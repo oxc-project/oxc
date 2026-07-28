@@ -64,10 +64,7 @@ use rustc_hash::FxHasher;
 use serde::Deserialize;
 
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{
-    ast::*,
-    builder::{AstBuilder, NONE},
-};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
@@ -464,7 +461,7 @@ impl<'a> StyledComponents<'a> {
                 let property = IdentifierName::new(SPAN, "withConfig", ctx);
                 let callee =
                     Expression::new_static_member_expression(SPAN, object, property, false, ctx);
-                Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx)
+                Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx)
             });
         } else {
             return false;

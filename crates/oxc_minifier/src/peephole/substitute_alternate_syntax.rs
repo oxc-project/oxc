@@ -2,7 +2,7 @@ use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     BoundNames, ToJsString, ToNumber,
@@ -992,7 +992,7 @@ impl<'a> PeepholeOptimizations {
                 Expression::new_call_expression(
                     SPAN,
                     callee,
-                    NONE,
+                    None,
                     [Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx)],
                     false,
                     ctx,
@@ -1002,7 +1002,7 @@ impl<'a> PeepholeOptimizations {
             };
 
             let new_decl =
-                VariableDeclarator::new(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false, ctx);
+                VariableDeclarator::new(SPAN, var_init.kind, r_id_pat, None, Some(arr), false, ctx);
             // The old declarators (`e`, `a`, and `r`'s original init) are
             // replaced wholesale — walk them so refs inside (e.g. `e` in
             // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
@@ -1251,7 +1251,7 @@ impl<'a> PeepholeOptimizations {
                             let callee = callee.take_in(ctx);
                             let args = args.take_in(ctx);
                             let new_value = Expression::new_call_expression(
-                                *span, callee, NONE, args, false, ctx,
+                                *span, callee, None, args, false, ctx,
                             );
                             ctx.replace_expression(expr, new_value);
                         }
@@ -1270,7 +1270,7 @@ impl<'a> PeepholeOptimizations {
                         let callee = callee.take_in(ctx);
                         let args = args.take_in(ctx);
                         let new_value =
-                            Expression::new_call_expression(*span, callee, NONE, args, false, ctx);
+                            Expression::new_call_expression(*span, callee, None, args, false, ctx);
                         ctx.replace_expression(expr, new_value);
                     }
                 } else {
@@ -1344,7 +1344,7 @@ impl<'a> PeepholeOptimizations {
             let new_value = Expression::new_call_expression_with_pure(
                 e.span,
                 e.callee.take_in(ctx),
-                NONE,
+                None,
                 e.arguments.take_in(ctx),
                 false,
                 e.pure,
@@ -1770,7 +1770,7 @@ impl<'a> PeepholeOptimizations {
                 false,
                 ctx,
             ),
-            NONE,
+            None,
             [Argument::new_string_literal(
                 expr.span(),
                 Str::from_str_in(delimiter, ctx),

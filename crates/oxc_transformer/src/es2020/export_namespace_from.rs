@@ -26,7 +26,7 @@
 //! * "export ns from" TC39 proposal: <https://github.com/tc39/proposal-export-ns-from>
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;
@@ -83,7 +83,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                         Some(ArenaVec::from_value_in(import_specifier, ctx)),
                         source,
                         None,
-                        NONE,
+                        None,
                         export_kind,
                         ctx,
                     );
@@ -101,7 +101,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExportNamespaceFrom {
                         [export_specifier],
                         None,
                         export_kind,
-                        NONE,
+                        None,
                         ctx,
                     );
                     new_statements.push(Statement::ExportNamedDeclaration(export_named_decl));

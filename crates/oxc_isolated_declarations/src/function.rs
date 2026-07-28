@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{SPAN, Span};
 
 use crate::{
@@ -33,7 +33,7 @@ impl<'a> IsolatedDeclarations<'a> {
             func.this_param.clone_in(self.allocator()),
             params,
             return_type,
-            NONE,
+            None,
             self,
         )
     }
@@ -116,7 +116,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 // not used afterwards, so move it in directly instead of cloning again.
                 pattern,
                 type_annotation,
-                NONE,
+                None,
                 optional,
                 None,
                 false,
@@ -130,7 +130,7 @@ impl<'a> IsolatedDeclarations<'a> {
             [],
             pattern,
             param.type_annotation.clone_in(self.allocator()),
-            NONE,
+            None,
             param.optional,
             None,
             false,

@@ -1,12 +1,9 @@
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::{
-    ast::{
-        ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
-        ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSLiteral,
-        TSMethodSignatureKind, TSSignature, TSTupleElement, TSType, TSTypeAnnotation,
-        TSTypeOperatorOperator,
-    },
-    builder::NONE,
+use oxc_ast::ast::{
+    ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
+    ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSLiteral,
+    TSMethodSignatureKind, TSSignature, TSTupleElement, TSType, TSTypeAnnotation,
+    TSTypeOperatorOperator,
 };
 use oxc_span::{ContentEq, GetSpan, SPAN, Span};
 use oxc_syntax::identifier::is_identifier_name;
@@ -61,7 +58,7 @@ impl<'a> IsolatedDeclarations<'a> {
             TSType::new_ts_function_type(
                 func.span,
                 func.type_parameters.clone_in(self.allocator()),
-                NONE,
+                None,
                 params,
                 return_type,
                 self,

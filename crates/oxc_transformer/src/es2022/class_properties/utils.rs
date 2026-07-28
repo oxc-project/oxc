@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use oxc_ast::{ast::*, builder::AstBuilder, builder::NONE};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_span::SPAN;
 use oxc_traverse::BoundIdentifier;
 
@@ -20,7 +20,7 @@ pub(super) fn create_variable_declaration<'a>(
         SPAN,
         kind,
         binding.create_binding_pattern(ctx),
-        NONE,
+        None,
         Some(init),
         false,
         ctx,

@@ -38,7 +38,7 @@ use std::mem;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
@@ -109,7 +109,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 SPAN,
                 variable_decl_kind,
                 binding_pattern,
-                NONE,
+                None,
                 Some(temp_id.create_read_expression(ctx)),
                 false,
                 ctx,
@@ -434,7 +434,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                     span,
                                     VariableDeclarationKind::Var,
                                     var_id.create_spanned_binding_pattern(span, ctx),
-                                    NONE,
+                                    None,
                                     Some(expr),
                                     false,
                                     ctx,
@@ -457,7 +457,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 )],
                                 None,
                                 ImportOrExportKind::Value,
-                                NONE,
+                                None,
                                 ctx,
                             ));
                         }
@@ -557,7 +557,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 export_specifiers,
                                 None,
                                 export_kind,
-                                NONE,
+                                None,
                                 ctx,
                             ));
                         }
@@ -725,7 +725,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                                 false,
                                 ctx,
                             ),
-                            NONE,
+                            None,
                             [Argument::from(old_init)],
                             false,
                             ctx,
@@ -754,11 +754,11 @@ impl<'a> ExplicitResourceManagement<'a> {
                                 SPAN,
                                 VariableDeclarationKind::Var,
                                 using_ctx.create_binding_pattern(ctx),
-                                NONE,
+                                None,
                                 Some(Expression::new_call_expression(
                                     SPAN,
                                     callee,
-                                    NONE,
+                                    None,
                                     [],
                                     false,
                                     ctx,
@@ -867,7 +867,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                             false,
                             ctx,
                         ),
-                        NONE,
+                        None,
                         [Argument::from(old_init)],
                         false,
                         ctx,
@@ -889,8 +889,8 @@ impl<'a> ExplicitResourceManagement<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 using_ctx.create_binding_pattern(ctx),
-                NONE,
-                Some(Expression::new_call_expression(SPAN, callee, NONE, [], false, ctx)),
+                None,
+                Some(Expression::new_call_expression(SPAN, callee, None, [], false, ctx)),
                 false,
                 ctx,
             )],
@@ -936,7 +936,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         );
 
         let catch_parameter =
-            CatchParameter::new(SPAN, ident.create_binding_pattern(ctx), NONE, ctx);
+            CatchParameter::new(SPAN, ident.create_binding_pattern(ctx), None, ctx);
 
         // `_usingCtx.e = _;`
         let stmt = Statement::new_expression_statement(
@@ -986,7 +986,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                 false,
                 ctx,
             ),
-            NONE,
+            None,
             [],
             false,
             ctx,
@@ -1020,7 +1020,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 binding.create_spanned_binding_pattern(original_span, ctx),
-                NONE,
+                None,
                 Some(class_expr),
                 false,
                 ctx,

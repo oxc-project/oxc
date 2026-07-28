@@ -32,7 +32,7 @@ use std::{iter, mem};
 use serde::Deserialize;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
@@ -215,7 +215,7 @@ impl<'a> ObjectRestSpread<'a> {
         let mut new_decls = vec![];
 
         if let Some(id) = reference_builder.binding.take() {
-            new_decls.push(VariableDeclarator::new(SPAN, state.kind, id, NONE, None, false, ctx));
+            new_decls.push(VariableDeclarator::new(SPAN, state.kind, id, None, None, false, ctx));
         }
 
         let data = Self::walk_assignment_target(&mut assign_expr.left, &mut new_decls, state, ctx);
@@ -457,7 +457,7 @@ impl<'a> ObjectRestSpread<'a> {
                 let bound_identifier = ctx.generate_uid_in_current_hoist_scope("ref");
                 let id = bound_identifier.create_binding_pattern(ctx);
                 let kind = VariableDeclarationKind::Var;
-                decls.push(VariableDeclarator::new(SPAN, kind, id, NONE, None, false, ctx));
+                decls.push(VariableDeclarator::new(SPAN, kind, id, None, None, false, ctx));
                 exprs.push(Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
@@ -691,7 +691,7 @@ impl<'a> ObjectRestSpread<'a> {
         let id = bound_identifier.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Var;
         let declarations = ArenaVec::from_value_in(
-            VariableDeclarator::new(SPAN, kind, id, NONE, None, false, ctx),
+            VariableDeclarator::new(SPAN, kind, id, None, None, false, ctx),
             ctx,
         );
         let decl = VariableDeclaration::boxed(SPAN, kind, declarations, false, ctx);
@@ -815,7 +815,7 @@ impl<'a> ObjectRestSpread<'a> {
         });
         let init = bound_identifier.create_read_expression(ctx);
         let declarations = ArenaVec::from_value_in(
-            VariableDeclarator::new(SPAN, kind, id, NONE, Some(init), false, ctx),
+            VariableDeclarator::new(SPAN, kind, id, None, Some(init), false, ctx),
             ctx,
         );
         VariableDeclaration::boxed(SPAN, kind, declarations, false, ctx)
@@ -881,7 +881,7 @@ impl<'a> ObjectRestSpread<'a> {
                 SPAN,
                 state.kind,
                 id,
-                NONE,
+                None,
                 Some(reference_builder.create_read_expression(ctx)),
                 false,
                 ctx,
@@ -939,7 +939,7 @@ impl<'a> ObjectRestSpread<'a> {
                         lhs.span(),
                         decl.kind,
                         lhs,
-                        NONE,
+                        None,
                         Some(rhs),
                         false,
                         ctx,
@@ -957,13 +957,13 @@ impl<'a> ObjectRestSpread<'a> {
 
         // Insert the original declarator by copying its data out.
         if !remove_empty_object_pattern {
-            let mut binding_pattern = BindingPattern::new_object_pattern(decl.span, [], NONE, ctx);
+            let mut binding_pattern = BindingPattern::new_object_pattern(decl.span, [], None, ctx);
             mem::swap(&mut binding_pattern, &mut decl.id);
             let decl = VariableDeclarator::new(
                 decl.span,
                 decl.kind,
                 binding_pattern,
-                NONE,
+                None,
                 Some(reference_builder.create_read_expression(ctx)),
                 false,
                 ctx,
@@ -1006,7 +1006,7 @@ impl<'a> ObjectRestSpread<'a> {
 
                     let init = bound_identifier.create_read_expression(ctx);
                     let mut decl =
-                        VariableDeclarator::new(SPAN, state.kind, id, NONE, Some(init), false, ctx);
+                        VariableDeclarator::new(SPAN, state.kind, id, None, Some(init), false, ctx);
                     let mut decls = self
                         .transform_variable_declarator(&mut decl, ctx)
                         .into_iter()
@@ -1078,7 +1078,7 @@ impl<'a> ObjectRestSpread<'a> {
                     SPAN,
                     state.kind,
                     p,
-                    NONE,
+                    None,
                     Some(lhs),
                     false,
                     ctx,
@@ -1181,7 +1181,7 @@ impl<'a> SpreadPair<'a> {
                     SPAN,
                     kind,
                     bound_identifier.create_binding_pattern(ctx),
-                    NONE,
+                    None,
                     Some(key_expression),
                     false,
                     ctx,
@@ -1203,7 +1203,7 @@ impl<'a> SpreadPair<'a> {
                     Argument::from(helper_load(Helper::ToPropertyKey, ctx)),
                     ctx,
                 );
-                Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx)
+                Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx)
             } else {
                 key_expression
             };

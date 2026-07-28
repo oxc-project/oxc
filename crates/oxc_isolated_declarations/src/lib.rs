@@ -12,7 +12,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
     ast::*,
-    builder::{AstBuilder, GetAstBuilder, NONE},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
@@ -433,7 +433,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 [],
                 None,
                 kind,
-                NONE,
+                None,
                 self,
             ));
         } else if self.scope.is_ts_module_block() {

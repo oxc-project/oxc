@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 use oxc_ast::{
     ast::*,
-    builder::{AstBuilder, GetAstBuilder, NONE},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
@@ -221,7 +221,7 @@ impl<'a> InjectGlobalVariables<'a> {
                 StringLiteral::new(SPAN, Str::from_str_in(&inject.source, self), None, self);
             let kind = ImportOrExportKind::Value;
             let import_decl = ModuleDeclaration::new_import_declaration(
-                SPAN, specifiers, source, None, NONE, kind, self,
+                SPAN, specifiers, source, None, None, kind, self,
             );
             Statement::from(import_decl)
         });

@@ -2,7 +2,7 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
@@ -404,6 +404,6 @@ impl<'a> ClassProperties<'a> {
             ],
             ctx,
         );
-        Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+        Expression::new_call_expression(span, callee, None, arguments, false, ctx)
     }
 }

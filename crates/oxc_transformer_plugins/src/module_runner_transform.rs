@@ -51,7 +51,7 @@ use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
@@ -264,7 +264,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             let arguments = options.into_iter().map(Argument::from);
             let arguments =
                 ArenaVec::from_iter_in(iter::once(Argument::from(source)).chain(arguments), ctx);
-            Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+            Expression::new_call_expression(span, callee, None, arguments, false, ctx)
         });
     }
 
@@ -522,7 +522,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 Expression::new_identifier(SPAN, static_ident!("__vite_ssr_exportAll__"), ctx);
             let ident = Argument::from(ident);
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
-            let call = Expression::new_call_expression(SPAN, callee, NONE, [ident], false, ctx);
+            let call = Expression::new_call_expression(SPAN, callee, None, [ident], false, ctx);
             let export = Statement::new_expression_statement(span, call, ctx);
             // names from `export *` cannot be known, so add it right after the import.
             hoist_imports.extend([import, export]);
@@ -725,11 +725,11 @@ impl<'a> ModuleRunnerTransform<'a> {
             static_ident!("__vite_ssr_import__"),
             ReferenceFlags::Read,
         );
-        let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
+        let call = Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx);
         let init = Expression::new_await_expression(SPAN, call, ctx);
 
         let kind = VariableDeclarationKind::Const;
-        let declarator = VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(init), false, ctx);
+        let declarator = VariableDeclarator::new(SPAN, kind, pattern, None, Some(init), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
@@ -743,7 +743,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let object =
             ctx.create_unbound_ident_expr(SPAN, static_ident!("Object"), ReferenceFlags::Read);
         let member = create_member_callee(object, static_ident!("defineProperty"), ctx);
-        Expression::new_call_expression(SPAN, member, NONE, arguments, false, ctx)
+        Expression::new_call_expression(SPAN, member, None, arguments, false, ctx)
     }
 
     // `key: value` or `key() {}`
@@ -771,7 +771,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let kind = FormalParameterKind::FormalParameter;
-        let params = FormalParameters::boxed(SPAN, kind, [], NONE, ctx);
+        let params = FormalParameters::boxed(SPAN, kind, [], None, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
         let body = FunctionBody::boxed(SPAN, [], [statement], ctx);
         let r#type = FunctionType::FunctionExpression;
@@ -783,10 +783,10 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             false,
             false,
-            NONE,
-            NONE,
+            None,
+            None,
             params,
-            NONE,
+            None,
             Some(body),
             scope_id,
             false,
@@ -855,7 +855,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let pattern = binding.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Const;
         let declarator =
-            VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(right), false, ctx);
+            VariableDeclarator::new(SPAN, kind, pattern, None, Some(right), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)

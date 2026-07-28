@@ -45,7 +45,7 @@
 //! (actually these would be improvements on ESBuild, not Babel)
 
 use oxc_allocator::GetAllocator;
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
@@ -176,6 +176,6 @@ impl<'a> RegExp {
             ),
         ];
 
-        *expr = Expression::new_new_expression(regexp.span, callee, NONE, arguments, ctx);
+        *expr = Expression::new_new_expression(regexp.span, callee, None, arguments, ctx);
     }
 }

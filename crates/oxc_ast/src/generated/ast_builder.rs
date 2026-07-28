@@ -349,22 +349,16 @@ impl<'a> Expression<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
             expression,
@@ -393,31 +387,19 @@ impl<'a> Expression<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-    >(
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
@@ -514,17 +496,16 @@ impl<'a> Expression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -548,18 +529,17 @@ impl<'a> Expression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -605,26 +585,23 @@ impl<'a> Expression<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -660,16 +637,16 @@ impl<'a> Expression<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -677,10 +654,7 @@ impl<'a> Expression<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -742,27 +716,20 @@ impl<'a> Expression<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed(
             span,
             r#type,
@@ -799,37 +766,23 @@ impl<'a> Expression<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -911,16 +864,15 @@ impl<'a> Expression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(
             span,
@@ -942,17 +894,16 @@ impl<'a> Expression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -1032,16 +983,13 @@ impl<'a> Expression<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
             span,
             tag,
@@ -1174,17 +1122,15 @@ impl<'a> Expression<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -1318,15 +1264,12 @@ impl<'a> Expression<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
             span,
             expression,
@@ -2022,22 +1965,16 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
             expression,
@@ -2066,31 +2003,19 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-    >(
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
@@ -2187,17 +2112,16 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -2221,18 +2145,17 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -2278,26 +2201,23 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -2333,16 +2253,16 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -2350,10 +2270,7 @@ impl<'a> ArrayExpressionElement<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -2415,27 +2332,20 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed(
             span,
             r#type,
@@ -2472,37 +2382,23 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -2584,16 +2480,15 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(
             span,
@@ -2615,17 +2510,16 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -2705,16 +2599,13 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
             span,
             tag,
@@ -2847,17 +2738,15 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -2991,15 +2880,12 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
             span,
             expression,
@@ -3587,22 +3473,16 @@ impl<'a> PropertyKey<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
             expression,
@@ -3631,31 +3511,19 @@ impl<'a> PropertyKey<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-    >(
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
@@ -3752,17 +3620,16 @@ impl<'a> PropertyKey<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -3786,18 +3653,17 @@ impl<'a> PropertyKey<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -3843,26 +3709,23 @@ impl<'a> PropertyKey<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -3898,16 +3761,16 @@ impl<'a> PropertyKey<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -3915,10 +3778,7 @@ impl<'a> PropertyKey<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -3980,27 +3840,20 @@ impl<'a> PropertyKey<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed(
             span,
             r#type,
@@ -4037,37 +3890,23 @@ impl<'a> PropertyKey<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -4149,16 +3988,15 @@ impl<'a> PropertyKey<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(
             span,
@@ -4180,17 +4018,16 @@ impl<'a> PropertyKey<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -4270,16 +4107,13 @@ impl<'a> PropertyKey<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
             span,
             tag,
@@ -4412,17 +4246,15 @@ impl<'a> PropertyKey<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -4556,15 +4388,12 @@ impl<'a> PropertyKey<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
             span,
             expression,
@@ -4745,22 +4574,19 @@ impl<'a> TaggedTemplateExpression<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TaggedTemplateExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             tag,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
             quasi,
         }
     }
@@ -4776,16 +4602,13 @@ impl<'a> TaggedTemplateExpression<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, tag, type_arguments, quasi, builder), &builder.allocator())
     }
@@ -5093,24 +4916,23 @@ impl<'a> CallExpression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         CallExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
             arguments: arguments.into_in(builder.allocator()),
             optional,
             pure: Default::default(),
@@ -5129,17 +4951,16 @@ impl<'a> CallExpression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -5161,25 +4982,24 @@ impl<'a> CallExpression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         CallExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
             arguments: arguments.into_in(builder.allocator()),
             optional,
             pure,
@@ -5199,18 +5019,17 @@ impl<'a> CallExpression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -5232,23 +5051,22 @@ impl<'a> NewExpression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         NewExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
             arguments: arguments.into_in(builder.allocator()),
             pure: Default::default(),
         }
@@ -5265,16 +5083,15 @@ impl<'a> NewExpression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -5295,24 +5112,23 @@ impl<'a> NewExpression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         NewExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             callee,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
             arguments: arguments.into_in(builder.allocator()),
             pure,
         }
@@ -5330,17 +5146,16 @@ impl<'a> NewExpression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -5697,22 +5512,16 @@ impl<'a> Argument<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
             expression,
@@ -5741,31 +5550,19 @@ impl<'a> Argument<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-    >(
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
@@ -5862,17 +5659,16 @@ impl<'a> Argument<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -5896,18 +5692,17 @@ impl<'a> Argument<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -5953,26 +5748,23 @@ impl<'a> Argument<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -6008,16 +5800,16 @@ impl<'a> Argument<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -6025,10 +5817,7 @@ impl<'a> Argument<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -6090,27 +5879,20 @@ impl<'a> Argument<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed(
             span,
             r#type,
@@ -6147,37 +5929,23 @@ impl<'a> Argument<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -6259,16 +6027,15 @@ impl<'a> Argument<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(
             span,
@@ -6290,17 +6057,16 @@ impl<'a> Argument<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -6380,16 +6146,13 @@ impl<'a> Argument<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
             span,
             tag,
@@ -6522,17 +6285,15 @@ impl<'a> Argument<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -6666,15 +6427,12 @@ impl<'a> Argument<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
             span,
             expression,
@@ -7329,15 +7087,14 @@ impl<'a> AssignmentTarget<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
             span,
@@ -7356,15 +7113,14 @@ impl<'a> AssignmentTarget<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
             span,
@@ -7595,15 +7351,14 @@ impl<'a> AssignmentTargetPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
             span,
@@ -7622,15 +7377,14 @@ impl<'a> AssignmentTargetPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
             span,
@@ -7652,22 +7406,21 @@ impl<'a> ArrayAssignmentTarget<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
         ArrayAssignmentTarget {
             node_id: Cell::new(builder.node_id()),
             span,
             elements: elements.into_in(builder.allocator()),
-            rest: rest.into_in(builder.allocator()),
+            rest,
         }
     }
 
@@ -7681,15 +7434,14 @@ impl<'a> ArrayAssignmentTarget<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, elements, rest, builder), &builder.allocator())
@@ -7707,22 +7459,21 @@ impl<'a> ObjectAssignmentTarget<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
         ObjectAssignmentTarget {
             node_id: Cell::new(builder.node_id()),
             span,
             properties: properties.into_in(builder.allocator()),
-            rest: rest.into_in(builder.allocator()),
+            rest,
         }
     }
 
@@ -7736,15 +7487,14 @@ impl<'a> ObjectAssignmentTarget<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, properties, rest, builder), &builder.allocator())
@@ -8030,15 +7780,14 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
             span,
@@ -8057,15 +7806,14 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
             span,
@@ -8424,17 +8172,16 @@ impl<'a> ChainElement<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -8458,18 +8205,17 @@ impl<'a> ChainElement<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -9035,18 +8781,13 @@ impl<'a> Statement<'a> {
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
     #[inline]
-    pub fn new_try_statement<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_try_statement<B: GetAstBuilder<'a>>(
         span: Span,
-        block: T1,
-        handler: T2,
-        finalizer: T3,
+        block: ArenaBox<'a, BlockStatement<'a>>,
+        handler: Option<ArenaBox<'a, CatchClause<'a>>>,
+        finalizer: Option<ArenaBox<'a, BlockStatement<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
-    {
+    ) -> Self {
         Self::TryStatement(TryStatement::boxed(span, block, handler, finalizer, builder.builder()))
     }
 
@@ -9158,27 +8899,20 @@ impl<'a> Statement<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionDeclaration(Function::boxed(
             span,
             r#type,
@@ -9215,37 +8949,23 @@ impl<'a> Statement<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_declaration_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_declaration_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionDeclaration(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -9282,26 +9002,23 @@ impl<'a> Statement<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed(
             span,
@@ -9337,16 +9054,16 @@ impl<'a> Statement<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -9354,10 +9071,7 @@ impl<'a> Statement<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed_with_scope_id(
             span,
@@ -9387,17 +9101,14 @@ impl<'a> Statement<'a> {
     /// * `type_annotation`
     /// * `declare`
     #[inline]
-    pub fn new_ts_type_alias_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_alias_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeAliasDeclaration(TSTypeAliasDeclaration::boxed(
             span,
             id,
@@ -9420,18 +9131,15 @@ impl<'a> Statement<'a> {
     /// * `declare`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_type_alias_declaration_with_scope_id<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_alias_declaration_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeAliasDeclaration(TSTypeAliasDeclaration::boxed_with_scope_id(
             span,
             id,
@@ -9455,19 +9163,17 @@ impl<'a> Statement<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed(
             span,
@@ -9493,20 +9199,18 @@ impl<'a> Statement<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed_with_scope_id(
             span,
@@ -9703,18 +9407,15 @@ impl<'a> Statement<'a> {
     /// * `with_clause`: Some(vec![]) for empty assertion
     /// * `import_kind`: `import type { foo } from 'bar'`
     #[inline]
-    pub fn new_import_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_import_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         phase: Option<ImportPhase>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         import_kind: ImportOrExportKind,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> Self {
         Self::ImportDeclaration(ImportDeclaration::boxed(
             span,
             specifiers,
@@ -9737,17 +9438,14 @@ impl<'a> Statement<'a> {
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
-    pub fn new_export_all_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_export_all_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> Self {
         Self::ExportAllDeclaration(ExportAllDeclaration::boxed(
             span,
             exported,
@@ -9790,18 +9488,17 @@ impl<'a> Statement<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T2,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         Self::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
             span,
@@ -10036,27 +9733,20 @@ impl<'a> Declaration<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionDeclaration(Function::boxed(
             span,
             r#type,
@@ -10093,37 +9783,23 @@ impl<'a> Declaration<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_declaration_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_declaration_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionDeclaration(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -10160,26 +9836,23 @@ impl<'a> Declaration<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed(
             span,
@@ -10215,16 +9888,16 @@ impl<'a> Declaration<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -10232,10 +9905,7 @@ impl<'a> Declaration<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed_with_scope_id(
             span,
@@ -10265,17 +9935,14 @@ impl<'a> Declaration<'a> {
     /// * `type_annotation`
     /// * `declare`
     #[inline]
-    pub fn new_ts_type_alias_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_alias_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeAliasDeclaration(TSTypeAliasDeclaration::boxed(
             span,
             id,
@@ -10298,18 +9965,15 @@ impl<'a> Declaration<'a> {
     /// * `declare`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_type_alias_declaration_with_scope_id<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_alias_declaration_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeAliasDeclaration(TSTypeAliasDeclaration::boxed_with_scope_id(
             span,
             id,
@@ -10333,19 +9997,17 @@ impl<'a> Declaration<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed(
             span,
@@ -10371,20 +10033,18 @@ impl<'a> Declaration<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed_with_scope_id(
             span,
@@ -10642,25 +10302,22 @@ impl<'a> VariableDeclarator<'a> {
     /// * `init`
     /// * `definite`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         kind: VariableDeclarationKind,
         id: BindingPattern<'a>,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         init: Option<Expression<'a>>,
         definite: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         VariableDeclarator {
             node_id: Cell::new(builder.node_id()),
             span,
             kind,
             id,
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
             init,
             definite,
         }
@@ -11253,22 +10910,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
             expression,
@@ -11297,31 +10948,19 @@ impl<'a> ForStatementInit<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-    >(
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
@@ -11418,17 +11057,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -11452,18 +11090,17 @@ impl<'a> ForStatementInit<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -11509,26 +11146,23 @@ impl<'a> ForStatementInit<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -11564,16 +11198,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -11581,10 +11215,7 @@ impl<'a> ForStatementInit<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -11646,27 +11277,20 @@ impl<'a> ForStatementInit<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed(
             span,
             r#type,
@@ -11703,37 +11327,23 @@ impl<'a> ForStatementInit<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -11815,16 +11425,15 @@ impl<'a> ForStatementInit<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(
             span,
@@ -11846,17 +11455,16 @@ impl<'a> ForStatementInit<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -11936,16 +11544,13 @@ impl<'a> ForStatementInit<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
             span,
             tag,
@@ -12078,17 +11683,15 @@ impl<'a> ForStatementInit<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -12222,15 +11825,12 @@ impl<'a> ForStatementInit<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
             span,
             expression,
@@ -12702,15 +12302,14 @@ impl<'a> ForStatementLeft<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_array_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ArrayAssignmentTarget(ArrayAssignmentTarget::boxed(
             span,
@@ -12729,15 +12328,14 @@ impl<'a> ForStatementLeft<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_object_assignment_target<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, AssignmentTargetRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, AssignmentTargetRest<'a>>>>,
     {
         Self::ObjectAssignmentTarget(ObjectAssignmentTarget::boxed(
             span,
@@ -13312,26 +12910,15 @@ impl<'a> TryStatement<'a> {
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
-        block: T1,
-        handler: T2,
-        finalizer: T3,
+        block: ArenaBox<'a, BlockStatement<'a>>,
+        handler: Option<ArenaBox<'a, CatchClause<'a>>>,
+        finalizer: Option<ArenaBox<'a, BlockStatement<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
-        TryStatement {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            block: block.into_in(builder.allocator()),
-            handler: handler.into_in(builder.allocator()),
-            finalizer: finalizer.into_in(builder.allocator()),
-        }
+        TryStatement { node_id: Cell::new(builder.node_id()), span, block, handler, finalizer }
     }
 
     /// Build a [`TryStatement`], and store it in the memory arena.
@@ -13345,18 +12932,13 @@ impl<'a> TryStatement<'a> {
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
-        block: T1,
-        handler: T2,
-        finalizer: T3,
+        block: ArenaBox<'a, BlockStatement<'a>>,
+        handler: Option<ArenaBox<'a, CatchClause<'a>>>,
+        finalizer: Option<ArenaBox<'a, BlockStatement<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, CatchClause<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, BlockStatement<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, block, handler, finalizer, builder), &builder.allocator())
     }
@@ -13373,21 +12955,18 @@ impl<'a> CatchClause<'a> {
     /// * `param`: The caught error parameter, e.g. `e` in `catch (e) {}`
     /// * `body`: The statements run when an error is caught
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         param: Option<CatchParameter<'a>>,
-        body: T1,
+        body: ArenaBox<'a, BlockStatement<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         CatchClause {
             node_id: Cell::new(builder.node_id()),
             span,
             param,
-            body: body.into_in(builder.allocator()),
+            body,
             scope_id: Default::default(),
         }
     }
@@ -13402,15 +12981,12 @@ impl<'a> CatchClause<'a> {
     /// * `param`: The caught error parameter, e.g. `e` in `catch (e) {}`
     /// * `body`: The statements run when an error is caught
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         param: Option<CatchParameter<'a>>,
-        body: T1,
+        body: ArenaBox<'a, BlockStatement<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, param, body, builder), &builder.allocator())
     }
@@ -13426,22 +13002,19 @@ impl<'a> CatchClause<'a> {
     /// * `body`: The statements run when an error is caught
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         param: Option<CatchParameter<'a>>,
-        body: T1,
+        body: ArenaBox<'a, BlockStatement<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         CatchClause {
             node_id: Cell::new(builder.node_id()),
             span,
             param,
-            body: body.into_in(builder.allocator()),
+            body,
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -13457,16 +13030,13 @@ impl<'a> CatchClause<'a> {
     /// * `body`: The statements run when an error is caught
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         param: Option<CatchParameter<'a>>,
-        body: T1,
+        body: ArenaBox<'a, BlockStatement<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, param, body, scope_id, builder),
@@ -13483,22 +13053,14 @@ impl<'a> CatchParameter<'a> {
     /// * `pattern`: The bound error
     /// * `type_annotation`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         pattern: BindingPattern<'a>,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
-        CatchParameter {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            pattern,
-            type_annotation: type_annotation.into_in(builder.allocator()),
-        }
+        CatchParameter { node_id: Cell::new(builder.node_id()), span, pattern, type_annotation }
     }
 }
 
@@ -13585,15 +13147,14 @@ impl<'a> BindingPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new_object_pattern<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_object_pattern<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, BindingRestElement<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         Self::ObjectPattern(ObjectPattern::boxed(span, properties, rest, builder.builder()))
     }
@@ -13607,15 +13168,14 @@ impl<'a> BindingPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new_array_pattern<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_array_pattern<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, BindingRestElement<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         Self::ArrayPattern(ArrayPattern::boxed(span, elements, rest, builder.builder()))
     }
@@ -13692,22 +13252,21 @@ impl<'a> ObjectPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, BindingRestElement<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
         ObjectPattern {
             node_id: Cell::new(builder.node_id()),
             span,
             properties: properties.into_in(builder.allocator()),
-            rest: rest.into_in(builder.allocator()),
+            rest,
         }
     }
 
@@ -13721,15 +13280,14 @@ impl<'a> ObjectPattern<'a> {
     /// * `properties`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         properties: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, BindingRestElement<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, BindingProperty<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, properties, rest, builder), &builder.allocator())
@@ -13777,22 +13335,21 @@ impl<'a> ArrayPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, BindingRestElement<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
         ArrayPattern {
             node_id: Cell::new(builder.node_id()),
             span,
             elements: elements.into_in(builder.allocator()),
-            rest: rest.into_in(builder.allocator()),
+            rest,
         }
     }
 
@@ -13806,15 +13363,14 @@ impl<'a> ArrayPattern<'a> {
     /// * `elements`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         elements: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, BindingRestElement<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Option<BindingPattern<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, BindingRestElement<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, elements, rest, builder), &builder.allocator())
@@ -13878,27 +13434,20 @@ impl<'a> Function<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         Function {
             node_id: Cell::new(builder.node_id()),
@@ -13908,11 +13457,11 @@ impl<'a> Function<'a> {
             generator,
             r#async,
             declare,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            body,
             scope_id: Default::default(),
             pure: Default::default(),
             pife: Default::default(),
@@ -13937,27 +13486,20 @@ impl<'a> Function<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
@@ -13999,30 +13541,23 @@ impl<'a> Function<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         Function {
             node_id: Cell::new(builder.node_id()),
@@ -14032,11 +13567,11 @@ impl<'a> Function<'a> {
             generator,
             r#async,
             declare,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            body,
             scope_id: Cell::new(Some(scope_id)),
             pure,
             pife,
@@ -14064,30 +13599,23 @@ impl<'a> Function<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn boxed_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn boxed_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id_and_pure_and_pife(
@@ -14124,16 +13652,15 @@ impl<'a> FormalParameters<'a> {
     /// * `items`
     /// * `rest`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: FormalParameterKind,
         items: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, FormalParameterRest<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, FormalParameter<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
         let builder = builder.builder();
         FormalParameters {
@@ -14141,7 +13668,7 @@ impl<'a> FormalParameters<'a> {
             span,
             kind,
             items: items.into_in(builder.allocator()),
-            rest: rest.into_in(builder.allocator()),
+            rest,
         }
     }
 
@@ -14156,16 +13683,15 @@ impl<'a> FormalParameters<'a> {
     /// * `items`
     /// * `rest`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         kind: FormalParameterKind,
         items: T1,
-        rest: T2,
+        rest: Option<ArenaBox<'a, FormalParameterRest<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, FormalParameter<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, FormalParameterRest<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, kind, items, rest, builder), &builder.allocator())
@@ -14186,12 +13712,12 @@ impl<'a> FormalParameter<'a> {
     /// * `readonly`
     /// * `override`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         decorators: T1,
         pattern: BindingPattern<'a>,
-        type_annotation: T2,
-        initializer: T3,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        initializer: Option<ArenaBox<'a, Expression<'a>>>,
         optional: bool,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
@@ -14200,8 +13726,6 @@ impl<'a> FormalParameter<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, Expression<'a>>>>,
     {
         let builder = builder.builder();
         FormalParameter {
@@ -14209,8 +13733,8 @@ impl<'a> FormalParameter<'a> {
             span,
             decorators: decorators.into_in(builder.allocator()),
             pattern,
-            type_annotation: type_annotation.into_in(builder.allocator()),
-            initializer: initializer.into_in(builder.allocator()),
+            type_annotation,
+            initializer,
             optional,
             accessibility,
             readonly,
@@ -14231,16 +13755,15 @@ impl<'a> FormalParameterRest<'a> {
     /// * `rest`
     /// * `type_annotation`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         decorators: T1,
         rest: BindingRestElement<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         FormalParameterRest {
@@ -14248,7 +13771,7 @@ impl<'a> FormalParameterRest<'a> {
             span,
             decorators: decorators.into_in(builder.allocator()),
             rest,
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
         }
     }
 
@@ -14263,16 +13786,15 @@ impl<'a> FormalParameterRest<'a> {
     /// * `rest`
     /// * `type_annotation`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         decorators: T1,
         rest: BindingRestElement<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -14352,32 +13874,26 @@ impl<'a> ArrowFunctionExpression<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         ArrowFunctionExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
             r#async,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            type_parameters,
+            params,
+            return_type,
+            body,
             scope_id: Default::default(),
             pure: Default::default(),
             pife: Default::default(),
@@ -14398,22 +13914,16 @@ impl<'a> ArrowFunctionExpression<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
@@ -14447,35 +13957,29 @@ impl<'a> ArrowFunctionExpression<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         ArrowFunctionExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
             r#async,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            type_parameters,
+            params,
+            return_type,
+            body,
             scope_id: Cell::new(Some(scope_id)),
             pure,
             pife,
@@ -14499,25 +14003,19 @@ impl<'a> ArrowFunctionExpression<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn boxed_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id_and_pure_and_pife(
@@ -14599,26 +14097,23 @@ impl<'a> Class<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         let builder = builder.builder();
         Class {
@@ -14627,11 +14122,11 @@ impl<'a> Class<'a> {
             r#type,
             decorators: decorators.into_in(builder.allocator()),
             id,
-            type_parameters: type_parameters.into_in(builder.allocator()),
+            type_parameters,
             super_class,
-            super_type_arguments: super_type_arguments.into_in(builder.allocator()),
+            super_type_arguments,
             implements: implements.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            body,
             r#abstract,
             declare,
             scope_id: Default::default(),
@@ -14656,26 +14151,23 @@ impl<'a> Class<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -14716,16 +14208,16 @@ impl<'a> Class<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -14733,10 +14225,7 @@ impl<'a> Class<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         let builder = builder.builder();
         Class {
@@ -14745,11 +14234,11 @@ impl<'a> Class<'a> {
             r#type,
             decorators: decorators.into_in(builder.allocator()),
             id,
-            type_parameters: type_parameters.into_in(builder.allocator()),
+            type_parameters,
             super_class,
-            super_type_arguments: super_type_arguments.into_in(builder.allocator()),
+            super_type_arguments,
             implements: implements.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            body,
             r#abstract,
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -14775,16 +14264,16 @@ impl<'a> Class<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -14792,10 +14281,7 @@ impl<'a> Class<'a> {
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -14913,12 +14399,12 @@ impl<'a> ClassElement<'a> {
     /// * `optional`
     /// * `accessibility`
     #[inline]
-    pub fn new_method_definition<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_method_definition<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: MethodDefinitionType,
         decorators: T1,
         key: PropertyKey<'a>,
-        value: T2,
+        value: ArenaBox<'a, Function<'a>>,
         kind: MethodDefinitionKind,
         computed: bool,
         r#static: bool,
@@ -14929,7 +14415,6 @@ impl<'a> ClassElement<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         Self::MethodDefinition(MethodDefinition::boxed(
             span,
@@ -14967,12 +14452,12 @@ impl<'a> ClassElement<'a> {
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new_property_definition<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_property_definition<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: PropertyDefinitionType,
         decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -14986,7 +14471,6 @@ impl<'a> ClassElement<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         Self::PropertyDefinition(PropertyDefinition::boxed(
             span,
@@ -15024,12 +14508,12 @@ impl<'a> ClassElement<'a> {
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new_accessor_property<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_accessor_property<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: AccessorPropertyType,
         decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -15040,7 +14524,6 @@ impl<'a> ClassElement<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         Self::AccessorProperty(AccessorProperty::boxed(
             span,
@@ -15069,17 +14552,16 @@ impl<'a> ClassElement<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1>(
         span: Span,
         parameters: T1,
-        type_annotation: T2,
+        type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         Self::TSIndexSignature(TSIndexSignature::boxed(
             span,
@@ -15111,12 +14593,12 @@ impl<'a> MethodDefinition<'a> {
     /// * `optional`
     /// * `accessibility`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: MethodDefinitionType,
         decorators: T1,
         key: PropertyKey<'a>,
-        value: T2,
+        value: ArenaBox<'a, Function<'a>>,
         kind: MethodDefinitionKind,
         computed: bool,
         r#static: bool,
@@ -15127,7 +14609,6 @@ impl<'a> MethodDefinition<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         let builder = builder.builder();
         MethodDefinition {
@@ -15136,7 +14617,7 @@ impl<'a> MethodDefinition<'a> {
             r#type,
             decorators: decorators.into_in(builder.allocator()),
             key,
-            value: value.into_in(builder.allocator()),
+            value,
             kind,
             computed,
             r#static,
@@ -15164,12 +14645,12 @@ impl<'a> MethodDefinition<'a> {
     /// * `optional`
     /// * `accessibility`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: MethodDefinitionType,
         decorators: T1,
         key: PropertyKey<'a>,
-        value: T2,
+        value: ArenaBox<'a, Function<'a>>,
         kind: MethodDefinitionKind,
         computed: bool,
         r#static: bool,
@@ -15180,7 +14661,6 @@ impl<'a> MethodDefinition<'a> {
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -15225,12 +14705,12 @@ impl<'a> PropertyDefinition<'a> {
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: PropertyDefinitionType,
         decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -15244,7 +14724,6 @@ impl<'a> PropertyDefinition<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         PropertyDefinition {
@@ -15253,7 +14732,7 @@ impl<'a> PropertyDefinition<'a> {
             r#type,
             decorators: decorators.into_in(builder.allocator()),
             key,
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
             value,
             computed,
             r#static,
@@ -15287,12 +14766,12 @@ impl<'a> PropertyDefinition<'a> {
     /// * `readonly`: `true` when declared with a `readonly` modifier
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: PropertyDefinitionType,
         decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -15306,7 +14785,6 @@ impl<'a> PropertyDefinition<'a> {
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -15476,18 +14954,15 @@ impl<'a> ModuleDeclaration<'a> {
     /// * `with_clause`: Some(vec![]) for empty assertion
     /// * `import_kind`: `import type { foo } from 'bar'`
     #[inline]
-    pub fn new_import_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_import_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         phase: Option<ImportPhase>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         import_kind: ImportOrExportKind,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> Self {
         Self::ImportDeclaration(ImportDeclaration::boxed(
             span,
             specifiers,
@@ -15510,17 +14985,14 @@ impl<'a> ModuleDeclaration<'a> {
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
-    pub fn new_export_all_declaration<B: GetAstBuilder<'a>, T1>(
+    pub fn new_export_all_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> Self {
         Self::ExportAllDeclaration(ExportAllDeclaration::boxed(
             span,
             exported,
@@ -15563,18 +15035,17 @@ impl<'a> ModuleDeclaration<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_export_named_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T2,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         Self::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
             span,
@@ -15643,12 +15114,12 @@ impl<'a> AccessorProperty<'a> {
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: AccessorPropertyType,
         decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -15659,7 +15130,6 @@ impl<'a> AccessorProperty<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         AccessorProperty {
@@ -15668,7 +15138,7 @@ impl<'a> AccessorProperty<'a> {
             r#type,
             decorators: decorators.into_in(builder.allocator()),
             key,
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
             value,
             computed,
             r#static,
@@ -15696,12 +15166,12 @@ impl<'a> AccessorProperty<'a> {
     /// * `definite`: Property has a `!` after its key.
     /// * `accessibility`: Accessibility modifier.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         r#type: AccessorPropertyType,
         decorators: T1,
         key: PropertyKey<'a>,
-        type_annotation: T2,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
@@ -15712,7 +15182,6 @@ impl<'a> AccessorProperty<'a> {
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -15795,18 +15264,15 @@ impl<'a> ImportDeclaration<'a> {
     /// * `with_clause`: Some(vec![]) for empty assertion
     /// * `import_kind`: `import type { foo } from 'bar'`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         phase: Option<ImportPhase>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         import_kind: ImportOrExportKind,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         ImportDeclaration {
             node_id: Cell::new(builder.node_id()),
@@ -15814,7 +15280,7 @@ impl<'a> ImportDeclaration<'a> {
             specifiers,
             source,
             phase,
-            with_clause: with_clause.into_in(builder.allocator()),
+            with_clause,
             import_kind,
         }
     }
@@ -15832,18 +15298,15 @@ impl<'a> ImportDeclaration<'a> {
     /// * `with_clause`: Some(vec![]) for empty assertion
     /// * `import_kind`: `import type { foo } from 'bar'`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         specifiers: Option<ArenaVec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         phase: Option<ImportPhase>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         import_kind: ImportOrExportKind,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, specifiers, source, phase, with_clause, import_kind, builder),
@@ -16194,18 +15657,17 @@ impl<'a> ExportNamedDeclaration<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T2,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         let builder = builder.builder();
         ExportNamedDeclaration {
@@ -16215,7 +15677,7 @@ impl<'a> ExportNamedDeclaration<'a> {
             specifiers: specifiers.into_in(builder.allocator()),
             source,
             export_kind,
-            with_clause: with_clause.into_in(builder.allocator()),
+            with_clause,
         }
     }
 
@@ -16232,18 +15694,17 @@ impl<'a> ExportNamedDeclaration<'a> {
     /// * `export_kind`: `export type { foo }`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: T1,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: T2,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -16304,24 +15765,21 @@ impl<'a> ExportAllDeclaration<'a> {
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         ExportAllDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             exported,
             source,
-            with_clause: with_clause.into_in(builder.allocator()),
+            with_clause,
             export_kind,
         }
     }
@@ -16338,17 +15796,14 @@ impl<'a> ExportAllDeclaration<'a> {
     /// * `with_clause`: Will be `Some(vec![])` for empty assertion
     /// * `export_kind`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: T1,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         export_kind: ImportOrExportKind,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, WithClause<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, exported, source, with_clause, export_kind, builder),
@@ -16402,27 +15857,20 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_declaration<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionDeclaration(Function::boxed(
             span,
             r#type,
@@ -16459,37 +15907,23 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_declaration_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_declaration_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionDeclaration(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -16526,26 +15960,23 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_declaration<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed(
             span,
@@ -16581,16 +16012,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -16598,10 +16029,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassDeclaration(Class::boxed_with_scope_id(
             span,
@@ -16632,19 +16060,17 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_interface_declaration<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed(
             span,
@@ -16670,20 +16096,18 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_interface_declaration_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         Self::TSInterfaceDeclaration(TSInterfaceDeclaration::boxed_with_scope_id(
             span,
@@ -16937,22 +16361,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
             expression,
@@ -16981,31 +16399,19 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-    >(
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
@@ -17102,17 +16508,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -17136,18 +16541,17 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -17193,26 +16597,23 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -17248,16 +16649,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -17265,10 +16666,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -17330,27 +16728,20 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed(
             span,
             r#type,
@@ -17387,37 +16778,23 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -17499,16 +16876,15 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(
             span,
@@ -17530,17 +16906,16 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -17620,16 +16995,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
             span,
             tag,
@@ -17762,17 +17134,15 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -17906,15 +17276,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
             span,
             expression,
@@ -18516,25 +17883,23 @@ impl<'a> JSXElement<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         let builder = builder.builder();
         JSXElement {
             node_id: Cell::new(builder.node_id()),
             span,
-            opening_element: opening_element.into_in(builder.allocator()),
+            opening_element,
             children: children.into_in(builder.allocator()),
-            closing_element: closing_element.into_in(builder.allocator()),
+            closing_element,
         }
     }
 
@@ -18549,17 +17914,15 @@ impl<'a> JSXElement<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -18581,23 +17944,22 @@ impl<'a> JSXOpeningElement<'a> {
     /// * `type_arguments`: Type parameters for generic JSX elements.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: JSXElementName<'a>,
-        type_arguments: T1,
-        attributes: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        attributes: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
     {
         let builder = builder.builder();
         JSXOpeningElement {
             node_id: Cell::new(builder.node_id()),
             span,
             name,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
             attributes: attributes.into_in(builder.allocator()),
         }
     }
@@ -18613,16 +17975,15 @@ impl<'a> JSXOpeningElement<'a> {
     /// * `type_arguments`: Type parameters for generic JSX elements.
     /// * `attributes`: List of JSX attributes. In React-like applications, these become props.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         name: JSXElementName<'a>,
-        type_arguments: T1,
-        attributes: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        attributes: T1,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXAttributeItem<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -19320,22 +18681,16 @@ impl<'a> JSXExpression<'a> {
     /// * `return_type`
     /// * `body`: See `expression` for whether this arrow expression returns an expression.
     #[inline]
-    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_arrow_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(ArrowFunctionExpression::boxed(
             span,
             expression,
@@ -19364,31 +18719,19 @@ impl<'a> JSXExpression<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-    >(
+    pub fn new_arrow_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         expression: bool,
         r#async: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, ArenaBox<'a, FunctionBody<'a>>>,
-    {
+    ) -> Self {
         Self::ArrowFunctionExpression(
             ArrowFunctionExpression::boxed_with_scope_id_and_pure_and_pife(
                 span,
@@ -19485,17 +18828,16 @@ impl<'a> JSXExpression<'a> {
     /// * `arguments`
     /// * `optional`
     #[inline]
-    pub fn new_call_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed(
             span,
@@ -19519,18 +18861,17 @@ impl<'a> JSXExpression<'a> {
     /// * `optional`
     /// * `pure`: `true` if the call expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_call_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         optional: bool,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::CallExpression(CallExpression::boxed_with_pure(
             span,
@@ -19576,26 +18917,23 @@ impl<'a> JSXExpression<'a> {
     /// * `abstract`: Whether the class is abstract
     /// * `declare`: Whether the class was `declare`ed
     #[inline]
-    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed(
             span,
@@ -19631,16 +18969,16 @@ impl<'a> JSXExpression<'a> {
     /// * `declare`: Whether the class was `declare`ed
     /// * `scope_id`: Id of the scope created by the [`Class`], including type parameters and
     #[inline]
-    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_class_expression_with_scope_id<B: GetAstBuilder<'a>, T1, T2>(
         span: Span,
         r#type: ClassType,
         decorators: T1,
         id: Option<BindingIdentifier<'a>>,
-        type_parameters: T2,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         super_class: Option<Expression<'a>>,
-        super_type_arguments: T3,
-        implements: T4,
-        body: T5,
+        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        implements: T2,
+        body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
         declare: bool,
         scope_id: ScopeId,
@@ -19648,10 +18986,7 @@ impl<'a> JSXExpression<'a> {
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T4: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
-        T5: IntoIn<'a, ArenaBox<'a, ClassBody<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
     {
         Self::ClassExpression(Class::boxed_with_scope_id(
             span,
@@ -19713,27 +19048,20 @@ impl<'a> JSXExpression<'a> {
     /// * `return_type`: The TypeScript return type annotation.
     /// * `body`: The function body.
     #[inline]
-    pub fn new_function_expression<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn new_function_expression<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed(
             span,
             r#type,
@@ -19770,37 +19098,23 @@ impl<'a> JSXExpression<'a> {
     /// * `pure`: `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     /// * `pife`: `true` if the function should be marked as "Possibly-Invoked Function Expression" (PIFE).
     #[inline]
-    pub fn new_function_expression_with_scope_id_and_pure_and_pife<
-        B: GetAstBuilder<'a>,
-        T1,
-        T2,
-        T3,
-        T4,
-        T5,
-    >(
+    pub fn new_function_expression_with_scope_id_and_pure_and_pife<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         pure: bool,
         pife: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> Self {
         Self::FunctionExpression(Function::boxed_with_scope_id_and_pure_and_pife(
             span,
             r#type,
@@ -19882,16 +19196,15 @@ impl<'a> JSXExpression<'a> {
     /// * `type_arguments`
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     #[inline]
-    pub fn new_new_expression<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed(
             span,
@@ -19913,17 +19226,16 @@ impl<'a> JSXExpression<'a> {
     /// * `arguments`: `true` if the new expression is marked with a `/* @__PURE__ */` comment
     /// * `pure`
     #[inline]
-    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_new_expression_with_pure<B: GetAstBuilder<'a>, T1>(
         span: Span,
         callee: Expression<'a>,
-        type_arguments: T1,
-        arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        arguments: T1,
         pure: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
     {
         Self::NewExpression(NewExpression::boxed_with_pure(
             span,
@@ -20003,16 +19315,13 @@ impl<'a> JSXExpression<'a> {
     /// * `type_arguments`
     /// * `quasi`
     #[inline]
-    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_tagged_template_expression<B: GetAstBuilder<'a>>(
         span: Span,
         tag: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         quasi: TemplateLiteral<'a>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TaggedTemplateExpression(TaggedTemplateExpression::boxed(
             span,
             tag,
@@ -20145,17 +19454,15 @@ impl<'a> JSXExpression<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_jsx_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::JSXElement(JSXElement::boxed(
             span,
@@ -20289,15 +19596,12 @@ impl<'a> JSXExpression<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_instantiation_expression<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         Self::TSInstantiationExpression(TSInstantiationExpression::boxed(
             span,
             expression,
@@ -20667,17 +19971,15 @@ impl<'a> JSXAttributeValue<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::Element(JSXElement::boxed(
             span,
@@ -20786,17 +20088,15 @@ impl<'a> JSXChild<'a> {
     /// * `children`: Children of the element.
     /// * `closing_element`: Closing tag of the element.
     #[inline]
-    pub fn new_element<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_element<B: GetAstBuilder<'a>, T1>(
         span: Span,
-        opening_element: T1,
-        children: T2,
-        closing_element: T3,
+        opening_element: ArenaBox<'a, JSXOpeningElement<'a>>,
+        children: T1,
+        closing_element: Option<ArenaBox<'a, JSXClosingElement<'a>>>,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, ArenaBox<'a, JSXOpeningElement<'a>>>,
-        T2: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, JSXClosingElement<'a>>>>,
+        T1: IntoIn<'a, ArenaVec<'a, JSXChild<'a>>>,
     {
         Self::Element(JSXElement::boxed(
             span,
@@ -20966,22 +20266,14 @@ impl<'a> TSThisParameter<'a> {
     /// * `this_span`
     /// * `type_annotation`: Type type the `this` keyword will have in the function
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         this_span: Span,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
-        TSThisParameter {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            this_span,
-            type_annotation: type_annotation.into_in(builder.allocator()),
-        }
+        TSThisParameter { node_id: Cell::new(builder.node_id()), span, this_span, type_annotation }
     }
 
     /// Build a [`TSThisParameter`], and store it in the memory arena.
@@ -20994,15 +20286,12 @@ impl<'a> TSThisParameter<'a> {
     /// * `this_span`
     /// * `type_annotation`: Type type the `this` keyword will have in the function
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         this_span: Span,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, this_span, type_annotation, builder), &builder.allocator())
     }
@@ -21721,19 +21010,14 @@ impl<'a> TSType<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new_ts_constructor_type<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_constructor_type<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSConstructorType(TSConstructorType::boxed(
             span,
             r#abstract,
@@ -21756,20 +21040,15 @@ impl<'a> TSType<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_constructor_type_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_constructor_type_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSConstructorType(TSConstructorType::boxed_with_scope_id(
             span,
             r#abstract,
@@ -21792,20 +21071,14 @@ impl<'a> TSType<'a> {
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
     #[inline]
-    pub fn new_ts_function_type<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_function_type<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSFunctionType(TSFunctionType::boxed(
             span,
             type_parameters,
@@ -21828,21 +21101,15 @@ impl<'a> TSType<'a> {
     /// * `return_type`: Return type of the function.
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_function_type_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_function_type_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSFunctionType(TSFunctionType::boxed_with_scope_id(
             span,
             type_parameters,
@@ -21865,18 +21132,14 @@ impl<'a> TSType<'a> {
     /// * `qualifier`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_import_type<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_import_type<B: GetAstBuilder<'a>>(
         span: Span,
         source: StringLiteral<'a>,
-        options: T1,
+        options: Option<ArenaBox<'a, ObjectExpression<'a>>>,
         qualifier: Option<TSImportTypeQualifier<'a>>,
-        type_arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSImportType(TSImportType::boxed(
             span,
             source,
@@ -21918,14 +21181,11 @@ impl<'a> TSType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
     #[inline]
-    pub fn new_ts_infer_type<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_infer_type<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameter: T1,
+        type_parameter: ArenaBox<'a, TSTypeParameter<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> Self {
         Self::TSInferType(TSInferType::boxed(span, type_parameter, builder.builder()))
     }
 
@@ -22172,16 +21432,13 @@ impl<'a> TSType<'a> {
     /// * `asserts`: Does this predicate include an `asserts` modifier?
     /// * `type_annotation`
     #[inline]
-    pub fn new_ts_type_predicate<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_predicate<B: GetAstBuilder<'a>>(
         span: Span,
         parameter_name: TSTypePredicateName<'a>,
         asserts: bool,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypePredicate(TSTypePredicate::boxed(
             span,
             parameter_name,
@@ -22200,15 +21457,12 @@ impl<'a> TSType<'a> {
     /// * `expr_name`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_type_query<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_query<B: GetAstBuilder<'a>>(
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeQuery(TSTypeQuery::boxed(span, expr_name, type_arguments, builder.builder()))
     }
 
@@ -22221,15 +21475,12 @@ impl<'a> TSType<'a> {
     /// * `type_name`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_type_reference<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_reference<B: GetAstBuilder<'a>>(
         span: Span,
         type_name: TSTypeName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeReference(TSTypeReference::boxed(
             span,
             type_name,
@@ -23126,19 +22377,14 @@ impl<'a> TSTupleElement<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new_ts_constructor_type<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_constructor_type<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSConstructorType(TSConstructorType::boxed(
             span,
             r#abstract,
@@ -23161,20 +22407,15 @@ impl<'a> TSTupleElement<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_constructor_type_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_constructor_type_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSConstructorType(TSConstructorType::boxed_with_scope_id(
             span,
             r#abstract,
@@ -23197,20 +22438,14 @@ impl<'a> TSTupleElement<'a> {
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
     #[inline]
-    pub fn new_ts_function_type<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_function_type<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSFunctionType(TSFunctionType::boxed(
             span,
             type_parameters,
@@ -23233,21 +22468,15 @@ impl<'a> TSTupleElement<'a> {
     /// * `return_type`: Return type of the function.
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_function_type_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_function_type_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         Self::TSFunctionType(TSFunctionType::boxed_with_scope_id(
             span,
             type_parameters,
@@ -23270,18 +22499,14 @@ impl<'a> TSTupleElement<'a> {
     /// * `qualifier`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_import_type<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_import_type<B: GetAstBuilder<'a>>(
         span: Span,
         source: StringLiteral<'a>,
-        options: T1,
+        options: Option<ArenaBox<'a, ObjectExpression<'a>>>,
         qualifier: Option<TSImportTypeQualifier<'a>>,
-        type_arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSImportType(TSImportType::boxed(
             span,
             source,
@@ -23323,14 +22548,11 @@ impl<'a> TSTupleElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
     #[inline]
-    pub fn new_ts_infer_type<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_infer_type<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameter: T1,
+        type_parameter: ArenaBox<'a, TSTypeParameter<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> Self {
         Self::TSInferType(TSInferType::boxed(span, type_parameter, builder.builder()))
     }
 
@@ -23577,16 +22799,13 @@ impl<'a> TSTupleElement<'a> {
     /// * `asserts`: Does this predicate include an `asserts` modifier?
     /// * `type_annotation`
     #[inline]
-    pub fn new_ts_type_predicate<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_predicate<B: GetAstBuilder<'a>>(
         span: Span,
         parameter_name: TSTypePredicateName<'a>,
         asserts: bool,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypePredicate(TSTypePredicate::boxed(
             span,
             parameter_name,
@@ -23605,15 +22824,12 @@ impl<'a> TSTupleElement<'a> {
     /// * `expr_name`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_type_query<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_query<B: GetAstBuilder<'a>>(
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeQuery(TSTypeQuery::boxed(span, expr_name, type_arguments, builder.builder()))
     }
 
@@ -23626,15 +22842,12 @@ impl<'a> TSTupleElement<'a> {
     /// * `type_name`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_type_reference<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_type_reference<B: GetAstBuilder<'a>>(
         span: Span,
         type_name: TSTypeName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSTypeReference(TSTypeReference::boxed(
             span,
             type_name,
@@ -24139,22 +23352,14 @@ impl<'a> TSTypeReference<'a> {
     /// * `type_name`
     /// * `type_arguments`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         type_name: TSTypeName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
-        TSTypeReference {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            type_name,
-            type_arguments: type_arguments.into_in(builder.allocator()),
-        }
+        TSTypeReference { node_id: Cell::new(builder.node_id()), span, type_name, type_arguments }
     }
 
     /// Build a [`TSTypeReference`], and store it in the memory arena.
@@ -24167,15 +23372,12 @@ impl<'a> TSTypeReference<'a> {
     /// * `type_name`
     /// * `type_arguments`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         type_name: TSTypeName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, type_name, type_arguments, builder), &builder.allocator())
     }
@@ -24470,23 +23672,20 @@ impl<'a> TSTypeAliasDeclaration<'a> {
     /// * `type_annotation`
     /// * `declare`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSTypeAliasDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
-            type_parameters: type_parameters.into_in(builder.allocator()),
+            type_parameters,
             type_annotation,
             declare,
             scope_id: Default::default(),
@@ -24505,17 +23704,14 @@ impl<'a> TSTypeAliasDeclaration<'a> {
     /// * `type_annotation`
     /// * `declare`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, id, type_parameters, type_annotation, declare, builder),
@@ -24536,24 +23732,21 @@ impl<'a> TSTypeAliasDeclaration<'a> {
     /// * `declare`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSTypeAliasDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
-            type_parameters: type_parameters.into_in(builder.allocator()),
+            type_parameters,
             type_annotation,
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -24573,18 +23766,15 @@ impl<'a> TSTypeAliasDeclaration<'a> {
     /// * `declare`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
@@ -24609,21 +23799,18 @@ impl<'a> TSClassImplements<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         expression: TSTypeName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSClassImplements {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
         }
     }
 }
@@ -24642,28 +23829,26 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         let builder = builder.builder();
         TSInterfaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
-            type_parameters: type_parameters.into_in(builder.allocator()),
+            type_parameters,
             extends: extends.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            body,
             declare,
             scope_id: Default::default(),
         }
@@ -24682,19 +23867,17 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `body`
     /// * `declare`: `true` for `declare interface Foo {}`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -24717,29 +23900,27 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> Self
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         let builder = builder.builder();
         TSInterfaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
-            type_parameters: type_parameters.into_in(builder.allocator()),
+            type_parameters,
             extends: extends.into_in(builder.allocator()),
-            body: body.into_in(builder.allocator()),
+            body,
             declare,
             scope_id: Cell::new(Some(scope_id)),
         }
@@ -24759,20 +23940,18 @@ impl<'a> TSInterfaceDeclaration<'a> {
     /// * `declare`: `true` for `declare interface Foo {}`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1>(
         span: Span,
         id: BindingIdentifier<'a>,
-        type_parameters: T1,
-        extends: T2,
-        body: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: T1,
+        body: ArenaBox<'a, TSInterfaceBody<'a>>,
         declare: bool,
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSInterfaceBody<'a>>>,
+        T1: IntoIn<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -24845,18 +24024,15 @@ impl<'a> TSPropertySignature<'a> {
     /// * `key`
     /// * `type_annotation`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         computed: bool,
         optional: bool,
         readonly: bool,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSPropertySignature {
             node_id: Cell::new(builder.node_id()),
@@ -24865,7 +24041,7 @@ impl<'a> TSPropertySignature<'a> {
             optional,
             readonly,
             key,
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
         }
     }
 
@@ -24882,18 +24058,15 @@ impl<'a> TSPropertySignature<'a> {
     /// * `key`
     /// * `type_annotation`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         computed: bool,
         optional: bool,
         readonly: bool,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, computed, optional, readonly, key, type_annotation, builder),
@@ -24914,17 +24087,16 @@ impl<'a> TSSignature<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, T1>(
         span: Span,
         parameters: T1,
-        type_annotation: T2,
+        type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         Self::TSIndexSignature(TSIndexSignature::boxed(
             span,
@@ -24948,18 +24120,15 @@ impl<'a> TSSignature<'a> {
     /// * `key`
     /// * `type_annotation`
     #[inline]
-    pub fn new_ts_property_signature<B: GetAstBuilder<'a>, T1>(
+    pub fn new_ts_property_signature<B: GetAstBuilder<'a>>(
         span: Span,
         computed: bool,
         optional: bool,
         readonly: bool,
         key: PropertyKey<'a>,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSPropertySignature(TSPropertySignature::boxed(
             span,
             computed,
@@ -24982,20 +24151,14 @@ impl<'a> TSSignature<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new_ts_call_signature_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_call_signature_declaration<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSCallSignatureDeclaration(TSCallSignatureDeclaration::boxed(
             span,
             type_parameters,
@@ -25018,21 +24181,15 @@ impl<'a> TSSignature<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_call_signature_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_call_signature_declaration_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSCallSignatureDeclaration(TSCallSignatureDeclaration::boxed_with_scope_id(
             span,
             type_parameters,
@@ -25054,18 +24211,13 @@ impl<'a> TSSignature<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new_ts_construct_signature_declaration<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_construct_signature_declaration<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSConstructSignatureDeclaration(TSConstructSignatureDeclaration::boxed(
             span,
             type_parameters,
@@ -25086,19 +24238,14 @@ impl<'a> TSSignature<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_construct_signature_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_ts_construct_signature_declaration_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSConstructSignatureDeclaration(TSConstructSignatureDeclaration::boxed_with_scope_id(
             span,
             type_parameters,
@@ -25124,24 +24271,18 @@ impl<'a> TSSignature<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new_ts_method_signature<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_method_signature<B: GetAstBuilder<'a>>(
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSMethodSignature(TSMethodSignature::boxed(
             span,
             key,
@@ -25172,25 +24313,19 @@ impl<'a> TSSignature<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_method_signature_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_ts_method_signature_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSMethodSignature(TSMethodSignature::boxed_with_scope_id(
             span,
             key,
@@ -25220,24 +24355,23 @@ impl<'a> TSIndexSignature<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>, T1>(
         span: Span,
         parameters: T1,
-        type_annotation: T2,
+        type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> Self
     where
         T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         let builder = builder.builder();
         TSIndexSignature {
             node_id: Cell::new(builder.node_id()),
             span,
             parameters: parameters.into_in(builder.allocator()),
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
             readonly,
             r#static,
         }
@@ -25255,17 +24389,16 @@ impl<'a> TSIndexSignature<'a> {
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
         span: Span,
         parameters: T1,
-        type_annotation: T2,
+        type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
         T1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         let builder = builder.builder();
         ArenaBox::new_in(
@@ -25288,28 +24421,22 @@ impl<'a> TSCallSignatureDeclaration<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSCallSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
             scope_id: Default::default(),
         }
     }
@@ -25326,20 +24453,14 @@ impl<'a> TSCallSignatureDeclaration<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, type_parameters, this_param, params, return_type, builder),
@@ -25360,29 +24481,23 @@ impl<'a> TSCallSignatureDeclaration<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSCallSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -25400,21 +24515,15 @@ impl<'a> TSCallSignatureDeclaration<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
@@ -25448,24 +24557,18 @@ impl<'a> TSMethodSignature<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSMethodSignature {
             node_id: Cell::new(builder.node_id()),
@@ -25474,10 +24577,10 @@ impl<'a> TSMethodSignature<'a> {
             computed,
             optional,
             kind,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
             scope_id: Default::default(),
         }
     }
@@ -25498,24 +24601,18 @@ impl<'a> TSMethodSignature<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(
@@ -25551,25 +24648,19 @@ impl<'a> TSMethodSignature<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSMethodSignature {
             node_id: Cell::new(builder.node_id()),
@@ -25578,10 +24669,10 @@ impl<'a> TSMethodSignature<'a> {
             computed,
             optional,
             kind,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -25603,25 +24694,19 @@ impl<'a> TSMethodSignature<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
@@ -25654,25 +24739,20 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSConstructSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            params,
+            return_type,
             scope_id: Default::default(),
         }
     }
@@ -25688,18 +24768,13 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, type_parameters, params, return_type, builder),
@@ -25719,26 +24794,21 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSConstructSignatureDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            params,
+            return_type,
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -25755,19 +24825,14 @@ impl<'a> TSConstructSignatureDeclaration<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(span, type_parameters, params, return_type, scope_id, builder),
@@ -25784,22 +24849,21 @@ impl<'a> TSIndexSignatureName<'a> {
     /// * `name`
     /// * `type_annotation`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, S1, T1>(
+    pub fn new<B: GetAstBuilder<'a>, S1>(
         span: Span,
         name: S1,
-        type_annotation: T1,
+        type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
     ) -> Self
     where
         S1: Into<Str<'a>>,
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
     {
         let builder = builder.builder();
         TSIndexSignatureName {
             node_id: Cell::new(builder.node_id()),
             span,
             name: name.into(),
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
         }
     }
 }
@@ -25812,21 +24876,18 @@ impl<'a> TSInterfaceHeritage<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSInterfaceHeritage {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
         }
     }
 }
@@ -25843,23 +24904,20 @@ impl<'a> TSTypePredicate<'a> {
     /// * `asserts`: Does this predicate include an `asserts` modifier?
     /// * `type_annotation`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         parameter_name: TSTypePredicateName<'a>,
         asserts: bool,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSTypePredicate {
             node_id: Cell::new(builder.node_id()),
             span,
             parameter_name,
             asserts,
-            type_annotation: type_annotation.into_in(builder.allocator()),
+            type_annotation,
         }
     }
 
@@ -25874,16 +24932,13 @@ impl<'a> TSTypePredicate<'a> {
     /// * `asserts`: Does this predicate include an `asserts` modifier?
     /// * `type_annotation`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         parameter_name: TSTypePredicateName<'a>,
         asserts: bool,
-        type_annotation: T1,
+        type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, parameter_name, asserts, type_annotation, builder),
@@ -26431,16 +25486,13 @@ impl<'a> TSInferType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, type_parameter: T1, builder: &B) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
-    {
+    pub fn new<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_parameter: ArenaBox<'a, TSTypeParameter<'a>>,
+        builder: &B,
+    ) -> Self {
         let builder = builder.builder();
-        TSInferType {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            type_parameter: type_parameter.into_in(builder.allocator()),
-        }
+        TSInferType { node_id: Cell::new(builder.node_id()), span, type_parameter }
     }
 
     /// Build a [`TSInferType`], and store it in the memory arena.
@@ -26452,14 +25504,11 @@ impl<'a> TSInferType<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_parameter`: The type bound when the
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameter: T1,
+        type_parameter: ArenaBox<'a, TSTypeParameter<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, type_parameter, builder), &builder.allocator())
     }
@@ -26476,22 +25525,14 @@ impl<'a> TSTypeQuery<'a> {
     /// * `expr_name`
     /// * `type_arguments`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
-        TSTypeQuery {
-            node_id: Cell::new(builder.node_id()),
-            span,
-            expr_name,
-            type_arguments: type_arguments.into_in(builder.allocator()),
-        }
+        TSTypeQuery { node_id: Cell::new(builder.node_id()), span, expr_name, type_arguments }
     }
 
     /// Build a [`TSTypeQuery`], and store it in the memory arena.
@@ -26504,15 +25545,12 @@ impl<'a> TSTypeQuery<'a> {
     /// * `expr_name`
     /// * `type_arguments`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
-        type_arguments: T1,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, expr_name, type_arguments, builder), &builder.allocator())
     }
@@ -26530,18 +25568,14 @@ impl<'a> TSTypeQueryExprName<'a> {
     /// * `qualifier`
     /// * `type_arguments`
     #[inline]
-    pub fn new_ts_import_type<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new_ts_import_type<B: GetAstBuilder<'a>>(
         span: Span,
         source: StringLiteral<'a>,
-        options: T1,
+        options: Option<ArenaBox<'a, ObjectExpression<'a>>>,
         qualifier: Option<TSImportTypeQualifier<'a>>,
-        type_arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         Self::TSImportType(TSImportType::boxed(
             span,
             source,
@@ -26640,26 +25674,22 @@ impl<'a> TSImportType<'a> {
     /// * `qualifier`
     /// * `type_arguments`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         source: StringLiteral<'a>,
-        options: T1,
+        options: Option<ArenaBox<'a, ObjectExpression<'a>>>,
         qualifier: Option<TSImportTypeQualifier<'a>>,
-        type_arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSImportType {
             node_id: Cell::new(builder.node_id()),
             span,
             source,
-            options: options.into_in(builder.allocator()),
+            options,
             qualifier,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
         }
     }
 
@@ -26675,18 +25705,14 @@ impl<'a> TSImportType<'a> {
     /// * `qualifier`
     /// * `type_arguments`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         source: StringLiteral<'a>,
-        options: T1,
+        options: Option<ArenaBox<'a, ObjectExpression<'a>>>,
         qualifier: Option<TSImportTypeQualifier<'a>>,
-        type_arguments: T2,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, ObjectExpression<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, source, options, qualifier, type_arguments, builder),
@@ -26785,28 +25811,22 @@ impl<'a> TSFunctionType<'a> {
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSFunctionType {
             node_id: Cell::new(builder.node_id()),
             span,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
             scope_id: Default::default(),
         }
     }
@@ -26823,20 +25843,14 @@ impl<'a> TSFunctionType<'a> {
     /// * `params`: Function parameters. Akin to [`Function::params`].
     /// * `return_type`: Return type of the function.
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, type_parameters, this_param, params, return_type, builder),
@@ -26857,29 +25871,23 @@ impl<'a> TSFunctionType<'a> {
     /// * `return_type`: Return type of the function.
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSFunctionType {
             node_id: Cell::new(builder.node_id()),
             span,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            this_param: this_param.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            this_param,
+            params,
+            return_type,
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -26897,21 +25905,15 @@ impl<'a> TSFunctionType<'a> {
     /// * `return_type`: Return type of the function.
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
@@ -26941,27 +25943,22 @@ impl<'a> TSConstructorType<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSConstructorType {
             node_id: Cell::new(builder.node_id()),
             span,
             r#abstract,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            params,
+            return_type,
             scope_id: Default::default(),
         }
     }
@@ -26978,19 +25975,14 @@ impl<'a> TSConstructorType<'a> {
     /// * `params`
     /// * `return_type`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new(span, r#abstract, type_parameters, params, return_type, builder),
@@ -27011,28 +26003,23 @@ impl<'a> TSConstructorType<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn new_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn new_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSConstructorType {
             node_id: Cell::new(builder.node_id()),
             span,
             r#abstract,
-            type_parameters: type_parameters.into_in(builder.allocator()),
-            params: params.into_in(builder.allocator()),
-            return_type: return_type.into_in(builder.allocator()),
+            type_parameters,
+            params,
+            return_type,
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -27050,20 +26037,15 @@ impl<'a> TSConstructorType<'a> {
     /// * `return_type`
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         r#abstract: bool,
-        type_parameters: T1,
-        params: T2,
-        return_type: T3,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: ArenaBox<'a, TSTypeAnnotation<'a>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, ArenaBox<'a, TSTypeAnnotation<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
             Self::new_with_scope_id(
@@ -27737,21 +26719,18 @@ impl<'a> TSInstantiationExpression<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, T1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSInstantiationExpression {
             node_id: Cell::new(builder.node_id()),
             span,
             expression,
-            type_arguments: type_arguments.into_in(builder.allocator()),
+            type_arguments,
         }
     }
 
@@ -27765,15 +26744,12 @@ impl<'a> TSInstantiationExpression<'a> {
     /// * `expression`
     /// * `type_arguments`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         expression: Expression<'a>,
-        type_arguments: T1,
+        type_arguments: ArenaBox<'a, TSTypeParameterInstantiation<'a>>,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(Self::new(span, expression, type_arguments, builder), &builder.allocator())
     }

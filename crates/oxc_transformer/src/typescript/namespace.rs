@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_syntax::{
@@ -328,7 +328,7 @@ impl<'a> TypeScriptNamespace {
         let kind = VariableDeclarationKind::Let;
         let decl = {
             let pattern = binding.create_spanned_binding_pattern(binding_span, ctx);
-            VariableDeclarator::new(span, kind, pattern, NONE, None, false, ctx)
+            VariableDeclarator::new(span, kind, pattern, None, None, false, ctx)
         };
         Declaration::new_variable_declaration(span, kind, [decl], false, ctx)
     }
@@ -353,7 +353,7 @@ impl<'a> TypeScriptNamespace {
                     SPAN,
                     FormalParameterKind::FormalParameter,
                     [item],
-                    NONE,
+                    None,
                     ctx,
                 )
             };
@@ -440,7 +440,7 @@ impl<'a> TypeScriptNamespace {
             )
         };
 
-        let expr = Expression::new_call_expression(span, callee, NONE, [argument], false, ctx);
+        let expr = Expression::new_call_expression(span, callee, None, [argument], false, ctx);
         Statement::new_expression_statement(span, expr, ctx)
     }
 

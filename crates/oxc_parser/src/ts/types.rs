@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
@@ -1472,7 +1472,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             computed,
             /* optional */ false,
             kind,
-            NONE,
+            None,
             this_param,
             params,
             return_type,

@@ -1,7 +1,7 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
@@ -230,7 +230,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 iterator_abrupt_completion.create_binding_pattern(ctx),
-                NONE,
+                None,
                 Some(Expression::new_boolean_literal(SPAN, false, ctx)),
                 false,
                 ctx,
@@ -245,7 +245,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 iterator_had_error_key.create_binding_pattern(ctx),
-                NONE,
+                None,
                 Some(Expression::new_boolean_literal(SPAN, false, ctx)),
                 false,
                 ctx,
@@ -260,7 +260,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 iterator_error_key.create_binding_pattern(ctx),
-                NONE,
+                None,
                 None,
                 false,
                 ctx,
@@ -286,7 +286,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                             SPAN,
                             VariableDeclarationKind::Var,
                             iterator_key.create_binding_pattern(ctx),
-                            NONE,
+                            None,
                             Some(iterator),
                             false,
                             ctx,
@@ -295,7 +295,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                             SPAN,
                             VariableDeclarationKind::Var,
                             step_key.create_binding_pattern(ctx),
-                            NONE,
+                            None,
                             None,
                             false,
                             ctx,
@@ -330,7 +330,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                                                 false,
                                                 ctx,
                                             ),
-                                            NONE,
+                                            None,
                                             [],
                                             false,
                                             ctx,
@@ -385,7 +385,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             );
             Some(CatchClause::boxed_with_scope_id(
                 SPAN,
-                Some(CatchParameter::new(SPAN, err_ident.create_binding_pattern(ctx), NONE, ctx)),
+                Some(CatchParameter::new(SPAN, err_ident.create_binding_pattern(ctx), None, ctx)),
                 {
                     BlockStatement::boxed_with_scope_id(
                         SPAN,
@@ -466,7 +466,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                                             false,
                                             ctx,
                                         ),
-                                        NONE,
+                                        None,
                                         [],
                                         false,
                                         ctx,
@@ -513,7 +513,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                     };
                     BlockStatement::boxed_with_scope_id(SPAN, [if_statement], finally_scope_id, ctx)
                 };
-                Statement::new_try_statement(SPAN, block, NONE, Some(finally), ctx)
+                Statement::new_try_statement(SPAN, block, None, Some(finally), ctx)
             };
 
             let block_statement =

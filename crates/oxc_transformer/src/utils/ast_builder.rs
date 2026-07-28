@@ -1,7 +1,7 @@
 use std::iter;
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::{Ident, static_ident};
@@ -29,7 +29,7 @@ pub fn create_bind_call<'a>(
 ) -> Expression<'a> {
     let callee = create_member_callee(callee, static_ident!("bind"), span, ctx);
     let this = Argument::from(this);
-    Expression::new_call_expression(span, callee, NONE, [this], false, ctx)
+    Expression::new_call_expression(span, callee, None, [this], false, ctx)
 }
 
 /// `object` -> `object.call(...arguments)`.
@@ -41,7 +41,7 @@ pub fn create_call_call<'a>(
 ) -> Expression<'a> {
     let callee = create_member_callee(callee, static_ident!("call"), span, ctx);
     let this = Argument::from(this);
-    Expression::new_call_expression(span, callee, NONE, [this], false, ctx)
+    Expression::new_call_expression(span, callee, None, [this], false, ctx)
 }
 
 /// Wrap an `Expression` in an arrow function IIFE (immediately invoked function expression)
@@ -70,12 +70,12 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let kind = FormalParameterKind::ArrowFormalParameters;
-    let params = FormalParameters::boxed(SPAN, kind, [], NONE, ctx);
+    let params = FormalParameters::boxed(SPAN, kind, [], None, ctx);
     let body = FunctionBody::boxed(SPAN, [], stmts, ctx);
     let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
-        SPAN, false, false, NONE, params, NONE, body, scope_id, false, false, ctx,
+        SPAN, false, false, None, params, None, body, scope_id, false, false, ctx,
     );
-    Expression::new_call_expression(span, arrow, NONE, [], false, ctx)
+    Expression::new_call_expression(span, arrow, None, [], false, ctx)
 }
 
 /// `object` -> `object.prototype`.
@@ -147,7 +147,7 @@ pub fn create_super_call<'a>(
     Expression::new_call_expression(
         SPAN,
         Expression::new_super(SPAN, ctx),
-        NONE,
+        None,
         [Argument::new_spread_element(SPAN, args_binding.create_read_expression(ctx), ctx)],
         false,
         ctx,
@@ -172,7 +172,7 @@ pub fn create_class_constructor<'a, 'c>(
         let args_binding = ctx.generate_uid("args", scope_id, SymbolFlags::FunctionScopedVariable);
         let rest_element =
             BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-        params_rest = Some(FormalParameterRest::boxed(SPAN, [], rest_element, NONE, ctx));
+        params_rest = Some(FormalParameterRest::boxed(SPAN, [], rest_element, None, ctx));
         ArenaVec::from_iter_in(
             iter::once(Statement::new_expression_statement(
                 SPAN,
@@ -238,8 +238,8 @@ pub fn create_class_method<'a>(
             false,
             false,
             false,
-            NONE,
-            NONE,
+            None,
+            None,
             params,
             return_type,
             Some(FunctionBody::boxed(SPAN, [], stmts, ctx)),

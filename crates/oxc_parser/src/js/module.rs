@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
 
@@ -466,7 +466,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         [],
                         None,
                         ImportOrExportKind::Value,
-                        NONE,
+                        None,
                         self,
                     );
                     if self.ctx.has_top_level() {
@@ -496,7 +496,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     [],
                     None,
                     ImportOrExportKind::Value,
-                    NONE,
+                    None,
                     self,
                 );
                 if self.ctx.has_top_level() {
@@ -665,7 +665,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             [],
             None,
             export_kind,
-            NONE,
+            None,
             self,
         );
         if self.ctx.has_top_level() {

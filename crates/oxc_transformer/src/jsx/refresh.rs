@@ -11,11 +11,7 @@ use oxc_allocator::{
     ArenaStringBuilder, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
     UnstableAddress,
 };
-use oxc_ast::{
-    ast::*,
-    builder::{AstBuilder, NONE},
-    match_expression,
-};
+use oxc_ast::{ast::*, builder::AstBuilder, match_expression};
 use oxc_ast_visit::{
     VisitJs,
     walk_js::{walk_call_expression, walk_declaration},
@@ -182,7 +178,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 binding.create_binding_pattern(ctx),
-                NONE,
+                None,
                 None,
                 false,
                 ctx,
@@ -195,7 +191,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
             ];
             Statement::new_expression_statement(
                 SPAN,
-                Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
+                Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx),
                 ctx,
             )
         });
@@ -243,7 +239,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
         let callee = binding.create_read_expression(ctx);
-        let expr = Expression::new_call_expression(func.span, callee, NONE, arguments, false, ctx);
+        let expr = Expression::new_call_expression(func.span, callee, None, arguments, false, ctx);
         let statement = Statement::new_expression_statement(func.span, expr, ctx);
 
         // Get the address of the statement containing this `FunctionDeclaration`
@@ -459,7 +455,7 @@ impl<'a> ReactRefresh<'a> {
             Expression::new_call_expression(
                 span,
                 binding.create_read_expression(ctx),
-                NONE,
+                None,
                 arguments,
                 false,
                 ctx,
@@ -653,7 +649,7 @@ impl<'a> ReactRefresh<'a> {
         if !custom_hooks_in_scope.is_empty() {
             // function () { return custom_hooks_in_scope }
             let formal_parameters =
-                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
+                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
             let function_body = FunctionBody::boxed(
                 SPAN,
                 [],
@@ -672,10 +668,10 @@ impl<'a> ReactRefresh<'a> {
                 false,
                 false,
                 false,
-                NONE,
-                NONE,
+                None,
+                None,
                 formal_parameters,
-                NONE,
+                None,
                 Some(function_body),
                 scope_id,
                 false,
@@ -689,7 +685,7 @@ impl<'a> ReactRefresh<'a> {
         let init = Expression::new_call_expression(
             SPAN,
             self.refresh_sig.to_expression(ctx),
-            NONE,
+            None,
             [],
             false,
             ctx,
@@ -702,7 +698,7 @@ impl<'a> ReactRefresh<'a> {
             Expression::new_call_expression(
                 SPAN,
                 binding.create_read_expression(ctx),
-                NONE,
+                None,
                 [],
                 false,
                 ctx,
@@ -896,7 +892,7 @@ impl<'a> ReactRefresh<'a> {
             Expression::new_call_expression(
                 SPAN,
                 binding.create_read_expression(ctx),
-                NONE,
+                None,
                 arguments,
                 false,
                 ctx,

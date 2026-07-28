@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, ReplaceWith};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 
@@ -18,7 +18,7 @@ impl<'a> IsolatedDeclarations<'a> {
             [],
             None,
             ImportOrExportKind::Value,
-            NONE,
+            None,
             self,
         ))
     }
