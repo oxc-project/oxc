@@ -141,7 +141,10 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
         Content::QuoteDouble(scalar) => {
             scalar::write_quoted(scalar::FlowScalarKind::QuoteDouble, to_span(scalar.span), f);
         }
-        Content::Alias(alias) => write_raw_span(to_span(alias.span), f),
+        Content::Alias(alias) => {
+            // Verbatim: `*name` has no layout freedom, and no comment can lie inside
+            write!(f, text(f.context().source_text().text_for(&to_span(alias.span))));
+        }
         Content::BlockLiteral(block) => block::write_block_scalar(block, false, f),
         Content::BlockFolded(block) => block::write_block_scalar(block, true, f),
         Content::Mapping(mapping) => {
@@ -154,30 +157,10 @@ pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {
         }
         Content::Sequence(sequence) => block_collection::write_sequence(sequence, f),
         Content::FlowMapping(flow) => {
-            write_flow_collection(flow.span.end, |f| flow::write_flow_mapping(flow, f), f);
+            write!(f, group(&format_with(|f| flow::write_flow_mapping(flow, f))));
         }
         Content::FlowSequence(flow) => {
-            write_flow_collection(flow.span.end, |f| flow::write_flow_sequence(flow, f), f);
+            write!(f, group(&format_with(|f| flow::write_flow_sequence(flow, f))));
         }
     }
-}
-
-/// Wraps a flow collection in its group,
-/// then claims any comments the flow printer's bounded flushes missed so they aren't re-emitted later.
-fn write_flow_collection<'a>(
-    end: u32,
-    inner: impl Fn(&mut YamlFormatter<'_, 'a>),
-    f: &mut YamlFormatter<'_, 'a>,
-) {
-    write!(f, group(&format_with(inner)));
-    let _ = f.context().comments().take_before(end);
-}
-
-/// v0: verbatim slice of the (newline-normalized) source.
-/// Claims any comments inside the span (e.g. inside a verbatim flow collection)
-/// so they aren't re-emitted at a later flush point.
-fn write_raw_span(span: oxc_span::Span, f: &mut YamlFormatter<'_, '_>) {
-    let raw = f.context().source_text().text_for(&span);
-    write!(f, text(raw));
-    let _ = f.context().comments().take_before(span.end);
 }

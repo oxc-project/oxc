@@ -197,7 +197,8 @@ fn block_value_line_contents<'s>(
         raw_lines.iter().map(|l| l.get(leading_space_count.min(l.len())..).unwrap_or("")).collect();
 
     let prose_wrap = f.options().prose_wrap;
-    // Literal blocks (`|`) are never re-flowed; folded blocks only under `proseWrap` always/never.
+    // Literal blocks (`|`) are never re-flowed;
+    // folded blocks only under `proseWrap` always/never.
     let no_reflow = prose_wrap == ProseWrap::Preserve || !is_folded;
 
     let lines: Vec<Vec<Cow<'s, str>>> = if no_reflow {
@@ -315,7 +316,7 @@ fn remove_unnecessary_trailing_newlines<'s>(
         return lines;
     }
     let keep = if trailing_newline_count >= 2 && !is_last_descendant {
-        // Preserve one blank line.
+        // Preserve one blank line
         lines.len() - (trailing_newline_count - 1)
     } else {
         lines.len() - trailing_newline_count
@@ -352,17 +353,17 @@ pub fn last_descendant_block_scalar<'b>(node: &'b Node<'_>) -> Option<&'b BlockS
             .last()
             .and_then(|item| item.content.as_deref())
             .and_then(last_descendant_block_scalar),
-        // Block scalars cannot appear inside flow collections.
+        // Block scalars cannot appear inside flow collections
         _ => None,
     }
 }
 
-/// Walks to the end offset of the stream's last descendant node
-/// (Prettier's `getLastDescendantNode` on root, used by block scalars).
+/// Walks to the end offset of the stream's last descendant node.
+///
+/// Spans nest and every wrapper ends at its last descendant
+/// (the parser's `container_span` / `MappingItem` / `Node` span construction),
+/// so the last document body's span end IS the last descendant's end.
 pub fn last_descendant_end(root: &Root<'_>) -> u32 {
-    // Spans nest and every wrapper ends at its last descendant
-    // (the parser's `container_span` / `MappingItem` / `Node` span construction),
-    // so the last document body's span end IS the last descendant's end.
     root.children
         .last()
         .and_then(|document| document.body.content.as_deref())

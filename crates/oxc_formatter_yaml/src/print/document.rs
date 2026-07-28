@@ -41,8 +41,8 @@ pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool
                 let comments = f.context().comments().take_before(marker.start);
                 write_end_comments(Some(anchor), comments, f);
             }
-            // After a keep-chomped block scalar the verbatim content already
-            // ends with a newline; `...` starts a fresh line without one.
+            // After a keep-chomped block scalar the verbatim content already ends with a newline;
+            // `...` starts a fresh line without one.
             if !(keep_chomped_tail && i + 1 == documents.len()) {
                 write!(f, hard_line_break());
             }
@@ -148,8 +148,7 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
         needs_line = true;
     }
 
-    // `# prettier-ignore` as the head's LAST end comment suppresses the whole
-    // document body (Prettier's `hasPrettierIgnore` for `documentBody`).
+    // Suppress comment as the head's LAST end comment suppresses the whole document body
     let mut head_ignores_body = false;
     if let Some(marker) = document.directives_end_marker {
         if needs_line {

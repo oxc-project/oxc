@@ -156,8 +156,7 @@ pub fn write_sequence<'a>(sequence: &'a Sequence<'a>, f: &mut YamlFormatter<'_, 
         }
         flush_leading_comments(item.span.start, f);
         // The content-area space stays when something follows it:
-        // the content, or a same-line comment
-        // (whose own line-suffix space makes it `-  # c`, two spaces, Prettier's shape).
+        // the content, or a same-line comment (whose own line-suffix space makes it `-  # c`, two spaces).
         // For a bare null item don't leave it at the line end.
         if item.content.is_some() || pending_same_line_comment(item.span.end, f).is_some() {
             write!(f, "- ");

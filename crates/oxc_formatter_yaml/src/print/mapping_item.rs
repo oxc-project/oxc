@@ -41,8 +41,7 @@ pub fn write_mapping_item<'a>(
 
     if is_empty_key && is_empty_value {
         // The `: `'s own space is the separation for what follows:
-        // a same-line comment
-        // (`: # c`, Prettier suppresses the line-suffix space for an empty mappingValue)
+        // a same-line comment (`: # c`, Prettier suppresses the line-suffix space for an empty mappingValue)
         // or the rest of a flow collection (`{ : }`).
         // In a block mapping with no comment nothing follows, don't leave it at the line end.
         let same_line_comment = pending_same_line_comment(item.span.end, f);
@@ -99,7 +98,7 @@ pub fn write_mapping_item<'a>(
         return;
     }
 
-    // Past the empty-key/empty-value returns, both wrappers and their content exist.
+    // Past the empty-key/empty-value returns, both wrappers and their content exist
     let key = item.key.as_ref().expect("empty key handled above");
     let value = item.value.as_ref().expect("empty value handled above");
     let key_node = key_content.expect("empty key handled above");
@@ -107,8 +106,8 @@ pub fn write_mapping_item<'a>(
     let value_start = value_node.span.start;
 
     // Force explicit key:
-    // the key isn't an inline node, or the source was already explicit with a comment between `?` and the key, or between the key and `:`
-    // (an implicit `key:` with a comment above the value keeps the implicit form,
+    // the key isn't an inline node, or the source was already explicit with a comment between `?` and the key,
+    // or between the key and `:` (an implicit `key:` with a comment above the value keeps the implicit form,
     // the comment becomes the value's leading comment instead).
     let explicit_comment_before_key = key.explicit
         && f.context().comments().peek().is_some_and(|c| c.span.end <= key_node.span.start);
@@ -117,9 +116,10 @@ pub fn write_mapping_item<'a>(
         || (key.explicit && has_own_line_comment_before_value(value_node, f))
     {
         write!(f, "? ");
-        // Comments between the key and `:` that are indented DEEPER than the item are the key's end comments (inside the key's align);
-        // comments at the item's own column lead the value (before the `: ` line).
-        // Comments AFTER the `:` are the value's middle comments and stay pending, `write_node` prints them right after the `: `.
+        // Comments between the key and `:` that are indented DEEPER than the item are the key's end comments
+        // (inside the key's align); comments at the item's own column lead the value (before the `: ` line).
+        // Comments AFTER the `:` are the value's middle comments and stay pending,
+        // `write_node` prints them right after the `: `.
         let item_column = column_of(&f.context().source_text(), item.span.start);
         // The `:` position: the value span starts at its indicator
         let colon = value.span.start;
@@ -245,7 +245,8 @@ pub fn write_mapping_item<'a>(
     let key = format_with(|f: &mut YamlFormatter<'_, 'a>| write_key(item, f)).memoized();
     // The group wrapper mirrors Prettier's `genericPrint` (`group(printNode())`)
     // and is what decides variant 1 for a multi-paragraph value:
-    // the paragraph hardline expands the group, fits then measures its content in expanded mode and exits `Yes` at the FIRST fill separator,
+    // the paragraph hardline expands the group,
+    // fits then measures its content in expanded mode and exits `Yes` at the FIRST fill separator,
     // so only `key: ` plus the first word must fit and the fill wraps from the key line.
     // A value with no forced break keeps the group flat and is measured in full.
     let value_content_fmt = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
@@ -255,8 +256,7 @@ pub fn write_mapping_item<'a>(
     .memoized();
     let colon = if space_before_colon { " :" } else { ":" };
 
-    // A definitely-single-line key never flips to the explicit form,
-    // no matter how long (Prettier's `conditionalGroup([[printedKey, implicit]])` short-circuit).
+    // A definitely-single-line key never flips to the explicit form, no matter how long
     if key_absolutely_single_line && !key_trailing_same_line {
         write!(
             f,

@@ -83,10 +83,9 @@ fn parse_root<'a>(
     source_text: &str,
 ) -> Result<(&'a Root<'a>, &'a str, &'a [SourceComment]), OxcDiagnostic> {
     let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
-    // NOTE: Normalize line endings BEFORE parsing like Prettier, unlike other `oxc_formatter_xxx`.
+    // NOTE: Normalize line endings BEFORE parsing, unlike other `oxc_formatter_xxx`.
     // For YAML formatter, the printer slices verbatim text from the source in many places.
-    // And a raw `\r` reaching the core `text()` builder panics.
-    // Spans stay consistent because parse and print both use the normalized copy.
+    // YAML is also unusual in that line breaks and whitespace have meaning.
     let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
     let source: &'a str = allocator.alloc_str(&source_text);
 

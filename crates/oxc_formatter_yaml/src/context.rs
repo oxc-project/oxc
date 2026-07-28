@@ -12,11 +12,11 @@ pub struct YamlFormatContext<'a> {
     options: YamlFormatOptions,
     source_text: SourceText<'a>,
     comments: Comments<'a>,
-    /// Number of enclosing block collections (Prettier's `parentIndent` for block scalars).
+    /// Number of enclosing block collections.
     /// Maintained by `write_mapping` / `write_sequence`.
     collection_depth: Cell<u32>,
     /// End offset of the stream's last descendant node;
-    /// block scalars compare against it for Prettier's `isLastDescendantNode`.
+    /// block scalars compare against it.
     last_descendant_end: u32,
 }
 
