@@ -76,7 +76,7 @@ impl<'a> PeepholeOptimizations {
             Statement::LabeledStatement(label_stmt) => {
                 Self::handle_stmts(&mut label_stmt.body, ParentType::None, ctx);
             }
-            _ => return,
+            _ => {}
         }
     }
 
