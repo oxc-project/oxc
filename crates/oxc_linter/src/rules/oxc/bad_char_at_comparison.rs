@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, TSType},
+    ast::{BinaryExpression, Expression, TSType, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -140,14 +140,29 @@ fn is_definitely_string(expr: &Expression, ctx: &LintContext) -> bool {
             let declaration =
                 ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind();
 
-            declaration.as_variable_declarator().is_some_and(|declarator| {
-                declarator.type_annotation.as_ref().is_some_and(|annotation| {
-                    matches!(annotation.type_annotation, TSType::TSStringKeyword(_))
-                })
-            })
+            declaration.as_variable_declarator().is_some_and(is_definitely_string_declarator)
         }
         _ => false,
     }
+}
+
+fn is_definitely_string_declarator(declarator: &VariableDeclarator) -> bool {
+    if declarator
+        .type_annotation
+        .as_ref()
+        .is_some_and(|annotation| matches!(annotation.type_annotation, TSType::TSStringKeyword(_)))
+    {
+        return true;
+    }
+
+    if !declarator.kind.is_const() || !declarator.id.is_binding_identifier() {
+        return false;
+    }
+
+    declarator
+        .init
+        .as_ref()
+        .is_some_and(|init| matches!(init.without_parentheses(), Expression::StringLiteral(_)))
 }
 
 const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
@@ -183,6 +198,7 @@ fn test() {
         r#"const value = [1, 2]; value[0] === "ab";"#,
         "chatAt(4) === 'a2'",
         "new chatAt(4) === 'a'",
+        r#"const value = 100; value[0] === "ab""#,
     ];
 
     let fail = vec![
@@ -203,6 +219,8 @@ fn test() {
         r#""abc".charAt(0) === ("ab")"#,
         r#""abc".charAt(0) === "😀""#,
         r#""abc".charAt(0) === "\u{1F600}""#,
+        r#"const value = "abc"; value[0] === "ab""#,
+        r#"const value = "abc"; value.at(0) === "ab""#,
     ];
 
     Tester::new(BadCharAtComparison::NAME, BadCharAtComparison::PLUGIN, pass, fail)
