@@ -1,11 +1,12 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
+use bitflags::bitflags;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
+    constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
@@ -29,52 +30,65 @@ fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
             && decl.declarations.iter().all(|d| d.init.is_none() && d.type_annotation.is_none()))
 }
 
-#[derive(Debug, Clone)]
-pub enum ParentType {
-    None = 0,
-    Function = 1,
-    Loop = 1 << 1,
-    // Switch = 1 << 2,
+bitflags! {
+    #[derive(Debug, Clone)]
+    pub struct ParentType: u8 {
+        const Return = 1;
+        const Continue = 1 << 1;
+        const Break = 1 << 2;
+    }
 }
 
 impl<'a> PeepholeOptimizations {
     pub fn get_parent_type(ctx: &mut TraverseCtx<'a>) -> ParentType {
         if ctx.parent().is_function_body() {
-            return ParentType::Function;
+            return ParentType::Return;
         }
-        if matches!(
-            ctx.ancestors().nth(1),
+
+        match ctx.ancestors().nth(1) {
+            Some(Ancestor::DoWhileStatementBody(do_while)) => {
+                if do_while.test().get_side_free_boolean_value(ctx) == Some(false) {
+                    return ParentType::Continue | ParentType::Break;
+                }
+                ParentType::Continue
+            }
             Some(
                 Ancestor::ForStatementBody(_)
-                    | Ancestor::ForInStatementBody(_)
-                    | Ancestor::ForOfStatementBody(_)
-                    | Ancestor::WhileStatementBody(_)
-            )
-        ) {
-            return ParentType::Loop;
+                | Ancestor::ForInStatementBody(_)
+                | Ancestor::ForOfStatementBody(_)
+                | Ancestor::WhileStatementBody(_),
+            ) => ParentType::Continue,
+            _ => ParentType::empty(),
         }
-        ParentType::None
     }
 
     pub fn try_minify_statements(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::IfStatement(if_stmt) => {
-                Self::handle_stmts(&mut if_stmt.consequent, ParentType::None, ctx);
+                Self::handle_stmts(&mut if_stmt.consequent, ParentType::empty(), ctx);
                 if let Some(alternate) = &mut if_stmt.alternate {
-                    Self::handle_stmts(alternate, ParentType::None, ctx);
+                    Self::handle_stmts(alternate, ParentType::empty(), ctx);
                 }
             }
             Statement::ForStatement(for_stmt) => {
-                Self::handle_stmts(&mut for_stmt.body, ParentType::Loop, ctx);
+                Self::handle_stmts(&mut for_stmt.body, ParentType::Continue, ctx);
             }
             Statement::ForInStatement(for_in_stmt) => {
-                Self::handle_stmts(&mut for_in_stmt.body, ParentType::Loop, ctx);
+                Self::handle_stmts(&mut for_in_stmt.body, ParentType::Continue, ctx);
             }
             Statement::ForOfStatement(for_of_stmt) => {
-                Self::handle_stmts(&mut for_of_stmt.body, ParentType::Loop, ctx);
+                Self::handle_stmts(&mut for_of_stmt.body, ParentType::Continue, ctx);
+            }
+            Statement::DoWhileStatement(do_while) => {
+                let parent_type = if do_while.test.get_side_free_boolean_value(ctx) == Some(false) {
+                    ParentType::Continue | ParentType::Break
+                } else {
+                    ParentType::Continue
+                };
+                Self::handle_stmts(&mut do_while.body, parent_type, ctx);
             }
             Statement::LabeledStatement(label_stmt) => {
-                Self::handle_stmts(&mut label_stmt.body, ParentType::None, ctx);
+                Self::handle_stmts(&mut label_stmt.body, ParentType::Continue, ctx);
             }
             _ => {}
         }
@@ -2155,11 +2169,15 @@ impl<'a> PeepholeOptimizations {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                matches!(parent_type, ParentType::Loop)
+                parent_type.contains(ParentType::Continue)
+            }
+            // unlabeled `break;` that terminates a `do...while` body if test is false.
+            Statement::BreakStatement(stmt) if stmt.label.is_none() => {
+                parent_type.contains(ParentType::Break)
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
-                matches!(parent_type, ParentType::Function)
+                parent_type.contains(ParentType::Return)
             }
             _ => false,
         }

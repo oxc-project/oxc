@@ -274,7 +274,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf9468729b8cbcea668e36183cb69d317348c2e08e994829fb56ebfdfbaac34"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -696,7 +696,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1523,7 +1523,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1756,9 +1756,9 @@ checksum = "d3b207530da2a077e5cd464ac2c22c7b0c11b7802330d9c742704420b0e21a6f"
 
 [[package]]
 name = "oxc-yaml-parser"
-version = "0.0.3"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7329e669b41469a5f0a6fa5b1735f97521e2ba3e0a677a2314039e2dd61cd13a"
+checksum = "3beb95e6d6a3d7217cbcf85e7bf88be7f0c8b6f4c697efe6ff21e3e5d4a44ef5"
 dependencies = [
  "oxc_allocator",
 ]
@@ -2308,6 +2308,7 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.142.0"
 dependencies = [
+ "bitflags",
  "cow-utils",
  "insta",
  "itoa",
@@ -2322,7 +2323,6 @@ dependencies = [
  "oxc_index",
  "oxc_mangler",
  "oxc_parser",
- "oxc_regular_expression",
  "oxc_semantic",
  "oxc_sourcemap",
  "oxc_span",
@@ -2844,6 +2844,7 @@ dependencies = [
  "oxc_formatter_css",
  "oxc_formatter_graphql",
  "oxc_formatter_json",
+ "oxc_formatter_yaml",
  "oxc_language_server",
  "oxc_napi",
  "oxc_span",
@@ -3307,7 +3308,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3434,7 +3435,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b55fb86dfd3a2f5f76ea78310a88f96c4ea21a3031f8d212443d56123fd0521"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3729,7 +3730,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4216,7 +4217,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

@@ -1106,10 +1106,26 @@ fn test_fold_remainder() {
 
 #[test]
 fn test_fold_exponential() {
-    fold_same("x = 2 ** 3");
+    fold("x = 2 ** 3", "x = 8");
+    fold("x = 10 ** 4", "x = 1e4");
+    fold("x = (-2) ** 3", "x = -8");
+
+    fold_same("x = 0.5 ** -2");
+    fold_same("x = 4 ** 0.5");
+    fold_same("x = (-5e-324) ** 3");
     fold_same("x = 2 ** -3");
+    fold_same("x = 2 ** 50");
     fold_same("x = 2 ** 55");
+    fold_same("x = 1e8 ** 2");
     fold_same("x = 3 ** -1");
+    fold_same("x = f() ** 2");
+    fold_same("x = 2 ** f()");
+    fold_same("x = ({ valueOf: f }) ** 2");
+    fold_same("x = 2n ** 3n");
+    fold_same("x = 2n ** 3");
+    fold_same("x = 2 ** 3n");
+    fold_same("x = (void f()) ** 0");
+    test_same("function f(Infinity) {\n\treturn Infinity ** 0;\n}");
     fold_same("x = (-1) ** 0.5");
     fold("x = (-0) ** 3", "x = -0");
     fold("x = null ** 0", "x = 1");

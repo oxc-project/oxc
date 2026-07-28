@@ -207,6 +207,14 @@
         "avoid"
       ]
     },
+    "CommentLineStrategyConfig": {
+      "type": "string",
+      "enum": [
+        "singleLine",
+        "multiline",
+        "keep"
+      ]
+    },
     "CustomGroupItemConfig": {
       "type": "object",
       "properties": {
@@ -472,7 +480,11 @@
         },
         "commentLineStrategy": {
           "description": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`",
-          "type": "string",
+          "allOf": [
+            {
+              "$ref": "#/definitions/CommentLineStrategyConfig"
+            }
+          ],
           "markdownDescription": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`"
         },
         "descriptionTag": {
@@ -492,7 +504,11 @@
         },
         "lineWrappingStyle": {
           "description": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`",
-          "type": "string",
+          "allOf": [
+            {
+              "$ref": "#/definitions/LineWrappingStyleConfig"
+            }
+          ],
           "markdownDescription": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`"
         },
         "preferCodeFences": {
@@ -520,6 +536,13 @@
         {
           "$ref": "#/definitions/JsdocConfig"
         }
+      ]
+    },
+    "LineWrappingStyleConfig": {
+      "type": "string",
+      "enum": [
+        "greedy",
+        "balance"
       ]
     },
     "NewlinesBetweenMarker": {

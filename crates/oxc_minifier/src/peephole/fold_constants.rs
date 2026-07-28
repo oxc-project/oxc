@@ -358,6 +358,11 @@ impl<'a> PeepholeOptimizations {
                     BinaryOperator::Multiplication => {
                         Self::try_fold_shorter_numeric_expression(e, ctx)
                     }
+                    // Number exponentiation is implementation-approximated, so only fold
+                    // integer-valued operands where the result is an exact safe integer.
+                    BinaryOperator::Exponential => Self::extract_numeric_values(e, ctx)
+                        .filter(|(base, exponent)| base.fract() == 0.0 && exponent.fract() == 0.0)
+                        .and_then(|_| Self::try_fold_safe_integer_numeric_expression(e, ctx)),
                     BinaryOperator::Remainder => {
                         Self::try_fold_safe_integer_numeric_expression(e, ctx)
                     }

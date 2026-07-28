@@ -7,7 +7,7 @@
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_regular_expression::{
-    LiteralParser, Options, RegexUnsupportedFlags, RegexUnsupportedPatterns,
+    LiteralParser, Options, RegexUnsupportedFlags, RegexUnsupportedPatterns, ast::Pattern,
     has_unsupported_regular_expression_flags, has_unsupported_regular_expression_pattern,
 };
 
@@ -51,26 +51,32 @@ pub fn is_valid_regexp<'a>(
         },
     };
 
-    if has_unsupported_regular_expression_flags(
-        flags.unwrap_or_default(),
-        &unsupported_regexp_flags(ctx),
-    ) {
-        return false;
-    }
-
     if is_regexp_literal {
         // ES5 throws whenever a RegExp object and flags are both supplied.
-        return flags.is_none()
-            || supports_es_feature(ctx, ESFeature::ES2015RegExpConstructorCanAlterFlags);
+        return regexp_flags_are_supported(flags.unwrap_or_default(), ctx)
+            && (flags.is_none()
+                || supports_es_feature(ctx, ESFeature::ES2015RegExpConstructorCanAlterFlags));
     }
-
-    let unsupported_patterns = unsupported_regexp_patterns(ctx);
 
     // The parser performs complete syntax validation beyond the compatibility checks above.
     let allocator = oxc_allocator::Allocator::default();
-    LiteralParser::new(&allocator, pattern, flags, Options::default()).parse().is_ok_and(
-        |pattern| !has_unsupported_regular_expression_pattern(&pattern, &unsupported_patterns),
-    )
+    LiteralParser::new(&allocator, pattern, flags, Options::default())
+        .parse()
+        .is_ok_and(|pattern| is_regexp_syntax_supported(&pattern, flags.unwrap_or_default(), ctx))
+}
+
+/// Whether parsed RegExp syntax is supported by every configured target.
+pub fn is_regexp_syntax_supported<'a>(
+    pattern: &Pattern<'_>,
+    flags: &str,
+    ctx: &impl MayHaveSideEffectsContext<'a>,
+) -> bool {
+    regexp_flags_are_supported(flags, ctx)
+        && !has_unsupported_regular_expression_pattern(pattern, &unsupported_regexp_patterns(ctx))
+}
+
+fn regexp_flags_are_supported<'a>(flags: &str, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+    !has_unsupported_regular_expression_flags(flags, &unsupported_regexp_flags(ctx))
 }
 
 fn unsupported_regexp_flags<'a>(ctx: &impl MayHaveSideEffectsContext<'a>) -> RegexUnsupportedFlags {

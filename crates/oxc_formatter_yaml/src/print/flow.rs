@@ -138,6 +138,10 @@ fn write_entry_separator(prev_end: u32, next_start: u32, f: &mut YamlFormatter<'
 }
 
 /// Trailing comma when broken, then any comments left before the closing bracket as own-line end comments.
+///
+/// The unconditional take is the FINAL recovery point for comments inside the collection:
+/// whatever the entry-level flushes (leading / same-line trailing) left pending is emitted here,
+/// so nothing inside the brackets can leak past them.
 fn write_trailing_comma_and_end_comments(close_end: u32, f: &mut YamlFormatter<'_, '_>) {
     if f.options().allow_trailing_comma() {
         write!(f, if_group_breaks(&","));
@@ -145,8 +149,8 @@ fn write_trailing_comma_and_end_comments(close_end: u32, f: &mut YamlFormatter<'
     // Comments inside the brackets after the last entry
     let close_start = close_end.saturating_sub(1);
     let comments = f.context().comments().take_before(close_start);
-    for &span in comments {
+    for comment in comments {
         write!(f, hard_line_break());
-        write_single_comment(span, f);
+        write_single_comment(comment.span, f);
     }
 }
