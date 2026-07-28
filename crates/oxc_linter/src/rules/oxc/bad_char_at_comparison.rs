@@ -166,6 +166,8 @@ fn is_static_string_index(expr: &Expression) -> bool {
     }
 }
 
+// Some test cases are adapted from `eslint-plugin-unicorn/no-invalid-character-comparison`:
+// <https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v72.0.0/test/no-invalid-character-comparison.js>
 #[test]
 fn test() {
     use crate::tester::Tester;
