@@ -64,6 +64,11 @@ pub struct Runtime {
     /// To make sure all `ModuleRecord` gets dropped after `Runtime` is dropped,
     /// `modules_by_path` must own `ModuleRecord` with `Arc`, all other references must use `Weak<ModuleRecord>`.
     modules_by_path: ModulesByPath,
+    /// Interned ids for resolved module paths, so that cross-module analysis can compare modules
+    /// with a `u32` compare instead of a `Path` one. See [`ModuleRecord::path_id`].
+    ///
+    /// Taken once per created record, not per comparison, so the lock is uncontended in practice.
+    path_ids: Mutex<(FxHashMap<PathBuf, u32>, u32)>,
     /// Collected disable directives from linted files
     disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
 }
@@ -269,8 +274,26 @@ impl Runtime {
                 .hasher(BuildHasherDefault::default())
                 .resize_mode(papaya::ResizeMode::Blocking)
                 .build(),
+            path_ids: Mutex::new((FxHashMap::default(), 1)),
             disable_directives_map: Arc::new(Mutex::new(FxHashMap::default())),
         }
+    }
+
+    /// Id for `path`, shared by every [`ModuleRecord`] resolving to it. See
+    /// [`ModuleRecord::path_id`].
+    ///
+    /// # Panics
+    ///
+    /// * If the mutex is poisoned (which only happens if a thread panicked while holding it).
+    fn intern_path(&self, path: &Path) -> u32 {
+        let (ids, next) = &mut *self.path_ids.lock().unwrap();
+        if let Some(id) = ids.get(path) {
+            return *id;
+        }
+        let id = *next;
+        *next += 1;
+        ids.insert(path.to_path_buf(), id);
+        id
     }
 
     /// Get [`AllocatorPool`] for copying ASTs to fixed-size allocators, if one is required.
@@ -1159,7 +1182,9 @@ impl Runtime {
         let mut semantic = semantic_ret.semantic;
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
 
-        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+        let mut module_record = ModuleRecord::new(path, &ret.module_record, &semantic);
+        module_record.path_id = self.intern_path(path);
+        let module_record = Arc::new(module_record);
 
         let tokens = ret.tokens.into_boxed_slice();
 
