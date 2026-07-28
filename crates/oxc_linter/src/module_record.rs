@@ -5,7 +5,7 @@ use std::{
     fmt,
     path::{Component, Path, PathBuf},
     sync::{
-        Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak,
+        Arc, OnceLock, Weak,
         atomic::{AtomicU32, Ordering},
     },
 };
@@ -31,6 +31,30 @@ fn path_is_node_module(path: &Path) -> bool {
         && path
             .components()
             .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")))
+}
+
+/// One entry of a [`ModuleRecord`]'s `[[LoadedModules]]`.
+#[derive(Debug)]
+pub struct LoadedModule {
+    /// Specifier the importing module used to request this one.
+    pub specifier: CompactStr,
+
+    /// Every import entry and indirect export entry naming [`Self::specifier`] is type-only.
+    ///
+    /// False when there are no such entries. Answered once when the graph is linked, rather than
+    /// by scanning the importing module's entries at each use.
+    pub is_type_only: bool,
+
+    module_record: Weak<ModuleRecord>,
+}
+
+impl LoadedModule {
+    /// # Panics
+    ///
+    /// * If the [`ModuleRecord`] has been dropped (fails to `Weak::upgrade`).
+    pub fn module_record(&self) -> Arc<ModuleRecord> {
+        Weak::upgrade(&self.module_record).unwrap()
+    }
 }
 
 /// ESM Module Record
@@ -76,15 +100,17 @@ pub struct ModuleRecord {
 
     /// `[[LoadedModules]]`
     ///
-    /// A map from the specifier strings used by the module represented by this record to request
-    /// the importation of a module to the resolved Module Record. The list does not contain two
-    /// different Records with the same `[[Specifier]]`.
+    /// The specifier strings used by the module represented by this record to request the
+    /// importation of a module, paired with the resolved Module Record. The list does not contain
+    /// two different Records with the same `[[Specifier]]`.
     ///
-    /// Note that Oxc does not support cross-file analysis, so this map will be empty after
-    /// [`ModuleRecord`] is created. You must link the module records yourself.
+    /// Sorted by specifier, so that graph walks iterate a module's edges in a deterministic order
+    /// without re-sorting at each visit, and [`ModuleRecord::get_loaded_module`] can binary search.
     ///
-    /// Use [ModuleRecord::get_loaded_module] to get a `ModuleRecord`.
-    loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
+    /// Written once, by [`ModuleRecord::set_loaded_modules`], when the graph is linked. Note that
+    /// Oxc does not support cross-file analysis, so this is empty after [`ModuleRecord`] is
+    /// created; you must link the module records yourself.
+    loaded_modules: OnceLock<Box<[LoadedModule]>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -127,12 +153,10 @@ impl fmt::Debug for ModuleRecord {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
         // recursively formatting loaded modules can crash when the module graph is cyclic
         let loaded_modules = self
-            .loaded_modules
-            .read()
-            .unwrap()
-            .keys()
-            .map(ToString::to_string)
-            .reduce(|acc, key| format!("{acc}, {key}"))
+            .loaded_modules()
+            .iter()
+            .map(|module| module.specifier.to_string())
+            .reduce(|acc, specifier| format!("{acc}, {specifier}"))
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
         f.debug_struct("ModuleRecord")
@@ -550,32 +574,57 @@ impl ModuleRecord {
         }
     }
 
-    /// # Panics
-    ///
-    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
-    pub fn loaded_modules(&self) -> RwLockReadGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
-        self.loaded_modules.read().unwrap()
+    /// This module's `[[LoadedModules]]`, sorted by specifier. Empty until the graph is linked.
+    pub fn loaded_modules(&self) -> &[LoadedModule] {
+        self.loaded_modules.get().map_or(&[], |modules| modules)
     }
 
-    /// # Panics
+    /// Link this module to the records its specifiers resolved to.
     ///
-    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
-    pub fn write_loaded_modules(
-        &self,
-    ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
-        self.loaded_modules.write().unwrap()
+    /// Sorts by specifier and answers each entry's [`LoadedModule::is_type_only`] here, so that
+    /// consumers walking the graph pay for neither. Duplicate specifiers are collapsed; they
+    /// resolve to the same record.
+    ///
+    /// Called once per record. A second call is ignored.
+    pub fn set_loaded_modules(&self, modules: Vec<(CompactStr, Weak<ModuleRecord>)>) {
+        // One pass over the entries rather than a scan per specifier: a specifier is type-only when
+        // it is named by at least one entry and every entry naming it is type-only.
+        let mut type_only = FxHashMap::<&str, bool>::default();
+        let entries =
+            self.import_entries
+                .iter()
+                .map(|entry| (entry.module_request.name(), entry.is_type))
+                .chain(self.indirect_export_entries.iter().filter_map(|entry| {
+                    Some((entry.module_request.as_ref()?.name(), entry.is_type))
+                }));
+        for (name, is_type) in entries {
+            type_only.entry(name).and_modify(|all| *all &= is_type).or_insert(is_type);
+        }
+
+        let mut modules = modules
+            .into_iter()
+            .map(|(specifier, module_record)| LoadedModule {
+                is_type_only: type_only.get(specifier.as_str()).copied().unwrap_or(false),
+                specifier,
+                module_record,
+            })
+            .collect::<Vec<_>>();
+        modules.sort_unstable_by(|a, b| a.specifier.cmp(&b.specifier));
+        modules.dedup_by(|a, b| a.specifier == b.specifier);
+
+        let _ = self.loaded_modules.set(modules.into_boxed_slice());
     }
 
     /// Get a loaded module by upgrading the weak reference to an Arc.
-    /// Returns None if the module has been dropped or not found.
+    /// Returns None if not found.
     ///
     /// # Panics
     ///
-    /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
     /// * If `ModuleRecord` is dropped (fails to Weak::upgrade).
     pub fn get_loaded_module(&self, key: &str) -> Option<Arc<ModuleRecord>> {
-        let loaded_modules = self.loaded_modules();
-        loaded_modules.get(key).map(|weak| Weak::upgrade(weak).unwrap())
+        let modules = self.loaded_modules();
+        let index = modules.binary_search_by(|module| module.specifier.as_str().cmp(key)).ok()?;
+        Some(modules[index].module_record())
     }
 
     pub(crate) fn exported_bindings_from_star_export(

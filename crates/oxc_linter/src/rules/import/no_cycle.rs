@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::Path, sync::Arc};
 
 use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
@@ -16,10 +13,14 @@ use crate::{
     ModuleRecord,
     context::LintContext,
     module_graph_visitor::{ModuleGraphVisitorBuilder, ModuleGraphVisitorEvent, VisitFoldWhile},
+    module_record::LoadedModule,
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+/// One hop of a reported cycle: the specifier used, and the module it resolved to.
+type CycleStep = (CompactStr, Arc<ModuleRecord>);
+
+fn no_cycle_diagnostic(span: Span, stack: &[CycleStep], cwd: &Path) -> OxcDiagnostic {
     let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
         .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
@@ -37,10 +38,11 @@ fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnost
         .with_label(span.primary_label("this module references itself"))
 }
 
-fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+fn format_cycle(stack: &[CycleStep], cwd: &Path) -> String {
     let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
 
-    for (i, (specifier, path)) in stack.iter().enumerate() {
+    for (i, (specifier, module_record)) in stack.iter().enumerate() {
+        let path = &module_record.resolved_absolute_path;
         let relative_path = path
             .strip_prefix(cwd)
             .unwrap_or(path)
@@ -154,22 +156,18 @@ impl Rule for NoCycle {
         }
 
         let needle = module_record.path_id;
-        let mut direct_imports = module_record
-            .loaded_modules()
-            .iter()
-            .map(|(key, weak_module_record)| (key.clone(), weak_module_record.upgrade().unwrap()))
-            .collect::<Vec<_>>();
-        direct_imports.sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
-        for (key, loaded_module_record) in direct_imports {
-            if !self.should_traverse_module(&key, &loaded_module_record, module_record) {
+        // Already sorted by specifier, so the order the cycles are reported in is deterministic.
+        for entry in module_record.loaded_modules() {
+            let loaded_module_record = entry.module_record();
+            if !self.should_traverse_module(entry, &loaded_module_record, module_record) {
                 continue;
             }
 
-            let requested_module = module_record.requested_modules[&key][0];
+            let requested_module = module_record.requested_modules[&entry.specifier][0];
             let span = requested_module.span;
-            let mut stack =
-                vec![(key.clone(), loaded_module_record.resolved_absolute_path.clone())];
+            let mut stack: Vec<CycleStep> =
+                vec![(entry.specifier.clone(), Arc::clone(&loaded_module_record))];
 
             if loaded_module_record.path_id == needle {
                 ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
@@ -178,10 +176,10 @@ impl Rule for NoCycle {
 
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
-                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
-                .event(|event, (key, val), _| match event {
+                .filter(|(entry, val), parent| self.should_traverse_module(entry, val, parent))
+                .event(|event, (entry, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
-                        stack.push((key.clone(), val.resolved_absolute_path.clone()));
+                        stack.push((entry.specifier.clone(), Arc::clone(val)));
                     }
                     ModuleGraphVisitorEvent::Leave => {
                         stack.pop();
@@ -239,9 +237,9 @@ impl NoCycle {
         visited: &mut FxHashSet<usize>,
         stack: &mut Vec<Arc<ModuleRecord>>,
     ) -> bool {
-        for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
-            let loaded_module_record = weak_module_record.upgrade().unwrap();
-            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+        for entry in module_record.loaded_modules() {
+            let loaded_module_record = entry.module_record();
+            if !self.should_traverse_module(entry, &loaded_module_record, module_record) {
                 continue;
             }
             // By path id, not pointer: that is what the walks report on, and one file can have
@@ -258,7 +256,7 @@ impl NoCycle {
 
     fn should_traverse_module(
         &self,
-        key: &CompactStr,
+        entry: &LoadedModule,
         module: &Arc<ModuleRecord>,
         parent: &ModuleRecord,
     ) -> bool {
@@ -266,31 +264,8 @@ impl NoCycle {
             return false;
         }
 
-        if self.ignore_types {
-            // Equivalent to collecting both entry lists and testing `!is_empty() && all(is_type)`,
-            // without materializing either `Vec`. This runs once per graph edge considered.
-            let mut types = parent
-                .import_entries
-                .iter()
-                .filter(|entry| entry.module_request.name() == key)
-                .map(|entry| entry.is_type)
-                .chain(
-                    parent
-                        .indirect_export_entries
-                        .iter()
-                        .filter(|entry| {
-                            entry
-                                .module_request
-                                .as_ref()
-                                .is_some_and(|module_request| module_request.name() == key)
-                        })
-                        .map(|entry| entry.is_type),
-                )
-                .peekable();
-
-            if types.peek().is_some() && types.all(|is_type| is_type) {
-                return false;
-            }
+        if self.ignore_types && entry.is_type_only {
+            return false;
         }
 
         // Allow self referencing named export.
@@ -303,7 +278,7 @@ impl NoCycle {
             && let Some(e) = module
                 .indirect_export_entries
                 .iter()
-                .find(|e| e.module_request.as_ref().is_some_and(|r| r.name.as_str() == key))
+                .find(|e| e.module_request.as_ref().is_some_and(|r| r.name == entry.specifier))
             && e.export_name.is_name()
         {
             return false;
