@@ -1166,6 +1166,32 @@ fn test_fold_non_finite_result_with_shadowed_global() {
 }
 
 #[test]
+fn test_fold_singleton_object_property_access() {
+    fold("v = ({ a: 1 }).a", "v = 1");
+    fold("v = ({ 'a': 'value' })['a']", "v = 'value'");
+    fold("v = ({ ['a']: 2 }).a", "v = 2");
+    fold("v = ({ a: true }).a", "v = !0");
+    fold("v = ({ a: null }).a", "v = null");
+    fold("v = ({ a: 1n }).a", "v = 1n");
+    fold("v = ({ a: -0 }).a", "v = -0");
+
+    fold_same("v = ({ a: 1 }).b");
+    fold_same("v = ({ a: 1, b: 2 }).a");
+    fold_same("v = ({ [key]: 1 }).a");
+    fold_same("v = ({ get a() { return 1 } }).a");
+    fold_same("v = ({ a() { return 1 } }).a");
+    fold_same("v = ({ __proto__: 1 }).__proto__");
+    fold_same("v = ({ a: value }).a");
+    test_same("({ a: 1 }).a()");
+    test_same("new ({ a: 1 }).a()");
+    test_same("({ a: 'tag' }).a``");
+    test_same("delete ({ a: 1 }).a");
+    test_same("({ a: 1 }).a = 2");
+    test_same("({ a: 1 }).a++");
+    fold("v = ({ /*! @license */ a: 1 }).a", "v = /*! @license */ 1");
+}
+
+#[test]
 fn test_fold_shift_left() {
     fold("1 << 3", "8");
     fold("1.2345 << 0", "1");

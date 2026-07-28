@@ -9,7 +9,7 @@ use oxc_ecmascript::{
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
@@ -38,8 +38,24 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let can_fold_object_property = !ctx.is_tree_shake_only()
+            && matches!(
+                expr,
+                Expression::StaticMemberExpression(member)
+                    if !member.optional && matches!(member.object, Expression::ObjectExpression(_))
+            )
+            && !Self::should_keep_indirect_access(expr, ctx)
+            && !matches!(ctx.parent(), Ancestor::NewExpressionCallee(_));
         let Expression::StaticMemberExpression(e) = expr else { return };
-        // TODO: tryFoldObjectPropAccess(n, left, name)
+        let StaticMemberExpression { object, property, .. } = e.as_mut();
+        if can_fold_object_property
+            && let Some(changed) =
+                Self::try_fold_singleton_object_property(object, property.name.as_str(), ctx)
+        {
+            ctx.replace_expression(expr, changed);
+            return;
+        }
+
         // `evaluate_value` only folds a narrow set of member accesses (currently
         // `.length` on constant strings/arrays) and bails cheaply otherwise.
         // Evaluate it first so the overwhelmingly common non-foldable access
@@ -64,6 +80,44 @@ impl<'a> PeepholeOptimizations {
         }
         let changed = ctx.value_to_expr(e.span, value);
         ctx.replace_expression(expr, changed);
+    }
+
+    fn try_fold_singleton_object_property(
+        object: &mut Expression<'a>,
+        accessed_name: &str,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::ObjectExpression(object) = object else { return None };
+        let [ObjectPropertyKind::ObjectProperty(property)] = object.properties.as_mut_slice()
+        else {
+            return None;
+        };
+        let value_is_primitive = matches!(
+            property.value,
+            Expression::BooleanLiteral(_)
+                | Expression::NullLiteral(_)
+                | Expression::NumericLiteral(_)
+                | Expression::BigIntLiteral(_)
+                | Expression::StringLiteral(_)
+        ) || matches!(
+            &property.value,
+            Expression::UnaryExpression(unary)
+                if unary.operator == UnaryOperator::LogicalNot
+                    && matches!(&unary.argument, Expression::NumericLiteral(_))
+        );
+
+        if property.kind != PropertyKind::Init
+            || property.method
+            || property.shorthand
+            || property.computed
+            || accessed_name == "__proto__"
+            || !property.key.is_specific_static_name(accessed_name)
+            || !value_is_primitive
+        {
+            return None;
+        }
+
+        Some(property.value.take_in(ctx))
     }
 
     pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
