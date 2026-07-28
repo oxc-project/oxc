@@ -847,7 +847,10 @@ fn fold_coalesce_on_tracked_non_nullish_binding() {
 // spurious mutation spins the fixed-point loop past its iteration guard.
 #[test]
 fn test_fold_if_keep_var_filter_converges() {
-    test_same("function f() {\n\tif (0) var x, y;\n\ty = 1;\n\treturn y;\n}\nf();");
+    test(
+        "function f() {\n\tif (0) var x, y;\n\ty = 1;\n\treturn y;\n}\nf();",
+        "function f() {\n\tif (0) var y;\n\ty = 1;\n\treturn y;\n}\nf();",
+    );
 }
 
 // DCE mode is rolldown's per-module tree-shaking preprocess; the DEFAULT-mode
