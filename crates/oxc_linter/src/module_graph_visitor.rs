@@ -1,6 +1,5 @@
 use std::{
     marker::PhantomData,
-    path::PathBuf,
     sync::{Arc, Weak},
 };
 
@@ -129,7 +128,7 @@ impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
 
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
-    pub _traversed: FxHashSet<PathBuf>,
+    pub _traversed: FxHashSet<u32>,
     pub _max_depth: u32,
 }
 
@@ -141,7 +140,9 @@ impl<T> ModuleGraphVisitResult<T> {
 
 #[derive(Debug)]
 struct ModuleGraphVisitor {
-    traversed: FxHashSet<PathBuf>,
+    /// Modules already visited, keyed on [`ModuleRecord::path_id`] — same semantics as keying on
+    /// the resolved path, without cloning and hashing a `PathBuf` for every node visited.
+    traversed: FxHashSet<u32>,
     depth: u32,
     max_depth: u32,
 }
@@ -218,8 +219,7 @@ impl ModuleGraphVisitor {
                 continue;
             }
 
-            let path = &loaded_module_record.resolved_absolute_path;
-            if !self.traversed.insert(path.clone()) {
+            if !self.traversed.insert(loaded_module_record.path_id) {
                 continue;
             }
 

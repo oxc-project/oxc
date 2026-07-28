@@ -1,9 +1,13 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
 use std::{
+    ffi::OsStr,
     fmt,
-    path::{Path, PathBuf},
-    sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
+    path::{Component, Path, PathBuf},
+    sync::{
+        Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak,
+        atomic::{AtomicU32, Ordering},
+    },
 };
 
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -12,6 +16,22 @@ use oxc_semantic::Semantic;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
+
+/// Ids for records built outside a lint run, counting down from `u32::MAX` so they never collide
+/// with the ids `Runtime` interns (which count up from 1). Such records are not part of a linked
+/// graph, so they only need to be distinct from each other.
+static NEXT_UNSHARED_PATH_ID: AtomicU32 = AtomicU32::new(u32::MAX);
+
+/// Is `path` inside a `node_modules` directory?
+///
+/// `Path::components` parses the path one component at a time, so rule out the overwhelmingly
+/// common case with a byte search and only parse components for paths that could match.
+fn path_is_node_module(path: &Path) -> bool {
+    memchr::memmem::find(path.as_os_str().as_encoded_bytes(), b"node_modules").is_some()
+        && path
+            .components()
+            .any(|c| matches!(c, Component::Normal(p) if p == OsStr::new("node_modules")))
+}
 
 /// ESM Module Record
 ///
@@ -27,6 +47,21 @@ pub struct ModuleRecord {
 
     /// Resolved absolute path to this module record
     pub resolved_absolute_path: PathBuf,
+
+    /// Identifies [`Self::resolved_absolute_path`] within a lint run: two records have the same
+    /// id if and only if they have the same resolved path.
+    ///
+    /// Cross-module analysis compares modules constantly, and `Path`'s `PartialEq` and `Hash` both
+    /// walk the path component by component — the same reason `Runtime` keys its maps on `OsStr`.
+    /// Comparing ids instead makes that a `u32` compare. Set by `Runtime` when the record is
+    /// created; records [`ModuleRecord::new`] builds outside a lint run get a distinct id each, so
+    /// they never compare equal to one another.
+    pub path_id: u32,
+
+    /// Is [`Self::resolved_absolute_path`] inside a `node_modules` directory?
+    ///
+    /// Answered once here rather than by walking the path's components at each use.
+    pub is_node_module: bool,
 
     /// `[[RequestedModules]]`
     ///
@@ -103,6 +138,8 @@ impl fmt::Debug for ModuleRecord {
         f.debug_struct("ModuleRecord")
             .field("has_module_syntax", &self.has_module_syntax)
             .field("resolved_absolute_path", &self.resolved_absolute_path)
+            .field("path_id", &self.path_id)
+            .field("is_node_module", &self.is_node_module)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
             .field("import_entries", &self.import_entries)
@@ -468,6 +505,8 @@ impl ModuleRecord {
         Self {
             has_module_syntax: other.has_module_syntax,
             resolved_absolute_path: path.to_path_buf(),
+            path_id: NEXT_UNSHARED_PATH_ID.fetch_sub(1, Ordering::Relaxed),
+            is_node_module: path_is_node_module(path),
             requested_modules: other
                 .requested_modules
                 .iter()
