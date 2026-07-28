@@ -10,6 +10,7 @@ mod stylish;
 mod unix;
 mod xml_utils;
 
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -62,6 +63,44 @@ impl FromStr for OutputFormat {
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
+}
+
+/// Find the git repository root by walking up from the current directory.
+/// Returns `None` if no `.git` directory is found.
+fn find_git_root() -> Option<PathBuf> {
+    let cwd = std::env::current_dir().ok()?;
+    find_git_root_from(&cwd)
+}
+
+/// Find the git repository root by walking up from the given path.
+fn find_git_root_from(start: &Path) -> Option<PathBuf> {
+    let mut current = start.to_path_buf();
+    loop {
+        if current.join(".git").exists() {
+            return Some(current);
+        }
+        if !current.pop() {
+            return None;
+        }
+    }
+}
+
+/// Get the path prefix from CWD to the git repository root.
+/// This prefix should be prepended to CWD-relative paths to make them repo-relative.
+///
+/// For example, if git root is `/repo` and CWD is `/repo/packages/foo`,
+/// this returns `Some("packages/foo")`.
+fn get_repo_path_prefix() -> Option<PathBuf> {
+    let cwd = std::env::current_dir().ok()?;
+    let git_root = find_git_root()?;
+
+    // Get the relative path from git root to CWD
+    let relative = cwd.strip_prefix(&git_root).ok()?;
+    if relative.as_os_str().is_empty() {
+        return None;
+    }
+
+    Some(relative.to_path_buf())
 }
 
 /// Some extra lint information, which can be outputted
@@ -188,9 +227,30 @@ impl OutputFormatter {
 
 #[cfg(test)]
 mod test {
+    use std::path::PathBuf;
+
+    use super::find_git_root_from;
     use crate::tester::Tester;
 
     const TEST_CWD: &str = "fixtures/cli/output_formatter_diagnostic";
+
+    #[test]
+    fn find_git_root_from_current_dir() {
+        // This test runs from within the oxc repo, so we should find a git root
+        let cwd = std::env::current_dir().unwrap();
+        let git_root = find_git_root_from(&cwd);
+        assert!(git_root.is_some());
+        assert!(git_root.unwrap().join(".git").exists());
+    }
+
+    #[test]
+    fn find_git_root_from_nonexistent() {
+        // A path that doesn't exist or has no git repo
+        let path = PathBuf::from("/");
+        let git_root = find_git_root_from(&path);
+        // Root directory typically doesn't have a .git folder
+        assert!(git_root.is_none() || *git_root.unwrap() == *"/");
+    }
 
     #[test]
     fn test_output_formatter_diagnostic_formats() {
