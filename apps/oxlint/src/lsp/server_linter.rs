@@ -4,7 +4,8 @@ use std::sync::{Arc, OnceLock};
 use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{
-    CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities,
+    CodeActionTriggerKind, DiagnosticOptions, DiagnosticServerCapabilities, DiagnosticSeverity,
+    DiagnosticTag,
 };
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
@@ -17,9 +18,9 @@ use tower_lsp_server::{
 use tracing::{debug, error, warn};
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder,
-    LintServiceOptions, Linter, Oxlintrc, read_to_string,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DiffManager, ExternalLinter,
+    ExternalPluginStore, FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner,
+    LintRunnerBuilder, LintServiceOptions, Linter, Oxlintrc, SuppressionManager, read_to_string,
 };
 
 use oxc_language_server::{
@@ -46,7 +47,8 @@ use crate::{
         },
         lsp_file_system::LspFileSystem,
         options::{
-            LintOptions as LSPLintOptions, RulesCustomization, Run, UnusedDisableDirectives,
+            LintOptions as LSPLintOptions, RulesCustomization, Run, SuppressedViolationSeverity,
+            UnusedDisableDirectives,
         },
         utils::range_overlaps,
     },
@@ -85,6 +87,9 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
+        // Read suppression-display options up front, before `options` is partially moved below.
+        let show_suppressed_violations = options.should_show_suppressed_violations();
+        let suppressed_violation_severity = options.suppressed_violation_severity;
         let mut external_linter = self.external_linter.as_ref();
         let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
 
@@ -233,6 +238,12 @@ impl ServerLinterBuilder {
             }
         };
 
+        // Load the bulk-suppression baseline (read-only: no `--suppress-all`/`--prune`). This is a
+        // no-op `DiffManager` when `oxlint-suppressions.json` is absent or malformed.
+        let suppressions =
+            SuppressionManager::load(&root_path, "oxlint-suppressions.json", false, false)
+                .build_diff();
+
         ServerLinter::new(
             options.run,
             root_path.to_path_buf(),
@@ -243,6 +254,9 @@ impl ServerLinterBuilder {
             fix_kind,
             lint_options.report_unused_directive,
             options.rules_customization,
+            suppressions,
+            show_suppressed_violations,
+            suppressed_violation_severity,
         )
     }
 }
@@ -399,6 +413,13 @@ pub struct ServerLinter {
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
+    /// Bulk-suppression baseline (`oxlint-suppressions.json`) for this workspace. A no-op when the
+    /// file is absent or malformed.
+    suppressions: Arc<DiffManager>,
+    /// Whether suppressed violations are rendered (faded) in the editor instead of hidden.
+    show_suppressed_violations: bool,
+    /// Severity override applied to suppressed violations when they are shown.
+    suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
 impl Tool for ServerLinter {
@@ -486,6 +507,9 @@ impl Tool for ServerLinter {
         if options.type_aware.unwrap_or(self.runner.has_type_aware()) {
             watchers.push("**/tsconfig*.json".to_string());
         }
+
+        // Re-lint open documents when the bulk-suppression baseline changes.
+        watchers.push("**/oxlint-suppressions.json".to_string());
 
         watchers
     }
@@ -694,6 +718,9 @@ impl ServerLinter {
         fix_kind: FixKind,
         unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
+        suppressions: Arc<DiffManager>,
+        show_suppressed_violations: bool,
+        suppressed_violation_severity: SuppressedViolationSeverity,
     ) -> Self {
         Self {
             run,
@@ -706,6 +733,9 @@ impl ServerLinter {
             fix_kind,
             unused_directives_severity,
             rules_customization,
+            suppressions,
+            show_suppressed_violations,
+            suppressed_violation_severity,
         }
     }
 
@@ -812,27 +842,59 @@ impl ServerLinter {
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> =
-            match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
-                Ok(results) => results
-                    .into_iter()
-                    .filter_map(|message| {
-                        message_to_lsp_diagnostic(
-                            message,
-                            uri,
-                            source_text,
-                            self.rules_customization.as_ref(),
-                        )
-                    })
-                    .collect(),
-                Err(e) => {
-                    // clear disable directives on error to prevent stale directives
-                    self.runner.directives_coordinator().remove(path);
-                    return Err(e);
-                }
-            };
+        let raw_messages = match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
+            Ok(results) => results,
+            Err(e) => {
+                // clear disable directives on error to prevent stale directives
+                self.runner.directives_coordinator().remove(path);
+                return Err(e);
+            }
+        };
+
+        // Split off diagnostics covered by the bulk-suppression baseline. `surfaced` are reported
+        // normally; `suppressed` are either hidden or rendered faded, depending on the option.
+        let (surfaced, suppressed) =
+            self.suppressions.partition_file(path, &self.cwd, raw_messages);
+
+        let mut messages: Vec<DiagnosticReport> = surfaced
+            .into_iter()
+            .filter_map(|message| {
+                message_to_lsp_diagnostic(
+                    message,
+                    uri,
+                    source_text,
+                    self.rules_customization.as_ref(),
+                )
+            })
+            .collect();
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
+
+        if self.show_suppressed_violations {
+            let severity_override = match self.suppressed_violation_severity {
+                SuppressedViolationSeverity::Original => None,
+                SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::HINT),
+                SuppressedViolationSeverity::Warning => Some(DiagnosticSeverity::WARNING),
+                SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::ERROR),
+            };
+            for message in suppressed {
+                if let Some(mut report) = message_to_lsp_diagnostic(
+                    message,
+                    uri,
+                    source_text,
+                    self.rules_customization.as_ref(),
+                ) {
+                    // Fade the diagnostic (greyed out in VS Code / neovim-lsp) and drop its code
+                    // actions — these violations are intentionally baselined, not to be fixed here.
+                    report.diagnostic.tags = Some(vec![DiagnosticTag::UNNECESSARY]);
+                    if let Some(severity) = severity_override {
+                        report.diagnostic.severity = Some(severity);
+                    }
+                    report.code_action = None;
+                    messages.push(report);
+                }
+            }
+        }
 
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
@@ -856,6 +918,10 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+            || old_options.should_show_suppressed_violations()
+                != new_options.should_show_suppressed_violations()
+            || old_options.suppressed_violation_severity
+                != new_options.suppressed_violation_severity
     }
 
     /// Check if the linter is responsible for the given URI.
@@ -1514,6 +1580,34 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("foo-bar.astro");
+    }
+
+    // Bulk-suppressed violations (`oxlint-suppressions.json`) are, by default, shown faded
+    // (`UNNECESSARY` tag) rather than hidden; violations not covered by the baseline surface
+    // normally. Here `no-console` (count 2) is fully suppressed, while `no-debugger` is not.
+    #[test]
+    fn test_suppressions_shown_faded_by_default() {
+        let tester = Tester::new("fixtures/lsp/suppressions", json!({}));
+        tester.test_and_snapshot_single_file("default.js");
+    }
+
+    // `showSuppressedViolations: false` hides suppressed violations entirely; only the
+    // unsuppressed `no-debugger` remains.
+    #[test]
+    fn test_suppressions_hidden_when_disabled() {
+        let tester =
+            Tester::new("fixtures/lsp/suppressions", json!({ "showSuppressedViolations": false }));
+        tester.test_and_snapshot_single_file("hidden.js");
+    }
+
+    // `suppressedViolationSeverity` overrides the severity used for shown-but-faded violations.
+    #[test]
+    fn test_suppressions_severity_override() {
+        let tester = Tester::new(
+            "fixtures/lsp/suppressions",
+            json!({ "suppressedViolationSeverity": "hint" }),
+        );
+        tester.test_and_snapshot_single_file("severity.js");
     }
 
     #[test]
