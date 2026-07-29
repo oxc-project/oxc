@@ -737,6 +737,38 @@ fn remove_pure_function_calls() {
 }
 
 #[test]
+fn keep_calls_before_var_function_assignment() {
+    // A `var` binding holds `undefined` until its assignment runs, so a call
+    // reached first throws `TypeError`. The function summary describes the
+    // VALUE; consuming it at a call site keyed only by the BINDING erases that
+    // throw. The trailing `var unused = 1` only supplies the extra pass that
+    // makes the summary available.
+    test("f(); var f = () => {}; var unused = 1;", "f(); var f = () => {};");
+
+    // Reached through a body that ordinary DCE empties. The trailing `f()` IS
+    // order-proven and still goes, so the fixed point keeps only the
+    // conditional call and the emptied declarator.
+    test(
+        "if (unknownGlobal) { f(); } var f = () => { var a = [1]; [...a]; }; f(); var unused = 1;",
+        "if (unknownGlobal) f(); var f = () => {};",
+    );
+
+    // A spread of an object literal is pure on its own, so the body empties.
+    test("f(); var f = () => { ({ ...{ a: 1 } }); }; var unused = 1;", "f(); var f = () => {};");
+
+    // The route the object-spread cleanup opens: its copies are removable, the
+    // body empties, and the summary reaches this same consumer.
+    test(
+        "f(); var f = () => { const P = { a: 1 }; ({ ...P }); ({ ...P }); }; var unused = 1;",
+        "f(); var f = () => {};",
+    );
+
+    // Order-proven calls keep optimizing: the declarator precedes them.
+    test("var f = () => {}; f(); f();", "");
+    test("const g = () => {}; g();", "");
+}
+
+#[test]
 fn preserve_iife_in_dce_mode() {
     // https://github.com/oxc-project/oxc/issues/17480
     // https://github.com/rolldown/rolldown/issues/9437
