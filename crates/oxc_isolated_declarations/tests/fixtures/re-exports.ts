@@ -10,3 +10,5 @@ export { Foo as "non-identifier" } from "./foo";
 
 // Re-export with import attributes
 export { data } from "./data.json" with { type: "json" };
+export * from "./data.json" with { type: "json" };
+export * as data from "./data.json" with { type: "json" };

@@ -6,18 +6,35 @@ use oxc_str::Str;
 use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
 impl<'a> IsolatedDeclarations<'a> {
+    pub(crate) fn transform_export_all_declaration(
+        &self,
+        prev_decl: &ExportAllDeclaration<'a>,
+    ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
+        ExportAllDeclaration::boxed(
+            prev_decl.span,
+            prev_decl.exported.clone_in(self.allocator()),
+            prev_decl.source.clone(),
+            None,
+            prev_decl.export_kind,
+            self,
+        )
+    }
+
     pub(crate) fn transform_export_named_declaration(
         &mut self,
         prev_decl: &ExportNamedDeclaration<'a>,
     ) -> Option<ArenaBox<'a, ExportNamedDeclaration<'a>>> {
-        let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
+        let declaration = match &prev_decl.declaration {
+            Some(decl) => Some(self.transform_declaration(decl, false)?),
+            None => None,
+        };
 
         Some(ExportNamedDeclaration::boxed(
             prev_decl.span,
-            Some(decl),
-            [],
-            None,
-            ImportOrExportKind::Value,
+            declaration,
+            prev_decl.specifiers.clone_in(self.allocator()),
+            prev_decl.source.clone(),
+            prev_decl.export_kind,
             None,
             self,
         ))
