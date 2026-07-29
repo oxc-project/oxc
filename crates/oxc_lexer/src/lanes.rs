@@ -214,11 +214,7 @@ impl Lanes {
 
     #[inline]
     pub fn push_template(&mut self, src: &[u8], bs: usize, be: usize) {
-        // CRLF normalization is implemented and tested but wired off: the
-        // extra `\r` needle costs ~2% on template-heavy sources, and the
-        // parser facade cooks CR-bearing templates itself, so end-to-end
-        // values are exact either way.
-        let (sp, nes) = self.cook::<false, false>(src, bs as u32, be as u32);
+        let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32);
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
@@ -1175,6 +1171,32 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn push_tpl(body: &[u8]) -> Vec<u8> {
+        let mut padded = body.to_vec();
+        padded.extend_from_slice(&[0u8; 64]);
+        let mut l = Lanes::default();
+        l.push_template(&padded, 0, body.len());
+        let sp = l.templates[0];
+        let s = (sp.start & StringSpan::START_MASK) as usize;
+        let e = (sp.end_and_flags & StringSpan::END_MASK) as usize;
+        l.cooked[s..e].to_vec()
+    }
+
+    #[test]
+    fn push_template_normalizes_raw_cr() {
+        assert_eq!(push_tpl(b"a\r\nb"), b"a\nb");
+        assert_eq!(push_tpl(b"a\rb"), b"a\nb");
+        assert_eq!(push_tpl(br"a\r\nb\`c"), b"a\r\nb`c");
+        assert_eq!(push_tpl(b"a\r\nb\\`c"), b"a\nb`c");
+    }
+
+    #[test]
+    fn push_template_keeps_escaped_cr_lf() {
+        assert_eq!(push_tpl(br"\r\n"), b"\r\n");
+        assert_eq!(push_tpl(br"\r"), b"\r");
+        assert_eq!(push_tpl(b"\r\n"), b"\n");
+    }
 
     fn cook(body: &[u8]) -> (Vec<u8>, bool) {
         let mut padded = body.to_vec();
