@@ -20,6 +20,7 @@ use crate::{
 /// The fields stay separate because they have different storage and reset
 /// contracts:
 /// - `values` is dense scratch rebuilt for each peephole pass;
+/// - `dead_argument_prefixes` is sparse monotone DCE metadata retained across passes;
 /// - `persistent` is sparse metadata retained across passes;
 /// - `liveness` is stable observability metadata plus optional graph results.
 pub struct SymbolState<'a> {
@@ -28,6 +29,8 @@ pub struct SymbolState<'a> {
     /// Sized once from `Scoping::symbols_len()`; no minifier pass mints new
     /// symbols, so indexed writes intentionally panic if that contract changes.
     values: IndexVec<SymbolId, Option<SymbolValue<'a>>>,
+    /// Monotone DCE summaries for stable local functions with dead trailing parameters.
+    dead_argument_prefixes: FxHashMap<SymbolId, u32>,
     persistent: FxHashMap<SymbolId, PersistentSymbolMetadata>,
     liveness: Option<SymbolLiveness<'a>>,
 }
@@ -43,6 +46,7 @@ impl<'a> SymbolState<'a> {
         values.resize_with(scoping.symbols_len(), || None);
         Self {
             values,
+            dead_argument_prefixes: FxHashMap::default(),
             persistent: FxHashMap::default(),
             liveness: SymbolLiveness::new_if_enabled(source_type, options, scoping, allocator),
         }
@@ -82,6 +86,30 @@ impl<'a> SymbolState<'a> {
         self.persistent
             .get(&symbol_id)
             .map_or(FunctionSummary::Unknown, PersistentSymbolMetadata::function_summary)
+    }
+
+    /// Record a dead-argument prefix, returning whether the reusable fact changed.
+    pub fn record_dead_argument_prefix(&mut self, symbol_id: SymbolId, prefix: usize) -> bool {
+        let prefix = u32::try_from(prefix).expect("function parameter count must fit in u32");
+        match self.dead_argument_prefixes.entry(symbol_id) {
+            std::collections::hash_map::Entry::Occupied(mut entry) => {
+                if *entry.get() == prefix {
+                    false
+                } else {
+                    debug_assert!(prefix < *entry.get(), "dead argument prefix must be monotone");
+                    entry.insert(prefix);
+                    true
+                }
+            }
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                entry.insert(prefix);
+                true
+            }
+        }
+    }
+
+    pub fn dead_argument_prefix(&self, symbol_id: SymbolId) -> Option<usize> {
+        self.dead_argument_prefixes.get(&symbol_id).map(|&prefix| prefix as usize)
     }
 
     pub fn record_member_write_effect(&mut self, symbol_id: SymbolId, effect: MemberWriteEffect) {

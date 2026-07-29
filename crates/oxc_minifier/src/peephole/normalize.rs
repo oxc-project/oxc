@@ -109,12 +109,20 @@ impl<'a> Traverse<'a> for Normalize {
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if ctx.is_tree_shake_only() {
+            PeepholeOptimizations::record_const_arrow_dead_arguments(decl, ctx);
+        }
         if self.options.convert_const_to_let {
             Self::convert_const_to_let(decl, ctx);
         }
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if ctx.is_tree_shake_only()
+            && let Statement::FunctionDeclaration(function) = stmt
+        {
+            PeepholeOptimizations::record_function_declaration_dead_arguments(function, ctx);
+        }
         match stmt {
             Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
