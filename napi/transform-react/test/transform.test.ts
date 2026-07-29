@@ -145,6 +145,41 @@ describe("transformSync", () => {
     expect(result.code).toContain("[CSS_VAR]");
     expect(result.code).toContain("import { CSS_VAR }");
   });
+
+  it("ignores ESLint suppressions when internal validations are enabled", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `function Component({ value }: { value: number }) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const doubled: number = value * 2;
+        return <div>{doubled}</div>;
+      }`,
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
+  });
+
+  it("honors ESLint suppressions when internal validations are disabled", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `function Component({ value }: { value: number }) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const doubled: number = value * 2;
+        return <div>{doubled}</div>;
+      }`,
+      {
+        environment: {
+          validateExhaustiveMemoizationDependencies: false,
+        },
+      },
+    );
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+    expect(result.code).toBe("");
+  });
 });
 
 describe("transform", () => {

@@ -2853,16 +2853,22 @@ pub fn compile_program<'a>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    let eslint_rules = options
-        .eslint_suppression_rules
-        .clone()
-        .unwrap_or_else(|| DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect());
+    // The compiler's own validations cover the safety concerns represented by the
+    // React Hooks ESLint rules. Match Babel by only consulting ESLint suppressions
+    // when either validation is disabled.
+    let eslint_rules = (!options.environment.validate_exhaustive_memoization_dependencies
+        || !options.environment.validate_hooks_usage)
+        .then(|| {
+            options.eslint_suppression_rules.clone().unwrap_or_else(|| {
+                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
+            })
+        });
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
         &program.comments,
         program.source_text,
-        Some(&eslint_rules),
+        eslint_rules.as_deref(),
         options.flow_suppressions,
     );
 

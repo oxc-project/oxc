@@ -8,7 +8,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{PluginOptions, compile};
+use oxc_react_compiler::{PanicThreshold, PluginOptions, compile};
 
 fn options() -> PluginOptions {
     PluginOptions::default()
@@ -69,40 +69,160 @@ fn skips_non_react_code() {
 }
 
 #[test]
-fn default_suppressions_bail_out() {
+fn default_eslint_suppressions_do_not_bail_out() {
     let fixtures = [
         (
             "eslint-disable-next-line",
             include_str!("../fixtures/default-suppression-eslint-next-line.js"),
-            1,
         ),
         (
             "eslint-disable block range",
             include_str!("../fixtures/default-suppression-eslint-block-range.js"),
-            1,
         ),
-        ("Flow", include_str!("../fixtures/default-suppression-flow.js"), 1),
     ];
 
-    // Babel 1.0.0 currently treats a block disable as open-ended. The block fixture
-    // therefore covers the disable/enable syntax without asserting post-enable behavior.
-    for (kind, source, expected_errors) in fixtures {
+    for (kind, source) in fixtures {
         let allocator = Allocator::default();
         let (_program, result) =
             transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
 
-        assert!(!result.changed, "{kind} suppression must prevent compilation");
+        assert!(result.changed, "{kind} must not prevent compilation");
         assert!(
-            result.diagnostics.has_errors(),
-            "{kind} suppression must report the compiler bail-out: {:?}",
+            !result.diagnostics.has_errors(),
+            "{kind} produced unexpected diagnostics: {:?}",
             result.diagnostics
         );
-        assert_eq!(
-            result.diagnostics.len(),
-            expected_errors,
-            "{kind} suppression should affect the same functions as the Babel plugin"
+    }
+}
+
+#[test]
+fn flow_suppressions_still_bail_out_by_default() {
+    let source = include_str!("../fixtures/default-suppression-flow.js");
+    let allocator = Allocator::default();
+    let (_program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(!result.changed, "Flow suppression must prevent compilation");
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+}
+
+#[test]
+fn eslint_suppressions_bail_out_when_either_internal_validation_is_disabled() {
+    let source = include_str!("../fixtures/default-suppression-eslint-next-line.js");
+
+    for disabled_validation in ["memo dependencies", "hooks usage"] {
+        let mut options = PluginOptions::default();
+        match disabled_validation {
+            "memo dependencies" => {
+                options.environment.validate_exhaustive_memoization_dependencies = false;
+            }
+            "hooks usage" => {
+                options.environment.validate_hooks_usage = false;
+            }
+            _ => unreachable!(),
+        }
+
+        let allocator = Allocator::default();
+        let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+
+        assert!(
+            !result.changed,
+            "suppression must prevent compilation when {disabled_validation} validation is disabled"
+        );
+        assert_eq!(result.diagnostics.len(), 1);
+        assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    }
+}
+
+#[test]
+fn internal_validations_report_errors_hidden_by_eslint_suppressions() {
+    let cases = [
+        (
+            "memo dependencies",
+            "\
+import { useMemo } from 'react';
+function Component({ value }) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const doubled = useMemo(() => value * 2, []);
+  return <div>{doubled}</div>;
+}
+",
+            "[ReactCompiler] MemoDependencies",
+        ),
+        (
+            "hooks usage",
+            "\
+import { useState } from 'react';
+function Component({ condition }) {
+  if (condition) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useState(0);
+  }
+  return <div />;
+}
+",
+            "[ReactCompiler] Hooks",
+        ),
+    ];
+
+    for (kind, source, expected_category) in cases {
+        let allocator = Allocator::default();
+        let (_program, result) =
+            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+        assert!(!result.changed, "{kind} validation must prevent compilation");
+        assert_eq!(result.diagnostics.len(), 1);
+        assert!(
+            result.diagnostics[0].message.contains(expected_category),
+            "expected {expected_category}, got {:?}",
+            result.diagnostics
         );
     }
+}
+
+#[test]
+fn custom_eslint_suppressions_follow_internal_validation_gating() {
+    let source = "\
+function Component({ value }) {
+  // eslint-disable-next-line custom/react-rule
+  const doubled = value * 2;
+  return <div>{doubled}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let options = PluginOptions {
+        eslint_suppression_rules: Some(vec!["custom/react-rule".to_string()]),
+        ..PluginOptions::default()
+    };
+    let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+    assert!(result.changed, "custom suppression must be ignored with both validations enabled");
+    assert!(!result.diagnostics.has_errors());
+
+    let allocator = Allocator::default();
+    let mut options = PluginOptions {
+        eslint_suppression_rules: Some(vec!["custom/react-rule".to_string()]),
+        ..PluginOptions::default()
+    };
+    options.environment.validate_exhaustive_memoization_dependencies = false;
+    let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+    assert!(!result.changed, "custom suppression must bail out when validation is disabled");
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+}
+
+#[test]
+fn all_errors_makes_enabled_eslint_suppressions_fatal() {
+    let source = include_str!("../fixtures/default-suppression-eslint-next-line.js");
+    let allocator = Allocator::default();
+    let mut options =
+        PluginOptions { panic_threshold: PanicThreshold::AllErrors, ..PluginOptions::default() };
+    options.environment.validate_exhaustive_memoization_dependencies = false;
+    let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+
+    assert!(!result.changed, "a fatal result must not produce a rewrite");
+    assert!(result.diagnostics.has_errors());
 }
 
 /// TypeScript-only constructs (`declare global`, `import =`, `export =`,
