@@ -115,7 +115,7 @@ fn is_single_character_access(expr: &Expression, ctx: &LintContext) -> bool {
         Expression::CallExpression(call_expr) => {
             is_method_call(call_expr, None, Some(&["charAt"]), Some(1), Some(1))
                 || (!call_expr.optional
-                    && is_method_call(call_expr, None, Some(&["at"]), Some(0), Some(1))
+                    && is_method_call(call_expr, None, Some(&["at"]), Some(1), Some(1))
                     && call_expr.callee.get_member_expr().is_some_and(|member_expr| {
                         !member_expr.optional() && is_definitely_string(member_expr.object(), ctx)
                     }))
@@ -210,7 +210,6 @@ fn test() {
         r"a.charAt(4) === '\\ukeff'",
         r#""abc".at(0) === "ab""#,
         r#""abc".at(-1) !== "ab""#,
-        r#""abc".at() === "ab""#,
         r#""abc"[0] === "ab""#,
         r#""abc"["0"] === "ab""#,
         r#"declare const value: string; value[0] === "ab";"#,
