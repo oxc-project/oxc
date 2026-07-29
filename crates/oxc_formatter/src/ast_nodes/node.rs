@@ -151,18 +151,6 @@ impl<'a> AstNode<'a, ArrowFunctionBody<'a>> {
             }))
             .as_ref()
     }
-
-    /// Returns the block body as an [`AstNode`].
-    pub fn as_function_body(&self) -> Option<&AstNode<'a, FunctionBody<'a>>> {
-        self.allocator
-            .alloc(self.inner.as_function_body().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            }))
-            .as_ref()
-    }
 }
 
 impl<'a> AstNode<'a, ImportExpression<'a>> {

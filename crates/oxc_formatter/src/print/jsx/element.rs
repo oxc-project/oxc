@@ -114,8 +114,9 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                     WrapState::WrapOnBreak
                 }
             }
-            // `() => <div></div>`
-            //        ^^^^^^^^^^^
+            // Concise arrow body: `() => <div></div>`
+            #[expect(clippy::match_same_arms)]
+            AstNodes::ArrowFunctionExpression(_) => WrapState::WrapOnBreak,
             _ => WrapState::WrapOnBreak,
         }
     }
@@ -245,12 +246,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
 /// // As JSX attribute:
 /// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
-pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
-    if let AstNodes::ExpressionStatement(stmt) = parent {
-        // If the parent is a JSXExpressionContainer, we need to check its parent
-        // to determine if it should expand.
-        parent = stmt.grand_parent();
-    }
+pub fn should_expand(parent: &AstNodes<'_>) -> bool {
     let maybe_jsx_expression_container = match parent {
         AstNodes::ArrowFunctionExpression(arrow) if arrow.is_expression() => match arrow.parent() {
             AstNodes::CallExpression(call) => call.parent(),

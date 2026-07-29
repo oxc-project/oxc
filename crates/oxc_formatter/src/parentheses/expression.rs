@@ -608,8 +608,6 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
             // Expression statements, only object destructuring needs parens:
             // - `a = b` = no parens
             // - `{ x } = obj` -> `({ x } = obj)` = needed to prevent parsing as block statement
-            // - `() => { x } = obj` -> `() => ({ x } = obj)` = needed in arrow function body
-            // - `() => a = b` -> `() => (a = b)` = also parens needed
             AstNodes::ExpressionStatement(_) => {
                 matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
                     && is_first_in_statement(
@@ -618,6 +616,13 @@ impl NeedsParentheses<'_> for AstNode<'_, AssignmentExpression<'_>> {
                         FirstInStatementMode::ExpressionStatementOrArrow,
                     )
             }
+            // Concise arrow bodies always need parens,
+            // otherwise the `{` of an object pattern would parse as a block body
+            // and a bare `=` reads as the arrow's own body:
+            // - `() => { x } = obj` -> `() => ({ x } = obj)`
+            // - `() => a = b` -> `() => (a = b)`
+            #[expect(clippy::match_same_arms)]
+            AstNodes::ArrowFunctionExpression(_) => true,
             // Sequence expressions, need to traverse up to find if we're in a for statement context:
             // - `a = 1, b = 2` in for loops don't need parens
             // - `(a = 1, b = 2)` elsewhere usually need parens
@@ -682,7 +687,7 @@ impl NeedsParentheses<'_> for AstNode<'_, SequenceExpression<'_>> {
         match self.parent() {
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
-            |AstNodes::ArrowFunctionExpression(_)
+            | AstNodes::ArrowFunctionExpression(_)
             // There's a precedence for writing `x++, y++`
             | AstNodes::ForStatement(_) => false,
             _ => true,

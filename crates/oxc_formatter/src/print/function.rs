@@ -11,9 +11,7 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{Buffer, prelude::*, trivia::FormatLeadingComments},
-    print::{
-        arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
-    },
+    print::semicolon::OptionalSemicolon,
     write,
 };
 
@@ -125,7 +123,10 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
         if let Some(body) = self.body() {
             write!(
                 f,
-                [space(), FormatMaybeCachedFunctionBody { body, mode: self.options.cache_mode }]
+                [
+                    space(),
+                    FormatContentWithCacheMode::new(body.span, body, self.options.cache_mode)
+                ]
             );
         }
 

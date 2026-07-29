@@ -71,7 +71,7 @@ pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) 
                     right => keeps_trailing_comment_inside_parens(right, false),
                 }
         }
-        Expression::ArrowFunctionExpression(arrow) if arrow.is_expression() => arrow
+        Expression::ArrowFunctionExpression(arrow) => arrow
             .get_expression()
             .is_some_and(|body| keeps_trailing_comment_inside_parens(body, true)),
         _ => false,

@@ -119,7 +119,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 });
 
                 let format_body =
-                    FormatMaybeCachedArrowFunctionBody { body, mode: self.options.cache_mode };
+                    FormatContentWithCacheMode::new(body.span(), body, self.options.cache_mode);
 
                 // With arrays, arrow self and objects, they have a natural line breaking strategy:
                 // Arrays and objects become blocks:
@@ -629,10 +629,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         });
 
         let format_tail_body_inner = format_with(|f| {
-            let format_tail_body = FormatMaybeCachedArrowFunctionBody {
-                body: tail_body,
-                mode: self.options.cache_mode,
-            };
+            let format_tail_body = FormatContentWithCacheMode::new(
+                tail_body.span(),
+                tail_body,
+                self.options.cache_mode,
+            );
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
@@ -825,38 +826,6 @@ fn format_signature<'a, 'b>(
         let content = FormatTrailingComments::Comments(comments_before_fat_arrow);
         write!(f, [FormatContentWithCacheMode::new(arrow.span, content, cache_mode)]);
     })
-}
-
-/// Formats an arrow function body with additional caching depending on [`mode`](Self::mode).
-pub struct FormatMaybeCachedArrowFunctionBody<'a, 'b> {
-    /// The body to format.
-    pub body: &'b AstNode<'a, ArrowFunctionBody<'a>>,
-
-    /// If the body should be cached or if the formatter should try to retrieve it from the cache.
-    pub mode: FunctionCacheMode,
-}
-
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatMaybeCachedArrowFunctionBody<'a, '_> {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let content = format_with(|f| self.body.fmt(f));
-        FormatContentWithCacheMode::new(self.body.span(), content, self.mode).fmt(f);
-    }
-}
-
-/// Formats a function block body with additional caching depending on [`mode`](Self::mode).
-pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
-    /// The body to format.
-    pub body: &'b AstNode<'a, FunctionBody<'a>>,
-
-    /// If the body should be cached or if the formatter should try to retrieve it from the cache.
-    pub mode: FunctionCacheMode,
-}
-
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatMaybeCachedFunctionBody<'a, '_> {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let content = format_with(|f| self.body.fmt(f));
-        FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f);
-    }
 }
 
 /// Format a sequence expression in an arrow function body that has a leading comment.
