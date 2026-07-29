@@ -149,7 +149,20 @@ fn statement_end(stmt: &oxc::Statement) -> Option<u32> {
     Some(stmt.span().end)
 }
 
-/// Collect binding names from a pattern that are declared in the given scope.
+/// Resolve a declaration identifier to its symbol.
+///
+/// Prefer the identifier's semantic identity because function and catch bodies
+/// may store direct lexical declarations in a child block scope. Fall back to
+/// the current scope's binding map if semantic identity is unavailable.
+fn resolve_declared_binding(
+    id: &oxc::BindingIdentifier,
+    scope_id: ScopeId,
+    scope: &ScopeResolver<'_, '_>,
+) -> Option<SymbolId> {
+    id.symbol_id.get().or_else(|| scope.get_binding(scope_id, id.name.as_str()))
+}
+
+/// Collect symbols declared by a binding pattern.
 fn collect_binding_names_from_pattern(
     pattern: &oxc::BindingPattern,
     scope_id: ScopeId,
@@ -158,7 +171,7 @@ fn collect_binding_names_from_pattern(
 ) {
     match pattern {
         oxc::BindingPattern::BindingIdentifier(id) => {
-            if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
+            if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
                 out.insert(symbol_id);
             }
         }
@@ -482,7 +495,7 @@ fn lower_block_statement_inner<'a>(
         match body_stmt {
             oxc::Statement::FunctionDeclaration(func) => {
                 if let Some(id) = &func.id
-                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                    && let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope)
                 {
                     declared.insert(symbol_id);
                 }
@@ -494,7 +507,7 @@ fn lower_block_statement_inner<'a>(
             }
             oxc::Statement::ClassDeclaration(cls) => {
                 if let Some(id) = &cls.id
-                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                    && let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope)
                 {
                     declared.insert(symbol_id);
                 }
