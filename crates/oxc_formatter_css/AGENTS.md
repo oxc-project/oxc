@@ -211,16 +211,22 @@ NOT covered: `$(var)` interpolation (`margin-$(dir): 10px`, `.icon.is-$(network)
 
 ### Known divergences
 
-Deliberate divergences from Prettier. Two admission reasons:
+Deliberate divergences from Prettier. Three admission reasons:
 
 1. Prettier's output would change program semantics (formatting must never do that)
 2. The impact does not justify the matching cost
+3. A uniform principle across our formatter crates beats emulating a Prettier inconsistency
 
 Notable divergences are:
 
-- A trailing `//` comment never counts toward the print width
-  - Emitted as a `line_suffix` (like line comments in every other formatter crate),
-    so the preceding value keeps its own layout: `@x: fade(@white, 4%); // long comment` stays flat
+- An end-of-line trailing `//` comment never counts toward the print width (reason 3)
+  - Prettier's postcss printer does not distinguish `//` from `/* */`: it prints both inline,
+    measures them, and breaks the preceding value on overflow
+  - We emit the `//` as a `line_suffix`, the treatment every other formatter crate,
+    and Prettier itself outside the CSS family, gives line comments
+  - Scope: END-OF-LINE positions (statement-level trailing, SCSS map/config trailing).
+    A value-interior `//` (before `)`, glued to an argument, inside a fill entry) stays inline,
+    because tokens still follow on the line and a `line_suffix` would move the comment across them
   - Trailing `/* */` comments still count, matching Prettier (both here and in the JS formatter, self-delimiting comments are inline content)
 - A COMMENTED keyframe selector list is formatted structurally (one selector per line, comments per the separator rule: `60% /* mid */,`)
   - Prettier keeps the whole list verbatim on one line, interior spacing included (`60%   /* mid */  ,   70%` survives untouched)

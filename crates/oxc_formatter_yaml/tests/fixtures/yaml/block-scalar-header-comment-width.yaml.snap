@@ -4,7 +4,7 @@ source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
 ==================== Input ====================
 # DIVERGENCE (AGENTS.md "trailing comment width"):
 # a same-line trailing comment is a line_suffix and never counts toward the fits measurement,
-# so the header stays on the key line. (The same as other our formatters, except for CSS for now)
+# so the header stays on the key line.
 run: | # this trailing comment is long enough to push the header line far beyond every print width
   set -euo pipefail
 short: | # fits
@@ -27,7 +27,7 @@ resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscale
 ------------------
 # DIVERGENCE (AGENTS.md "trailing comment width"):
 # a same-line trailing comment is a line_suffix and never counts toward the fits measurement,
-# so the header stays on the key line. (The same as other our formatters, except for CSS for now)
+# so the header stays on the key line.
 run: | # this trailing comment is long enough to push the header line far beyond every print width
   set -euo pipefail
 short: | # fits
@@ -52,7 +52,7 @@ resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscale
 -------------------
 # DIVERGENCE (AGENTS.md "trailing comment width"):
 # a same-line trailing comment is a line_suffix and never counts toward the fits measurement,
-# so the header stays on the key line. (The same as other our formatters, except for CSS for now)
+# so the header stays on the key line.
 run: | # this trailing comment is long enough to push the header line far beyond every print width
   set -euo pipefail
 short: | # fits

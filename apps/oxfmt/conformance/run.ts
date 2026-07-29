@@ -34,8 +34,8 @@ const NOTE_LESS_MATH_FILL =
   "Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md";
 const NOTE_MQ_OP_SPACING =
   "Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)";
-const NOTE_INLINE_COMMENT_WIDTH =
-  "Allowed: trailing `//` comment doesn't count toward print width, so the value stays flat where Prettier breaks it.";
+const NOTE_EOL_LINE_COMMENT_WIDTH =
+  "Allowed: trailing `// comment` rides a line_suffix, never counts toward print width; Prettier only treats CSS-family `//` inline and breaks the value. See crates/oxc_formatter_css/AGENTS.md";
 const NOTE_EMBEDDED_EXPRESSION_INDENT =
   "We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently";
 
@@ -208,13 +208,13 @@ const categories: Category[] = [
       "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_LESS_MATH_FILL,
       "externals/ng-zorro-antd/components/style/themes/default.less": [
         NOTE_LESS_MATH_FILL,
-        NOTE_INLINE_COMMENT_WIDTH,
+        NOTE_EOL_LINE_COMMENT_WIDTH,
       ].join("\n"),
       "externals/ng-zorro-antd/components/style/themes/variable.less": [
         NOTE_LESS_MATH_FILL,
-        NOTE_INLINE_COMMENT_WIDTH,
+        NOTE_EOL_LINE_COMMENT_WIDTH,
       ].join("\n"),
-      "externals/ng-zorro-antd/components/style/themes/dark.less": NOTE_INLINE_COMMENT_WIDTH,
+      "externals/ng-zorro-antd/components/style/themes/dark.less": NOTE_EOL_LINE_COMMENT_WIDTH,
       "externals/ng-zorro-antd/components/table/style/index.less": NOTE_LESS_MATH_FILL,
       "externals/ng-zorro-antd/components/table/style/rtl.less": NOTE_LESS_MATH_FILL,
     },
@@ -268,7 +268,7 @@ const categories: Category[] = [
       "externals/gitlab/stylesheets/framework/sidebar.scss": "long-expr line-break position",
       "externals/gitlab/stylesheets/framework/variables_overrides.scss":
         "Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md",
-      "externals/gitlab/stylesheets/pages/profile.scss": NOTE_INLINE_COMMENT_WIDTH,
+      "externals/gitlab/stylesheets/pages/profile.scss": NOTE_EOL_LINE_COMMENT_WIDTH,
     },
   },
 ];
