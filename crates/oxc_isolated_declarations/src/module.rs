@@ -13,7 +13,7 @@ impl<'a> IsolatedDeclarations<'a> {
         ExportAllDeclaration::boxed(
             prev_decl.span,
             prev_decl.exported.clone_in(self.allocator()),
-            prev_decl.source.clone(),
+            prev_decl.source.clone_in(self.allocator()),
             None,
             prev_decl.export_kind,
             self,
