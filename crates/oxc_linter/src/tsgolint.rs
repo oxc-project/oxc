@@ -43,6 +43,8 @@ pub struct TsGoLintState {
     type_check: bool,
     /// If `true`, request that per-rule debug timings be returned from `tsgolint`.
     timings: bool,
+    /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
+    with_ignore_fixes: bool,
 }
 
 impl TsGoLintState {
@@ -59,6 +61,7 @@ impl TsGoLintState {
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
             timings: false,
+            with_ignore_fixes: false,
         }
     }
 
@@ -82,6 +85,7 @@ impl TsGoLintState {
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
             timings: false,
+            with_ignore_fixes: false,
         })
     }
 
@@ -110,6 +114,12 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_timings(mut self, yes: bool) -> Self {
         self.timings = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_ignore_fixes(mut self, yes: bool) -> Self {
+        self.with_ignore_fixes = yes;
         self
     }
 
@@ -483,6 +493,10 @@ impl TsGoLintState {
                                     tsgolint_diagnostic,
                                     &source_text_owned,
                                 );
+
+                                if self.with_ignore_fixes {
+                                    message.add_ignore_fix(0, &source_text_owned);
+                                }
 
                                 message.error.severity = if severity == AllowWarnDeny::Deny {
                                     Severity::Error

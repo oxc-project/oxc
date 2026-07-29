@@ -72,6 +72,13 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
             Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
             Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
+            Expression::TSAsExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSNonNullExpression(_)
+            | Expression::TSInstantiationExpression(_) => {
+                self.get_inner_expression().may_have_side_effects(ctx)
+            }
             _ => true,
         }
     }

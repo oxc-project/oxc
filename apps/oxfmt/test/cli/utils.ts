@@ -322,11 +322,17 @@ function normalizeOutput(output: string, cwd: string): string {
 
   return (
     output
+      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own
+      .replace(
+        // oxlint-disable-next-line no-control-regex
+        /vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯(?:\x1b\[[0-9;]*m)*\n?/g,
+        "<Vite+ diagnostic>\n",
+      )
+      // Make ANSI style codes visible so snapshots can pin color behavior
       // oxlint-disable-next-line no-control-regex
-      .replace(/\x1b\[[0-9;]*m/g, "")
+      .replace(/\x1b/g, "<esc>")
       .replace(/\d+(?:\.\d+)?s|\d+ms/g, "<time>")
       .replace(/\.timestamp-[0-9a-f-]+/g, ".timestamp-<timestamp-hash>")
-      .replace(/vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯\n?/g, "<Vite+ diagnostic>\n")
       .replace(/\\/g, "/")
       .replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>")
       .replace(new RegExp(RegExp.escape(rootPath), "g"), "<root>")

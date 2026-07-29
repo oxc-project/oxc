@@ -6,13 +6,15 @@ export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textTo
   // carrying the typed `FormatConfig` + parent filepath for the Rust-side `oxc_formatter`.
   const { parser, parentParser, filepath, _oxfmtPluginOptionsJson } = textToDocOptions;
 
-  // For (j|t)s-in-xxx, default `parser` is either `babel`, `babel-ts` or `typescript`
+  // For (j|t)s-in-xxx, default `parser` is either `babel`(JS), `babel-ts` or `typescript`
   // We need to infer `SourceType::from_extension(ext)` for `oxc_formatter`.
-  // - JS: always enable JSX for js-in-xxx, it's safe
+  // - JS: always enable JSX for js-in-xxx, it's syntactically valid
   // - TS: `typescript` (ts-in-vue|markdown|mdx) or `babel-ts` (ts-in-vue(script generic="..."))
   //   - In case of ts-in-md, `filepath` is overridden as `dummy.tx(x)` to distinguish TSX or TS
-  //   - NOTE: tsx-in-vue is not supported since there is no signal from Prettier to detect it
-  //     - Prettier is using `maybeJSXRe.test(sourceText)` to detect, but it's slow!
+  //   - For tsx-in-vue (`<script lang="tsx">`), there is no signal from Prettier to detect it
+  //     - `filepath` is the parent `.vue` file, so this resolves to "ts"
+  //     - The Rust side (`text_to_doc_api::run()`) retries the failed "ts" parse as "tsx"
+  //       - avoiding Prettier's `maybeJSXRe.test(sourceText)` sniff cost on every ts-in-vue
   const isTS = parser === "typescript" || parser === "babel-ts";
   const embeddedSourceExt = isTS ? (filepath?.endsWith(".tsx") ? "tsx" : "ts") : "jsx";
 

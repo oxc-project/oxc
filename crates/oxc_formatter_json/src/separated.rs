@@ -78,9 +78,9 @@ pub fn write_separated<'a, F>(
 /// Mirrors [`write_inter_entry_separator`]'s rule applied to the final position:
 /// a block comment that sits on the same line as the last value is part of that value's trailing,
 /// so it prints before the separator (`value /* block */,`).
-/// Line comments and own-line comments stay pending for the caller's [`crate::comments::FormatTrailingInsideComments`] pass.
-/// Landing after the comma (`value, // line`) which is correct,
-/// since a line comment terminates the line.
+/// Line comments and own-line comments stay pending for the caller's [`crate::comments::FormatTrailingInsideComments`] pass;
+/// riding a `line_suffix` there, such a comment lands at the end of the printed line,
+/// i.e. after the comma (`value, // line`) correct, since a line comment terminates the line.
 ///
 /// `upper_bound` (the container's closing-delimiter position) bounds the comment scan
 /// so nested/outer comments aren't pulled in.

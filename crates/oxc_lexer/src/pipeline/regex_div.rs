@@ -1218,10 +1218,10 @@ pub(super) unsafe fn prev_is_regex(
 #[cfg(test)]
 mod tests {
     use crate::options::default_options;
-    use crate::token::token_kind as k;
+    use crate::token::TokenKind;
     use crate::{Lexer, PAD};
 
-    fn kinds_of(code: &str, ts: bool, jsx: bool) -> Vec<u8> {
+    fn kinds_of(code: &str, ts: bool, jsx: bool) -> Vec<TokenKind> {
         let mut buf = code.as_bytes().to_vec();
         let n = buf.len();
         buf.resize(n + PAD, 0);
@@ -1230,20 +1230,20 @@ mod tests {
         opts.jsx = jsx;
         let mut lx = Lexer::new();
         let count = lx.lex(&buf, n, opts);
-        lx.kinds[..count - 1].iter().copied().filter(|&kk| !crate::is_trivia(kk)).collect()
+        lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
     }
 
     #[track_caller]
     fn regex(code: &str, ts: bool) {
         let ks = kinds_of(code, ts, false);
-        assert!(ks.contains(&k::REGEXP), "expected regex in {code:?}: kinds {ks:?}");
+        assert!(ks.contains(&TokenKind::RegExp), "expected regex in {code:?}: kinds {ks:?}");
     }
 
     #[track_caller]
     fn division(code: &str, ts: bool) {
         let ks = kinds_of(code, ts, false);
-        assert!(!ks.contains(&k::REGEXP), "expected division in {code:?}: kinds {ks:?}");
-        assert!(ks.contains(&k::SLASH), "expected a `/` in {code:?}: kinds {ks:?}");
+        assert!(!ks.contains(&TokenKind::RegExp), "expected division in {code:?}: kinds {ks:?}");
+        assert!(ks.contains(&TokenKind::Slash), "expected a `/` in {code:?}: kinds {ks:?}");
     }
 
     #[track_caller]
@@ -1411,8 +1411,8 @@ mod tests {
     fn slash_dense_chains() {
         let count = |code: &str, want_re: usize, want_slash: usize| {
             let ks = kinds_of(code, false, false);
-            let re = ks.iter().filter(|&&kk| kk == k::REGEXP).count();
-            let sl = ks.iter().filter(|&&kk| kk == k::SLASH).count();
+            let re = ks.iter().filter(|&&kk| kk == TokenKind::RegExp).count();
+            let sl = ks.iter().filter(|&&kk| kk == TokenKind::Slash).count();
             assert_eq!(
                 (re, sl),
                 (want_re, want_slash),
@@ -1567,7 +1567,7 @@ mod tests {
     #[test]
     fn ts_postfix_bang_unchanged() {
         let ks = kinds_of("x! / 2;", true, false);
-        assert!(!ks.contains(&k::REGEXP), "x! / 2 must stay division: {ks:?}");
+        assert!(!ks.contains(&TokenKind::RegExp), "x! / 2 must stay division: {ks:?}");
     }
 
     #[test]
@@ -1589,9 +1589,9 @@ mod tests {
     #[test]
     fn ts_angle_close_resolved() {
         let ks = kinds_of("class C<T> {} /re/.test(x);", true, false);
-        assert!(ks.contains(&k::REGEXP), "TS class decl with type params: {ks:?}");
+        assert!(ks.contains(&TokenKind::RegExp), "TS class decl with type params: {ks:?}");
         let ks = kinds_of("x = f < T > {} / re / g;", true, false);
-        assert!(!ks.contains(&k::REGEXP), "TS relational re-read must divide: {ks:?}");
+        assert!(!ks.contains(&TokenKind::RegExp), "TS relational re-read must divide: {ks:?}");
     }
 
     #[test]
@@ -1611,31 +1611,31 @@ mod tests {
     fn jsx_operand_positions() {
         let jsx = |code: &str| kinds_of(code, false, true);
         let ks = jsx("export default <App/>;");
-        assert!(ks.contains(&k::JSX_LT), "export default <App/> must open JSX: {ks:?}");
+        assert!(ks.contains(&TokenKind::JsxLt), "export default <App/> must open JSX: {ks:?}");
         let ks = jsx("if (x) <App/>;");
-        assert!(ks.contains(&k::JSX_LT), "if (x) <App/> must open JSX: {ks:?}");
+        assert!(ks.contains(&TokenKind::JsxLt), "if (x) <App/> must open JSX: {ks:?}");
         let ks = jsx("x = a < b;");
-        assert!(!ks.contains(&k::JSX_LT), "a < b is a comparison: {ks:?}");
+        assert!(!ks.contains(&TokenKind::JsxLt), "a < b is a comparison: {ks:?}");
         let ks = jsx("f(x) < y;");
-        assert!(!ks.contains(&k::JSX_LT), "f(x) < y is a comparison: {ks:?}");
+        assert!(!ks.contains(&TokenKind::JsxLt), "f(x) < y is a comparison: {ks:?}");
         let ks = jsx("a++ < b;");
-        assert!(!ks.contains(&k::JSX_LT), "a++ < b is a comparison: {ks:?}");
+        assert!(!ks.contains(&TokenKind::JsxLt), "a++ < b is a comparison: {ks:?}");
         let ks = jsx("x = a > {} < b;");
-        assert!(!ks.contains(&k::JSX_LT), "a > {{}} < b is a comparison chain: {ks:?}");
+        assert!(!ks.contains(&TokenKind::JsxLt), "a > {{}} < b is a comparison chain: {ks:?}");
     }
 
     #[test]
     fn jsx_replay_oracle() {
         let jsx = |code: &str| kinds_of(code, false, true);
         let ks = jsx("function* items(d) { for (const x of d) yield <li id={x}/>; }");
-        assert!(ks.contains(&k::JSX_LT), "yielded JSX element must frame: {ks:?}");
+        assert!(ks.contains(&TokenKind::JsxLt), "yielded JSX element must frame: {ks:?}");
         let ks = jsx("var await = 1, max = 10;\nif (await < max) done();");
-        assert!(!ks.contains(&k::JSX_LT), "await < max is a comparison: {ks:?}");
-        assert!(ks.contains(&k::LT), "expected a plain `<`: {ks:?}");
+        assert!(!ks.contains(&TokenKind::JsxLt), "await < max is a comparison: {ks:?}");
+        assert!(ks.contains(&TokenKind::Lt), "expected a plain `<`: {ks:?}");
         let ks = jsx("async function f() { return await <Spinner/>; }");
-        assert!(ks.contains(&k::JSX_LT), "awaited JSX element must frame: {ks:?}");
+        assert!(ks.contains(&TokenKind::JsxLt), "awaited JSX element must frame: {ks:?}");
         let ks =
             jsx("var await = 1, g = 2;\nvar el = <a b={async () => await 1} c={await /2/g}/>;");
-        assert!(!ks.contains(&k::REGEXP), "container leak, expected division: {ks:?}");
+        assert!(!ks.contains(&TokenKind::RegExp), "container leak, expected division: {ks:?}");
     }
 }

@@ -145,7 +145,6 @@ fn cmp_diagnostics_for_runtime_optimization_assertion(
         .then_with(|| left.error.url.cmp(&right.error.url))
         .then_with(|| left.span.cmp(&right.span))
         .then_with(|| left.fixes.cmp_fix_sequence(&right.fixes))
-        .then_with(|| left.section_offset.cmp(&right.section_offset))
         .then_with(|| {
             left.rule.as_ref().map(|rule| (rule.plugin_name.as_ref(), rule.rule_name.as_ref())).cmp(
                 &right

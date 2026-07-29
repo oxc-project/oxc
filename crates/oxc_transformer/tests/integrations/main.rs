@@ -2,8 +2,6 @@ mod comments;
 mod enum_eval;
 mod es_target;
 mod helper_call;
-#[cfg(feature = "react_compiler")]
-mod react_compiler;
 mod targets;
 
 use std::path::Path;

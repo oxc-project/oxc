@@ -343,6 +343,12 @@ impl<C> Format<'_, C> for Space {
 // ---------------------------------------------------------------------------
 
 /// Pushes some content to the end of the current line.
+///
+/// The content is skipped by the printer's fits measurement (zero width),
+/// so the printed line may exceed the print width.
+/// Consumer crates rely on this for same-line trailing line comments,
+/// which must never cause the preceding group to break;
+/// pair with [`expand_parent`] when the suffix must force a structural break instead.
 #[inline]
 pub fn line_suffix<'a, 'ast, C, Content>(inner: &'a Content) -> LineSuffix<'a, 'ast, C>
 where
@@ -375,6 +381,11 @@ impl<C> std::fmt::Debug for LineSuffix<'_, '_, C> {
 // ---------------------------------------------------------------------------
 
 /// Inserts a boundary for line suffixes.
+///
+/// Prevents pending [`line_suffix`]es from moving past this point:
+/// the printer flushes them here, inserting a hard line break if needed.
+/// In the fits measurement, reaching a boundary while a suffix is pending counts
+/// as "does not fit" (the flush would break the line).
 pub const fn line_suffix_boundary() -> LineSuffixBoundary {
     LineSuffixBoundary
 }

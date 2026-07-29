@@ -61,6 +61,7 @@ pnpm-lock.yaml
 /crates/oxc_codegen @dunqing
 /crates/oxc_napi @dunqing
 /napi/transform @dunqing
+/napi/transform-react @dunqing
 /napi/minify @dunqing
 /npm/runtime @dunqing
 /tasks/transform_conformance @dunqing

@@ -37,7 +37,9 @@
 //!
 //! **Implementation**:
 //! 1. Calls `get_trailing_comments()` with node context to determine ownership
-//! 2. Uses line suffixes to prevent comments from interfering with code layout
+//! 2. Defers same-line trailing LINE comments via `line_suffix`
+//!    (excluded from the printer's fits measurement, so they never count toward the print width);
+//!    same-line trailing BLOCK comments print inline and DO count
 //! 3. Handles complex spacing rules for different comment types
 //! 4. Advances cursor after processing each comment
 //!

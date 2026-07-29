@@ -20,10 +20,6 @@ fn no_control_regex_diagnostic(control_chars: &[Character]) -> OxcDiagnostic {
                         "'{ch}' is a control character. It looks like a backreference, but there is no corresponding capture group."
                     )
                 }
-                CharacterKind::Null => {
-                    "'\\0' matches the null character (U+0000), which is a control character."
-                        .to_string()
-                }
                 _ => {
                     // Show the code point since the character itself is not printable
                     let ch = format!("U+{:04X}", ch.value);
@@ -81,6 +77,7 @@ declare_oxc_lint!(
     /// var pattern6 = new RegExp("\x20");
     /// var pattern7 = new RegExp("\\t");
     /// var pattern8 = new RegExp("\\n");
+    /// var pattern9 = /\0/;
     /// ```
     NoControlRegex,
     eslint,
@@ -138,7 +135,7 @@ impl<'a> Visit<'a> for ControlCharacterFinder<'a> {
 
     fn visit_character(&mut self, ch: &Character) {
         // Control characters are in the range 0x00 to 0x1F
-        if ch.value <= 0x1F {
+        if ch.value <= 0x1F && ch.kind != CharacterKind::Null {
             let text: &str = ch.span.source_text(self.source_text);
             let is_code_point_match = text
                 .trim_start_matches('\\')
@@ -237,14 +234,11 @@ mod tests {
             r#"const filename = /filename[^;=\n]=((['"]).?\2|[^;\n]*)/;"#,
             r"const r = /([a-z])\1/;",
             r"const r = /\1([a-z])/;",
-        ];
-
-        let fail = vec![
             r"const r = /\0/;",
-            r"const r = /[a-z]\1/;",
-            r"const r = /([a-z])\2/;",
             r"const r = /([a-z])\0/;",
         ];
+
+        let fail = vec![r"const r = /[a-z]\1/;", r"const r = /([a-z])\2/;"];
 
         Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail)
             .with_snapshot_suffix("capture-group-indexing")
@@ -281,6 +275,9 @@ mod tests {
             r"/^expected `string`\.\n {2}in Foo \(at (.*)[/\\]debug[/\\]test[/\\]browser[/\\]debug\.test\.js:[0-9]+\)$/",
             r"/\f/",
             r"/\v/",
+            // https://github.com/oxc-project/oxc/issues/25024
+            r"/\0\t\n\r/;",
+            r"new RegExp('\\0')", // the pattern contains a `\0` escape
         ];
 
         let fail = vec![
@@ -291,6 +288,7 @@ mod tests {
             "var regex = new RegExp('\\x1f\\x1e')",
             "var regex = new RegExp('\\x1fFOO\\x00')",
             "var regex = new RegExp('FOO\\x1fFOO\\x1f')",
+            "new RegExp('\\0')", // the pattern contains a literal U+0000 character
             "var regex = RegExp('\\x1f')",
             "var regex = /(?<a>\\x1f)/",
             r"var regex = /(?<\u{1d49c}>.)\x1f/",
