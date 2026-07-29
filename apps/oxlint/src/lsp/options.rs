@@ -296,7 +296,10 @@ impl TryFrom<Value> for LintOptions {
 mod test {
     use serde_json::json;
 
-    use super::{LintOptions, RuleCustomizationSeverity, Run, UnusedDisableDirectives};
+    use super::{
+        LintOptions, RuleCustomizationSeverity, Run, SuppressedViolationSeverity,
+        UnusedDisableDirectives,
+    };
 
     #[test]
     fn test_valid_options_json() {
@@ -307,6 +310,8 @@ mod test {
             "typeAware": true,
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix",
+            "showSuppressedViolations": false,
+            "suppressedViolationSeverity": "hint",
             "rulesCustomization": {
                 "no-unused-vars": {
                     "severity": "error",
@@ -325,6 +330,11 @@ mod test {
         assert_eq!(options.type_aware, Some(true));
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
+        assert!(!options.should_show_suppressed_violations());
+        assert_eq!(
+            options.suppressed_violation_severity,
+            SuppressedViolationSeverity::Hint
+        );
 
         assert!(options.rules_customization.is_some());
         let rules_customization = options.rules_customization.unwrap();
@@ -349,6 +359,11 @@ mod test {
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFixOrSuggestion);
         assert!(options.rules_customization.is_none());
+        assert!(options.should_show_suppressed_violations());
+        assert_eq!(
+            options.suppressed_violation_severity,
+            SuppressedViolationSeverity::Original
+        );
     }
 
     #[test]
