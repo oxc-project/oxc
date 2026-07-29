@@ -437,10 +437,19 @@ impl Lanes {
 
         let s_ = (start as usize).min(sl);
         let mut q = s_;
-        while q > 0 && is_lex_ws(src[q - 1]) {
+        let pre = loop {
+            if q == 0 {
+                break true;
+            }
+            let b = src[q - 1];
+            if b == b'\n' || b == b'\r' {
+                break true;
+            }
+            if !is_lex_ws(b) {
+                break false;
+            }
             q -= 1;
-        }
-        let pre = q == 0 || src[q..s_].iter().any(|&b| b == b'\n' || b == b'\r');
+        };
         c.set_preceded_by_newline(pre);
 
         if !blk {
