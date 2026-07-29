@@ -161,7 +161,7 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
     ],
-    optionSets: [{ printWidth: 80 }, { printWith: 100 }],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
     notes: {},
   },
   {

@@ -175,7 +175,7 @@
 ### Option 2: 4/5 (80.00%)
 
 ```json
-{"printWith":100}
+{"printWidth":100}
 ```
 
 | File | Note |
