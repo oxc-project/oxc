@@ -86,10 +86,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `ImportMeta`
-                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -197,10 +197,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `ImportMeta`
-                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -272,10 +272,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `ImportMeta`
-                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -333,6 +333,16 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_arguments(&it.arguments);
     }
 
+    #[inline(always)]
+    fn visit_import_meta(&mut self, it: &ImportMeta) {
+        // Struct does not contain a scope. Halt traversal.
+    }
+
+    #[inline(always)]
+    fn visit_new_target(&mut self, it: &NewTarget) {
+        // Struct does not contain a scope. Halt traversal.
+    }
+
     #[inline]
     fn visit_spread_element(&mut self, it: &SpreadElement<'a>) {
         self.visit_expression(&it.argument);
@@ -386,10 +396,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `ImportMeta`
-                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -777,10 +787,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `ImportMeta`
-                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -977,6 +987,76 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_function_body(&mut self, it: &FunctionBody<'a>) {
         self.visit_statements(&it.statements);
+    }
+
+    fn visit_arrow_function_body(&mut self, it: &ArrowFunctionBody<'a>) {
+        match it {
+            ArrowFunctionBody::FunctionBody(it) => self.visit_function_body(it),
+            ArrowFunctionBody::TemplateLiteral(it) => self.visit_template_literal(it),
+            ArrowFunctionBody::ArrayExpression(it) => self.visit_array_expression(it),
+            ArrowFunctionBody::ArrowFunctionExpression(it) => {
+                self.visit_arrow_function_expression(it)
+            }
+            ArrowFunctionBody::AssignmentExpression(it) => self.visit_assignment_expression(it),
+            ArrowFunctionBody::AwaitExpression(it) => self.visit_await_expression(it),
+            ArrowFunctionBody::BinaryExpression(it) => self.visit_binary_expression(it),
+            ArrowFunctionBody::CallExpression(it) => self.visit_call_expression(it),
+            ArrowFunctionBody::ChainExpression(it) => self.visit_chain_expression(it),
+            ArrowFunctionBody::ClassExpression(it) => self.visit_class(it),
+            ArrowFunctionBody::ConditionalExpression(it) => self.visit_conditional_expression(it),
+            ArrowFunctionBody::FunctionExpression(it) => {
+                let flags = ScopeFlags::Function;
+                self.visit_function(it, flags)
+            }
+            ArrowFunctionBody::ImportExpression(it) => self.visit_import_expression(it),
+            ArrowFunctionBody::LogicalExpression(it) => self.visit_logical_expression(it),
+            ArrowFunctionBody::NewExpression(it) => self.visit_new_expression(it),
+            ArrowFunctionBody::ObjectExpression(it) => self.visit_object_expression(it),
+            ArrowFunctionBody::ParenthesizedExpression(it) => {
+                self.visit_parenthesized_expression(it)
+            }
+            ArrowFunctionBody::SequenceExpression(it) => self.visit_sequence_expression(it),
+            ArrowFunctionBody::TaggedTemplateExpression(it) => {
+                self.visit_tagged_template_expression(it)
+            }
+            ArrowFunctionBody::UnaryExpression(it) => self.visit_unary_expression(it),
+            ArrowFunctionBody::UpdateExpression(it) => self.visit_update_expression(it),
+            ArrowFunctionBody::YieldExpression(it) => self.visit_yield_expression(it),
+            ArrowFunctionBody::PrivateInExpression(it) => self.visit_private_in_expression(it),
+            ArrowFunctionBody::JSXElement(it) => self.visit_jsx_element(it),
+            ArrowFunctionBody::JSXFragment(it) => self.visit_jsx_fragment(it),
+            ArrowFunctionBody::TSAsExpression(it) => self.visit_ts_as_expression(it),
+            ArrowFunctionBody::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
+            ArrowFunctionBody::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            ArrowFunctionBody::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
+            ArrowFunctionBody::TSInstantiationExpression(it) => {
+                self.visit_ts_instantiation_expression(it)
+            }
+            ArrowFunctionBody::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
+            ArrowFunctionBody::ComputedMemberExpression(it) => {
+                self.visit_computed_member_expression(it)
+            }
+            ArrowFunctionBody::StaticMemberExpression(it) => {
+                self.visit_static_member_expression(it)
+            }
+            ArrowFunctionBody::PrivateFieldExpression(it) => {
+                self.visit_private_field_expression(it)
+            }
+            _ => {
+                // Remaining variants do not contain scopes:
+                // `BooleanLiteral`
+                // `NullLiteral`
+                // `NumericLiteral`
+                // `BigIntLiteral`
+                // `RegExpLiteral`
+                // `StringLiteral`
+                // `Identifier`
+                // `Super`
+                // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
+            }
+        }
     }
 
     #[inline]
@@ -1225,10 +1305,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `ImportMeta`
-                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -1386,10 +1466,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `ImportMeta`
-                // `NewTarget`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
