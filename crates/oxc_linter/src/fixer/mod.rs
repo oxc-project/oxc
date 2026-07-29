@@ -1,35 +1,29 @@
-use std::borrow::Cow;
-
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::OxcCode;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SourceType, Span};
-
-/// Identifies the lint rule that produced a [`Message`].
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MessageRule {
-    /// Canonical plugin name, like `react`, `jsx-a11y`, `typescript`, etc.
-    pub plugin_name: Cow<'static, str>,
-    /// Canonical rule name: like `no-unused-vars` or `no-floating-promises`
-    pub rule_name: Cow<'static, str>,
-}
-
-impl MessageRule {
-    /// Returns the canonical name of the rule in the format `{plugin}/{rule}`. Omits
-    /// the plugin name for core rules (like `no-undef` instead of `eslint/no-undef`).
-    pub fn short_canonical_name(&self) -> String {
-        if self.plugin_name == "eslint" {
-            return self.rule_name.to_string();
-        }
-
-        format!("{}/{}", self.plugin_name, self.rule_name)
-    }
-}
+use std::borrow::Cow;
 
 use crate::LintContext;
 
 mod disable_fix;
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
+
+pub fn oxc_code_short_canonical_name(code: &OxcCode) -> Option<String> {
+    let Some(scope) = &code.scope else {
+        return None;
+    };
+    let Some(number) = &code.number else {
+        return None;
+    };
+
+    if scope == "eslint" {
+        return Some(number.to_string());
+    }
+
+    Some(format!("{scope}/{number}"))
+}
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -267,9 +261,6 @@ pub struct Message {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
     pub span: Span,
-    fixed: bool,
-    /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
-    pub rule: Option<MessageRule>,
 }
 
 impl Message {
@@ -282,13 +273,7 @@ impl Message {
             .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, rule: None }
-    }
-
-    #[must_use]
-    pub fn with_rule(mut self, rule: MessageRule) -> Self {
-        self.rule = Some(rule);
-        self
+        Self { error, fixes, span }
     }
 
     /// move the offset of all spans to the right
@@ -388,7 +373,7 @@ impl<'a> Fixer<'a> {
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
 
-        for mut m in self.messages {
+        for m in self.messages {
             let fix = match &m.fixes {
                 PossibleFixes::None => None,
                 PossibleFixes::Single(fix) => Some(fix),
@@ -419,7 +404,6 @@ impl<'a> Fixer<'a> {
                 continue;
             }
 
-            m.fixed = true;
             fixed = true;
             let offset = last_pos as usize;
             output.push_str(&source_text[offset..start as usize]);

@@ -2076,6 +2076,11 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
+    pub fn is_parent_of_arrow_function_body(self) -> bool {
+        matches!(self, Self::ArrowFunctionExpressionBody(_))
+    }
+
+    #[inline]
     pub fn is_parent_of_class_element(self) -> bool {
         matches!(self, Self::ClassBodyBody(_))
     }
@@ -8644,8 +8649,6 @@ pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_NODE_ID: usize =
     offset_of!(ArrowFunctionExpression, node_id);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN: usize =
     offset_of!(ArrowFunctionExpression, span);
-pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION: usize =
-    offset_of!(ArrowFunctionExpression, expression);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC: usize =
     offset_of!(ArrowFunctionExpression, r#async);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS: usize =
@@ -8687,14 +8690,6 @@ impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn expression(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
-                as *const bool)
-        }
-    }
-
-    #[inline]
     pub fn r#async(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
@@ -8718,10 +8713,10 @@ impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn body(self) -> &'t ArenaBox<'a, FunctionBody<'a>> {
+    pub fn body(self) -> &'t ArrowFunctionBody<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-                as *const ArenaBox<'a, FunctionBody<'a>>)
+                as *const ArrowFunctionBody<'a>)
         }
     }
 
@@ -8779,14 +8774,6 @@ impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
     }
 
     #[inline]
-    pub fn expression(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
-                as *const bool)
-        }
-    }
-
-    #[inline]
     pub fn r#async(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
@@ -8810,10 +8797,10 @@ impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
     }
 
     #[inline]
-    pub fn body(self) -> &'t ArenaBox<'a, FunctionBody<'a>> {
+    pub fn body(self) -> &'t ArrowFunctionBody<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-                as *const ArenaBox<'a, FunctionBody<'a>>)
+                as *const ArrowFunctionBody<'a>)
         }
     }
 
@@ -8871,14 +8858,6 @@ impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
     }
 
     #[inline]
-    pub fn expression(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
-                as *const bool)
-        }
-    }
-
-    #[inline]
     pub fn r#async(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
@@ -8902,10 +8881,10 @@ impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
     }
 
     #[inline]
-    pub fn body(self) -> &'t ArenaBox<'a, FunctionBody<'a>> {
+    pub fn body(self) -> &'t ArrowFunctionBody<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-                as *const ArenaBox<'a, FunctionBody<'a>>)
+                as *const ArrowFunctionBody<'a>)
         }
     }
 
@@ -8959,14 +8938,6 @@ impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn expression(self) -> &'t bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
-                as *const bool)
         }
     }
 

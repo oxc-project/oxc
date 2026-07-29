@@ -3969,6 +3969,61 @@ impl BindingPattern<'_> {
     }
 }
 
+impl ArrowFunctionBody<'_> {
+    /// Get [`NodeId`] of [`ArrowFunctionBody`].
+    // `#[inline(always)]` because this should boil down to a single instruction.
+    #[inline(always)]
+    pub fn node_id(&self) -> NodeId {
+        match self {
+            Self::FunctionBody(it) => it.node_id(),
+            Self::BooleanLiteral(it) => it.node_id(),
+            Self::NullLiteral(it) => it.node_id(),
+            Self::NumericLiteral(it) => it.node_id(),
+            Self::BigIntLiteral(it) => it.node_id(),
+            Self::RegExpLiteral(it) => it.node_id(),
+            Self::StringLiteral(it) => it.node_id(),
+            Self::TemplateLiteral(it) => it.node_id(),
+            Self::Identifier(it) => it.node_id(),
+            Self::Super(it) => it.node_id(),
+            Self::ArrayExpression(it) => it.node_id(),
+            Self::ArrowFunctionExpression(it) => it.node_id(),
+            Self::AssignmentExpression(it) => it.node_id(),
+            Self::AwaitExpression(it) => it.node_id(),
+            Self::BinaryExpression(it) => it.node_id(),
+            Self::CallExpression(it) => it.node_id(),
+            Self::ChainExpression(it) => it.node_id(),
+            Self::ClassExpression(it) => it.node_id(),
+            Self::ConditionalExpression(it) => it.node_id(),
+            Self::FunctionExpression(it) => it.node_id(),
+            Self::ImportExpression(it) => it.node_id(),
+            Self::LogicalExpression(it) => it.node_id(),
+            Self::NewExpression(it) => it.node_id(),
+            Self::ObjectExpression(it) => it.node_id(),
+            Self::ParenthesizedExpression(it) => it.node_id(),
+            Self::SequenceExpression(it) => it.node_id(),
+            Self::TaggedTemplateExpression(it) => it.node_id(),
+            Self::ThisExpression(it) => it.node_id(),
+            Self::UnaryExpression(it) => it.node_id(),
+            Self::UpdateExpression(it) => it.node_id(),
+            Self::YieldExpression(it) => it.node_id(),
+            Self::PrivateInExpression(it) => it.node_id(),
+            Self::ImportMeta(it) => it.node_id(),
+            Self::NewTarget(it) => it.node_id(),
+            Self::JSXElement(it) => it.node_id(),
+            Self::JSXFragment(it) => it.node_id(),
+            Self::TSAsExpression(it) => it.node_id(),
+            Self::TSSatisfiesExpression(it) => it.node_id(),
+            Self::TSTypeAssertion(it) => it.node_id(),
+            Self::TSNonNullExpression(it) => it.node_id(),
+            Self::TSInstantiationExpression(it) => it.node_id(),
+            Self::V8IntrinsicExpression(it) => it.node_id(),
+            Self::ComputedMemberExpression(it) => it.node_id(),
+            Self::StaticMemberExpression(it) => it.node_id(),
+            Self::PrivateFieldExpression(it) => it.node_id(),
+        }
+    }
+}
+
 impl ClassElement<'_> {
     /// Get [`NodeId`] of [`ClassElement`].
     // `#[inline(always)]` because this should boil down to a single instruction.

@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{Expression, IdentifierReference, Statement},
 };
 use oxc_cfg::{
     BlockNodeId, EdgeType, ErrorEdgeKind, EvalConstConditionResult, Instruction, InstructionKind,
@@ -11,8 +11,12 @@ use oxc_cfg::{
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{
+    GlobalContext,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects},
+};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
+use oxc_semantic::{IsGlobalReference, NodeId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -458,18 +462,82 @@ fn explicit_error_edge_can_throw(block_id: BlockNodeId, ctx: &LintContext<'_>) -
             | InstructionKind::Continue(_)
             | InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
             | InstructionKind::ImplicitReturn
-            | InstructionKind::Unreachable => return false,
+            | InstructionKind::Unreachable => return can_throw,
             InstructionKind::Throw
+            | InstructionKind::Iteration(_)
             | InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
                 return true;
             }
-            InstructionKind::Statement
-            | InstructionKind::Condition
-            | InstructionKind::Iteration(_) => can_throw = true,
+            InstructionKind::Statement | InstructionKind::Condition => {
+                can_throw |= instruction
+                    .node_id
+                    .is_some_and(|node_id| ast_node_can_throw(ctx.nodes().kind(node_id), ctx));
+            }
         }
     }
 
     can_throw
+}
+
+fn ast_node_can_throw<'a>(node: AstKind<'a>, ctx: &LintContext<'a>) -> bool {
+    let ctx = NoUnreachableLoopSideEffectsContext { ctx };
+    match node {
+        AstKind::ExpressionStatement(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::VariableDeclaration(e) => e.may_have_side_effects(&ctx),
+        AstKind::IdentifierReference(e) => e.may_have_side_effects(&ctx),
+        AstKind::TemplateLiteral(e) => e.may_have_side_effects(&ctx),
+        AstKind::TaggedTemplateExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::ComputedMemberExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::StaticMemberExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::ArrayExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::Class(e) => e.may_have_side_effects(&ctx),
+        AstKind::CallExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::NewExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::UnaryExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::BinaryExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::LogicalExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::AssignmentExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::UpdateExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::SequenceExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::ParenthesizedExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSAsExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSSatisfiesExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSTypeAssertion(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSNonNullExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSInstantiationExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) | AstKind::AwaitExpression(_) => {
+            true
+        }
+        _ => false,
+    }
+}
+
+struct NoUnreachableLoopSideEffectsContext<'c, 'a> {
+    ctx: &'c LintContext<'a>,
+}
+
+impl<'a> GlobalContext<'a> for NoUnreachableLoopSideEffectsContext<'_, 'a> {
+    fn is_global_reference(&self, reference: &IdentifierReference<'a>) -> bool {
+        reference.is_global_reference(self.ctx.scoping())
+    }
+}
+
+impl<'a> MayHaveSideEffectsContext<'a> for NoUnreachableLoopSideEffectsContext<'_, 'a> {
+    fn annotations(&self) -> bool {
+        false
+    }
+
+    fn manual_pure_functions(&self, _callee: &Expression) -> bool {
+        false
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        PropertyReadSideEffects::All
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        true
+    }
 }
 
 fn is_static_infinite_loop_exit(block_id: BlockNodeId, ctx: &LintContext<'_>) -> bool {
@@ -927,6 +995,17 @@ fn test() {
             Some(serde_json::json!([{ "ignore": ["ForInStatement", "ForOfStatement"] }])),
         )
             .into(),
+        (
+            "function foo() { for (let i = 0; i <= 3; i++) { try { bar(); return; } catch (error) {} } }",
+            None,
+        )
+            .into(),
+        (
+            "function f() { while (a) { try { if (mayThrow()) {} return; } catch { continue; } } }",
+            None,
+        )
+        .into(),
+        ("while (a) { try { for (const x of iterable) {} return; } catch { continue; } }", None).into()
     ]);
 
     let mut fail = Vec::<TestCase>::new();
@@ -938,6 +1017,9 @@ fn test() {
         }
     }
     fail.extend([
+        ("function f() { while (a) { try { ; return; } catch { continue; } } }", None).into(),
+        ("function f() { while (a) { try { let value = 1; return; } catch { continue; } } }", None)
+            .into(),
         ("while (foo) { for (a of b) { if (baz) { break; } else { throw err; } } }", None)
             .into(),
         (

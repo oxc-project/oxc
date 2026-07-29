@@ -1,6 +1,7 @@
-pub mod return_checker;
-
 use std::borrow::Cow;
+
+use serde::Deserialize;
+use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
@@ -10,16 +11,17 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
-use self::return_checker::{StatementReturnStatus, check_function_body, is_void_arrow_return};
 use crate::{
     AstNode,
     ast_util::{get_enclosing_function, outermost_paren},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
+
+pub mod return_checker;
+
+use self::return_checker::{StatementReturnStatus, check_function_body};
 
 #[derive(Debug, Clone, Copy)]
 enum MissingReturnHint {
@@ -173,18 +175,25 @@ impl Rule for ArrayCallbackReturn {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, always_explicit_return, is_async_empty) = match node.kind() {
+        let (function_body, concise_expression, always_explicit_return, is_async_empty) = match node
+            .kind()
+        {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
-            AstKind::ArrowFunctionExpression(arrow) => (
-                &arrow.body,
-                arrow.r#async || arrow.expression,
-                arrow.r#async && arrow.body.statements.is_empty(),
-            ),
+            AstKind::ArrowFunctionExpression(arrow) => {
+                let function_body = arrow.get_function_body();
+                (
+                    function_body,
+                    arrow.get_expression(),
+                    arrow.r#async || arrow.is_expression(),
+                    arrow.r#async && function_body.is_some_and(|body| body.statements.is_empty()),
+                )
+            }
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
                     (
-                        body,
+                        Some(body.as_ref()),
+                        None,
                         function.r#async || function.generator,
                         function.r#async && body.statements.is_empty(),
                     )
@@ -207,10 +216,16 @@ impl Rule for ArrayCallbackReturn {
                 ("forEach", false, _, _) => (),
                 ("forEach", true, false, _) => {
                     if return_status.may_return_explicit() {
-                        let return_spans = return_checker::get_explicit_return_spans(function_body)
-                            .into_iter()
-                            .next()
-                            .unwrap_or_else(|| function_body.span());
+                        let return_spans = concise_expression.map_or_else(
+                            || {
+                                let function_body = function_body.unwrap();
+                                return_checker::get_explicit_return_spans(function_body)
+                                    .into_iter()
+                                    .next()
+                                    .unwrap_or_else(|| function_body.span())
+                            },
+                            GetSpan::span,
+                        );
 
                         ctx.diagnostic(expect_no_return(
                             &full_array_method_name(array_method),
@@ -224,9 +239,20 @@ impl Rule for ArrayCallbackReturn {
                         return;
                     }
 
-                    if is_void_arrow_return(&function_body.statements) {
+                    if concise_expression.is_some_and(Expression::is_void) {
                         return;
                     }
+
+                    if let Some(expression) = concise_expression {
+                        ctx.diagnostic(expect_void_return(
+                            &full_array_method_name(array_method),
+                            array_method_span,
+                            expression.span(),
+                        ));
+                        return;
+                    }
+
+                    let function_body = function_body.unwrap();
 
                     let (return_spans, has_void) =
                         return_checker::get_no_voided_return_spans(function_body, self.allow_void);
@@ -251,7 +277,7 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
-                            function_body,
+                            function_body.unwrap(),
                             self.allow_implicit,
                         ));
                     }
@@ -261,7 +287,7 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
-                            function_body,
+                            function_body.unwrap(),
                             self.allow_implicit,
                         ));
                     }
@@ -271,7 +297,7 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
-                            function_body,
+                            function_body.unwrap(),
                             self.allow_implicit,
                         ));
                     }

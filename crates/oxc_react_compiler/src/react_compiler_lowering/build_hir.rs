@@ -149,7 +149,20 @@ fn statement_end(stmt: &oxc::Statement) -> Option<u32> {
     Some(stmt.span().end)
 }
 
-/// Collect binding names from a pattern that are declared in the given scope.
+/// Resolve a declaration identifier to its symbol.
+///
+/// Prefer the identifier's semantic identity because function and catch bodies
+/// may store direct lexical declarations in a child block scope. Fall back to
+/// the current scope's binding map if semantic identity is unavailable.
+fn resolve_declared_binding(
+    id: &oxc::BindingIdentifier,
+    scope_id: ScopeId,
+    scope: &ScopeResolver<'_, '_>,
+) -> Option<SymbolId> {
+    id.symbol_id.get().or_else(|| scope.get_binding(scope_id, id.name.as_str()))
+}
+
+/// Collect symbols declared by a binding pattern.
 fn collect_binding_names_from_pattern(
     pattern: &oxc::BindingPattern,
     scope_id: ScopeId,
@@ -158,7 +171,7 @@ fn collect_binding_names_from_pattern(
 ) {
     match pattern {
         oxc::BindingPattern::BindingIdentifier(id) => {
-            if let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str()) {
+            if let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope) {
                 out.insert(symbol_id);
             }
         }
@@ -482,7 +495,7 @@ fn lower_block_statement_inner<'a>(
         match body_stmt {
             oxc::Statement::FunctionDeclaration(func) => {
                 if let Some(id) = &func.id
-                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                    && let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope)
                 {
                     declared.insert(symbol_id);
                 }
@@ -494,7 +507,7 @@ fn lower_block_statement_inner<'a>(
             }
             oxc::Statement::ClassDeclaration(cls) => {
                 if let Some(id) = &cls.id
-                    && let Some(symbol_id) = scope.get_binding(scope_id, id.name.as_str())
+                    && let Some(symbol_id) = resolve_declared_binding(id, scope_id, scope)
                 {
                     declared.insert(symbol_id);
                 }
@@ -550,16 +563,10 @@ pub fn lower<'a>(
             )
         }
         FunctionNode::Arrow(arrow) => {
-            let body = if arrow.expression {
-                match arrow.body.statements.first() {
-                    Some(oxc::Statement::ExpressionStatement(es)) => {
-                        FunctionBody::Expression(&es.expression)
-                    }
-                    _ => FunctionBody::Block(arrow.body.as_ref()),
-                }
-            } else {
-                FunctionBody::Block(arrow.body.as_ref())
-            };
+            let body = arrow.get_expression().map_or_else(
+                || FunctionBody::Block(arrow.get_function_body().unwrap()),
+                FunctionBody::Expression,
+            );
             (arrow.params.as_ref(), body, false, arrow.r#async, arrow.span, None)
         }
     };
@@ -2936,16 +2943,10 @@ fn lower_function<'a>(
     // Extract function parts from the AST node
     let (params, body, id, generator, is_async, func_span) = match func {
         FunctionNode::Arrow(arrow) => {
-            let body = if arrow.expression {
-                match arrow.body.statements.first() {
-                    Some(oxc::Statement::ExpressionStatement(es)) => {
-                        FunctionBody::Expression(&es.expression)
-                    }
-                    _ => FunctionBody::Block(arrow.body.as_ref()),
-                }
-            } else {
-                FunctionBody::Block(arrow.body.as_ref())
-            };
+            let body = arrow.get_expression().map_or_else(
+                || FunctionBody::Block(arrow.get_function_body().unwrap()),
+                FunctionBody::Expression,
+            );
             (arrow.params.as_ref(), body, None, false, arrow.r#async, arrow.span)
         }
         FunctionNode::Function(f) => {
@@ -4985,22 +4986,19 @@ fn collect_fbt_sub_tags_from_expr(
             );
         }
         oxc::Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                if let Some(oxc::Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                {
-                    collect_fbt_sub_tags_from_expr(
-                        builder,
-                        &es.expression,
-                        tag_name,
-                        enum_spans,
-                        plural_spans,
-                        pronoun_spans,
-                    );
-                }
+            if let Some(expression) = arrow.get_expression() {
+                collect_fbt_sub_tags_from_expr(
+                    builder,
+                    expression,
+                    tag_name,
+                    enum_spans,
+                    plural_spans,
+                    pronoun_spans,
+                );
             } else {
                 collect_fbt_sub_tags_from_stmts(
                     builder,
-                    &arrow.body.statements,
+                    &arrow.get_function_body().unwrap().statements,
                     tag_name,
                     enum_spans,
                     plural_spans,
@@ -5451,15 +5449,10 @@ fn is_reorderable_expression(
             }
         }
         oxc::Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                match arrow.body.statements.first() {
-                    Some(oxc::Statement::ExpressionStatement(es)) => {
-                        is_reorderable_expression(builder, &es.expression, false)
-                    }
-                    _ => arrow.body.statements.is_empty(),
-                }
+            if let Some(expression) = arrow.get_expression() {
+                is_reorderable_expression(builder, expression, false)
             } else {
-                arrow.body.statements.is_empty()
+                arrow.get_function_body().unwrap().statements.is_empty()
             }
         }
         oxc::Expression::CallExpression(call) => {

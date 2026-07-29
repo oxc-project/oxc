@@ -65,7 +65,8 @@ pub struct TransformOptions {
     #[napi(ts_type = "'client' | 'ssr' | 'lint'")]
     pub output_mode: Option<String>,
 
-    /// ESLint rule names whose suppressions opt a function out of compilation.
+    /// ESLint rule names whose suppressions opt a function out of compilation when
+    /// hooks usage or exhaustive memoization dependency validation is disabled.
     pub eslint_suppression_rules: Option<Vec<String>>,
 
     /// Treat Flow suppression comments as opt-outs.

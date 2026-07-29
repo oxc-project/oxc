@@ -310,15 +310,9 @@ impl<'a> ClassProperties<'a> {
             ),
             ctx,
         );
-        let body = ArenaVec::from_value_in(
-            Statement::new_expression_statement(SPAN, body_exprs, ctx),
-            ctx,
-        );
-
         // `(..._args) => (super(..._args), <inits>, this)`
         let super_func = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
-            true,
             false,
             None,
             {
@@ -334,7 +328,7 @@ impl<'a> ClassProperties<'a> {
                 )
             },
             None,
-            FunctionBody::boxed(SPAN, [], body, ctx),
+            ArrowFunctionBody::from(body_exprs),
             super_func_scope_id,
             false,
             false,

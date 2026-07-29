@@ -2259,6 +2259,148 @@ function walkFunctionBody(pos, ast, visitors) {
   if (exit !== null) exit(node);
 }
 
+function walkArrowFunctionBody(pos, ast, visitors) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      walkBoxBooleanLiteral(pos + 8, ast, visitors);
+      return;
+    case 1:
+      walkBoxNullLiteral(pos + 8, ast, visitors);
+      return;
+    case 2:
+      walkBoxNumericLiteral(pos + 8, ast, visitors);
+      return;
+    case 3:
+      walkBoxBigIntLiteral(pos + 8, ast, visitors);
+      return;
+    case 4:
+      walkBoxRegExpLiteral(pos + 8, ast, visitors);
+      return;
+    case 5:
+      walkBoxStringLiteral(pos + 8, ast, visitors);
+      return;
+    case 6:
+      walkBoxTemplateLiteral(pos + 8, ast, visitors);
+      return;
+    case 7:
+      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      return;
+    case 8:
+      walkBoxSuper(pos + 8, ast, visitors);
+      return;
+    case 9:
+      walkBoxArrayExpression(pos + 8, ast, visitors);
+      return;
+    case 10:
+      walkBoxArrowFunctionExpression(pos + 8, ast, visitors);
+      return;
+    case 11:
+      walkBoxAssignmentExpression(pos + 8, ast, visitors);
+      return;
+    case 12:
+      walkBoxAwaitExpression(pos + 8, ast, visitors);
+      return;
+    case 13:
+      walkBoxBinaryExpression(pos + 8, ast, visitors);
+      return;
+    case 14:
+      walkBoxCallExpression(pos + 8, ast, visitors);
+      return;
+    case 15:
+      walkBoxChainExpression(pos + 8, ast, visitors);
+      return;
+    case 16:
+      walkBoxClass(pos + 8, ast, visitors);
+      return;
+    case 17:
+      walkBoxConditionalExpression(pos + 8, ast, visitors);
+      return;
+    case 18:
+      walkBoxFunction(pos + 8, ast, visitors);
+      return;
+    case 19:
+      walkBoxImportExpression(pos + 8, ast, visitors);
+      return;
+    case 20:
+      walkBoxLogicalExpression(pos + 8, ast, visitors);
+      return;
+    case 21:
+      walkBoxNewExpression(pos + 8, ast, visitors);
+      return;
+    case 22:
+      walkBoxObjectExpression(pos + 8, ast, visitors);
+      return;
+    case 23:
+      walkBoxParenthesizedExpression(pos + 8, ast, visitors);
+      return;
+    case 24:
+      walkBoxSequenceExpression(pos + 8, ast, visitors);
+      return;
+    case 25:
+      walkBoxTaggedTemplateExpression(pos + 8, ast, visitors);
+      return;
+    case 26:
+      walkBoxThisExpression(pos + 8, ast, visitors);
+      return;
+    case 27:
+      walkBoxUnaryExpression(pos + 8, ast, visitors);
+      return;
+    case 28:
+      walkBoxUpdateExpression(pos + 8, ast, visitors);
+      return;
+    case 29:
+      walkBoxYieldExpression(pos + 8, ast, visitors);
+      return;
+    case 30:
+      walkBoxPrivateInExpression(pos + 8, ast, visitors);
+      return;
+    case 31:
+      walkBoxImportMeta(pos + 8, ast, visitors);
+      return;
+    case 32:
+      walkBoxNewTarget(pos + 8, ast, visitors);
+      return;
+    case 33:
+      walkBoxJSXElement(pos + 8, ast, visitors);
+      return;
+    case 34:
+      walkBoxJSXFragment(pos + 8, ast, visitors);
+      return;
+    case 35:
+      walkBoxTSAsExpression(pos + 8, ast, visitors);
+      return;
+    case 36:
+      walkBoxTSSatisfiesExpression(pos + 8, ast, visitors);
+      return;
+    case 37:
+      walkBoxTSTypeAssertion(pos + 8, ast, visitors);
+      return;
+    case 38:
+      walkBoxTSNonNullExpression(pos + 8, ast, visitors);
+      return;
+    case 39:
+      walkBoxTSInstantiationExpression(pos + 8, ast, visitors);
+      return;
+    case 40:
+      walkBoxV8IntrinsicExpression(pos + 8, ast, visitors);
+      return;
+    case 48:
+      walkBoxComputedMemberExpression(pos + 8, ast, visitors);
+      return;
+    case 49:
+      walkBoxStaticMemberExpression(pos + 8, ast, visitors);
+      return;
+    case 50:
+      walkBoxPrivateFieldExpression(pos + 8, ast, visitors);
+      return;
+    case 64:
+      walkBoxFunctionBody(pos + 8, ast, visitors);
+      return;
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ArrowFunctionBody`);
+  }
+}
+
 function walkArrowFunctionExpression(pos, ast, visitors) {
   const enterExit = visitors[95];
   let node,
@@ -2273,7 +2415,7 @@ function walkArrowFunctionExpression(pos, ast, visitors) {
   walkOptionBoxTSTypeParameterDeclaration(pos + 16, ast, visitors);
   walkBoxFormalParameters(pos + 24, ast, visitors);
   walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
-  walkBoxFunctionBody(pos + 40, ast, visitors);
+  walkArrowFunctionBody(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }

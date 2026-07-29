@@ -99,7 +99,7 @@ fn is_parent_arrow_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext
         return false;
     };
 
-    arrow_function_expression.expression
+    arrow_function_expression.is_expression()
 }
 
 impl NoUnusedExpressions {

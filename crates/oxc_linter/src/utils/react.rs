@@ -5,11 +5,12 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Expression, Function,
+        FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
         JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
         JSXOpeningElement, Statement, StaticMemberExpression,
     },
+    match_expression,
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{
@@ -1005,23 +1006,19 @@ pub fn find_innermost_function_with_jsx<'a>(
             if arrow_function_returns(arrow_func, ctx).has_jsx() {
                 Some(InnermostFunction::ArrowFunction)
             } else {
-                // Check if this arrow function returns another function that contains JSX
-                if arrow_func.expression {
-                    // Expression-bodied arrow function: () => () => <div />
-                    if arrow_func.body.statements.len() == 1
-                        && let Statement::ExpressionStatement(expr_stmt) =
-                            &arrow_func.body.statements[0]
-                    {
-                        return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
-                    }
-                } else {
-                    // Block-bodied arrow function: () => { return () => <div /> }
-                    for stmt in &arrow_func.body.statements {
-                        if let Statement::ReturnStatement(ret_stmt) = stmt
-                            && let Some(expr) = &ret_stmt.argument
-                        {
-                            return find_innermost_function_with_jsx(expr, ctx);
+                match &arrow_func.body {
+                    ArrowFunctionBody::FunctionBody(body) => {
+                        for stmt in &body.statements {
+                            if let Statement::ReturnStatement(ret_stmt) = stmt
+                                && let Some(expr) = &ret_stmt.argument
+                            {
+                                return find_innermost_function_with_jsx(expr, ctx);
+                            }
                         }
+                    }
+                    expression @ match_expression!(ArrowFunctionBody) => {
+                        let expression = expression.to_expression();
+                        return find_innermost_function_with_jsx(expression, ctx);
                     }
                 }
                 None
@@ -1084,12 +1081,19 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
     finder.found
 }
 
+/// Checks if an arrow function body contains JSX anywhere.
+pub fn arrow_function_body_contains_jsx(body: &ArrowFunctionBody) -> bool {
+    let mut finder = JsxFinder::new();
+    finder.visit_arrow_function_body(body);
+    finder.found
+}
+
 /// Checks if a function-like expression (function or arrow function) contains JSX
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::FunctionExpression(func) => function_contains_jsx(func),
         Expression::ArrowFunctionExpression(arrow_func) => {
-            function_body_contains_jsx(&arrow_func.body)
+            arrow_function_body_contains_jsx(&arrow_func.body)
         }
         _ => false,
     }

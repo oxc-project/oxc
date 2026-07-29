@@ -323,7 +323,7 @@ fn should_group_first_argument(
         // fit entirely on the line or break fully. Only a single arrow
         // with a block body can be grouped to collapse the braces.
         Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
+            if arrow.is_expression() {
                 return false;
             }
         }
@@ -1010,6 +1010,11 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
+            // The AMD layout only applies in statement position, matching Prettier's
+            // `parent.type === "ExpressionStatement"` check. A concise arrow body is not statement
+            // position: its parent is the `ArrowFunctionExpression`, so `() => define(...)` formats
+            // as a normal call. (oxc used to accept it, because concise bodies were wrapped in a
+            // synthetic `ExpressionStatement` before `ArrowFunctionBody` existed.)
             let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
@@ -1102,7 +1107,7 @@ fn is_react_hook_with_deps_array(
                 return false;
             }
 
-            if callback.expression {
+            if callback.is_expression() {
                 return false;
             }
 
@@ -1134,7 +1139,7 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
         return false;
     };
 
-    if arrow.expression {
+    if arrow.is_expression() {
         return false;
     }
 

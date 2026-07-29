@@ -96,7 +96,7 @@ impl Rule for ReturnInComputedProperty {
             AstKind::ArrowFunctionExpression(arrow) => {
                 // Expression-body arrow (`() => x`) implicitly returns its expression,
                 // so it always has a return on every code path.
-                if arrow.expression {
+                if arrow.is_expression() {
                     return;
                 }
                 arrow.span

@@ -6,13 +6,12 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, Expression, JSXAttributeName, JSXAttributeValue, JSXElementName,
-        JSXExpression, JSXMemberExpression, JSXMemberExpressionObject, Statement,
-        StaticMemberExpression,
+        JSXExpression, JSXMemberExpression, JSXMemberExpressionObject, StaticMemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::{CompactStr, Ident};
 use schemars::{
     JsonSchema, SchemaGenerator,
@@ -304,7 +303,7 @@ impl Rule for JsxHandlerNames {
                 {
                     (Some(Cow::Borrowed(name.as_str())), span, is_props_handler)
                 } else {
-                    (None, arrow_function.body.span, false)
+                    (None, arrow_function.body.span(), false)
                 }
             }
             JSXExpression::Identifier(ident) => {
@@ -387,10 +386,7 @@ impl JsxHandlerNames {
 /// true if the expression is in the form of "foo.bar" or "() => foo.bar()"
 /// like event handler methods in class components.
 fn is_member_expression_callee(arrow_function: &ArrowFunctionExpression<'_>) -> bool {
-    let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
-        return false;
-    };
-    let Expression::CallExpression(callee_expr) = &stmt.expression else {
+    let Some(Expression::CallExpression(callee_expr)) = arrow_function.get_expression() else {
         return false;
     };
     callee_expr.callee.is_member_expression()
@@ -475,16 +471,13 @@ fn test_normalize_handler_name() {
 fn get_event_handler_name_from_arrow_function<'a>(
     arrow_function: &'a ArrowFunctionExpression<'a>,
 ) -> Option<(Ident<'a>, Span, bool)> {
-    if !arrow_function.expression {
+    if !arrow_function.is_expression() {
         // Ignore arrow functions with block bodies like `() => { this.handleChange() }`.
         // The event handler name can only be extracted from arrow functions
         // with a single expression body, such as `() => this.handleChange()`.
         return None;
     }
-    let Some(Statement::ExpressionStatement(stmt)) = arrow_function.body.statements.first() else {
-        return None;
-    };
-    let Expression::CallExpression(call_expr) = &stmt.expression else {
+    let Some(Expression::CallExpression(call_expr)) = arrow_function.get_expression() else {
         return None;
     };
 

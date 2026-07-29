@@ -20,7 +20,7 @@ use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{ErrorCategory, has_critical_errors, with_fallback_label};
+use crate::diagnostics::{ErrorCategory, should_panic, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
@@ -1011,7 +1011,7 @@ fn log_error(err: &Diagnostics, fn_span: Option<Span>, diagnostics: &mut Diagnos
 }
 
 /// Handle an error according to the panicThreshold setting.
-/// Returns Some(CompileResult::Error) if the error should be surfaced as fatal,
+/// Returns Some(CompileResult::Fatal) if the error should be surfaced as fatal,
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
     err: &Diagnostics,
@@ -1022,19 +1022,10 @@ fn handle_error<'a>(
     // Log the error
     log_error(err, fn_span, diagnostics);
 
-    let should_panic = match panic_threshold {
-        PanicThreshold::AllErrors => true,
-        PanicThreshold::CriticalErrors => has_critical_errors(err),
-        PanicThreshold::None => false,
-    };
-
-    // Config errors always cause a panic
-    let is_config_error = err.iter().any(|d| ErrorCategory::Config.matches(d));
-
-    if should_panic || is_config_error {
+    if should_panic(err, panic_threshold) {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error { diagnostics: std::mem::take(diagnostics) })
+        Some(CompileResult::Fatal { diagnostics: std::mem::take(diagnostics) })
     } else {
         None
     }
@@ -1200,13 +1191,11 @@ fn try_make_compile_source<'b, 'a>(
             (&f.params, FnBody::Block(block), f.span, body_directive_values(block))
         }
         FunctionNode::Arrow(a) => {
-            let (body, directives) = if a.expression {
-                // Expression-bodied arrow: the single body statement is an
-                // `ExpressionStatement` wrapping the expression.
-                let expr = a.get_expression().expect("expression-bodied arrow has an expression");
+            let (body, directives) = if let Some(expr) = a.get_expression() {
                 (FnBody::Expression(expr), Vec::new())
             } else {
-                (FnBody::Block(&a.body), body_directive_values(&a.body))
+                let block = a.get_function_body().unwrap();
+                (FnBody::Block(block), body_directive_values(block))
             };
             (&a.params, body, a.span, directives)
         }
@@ -1611,8 +1600,12 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         };
 
         if !skip_body {
-            for stmt in &arrow.body.statements {
-                self.walk_statement(stmt);
+            if let Some(expression) = arrow.get_expression() {
+                self.walk_expression(expression);
+            } else {
+                for stmt in &arrow.get_function_body().unwrap().statements {
+                    self.walk_statement(stmt);
+                }
             }
         }
 
@@ -1932,7 +1925,9 @@ fn may_have_functions_to_compile(semantic: &Semantic, opts: &PluginOptions) -> b
             }
             AstKind::ArrowFunctionExpression(arrow) => {
                 let name = declarator_name_for(nodes, node.id());
-                if name.is_none() && arrow.body.directives.is_empty() {
+                if name.is_none()
+                    && arrow.get_function_body().is_none_or(|body| body.directives.is_empty())
+                {
                     continue;
                 }
                 (FunctionNode::Arrow(arrow), name, OriginalFnKind::ArrowFunctionExpression)
@@ -2137,12 +2132,13 @@ fn ox_build_compiled_expression<'a>(
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => Expression::new_arrow_function_expression(
             SPAN,
-            false,
             codegen.is_async,
             None,
             codegen.params.clone_in_with_semantic_ids(ast.allocator()),
             None,
-            codegen.body.clone_in_with_semantic_ids(ast.allocator()),
+            ArrowFunctionBody::FunctionBody(
+                codegen.body.clone_in_with_semantic_ids(ast.allocator()),
+            ),
             ast,
         ),
         _ => Expression::FunctionExpression(ox_build_function(
@@ -2199,9 +2195,9 @@ fn ox_replace_arrow<'a>(
         arrow.return_type = None;
     }
     arrow.params = params;
-    arrow.body = codegen.body.clone_in_with_semantic_ids(ast.allocator());
+    arrow.body =
+        ArrowFunctionBody::FunctionBody(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
     arrow.r#async = codegen.is_async;
-    arrow.expression = false;
 }
 
 /// Build `const <name> = <gating_expression>;`
@@ -2853,16 +2849,22 @@ pub fn compile_program<'a>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    let eslint_rules = options
-        .eslint_suppression_rules
-        .clone()
-        .unwrap_or_else(|| DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect());
+    // The compiler's own validations cover the safety concerns represented by the
+    // React Hooks ESLint rules. Match Babel by only consulting ESLint suppressions
+    // when either validation is disabled.
+    let eslint_rules = (!options.environment.validate_exhaustive_memoization_dependencies
+        || !options.environment.validate_hooks_usage)
+        .then(|| {
+            options.eslint_suppression_rules.clone().unwrap_or_else(|| {
+                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
+            })
+        });
 
     // Find program-level suppressions from comments
     let suppressions = find_program_suppressions(
         &program.comments,
         program.source_text,
-        Some(&eslint_rules),
+        eslint_rules.as_deref(),
         options.flow_suppressions,
     );
 
@@ -2952,7 +2954,11 @@ pub fn compile_program<'a>(
                 Diagnostics::from(ErrorCategory::Invariant.diagnostic(
                     "Unexpected compiled functions when module scope opt-out is present",
                 ));
-            handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
+            if let Some(result) =
+                handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics)
+            {
+                return result;
+            }
         }
         return CompileResult::Success { output: None, diagnostics: context.diagnostics };
     }

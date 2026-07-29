@@ -702,8 +702,11 @@ const _: () = {
     assert!(offset_of!(FunctionBody, directives) == 16);
     assert!(offset_of!(FunctionBody, statements) == 40);
 
-    // Padding: 4 bytes
-    assert!(size_of::<ArrowFunctionExpression>() == 56);
+    assert!(size_of::<ArrowFunctionBody>() == 16);
+    assert!(align_of::<ArrowFunctionBody>() == 8);
+
+    // Padding: 5 bytes
+    assert!(size_of::<ArrowFunctionExpression>() == 64);
     assert!(align_of::<ArrowFunctionExpression>() == 8);
     assert!(offset_of!(ArrowFunctionExpression, span) == 0);
     assert!(offset_of!(ArrowFunctionExpression, node_id) == 8);
@@ -712,10 +715,9 @@ const _: () = {
     assert!(offset_of!(ArrowFunctionExpression, params) == 24);
     assert!(offset_of!(ArrowFunctionExpression, return_type) == 32);
     assert!(offset_of!(ArrowFunctionExpression, body) == 40);
-    assert!(offset_of!(ArrowFunctionExpression, expression) == 48);
-    assert!(offset_of!(ArrowFunctionExpression, r#async) == 49);
-    assert!(offset_of!(ArrowFunctionExpression, pure) == 50);
-    assert!(offset_of!(ArrowFunctionExpression, pife) == 51);
+    assert!(offset_of!(ArrowFunctionExpression, r#async) == 56);
+    assert!(offset_of!(ArrowFunctionExpression, pure) == 57);
+    assert!(offset_of!(ArrowFunctionExpression, pife) == 58);
 
     // Padding: 3 bytes
     assert!(size_of::<YieldExpression>() == 32);
@@ -2517,8 +2519,11 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(FunctionBody, directives) == 12);
     assert!(offset_of!(FunctionBody, statements) == 28);
 
-    // Padding: 0 bytes
-    assert!(size_of::<ArrowFunctionExpression>() == 36);
+    assert!(size_of::<ArrowFunctionBody>() == 8);
+    assert!(align_of::<ArrowFunctionBody>() == 4);
+
+    // Padding: 1 bytes
+    assert!(size_of::<ArrowFunctionExpression>() == 40);
     assert!(align_of::<ArrowFunctionExpression>() == 4);
     assert!(offset_of!(ArrowFunctionExpression, span) == 0);
     assert!(offset_of!(ArrowFunctionExpression, node_id) == 8);
@@ -2527,10 +2532,9 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ArrowFunctionExpression, params) == 20);
     assert!(offset_of!(ArrowFunctionExpression, return_type) == 24);
     assert!(offset_of!(ArrowFunctionExpression, body) == 28);
-    assert!(offset_of!(ArrowFunctionExpression, expression) == 32);
-    assert!(offset_of!(ArrowFunctionExpression, r#async) == 33);
-    assert!(offset_of!(ArrowFunctionExpression, pure) == 34);
-    assert!(offset_of!(ArrowFunctionExpression, pife) == 35);
+    assert!(offset_of!(ArrowFunctionExpression, r#async) == 36);
+    assert!(offset_of!(ArrowFunctionExpression, pure) == 37);
+    assert!(offset_of!(ArrowFunctionExpression, pife) == 38);
 
     // Padding: 3 bytes
     assert!(size_of::<YieldExpression>() == 24);

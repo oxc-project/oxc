@@ -18,6 +18,8 @@
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_span::Span;
 
+use crate::options::PanicThreshold;
+
 /// Error categories matching the TS `ErrorCategory` enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCategory {
@@ -120,6 +122,18 @@ pub fn has_critical_errors(diagnostics: &[OxcDiagnostic]) -> bool {
     diagnostics
         .iter()
         .any(|d| d.severity == Severity::Error && !ErrorCategory::PreserveManualMemo.matches(d))
+}
+
+/// Whether diagnostics should abort compilation for the configured panic threshold.
+///
+/// Config errors are always fatal, matching the upstream compiler.
+pub fn should_panic(diagnostics: &[OxcDiagnostic], panic_threshold: PanicThreshold) -> bool {
+    diagnostics.iter().any(|d| ErrorCategory::Config.matches(d))
+        || match panic_threshold {
+            PanicThreshold::AllErrors => true,
+            PanicThreshold::CriticalErrors => has_critical_errors(diagnostics),
+            PanicThreshold::None => false,
+        }
 }
 
 /// Owned copy of a diagnostic for the log accumulator, labelling the enclosing

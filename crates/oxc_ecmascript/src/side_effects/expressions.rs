@@ -47,9 +47,7 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
                 }
                 e.consequent.may_have_side_effects(ctx) || e.alternate.may_have_side_effects(ctx)
             }
-            Expression::SequenceExpression(e) => {
-                e.expressions.iter().any(|e| e.may_have_side_effects(ctx))
-            }
+            Expression::SequenceExpression(e) => e.may_have_side_effects(ctx),
             Expression::BinaryExpression(e) => e.may_have_side_effects(ctx),
             Expression::ObjectExpression(object_expr) => {
                 object_expr.properties.iter().any(|property| property.may_have_side_effects(ctx))
@@ -552,11 +550,22 @@ fn iife_call_may_have_side_effects<'a>(
     call: &CallExpression<'a>,
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> Option<bool> {
-    let (params, body) = match &call.callee {
+    let (params, body_may_have_side_effects) = match &call.callee {
         Expression::FunctionExpression(f) if !f.r#async && !f.generator => {
-            (&f.params, f.body.as_deref()?)
+            let body = f.body.as_deref()?;
+            (&f.params, body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)))
         }
-        Expression::ArrowFunctionExpression(f) if !f.r#async => (&f.params, &*f.body),
+        Expression::ArrowFunctionExpression(f) if !f.r#async => {
+            let body_may_have_side_effects = match &f.body {
+                ArrowFunctionBody::FunctionBody(b) => {
+                    b.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx))
+                }
+                match_expression!(ArrowFunctionBody) => {
+                    f.get_expression().unwrap().may_have_side_effects(ctx)
+                }
+            };
+            (&f.params, body_may_have_side_effects)
+        }
         _ => return None,
     };
 
@@ -572,7 +581,7 @@ fn iife_call_may_have_side_effects<'a>(
         return Some(true);
     }
 
-    Some(body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)))
+    Some(body_may_have_side_effects)
 }
 
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -1111,5 +1120,11 @@ impl<'a> MayHaveSideEffects<'a> for UpdateExpression<'a> {
         // Terser, esbuild, Rollup, and SWC all treat updates as unconditionally
         // side-effectful; match that.
         true
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for SequenceExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        self.expressions.iter().any(|e| e.may_have_side_effects(ctx))
     }
 }

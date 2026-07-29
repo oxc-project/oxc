@@ -53,7 +53,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
@@ -69,7 +69,7 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
-    utils::sync_function_symbol_flags,
+    utils::{ast_builder::arrow_function_body_as_function_body_mut, sync_function_symbol_flags},
 };
 
 pub struct AsyncToGenerator<'a> {
@@ -527,17 +527,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let arrow_span = arrow.span;
-        let mut body = arrow.body.take_in_box(ctx);
-
-        // If the arrow's expression is true, we need to wrap the only one expression with return statement.
-        if arrow.expression {
-            let statement = body.statements.first_mut().unwrap();
-            statement.replace_with(|statement| {
-                let Statement::ExpressionStatement(es) = statement else { unreachable!() };
-                let expression = es.unbox().expression;
-                Statement::new_return_statement(expression.span(), Some(expression), ctx)
-            });
-        }
+        let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx).take_in_box(ctx);
 
         let params = arrow.params.take_in_box(ctx);
         let generator_function_id = arrow.scope_id();

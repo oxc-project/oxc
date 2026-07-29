@@ -154,7 +154,10 @@ export interface TransformOptions {
   noEmit?: boolean
   /** Select client, SSR, or lint output. */
   outputMode?: 'client' | 'ssr' | 'lint'
-  /** ESLint rule names whose suppressions opt a function out of compilation. */
+  /**
+   * ESLint rule names whose suppressions opt a function out of compilation when
+   * hooks usage or exhaustive memoization dependency validation is disabled.
+   */
   eslintSuppressionRules?: Array<string>
   /**
    * Treat Flow suppression comments as opt-outs.
@@ -183,6 +186,8 @@ export interface TransformOptions {
 
 /** Result returned by the React Compiler transform. */
 export interface TransformResult {
+  /** Whether the transform was aborted without emitting code. */
+  fatal: boolean
   /**
    * Transformed JavaScript code.
    *

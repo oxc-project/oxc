@@ -102,16 +102,10 @@ fn is_simple_compare_callback_function(expr: &Expression, ctx: &LintContext) -> 
         Expression::ArrowFunctionExpression(arrow_function)
             if !arrow_function.r#async && arrow_function.params.items.len() == 1 =>
         {
-            let query = if arrow_function.expression {
-                if let Some(Statement::ExpressionStatement(expr)) =
-                    arrow_function.body.statements.first()
-                {
-                    Some(&expr.expression)
-                } else {
-                    None
-                }
+            let query = if arrow_function.is_expression() {
+                arrow_function.get_expression()
             } else if let Some(Statement::ReturnStatement(ret)) =
-                arrow_function.body.statements.first()
+                arrow_function.get_function_body().unwrap().statements.first()
             {
                 ret.argument.as_ref()
             } else {

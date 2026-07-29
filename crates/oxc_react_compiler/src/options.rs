@@ -138,8 +138,9 @@ pub struct PluginOptions {
     pub output_mode: Option<CompilerOutputMode>,
 
     /// ESLint rule names whose `eslint-disable` comments make the compiler skip the
-    /// function they cover, so it doesn't optimize code the author has already
-    /// flagged. `None` uses the defaults (`react-hooks/exhaustive-deps` and
+    /// function they cover. These suppressions are ignored when both hooks usage
+    /// and exhaustive memoization dependency validation are enabled. Otherwise,
+    /// `None` uses the defaults (`react-hooks/exhaustive-deps` and
     /// `react-hooks/rules-of-hooks`).
     pub eslint_suppression_rules: Option<Vec<String>>,
 
