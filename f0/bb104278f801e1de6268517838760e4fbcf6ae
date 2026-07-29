@@ -1,0 +1,19 @@
+crates/oxc_linter/src/snapshots/eslint_no_control_regex.snap
+  s_694cbf0fad91c2::t_1a2298fd3e2795 64-71,201,203-205,218,221,229-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f0bb104278f801e1de6268517838760e4fbcf6ae",
+  "prompts": {},
+  "sessions": {
+    "s_694cbf0fad91c2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa905-b6f8-7d20-a767-15ac1098d49e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
