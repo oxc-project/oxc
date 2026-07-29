@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/eslint/no_unreachable_loop.rs
+  s_76a35fee03740a::t_d5692c09692d83 492-521,1014-1018
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "aaa736be83d49d69afb1430bef0de4a41e1266ef",
+  "prompts": {},
+  "sessions": {
+    "s_76a35fee03740a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fad31-db2f-7413-80c3-078f8eff4545",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
