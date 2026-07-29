@@ -19,8 +19,8 @@ use oxc_span::{SourceType, Span};
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
 use crate::{
-    CompositeFix, FixKind, Fixer, Message, MessageRule, PossibleFixes, RuleTimingRecord,
-    RuleTimingSource, RuleTimingStore, WEBSITE_BASE_RULES_URL, suppression::DiffManager,
+    CompositeFix, FixKind, Fixer, Message, PossibleFixes, RuleTimingRecord, RuleTimingSource,
+    RuleTimingStore, WEBSITE_BASE_RULES_URL, suppression::DiffManager,
 };
 
 /// State required to initialize the `tsgolint` linter.
@@ -823,7 +823,6 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
-        let rule_name = val.rule.clone();
         let fix = if val.fixes.is_empty() {
             None
         } else {
@@ -859,10 +858,7 @@ impl Message {
         #[expect(clippy::from_iter_instead_of_collect)]
         let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
 
-        Self::new(val.into(), possible_fixes).with_rule(MessageRule {
-            plugin_name: Cow::Borrowed("typescript"),
-            rule_name: Cow::Owned(rule_name),
-        })
+        Self::new(val.into(), possible_fixes)
     }
 }
 
