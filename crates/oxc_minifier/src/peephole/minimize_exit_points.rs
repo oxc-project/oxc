@@ -75,8 +75,8 @@ impl<'a> PeepholeOptimizations {
                     );
                 }
             }
-            _ => return,
-        };
+            _ => {}
+        }
     }
 
     /// Returns `true` if the statement is an unconditional termination that can be
