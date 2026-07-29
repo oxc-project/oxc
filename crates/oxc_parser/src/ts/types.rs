@@ -1649,7 +1649,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             kind if kind.is_unary_operator() => true,
             kind if kind.is_update_operator() => true,
-            Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At => true,
+            Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At | Kind::Async => {
+                true
+            }
             kind if kind.is_binary_operator() => true,
             kind => kind.is_ts_identifier(self.ctx.has_yield(), self.ctx.has_await()),
         }
