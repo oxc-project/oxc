@@ -790,8 +790,12 @@ impl<'a> PeepholeOptimizations {
                     let ty = right.value_type(ctx);
                     matches!(ty, ValueType::Undetermined | ValueType::String)
                         // a loose comparison with an object can be `true` via ToPrimitive
-                        // (e.g. `typeof foo == ['object']` is true when `foo` is an object)
-                        || (ty == ValueType::Object && !is_strict)
+                        // (e.g. `typeof foo == ['object']` is true when `foo` is an object),
+                        // so only fold when the object's string value is statically known
+                        // to not be a typeof result
+                        || (ty == ValueType::Object
+                            && !is_strict
+                            && right.to_js_string(ctx).is_none_or(|s| is_typeof_string(&s)))
                 }
             };
 
