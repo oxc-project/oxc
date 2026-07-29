@@ -1230,7 +1230,7 @@ mod tests {
         opts.jsx = jsx;
         let mut lx = Lexer::new();
         let count = lx.lex(&buf, n, opts);
-        lx.kinds[..count - 1].iter().copied().filter(|&kk| !crate::is_trivia(kk)).collect()
+        lx.sig_kinds[..count].iter().copied().filter(|&kk| !crate::is_trivia(kk)).collect()
     }
 
     #[track_caller]

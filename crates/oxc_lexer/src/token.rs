@@ -178,6 +178,8 @@ pub mod token_kind {
     pub const INVALID: u8 = 255;
 }
 
+pub const SPAN_SENTINELS: usize = 8;
+
 pub const TRIVIA_MIN: u8 = token_kind::LINE_COMMENT;
 pub const TRIVIA_MAX: u8 = token_kind::LINE_TERMINATOR;
 

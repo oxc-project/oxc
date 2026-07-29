@@ -11,7 +11,7 @@ fn kinds_of(code: &str, module: bool) -> Vec<u8> {
     opts.source_type_module = module;
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
-    lx.kinds[..count - 1].iter().copied().filter(|&kk| !oxc_lexer::is_trivia(kk)).collect()
+    lx.sig_kinds[..count].iter().copied().filter(|&kk| !oxc_lexer::is_trivia(kk)).collect()
 }
 
 fn diag_codes(code: &str, module: bool) -> Vec<u16> {

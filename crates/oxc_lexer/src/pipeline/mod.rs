@@ -20,19 +20,25 @@ mod keywords;
 mod regex_div;
 mod replay;
 
+use oxc_span::Span;
+
 use crate::PAD;
 use crate::lanes::Lanes;
 use crate::options::LexOptions;
 use crate::tables::Tables;
+use crate::token::SPAN_SENTINELS;
 
 use bitmap::bm_any;
 use carve::{carve, carve_jsx};
 use classify::{classify, misc_post, misc_pre};
 use coalesce::coalesce;
-use compress::{compress, lanes_post};
+use compress::{build_spans, compress, lanes_post, write_sentinels};
 use keywords::KWB;
 
 use crate::token::token_kind;
+
+const STAGE_BLOCKS: usize = 32;
+const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
 // Short kind aliases for the pipeline, tied to `token_kind` so they can't drift.
 pub(crate) const WS: u8 = token_kind::WHITESPACE;
@@ -73,8 +79,11 @@ pub struct Lexer {
     kind: Vec<u8>,
     kwpos: Vec<u32>,
     nb_cap: usize,
-    pub starts: Vec<u32>,
-    pub kinds: Vec<u8>,
+    stage_pos: Vec<u32>,
+    stage_kind: Vec<u8>,
+    pub spans: Vec<Span>,
+    pub sig_kinds: Vec<u8>,
+    pub sig_len: usize,
     out_cap: usize,
     pub lanes: Lanes,
     tables: Box<Tables>,
@@ -99,8 +108,11 @@ impl Lexer {
             kind: Vec::new(),
             kwpos: Vec::new(),
             nb_cap: 0,
-            starts: Vec::new(),
-            kinds: Vec::new(),
+            stage_pos: vec![0; STAGE_CAP],
+            stage_kind: vec![0; STAGE_CAP],
+            spans: Vec::new(),
+            sig_kinds: Vec::new(),
+            sig_len: 0,
             out_cap: 0,
             lanes: Lanes::default(),
             tables: Box::new(Tables::new()),
@@ -125,28 +137,31 @@ impl Lexer {
         }
         let need = n + PAD;
         if self.out_cap < need {
-            self.starts.resize(need, 0);
-            self.kinds.resize(need, 0);
+            self.spans.resize(need + SPAN_SENTINELS, Span::new(0, 0));
+            self.sig_kinds.resize(need + SPAN_SENTINELS, 0);
             self.out_cap = need;
         }
     }
 
-    /// Run the full pipeline over `src[..n]`, writing the token stream into
-    /// `out_kinds`/`out_starts` (EOF sentinel last) and the value lanes and
-    /// diagnostics into `self.lanes`. Returns the token count including EOF.
+    /// Run the full pipeline over `src[..n]`, writing the trivia-free token
+    /// stream into `out_kinds`/`out_spans` ([`SPAN_SENTINELS`] EOF entries
+    /// spanning `(n, n)` follow the last token) and the value lanes and
+    /// diagnostics into `self.lanes`. Returns the significant token count,
+    /// excluding the sentinels.
     ///
     /// # Safety
     ///
     /// - `src` must extend at least [`PAD`] zeroed bytes past `n`.
-    /// - `out_kinds` must be valid for `n + PAD` byte writes and `out_starts`
-    ///   for `n + PAD` u32 writes: `compress` stores full 8-lane groups past
-    ///   the last token, and the EOF sentinel follows it.
+    /// - `out_kinds` must be valid for `n + PAD + SPAN_SENTINELS` byte writes
+    ///   and `out_spans` for the same number of [`Span`] writes: `build_spans`
+    ///   stores full 4-lane groups past the last token, and the sentinels
+    ///   follow it.
     pub unsafe fn lex_raw(
         &mut self,
         src: &[u8],
         n: usize,
         out_kinds: *mut u8,
-        out_starts: *mut u32,
+        out_spans: *mut Span,
         jsx: bool,
         ts: bool,
         module: bool,
@@ -157,10 +172,9 @@ impl Lexer {
         self.lanes.clear();
         self.lanes.module = module;
         if n == 0 {
-            *out_kinds = EOF;
-            *out_starts = 0;
-            *out_starts.add(1) = 0;
-            return 1;
+            write_sentinels(0, out_spans, out_kinds);
+            self.sig_len = 0;
+            return 0;
         }
         let nb = n.div_ceil(64);
         let sp = src.as_ptr();
@@ -205,17 +219,35 @@ impl Lexer {
         if nesc != 0 {
             misc_post(sp, n, st, word, misc, kind);
         }
-        let m = compress(t, st, kind, nb, out_starts, out_kinds);
-        *out_kinds.add(m) = EOF;
-        *out_starts.add(m) = n as u32;
-        *out_starts.add(m + 1) = n as u32;
-        lanes_post(src, out_kinds, out_starts, m, &mut self.lanes);
-        m + 1
+        let stage_pos = self.stage_pos.as_mut_ptr();
+        let stage_kind = self.stage_kind.as_mut_ptr();
+        let mut c = 0usize;
+        let mut w = 0usize;
+        let mut b = 0usize;
+        while b < nb {
+            let b1 = (b + STAGE_BLOCKS).min(nb);
+            c += compress(t, st, kind, b, b1, stage_pos.add(c), stage_kind.add(c));
+            b = b1;
+            if c > 1 {
+                w += build_spans(stage_kind, stage_pos, c - 1, out_spans.add(w), out_kinds.add(w));
+                *stage_pos = *stage_pos.add(c - 1);
+                *stage_kind = *stage_kind.add(c - 1);
+                c = 1;
+            }
+        }
+        if c == 1 {
+            *stage_pos.add(1) = n as u32;
+            w += build_spans(stage_kind, stage_pos, 1, out_spans.add(w), out_kinds.add(w));
+        }
+        write_sentinels(n as u32, out_spans.add(w), out_kinds.add(w));
+        lanes_post(src, out_kinds, out_spans, w, n as u32, &mut self.lanes);
+        self.sig_len = w;
+        w
     }
 
-    /// Lex `src[..n]` into the internal `starts`/`kinds` buffers (mode from
-    /// `options`), returning the token count including EOF. Test/bench
-    /// entry; the arena API is [`crate::lex_utf8`].
+    /// Lex `src[..n]` into the internal `spans`/`sig_kinds` buffers (mode from
+    /// `options`), returning the significant token count. Test/bench entry;
+    /// the arena API is [`crate::lex_utf8`].
     ///
     /// # Panics
     ///
@@ -227,14 +259,14 @@ impl Lexer {
             src.len()
         );
         self.ensure(n);
-        let kinds = self.kinds.as_mut_ptr();
-        let starts = self.starts.as_mut_ptr();
+        let kinds = self.sig_kinds.as_mut_ptr();
+        let spans = self.spans.as_mut_ptr();
         unsafe {
             self.lex_raw(
                 src,
                 n,
                 kinds,
-                starts,
+                spans,
                 options.jsx,
                 options.ts,
                 options.source_type_module,

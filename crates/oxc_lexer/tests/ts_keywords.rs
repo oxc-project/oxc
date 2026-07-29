@@ -55,7 +55,7 @@ fn kinds(code: &str, ts: bool, jsx: bool) -> Vec<u8> {
     opts.jsx = jsx;
     let mut lx = Lexer::new();
     let count = lx.lex(&buf, n, opts);
-    lx.kinds[..count - 1].iter().copied().filter(|&kk| !oxc_lexer::is_trivia(kk)).collect()
+    lx.sig_kinds[..count].iter().copied().filter(|&kk| !oxc_lexer::is_trivia(kk)).collect()
 }
 
 fn first_kind(code: &str, ts: bool) -> u8 {
