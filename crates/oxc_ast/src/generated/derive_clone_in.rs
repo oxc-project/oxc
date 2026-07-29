@@ -2301,6 +2301,72 @@ impl<'new_alloc> CloneIn<'new_alloc> for FunctionBody<'_> {
     }
 }
 
+impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionBody<'_> {
+    type Cloned = ArrowFunctionBody<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        match self {
+            Self::FunctionBody(it) => ArrowFunctionBody::FunctionBody(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+            Self::BooleanLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::NumericLiteral(_)
+            | Self::BigIntLiteral(_)
+            | Self::RegExpLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::TemplateLiteral(_)
+            | Self::Identifier(_)
+            | Self::Super(_)
+            | Self::ArrayExpression(_)
+            | Self::ArrowFunctionExpression(_)
+            | Self::AssignmentExpression(_)
+            | Self::AwaitExpression(_)
+            | Self::BinaryExpression(_)
+            | Self::CallExpression(_)
+            | Self::ChainExpression(_)
+            | Self::ClassExpression(_)
+            | Self::ConditionalExpression(_)
+            | Self::FunctionExpression(_)
+            | Self::ImportExpression(_)
+            | Self::LogicalExpression(_)
+            | Self::NewExpression(_)
+            | Self::ObjectExpression(_)
+            | Self::ParenthesizedExpression(_)
+            | Self::SequenceExpression(_)
+            | Self::TaggedTemplateExpression(_)
+            | Self::ThisExpression(_)
+            | Self::UnaryExpression(_)
+            | Self::UpdateExpression(_)
+            | Self::YieldExpression(_)
+            | Self::PrivateInExpression(_)
+            | Self::ImportMeta(_)
+            | Self::NewTarget(_)
+            | Self::JSXElement(_)
+            | Self::JSXFragment(_)
+            | Self::TSAsExpression(_)
+            | Self::TSSatisfiesExpression(_)
+            | Self::TSTypeAssertion(_)
+            | Self::TSNonNullExpression(_)
+            | Self::TSInstantiationExpression(_)
+            | Self::V8IntrinsicExpression(_)
+            | Self::ComputedMemberExpression(_)
+            | Self::StaticMemberExpression(_)
+            | Self::PrivateFieldExpression(_) => ArrowFunctionBody::from(CloneIn::clone_in_impl(
+                self.to_expression(),
+                with_semantic_ids,
+                allocator,
+            )),
+        }
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
     type Cloned = ArrowFunctionExpression<'new_alloc>;
 
@@ -2312,7 +2378,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'_> {
         ArrowFunctionExpression {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            expression: CloneIn::clone_in_impl(&self.expression, with_semantic_ids, allocator),
             r#async: CloneIn::clone_in_impl(&self.r#async, with_semantic_ids, allocator),
             type_parameters: CloneIn::clone_in_impl(
                 &self.type_parameters,

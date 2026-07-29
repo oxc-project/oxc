@@ -1855,13 +1855,15 @@ impl GenExpr for ArrowFunctionExpression<'_> {
             p.print_soft_space();
             p.print_str("=>");
             p.print_soft_space();
-            if self.expression {
-                if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
-                    p.start_of_arrow_expr = p.code_len();
-                    stmt.expression.print_expr(p, Precedence::Comma, body_ctx);
+            match &self.body {
+                ArrowFunctionBody::FunctionBody(b) => {
+                    b.print(p, body_ctx);
                 }
-            } else {
-                self.body.print(p, body_ctx);
+                expression @ match_expression!(ArrowFunctionBody) => {
+                    let expression = expression.to_expression();
+                    p.start_of_arrow_expr = p.code_len();
+                    expression.print_expr(p, Precedence::Comma, body_ctx);
+                }
             }
         });
     }

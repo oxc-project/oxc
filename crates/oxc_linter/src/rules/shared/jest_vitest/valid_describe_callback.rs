@@ -116,17 +116,14 @@ pub fn run<'a>(
                 diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
             }
 
-            if arrow_expr.expression && !arrow_expr.body.statements.is_empty() {
-                let stmt = &arrow_expr.body.statements[0];
-                let Statement::ExpressionStatement(expr_stmt) = stmt else {
-                    return;
-                };
-                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                    diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
-                }
+            if arrow_expr.is_expression()
+                && let Some(Expression::CallExpression(call_expr)) = arrow_expr.get_expression()
+            {
+                diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
             }
 
-            if let Some(span) = find_first_return_stmt_span(&arrow_expr.body) {
+            if let Some(span) = arrow_expr.get_function_body().and_then(find_first_return_stmt_span)
+            {
                 diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
             }
         }

@@ -31,12 +31,13 @@ const assignmentChain = () =>
     thirdVeryLongIdentifier);
 
 const amd = () =>
-  define("a-very-long-module-name", [
-    "first-long-dependency",
-    "second-long-dependency",
-  ], () => {
-    return value;
-  });
+  define(
+    "a-very-long-module-name",
+    ["first-long-dependency", "second-long-dependency"],
+    () => {
+      return value;
+    },
+  );
 
 -------------------
 { printWidth: 100 }

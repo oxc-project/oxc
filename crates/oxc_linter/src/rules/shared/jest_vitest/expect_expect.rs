@@ -277,7 +277,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
                 }
             }
             Expression::ArrowFunctionExpression(arrow_expr) => {
-                self.visit_function_body(&arrow_expr.body);
+                self.visit_arrow_function_body(&arrow_expr.body);
             }
             Expression::CallExpression(call_expr) => {
                 self.visit_call_expression(call_expr);

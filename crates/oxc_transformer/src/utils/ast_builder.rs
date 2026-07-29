@@ -1,6 +1,6 @@
 use std::iter;
 
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
@@ -8,6 +8,22 @@ use oxc_str::{Ident, static_ident};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
+
+/// Convert a concise arrow body to a block body with an explicit return, and return the block.
+pub fn arrow_function_body_as_function_body_mut<'a, 'b>(
+    body: &'b mut ArrowFunctionBody<'a>,
+    ctx: &TraverseCtx<'a>,
+) -> &'b mut FunctionBody<'a> {
+    if body.is_expression() {
+        body.replace_with(|body| {
+            let expression = body.into_expression();
+            let span = expression.span();
+            let statement = Statement::new_return_statement(span, Some(expression), ctx);
+            ArrowFunctionBody::FunctionBody(FunctionBody::boxed(span, [], [statement], ctx))
+        });
+    }
+    body.as_function_body_mut().unwrap()
+}
 
 /// `object` -> `object.call`.
 pub fn create_member_callee<'a>(
@@ -73,7 +89,16 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
     let params = FormalParameters::boxed(SPAN, kind, [], None, ctx);
     let body = FunctionBody::boxed(SPAN, [], stmts, ctx);
     let arrow = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
-        SPAN, false, false, None, params, None, body, scope_id, false, false, ctx,
+        SPAN,
+        false,
+        None,
+        params,
+        None,
+        ArrowFunctionBody::FunctionBody(body),
+        scope_id,
+        false,
+        false,
+        ctx,
     );
     Expression::new_call_expression(span, arrow, None, [], false, ctx)
 }

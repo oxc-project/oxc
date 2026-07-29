@@ -2437,6 +2437,66 @@ unsafe fn walk_function_body<'a, State, Tr: Traverse<'a, State>>(
     traverser.exit_function_body(&mut *node, ctx);
 }
 
+unsafe fn walk_arrow_function_body<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut ArrowFunctionBody<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_arrow_function_body(&mut *node, ctx);
+    match &mut *node {
+        ArrowFunctionBody::FunctionBody(node) => {
+            walk_function_body(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ArrowFunctionBody::BooleanLiteral(_)
+        | ArrowFunctionBody::NullLiteral(_)
+        | ArrowFunctionBody::NumericLiteral(_)
+        | ArrowFunctionBody::BigIntLiteral(_)
+        | ArrowFunctionBody::RegExpLiteral(_)
+        | ArrowFunctionBody::StringLiteral(_)
+        | ArrowFunctionBody::TemplateLiteral(_)
+        | ArrowFunctionBody::Identifier(_)
+        | ArrowFunctionBody::Super(_)
+        | ArrowFunctionBody::ArrayExpression(_)
+        | ArrowFunctionBody::ArrowFunctionExpression(_)
+        | ArrowFunctionBody::AssignmentExpression(_)
+        | ArrowFunctionBody::AwaitExpression(_)
+        | ArrowFunctionBody::BinaryExpression(_)
+        | ArrowFunctionBody::CallExpression(_)
+        | ArrowFunctionBody::ChainExpression(_)
+        | ArrowFunctionBody::ClassExpression(_)
+        | ArrowFunctionBody::ConditionalExpression(_)
+        | ArrowFunctionBody::FunctionExpression(_)
+        | ArrowFunctionBody::ImportExpression(_)
+        | ArrowFunctionBody::LogicalExpression(_)
+        | ArrowFunctionBody::NewExpression(_)
+        | ArrowFunctionBody::ObjectExpression(_)
+        | ArrowFunctionBody::ParenthesizedExpression(_)
+        | ArrowFunctionBody::SequenceExpression(_)
+        | ArrowFunctionBody::TaggedTemplateExpression(_)
+        | ArrowFunctionBody::ThisExpression(_)
+        | ArrowFunctionBody::UnaryExpression(_)
+        | ArrowFunctionBody::UpdateExpression(_)
+        | ArrowFunctionBody::YieldExpression(_)
+        | ArrowFunctionBody::PrivateInExpression(_)
+        | ArrowFunctionBody::ImportMeta(_)
+        | ArrowFunctionBody::NewTarget(_)
+        | ArrowFunctionBody::JSXElement(_)
+        | ArrowFunctionBody::JSXFragment(_)
+        | ArrowFunctionBody::TSAsExpression(_)
+        | ArrowFunctionBody::TSSatisfiesExpression(_)
+        | ArrowFunctionBody::TSTypeAssertion(_)
+        | ArrowFunctionBody::TSNonNullExpression(_)
+        | ArrowFunctionBody::TSInstantiationExpression(_)
+        | ArrowFunctionBody::V8IntrinsicExpression(_)
+        | ArrowFunctionBody::ComputedMemberExpression(_)
+        | ArrowFunctionBody::StaticMemberExpression(_)
+        | ArrowFunctionBody::PrivateFieldExpression(_) => {
+            walk_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_arrow_function_body(&mut *node, ctx);
+}
+
 unsafe fn walk_arrow_function_expression<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
     node: *mut ArrowFunctionExpression<'a>,
@@ -2478,10 +2538,10 @@ unsafe fn walk_arrow_function_expression<'a, State, Tr: Traverse<'a, State>>(
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ArrowFunctionExpressionBody);
-    walk_function_body(
+    walk_arrow_function_body(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-            as *mut ArenaBox<FunctionBody>)) as *mut _,
+        (node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+            as *mut ArrowFunctionBody,
         ctx,
     );
     ctx.pop_stack(pop_token);

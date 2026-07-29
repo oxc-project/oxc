@@ -431,15 +431,7 @@ pub fn find_context_identifiers(
         }
         FunctionNode::Arrow(arrow) => {
             visitor.visit_formal_parameters(&arrow.params);
-            if arrow.expression {
-                if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first() {
-                    visitor.visit_expression(&es.expression);
-                } else {
-                    visitor.visit_function_body(&arrow.body);
-                }
-            } else {
-                visitor.visit_function_body(&arrow.body);
-            }
+            visitor.visit_arrow_function_body(&arrow.body);
         }
     }
 

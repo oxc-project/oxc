@@ -509,7 +509,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return;
         }
 
-        if arrow.expression {
+        if arrow.is_expression() {
             let Some(expr) = arrow.get_expression() else {
                 debug_assert!(
                     false,
@@ -535,7 +535,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     // `export const foo = () => () => (): number => 1`
                     Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
                         debug_assert!(self.rule.allow_higher_order_functions);
-                        walk_js::walk_function_body(self, &arrow.body);
+                        walk_js::walk_arrow_function_body(self, &arrow.body);
                         return;
                     }
                     _ => {
@@ -545,7 +545,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                 }
             }
         } else {
-            walk_js::walk_function_body(self, &arrow.body);
+            walk_js::walk_arrow_function_body(self, &arrow.body);
 
             // AST is immutable in linter, so `unstable_address` produces stable `Address`es
             let is_hof = self.is_higher_order_function(arrow.unstable_address());

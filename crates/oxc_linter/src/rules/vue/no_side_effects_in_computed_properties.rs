@@ -316,7 +316,7 @@ fn is_inside_setup_function(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
                 let Some(body) = &f.body else { return false };
                 body.span
             }
-            AstKind::ArrowFunctionExpression(f) => f.body.span,
+            AstKind::ArrowFunctionExpression(f) => f.body.span(),
             _ => return false,
         };
         // Declaration must be inside the function body (not in the parameter list)

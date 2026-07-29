@@ -59,7 +59,7 @@ eslint/no-duplicate-imports                                |      7
 eslint/no-else-return                                      |  13190
 eslint/no-empty                                            |  15230
 eslint/no-empty-character-class                            |    209
-eslint/no-empty-function                                   |  16721
+eslint/no-empty-function                                   |  15202
 eslint/no-empty-pattern                                    |    655
 eslint/no-empty-static-block                               |      2
 eslint/no-eq-null                                          |  20604
@@ -136,7 +136,7 @@ eslint/no-unreachable-loop                                 |   1607
 eslint/no-unsafe-finally                                   |  15259
 eslint/no-unsafe-negation                                  |  20604
 eslint/no-unsafe-optional-chaining                         |    792
-eslint/no-unused-expressions                               |  26321
+eslint/no-unused-expressions                               |  24802
 eslint/no-unused-labels                                    |      7
 eslint/no-unused-private-class-members                     |      4
 eslint/no-unused-vars                                      |      7
@@ -171,7 +171,7 @@ eslint/prefer-spread                                       |  62606
 eslint/prefer-template                                     |  20604
 eslint/preserve-caught-error                               |    151
 eslint/radix                                               |  62606
-eslint/require-await                                       |  16721
+eslint/require-await                                       |  17731
 eslint/require-unicode-regexp                              |  64236
 eslint/require-yield                                       |  14283
 eslint/sort-imports                                        |      7
@@ -212,7 +212,7 @@ import/no-namespace                                        |      7
 import/no-nodejs-modules                                   |  62796
 import/no-relative-parent-imports                          |  62794
 import/no-self-import                                      |      7
-import/no-unassigned-import                                |  26424
+import/no-unassigned-import                                |  24905
 import/no-webpack-loader-syntax                            |  62709
 import/prefer-default-export                               |      7
 import/unambiguous                                         |      7
@@ -393,7 +393,7 @@ oxc/only-used-in-recursion                                 |  16812
 oxc/uninvoked-array-callback                               |   1421
 promise/always-return                                      |  16812
 promise/avoid-new                                          |   1421
-promise/catch-or-return                                    |  26321
+promise/catch-or-return                                    |  24802
 promise/no-callback-in-promise                             |  62606
 promise/no-multiple-resolved                               |   1421
 promise/no-nesting                                         |  62606
@@ -404,7 +404,7 @@ promise/no-return-wrap                                     |  62606
 promise/param-names                                        |   1421
 promise/prefer-await-to-callbacks                          |  79418
 promise/prefer-await-to-then                               |  62606
-promise/prefer-catch                                       |  26321
+promise/prefer-catch                                       |  24802
 promise/spec-only                                          |  95297
 promise/valid-params                                       |  62606
 react/button-has-type                                      |   7019
@@ -473,7 +473,7 @@ react_perf/jsx-no-jsx-as-prop                              |    804
 react_perf/jsx-no-new-array-as-prop                        |    804
 react_perf/jsx-no-new-function-as-prop                     |    804
 react_perf/jsx-no-new-object-as-prop                       |    804
-typescript/adjacent-overload-signatures                    |  15651
+typescript/adjacent-overload-signatures                    |  14374
 typescript/array-type                                      |  14479
 typescript/ban-ts-comment                                  |      4
 typescript/ban-tslint-comment                              |      7
@@ -531,13 +531,13 @@ unicorn/consistent-existence-index-check                   |  20604
 unicorn/consistent-function-scoping                        |  16812
 unicorn/consistent-template-literal-escape                 |    613
 unicorn/custom-error-definition                            |    300
-unicorn/empty-brace-spaces                                 |  46094
+unicorn/empty-brace-spaces                                 |  44575
 unicorn/error-message                                      |  64027
 unicorn/escape-case                                        |  63282
 unicorn/explicit-length-check                              |  76337
 unicorn/explicit-timer-delay                               |  62606
 unicorn/filename-case                                      |      7
-unicorn/import-style                                       |  64008
+unicorn/import-style                                       |  62489
 unicorn/max-nested-calls                                   |  64027
 unicorn/new-for-builtins                                   |  64027
 unicorn/no-abusive-eslint-disable                          |      7
@@ -557,7 +557,7 @@ unicorn/no-console-spaces                                  |  62606
 unicorn/no-document-cookie                                 |  13005
 unicorn/no-empty-file                                      |      7
 unicorn/no-hex-escape                                      |  63282
-unicorn/no-immediate-mutation                              |  26321
+unicorn/no-immediate-mutation                              |  24802
 unicorn/no-instanceof-array                                |  20604
 unicorn/no-instanceof-builtins                             |  20604
 unicorn/no-invalid-fetch-options                           |  64027
@@ -640,7 +640,7 @@ unicorn/prefer-regexp-test                                 |  62606
 unicorn/prefer-response-static-json                        |   1421
 unicorn/prefer-set-has                                     |  37499
 unicorn/prefer-set-size                                    |  76337
-unicorn/prefer-single-call                                 |  26321
+unicorn/prefer-single-call                                 |  24802
 unicorn/prefer-spread                                      |  62606
 unicorn/prefer-string-raw                                  |  62460
 unicorn/prefer-string-replace-all                          |  62606

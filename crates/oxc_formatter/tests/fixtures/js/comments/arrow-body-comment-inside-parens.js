@@ -1,0 +1,48 @@
+// Own-line comment *inside* the source parentheses of a concise arrow body.
+// The parens are not part of the AST, so the body's span starts at the expression:
+// the comment is a leading comment of the body, and the body moves to its own line.
+// (Distinct from `arrow-body-leading-comment-in-call.js`, where the comment sits
+// *before* the opening paren.)
+
+const array = () => (
+  // c
+  [1, 2, 3]
+);
+
+const object = () => (
+  // c
+  ({ a: 1 })
+);
+
+const arrow = () => (
+  // c
+  () => 1
+);
+
+const template = () => (
+  // c
+  `tpl ${x}
+  more`
+);
+
+// Block comment on the same line as the expression stays hugged.
+const inlineBlock = () => (
+  /* c */ [1, 2, 3]
+);
+
+// Chain tail body.
+const chainTail = (a) => (b) => (
+  // c
+  [1, 2]
+);
+
+// As a call argument: the body breaks and the call gets a trailing comma.
+foo(() => (
+  // c
+  [1, 2, 3]
+));
+
+foo((a) => (b) => (
+  // c
+  [1, 2]
+));

@@ -165,6 +165,11 @@ impl Rule for ConsistentFunctionScoping {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        enum FunctionLikeBody<'a, 'b> {
+            Function(&'b FunctionBody<'a>),
+            Arrow(&'b ArrowFunctionBody<'a>),
+        }
+
         let (
             function_declaration_symbol_id,
             function_name,
@@ -200,7 +205,7 @@ impl Rule for ConsistentFunctionScoping {
                         (
                             binding_ident.symbol_id(),
                             Some(binding_ident.name.as_str()),
-                            function_body,
+                            FunctionLikeBody::Function(function_body),
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
                                 |func_binding_ident| func_binding_ident.span,
@@ -211,7 +216,7 @@ impl Rule for ConsistentFunctionScoping {
                         (
                             function_id.symbol_id(),
                             Some(function_id.name.as_str()),
-                            function_body,
+                            FunctionLikeBody::Function(function_body),
                             function_id.span(),
                             func_scope_id,
                         )
@@ -227,7 +232,7 @@ impl Rule for ConsistentFunctionScoping {
                     (
                         binding_ident.symbol_id(),
                         Some(binding_ident.name.as_str()),
-                        &arrow_function.body,
+                        FunctionLikeBody::Arrow(&arrow_function.body),
                         binding_ident.span(),
                         arrow_function.scope_id(),
                     )
@@ -258,7 +263,10 @@ impl Rule for ConsistentFunctionScoping {
         // get all references in the function body
         let (function_body_var_references, is_parent_this_referenced) = {
             let mut rf = ReferencesFinder::default();
-            rf.visit_function_body(function_body);
+            match function_body {
+                FunctionLikeBody::Function(body) => rf.visit_function_body(body),
+                FunctionLikeBody::Arrow(body) => rf.visit_arrow_function_body(body),
+            }
             (rf.references, rf.is_parent_this_referenced)
         };
 

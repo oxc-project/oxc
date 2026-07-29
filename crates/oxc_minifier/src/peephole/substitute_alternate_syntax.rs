@@ -201,22 +201,16 @@ impl<'a> PeepholeOptimizations {
     /// `() => { return foo })` -> `() => foo`
     pub fn substitute_arrow_expression(
         arrow_expr: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
-        if !arrow_expr.expression
-            && arrow_expr.body.directives.is_empty()
-            && arrow_expr.body.statements.len() == 1
-            && let Some(body) = arrow_expr.body.statements.first_mut()
-            && let Statement::ReturnStatement(ret_stmt) = body
+        if let Some(body) = arrow_expr.get_function_body_mut()
+            && body.directives.is_empty()
+            && body.statements.len() == 1
+            && let Statement::ReturnStatement(return_statement) = &mut body.statements[0]
+            && let Some(expr) =
+                return_statement.argument.as_mut().map(|argument| argument.take_in(ctx))
         {
-            let return_stmt_arg = ret_stmt.argument.as_mut().map(|arg| arg.take_in(ctx));
-            if let Some(arg) = return_stmt_arg {
-                ctx.replace_statement(
-                    body,
-                    Statement::new_expression_statement(arg.span(), arg, ctx),
-                );
-                arrow_expr.expression = true;
-            }
+            arrow_expr.body = ArrowFunctionBody::from(expr);
         }
     }
 
@@ -1950,7 +1944,6 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
             && !f.r#async
             && !f.params.has_parameter()
-            && f.body.statements.len() == 1
         {
             if let Some(expr) = f.get_expression_mut() {
                 // Replace "(() => foo())()" with "foo()"
@@ -1964,7 +1957,11 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(e, new_value);
                 return;
             }
-            match &mut f.body.statements[0] {
+            let Some(body) = f.get_function_body_mut() else { return };
+            if body.statements.len() != 1 {
+                return;
+            }
+            match &mut body.statements[0] {
                 Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
                     let new_value = if is_pure && Self::is_expression_result_unused(ctx) {

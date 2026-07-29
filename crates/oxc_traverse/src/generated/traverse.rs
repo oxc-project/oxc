@@ -1217,6 +1217,21 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_arrow_function_body(
+        &mut self,
+        node: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_arrow_function_body(
+        &mut self,
+        node: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_arrow_function_expression(
         &mut self,
         node: &mut ArrowFunctionExpression<'a>,

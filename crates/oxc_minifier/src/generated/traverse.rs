@@ -948,6 +948,21 @@ pub trait Traverse<'a> {
     fn exit_function_body(&mut self, node: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
+    fn enter_arrow_function_body(
+        &mut self,
+        node: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_arrow_function_body(
+        &mut self,
+        node: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_arrow_function_expression(
         &mut self,
         node: &mut ArrowFunctionExpression<'a>,

@@ -192,6 +192,8 @@ impl<'a> ReplaceWith<'a> for FormalParameterRest<'a> {}
 
 impl<'a> ReplaceWith<'a> for FunctionBody<'a> {}
 
+impl<'a> ReplaceWith<'a> for ArrowFunctionBody<'a> {}
+
 impl<'a> ReplaceWith<'a> for ArrowFunctionExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for YieldExpression<'a> {}

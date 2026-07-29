@@ -300,15 +300,7 @@ pub fn build_identifier_loc_index(func: &FunctionNode<'_, '_>) -> IdentifierLocI
             if let Some(return_type) = &arrow.return_type {
                 visitor.visit_ts_type_annotation(return_type);
             }
-            if arrow.expression {
-                if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first() {
-                    visitor.visit_expression(&es.expression);
-                } else {
-                    visitor.visit_function_body(&arrow.body);
-                }
-            } else {
-                visitor.visit_function_body(&arrow.body);
-            }
+            visitor.visit_arrow_function_body(&arrow.body);
         }
     }
 

@@ -75,6 +75,7 @@ impl Rule for NoRenderReturnValue {
                     | AstKind::ObjectProperty(_)
                     | AstKind::ReturnStatement(_)
                     | AstKind::AssignmentExpression(_)
+                    | AstKind::ArrowFunctionExpression(_)
             ) {
                 ctx.diagnostic(no_render_return_value_diagnostic(ident.span.merge(property_span)));
             }
@@ -83,7 +84,7 @@ impl Rule for NoRenderReturnValue {
             if ctx.scoping().scope_flags(scope_id).is_arrow()
                 && let AstKind::ArrowFunctionExpression(e) =
                     ctx.nodes().kind(ctx.scoping().get_node_id(scope_id))
-                && e.expression
+                && e.is_expression()
             {
                 ctx.diagnostic(no_render_return_value_diagnostic(ident.span.merge(property_span)));
             }

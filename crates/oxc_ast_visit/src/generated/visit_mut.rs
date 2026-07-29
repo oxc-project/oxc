@@ -494,6 +494,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_arrow_function_body(&mut self, it: &mut ArrowFunctionBody<'a>) {
+        walk_arrow_function_body(self, it);
+    }
+
+    #[inline]
     fn visit_arrow_function_expression(&mut self, it: &mut ArrowFunctionExpression<'a>) {
         walk_arrow_function_expression(self, it);
     }
@@ -2617,6 +2622,20 @@ pub mod walk_mut {
     }
 
     #[inline]
+    pub fn walk_arrow_function_body<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ArrowFunctionBody<'a>,
+    ) {
+        // No `AstType` for this type
+        match it {
+            ArrowFunctionBody::FunctionBody(it) => visitor.visit_function_body(it),
+            match_expression!(ArrowFunctionBody) => {
+                visitor.visit_expression(it.to_expression_mut())
+            }
+        }
+    }
+
+    #[inline]
     pub fn walk_arrow_function_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ArrowFunctionExpression<'a>,
@@ -2641,7 +2660,7 @@ pub mod walk_mut {
         if let Some(return_type) = &mut it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
-        visitor.visit_function_body(&mut it.body);
+        visitor.visit_arrow_function_body(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
     }
