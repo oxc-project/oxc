@@ -1,0 +1,21 @@
+crates/oxc_linter/src/snapshots/eslint_no_unreachable_loop.snap
+  s_76a35fee03740a::t_625c29caf9278e 5689-5702
+crates/oxc_linter/src/rules/eslint/no_unreachable_loop.rs
+  s_76a35fee03740a::t_7f5f797958d3b8 6,14-17,19,465,472-476,483-523,979-983,995-997
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f095af0cc575b8c3c9f5270cba5647dbc7f53daa",
+  "prompts": {},
+  "sessions": {
+    "s_76a35fee03740a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fad31-db2f-7413-80c3-078f8eff4545",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
