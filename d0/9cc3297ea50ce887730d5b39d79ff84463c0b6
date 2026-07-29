@@ -1,0 +1,19 @@
+crates/oxc_ast/src/ast_impl/js.rs
+  s_60ae018ae28f5b::t_4d29b4fbf16798 2022
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d09cc3297ea50ce887730d5b39d79ff84463c0b6",
+  "prompts": {},
+  "sessions": {
+    "s_60ae018ae28f5b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae74-13c4-7363-a7d6-0613cbd8cd14",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
