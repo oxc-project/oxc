@@ -1,0 +1,8 @@
+[
+  { "args": ["--check"] },
+  { "args": ["--check"], "env": { "FORCE_COLOR": "1" } },
+  { "args": ["--check"], "env": { "NO_COLOR": "1" } },
+  { "args": ["--check"], "env": { "FORCE_COLOR": "0" } },
+  { "args": ["--check"], "env": { "CI": "true" } },
+  { "args": ["--list-different"], "env": { "FORCE_COLOR": "1" } }
+]

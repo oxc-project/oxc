@@ -168,32 +168,39 @@ pub fn flush_leading_comments(value_start: u32, f: &mut CssFormatter<'_, '_>) {
     write_leading_comments(leading, value_start, f);
 }
 
-/// If the next pending comment sits on the same line as `prev_end`,
-/// drain it and emit it as a trailing comment.
-pub fn write_trailing_same_line_comment(prev_end: u32, upper: u32, f: &mut CssFormatter<'_, '_>) {
-    let Some(comment) = f.context().comments().peek() else { return };
-    if comment.span.end > upper {
-        return;
-    }
+/// Drains and emits the run of pending comments sitting on the same line
+/// as `prev_end` as trailing comments (`red; /* x */ /* y */`); a `//` comment ends the run.
+/// Look-alike of `scss::write_same_line_trailing_comments`, which deliberately differs:
+/// no `expand_parent` there (its map/config bodies already hard-break).
+pub fn write_trailing_same_line_comments(
+    mut prev_end: u32,
+    upper: u32,
+    f: &mut CssFormatter<'_, '_>,
+) {
     let source = f.context().source_text();
-    if classify_gap(source.bytes_range(prev_end, comment.span.start)) != Gap::None {
-        return;
-    }
-    f.context().comments().take_before(comment.span.end);
-    if comment.inline {
-        // A trailing `//` comment is an EOL annotation:
-        // Use `line_suffix`, excluded from fits, like line comments in every formatter crate here.
-        // NOTE: Prettier is inconsistent here,
-        // they do not distinguish between `// c` and `/* c */` for CSS/SCSS/Less.
+    while let Some(comment) = f.context().comments().peek() {
+        if comment.span.end > upper
+            || classify_gap(source.bytes_range(prev_end, comment.span.start)) != Gap::None
+        {
+            return;
+        }
+
+        f.context().comments().take_before(comment.span.end);
         let content = format_with(move |f: &mut CssFormatter<'_, '_>| {
             write!(f, space());
             write_single_comment(comment, f);
         });
-        write!(f, [line_suffix(&content), expand_parent()]);
-        return;
+
+        // NOTE: Prettier does not distinguish between `// c` and `/* c */` at EOL only for CSS/SCSS/Less.
+        // All other formatters treat EOL-line comments as line suffixes, so we are consistent with them.
+        if comment.inline {
+            write!(f, [line_suffix(&content), expand_parent()]);
+            return;
+        }
+
+        write!(f, [content]);
+        prev_end = comment.span.end;
     }
-    write!(f, space());
-    write_single_comment(comment, f);
 }
 
 /// Emit comments that sit between the last child of a container and its closing delimiter.

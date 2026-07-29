@@ -365,7 +365,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     // Check if there are trailing line comments after the extends clause
                     // These comments need special handling to ensure they're placed correctly
                     // relative to the extends expression and any type arguments
-                    let has_trailing_comments = comments.iter().any(|comment| comment.is_line());
+                    let has_trailing_line_comments =
+                        comments.iter().any(|comment| comment.is_line());
 
                     let content = format_with(|f| {
                         if let Some(type_arguments) = type_arguments {
@@ -377,9 +378,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                             }
                         } else if implements.is_empty() {
                             FormatNodeWithoutTrailingComments(extends).fmt(f);
-                            // Only add trailing comments if they're not line comments
                             // Line comments are handled separately to ensure proper placement
-                            if !has_trailing_comments {
+                            if !has_trailing_line_comments {
                                 FormatTrailingComments::Comments(comments).fmt(f);
                             }
                         } else {

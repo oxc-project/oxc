@@ -43,23 +43,17 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningElement<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let name = self.name();
-        let mut name_has_leading_comment = false;
-        let mut name_has_own_line_leading_comment = false;
-        for leading_comment in f.comments().comments_before(name.span().start) {
-            name_has_leading_comment = true;
-            name_has_own_line_leading_comment =
-                name_has_own_line_leading_comment || leading_comment.is_line();
-        }
+        let comments = f.comments().comments_before(name.span().start);
+        let name_has_leading_comment = !comments.is_empty();
+        let name_has_leading_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_name = format_with(|f| {
-            if name_has_own_line_leading_comment {
-                write!(f, [hard_line_break()]);
-            } else if name_has_leading_comment {
-                write!(f, [space()]);
-            }
-            if name_has_own_line_leading_comment {
-                write!(f, [block_indent(&name), hard_line_break()]);
+            if name_has_leading_line_comment {
+                write!(f, [hard_line_break(), block_indent(&name), hard_line_break()]);
             } else {
+                if name_has_leading_comment {
+                    write!(f, [space()]);
+                }
                 write!(f, [name]);
             }
         });
@@ -83,10 +77,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
             return;
         }
 
-        let has_own_line_comment = comments.iter().any(|c| c.is_line());
+        let has_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
-            if has_own_line_comment {
+            if has_line_comment {
                 write!(f, [hard_line_break()]);
             }
 
@@ -98,7 +92,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
 
         write!(
             f,
-            ["<", indent(&format_comments), has_own_line_comment.then_some(hard_line_break()), ">"]
+            ["<", indent(&format_comments), has_line_comment.then_some(hard_line_break()), ">"]
         );
     }
 }
@@ -112,12 +106,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
             return;
         }
 
-        let has_own_line_comment = comments.iter().any(|c| c.is_line());
+        let has_line_comment = comments.iter().any(|c| c.is_line());
 
         let format_comments = format_with(|f| {
-            if has_own_line_comment {
+            if has_line_comment {
                 write!(f, [hard_line_break()]);
-            } else if !comments.is_empty() {
+            } else {
                 write!(f, [space()]);
             }
 
@@ -129,12 +123,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
 
         write!(
             f,
-            [
-                "</",
-                indent(&format_comments),
-                has_own_line_comment.then_some(hard_line_break()),
-                ">"
-            ]
+            ["</", indent(&format_comments), has_line_comment.then_some(hard_line_break()), ">"]
         );
     }
 }

@@ -764,24 +764,9 @@ impl<'a> PeepholeOptimizations {
             && e.operator.is_equality()
             && !e.left.may_have_side_effects(ctx)
         {
-            let right_ty = e.right.value_type(ctx);
-
-            if !right_ty.is_undetermined()
-                && right_ty != ValueType::String
-                && !e.right.may_have_side_effects(ctx)
-            {
-                let new_expr = Expression::new_boolean_literal(
-                    e.span,
-                    e.operator == BinaryOperator::Inequality
-                        || e.operator == BinaryOperator::StrictInequality,
-                    ctx,
-                );
-                ctx.replace_expression(expr, new_expr);
-                return;
-            }
-            if let Expression::StringLiteral(string_lit) = &e.right
-                && !matches!(
-                    string_lit.value.as_str(),
+            fn is_typeof_string(s: &str) -> bool {
+                matches!(
+                    s,
                     "string"
                         | "number"
                         | "bigint"
@@ -792,15 +777,39 @@ impl<'a> PeepholeOptimizations {
                         | "function"
                         | "unknown" // IE
                 )
-            {
-                let new_expr = Expression::new_boolean_literal(
-                    e.span,
-                    e.operator == BinaryOperator::Inequality
-                        || e.operator == BinaryOperator::StrictInequality,
-                    ctx,
-                );
-                ctx.replace_expression(expr, new_expr);
             }
+
+            let is_strict = matches!(
+                e.operator,
+                BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
+            );
+
+            let may_be_equal = match &e.right {
+                Expression::StringLiteral(string_lit) => is_typeof_string(&string_lit.value),
+                right => {
+                    let ty = right.value_type(ctx);
+                    matches!(ty, ValueType::Undetermined | ValueType::String)
+                        // a loose comparison with an object can be `true` via ToPrimitive
+                        // (e.g. `typeof foo == ['object']` is true when `foo` is an object),
+                        // so only fold when the object's string value is statically known
+                        // to not be a typeof result
+                        || (ty == ValueType::Object
+                            && !is_strict
+                            && right.to_js_string(ctx).is_none_or(|s| is_typeof_string(&s)))
+                }
+            };
+
+            if may_be_equal || e.right.may_have_side_effects(ctx) {
+                return;
+            }
+
+            let new_expr = Expression::new_boolean_literal(
+                e.span,
+                e.operator == BinaryOperator::Inequality
+                    || e.operator == BinaryOperator::StrictInequality,
+                ctx,
+            );
+            ctx.replace_expression(expr, new_expr);
         }
     }
 

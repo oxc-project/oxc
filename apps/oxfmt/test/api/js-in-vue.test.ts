@@ -134,4 +134,32 @@ const q = graphql\`
     expect(result2.code).toBe(result.code);
     expect(result2.errors).toStrictEqual([]);
   });
+
+  // tsx-in-vue: no parser-name signal from Prettier, handled by ts→tsx retry on the Rust side
+  it('should format <script lang="tsx"> blocks', async () => {
+    const input = `
+<script lang="tsx">
+export default {
+  render( h ): VNode {return <div>{ this.foo   }</div>    },
+}
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toContain("return <div>{this.foo}</div>;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // The ts-only grammar must keep winning on the first (ts) attempt
+  it('should format generic arrows in <script lang="ts"> blocks', async () => {
+    const input = `
+<script lang="ts">
+export const identity=<T>(x:T):T=>x;
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toContain("export const identity = <T>(x: T): T => x;");
+    expect(result.errors).toStrictEqual([]);
+  });
 });
