@@ -132,12 +132,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, ExportFromDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         format_named_export_specifiers(self.span, self.export_kind(), self.specifiers(), f);
+        let source = self.source();
+        let with_clause = self.with_clause();
         let content = format_with(|f| {
             write!(f, [space(), "from", space()]);
-            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
+            format_import_and_export_source_with_clause(source, with_clause, f);
         });
-        let content_end =
-            import_and_export_source_with_clause_end(self.source(), self.with_clause());
+        let content_end = import_and_export_source_with_clause_end(source, with_clause);
         write!(f, FormatContentWithSemicolon::new(&content, content_end, self.span.end));
         self.format_trailing_comments(f);
     }
