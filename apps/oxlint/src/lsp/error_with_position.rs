@@ -10,7 +10,6 @@ use oxc_diagnostics::{OxcCode, Severity};
 use oxc_language_server::offset_to_position as lsp_offset_to_position;
 use oxc_linter::{
     AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
-    disable_for_this_line, disable_for_this_section,
 };
 
 use crate::lsp::{
@@ -42,8 +41,6 @@ pub struct FixedContent {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FixedContentKind {
     LintRule(OxcCode),
-    IgnoreLintRuleLine,
-    IgnoreLintRuleSection,
     UnusedDirective,
 }
 
@@ -199,28 +196,6 @@ pub fn message_to_lsp_diagnostic(
             }));
         }
     }
-
-    // Add ignore fixes
-    let error_offset = message.span.start;
-    let section_offset = message.section_offset;
-
-    // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
-    // and attaching a ignore comment would not ignore the error.
-    // This is because the ignore comment would need to be placed before the error offset, which is not possible.
-    if error_offset == section_offset && message.span.end == section_offset {
-        return Some(DiagnosticReport {
-            diagnostic,
-            code_action: Some(LinterCodeAction { range, fixed_content }),
-        });
-    }
-
-    add_ignore_fixes(
-        &mut fixed_content,
-        &message.error.code,
-        error_offset,
-        section_offset,
-        source_text,
-    );
 
     let code_action = if fixed_content.is_empty() {
         None
@@ -394,43 +369,9 @@ pub fn offset_to_position(offset: u32, source_text: &str) -> Position {
     lsp_offset_to_position(source_text, offset)
 }
 
-/// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
-/// These fixes will be added to the end of the existing fixes.
-/// If the existing fixes already contain an "remove unused disable directive" fix,
-/// then no ignore fixes will be added.
-fn add_ignore_fixes(
-    fixes: &mut Vec<FixedContent>,
-    code: &OxcCode,
-    error_offset: u32,
-    section_offset: u32,
-    source_text: &str,
-) {
-    debug_assert!(
-        !fixes.iter().any(|fix| fix.message.starts_with("remove unused disable directive")),
-        "Unused disable directives should never pass pass this point, as they should be handled separately in `create_unused_directives_messages`."
-    );
-
-    let Some(rule_name_with_plugin) = get_full_rule_name(code) else {
-        return;
-    };
-    fixes.push(fix_to_fixed_content(
-        &disable_for_this_line(&rule_name_with_plugin, error_offset, section_offset, source_text),
-        source_text,
-        FixedContentKind::IgnoreLintRuleLine,
-    ));
-
-    fixes.push(fix_to_fixed_content(
-        &disable_for_this_section(&rule_name_with_plugin, section_offset, source_text),
-        source_text,
-        FixedContentKind::IgnoreLintRuleSection,
-    ));
-}
-
 #[cfg(test)]
 #[expect(clippy::cast_possible_truncation)]
 mod test {
-    use oxc_diagnostics::OxcCode;
-
     use super::offset_to_position;
 
     #[test]
@@ -474,18 +415,6 @@ mod test {
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
         offset_to_position(100, "foo");
-    }
-
-    #[test]
-    fn add_ignore_fixes_uses_user_facing_plugin_names() {
-        let source = "foo();";
-        let code = OxcCode { scope: Some("jsx-a11y".into()), number: Some("alt-text".into()) };
-        let mut fixes = vec![];
-
-        super::add_ignore_fixes(&mut fixes, &code, 0, 0, source);
-
-        assert_eq!(fixes[0].code, "// oxlint-disable-next-line jsx-a11y/alt-text\n");
-        assert_eq!(fixes[1].code, "// oxlint-disable jsx-a11y/alt-text\n");
     }
 
     fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {

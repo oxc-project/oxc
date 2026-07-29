@@ -1,6 +1,6 @@
 use oxc_span::Span;
 
-use crate::{Fix, FixKind};
+use crate::{Fix, FixKind, Message};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -10,13 +10,32 @@ enum DisableDirective {
     Section,
 }
 
-pub fn disable_for_this_line(
+impl Message {
+    pub(crate) fn add_ignore_fix(&mut self, section_offset: u32, section_source_text: &str) {
+        let Some(message_rule) = &self.rule else { return };
+        // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
+        // and attaching a ignore comment would not ignore the error.
+        // This is because the ignore comment would need to be placed before the error offset, which is not possible.
+        if self.span.start == 0 && self.span.end == 0 {
+            return;
+        }
+
+        let rule_name = message_rule.short_canonical_name();
+
+        self.fixes.extend_fix(vec![
+            disable_for_this_line(&rule_name, self.span.start, section_offset, section_source_text),
+            disable_for_this_section(&rule_name, section_offset, section_source_text),
+        ]);
+    }
+}
+
+fn disable_for_this_line(
     rule_name: &str,
     error_offset: u32,
     section_offset: u32,
-    source_text: &str,
+    section_source_text: &str,
 ) -> Fix {
-    let bytes = source_text.as_bytes();
+    let bytes = section_source_text.as_bytes();
     let message = format!("Disable {rule_name} for this line");
 
     // Reuse an inline disable-line comment on the same line when present.
@@ -25,22 +44,17 @@ pub fn disable_for_this_line(
             message: Some(Cow::Owned(message)),
             content: Cow::Owned(format!(" {rule_name}")),
             span: Span::empty(existing_comment_end),
-            kind: FixKind::SafeFix,
+            kind: FixKind::IgnoreFix,
         };
     }
 
     // Find the line break before the error
     let mut line_break_offset = error_offset;
-    for byte in bytes[section_offset as usize..error_offset as usize].iter().rev() {
+    for byte in bytes[..error_offset as usize].iter().rev() {
         if *byte == b'\n' || *byte == b'\r' {
             break;
         }
         line_break_offset -= 1;
-    }
-
-    // For framework files, ensure we don't go before the section start
-    if section_offset > 0 && line_break_offset < section_offset {
-        line_break_offset = section_offset;
     }
 
     let (content_prefix, insert_offset) =
@@ -54,7 +68,7 @@ pub fn disable_for_this_line(
             message: Some(Cow::Owned(message)),
             content: Cow::Owned(format!(" {rule_name}")),
             span: Span::empty(existing_comment_end),
-            kind: FixKind::SafeFix,
+            kind: FixKind::IgnoreFix,
         };
     }
 
@@ -77,16 +91,19 @@ pub fn disable_for_this_line(
             "{content_prefix}{whitespace_string}// oxlint-disable-next-line {rule_name}\n"
         )),
         span: Span::empty(insert_offset),
-        kind: FixKind::SafeFix,
+        kind: FixKind::IgnoreFix,
     }
 }
 
-pub fn disable_for_this_section(rule_name: &str, section_offset: u32, source_text: &str) -> Fix {
-    let bytes = source_text.as_bytes();
+fn disable_for_this_section(
+    rule_name: &str,
+    section_offset: u32,
+    section_source_text: &str,
+) -> Fix {
+    let bytes = section_source_text.as_bytes();
     let message = format!("Disable {rule_name} for this whole file");
 
-    let (content_prefix, insert_offset) =
-        get_section_insert_position(section_offset, section_offset, bytes);
+    let (content_prefix, insert_offset) = get_section_insert_position(section_offset, 0, bytes);
 
     // Reuse an existing section disable comment when present by appending the rule.
     if let Some(existing_comment_end) =
@@ -96,7 +113,7 @@ pub fn disable_for_this_section(rule_name: &str, section_offset: u32, source_tex
             message: Some(Cow::Owned(message)),
             content: Cow::Owned(format!(" {rule_name}")),
             span: Span::empty(existing_comment_end),
-            kind: FixKind::SafeFix,
+            kind: FixKind::IgnoreFix,
         };
     }
 
@@ -106,14 +123,14 @@ pub fn disable_for_this_section(rule_name: &str, section_offset: u32, source_tex
         message: Some(Cow::Owned(message)),
         content: Cow::Owned(content),
         span: Span::empty(insert_offset),
-        kind: FixKind::SafeFix,
+        kind: FixKind::IgnoreFix,
     }
 }
 
 /// Get the insert position and content prefix for section-based insertions.
 ///
-/// For framework files (section_offset > 0), this handles proper line break detection.
-/// For regular JS files (section_offset == 0), this handles shebang lines.
+/// The section source is already sliced at section offset, so offset 0 is the section start.
+/// This handles section-start line break detection and shebang lines at the section start.
 ///
 /// Returns (content_prefix, insert_offset) where:
 /// - content_prefix: "\n" if we need to add a line break, "" otherwise
@@ -124,9 +141,9 @@ fn get_section_insert_position(
     target_offset: u32,
     bytes: &[u8],
 ) -> (&'static str, u32) {
-    if section_offset == 0 && target_offset == 0 {
+    if target_offset == 0 {
         if bytes.starts_with(b"#!") {
-            // Shebang present, insert after the first line
+            // Shebang present, insert after the first line.
             let mut shebang_end = 0;
             for (i, &byte) in bytes.iter().enumerate() {
                 if byte == b'\n' {
@@ -136,29 +153,24 @@ fn get_section_insert_position(
             }
             return ("", shebang_end as u32);
         }
-        // Regular JS file without shebang, insert at start
-        ("", target_offset)
-    } else if target_offset == section_offset {
-        // Framework files - check for line breaks at section_offset
-        let current = bytes.get(section_offset as usize);
-        let next = bytes.get((section_offset + 1) as usize);
 
-        match (current, next) {
-            (Some(b'\n'), _) => {
-                // LF at offset, insert after it
-                ("", section_offset + 1)
-            }
-            (Some(b'\r'), Some(b'\n')) => {
-                // CRLF at offset, insert after both
-                ("", section_offset + 2)
-            }
-            _ => {
-                // Not at line start, prepend newline
-                ("\n", section_offset)
-            }
+        if section_offset == 0 {
+            // Full file starts at offset 0, insert before first byte with no extra newline.
+            return ("", 0);
         }
+
+        // Section starts at a line break, insert after it.
+        if bytes.first() == Some(&b'\n') {
+            return ("", 1);
+        }
+        if bytes.first() == Some(&b'\r') && bytes.get(1) == Some(&b'\n') {
+            return ("", 2);
+        }
+
+        // Section starts in the middle of a line, prepend a newline.
+        ("\n", 0)
     } else {
-        // Framework files where target_offset != section_offset (line was found)
+        // Insertion point was derived from a line start in the section slice.
         ("", target_offset)
     }
 }
@@ -362,19 +374,25 @@ mod tests {
     #[test]
     fn disable_for_section_after_lf() {
         let source = "<script>\nconsole.log('hello');";
-        let fix = super::disable_for_this_section("no-console", 8, source);
+        let section_offset = 8;
+        let section_source_text = &source[8..];
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, "// oxlint-disable no-console\n");
-        assert_eq!(fix.span, Span::empty(9));
+        assert_eq!(fix.span, Span::empty(1));
     }
 
     #[test]
     fn disable_for_section_after_crlf() {
         let source = "<script>\r\nconsole.log('hello');";
-        let fix = super::disable_for_this_section("no-console", 8, source);
+        let section_offset = 8;
+        let section_source_text = &source[8..];
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, "// oxlint-disable no-console\n");
-        assert_eq!(fix.span, Span::empty(10));
+        assert_eq!(fix.span, Span::empty(2));
     }
 
     #[test]
@@ -398,10 +416,13 @@ mod tests {
     #[test]
     fn disable_for_section_mid_line() {
         let source = "const x = 5;";
-        let fix = super::disable_for_this_section("no-unused-vars", 6, source);
+        let section_offset = 6;
+        let section_source_text = &source[6..];
+        let fix =
+            super::disable_for_this_section("no-unused-vars", section_offset, section_source_text);
 
         assert_eq!(fix.content, "\n// oxlint-disable no-unused-vars\n");
-        assert_eq!(fix.span, Span::empty(6));
+        assert_eq!(fix.span, Span::empty(0));
     }
 
     #[test]
@@ -409,30 +430,36 @@ mod tests {
         let source =
             "<template>\n  <div />\n</template>\n<script>\nconsole.log('hello');\n</script>";
         let section_offset = source.find("<script>").unwrap() as u32 + "<script>".len() as u32;
-        let fix = super::disable_for_this_section("no-console", section_offset, source);
+        let section_source_text = &source[section_offset as usize..];
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, "// oxlint-disable no-console\n");
-        assert_eq!(fix.span, Span::empty(42));
+        assert_eq!(fix.span, Span::empty(1));
     }
 
     #[test]
     fn disable_for_section_vue_script_block_after_template_crlf() {
         let source = "<template>\r\n  <div />\r\n</template>\r\n<script>\r\nconsole.log('hello');\r\n</script>";
         let section_offset = source.find("<script>").unwrap() as u32 + "<script>".len() as u32;
-        let fix = super::disable_for_this_section("no-console", section_offset, source);
+        let section_source_text = &source[section_offset as usize..];
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, "// oxlint-disable no-console\n");
-        assert_eq!(fix.span, Span::empty(46));
+        assert_eq!(fix.span, Span::empty(2));
     }
 
     #[test]
     fn disable_for_section_vue_script_setup_mid_line() {
         let source = "<template><div /></template>\n<script setup>const x = 1;\n</script>";
         let section_offset = source.find("const x").unwrap() as u32;
-        let fix = super::disable_for_this_section("no-unused-vars", section_offset, source);
+        let section_source_text = &source[section_offset as usize..];
+        let fix =
+            super::disable_for_this_section("no-unused-vars", section_offset, section_source_text);
 
         assert_eq!(fix.content, "\n// oxlint-disable no-unused-vars\n");
-        assert_eq!(fix.span, Span::empty(43));
+        assert_eq!(fix.span, Span::empty(0));
     }
 
     #[test]
@@ -442,11 +469,13 @@ mod tests {
             "<template>\n</template>\n<script>\n{existing}\nconsole.log('hello');\n</script>"
         );
         let section_offset = source.find(existing).unwrap() as u32;
+        let section_source_text = &source[section_offset as usize..];
 
-        let fix = super::disable_for_this_section("no-console", section_offset, &source);
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, " no-console");
-        assert_eq!(fix.span, Span::empty(58));
+        assert_eq!(fix.span, Span::empty(26));
     }
 
     #[test]
@@ -566,10 +595,17 @@ mod tests {
         let source = "<script>\nconsole.log('hello');\n</script>";
         let section_offset = 8; // At the \n after "<script>"
         let error_offset = 17; // At 'console'
-        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
+        let section_source_text = &source[section_offset as usize..];
+        let error_offset_in_section = error_offset - section_offset;
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset_in_section,
+            section_offset,
+            section_source_text,
+        );
 
         assert_eq!(fix.content, "// oxlint-disable-next-line no-console\n");
-        assert_eq!(fix.span, Span::empty(9));
+        assert_eq!(fix.span, Span::empty(1));
     }
 
     #[test]
@@ -578,10 +614,17 @@ mod tests {
         let source = "<script>console.log('hello');\n</script>";
         let section_offset = 8; // After "<script>"
         let error_offset = 16; // At 'console'
-        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
+        let section_source_text = &source[section_offset as usize..];
+        let error_offset_in_section = error_offset - section_offset;
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset_in_section,
+            section_offset,
+            section_source_text,
+        );
 
         assert_eq!(fix.content, "\n// oxlint-disable-next-line no-console\n");
-        assert_eq!(fix.span, Span::empty(8));
+        assert_eq!(fix.span, Span::empty(0));
     }
 
     #[test]
@@ -590,10 +633,17 @@ mod tests {
         let source = "<template>\n</template>\n<script>\n  console.log('hello');\n</script>";
         let section_offset = 31; // At \n after "<script>"
         let error_offset = 36; // At 'console' (after "  ")
-        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
+        let section_source_text = &source[section_offset as usize..];
+        let error_offset_in_section = error_offset - section_offset;
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset_in_section,
+            section_offset,
+            section_source_text,
+        );
 
         assert_eq!(fix.content, "  // oxlint-disable-next-line no-console\n");
-        assert_eq!(fix.span, Span::empty(32));
+        assert_eq!(fix.span, Span::empty(1));
     }
 
     #[test]
@@ -602,10 +652,17 @@ mod tests {
         let source = "<script>\nconsole.log('hello');\n</script>";
         let section_offset = 8; // At the \n after "<script>"
         let error_offset = 8; // Error exactly at section offset
-        let fix = super::disable_for_this_line("no-console", error_offset, section_offset, source);
+        let section_source_text = &source[section_offset as usize..];
+        let error_offset_in_section = error_offset - section_offset;
+        let fix = super::disable_for_this_line(
+            "no-console",
+            error_offset_in_section,
+            section_offset,
+            section_source_text,
+        );
 
         assert_eq!(fix.content, "// oxlint-disable-next-line no-console\n");
-        assert_eq!(fix.span, Span::empty(9));
+        assert_eq!(fix.span, Span::empty(1));
     }
 
     #[test]
@@ -716,9 +773,11 @@ mod tests {
     fn disable_for_this_section_merges_with_existing_ignore_comment_above() {
         let existing = "// oxlint-disable no-alert";
         let source = format!("{existing}\nconsole.log('hello');");
-        let section_offset = source.find("console").unwrap() as u32;
+        let section_offset = source.find(existing).unwrap() as u32;
+        let section_source_text = &source[section_offset as usize..];
 
-        let fix = super::disable_for_this_section("no-console", section_offset, &source);
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, " no-console");
         assert_eq!(fix.span, Span::empty(26));
@@ -728,9 +787,11 @@ mod tests {
     fn disable_for_this_section_merges_with_eslint_disable_comment_above() {
         let existing = "// eslint-disable no-alert";
         let source = format!("{existing}\nconsole.log('hello');");
-        let section_offset = source.find("console").unwrap() as u32;
+        let section_offset = source.find(existing).unwrap() as u32;
+        let section_source_text = &source[section_offset as usize..];
 
-        let fix = super::disable_for_this_section("no-console", section_offset, &source);
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, " no-console");
         assert_eq!(fix.span, Span::empty(26));
@@ -760,8 +821,10 @@ mod tests {
     fn disable_for_this_section_does_not_merge_with_non_disable_comment_above() {
         let source = "// tslint:disable no-alert\nconsole.log('hello');";
         let section_offset = source.find("console").unwrap() as u32;
+        let section_source_text = &source[section_offset as usize..];
 
-        let fix = super::disable_for_this_section("no-console", section_offset, source);
+        let fix =
+            super::disable_for_this_section("no-console", section_offset, section_source_text);
 
         assert_eq!(fix.content, "\n// oxlint-disable no-console\n");
     }

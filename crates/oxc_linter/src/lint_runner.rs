@@ -145,6 +145,7 @@ pub struct LintRunnerBuilder {
     fix_kind: FixKind,
     type_check_only: bool,
     timings: bool,
+    with_ignore_fixes: bool,
 }
 
 impl LintRunnerBuilder {
@@ -158,6 +159,7 @@ impl LintRunnerBuilder {
             fix_kind: FixKind::None,
             type_check_only: false,
             timings: false,
+            with_ignore_fixes: false,
         }
     }
 
@@ -197,6 +199,12 @@ impl LintRunnerBuilder {
         self
     }
 
+    #[must_use]
+    pub fn with_ignore_fixes(mut self, with_ignore_fixes: bool) -> Self {
+        self.with_ignore_fixes = with_ignore_fixes;
+        self
+    }
+
     /// # Errors
     /// Returns an error if the type-aware linter fails to initialize.
     pub fn build(self) -> Result<LintRunner, String> {
@@ -212,7 +220,8 @@ impl LintRunnerBuilder {
                     state
                         .with_silent(self.silent)
                         .with_type_check(self.type_check)
-                        .with_timings(self.timings),
+                        .with_timings(self.timings)
+                        .with_ignore_fixes(self.with_ignore_fixes),
                 ),
                 Err(e) => return Err(e),
             }
