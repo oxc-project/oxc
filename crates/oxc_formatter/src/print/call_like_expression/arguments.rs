@@ -573,10 +573,6 @@ fn can_group_arrow_function_expression_argument(
     is_arrow_recursion: bool,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    // NOTE: Prettier's `couldExpandArg` has no return-type condition: an arrow
-    // with a type-reference return annotation and a groupable body still hugs,
-    // e.g. `computed((): Filters => ({ ... }))`. An earlier Prettier version
-    // restricted this (prettier#7542); the restriction is gone.
     arrow_function.get_expression().is_none_or(|expr| match expr {
         Expression::ObjectExpression(_)
         | Expression::ArrayExpression(_)
