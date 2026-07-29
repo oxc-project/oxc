@@ -7,7 +7,7 @@ checker.ts:
   sys peak growth: 10169560 # 10.17 MB
   arena allocs: 148201
   arena reallocs: 28468
-  arena size: 19202816 # 19.20 MB
+  arena size: 19201056 # 19.20 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
@@ -18,7 +18,7 @@ App.tsx:
   sys peak growth: 1612427 # 1.61 MB
   arena allocs: 16027
   arena reallocs: 2721
-  arena size: 2888280 # 2.89 MB
+  arena size: 2887160 # 2.89 MB
 
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
@@ -73,5 +73,5 @@ kitchen-sink.tsx:
   sys peak growth: 3707425 # 3.71 MB
   arena allocs: 66761
   arena reallocs: 12252
-  arena size: 9425560 # 9.43 MB
+  arena size: 9423848 # 9.42 MB
 

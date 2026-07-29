@@ -749,7 +749,7 @@ fn is_initializer_sentinel(kind: AstKind) -> bool {
             | AstKind::ArrowFunctionExpression(_)
             | AstKind::CatchClause(_)
             | AstKind::ImportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDeclaration(_)
     )
 }
 

@@ -626,8 +626,18 @@ pub trait VisitJsMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_export_declaration(&mut self, it: &mut ExportDeclaration<'a>) {
+        walk_export_declaration(self, it);
+    }
+
+    #[inline]
     fn visit_export_named_declaration(&mut self, it: &mut ExportNamedDeclaration<'a>) {
         walk_export_named_declaration(self, it);
+    }
+
+    #[inline]
+    fn visit_export_from_declaration(&mut self, it: &mut ExportFromDeclaration<'a>) {
+        walk_export_from_declaration(self, it);
     }
 
     #[inline]
@@ -2438,7 +2448,6 @@ pub mod walk_js_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_module_declaration<'a, V: VisitJsMut<'a>>(
         visitor: &mut V,
         it: &mut ModuleDeclaration<'a>,
@@ -2450,8 +2459,12 @@ pub mod walk_js_mut {
             ModuleDeclaration::ExportDefaultDeclaration(it) => {
                 visitor.visit_export_default_declaration(it)
             }
+            ModuleDeclaration::ExportDeclaration(it) => visitor.visit_export_declaration(it),
             ModuleDeclaration::ExportNamedDeclaration(it) => {
                 visitor.visit_export_named_declaration(it)
+            }
+            ModuleDeclaration::ExportFromDeclaration(it) => {
+                visitor.visit_export_from_declaration(it)
             }
             ModuleDeclaration::TSExportAssignment(it) => visitor.visit_ts_export_assignment(it),
             _ => {}
@@ -2596,6 +2609,18 @@ pub mod walk_js_mut {
     }
 
     #[inline]
+    pub fn walk_export_declaration<'a, V: VisitJsMut<'a>>(
+        visitor: &mut V,
+        it: &mut ExportDeclaration<'a>,
+    ) {
+        let kind = AstType::ExportDeclaration;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_declaration(&mut it.declaration);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
     pub fn walk_export_named_declaration<'a, V: VisitJsMut<'a>>(
         visitor: &mut V,
         it: &mut ExportNamedDeclaration<'a>,
@@ -2603,13 +2628,20 @@ pub mod walk_js_mut {
         let kind = AstType::ExportNamedDeclaration;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        if let Some(declaration) = &mut it.declaration {
-            visitor.visit_declaration(declaration);
-        }
         visitor.visit_export_specifiers(&mut it.specifiers);
-        if let Some(source) = &mut it.source {
-            visitor.visit_string_literal(source);
-        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_export_from_declaration<'a, V: VisitJsMut<'a>>(
+        visitor: &mut V,
+        it: &mut ExportFromDeclaration<'a>,
+    ) {
+        let kind = AstType::ExportFromDeclaration;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_export_specifiers(&mut it.specifiers);
+        visitor.visit_string_literal(&mut it.source);
         if let Some(with_clause) = &mut it.with_clause {
             visitor.visit_with_clause(with_clause);
         }

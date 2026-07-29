@@ -572,8 +572,8 @@ fn get_module_instance_state_for_statement<'a, 'b>(
                     ModuleInstanceState::Instantiated
                 }
             }
-            Statement::ExportNamedDeclaration(export_decl) if let Some(declaration) = &export_decl.declaration => {
-                match declaration {
+            Statement::ExportDeclaration(export_decl) => {
+                match &export_decl.declaration {
                     Declaration::TSModuleDeclaration(module_decl) => {
                         get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
                     }
@@ -586,18 +586,14 @@ fn get_module_instance_state_for_statement<'a, 'b>(
             }
             // 4. Export alias declarations pointing at uninstantiated modules
             Statement::ExportNamedDeclaration(export_decl) => {
-                if export_decl.source.is_none() {
-                    let mut export_state = ModuleInstanceState::NonInstantiated;
-                    for specifier in &export_decl.specifiers {
-                        export_state = get_module_instance_state_for_alias_target(builder, specifier, current_node_id, module_declaration_stmts.as_slice());
-                        if export_state.is_instantiated() {
-                            break;
-                        }
+                let mut export_state = ModuleInstanceState::NonInstantiated;
+                for specifier in &export_decl.specifiers {
+                    export_state = get_module_instance_state_for_alias_target(builder, specifier, current_node_id, module_declaration_stmts.as_slice());
+                    if export_state.is_instantiated() {
+                        break;
                     }
-                    export_state
-                } else {
-                    ModuleInstanceState::Instantiated
                 }
+                export_state
             }
             // 5. other module declarations
             Statement::TSModuleDeclaration(module_decl) => {
@@ -644,21 +640,18 @@ fn get_module_instance_state_for_alias_target<'a>(
                         found = true;
                     }
                 }
-                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
-                    Some(Declaration::VariableDeclaration(decl)) => {
+                Statement::ExportDeclaration(decl) => match &decl.declaration {
+                    Declaration::VariableDeclaration(decl) => {
                         decl.bound_names(&mut |id| {
                             if id.name == name {
                                 found = true;
                             }
                         });
                     }
-                    Some(decl) => {
+                    decl => {
                         if decl.id().is_some_and(|id| id.name == name) {
                             found = true;
                         }
-                    }
-                    None => {
-                        continue;
                     }
                 },
                 Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {

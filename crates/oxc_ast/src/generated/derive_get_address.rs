@@ -321,7 +321,9 @@ impl GetAddress for Statement<'_> {
             Self::ImportDeclaration(it) => GetAddress::address(it),
             Self::ExportAllDeclaration(it) => GetAddress::address(it),
             Self::ExportDefaultDeclaration(it) => GetAddress::address(it),
+            Self::ExportDeclaration(it) => GetAddress::address(it),
             Self::ExportNamedDeclaration(it) => GetAddress::address(it),
+            Self::ExportFromDeclaration(it) => GetAddress::address(it),
             Self::TSExportAssignment(it) => GetAddress::address(it),
             Self::TSNamespaceExportDeclaration(it) => GetAddress::address(it),
         }
@@ -509,7 +511,9 @@ impl GetAddress for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => GetAddress::address(it),
             Self::ExportAllDeclaration(it) => GetAddress::address(it),
             Self::ExportDefaultDeclaration(it) => GetAddress::address(it),
+            Self::ExportDeclaration(it) => GetAddress::address(it),
             Self::ExportNamedDeclaration(it) => GetAddress::address(it),
+            Self::ExportFromDeclaration(it) => GetAddress::address(it),
             Self::TSExportAssignment(it) => GetAddress::address(it),
             Self::TSNamespaceExportDeclaration(it) => GetAddress::address(it),
         }

@@ -445,7 +445,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
                             program_body.push(Statement::new_export_named_declaration(
                                 SPAN,
-                                None,
                                 [ExportSpecifier::new(
                                     SPAN,
                                     ModuleExportName::IdentifierReference(
@@ -455,21 +454,23 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                     ImportOrExportKind::Value,
                                     ctx,
                                 )],
-                                None,
                                 ImportOrExportKind::Value,
-                                None,
                                 ctx,
                             ));
                         }
                         Statement::ExportNamedDeclaration(export_named_declaration) => {
-                            if export_named_declaration.declaration.is_none() {
-                                program_body.push(Statement::ExportNamedDeclaration(
-                                    export_named_declaration,
-                                ));
-                                return (program_body, inner_block);
-                            }
+                            program_body
+                                .push(Statement::ExportNamedDeclaration(export_named_declaration));
+                            return (program_body, inner_block);
+                        }
+                        Statement::ExportFromDeclaration(export_from_declaration) => {
+                            program_body
+                                .push(Statement::ExportFromDeclaration(export_from_declaration));
+                            return (program_body, inner_block);
+                        }
+                        Statement::ExportDeclaration(export_declaration) => {
+                            let decl = &export_declaration.declaration;
 
-                            let decl = export_named_declaration.declaration.as_ref().unwrap();
                             if matches!(
                                 decl,
                                 Declaration::FunctionDeclaration(_)
@@ -480,16 +481,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 // Note: `TSGlobalDeclaration` cannot be exported
                                 | Declaration::TSImportEqualsDeclaration(_)
                             ) {
-                                program_body.push(Statement::ExportNamedDeclaration(
-                                    export_named_declaration,
-                                ));
+                                program_body.push(Statement::ExportDeclaration(export_declaration));
 
                                 return (program_body, inner_block);
                             }
 
-                            let export_kind = export_named_declaration.export_kind;
+                            let export_kind = export_declaration.export_kind();
 
-                            let decl = export_named_declaration.unbox().declaration.unwrap();
+                            let decl = export_declaration.unbox().declaration;
                             let export_specifiers = match decl {
                                 Declaration::ClassDeclaration(class_decl) => {
                                     let class_binding = class_decl.id.as_ref().unwrap();
@@ -553,11 +552,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
                             program_body.push(Statement::new_export_named_declaration(
                                 SPAN,
-                                None,
                                 export_specifiers,
-                                None,
                                 export_kind,
-                                None,
                                 ctx,
                             ));
                         }

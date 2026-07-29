@@ -228,11 +228,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 _ => {}
             },
-            Statement::ExportNamedDeclaration(decl) => match &mut decl.declaration {
-                Some(Declaration::FunctionDeclaration(func)) => {
+            Statement::ExportDeclaration(decl) => match &mut decl.declaration {
+                Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
                 }
-                Some(Declaration::VariableDeclaration(var_decl)) if var_decl.kind.is_const() => {
+                Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
                         Self::set_pure_on_function_expr(expr);

@@ -181,20 +181,15 @@ impl Rule for ExplicitModuleBoundaryTypes {
         match node.kind() {
             // look for `export function foo() { ... }`, `export const foo = () => { ... }`,
             // etc.
+            AstKind::ExportDeclaration(export) => {
+                let mut checker = ExplicitTypesChecker::new(self, ctx);
+                walk_js::walk_declaration(&mut checker, &export.declaration);
+            }
             AstKind::ExportNamedDeclaration(export) => {
-                // export { foo } from 'bar';
-                if export.source.is_some() {
-                    return;
-                }
-                if let Some(decl) = &export.declaration {
-                    let mut checker = ExplicitTypesChecker::new(self, ctx);
-                    walk_js::walk_declaration(&mut checker, decl);
-                } else {
-                    let mut checker = ExplicitTypesChecker::new(self, ctx);
-                    for specifier in &export.specifiers {
-                        if let ModuleExportName::IdentifierReference(id) = &specifier.local {
-                            Self::run_on_identifier_reference(ctx, id, &mut checker);
-                        }
+                let mut checker = ExplicitTypesChecker::new(self, ctx);
+                for specifier in &export.specifiers {
+                    if let ModuleExportName::IdentifierReference(id) = &specifier.local {
+                        Self::run_on_identifier_reference(ctx, id, &mut checker);
                     }
                 }
             }

@@ -20,24 +20,26 @@ impl<'a> IsolatedDeclarations<'a> {
         )
     }
 
-    pub(crate) fn transform_export_named_declaration(
-        &mut self,
-        prev_decl: &ExportNamedDeclaration<'a>,
-    ) -> Option<ArenaBox<'a, ExportNamedDeclaration<'a>>> {
-        let declaration = match &prev_decl.declaration {
-            Some(decl) => Some(self.transform_declaration(decl, false)?),
-            None => None,
-        };
-
-        Some(ExportNamedDeclaration::boxed(
+    pub(crate) fn transform_export_from_declaration(
+        &self,
+        prev_decl: &ExportFromDeclaration<'a>,
+    ) -> ArenaBox<'a, ExportFromDeclaration<'a>> {
+        ExportFromDeclaration::boxed(
             prev_decl.span,
-            declaration,
             prev_decl.specifiers.clone_in(self.allocator()),
-            prev_decl.source.clone(),
+            prev_decl.source.clone_in(self.allocator()),
             prev_decl.export_kind,
             None,
             self,
-        ))
+        )
+    }
+
+    pub(crate) fn transform_export_declaration(
+        &mut self,
+        prev_decl: &ExportDeclaration<'a>,
+    ) -> Option<ArenaBox<'a, ExportDeclaration<'a>>> {
+        let decl = self.transform_declaration(&prev_decl.declaration, false)?;
+        Some(ExportDeclaration::boxed(prev_decl.span, decl, self))
     }
 
     pub(crate) fn create_unique_name(&self, name: &str) -> Str<'a> {
@@ -186,7 +188,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    /// Strip export keyword from ExportNamedDeclaration
+    /// Strip export keyword from ExportDeclaration
     ///
     /// ```ts
     /// export const a = 1;
@@ -199,12 +201,10 @@ impl<'a> IsolatedDeclarations<'a> {
     /// ```
     pub(crate) fn strip_export_keyword(stmts: &mut ArenaVec<'a, Statement<'a>>) {
         stmts.iter_mut().for_each(|stmt| {
-            if let Statement::ExportNamedDeclaration(decl) = stmt
-                && decl.declaration.is_some()
-            {
+            if let Statement::ExportDeclaration(_) = stmt {
                 stmt.replace_with(|stmt| {
-                    let Statement::ExportNamedDeclaration(decl) = stmt else { unreachable!() };
-                    Statement::from(decl.unbox().declaration.unwrap())
+                    let Statement::ExportDeclaration(decl) = stmt else { unreachable!() };
+                    Statement::from(decl.unbox().declaration)
                 });
             }
         });

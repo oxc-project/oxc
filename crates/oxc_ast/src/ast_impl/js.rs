@@ -1902,7 +1902,9 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             ModuleDeclaration::ImportDeclaration(_) => false,
             ModuleDeclaration::ExportDefaultDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportNamedDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportFromDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportAllDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::TSNamespaceExportDeclaration(_)
             | ModuleDeclaration::TSExportAssignment(_) => true,
@@ -1920,7 +1922,9 @@ impl<'a> ModuleDeclaration<'a> {
             self,
             Self::ExportAllDeclaration(_)
                 | Self::ExportDefaultDeclaration(_)
+                | Self::ExportDeclaration(_)
                 | Self::ExportNamedDeclaration(_)
+                | Self::ExportFromDeclaration(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExportDeclaration(_)
         )
@@ -1942,8 +1946,10 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
             Self::ExportAllDeclaration(decl) => Some(&decl.source),
-            Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
+            Self::ExportFromDeclaration(decl) => Some(&decl.source),
             Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
         }
@@ -1960,8 +1966,10 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportAllDeclaration(decl) => decl.with_clause.as_deref(),
-            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportFromDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
         }
@@ -2009,11 +2017,34 @@ impl<'a> ImportAttributeKey<'a> {
     }
 }
 
-impl ExportNamedDeclaration<'_> {
-    /// Returns `true` if this export declaration uses any TypeScript syntax (such as `type` or `declare`).
+impl ExportDeclaration<'_> {
+    /// Returns the export kind derived from the wrapped declaration.
+    #[inline]
+    pub fn export_kind(&self) -> ImportOrExportKind {
+        if self.declaration.declare() || self.declaration.is_type() {
+            ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
+        }
+    }
+
+    /// Returns `true` if this export declaration uses any TypeScript syntax.
     pub fn is_typescript_syntax(&self) -> bool {
-        self.export_kind == ImportOrExportKind::Type
-            || self.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax)
+        self.declaration.is_typescript_syntax()
+    }
+}
+
+impl ExportNamedDeclaration<'_> {
+    /// Returns `true` if this is a TypeScript type-only export.
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.export_kind.is_type()
+    }
+}
+
+impl ExportFromDeclaration<'_> {
+    /// Returns `true` if this is a TypeScript type-only re-export.
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.export_kind.is_type()
     }
 }
 

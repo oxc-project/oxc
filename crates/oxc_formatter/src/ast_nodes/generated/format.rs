@@ -2749,9 +2749,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ModuleDeclaration<'a>> 
                     })
                     .fmt(f);
             }
+            ModuleDeclaration::ExportDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ExportDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
             ModuleDeclaration::ExportNamedDeclaration(inner) => {
                 allocator
                     .alloc(AstNode::<ExportNamedDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            ModuleDeclaration::ExportFromDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ExportFromDeclaration> {
                         inner,
                         parent,
                         allocator,
@@ -2964,7 +2984,33 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttributeKey<'a>>
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDeclaration<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if is_suppressed {
+            self.format_leading_comments(f);
+            FormatSuppressedNode(self.span()).fmt(f);
+            self.format_trailing_comments(f);
+        } else {
+            self.write(f);
+        }
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportNamedDeclaration<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if is_suppressed {
+            self.format_leading_comments(f);
+            FormatSuppressedNode(self.span()).fmt(f);
+            self.format_trailing_comments(f);
+        } else {
+            self.write(f);
+        }
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportFromDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if is_suppressed {

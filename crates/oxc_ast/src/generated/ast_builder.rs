@@ -9452,25 +9452,35 @@ impl<'a> Statement<'a> {
         ))
     }
 
+    /// Build a [`Statement::ExportDeclaration`].
+    ///
+    /// This node contains an [`ExportDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `declaration`
+    #[inline]
+    pub fn new_export_declaration<B: GetAstBuilder<'a>>(
+        span: Span,
+        declaration: Declaration<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ExportDeclaration(ExportDeclaration::boxed(span, declaration, builder.builder()))
+    }
+
     /// Build a [`Statement::ExportNamedDeclaration`].
     ///
     /// This node contains an [`ExportNamedDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `specifiers`
-    /// * `source`
     /// * `export_kind`: `export type { foo }`
-    /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
     pub fn new_export_named_declaration<B: GetAstBuilder<'a>, V1>(
         span: Span,
-        declaration: Option<Declaration<'a>>,
         specifiers: V1,
-        source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
     ) -> Self
     where
@@ -9478,7 +9488,36 @@ impl<'a> Statement<'a> {
     {
         Self::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
             span,
-            declaration,
+            specifiers,
+            export_kind,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`Statement::ExportFromDeclaration`].
+    ///
+    /// This node contains an [`ExportFromDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `specifiers`
+    /// * `source`
+    /// * `export_kind`: `export type { foo } from 'module'`
+    /// * `with_clause`: Some(vec![]) for empty assertion
+    #[inline]
+    pub fn new_export_from_declaration<B: GetAstBuilder<'a>, V1>(
+        span: Span,
+        specifiers: V1,
+        source: StringLiteral<'a>,
+        export_kind: ImportOrExportKind,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
+        builder: &B,
+    ) -> Self
+    where
+        V1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    {
+        Self::ExportFromDeclaration(ExportFromDeclaration::boxed(
+            span,
             specifiers,
             source,
             export_kind,
@@ -16264,25 +16303,35 @@ impl<'a> ModuleDeclaration<'a> {
         ))
     }
 
+    /// Build a [`ModuleDeclaration::ExportDeclaration`].
+    ///
+    /// This node contains an [`ExportDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `declaration`
+    #[inline]
+    pub fn new_export_declaration<B: GetAstBuilder<'a>>(
+        span: Span,
+        declaration: Declaration<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ExportDeclaration(ExportDeclaration::boxed(span, declaration, builder.builder()))
+    }
+
     /// Build a [`ModuleDeclaration::ExportNamedDeclaration`].
     ///
     /// This node contains an [`ExportNamedDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `specifiers`
-    /// * `source`
     /// * `export_kind`: `export type { foo }`
-    /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
     pub fn new_export_named_declaration<B: GetAstBuilder<'a>, V1>(
         span: Span,
-        declaration: Option<Declaration<'a>>,
         specifiers: V1,
-        source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
     ) -> Self
     where
@@ -16290,7 +16339,36 @@ impl<'a> ModuleDeclaration<'a> {
     {
         Self::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
             span,
-            declaration,
+            specifiers,
+            export_kind,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`ModuleDeclaration::ExportFromDeclaration`].
+    ///
+    /// This node contains an [`ExportFromDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `specifiers`
+    /// * `source`
+    /// * `export_kind`: `export type { foo } from 'module'`
+    /// * `with_clause`: Some(vec![]) for empty assertion
+    #[inline]
+    pub fn new_export_from_declaration<B: GetAstBuilder<'a>, V1>(
+        span: Span,
+        specifiers: V1,
+        source: StringLiteral<'a>,
+        export_kind: ImportOrExportKind,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
+        builder: &B,
+    ) -> Self
+    where
+        V1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    {
+        Self::ExportFromDeclaration(ExportFromDeclaration::boxed(
+            span,
             specifiers,
             source,
             export_kind,
@@ -16884,6 +16962,44 @@ impl<'a> ImportAttributeKey<'a> {
     }
 }
 
+impl<'a> ExportDeclaration<'a> {
+    /// Build an [`ExportDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ExportDeclaration::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `declaration`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>>(
+        span: Span,
+        declaration: Declaration<'a>,
+        builder: &B,
+    ) -> Self {
+        let builder = builder.builder();
+        ExportDeclaration { node_id: Cell::new(builder.node_id()), span, declaration }
+    }
+
+    /// Build an [`ExportDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ExportDeclaration::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `declaration`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>>(
+        span: Span,
+        declaration: Declaration<'a>,
+        builder: &B,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, declaration, builder), &builder.allocator())
+    }
+}
+
 impl<'a> ExportNamedDeclaration<'a> {
     /// Build an [`ExportNamedDeclaration`].
     ///
@@ -16892,19 +17008,13 @@ impl<'a> ExportNamedDeclaration<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
     /// * `specifiers`
-    /// * `source`
     /// * `export_kind`: `export type { foo }`
-    /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
     pub fn new<B: GetAstBuilder<'a>, V1>(
         span: Span,
-        declaration: Option<Declaration<'a>>,
         specifiers: V1,
-        source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
     ) -> Self
     where
@@ -16914,11 +17024,8 @@ impl<'a> ExportNamedDeclaration<'a> {
         ExportNamedDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
-            declaration,
             specifiers: specifiers.into_in(builder.allocator()),
-            source,
             export_kind,
-            with_clause,
         }
     }
 
@@ -16929,17 +17036,74 @@ impl<'a> ExportNamedDeclaration<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
+    /// * `specifiers`
+    /// * `export_kind`: `export type { foo }`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>, V1>(
+        span: Span,
+        specifiers: V1,
+        export_kind: ImportOrExportKind,
+        builder: &B,
+    ) -> ArenaBox<'a, Self>
+    where
+        V1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, specifiers, export_kind, builder), &builder.allocator())
+    }
+}
+
+impl<'a> ExportFromDeclaration<'a> {
+    /// Build an [`ExportFromDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ExportFromDeclaration::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
     /// * `specifiers`
     /// * `source`
-    /// * `export_kind`: `export type { foo }`
+    /// * `export_kind`: `export type { foo } from 'module'`
+    /// * `with_clause`: Some(vec![]) for empty assertion
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>, V1>(
+        span: Span,
+        specifiers: V1,
+        source: StringLiteral<'a>,
+        export_kind: ImportOrExportKind,
+        with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
+        builder: &B,
+    ) -> Self
+    where
+        V1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    {
+        let builder = builder.builder();
+        ExportFromDeclaration {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            specifiers: specifiers.into_in(builder.allocator()),
+            source,
+            export_kind,
+            with_clause,
+        }
+    }
+
+    /// Build an [`ExportFromDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ExportFromDeclaration::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `specifiers`
+    /// * `source`
+    /// * `export_kind`: `export type { foo } from 'module'`
     /// * `with_clause`: Some(vec![]) for empty assertion
     #[inline]
     pub fn boxed<B: GetAstBuilder<'a>, V1>(
         span: Span,
-        declaration: Option<Declaration<'a>>,
         specifiers: V1,
-        source: Option<StringLiteral<'a>>,
+        source: StringLiteral<'a>,
         export_kind: ImportOrExportKind,
         with_clause: Option<ArenaBox<'a, WithClause<'a>>>,
         builder: &B,
@@ -16949,7 +17113,7 @@ impl<'a> ExportNamedDeclaration<'a> {
     {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new(span, declaration, specifiers, source, export_kind, with_clause, builder),
+            Self::new(span, specifiers, source, export_kind, with_clause, builder),
             &builder.allocator(),
         )
     }

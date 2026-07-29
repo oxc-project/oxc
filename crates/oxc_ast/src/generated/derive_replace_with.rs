@@ -234,7 +234,11 @@ impl<'a> ReplaceWith<'a> for ImportAttribute<'a> {}
 
 impl<'a> ReplaceWith<'a> for ImportAttributeKey<'a> {}
 
+impl<'a> ReplaceWith<'a> for ExportDeclaration<'a> {}
+
 impl<'a> ReplaceWith<'a> for ExportNamedDeclaration<'a> {}
+
+impl<'a> ReplaceWith<'a> for ExportFromDeclaration<'a> {}
 
 impl<'a> ReplaceWith<'a> for ExportDefaultDeclaration<'a> {}
 

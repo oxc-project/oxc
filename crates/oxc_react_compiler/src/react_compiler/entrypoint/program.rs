@@ -1459,10 +1459,8 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                 self.walk_expression(&node.object);
                 self.walk_statement(&node.body);
             }
-            Statement::ExportNamedDeclaration(node) => {
-                if let Some(decl) = &node.declaration {
-                    self.walk_declaration(decl);
-                }
+            Statement::ExportDeclaration(node) => {
+                self.walk_declaration(&node.declaration);
             }
             Statement::ExportDefaultDeclaration(node) => {
                 self.walk_export_default(&node.declaration);
@@ -2289,8 +2287,8 @@ impl<'a> OxcVisitor<'a, '_> {
             Statement::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
                 Some(f.id.as_ref().map(|id| id.name))
             }
-            Statement::ExportNamedDeclaration(e) => match &e.declaration {
-                Some(Declaration::FunctionDeclaration(f)) if f.scope_id.get() == Some(scope_id) => {
+            Statement::ExportDeclaration(e) => match &e.declaration {
+                Declaration::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
                     Some(f.id.as_ref().map(|id| id.name))
                 }
                 _ => None,
@@ -2299,22 +2297,14 @@ impl<'a> OxcVisitor<'a, '_> {
         };
         if let Some(name) = replace_name {
             let name = name.as_deref().unwrap_or("anonymous");
-            let is_export = matches!(stmt, Statement::ExportNamedDeclaration(_));
+            let is_export = matches!(stmt, Statement::ExportDeclaration(_));
             let const_decl = ox_build_gated_const_decl(ast, gating_expression, name);
             if is_export {
                 let decl = match const_decl {
                     Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
                     _ => unreachable!(),
                 };
-                *stmt = Statement::new_export_named_declaration(
-                    SPAN,
-                    Some(decl),
-                    [],
-                    None,
-                    ImportOrExportKind::Value,
-                    None,
-                    ast,
-                );
+                *stmt = Statement::new_export_declaration(SPAN, decl, ast);
             } else {
                 *stmt = const_decl;
             }
@@ -2655,8 +2645,8 @@ fn ox_insert_outlined_after<'a>(
         let is_target = |f: &Function<'a>| -> bool { f.scope_id.get() == Some(scope_id) };
         match stmt {
             Statement::FunctionDeclaration(f) => is_target(f),
-            Statement::ExportNamedDeclaration(e) => {
-                matches!(&e.declaration, Some(Declaration::FunctionDeclaration(f)) if is_target(f))
+            Statement::ExportDeclaration(e) => {
+                matches!(&e.declaration, Declaration::FunctionDeclaration(f) if is_target(f))
             }
             Statement::ExportDefaultDeclaration(e) => {
                 matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if is_target(f))

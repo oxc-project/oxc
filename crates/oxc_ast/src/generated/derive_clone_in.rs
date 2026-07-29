@@ -1414,7 +1414,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Statement<'_> {
             Self::ImportDeclaration(_)
             | Self::ExportAllDeclaration(_)
             | Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
             | Self::ExportNamedDeclaration(_)
+            | Self::ExportFromDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => Statement::from(CloneIn::clone_in_impl(
                 self.to_module_declaration(),
@@ -2672,7 +2674,13 @@ impl<'new_alloc> CloneIn<'new_alloc> for ModuleDeclaration<'_> {
             Self::ExportDefaultDeclaration(it) => ModuleDeclaration::ExportDefaultDeclaration(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
+            Self::ExportDeclaration(it) => ModuleDeclaration::ExportDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
             Self::ExportNamedDeclaration(it) => ModuleDeclaration::ExportNamedDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ExportFromDeclaration(it) => ModuleDeclaration::ExportFromDeclaration(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
             Self::TSExportAssignment(it) => ModuleDeclaration::TSExportAssignment(
@@ -2932,6 +2940,22 @@ impl<'new_alloc> CloneIn<'new_alloc> for ImportAttributeKey<'_> {
     }
 }
 
+impl<'new_alloc> CloneIn<'new_alloc> for ExportDeclaration<'_> {
+    type Cloned = ExportDeclaration<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ExportDeclaration {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            declaration: CloneIn::clone_in_impl(&self.declaration, with_semantic_ids, allocator),
+        }
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for ExportNamedDeclaration<'_> {
     type Cloned = ExportNamedDeclaration<'new_alloc>;
 
@@ -2943,7 +2967,23 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportNamedDeclaration<'_> {
         ExportNamedDeclaration {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            declaration: CloneIn::clone_in_impl(&self.declaration, with_semantic_ids, allocator),
+            specifiers: CloneIn::clone_in_impl(&self.specifiers, with_semantic_ids, allocator),
+            export_kind: CloneIn::clone_in_impl(&self.export_kind, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ExportFromDeclaration<'_> {
+    type Cloned = ExportFromDeclaration<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ExportFromDeclaration {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             specifiers: CloneIn::clone_in_impl(&self.specifiers, with_semantic_ids, allocator),
             source: CloneIn::clone_in_impl(&self.source, with_semantic_ids, allocator),
             export_kind: CloneIn::clone_in_impl(&self.export_kind, with_semantic_ids, allocator),

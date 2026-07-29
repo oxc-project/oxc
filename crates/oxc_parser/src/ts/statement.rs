@@ -448,14 +448,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             // `export { ... } from "..."` (re-export from a module). A bare `export { ... }`
             // with no module source re-exports locals and is allowed in a namespace.
-            Statement::ExportNamedDeclaration(decl) if decl.source.is_some() => {
+            Statement::ExportFromDeclaration(decl) => {
                 self.error(diagnostics::export_in_namespace(decl.span));
             }
             // `export import x = require("...")` is wrapped in an export declaration.
-            Statement::ExportNamedDeclaration(decl)
+            Statement::ExportDeclaration(decl)
                 if matches!(
                     &decl.declaration,
-                    Some(Declaration::TSImportEqualsDeclaration(import_decl))
+                    Declaration::TSImportEqualsDeclaration(import_decl)
                         if import_decl.module_reference.is_external()
                 ) =>
             {

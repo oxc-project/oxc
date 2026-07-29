@@ -1382,7 +1382,9 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
         Statement::ImportDeclaration(_)
         | Statement::ExportAllDeclaration(_)
         | Statement::ExportDefaultDeclaration(_)
+        | Statement::ExportDeclaration(_)
         | Statement::ExportNamedDeclaration(_)
+        | Statement::ExportFromDeclaration(_)
         | Statement::TSExportAssignment(_)
         | Statement::TSNamespaceExportDeclaration(_) => {
             walk_module_declaration(traverser, node as *mut _, ctx)
@@ -2796,8 +2798,14 @@ unsafe fn walk_module_declaration<'a, State, Tr: Traverse<'a, State>>(
         ModuleDeclaration::ExportDefaultDeclaration(node) => {
             walk_export_default_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
+        ModuleDeclaration::ExportDeclaration(node) => {
+            walk_export_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
         ModuleDeclaration::ExportNamedDeclaration(node) => {
             walk_export_named_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ModuleDeclaration::ExportFromDeclaration(node) => {
+            walk_export_from_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
         ModuleDeclaration::TSExportAssignment(node) => {
             walk_ts_export_assignment(traverser, (&mut **node) as *mut _, ctx)
@@ -3045,43 +3053,72 @@ unsafe fn walk_import_attribute_key<'a, State, Tr: Traverse<'a, State>>(
     traverser.exit_import_attribute_key(&mut *node, ctx);
 }
 
+unsafe fn walk_export_declaration<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut ExportDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_export_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportDeclarationDeclaration(
+        ancestor::ExportDeclarationWithoutDeclaration(node, PhantomData),
+    ));
+    walk_declaration(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DECLARATION_DECLARATION) as *mut Declaration,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_declaration(&mut *node, ctx);
+}
+
 unsafe fn walk_export_named_declaration<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
     node: *mut ExportNamedDeclaration<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_export_named_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportNamedDeclarationDeclaration(
-        ancestor::ExportNamedDeclarationWithoutDeclaration(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::ExportNamedDeclarationSpecifiers(
+        ancestor::ExportNamedDeclarationWithoutSpecifiers(node, PhantomData),
     ));
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION)
-        as *mut Option<Declaration>)
-    {
-        walk_declaration(traverser, field as *mut _, ctx);
-    }
-    ctx.retag_stack(AncestorType::ExportNamedDeclarationSpecifiers);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS)
         as *mut ArenaVec<ExportSpecifier>)
     {
         walk_export_specifier(traverser, item as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_SOURCE)
-        as *mut Option<StringLiteral>)
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_named_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_export_from_declaration<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut ExportFromDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_export_from_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportFromDeclarationSpecifiers(
+        ancestor::ExportFromDeclarationWithoutSpecifiers(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_EXPORT_FROM_DECLARATION_SPECIFIERS)
+        as *mut ArenaVec<ExportSpecifier>)
     {
-        ctx.retag_stack(AncestorType::ExportNamedDeclarationSource);
-        walk_string_literal(traverser, field as *mut _, ctx);
+        walk_export_specifier(traverser, item as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::ExportFromDeclarationSource);
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_FROM_DECLARATION_SOURCE)
+            as *mut StringLiteral,
+        ctx,
+    );
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
+        .add(ancestor::OFFSET_EXPORT_FROM_DECLARATION_WITH_CLAUSE)
         as *mut Option<ArenaBox<WithClause>>)
     {
-        ctx.retag_stack(AncestorType::ExportNamedDeclarationWithClause);
+        ctx.retag_stack(AncestorType::ExportFromDeclarationWithClause);
         walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
-    traverser.exit_export_named_declaration(&mut *node, ctx);
+    traverser.exit_export_from_declaration(&mut *node, ctx);
 }
 
 unsafe fn walk_export_default_declaration<'a, State, Tr: Traverse<'a, State>>(

@@ -274,12 +274,15 @@ fn check_ts_export_assignment_in_statements<'a>(
             }
             Statement::ExportNamedDeclaration(export_decl) => {
                 // ignore `export {}`
-                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
-                    continue;
-                }
-                has_other_exports = true;
+                has_other_exports |= !export_decl.specifiers.is_empty();
             }
-            Statement::ExportDefaultDeclaration(_) | Statement::ExportAllDeclaration(_) => {
+            Statement::ExportFromDeclaration(export_decl) => {
+                // Preserve the existing treatment of `export {} from "mod"`.
+                has_other_exports |= !export_decl.specifiers.is_empty();
+            }
+            Statement::ExportDeclaration(_)
+            | Statement::ExportDefaultDeclaration(_)
+            | Statement::ExportAllDeclaration(_) => {
                 has_other_exports = true;
             }
             _ => {}

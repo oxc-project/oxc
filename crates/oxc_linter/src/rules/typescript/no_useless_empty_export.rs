@@ -60,7 +60,7 @@ declare_oxc_lint!(
 impl Rule for NoUselessEmptyExport {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportNamedDeclaration(decl) = node.kind() else { return };
-        if decl.declaration.is_some() || !decl.specifiers.is_empty() {
+        if !decl.specifiers.is_empty() {
             return;
         }
         let module_record = ctx.module_record();

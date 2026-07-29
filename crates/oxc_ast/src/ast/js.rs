@@ -2401,8 +2401,7 @@ pub struct StaticBlock<'a> {
 /// import bar from 'bar';
 /// import * as baz from 'baz';
 ///
-/// // Not a ModuleDeclaration
-/// export const a = 5;
+/// export const a = 5;       // ExportDeclaration
 ///
 /// const b = 6;
 ///
@@ -2424,14 +2423,17 @@ pub enum ModuleDeclaration<'a> {
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
     /// `export default 5;`
     ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
-    /// `export {five} from './numbers.js';`
+    /// `export const five = 5;`
+    ExportDeclaration(Box<'a, ExportDeclaration<'a>>) = 67,
     /// `export {six, seven};`
-    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
+    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 68,
+    /// `export {five} from './numbers.js';`
+    ExportFromDeclaration(Box<'a, ExportFromDeclaration<'a>>) = 69,
 
     /// `export = 5;`
-    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
+    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 70,
     /// `export as namespace React;`
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 71,
 }
 
 #[ast]
@@ -2669,32 +2671,104 @@ pub enum ImportAttributeKey<'a> {
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
-/// Named Export Declaration
+/// Exported declaration.
+///
+/// ## Example
+///
+/// ```ts
+/// export const foo = 1;
+/// export interface Bar {}
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_ts_def = "
+        interface ExportNamedDeclaration extends Span {
+            type: 'ExportNamedDeclaration';
+            declaration: Declaration | null;
+            specifiers: Array<ExportSpecifier>;
+            source: StringLiteral | null;
+            exportKind?: ImportOrExportKind;
+            attributes: Array<ImportAttribute>;
+            parent/* IF !LINTER */?/* END IF */: Node;
+        }
+    ",
+    add_fields(
+        specifiers = EmptyArray,
+        source = Null,
+        exportKind = ExportDeclarationExportKind,
+        attributes = EmptyArray,
+    ),
+    field_order(declaration, specifiers, source, exportKind, attributes, span),
+)]
+pub struct ExportDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub declaration: Declaration<'a>,
+}
+
+/// Local named export declaration.
 ///
 /// ## Example
 ///
 /// ```ts
 /// //       ________ specifiers
 /// export { Foo, Bar };
-/// export type { Baz } from 'baz';
-/// //     ^^^^              ^^^^^
-/// // export_kind           source
+/// export type { Baz };
+/// //     ^^^^
+/// // export_kind
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_fields(declaration = Null, source = Null, attributes = EmptyArray),
+    field_order(declaration, specifiers, source, export_kind, attributes, span),
+)]
 pub struct ExportNamedDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
-    pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     #[ts]
     pub export_kind: ImportOrExportKind,
+}
+
+/// Named re-export declaration.
+///
+/// ## Example
+///
+/// ```ts
+/// export { Foo, Bar } from 'module';
+/// export type { Baz } from 'baz';
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_fields(declaration = Null),
+    field_order(declaration, specifiers, source, export_kind, with_clause, span),
+)]
+pub struct ExportFromDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub specifiers: Vec<'a, ExportSpecifier<'a>>,
+    pub source: StringLiteral<'a>,
+    /// `export type { foo } from 'module'`
+    #[ts]
+    pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
+    #[estree(rename = "attributes", via = ExportFromDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 

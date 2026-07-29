@@ -22,7 +22,9 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "CatchParameter",
     "CatchClause",
     // Manually prints it because class's decorators can be appears before `export class Cls {}`.
+    "ExportDeclaration",
     "ExportNamedDeclaration",
+    "ExportFromDeclaration",
     "ExportDefaultDeclaration",
     //
     "JSXElement",

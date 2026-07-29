@@ -151,7 +151,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                     let mut is_parent_exported = false;
                     let mut node_start = interface_decl.span.start;
                     let mut node_end = interface_decl.span.end;
-                    if let AstKind::ExportNamedDeclaration(export_name_decl) =
+                    if let AstKind::ExportDeclaration(export_name_decl) =
                         ctx.nodes().parent_kind(node.id())
                     {
                         is_parent_exported = true;

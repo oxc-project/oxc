@@ -72,7 +72,7 @@ impl<'a> PeepholeOptimizations {
         for ancestor in ctx.ancestors() {
             match ancestor {
                 Ancestor::VariableDeclarationDeclarations(_)
-                | Ancestor::ExportNamedDeclarationDeclaration(_) => {}
+                | Ancestor::ExportDeclarationDeclaration(_) => {}
                 Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_) => return true,
                 _ => return false,
             }

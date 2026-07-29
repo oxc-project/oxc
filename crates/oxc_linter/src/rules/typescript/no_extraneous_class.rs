@@ -147,7 +147,7 @@ impl Rule for NoExtraneousClass {
                             if has_decorators {
                                 return fixer.noop();
                             }
-                            if let AstKind::ExportNamedDeclaration(decl) =
+                            if let AstKind::ExportDeclaration(decl) =
                                 ctx.nodes().parent_kind(node.id())
                             {
                                 fixer.delete(decl)

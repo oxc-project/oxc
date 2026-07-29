@@ -25,7 +25,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             AstNodes::ForInStatement(stmt) => stmt.left().span() != self.span(),
             AstNodes::ForOfStatement(stmt) => stmt.left().span() != self.span(),
             // Everywhere else the declaration terminates itself, including `export const ...`,
-            // whose `ExportNamedDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
+            // whose `ExportDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
             _ => true,
         };
 

@@ -105,87 +105,89 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ExportDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
-        let export_kind = self.export_kind();
-        let specifiers = self.specifiers();
-        let source = self.source();
-
-        if let Some(decl) = declaration {
-            format_export_keyword_with_class_decorators(
-                self.span,
-                "export",
-                decl.as_ast_nodes(),
-                f,
-            );
-            write!(f, decl);
-        } else {
-            self.format_leading_comments(f);
-            write!(f, ["export", space()]);
-
-            let needs_space = f.options().bracket_spacing.value();
-            if specifiers.is_empty() {
-                let comments =
-                    f.context().comments().comments_before_character(self.span.start, b'{');
-                let has_line_comment = comments.iter().any(|c| c.is_line());
-                // Block comment example:
-                // Input:  `export /* comment */ {}`
-                // Output: `export /* comment */ {}`
-                //
-                // Line comment example:
-                // Input:  `export // comment
-                //         {}`
-                // Output: `export // comment
-                //          {}`
-                if !comments.is_empty() {
-                    write!(
-                        f,
-                        [
-                            FormatTrailingComments::Comments(comments),
-                            has_line_comment.then_some(soft_line_break()),
-                            " "
-                        ]
-                    );
-                }
-                write!(
-                    f,
-                    [export_kind, "{", format_dangling_comments(self.span).with_block_indent()]
-                );
-            } else if specifiers.len() == 1
-                && f.comments().comments_before_character(self.span.start, b'}').is_empty()
-            {
-                let space = maybe_space(needs_space).memoized();
-                write!(f, [export_kind, "{", space, specifiers.first(), space]);
-            } else {
-                write!(
-                    f,
-                    [
-                        export_kind,
-                        "{",
-                        group(&soft_block_indent_with_maybe_space(specifiers, needs_space))
-                    ]
-                );
-            }
-            write!(f, "}");
-
-            let with_clause = self.with_clause();
-            if let Some(source) = source {
-                let content = format_with(|f| {
-                    write!(f, [space(), "from", space()]);
-                    format_import_and_export_source_with_clause(source, with_clause, f);
-                });
-                let content_end = import_and_export_source_with_clause_end(source, with_clause);
-                write!(f, FormatContentWithSemicolon::new(&content, content_end, self.span.end));
-            } else {
-                write!(f, OptionalSemicolon);
-            }
-        }
+        format_export_keyword_with_class_decorators(
+            self.span,
+            "export",
+            declaration.as_ast_nodes(),
+            f,
+        );
+        write!(f, declaration);
         // No semicolon when there is a declaration:
         // an exported variable declaration prints it itself, together with its trailing comments
-
         self.format_trailing_comments(f);
     }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_named_export_specifiers(self.span, self.export_kind(), self.specifiers(), f);
+        write!(f, OptionalSemicolon);
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ExportFromDeclaration<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_named_export_specifiers(self.span, self.export_kind(), self.specifiers(), f);
+        let content = format_with(|f| {
+            write!(f, [space(), "from", space()]);
+            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
+        });
+        let content_end =
+            import_and_export_source_with_clause_end(self.source(), self.with_clause());
+        write!(f, FormatContentWithSemicolon::new(&content, content_end, self.span.end));
+        self.format_trailing_comments(f);
+    }
+}
+
+fn format_named_export_specifiers<'a>(
+    span: Span,
+    export_kind: ImportOrExportKind,
+    specifiers: &AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    format_leading_comments(span).fmt(f);
+    write!(f, ["export", space()]);
+
+    let needs_space = f.options().bracket_spacing.value();
+    if specifiers.is_empty() {
+        let comments = f.context().comments().comments_before_character(span.start, b'{');
+        let has_line_comment = comments.iter().any(|c| c.is_line());
+        // Block comment example:
+        // Input:  `export /* comment */ {}`
+        // Output: `export /* comment */ {}`
+        //
+        // Line comment example:
+        // Input:  `export // comment
+        //         {}`
+        // Output: `export // comment
+        //          {}`
+        if !comments.is_empty() {
+            write!(
+                f,
+                [
+                    FormatTrailingComments::Comments(comments),
+                    has_line_comment.then_some(soft_line_break()),
+                    " "
+                ]
+            );
+        }
+        write!(f, [export_kind, "{", format_dangling_comments(span).with_block_indent()]);
+    } else if specifiers.len() == 1
+        && f.comments().comments_before_character(span.start, b'}').is_empty()
+    {
+        let space = maybe_space(needs_space).memoized();
+        write!(f, [export_kind, "{", space, specifiers.first(), space]);
+    } else {
+        write!(
+            f,
+            [export_kind, "{", group(&soft_block_indent_with_maybe_space(specifiers, needs_space))]
+        );
+    }
+    write!(f, "}");
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>> {

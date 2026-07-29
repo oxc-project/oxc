@@ -2766,7 +2766,9 @@ impl<'a> Statement<'a> {
             Self::ImportDeclaration(_)
                 | Self::ExportAllDeclaration(_)
                 | Self::ExportDefaultDeclaration(_)
+                | Self::ExportDeclaration(_)
                 | Self::ExportNamedDeclaration(_)
+                | Self::ExportFromDeclaration(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExportDeclaration(_)
         )
@@ -2866,9 +2868,11 @@ impl<'a> TryFrom<Statement<'a>> for ModuleDeclaration<'a> {
             Statement::ExportDefaultDeclaration(o) => {
                 Ok(ModuleDeclaration::ExportDefaultDeclaration(o))
             }
+            Statement::ExportDeclaration(o) => Ok(ModuleDeclaration::ExportDeclaration(o)),
             Statement::ExportNamedDeclaration(o) => {
                 Ok(ModuleDeclaration::ExportNamedDeclaration(o))
             }
+            Statement::ExportFromDeclaration(o) => Ok(ModuleDeclaration::ExportFromDeclaration(o)),
             Statement::TSExportAssignment(o) => Ok(ModuleDeclaration::TSExportAssignment(o)),
             Statement::TSNamespaceExportDeclaration(o) => {
                 Ok(ModuleDeclaration::TSNamespaceExportDeclaration(o))
@@ -2890,7 +2894,9 @@ impl<'a> From<ModuleDeclaration<'a>> for Statement<'a> {
             ModuleDeclaration::ExportDefaultDeclaration(o) => {
                 Statement::ExportDefaultDeclaration(o)
             }
+            ModuleDeclaration::ExportDeclaration(o) => Statement::ExportDeclaration(o),
             ModuleDeclaration::ExportNamedDeclaration(o) => Statement::ExportNamedDeclaration(o),
+            ModuleDeclaration::ExportFromDeclaration(o) => Statement::ExportFromDeclaration(o),
             ModuleDeclaration::TSExportAssignment(o) => Statement::TSExportAssignment(o),
             ModuleDeclaration::TSNamespaceExportDeclaration(o) => {
                 Statement::TSNamespaceExportDeclaration(o)
@@ -5612,7 +5618,9 @@ macro_rules! match_module_declaration {
         $ty::ImportDeclaration(_)
             | $ty::ExportAllDeclaration(_)
             | $ty::ExportDefaultDeclaration(_)
+            | $ty::ExportDeclaration(_)
             | $ty::ExportNamedDeclaration(_)
+            | $ty::ExportFromDeclaration(_)
             | $ty::TSExportAssignment(_)
             | $ty::TSNamespaceExportDeclaration(_)
     };

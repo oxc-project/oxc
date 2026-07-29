@@ -88,10 +88,8 @@ impl Rule for PreferStringRaw {
             AstKind::ImportDeclaration(decl) if string_literal.span == decl.source.span => {
                 return;
             }
-            AstKind::ExportNamedDeclaration(decl) => {
-                if let Some(source) = &decl.source
-                    && string_literal.span == source.span
-                {
+            AstKind::ExportFromDeclaration(decl) => {
+                if string_literal.span == decl.source.span {
                     return;
                 }
             }

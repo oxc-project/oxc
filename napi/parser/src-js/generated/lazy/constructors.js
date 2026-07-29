@@ -2690,10 +2690,14 @@ function constructStatement(pos, ast) {
     case 66:
       return constructBoxExportDefaultDeclaration(pos + 8, ast);
     case 67:
-      return constructBoxExportNamedDeclaration(pos + 8, ast);
+      return constructBoxExportDeclaration(pos + 8, ast);
     case 68:
-      return constructBoxTSExportAssignment(pos + 8, ast);
+      return constructBoxExportNamedDeclaration(pos + 8, ast);
     case 69:
+      return constructBoxExportFromDeclaration(pos + 8, ast);
+    case 70:
+      return constructBoxTSExportAssignment(pos + 8, ast);
+    case 71:
       return constructBoxTSNamespaceExportDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Statement`);
@@ -5487,10 +5491,14 @@ function constructModuleDeclaration(pos, ast) {
     case 66:
       return constructBoxExportDefaultDeclaration(pos + 8, ast);
     case 67:
-      return constructBoxExportNamedDeclaration(pos + 8, ast);
+      return constructBoxExportDeclaration(pos + 8, ast);
     case 68:
-      return constructBoxTSExportAssignment(pos + 8, ast);
+      return constructBoxExportNamedDeclaration(pos + 8, ast);
     case 69:
+      return constructBoxExportFromDeclaration(pos + 8, ast);
+    case 70:
+      return constructBoxTSExportAssignment(pos + 8, ast);
+    case 71:
       return constructBoxTSNamespaceExportDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleDeclaration`);
@@ -6012,6 +6020,52 @@ function constructImportAttributeKey(pos, ast) {
   }
 }
 
+export class ExportDeclaration {
+  type = "ExportDeclaration";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get declaration() {
+    const internal = this.#internal;
+    return constructDeclaration(internal.pos + 16, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ExportDeclaration",
+      start: this.start,
+      end: this.end,
+      declaration: this.declaration,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExportDeclaration.prototype);
+  }
+}
+
+const DebugExportDeclaration = class ExportDeclaration {};
+
 export class ExportNamedDeclaration {
   type = "ExportNamedDeclaration";
   #internal;
@@ -6037,21 +6091,11 @@ export class ExportNamedDeclaration {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
-  get declaration() {
-    const internal = this.#internal;
-    return constructOptionDeclaration(internal.pos + 16, internal.ast);
-  }
-
   get specifiers() {
     const internal = this.#internal,
       cached = internal.$specifiers;
     if (cached !== void 0) return cached;
-    return (internal.$specifiers = constructVecExportSpecifier(internal.pos + 32, internal.ast));
-  }
-
-  get source() {
-    const internal = this.#internal;
-    return constructOptionStringLiteral(internal.pos + 56, internal.ast);
+    return (internal.$specifiers = constructVecExportSpecifier(internal.pos + 16, internal.ast));
   }
 
   get exportKind() {
@@ -6059,21 +6103,13 @@ export class ExportNamedDeclaration {
     return constructImportOrExportKind(internal.pos + 12, internal.ast);
   }
 
-  get attributes() {
-    const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 104, internal.ast);
-  }
-
   toJSON() {
     return {
       type: "ExportNamedDeclaration",
       start: this.start,
       end: this.end,
-      declaration: this.declaration,
       specifiers: this.specifiers,
-      source: this.source,
       exportKind: this.exportKind,
-      attributes: this.attributes,
     };
   }
 
@@ -6083,6 +6119,72 @@ export class ExportNamedDeclaration {
 }
 
 const DebugExportNamedDeclaration = class ExportNamedDeclaration {};
+
+export class ExportFromDeclaration {
+  type = "ExportFromDeclaration";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $specifiers: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get specifiers() {
+    const internal = this.#internal,
+      cached = internal.$specifiers;
+    if (cached !== void 0) return cached;
+    return (internal.$specifiers = constructVecExportSpecifier(internal.pos + 16, internal.ast));
+  }
+
+  get source() {
+    const internal = this.#internal;
+    return new StringLiteral(internal.pos + 40, internal.ast);
+  }
+
+  get exportKind() {
+    const internal = this.#internal;
+    return constructImportOrExportKind(internal.pos + 12, internal.ast);
+  }
+
+  get attributes() {
+    const internal = this.#internal;
+    return constructOptionBoxWithClause(internal.pos + 88, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ExportFromDeclaration",
+      start: this.start,
+      end: this.end,
+      specifiers: this.specifiers,
+      source: this.source,
+      exportKind: this.exportKind,
+      attributes: this.attributes,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExportFromDeclaration.prototype);
+  }
+}
+
+const DebugExportFromDeclaration = class ExportFromDeclaration {};
 
 export class ExportDefaultDeclaration {
   type = "ExportDefaultDeclaration";
@@ -13464,8 +13566,16 @@ function constructBoxExportDefaultDeclaration(pos, ast) {
   return new ExportDefaultDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
+function constructBoxExportDeclaration(pos, ast) {
+  return new ExportDeclaration(ast.buffer.int32[pos >> 2], ast);
+}
+
 function constructBoxExportNamedDeclaration(pos, ast) {
   return new ExportNamedDeclaration(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxExportFromDeclaration(pos, ast) {
+  return new ExportFromDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSExportAssignment(pos, ast) {
@@ -13529,11 +13639,6 @@ function constructImportAttribute(pos, ast) {
   return new ImportAttribute(pos, ast);
 }
 
-function constructOptionDeclaration(pos, ast) {
-  if (ast.buffer[pos] === 31) return null;
-  return constructDeclaration(pos, ast);
-}
-
 function constructVecExportSpecifier(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
@@ -13542,11 +13647,6 @@ function constructVecExportSpecifier(pos, ast) {
 
 function constructExportSpecifier(pos, ast) {
   return new ExportSpecifier(pos, ast);
-}
-
-function constructOptionStringLiteral(pos, ast) {
-  if (ast.buffer[pos + 12] === 2) return null;
-  return new StringLiteral(pos, ast);
 }
 
 function constructOptionModuleExportName(pos, ast) {
