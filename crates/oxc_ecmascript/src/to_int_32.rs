@@ -16,24 +16,23 @@ impl<T> ToUint32 for T where T: ToInt32 {}
 
 impl ToInt32 for f64 {
     fn to_int_32(&self) -> i32 {
-        #[cfg(all(target_arch = "aarch64", target_os = "macos"))]
-        {
-            // macOS aarch64 always has jsconv feature
-            // SAFETY: macOS aarch64 always supports jsconv
-            unsafe { f64_to_int32_arm64(*self) }
-        }
-        #[cfg(all(target_arch = "aarch64", not(target_os = "macos")))]
-        {
-            if std::arch::is_aarch64_feature_detected!("jsconv") {
-                // SAFETY: Feature detection confirmed jsconv is available
+        cfg_select! {
+            all(target_arch = "aarch64", target_os = "macos") => {
+                // macOS aarch64 always has jsconv feature
+                // SAFETY: macOS aarch64 always supports jsconv
                 unsafe { f64_to_int32_arm64(*self) }
-            } else {
+            }
+            target_arch = "aarch64" => {
+                if std::arch::is_aarch64_feature_detected!("jsconv") {
+                    // SAFETY: Feature detection confirmed jsconv is available
+                    unsafe { f64_to_int32_arm64(*self) }
+                } else {
+                    f64_to_int32_generic(*self)
+                }
+            }
+            _ => {
                 f64_to_int32_generic(*self)
             }
-        }
-        #[cfg(not(target_arch = "aarch64"))]
-        {
-            f64_to_int32_generic(*self)
         }
     }
 }
@@ -46,19 +45,9 @@ impl ToInt32 for f64 {
 #[cfg(target_arch = "aarch64")]
 #[target_feature(enable = "jsconv")]
 unsafe fn f64_to_int32_arm64(number: f64) -> i32 {
-    if number.is_nan() {
-        return 0;
-    }
-    let ret: i32;
-    // SAFETY: Number is not nan so no floating-point exception should throw.
-    unsafe {
-        std::arch::asm!(
-            "fjcvtzs {dst:w}, {src:d}",
-            src = in(vreg) number,
-            dst = out(reg) ret,
-        );
-    }
-    ret
+    // SAFETY: `jsconv` target feature was just verified to be available,
+    // so the `fjcvtzs` instruction used by `__jcvt` is available.
+    unsafe { std::arch::aarch64::__jcvt(number) }
 }
 
 /// Generic implementation of ToInt32 for non-ARM64 architectures or ARM64 without JSCVT
