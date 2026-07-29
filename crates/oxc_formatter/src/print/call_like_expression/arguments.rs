@@ -1053,11 +1053,13 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement_like_position = matches!(
-                call.parent(),
-                AstNodes::ArrowFunctionExpression(_) | AstNodes::ExpressionStatement(_)
-            );
-            if in_statement_like_position {
+            // The AMD layout only applies in statement position, matching Prettier's
+            // `parent.type === "ExpressionStatement"` check. A concise arrow body is not statement
+            // position: its parent is the `ArrowFunctionExpression`, so `() => define(...)` formats
+            // as a normal call. (oxc used to accept it, because concise bodies were wrapped in a
+            // synthetic `ExpressionStatement` before `ArrowFunctionBody` existed.)
+            let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
+            if in_statement {
                 match arguments.len() {
                     1 => true,
                     2 => matches!(arguments.first(), Some(Argument::ArrayExpression(_))),
