@@ -10,11 +10,7 @@ use std::path::Path;
 use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
-#[cfg(feature = "react_compiler")]
-use oxc_react_compiler::{PluginOptions, compile as react_compiler_compile};
 use oxc_semantic::Scoping;
-#[cfg(feature = "react_compiler")]
-use oxc_semantic::SemanticBuilder;
 use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
@@ -107,8 +103,6 @@ pub struct Transformer<'a> {
     allocator: &'a Allocator,
 
     // Options, in evaluation order.
-    #[cfg(feature = "react_compiler")]
-    react_compiler: Option<PluginOptions>,
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
     plugins: PluginsOptions,
@@ -125,8 +119,6 @@ impl<'a> Transformer<'a> {
         Self {
             state,
             allocator,
-            #[cfg(feature = "react_compiler")]
-            react_compiler: options.react_compiler.clone(),
             typescript: options.typescript.clone(),
             decorator: options.decorator,
             plugins: options.plugins.clone(),
@@ -143,21 +135,6 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
-
-        #[cfg(feature = "react_compiler")]
-        let (scoping, react_compiler_diagnostics) = self.run_react_compiler(scoping, program);
-        #[cfg(not(feature = "react_compiler"))]
-        let react_compiler_diagnostics = Diagnostics::new();
-
-        // A React Compiler error is fatal: stop before the rest of the transform runs.
-        if react_compiler_diagnostics.has_errors() {
-            #[expect(deprecated)]
-            return TransformerReturn {
-                diagnostics: react_compiler_diagnostics,
-                scoping,
-                helpers_used: FxHashMap::default(),
-            };
-        }
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -213,32 +190,9 @@ impl<'a> Transformer<'a> {
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
-        let mut diagnostics = react_compiler_diagnostics;
-        diagnostics.extend(state.take_errors());
+        let diagnostics = state.take_errors().into();
         #[expect(deprecated)]
         TransformerReturn { diagnostics, scoping, helpers_used }
-    }
-
-    #[cfg(feature = "react_compiler")]
-    fn run_react_compiler(
-        &mut self,
-        scoping: Scoping,
-        program: &mut Program<'a>,
-    ) -> (Scoping, Diagnostics) {
-        let Some(options) = self.react_compiler.take() else {
-            return (scoping, Diagnostics::new());
-        };
-        let (output, diagnostics) = {
-            let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
-            react_compiler_compile(program, &semantic, self.allocator, options)
-        };
-        let Some(output) = output else {
-            return (scoping, diagnostics);
-        };
-        output.transform(program);
-        let scoping =
-            SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
-        (scoping, diagnostics)
     }
 }
 

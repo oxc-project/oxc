@@ -129,6 +129,22 @@ describe("transformSync", () => {
     expect(result.code).not.toContain("interface Props");
     expect(result.code).not.toContain("<button");
   });
+
+  it("keeps imports used by compiled computed keys", () => {
+    const result = transformSync(
+      "Box.tsx",
+      `import { CSS_VAR } from "./styles.css";
+      export function Box({ size }) {
+        const style = { [CSS_VAR]: size + "px" };
+        return <div style={style} />;
+      }`,
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("_c(");
+    expect(result.code).toContain("[CSS_VAR]");
+    expect(result.code).toContain("import { CSS_VAR }");
+  });
 });
 
 describe("transform", () => {

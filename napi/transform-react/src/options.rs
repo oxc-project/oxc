@@ -160,21 +160,23 @@ pub struct ReactCompilerEnvironmentOptions {
 }
 
 impl TransformOptions {
-    pub(crate) fn into_transform_options(
+    pub(crate) fn resolve(
         self,
         filename: &str,
-    ) -> Result<oxc::transformer::TransformOptions, OxcDiagnostic> {
+    ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions), OxcDiagnostic> {
         let enabled = self
             .sources
             .as_ref()
             .is_none_or(|sources| sources.iter().any(|source| filename.contains(source.as_str())));
         let react_compiler = enabled.then(|| self.into_plugin_options()).transpose()?;
 
-        Ok(oxc::transformer::TransformOptions {
+        Ok((
             react_compiler,
-            jsx: oxc::transformer::JsxOptions::enable(),
-            ..oxc::transformer::TransformOptions::default()
-        })
+            oxc::transformer::TransformOptions {
+                jsx: oxc::transformer::JsxOptions::enable(),
+                ..oxc::transformer::TransformOptions::default()
+            },
+        ))
     }
 
     fn into_plugin_options(self) -> Result<PluginOptions, OxcDiagnostic> {

@@ -21,11 +21,15 @@ use napi::{Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
 
 use oxc::{
-    CompilerInterface,
-    codegen::CodegenReturn,
-    diagnostics::{Diagnostics, OxcDiagnostic},
+    allocator::Allocator,
+    codegen::{Codegen, CodegenOptions},
+    diagnostics::Diagnostics,
+    parser::Parser,
+    semantic::{SemanticBuilder, SemanticBuilderReturn},
+    transformer::Transformer,
 };
 use oxc_napi::{OxcError, get_source_type};
+use oxc_react_compiler::compile as react_compiler_compile;
 use oxc_sourcemap::napi::SourceMap;
 
 pub use crate::options::*;
@@ -47,49 +51,6 @@ pub struct TransformResult {
     pub errors: Vec<OxcError>,
 }
 
-#[derive(Default)]
-struct Compiler {
-    transform_options: oxc::transformer::TransformOptions,
-    sourcemap: bool,
-    printed: String,
-    printed_sourcemap: Option<SourceMap>,
-    errors: Diagnostics,
-}
-
-impl Compiler {
-    fn new(filename: &str, options: Option<TransformOptions>) -> Result<Self, OxcDiagnostic> {
-        let sourcemap = options.as_ref().and_then(|options| options.sourcemap).unwrap_or(false);
-        let transform_options = options.unwrap_or_default().into_transform_options(filename)?;
-
-        Ok(Self {
-            transform_options,
-            sourcemap,
-            printed: String::new(),
-            printed_sourcemap: None,
-            errors: Diagnostics::new(),
-        })
-    }
-}
-
-impl CompilerInterface for Compiler {
-    fn handle_errors(&mut self, errors: Diagnostics) {
-        self.errors.extend(errors);
-    }
-
-    fn enable_sourcemap(&self) -> bool {
-        self.sourcemap
-    }
-
-    fn transform_options(&self) -> Option<&oxc::transformer::TransformOptions> {
-        Some(&self.transform_options)
-    }
-
-    fn after_codegen(&mut self, ret: CodegenReturn<'_>) {
-        self.printed = ret.code;
-        self.printed_sourcemap = ret.map.map(SourceMap::from);
-    }
-}
-
 fn transform_impl(
     filename: &str,
     source_text: &str,
@@ -100,23 +61,77 @@ fn transform_impl(
         options.as_ref().and_then(|options| options.lang.as_deref()),
         options.as_ref().and_then(|options| options.source_type.as_deref()),
     );
+    let sourcemap = options.as_ref().and_then(|options| options.sourcemap).unwrap_or(false);
 
-    let mut compiler = match Compiler::new(filename, options) {
-        Ok(compiler) => compiler,
-        Err(error) => {
-            return TransformResult {
-                errors: OxcError::from_diagnostics(filename, source_text, [error]),
-                ..TransformResult::default()
-            };
-        }
-    };
+    let (react_compiler_options, transform_options) =
+        match options.unwrap_or_default().resolve(filename) {
+            Ok(options) => options,
+            Err(error) => {
+                return TransformResult {
+                    errors: OxcError::from_diagnostics(filename, source_text, [error]),
+                    ..TransformResult::default()
+                };
+            }
+        };
 
-    compiler.compile(source_text, source_type, Path::new(filename));
+    let allocator = Allocator::default();
+    let parser_return = Parser::new(&allocator, source_text, source_type).parse();
+    let mut diagnostics = parser_return.diagnostics;
+    let mut program = parser_return.program;
 
+    let SemanticBuilderReturn { semantic, diagnostics: semantic_diagnostics } =
+        SemanticBuilder::new_compiler()
+            .with_excess_capacity(2.0)
+            .with_enum_eval(true)
+            .with_build_nodes(react_compiler_options.is_some())
+            .build(&program);
+    if !semantic_diagnostics.is_empty() {
+        diagnostics.extend(semantic_diagnostics);
+        return error_result(filename, source_text, diagnostics);
+    }
+
+    let (react_output, react_diagnostics) = react_compiler_options.map_or_else(
+        || (None, Diagnostics::new()),
+        |options| react_compiler_compile(&program, &semantic, &allocator, options),
+    );
+    let react_has_errors = react_diagnostics.has_errors();
+    diagnostics.extend(react_diagnostics);
+    if react_has_errors {
+        return error_result(filename, source_text, diagnostics);
+    }
+
+    let mut scoping = semantic.into_scoping();
+    if let Some(output) = react_output {
+        output.transform(&mut program);
+        scoping =
+            SemanticBuilder::new().with_enum_eval(true).build(&program).semantic.into_scoping();
+    }
+
+    let transformer_return = Transformer::new(&allocator, Path::new(filename), &transform_options)
+        .build_with_scoping(scoping, &mut program);
+    let transform_has_errors = transformer_return.diagnostics.has_errors();
+    diagnostics.extend(transformer_return.diagnostics);
+    if transform_has_errors {
+        return error_result(filename, source_text, diagnostics);
+    }
+
+    let codegen_return = Codegen::new()
+        .with_options(CodegenOptions {
+            source_map_path: sourcemap.then(|| Path::new(filename).to_path_buf()),
+            ..CodegenOptions::default()
+        })
+        .build(&program);
     TransformResult {
-        code: compiler.printed,
-        map: compiler.printed_sourcemap,
-        errors: OxcError::from_diagnostics(filename, source_text, compiler.errors),
+        code: codegen_return.code,
+        map: codegen_return.map.map(SourceMap::from),
+        errors: OxcError::from_diagnostics(filename, source_text, diagnostics),
+    }
+}
+
+fn error_result(filename: &str, source_text: &str, diagnostics: Diagnostics) -> TransformResult {
+    TransformResult {
+        errors: OxcError::from_diagnostics(filename, source_text, diagnostics),
+        ..TransformResult::default()
     }
 }
 
