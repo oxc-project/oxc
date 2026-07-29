@@ -12,7 +12,10 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::{
+    scope::ScopeId,
+    symbol::{SymbolFlags, SymbolId},
+};
 
 use super::PeepholeOptimizations;
 use super::fold_constants::is_cjs_module_exports_hint;
@@ -674,6 +677,39 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// Whether a function summary may be consumed at the call site currently
+    /// being visited.
+    ///
+    /// A summary is a property of the function VALUE, but both consumers key it
+    /// by the BINDING. For a hoisted `function f() {}` those coincide: the
+    /// binding holds that function for the whole scope, so a side-effect-free
+    /// body licenses erasing any call. For `var f = <fn>` they do not — the
+    /// binding holds `undefined` until the assignment runs, and a call reached
+    /// first throws `TypeError`, which erasing the call would silently drop.
+    ///
+    /// So a `var` binding additionally needs proof that its declarator already
+    /// ran. Reuse the traversal-order proof: `SymbolState::values` is per-pass
+    /// scratch, reset at pass start and written by `exit_variable_declarator`,
+    /// so an entry existing when this call site is visited proves the
+    /// declarator precedes it in this pass's traversal — with a carve-out for
+    /// statement-list re-processing, where the list also holds entries for
+    /// declarators positioned later.
+    ///
+    /// `let` / `const` need no proof: a call before their declarator is a TDZ
+    /// `ReferenceError`, inside the minifier's documented `No TDZ Violation`
+    /// assumption.
+    ///
+    /// Conservative case: a call inside a function body traversed before the
+    /// declarator loses the optimization even when the body only runs later
+    /// (`function g() { f(); } var f = () => {}; g();`). Proving that needs
+    /// reachability, not traversal order.
+    pub(super) fn summary_order_proven(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        if !ctx.scoping().symbol_flags(symbol_id).contains(SymbolFlags::FunctionScopedVariable) {
+            return true;
+        }
+        !ctx.state.reprocessing_statements && ctx.state.symbols.value(symbol_id).is_some()
+    }
+
     fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
@@ -685,6 +721,7 @@ impl<'a> PeepholeOptimizations {
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
                     ctx.state.symbols.function_summary(symbol_id).is_side_effect_free()
+                        && Self::summary_order_proven(symbol_id, ctx)
                 } else {
                     false
                 })

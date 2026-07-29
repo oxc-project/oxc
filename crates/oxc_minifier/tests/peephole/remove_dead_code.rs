@@ -278,6 +278,14 @@ fn remove_empty_function() {
     test_options("var foo = () => {}; x = foo(a(), b())", "x = (a(), b(), void 0)", &options);
     test_options("var foo = function () {}; foo()", "", &options);
 
+    // The `void 0` rewrite is the other summary consumer, and it must respect
+    // the same ordering: `x = foo()` before the assignment throws.
+    test_options(
+        "x = foo(); var foo = () => {}; var unused = 1;",
+        "x = foo(); var foo = () => {};",
+        &options,
+    );
+
     test_options("var foo = (a = 0) => {}; foo()", "", &options);
     test_options(
         "var foo = (a = side_effect()) => {}; foo()",

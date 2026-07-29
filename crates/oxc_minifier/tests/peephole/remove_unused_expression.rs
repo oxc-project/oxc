@@ -452,6 +452,12 @@ fn test_fold_call_expression() {
     test("false || /* @__PURE__ */ noEffect()", "");
 
     test("var foo = () => 1; foo(), foo()", "var foo = () => 1");
+
+    // A call reached while the hoisted `var` still holds `undefined` throws, so
+    // the summary of the value assigned later must not erase it. The trailing
+    // `var unused = 1` supplies the extra pass that publishes the summary;
+    // without it the call site is visited before one exists.
+    test("foo(); var foo = () => 1; var unused = 1;", "foo(); var foo = () => 1, unused = 1;");
     test_same("var foo = () => { bar() }; foo(), foo()");
     test_same("const a = (x) => x, b = () => a(1);");
 }
