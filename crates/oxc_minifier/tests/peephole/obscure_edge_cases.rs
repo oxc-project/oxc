@@ -303,7 +303,10 @@ fn test_loop_optimization_edge_cases() {
 #[test]
 fn test_switch_statement_edge_cases() {
     // Test switch with constant discriminant - might be optimized in future
-    test_same("switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); }");
+    test(
+        "switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); break; }",
+        "switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); }",
+    );
     // Could be optimized to just: b();
 
     test_same("switch ('test') { case 'foo': a(); break; case 'test': b(); break; default: c(); }");

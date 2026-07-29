@@ -3,6 +3,7 @@ mod fold_constants;
 mod inline;
 mod minimize_conditional_expression;
 mod minimize_conditions;
+mod minimize_exit_points;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
@@ -404,6 +405,8 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::remove_exit_statements(stmt, ctx);
+
         if ctx.is_tree_shake_only() {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
