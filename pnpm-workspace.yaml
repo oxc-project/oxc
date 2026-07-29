@@ -4,6 +4,7 @@ packages:
   - wasm/*
   - npm/*
   - tasks/e2e
+  - tasks/react_compiler
   - tasks/transform_conformance
   - tasks/compat_data
 
