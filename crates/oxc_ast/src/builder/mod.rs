@@ -70,12 +70,12 @@
 //! (e.g. `builder.statement_expression(span, expr)`) and primitives (e.g. `builder.vec()`,`builder.ident(str)`).
 //! Those methods have now been removed. Use the AST type builder methods described above instead.
 //!
-//! [`AstBuilder`] and [`NONE`] are no longer re-exported from the crate root either -
-//! import them from this module instead.
+//! [`AstBuilder`] is no longer re-exported from the crate root either -
+//! import it from this module instead.
 //!
 //! Explanation of the motivation for this change here: <https://github.com/oxc-project/oxc/issues/23043>.
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, FromIn, GetAllocator};
+use oxc_allocator::{Allocator, GetAllocator};
 use oxc_syntax::node::NodeId;
 
 mod custom;
@@ -161,26 +161,5 @@ impl<'a> GetAllocator<'a> for AstBuilder<'a> {
     #[inline]
     fn allocator(&self) -> &'a Allocator {
         self.allocator
-    }
-}
-
-/// Type that can be used in any AST builder method call which requires either:
-///
-/// * `IntoIn<'a, Option<Box<'a, T>>`.
-/// * `IntoIn<'a, Option<Vec<'a, T>>`.
-///
-/// Pass `NONE` instead of `None::<Box<'a, T>>`.
-#[expect(clippy::upper_case_acronyms)]
-pub struct NONE;
-
-impl<'a, T> FromIn<'a, NONE> for Option<ArenaBox<'a, T>> {
-    fn from_in(_: NONE, _: &'a Allocator) -> Self {
-        None
-    }
-}
-
-impl<'a, T> FromIn<'a, NONE> for Option<ArenaVec<'a, T>> {
-    fn from_in(_: NONE, _: &'a Allocator) -> Self {
-        None
     }
 }

@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, ReplaceWith};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 
@@ -18,7 +18,7 @@ impl<'a> IsolatedDeclarations<'a> {
             [],
             None,
             ImportOrExportKind::Value,
-            NONE,
+            None,
             self,
         ))
     }
@@ -100,7 +100,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let id = BindingPattern::new_binding_identifier(SPAN, name, self);
             let type_annotation = self
                 .infer_type_from_expression(expr)
-                .map(|ts_type| TSTypeAnnotation::new(SPAN, ts_type, self));
+                .map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
 
             if type_annotation.is_none() {
                 self.error(default_export_inferred(expr.span()));

@@ -92,7 +92,7 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, walk_js_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
@@ -665,7 +665,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             arrow_function_expr.r#async,
             false,
             arrow_function_expr.type_parameters,
-            NONE,
+            None,
             arrow_function_expr.params,
             arrow_function_expr.return_type,
             Some(body),
@@ -797,7 +797,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             arguments.push(Argument::from(assign_value.take_in(ctx)));
         }
         let call =
-            Expression::new_call_expression(expr.span(), callee, NONE, arguments, false, ctx);
+            Expression::new_call_expression(expr.span(), callee, None, arguments, false, ctx);
         Some(call)
     }
 
@@ -838,7 +838,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let callee =
             MemberExpression::new_static_member_expression(SPAN, object, property, false, ctx);
         let callee = Expression::from(callee);
-        Some(Expression::new_call_expression(call.span, callee, NONE, arguments, false, ctx))
+        Some(Expression::new_call_expression(call.span, callee, None, arguments, false, ctx))
     }
 
     /// Transform an `AssignmentExpression` whose assignment target is a `super` member expression.
@@ -924,8 +924,8 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 [],
                 param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
+                None,
+                None,
                 false,
                 None,
                 false,
@@ -954,8 +954,8 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 [],
                 param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
+                None,
+                None,
                 false,
                 None,
                 false,
@@ -977,23 +977,23 @@ impl<'a> ArrowFunctionConverter<'a> {
             );
         }
 
-        let params = FormalParameters::new(
+        let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             items,
-            NONE,
+            None,
             ctx,
         );
         let statement = Statement::new_expression_statement(SPAN, init, ctx);
-        let body = FunctionBody::new(SPAN, [], [statement], ctx);
+        let body = FunctionBody::boxed(SPAN, [], [statement], ctx);
         let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
-            SPAN, true, false, NONE, params, NONE, body, scope_id, false, false, ctx,
+            SPAN, true, false, None, params, None, body, scope_id, false, false, ctx,
         );
         VariableDeclarator::new(
             SPAN,
             VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
-            NONE,
+            None,
             Some(init),
             false,
             ctx,
@@ -1170,7 +1170,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             SPAN,
             VariableDeclarationKind::Var,
             arguments_var.create_binding_pattern(ctx),
-            NONE,
+            None,
             Some(init),
             false,
             ctx,
@@ -1231,7 +1231,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
-                NONE,
+                None,
                 init,
                 false,
                 ctx,

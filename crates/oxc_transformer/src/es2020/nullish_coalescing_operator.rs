@@ -29,7 +29,7 @@
 //! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
 
 use oxc_allocator::{ArenaBox, ReplaceWith};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
@@ -146,15 +146,15 @@ impl<'a> NullishCoalescingOperator {
             // so the temporary variable can be injected in correct scope
             let id = binding.create_binding_pattern(ctx);
             let param =
-                FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
-            let params = FormalParameters::new(
+                FormalParameter::new(SPAN, [], id, None, None, false, None, false, false, ctx);
+            let params = FormalParameters::boxed(
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
                 [param],
-                NONE,
+                None,
                 ctx,
             );
-            let body = FunctionBody::new(
+            let body = FunctionBody::boxed(
                 SPAN,
                 [],
                 [Statement::new_expression_statement(SPAN, new_expr, ctx)],
@@ -165,9 +165,9 @@ impl<'a> NullishCoalescingOperator {
                     SPAN,
                     true,
                     false,
-                    NONE,
+                    None,
                     params,
-                    NONE,
+                    None,
                     body,
                     current_scope_id,
                     false,
@@ -175,7 +175,7 @@ impl<'a> NullishCoalescingOperator {
                     ctx,
                 );
             // `(x) => x;` -> `((x) => x)();`
-            new_expr = Expression::new_call_expression(SPAN, arrow_function, NONE, [], false, ctx);
+            new_expr = Expression::new_call_expression(SPAN, arrow_function, None, [], false, ctx);
         } else {
             ctx.state.var_declarations.insert_var(&binding, &ctx.ast);
         }

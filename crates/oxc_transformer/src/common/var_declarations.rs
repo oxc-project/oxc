@@ -15,10 +15,7 @@
 //! ```
 
 use oxc_allocator::ArenaVec;
-use oxc_ast::{
-    ast::*,
-    builder::{AstBuilder, NONE},
-};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, ast_operations::GatherNodeParts};
@@ -153,7 +150,7 @@ impl<'a> VarDeclarationsStore<'a> {
             SPAN,
             VariableDeclarationKind::Var,
             ident,
-            NONE,
+            None,
             init,
             false,
             ast,
@@ -173,7 +170,7 @@ impl<'a> VarDeclarationsStore<'a> {
             SPAN,
             VariableDeclarationKind::Let,
             ident,
-            NONE,
+            None,
             init,
             false,
             ast,

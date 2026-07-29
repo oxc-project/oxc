@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_str::static_ident;
@@ -173,11 +173,11 @@ impl<'a> TypeScriptModule {
                 let argument = Argument::StringLiteral(str_lit);
                 (
                     VariableDeclarationKind::Const,
-                    Expression::new_call_expression(SPAN, callee, NONE, [argument], false, ctx),
+                    Expression::new_call_expression(SPAN, callee, None, [argument], false, ctx),
                 )
             }
         };
-        let decl = VariableDeclarator::new(SPAN, kind, binding, NONE, Some(init), false, ctx);
+        let decl = VariableDeclarator::new(SPAN, kind, binding, None, Some(init), false, ctx);
 
         Some(Declaration::new_variable_declaration(SPAN, kind, [decl], false, ctx))
     }

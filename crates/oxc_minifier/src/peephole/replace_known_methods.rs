@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
@@ -193,7 +193,7 @@ impl<'a> PeepholeOptimizations {
         let new_expr = Expression::new_call_expression(
             original_span,
             new_root_callee.take_in(ctx),
-            NONE,
+            None,
             ArenaVec::from_iter_in(
                 collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx)),
                 ctx,
@@ -263,7 +263,7 @@ impl<'a> PeepholeOptimizations {
                     Some(Expression::new_call_expression(
                         span,
                         callee.take_in(ctx),
-                        NONE,
+                        None,
                         args.take_in(ctx),
                         false,
                         ctx,

@@ -18,7 +18,7 @@ use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
 use crate::ast::*;
 
-use super::{GetAstBuilder, NONE};
+use super::GetAstBuilder;
 
 impl<'a> Expression<'a> {
     /// Build an [`Expression`] representing the number `0`.
@@ -78,7 +78,7 @@ impl<'a> FormalParameter<'a> {
         builder: &B,
     ) -> Self {
         let builder = builder.builder();
-        FormalParameter::new(span, [], pattern, NONE, NONE, false, None, false, false, builder)
+        FormalParameter::new(span, [], pattern, None, None, false, None, false, false, builder)
     }
 }
 
@@ -99,8 +99,8 @@ impl<'a> Function<'a> {
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
-        params: FormalParameters<'a>,
-        body: FunctionBody<'a>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
@@ -112,10 +112,10 @@ impl<'a> Function<'a> {
             false,
             false,
             false,
-            NONE,
-            NONE,
+            None,
+            None,
             params,
-            NONE,
+            None,
             Some(body),
             scope_id,
             false,
@@ -141,28 +141,21 @@ impl<'a> Function<'a> {
     /// * `body`: The function body.
     /// * `scope_id`
     #[inline]
-    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4, T5>(
+    pub fn boxed_with_scope_id<B: GetAstBuilder<'a>>(
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
         declare: bool,
-        type_parameters: T1,
-        this_param: T2,
-        params: T3,
-        return_type: T4,
-        body: T5,
+        type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+        this_param: Option<ArenaBox<'a, TSThisParameter<'a>>>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+        return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+        body: Option<ArenaBox<'a, FunctionBody<'a>>>,
         scope_id: ScopeId,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
-        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
-        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
-        T5: IntoIn<'a, Option<ArenaBox<'a, FunctionBody<'a>>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         Function::boxed_with_scope_id_and_pure_and_pife(
             span,
@@ -193,14 +186,14 @@ impl<'a> ExportNamedDeclaration<'a> {
     /// * `specifiers`
     /// * `source`
     #[inline]
-    pub fn boxed_plain<B: GetAstBuilder<'a>, T1>(
+    pub fn boxed_plain<B: GetAstBuilder<'a>, V1>(
         span: Span,
-        specifiers: T1,
+        specifiers: V1,
         source: Option<StringLiteral<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self>
     where
-        T1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+        V1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
     {
         let builder = builder.builder();
         ExportNamedDeclaration::boxed(
@@ -209,7 +202,7 @@ impl<'a> ExportNamedDeclaration<'a> {
             specifiers,
             source,
             ImportOrExportKind::Value,
-            NONE,
+            None,
             builder,
         )
     }
@@ -233,7 +226,7 @@ impl<'a> ExportNamedDeclaration<'a> {
             [],
             None,
             ImportOrExportKind::Value,
-            NONE,
+            None,
             builder,
         )
     }

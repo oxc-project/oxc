@@ -1,7 +1,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
@@ -187,12 +187,12 @@ impl<'a> TypeScriptEnum {
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let param = FormalParameter::new(SPAN, [], id, NONE, NONE, false, None, false, false, ctx);
+        let param = FormalParameter::new(SPAN, [], id, None, None, false, None, false, false, ctx);
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             [param],
-            NONE,
+            None,
             ctx,
         );
 
@@ -218,10 +218,10 @@ impl<'a> TypeScriptEnum {
             false,
             false,
             false,
-            NONE,
-            NONE,
+            None,
+            None,
             params,
-            NONE,
+            None,
             Some(body),
             func_scope_id,
             false,
@@ -257,7 +257,7 @@ impl<'a> TypeScriptEnum {
         let call_expression = Expression::new_call_expression_with_pure(
             span,
             callee,
-            NONE,
+            None,
             arguments,
             false,
             !has_potential_side_effect,
@@ -299,7 +299,7 @@ impl<'a> TypeScriptEnum {
                 span,
                 kind,
                 binding,
-                NONE,
+                None,
                 Some(call_expression),
                 false,
                 ctx,

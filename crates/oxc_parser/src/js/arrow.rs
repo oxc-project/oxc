@@ -1,5 +1,5 @@
 use oxc_allocator::ArenaBox;
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::FileExtension;
 use oxc_syntax::precedence::Precedence;
 
@@ -238,7 +238,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ident.span,
             FormalParameterKind::ArrowFormalParameters,
             [formal_parameter],
-            NONE,
+            None,
             self,
         );
 
