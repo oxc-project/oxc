@@ -1,7 +1,8 @@
 use std::iter;
 
 use crate::{
-    CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor, symbol_value::FreshValueKind,
+    CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor, spread_cleanup,
+    symbol_value::FreshValueKind,
 };
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
@@ -444,10 +445,10 @@ impl<'a> PeepholeOptimizations {
         if object_expr.properties.iter().all(ObjectPropertyKind::is_spread) {
             // All-spread objects like `({...x})` can only be removed if
             // the spread arguments themselves have no side effects.
-            return !object_expr
-                .properties
-                .iter()
-                .any(|property| property.may_have_side_effects(ctx));
+            return !object_expr.properties.iter().any(|property| {
+                !spread_cleanup::is_dead_object_copy_spread(property, ctx)
+                    && property.may_have_side_effects(ctx)
+            });
         }
 
         let mut transformed_elements = ArenaVec::new_in(ctx);
@@ -455,8 +456,17 @@ impl<'a> PeepholeOptimizations {
 
         for prop in object_expr.properties.drain(..) {
             match prop {
-                ObjectPropertyKind::SpreadProperty(_) => {
-                    pending_spread_elements.push(prop);
+                ObjectPropertyKind::SpreadProperty(spread) => {
+                    // A copy the quiet-pass census proved dead contributes
+                    // nothing to the surviving groups. Dropping it here bypasses
+                    // the `replace_*` helpers, so walk its reference into
+                    // `pass_changes.removed_references` — same rationale as the
+                    // key and value branches below.
+                    if spread_cleanup::is_dead_object_copy_spread_argument(&spread.argument, ctx) {
+                        ctx.drop_expression(&spread.argument);
+                    } else {
+                        pending_spread_elements.push(ObjectPropertyKind::SpreadProperty(spread));
+                    }
                 }
                 ObjectPropertyKind::ObjectProperty(prop) => {
                     if !pending_spread_elements.is_empty() {

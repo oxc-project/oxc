@@ -1056,3 +1056,75 @@ fn dce_keeps_implicitly_observable_bindings() {
         options,
     );
 }
+
+// A dead object-copy spread of a binding that provably still holds a
+// getter-free object literal runs no user code, so it is removable. Proven at a
+// quiet-pass boundary by a census over the symbol's live references — see
+// `crate::spread_cleanup`.
+// https://github.com/oxc-project/oxc/issues/20661
+// https://github.com/rolldown/rolldown/issues/8582
+#[test]
+fn remove_dead_object_spread_of_local_literal() {
+    // The effect / rolldown#8582 shape: computed keys and methods install no
+    // accessors, so both copies are dead. The computed key's own reads stay.
+    test(
+        "const Proto = { [TypeId]: TypeId, m() {} }; ({ ...Proto }); ({ ...Proto });",
+        "TypeId, TypeId;",
+    );
+    // Transitive, one cleanup round per quiet boundary: removing `P2`'s copies
+    // kills its declarator, which makes `P1`'s copy inside it dead in turn.
+    test("const P1 = { a: 1 }; const P2 = { ...P1, b: 2 }; ({ ...P2 }); ({ ...P2 });", "");
+    // The copies sit in dead declarator initializers, mixed with data keys.
+    test("const P = { a: 1 }; const X = { ...P, t: 1 }; const Y = { ...P, u: 2 };", "");
+    // A computed `["__proto__"]` key creates an own data property rather than
+    // setting the prototype, so the literal is still classified and the copies
+    // still go. The `base` read is an ordinary global read and stays.
+    test("const P = { [\"__proto__\"]: base, a: 1 }; ({ ...P }); ({ ...P });", "base;");
+}
+
+// A symbol whose every copy sits in a USED initializer passes the census but
+// has nothing removable, so it is never published. Were it published, the
+// cleanup pass would remove nothing, be quiet, and re-derive the identical
+// census — retrying until the iteration guard. Two guards stop that: the
+// publish filter here, and the terminal rule that a cleanup pass which changed
+// nothing ends the loop. `Q` is read twice so single-use inlining does not
+// dissolve the shape first.
+#[test]
+fn keep_object_spread_in_used_initializer() {
+    test(
+        "const P = { a: 1 }; const Q = { ...P }; console.log(Q, Q);",
+        "const Q = { a: 1 }; console.log(Q, Q);",
+    );
+}
+
+// Every keep below is the classifier or the census failing. This cleanup has no
+// sanctioned read positions: any live use that is not an object-copy spread
+// disqualifies the symbol, so the hazards do not need enumerating.
+#[test]
+fn keep_object_spread_disqualified_by_census() {
+    // A getter runs on copy, so the literal is never classified `Object`.
+    test_same("const P = { get a() { return 1 } }; ({ ...P }); ({ ...P });");
+    // An ordinary call argument: `foo` can install a getter.
+    test_same("const P = { a: 1 }; foo(P); ({ ...P });");
+    // `console.log` is no exception — Node invokes a `util.inspect.custom`
+    // method on the argument with the argument as the receiver.
+    test_same("const P = { a: 1 }; console.log(P); ({ ...P });");
+    // An array spread runs the value's own `@@iterator`. Deliberately out of
+    // scope for this object-only cleanup; the census keeps it sound anyway.
+    test_same(
+        "const P = { a: 1, [Symbol.iterator]() { return [][Symbol.iterator]() } }; [...P]; ({ ...P });",
+    );
+    // A member write is not a copy. Allowing static ones would be sound but is
+    // deliberately outside this scope.
+    test_same("const P = { a: 1 }; P.b = 2; ({ ...P }); ({ ...P });");
+    // Reassigned: the copied value is not the classified one.
+    test_same("let P = { a: 1 }; P = unknownGlobal; ({ ...P }); ({ ...P });");
+    // The copy precedes the declarator, so the mark-time order proof fails.
+    test_same("({ ...P }); const P = { a: 1 };");
+    // An exported binding fails twice over: `is_implicitly_observable` marks it,
+    // and the `export { P }` specifier is itself a live unmarked reference.
+    test_same("const P = { a: 1 }; ({ ...P }); export { P };");
+    // `f` runs while the hoisted `var` still holds `undefined`, so the copy
+    // inside it fails the mark-time same-function proof and goes unmarked.
+    test_same("function f() { ({ ...P }); } f(); var P = { a: 1 }; ({ ...P });");
+}

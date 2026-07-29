@@ -1176,3 +1176,44 @@ fn test_update_expression_respects_property_read_side_effects() {
         &options,
     );
 }
+
+// Full-minify flavor of the quiet-pass object-spread cleanup (see
+// `crate::spread_cleanup`). `unused: Keep` retains the declarations, so these
+// pin the spread removal itself rather than the cascade behind it.
+// https://github.com/oxc-project/oxc/issues/20661
+// https://github.com/rolldown/rolldown/issues/8582
+#[test]
+fn test_remove_dead_object_spread_of_local_literal() {
+    test(
+        "const Proto = { [TypeId]: TypeId, m() {} }; ({ ...Proto }); ({ ...Proto });",
+        "const Proto = { [TypeId]: TypeId, m() {} };",
+    );
+    // `P1` is single-use once the copies go, so it inlines and folds into `P2`.
+    test(
+        "const P1 = { a: 1 }; const P2 = { ...P1, b: 2 }; ({ ...P2 }); ({ ...P2 });",
+        "const P2 = { a: 1, b: 2 };",
+    );
+    // Mixed properties: the copy is dropped from the group, the data keys are
+    // dropped by the ordinary unused-property path.
+    test("const P = { a: 1 }; ({ ...P, t: 1 }); ({ ...P, u: 2 });", "const P = { a: 1 };");
+}
+
+/// See `keep_object_spread_in_used_initializer` in the dce suite.
+#[test]
+fn test_keep_object_spread_in_used_initializer() {
+    test(
+        "const P = { a: 1 }; const Q = { ...P }; console.log(Q, Q);",
+        "const Q = { a: 1 }; console.log(Q, Q);",
+    );
+}
+
+#[test]
+fn test_keep_object_spread_disqualified_by_census() {
+    test_same("const P = { get a() { return 1 } }; ({ ...P }), { ...P };");
+    test_same("const P = { a: 1 }; foo(P), { ...P };");
+    test_same("const P = { a: 1 }; console.log(P), { ...P };");
+    test_same("const P = { a: 1 }; P.b = 2, { ...P }, { ...P };");
+    test_same("let P = { a: 1 }; P = unknownGlobal, { ...P }, { ...P };");
+    test_same("({ ...P }); const P = { a: 1 };");
+    test_same("const P = { a: 1 }; ({ ...P }); export { P };");
+}

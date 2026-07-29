@@ -18,7 +18,8 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
     ReusableTraverseCtx, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    peephole::PeepholeOptimizations, symbol_liveness, traverse_context::as_direct_eval_call,
+    peephole::PeepholeOptimizations, spread_cleanup, symbol_liveness,
+    traverse_context::as_direct_eval_call,
 };
 
 /// The fixed-point decision produced by one completed peephole pass.
@@ -290,6 +291,7 @@ pub fn run_peephole_pass<'a>(
 ) -> PassOutcome {
     debug_assert_pass_changes_clean(ctx.get_mut());
     ctx.state_mut().symbols.reset_values();
+    ctx.state_mut().spread_cleanup.begin_pass();
     traverse_mut_with_ctx(&mut PeepholeOptimizations, program, ctx);
 
     let ctx = ctx.get_mut();
@@ -300,8 +302,30 @@ pub fn run_peephole_pass<'a>(
         "ordinary liveness progress must follow a recorded pass change"
     );
     debug_assert_pass_changes_clean(ctx);
+    let mut needs_another_pass = revisit_requested || newly_dead;
 
-    PassOutcome { needs_another_pass: revisit_requested || newly_dead }
+    // The quiet-pass boundary of [`crate::spread_cleanup`], reached only when
+    // the traversal changed nothing — which is exactly what makes this pass's
+    // spread marks, its symbol values, its liveness data and the just-flushed
+    // `Scoping` describe one and the same program.
+    //
+    // Dropping the previous boundary's candidates here is also the terminal
+    // condition: a pass that consumed candidates and still changed nothing
+    // removed nothing, so re-publishing the same census would spin the loop.
+    // Every other route back to this point followed real progress.
+    //
+    // Defence in depth. `settle_candidates` only publishes a symbol with at
+    // least one copy in discarded position, so a published candidate always has
+    // something for the cleanup pass to remove and no constructible program
+    // reaches the suppression — which is also why no test can exercise it. Kept
+    // because the publish filter and the census are separate rules that can
+    // drift apart: relax the filter and this is what still terminates the loop.
+    let was_cleanup_pass = ctx.state.spread_cleanup.take_candidates();
+    if !needs_another_pass && !was_cleanup_pass && spread_cleanup::settle_candidates(program, ctx) {
+        needs_another_pass = true;
+    }
+
+    PassOutcome { needs_another_pass }
 }
 
 #[inline]
