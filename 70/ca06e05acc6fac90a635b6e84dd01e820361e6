@@ -1,0 +1,35 @@
+apps/oxfmt/test/cli/vite_plus/0.snap.md
+  s_69bf59a4b03ca1::t_08c4d694fb0319 5
+apps/oxfmt/test/cli/vite_plus/1.snap.md
+  s_69bf59a4b03ca1::t_7d46130f976695 5
+apps/oxfmt/test/cli/vite_plus/2.snap.md
+  s_69bf59a4b03ca1::t_01e67647f273c1 5
+apps/oxfmt/test/cli/vite_plus/3.snap.md
+  s_69bf59a4b03ca1::t_36d1bd7117aaaf 5
+apps/oxfmt/test/cli/vite_plus/4.snap.md
+  s_69bf59a4b03ca1::t_4cbc829ee87757 5
+apps/oxfmt/test/cli/vite_plus/5.snap.md
+  s_69bf59a4b03ca1::t_7b34402f26bd58 5
+apps/oxfmt/test/cli/vite_plus/6.snap.md
+  s_69bf59a4b03ca1::t_805c3c60f9bee8 5
+apps/oxfmt/test/cli/vite_plus/7.snap.md
+  s_69bf59a4b03ca1::t_8cd3355d034fb1 5
+apps/oxfmt/test/cli/vite_plus/options.json
+  s_69bf59a4b03ca1::t_fb908bde6f4e38 2-6,10,15,20-25,30-35,37-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "70ca06e05acc6fac90a635b6e84dd01e820361e6",
+  "prompts": {},
+  "sessions": {
+    "s_69bf59a4b03ca1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019facfc-e5df-7d92-a723-f3d40f626723",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
