@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::error::diag_code;
 use crate::lanes::Lanes;
 use crate::tables::Tables;
-use crate::token::{SPAN_SENTINELS, is_trivia};
+use crate::token::{SPAN_SENTINELS, is_trivia_byte};
 
 #[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
 use super::find::{eqm, load8};
@@ -109,7 +109,7 @@ pub(super) unsafe fn build_spans(
         let k = *stage_kind.add(j);
         *sp.add(w) = stage_pos.add(j).cast::<u64>().read_unaligned();
         *sig_kinds.add(w) = k;
-        w += usize::from(!is_trivia(k) || k == HASHBANG);
+        w += usize::from(!is_trivia_byte(k) || k == HASHBANG);
         j += 1;
     }
     w

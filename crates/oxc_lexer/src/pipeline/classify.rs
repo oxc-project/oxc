@@ -180,7 +180,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     let mut punct = [PUNCT1_KIND_UNKNOWN; 256];
     let mut i = 0;
     while i < PUNCT1_NKNOWN {
-        punct[PUNCT1[i].0 as usize] = PUNCT1[i].1;
+        punct[PUNCT1[i].0 as usize] = PUNCT1[i].1 as u8;
         i += 1;
     }
     let mut t = [0u16; 256];

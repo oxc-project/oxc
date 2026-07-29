@@ -36,7 +36,7 @@ fn lexer_stream(
 
     let mut spans = Vec::with_capacity(kinds.len());
     for (i, &kind) in kinds.iter().enumerate() {
-        if kind == oxc_lexer::token_kind::EOF || oxc_lexer::is_trivia(kind) {
+        if kind == oxc_lexer::TokenKind::Eof || kind.is_trivia() {
             continue;
         }
         spans.push((token_spans[i].start, token_spans[i].end));

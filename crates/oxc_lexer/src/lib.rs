@@ -18,9 +18,7 @@ pub use error::{Diagnostic, diag_code, diag_severity};
 pub use lanes::Lanes;
 pub use options::{LexOptions, default_options};
 pub use pipeline::Lexer;
-pub use token::{
-    TRIVIA_MAX, TRIVIA_MIN, is_string_kind, is_trivia, token_flags, token_kind, token_kind_name,
-};
+pub use token::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
 use core::cell::RefCell;
 
@@ -93,12 +91,15 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
 
         if !lx.lanes.unicode_leads.is_empty() && k > 0 {
             // SAFETY: `lex_raw` wrote `k` kinds and `k` spans.
-            let (kinds_all, spans_all) = unsafe {
+            let (kind_bytes, spans_all) = unsafe {
                 (
                     core::slice::from_raw_parts(arena.tok_kinds, k),
                     core::slice::from_raw_parts(arena.tok_spans, k),
                 )
             };
+            token::debug_assert_kind_bytes(kind_bytes);
+            // SAFETY: every kind the pipeline writes is a declared discriminant.
+            let kinds_all = unsafe { token::kinds_from_bytes(kind_bytes) };
             resolve_unicode_leads(&mut lx.lanes, &src[..n], kinds_all, spans_all);
         }
 
@@ -142,7 +143,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
 fn resolve_unicode_leads(
     lanes: &mut Lanes,
     src: &[u8],
-    kinds_all: &[u8],
+    kinds_all: &[TokenKind],
     spans_all: &[oxc_span::Span],
 ) {
     let k = kinds_all.len();
@@ -180,14 +181,13 @@ fn resolve_unicode_leads(
 }
 
 /// Literal interiors, trivia, and JSX text may legally contain any char; only candidates landing in code-level tokens are worth checking.
-fn candidate_is_code_level(kind: u8) -> bool {
-    use token::token_kind as T;
-    !(is_trivia(kind)
-        || is_string_kind(kind)
-        || kind == T::REGEXP
-        || (T::TEMPLATE_NO_SUB..=T::TEMPLATE_TAIL).contains(&kind)
-        || (T::TEMPLATE_NO_SUB_COOKED..=T::TEMPLATE_TAIL_COOKED).contains(&kind)
-        || kind == T::JSX_TEXT)
+fn candidate_is_code_level(kind: TokenKind) -> bool {
+    !(kind.is_trivia()
+        || kind.is_string()
+        || kind == TokenKind::RegExp
+        || (TokenKind::TemplateNoSub..=TokenKind::TemplateTail).contains(&kind)
+        || (TokenKind::TemplateNoSubCooked..=TokenKind::TemplateTailCooked).contains(&kind)
+        || kind == TokenKind::JsxText)
 }
 
 fn empty_result(arena: &Arena) -> LexResult {

@@ -56,13 +56,16 @@ impl LexResult {
     }
 
     #[must_use]
-    pub fn tok_kinds<'a>(&'a self, arena: &'a Arena) -> &'a [u8] {
+    pub fn tok_kinds<'a>(&'a self, arena: &'a Arena) -> &'a [crate::token::TokenKind] {
         if arena.tok_kinds.is_null() {
             return &[];
         }
         let n = self.token_count as usize;
         // SAFETY: the lexer wrote `token_count` kinds plus the EOF sentinels.
-        unsafe { core::slice::from_raw_parts(arena.tok_kinds, n + SPAN_SENTINELS) }
+        let bytes = unsafe { core::slice::from_raw_parts(arena.tok_kinds, n + SPAN_SENTINELS) };
+        crate::token::debug_assert_kind_bytes(bytes);
+        // SAFETY: every kind the pipeline writes is a declared discriminant.
+        unsafe { crate::token::kinds_from_bytes(bytes) }
     }
 
     #[must_use]

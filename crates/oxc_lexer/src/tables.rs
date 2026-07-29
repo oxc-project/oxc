@@ -161,7 +161,7 @@ impl Tables {
             let mut found: i32 = -1;
             for kw in KEYWORDS.iter() {
                 if kw.0 == *r {
-                    found = (kw.1 - KW_KIND_BASE) as i32;
+                    found = (kw.1 as u8 - KW_KIND_BASE) as i32;
                     break;
                 }
             }

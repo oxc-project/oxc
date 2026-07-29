@@ -35,35 +35,35 @@ use coalesce::coalesce;
 use compress::{build_spans, compress, lanes_post, write_sentinels};
 use keywords::KWB;
 
-use crate::token::token_kind;
+use crate::token::TokenKind;
 
 const STAGE_BLOCKS: usize = 32;
 const STAGE_CAP: usize = STAGE_BLOCKS * 64 + 128;
 
 // Short kind aliases for the pipeline, tied to `token_kind` so they can't drift.
-pub(crate) const WS: u8 = token_kind::WHITESPACE;
-pub(crate) const IDENT: u8 = token_kind::IDENT;
-pub(crate) const NUM: u8 = token_kind::NUMBER;
-pub(crate) const BIGINT: u8 = token_kind::BIGINT;
-pub(crate) const STR: u8 = token_kind::STRING;
-pub(crate) const LCOM: u8 = token_kind::LINE_COMMENT;
-pub(crate) const BCOM: u8 = token_kind::BLOCK_COMMENT;
-pub(crate) const REGEX: u8 = token_kind::REGEXP;
-pub(crate) const TMPL_NOSUB: u8 = token_kind::TEMPLATE_NO_SUB;
-pub(crate) const TMPL_HEAD: u8 = token_kind::TEMPLATE_HEAD;
-pub(crate) const TMPL_MIDDLE: u8 = token_kind::TEMPLATE_MIDDLE;
-pub(crate) const TMPL_TAIL: u8 = token_kind::TEMPLATE_TAIL;
-pub(crate) const HASHBANG: u8 = token_kind::HASHBANG;
-pub(crate) const IDENT_ESC: u8 = token_kind::IDENT_ESCAPED;
-pub(crate) const PRIV_IDENT: u8 = token_kind::PRIVATE_IDENT;
-pub(crate) const PRIV_IDENT_ESC: u8 = token_kind::PRIVATE_IDENT_ESCAPED;
-pub(crate) const EOF: u8 = token_kind::EOF;
+pub(crate) const WS: u8 = TokenKind::Whitespace as u8;
+pub(crate) const IDENT: u8 = TokenKind::Ident as u8;
+pub(crate) const NUM: u8 = TokenKind::Number as u8;
+pub(crate) const BIGINT: u8 = TokenKind::BigInt as u8;
+pub(crate) const STR: u8 = TokenKind::String as u8;
+pub(crate) const LCOM: u8 = TokenKind::LineComment as u8;
+pub(crate) const BCOM: u8 = TokenKind::BlockComment as u8;
+pub(crate) const REGEX: u8 = TokenKind::RegExp as u8;
+pub(crate) const TMPL_NOSUB: u8 = TokenKind::TemplateNoSub as u8;
+pub(crate) const TMPL_HEAD: u8 = TokenKind::TemplateHead as u8;
+pub(crate) const TMPL_MIDDLE: u8 = TokenKind::TemplateMiddle as u8;
+pub(crate) const TMPL_TAIL: u8 = TokenKind::TemplateTail as u8;
+pub(crate) const HASHBANG: u8 = TokenKind::Hashbang as u8;
+pub(crate) const IDENT_ESC: u8 = TokenKind::IdentEscaped as u8;
+pub(crate) const PRIV_IDENT: u8 = TokenKind::PrivateIdent as u8;
+pub(crate) const PRIV_IDENT_ESC: u8 = TokenKind::PrivateIdentEscaped as u8;
+pub(crate) const EOF: u8 = TokenKind::Eof as u8;
 
 // JSX coarse kinds, written only by `carve_jsx`. `JEND`/`JSX_LT` read as
 // values in `prev_is_regex` (after a completed element, `/` is division).
-pub(crate) const JTEXT: u8 = token_kind::JSX_TEXT;
-pub(crate) const JEND: u8 = token_kind::JSX_TAG_END;
-pub(crate) const JSX_LT: u8 = token_kind::JSX_LT;
+pub(crate) const JTEXT: u8 = TokenKind::JsxText as u8;
+pub(crate) const JEND: u8 = TokenKind::JsxTagEnd as u8;
+pub(crate) const JSX_LT: u8 = TokenKind::JsxLt as u8;
 
 // `glue_number` computes the kind as `NUM + is_bigint` — keep them adjacent.
 const _: () = assert!(BIGINT == NUM + 1);
@@ -82,7 +82,7 @@ pub struct Lexer {
     stage_pos: Vec<u32>,
     stage_kind: Vec<u8>,
     pub spans: Vec<Span>,
-    pub sig_kinds: Vec<u8>,
+    sig_kinds: Vec<u8>,
     pub sig_len: usize,
     out_cap: usize,
     pub lanes: Lanes,
@@ -117,6 +117,17 @@ impl Lexer {
             lanes: Lanes::default(),
             tables: Box::new(Tables::new()),
         }
+    }
+
+    /// The kinds written by the last [`Lexer::lex`], including the trailing
+    /// [`SPAN_SENTINELS`] EOF entries.
+    #[must_use]
+    pub fn kinds(&self) -> &[TokenKind] {
+        let bytes = &self.sig_kinds[..self.sig_len + SPAN_SENTINELS];
+        crate::token::debug_assert_kind_bytes(bytes);
+        // SAFETY: `lex_raw` wrote `sig_len` kinds plus the sentinels, all of
+        // them declared discriminants.
+        unsafe { crate::token::kinds_from_bytes(bytes) }
     }
 
     fn ensure(&mut self, n: usize) {
