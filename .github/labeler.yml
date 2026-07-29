@@ -37,6 +37,7 @@ A-transformer:
             "crates/oxc_traverse/**",
             "tasks/transform_conformance/**",
             "napi/transform/**",
+            "napi/transform-react/**",
           ]
 
 A-linter:

@@ -151,6 +151,7 @@ oxc_span = { version = "0.142.0", path = "crates/oxc_span" } # Source positions
 oxc_str = { version = "0.142.0", path = "crates/oxc_str" } # String types
 oxc_syntax = { version = "0.142.0", path = "crates/oxc_syntax" } # Syntax utilities
 oxc_transform_napi = { version = "0.142.0", path = "napi/transform" } # Node.js transformer binding
+oxc_transform_react_napi = { version = "0.142.0", path = "napi/transform-react" } # Node.js React Compiler binding
 oxc_transformer = { version = "0.142.0", path = "crates/oxc_transformer" } # Code transformation
 oxc_transformer_plugins = { version = "0.142.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
 oxc_traverse = { version = "0.142.0", path = "crates/oxc_traverse" } # AST traversal
@@ -276,7 +277,7 @@ walkdir = "2.5.0" # Directory traversal
 windows-sys = { version = "0.61.2" } # Windows API bindings
 
 [workspace.metadata.cargo-shear]
-ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]
+ignored = ["oxc_transform_napi", "oxc_transform_react_napi", "oxc_parser_napi", "oxc_minify_napi"]
 
 # `oxc_allocator` is both dogfooded here (workspace path) and published to crates.io.
 # External workspace-dependencies (e.g. `oxc-css-parser`) pull it from the registry,
