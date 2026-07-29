@@ -21,12 +21,17 @@ const result = transformSync(
   },
 );
 
-if (result.errors.length > 0) {
+if (result.fatal) {
   console.error(result.errors);
+} else {
+  console.log(result.code);
 }
-
-console.log(result.code);
 ```
+
+`errors` contains every diagnostic reported by parsing, the React Compiler, and
+the downstream transform. Some React Compiler bail-outs have error severity but
+are nonfatal under the default `panicThreshold`; check `fatal` to decide whether
+the transform emitted usable code.
 
 The React Compiler options use the same names as
 `babel-plugin-react-compiler`/`react-compiler-napi`, including

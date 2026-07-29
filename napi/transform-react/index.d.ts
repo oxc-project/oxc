@@ -186,6 +186,8 @@ export interface TransformOptions {
 
 /** Result returned by the React Compiler transform. */
 export interface TransformResult {
+  /** Whether the transform was aborted without emitting code. */
+  fatal: boolean
   /**
    * Transformed JavaScript code.
    *

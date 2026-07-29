@@ -20,7 +20,7 @@ use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{ErrorCategory, has_critical_errors, with_fallback_label};
+use crate::diagnostics::{ErrorCategory, should_panic, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
@@ -1011,7 +1011,7 @@ fn log_error(err: &Diagnostics, fn_span: Option<Span>, diagnostics: &mut Diagnos
 }
 
 /// Handle an error according to the panicThreshold setting.
-/// Returns Some(CompileResult::Error) if the error should be surfaced as fatal,
+/// Returns Some(CompileResult::Fatal) if the error should be surfaced as fatal,
 /// otherwise returns None (error was logged only).
 fn handle_error<'a>(
     err: &Diagnostics,
@@ -1022,19 +1022,10 @@ fn handle_error<'a>(
     // Log the error
     log_error(err, fn_span, diagnostics);
 
-    let should_panic = match panic_threshold {
-        PanicThreshold::AllErrors => true,
-        PanicThreshold::CriticalErrors => has_critical_errors(err),
-        PanicThreshold::None => false,
-    };
-
-    // Config errors always cause a panic
-    let is_config_error = err.iter().any(|d| ErrorCategory::Config.matches(d));
-
-    if should_panic || is_config_error {
+    if should_panic(err, panic_threshold) {
         // The per-detail diagnostics were already pushed by `log_error`; the fatal
         // result just carries them. (The old JS-shim summary is dropped.)
-        Some(CompileResult::Error { diagnostics: std::mem::take(diagnostics) })
+        Some(CompileResult::Fatal { diagnostics: std::mem::take(diagnostics) })
     } else {
         None
     }
@@ -2958,7 +2949,11 @@ pub fn compile_program<'a>(
                 Diagnostics::from(ErrorCategory::Invariant.diagnostic(
                     "Unexpected compiled functions when module scope opt-out is present",
                 ));
-            handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics);
+            if let Some(result) =
+                handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics)
+            {
+                return result;
+            }
         }
         return CompileResult::Success { output: None, diagnostics: context.diagnostics };
     }

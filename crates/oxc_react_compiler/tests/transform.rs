@@ -8,7 +8,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{PanicThreshold, PluginOptions, compile};
+use oxc_react_compiler::{CompileResult, PanicThreshold, PluginOptions, compile};
 
 fn options() -> PluginOptions {
     PluginOptions::default()
@@ -17,6 +17,7 @@ fn options() -> PluginOptions {
 struct TransformResult {
     changed: bool,
     diagnostics: Diagnostics,
+    fatal: bool,
 }
 
 /// Parse `source_text` then run the compiler in place, returning the
@@ -28,15 +29,23 @@ fn transform_source<'a>(
     options: PluginOptions,
 ) -> (Program<'a>, TransformResult) {
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
-    let (output, diagnostics) = {
+    let result = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
         compile(&program, &semantic, allocator, options)
     };
-    let changed = output.is_some();
-    if let Some(output) = output {
-        output.transform(&mut program);
-    }
-    (program, TransformResult { changed, diagnostics })
+    let result = match result {
+        CompileResult::Success { output, diagnostics } => {
+            let changed = output.is_some();
+            if let Some(output) = output {
+                output.transform(&mut program);
+            }
+            TransformResult { changed, diagnostics, fatal: false }
+        }
+        CompileResult::Fatal { diagnostics } => {
+            TransformResult { changed: false, diagnostics, fatal: true }
+        }
+    };
+    (program, result)
 }
 
 #[test]
@@ -87,6 +96,7 @@ fn default_eslint_suppressions_do_not_bail_out() {
             transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
 
         assert!(result.changed, "{kind} must not prevent compilation");
+        assert!(!result.fatal, "{kind} must not produce a fatal result");
         assert!(
             !result.diagnostics.has_errors(),
             "{kind} produced unexpected diagnostics: {:?}",
@@ -103,6 +113,7 @@ fn flow_suppressions_still_bail_out_by_default() {
         transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
 
     assert!(!result.changed, "Flow suppression must prevent compilation");
+    assert!(!result.fatal, "Flow suppression must be a nonfatal bail-out by default");
     assert_eq!(result.diagnostics.len(), 1);
     assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
 }
@@ -129,6 +140,10 @@ fn eslint_suppressions_bail_out_when_either_internal_validation_is_disabled() {
         assert!(
             !result.changed,
             "suppression must prevent compilation when {disabled_validation} validation is disabled"
+        );
+        assert!(
+            !result.fatal,
+            "suppression must be a nonfatal bail-out when {disabled_validation} validation is disabled"
         );
         assert_eq!(result.diagnostics.len(), 1);
         assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
@@ -221,6 +236,7 @@ fn all_errors_makes_enabled_eslint_suppressions_fatal() {
     options.environment.validate_exhaustive_memoization_dependencies = false;
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
 
+    assert!(result.fatal, "all_errors must escalate suppression diagnostics");
     assert!(!result.changed, "a fatal result must not produce a rewrite");
     assert!(result.diagnostics.has_errors());
 }

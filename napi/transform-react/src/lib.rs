@@ -29,7 +29,7 @@ use oxc::{
     transformer::Transformer,
 };
 use oxc_napi::{OxcError, get_source_type};
-use oxc_react_compiler::compile as react_compiler_compile;
+use oxc_react_compiler::{CompileResult, compile as react_compiler_compile};
 use oxc_sourcemap::napi::SourceMap;
 
 pub use crate::options::*;
@@ -38,6 +38,9 @@ pub use crate::options::*;
 #[derive(Default)]
 #[napi(object)]
 pub struct TransformResult {
+    /// Whether the transform was aborted without emitting code.
+    pub fatal: bool,
+
     /// Transformed JavaScript code.
     ///
     /// This is empty when parsing, semantic analysis, option validation, or the
@@ -68,6 +71,7 @@ fn transform_impl(
             Ok(options) => options,
             Err(error) => {
                 return TransformResult {
+                    fatal: true,
                     errors: OxcError::from_diagnostics(filename, source_text, [error]),
                     ..TransformResult::default()
                 };
@@ -76,8 +80,12 @@ fn transform_impl(
 
     let allocator = Allocator::default();
     let parser_return = Parser::new(&allocator, source_text, source_type).parse();
+    let parser_has_errors = parser_return.diagnostics.has_errors();
     let mut diagnostics = parser_return.diagnostics;
     let mut program = parser_return.program;
+    if parser_has_errors {
+        return error_result(filename, source_text, diagnostics);
+    }
 
     let SemanticBuilderReturn { semantic, diagnostics: semantic_diagnostics } =
         SemanticBuilder::new_compiler()
@@ -90,13 +98,15 @@ fn transform_impl(
         return error_result(filename, source_text, diagnostics);
     }
 
-    let (react_output, react_diagnostics) = react_compiler_options.map_or_else(
-        || (None, Diagnostics::new()),
-        |options| react_compiler_compile(&program, &semantic, &allocator, options),
-    );
-    let react_has_errors = react_diagnostics.has_errors();
+    let (react_output, react_diagnostics, react_fatal) = match react_compiler_options {
+        None => (None, Diagnostics::new(), false),
+        Some(options) => match react_compiler_compile(&program, &semantic, &allocator, options) {
+            CompileResult::Success { output, diagnostics } => (output, diagnostics, false),
+            CompileResult::Fatal { diagnostics } => (None, diagnostics, true),
+        },
+    };
     diagnostics.extend(react_diagnostics);
-    if react_has_errors {
+    if react_fatal {
         return error_result(filename, source_text, diagnostics);
     }
 
@@ -122,6 +132,7 @@ fn transform_impl(
         })
         .build(&program);
     TransformResult {
+        fatal: false,
         code: codegen_return.code,
         map: codegen_return.map.map(SourceMap::from),
         errors: OxcError::from_diagnostics(filename, source_text, diagnostics),
@@ -130,6 +141,7 @@ fn transform_impl(
 
 fn error_result(filename: &str, source_text: &str, diagnostics: Diagnostics) -> TransformResult {
     TransformResult {
+        fatal: true,
         errors: OxcError::from_diagnostics(filename, source_text, diagnostics),
         ..TransformResult::default()
     }

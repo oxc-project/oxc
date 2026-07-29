@@ -20,7 +20,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{PluginOptions, compile};
+use oxc_react_compiler::{CompileResult, PluginOptions, compile};
 
 /// Compile a React component with the Rust React Compiler and print the result.
 fn main() {
@@ -39,14 +39,20 @@ fn main() {
     let allocator = Allocator::default();
     let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
-    let (output, diagnostics) = {
+    let result = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
         compile(&program, &semantic, &allocator, PluginOptions::default())
     };
-    let changed = output.is_some();
-    if let Some(output) = output {
-        output.transform(&mut program);
-    }
+    let (changed, diagnostics, fatal) = match result {
+        CompileResult::Success { output, diagnostics } => {
+            let changed = output.is_some();
+            if let Some(output) = output {
+                output.transform(&mut program);
+            }
+            (changed, diagnostics, false)
+        }
+        CompileResult::Fatal { diagnostics } => (false, diagnostics, true),
+    };
 
     if !diagnostics.is_empty() {
         println!("Diagnostics:\n");
@@ -56,7 +62,9 @@ fn main() {
         println!();
     }
 
-    if changed {
+    if fatal {
+        println!("Compilation aborted.");
+    } else if changed {
         let code = Codegen::new().build(&program).code;
         println!("Compiled:\n");
         println!("{code}");

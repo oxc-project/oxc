@@ -19,6 +19,7 @@ describe("transformSync", () => {
   it("runs React Compiler before TypeScript and JSX transforms", () => {
     const result = transformSync("Component.tsx", fixture);
 
+    expect(result.fatal).toBe(false);
     expect(result.errors).toEqual([]);
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).toContain("_c(");
@@ -100,9 +101,18 @@ describe("transformSync", () => {
     ],
   ])("reports an invalid %s option without emitting code", (option, options) => {
     const result = transformSync("Component.tsx", fixture, options as never);
+    expect(result.fatal).toBe(true);
     expect(result.code).toBe("");
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].message).toContain(`Invalid React Compiler \`${option}\` option`);
+  });
+
+  it("marks parse errors as fatal", () => {
+    const result = transformSync("Component.tsx", "function Component(");
+
+    expect(result.fatal).toBe(true);
+    expect(result.code).toBe("");
+    expect(result.errors.length).toBeGreaterThan(0);
   });
 
   it("supports source maps and language overrides", () => {
@@ -176,9 +186,112 @@ describe("transformSync", () => {
       },
     );
 
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({
+      severity: "Error",
+      message: expect.stringContaining("[ReactCompiler] Suppression:"),
+    });
+    expect(result.code).not.toBe("");
+    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).not.toContain(": number");
+    expect(result.code).not.toContain("<div");
+  });
+
+  it("continues after an incompatible library bailout", () => {
+    const result = transformSync(
+      "Components.tsx",
+      `import { useReactTable } from "@tanstack/react-table";
+      function Table() {
+        const table = useReactTable({});
+        return <div>{table}</div>;
+      }
+      export function Component(props: { text: string }) {
+        return <span>{props.text}</span>;
+      }`,
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({
+      severity: "Warning",
+      message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library",
+    });
+    expect(result.errors.some((error) => error.message.includes("Unexpected error"))).toBe(false);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).not.toContain("props: { text: string }");
+    expect(result.code).not.toContain("<span");
+  });
+
+  it("compiles an unsuppressed sibling after a suppression bailout", () => {
+    const result = transformSync(
+      "Components.tsx",
+      `function Suppressed({ value }: { value: number }) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const doubled = value * 2;
+        return <div>{doubled}</div>;
+      }
+      export function Component(props: { text: string }) {
+        return <span>{props.text}</span>;
+      }`,
+      {
+        environment: {
+          validateExhaustiveMemoizationDependencies: false,
+        },
+      },
+    );
+
+    expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).not.toContain("props: { text: string }");
+    expect(result.code).not.toContain("<span");
+  });
+
+  it.each(["critical_errors", "all_errors"] as const)(
+    "makes suppression bailouts fatal at panicThreshold %s",
+    (panicThreshold) => {
+      const result = transformSync(
+        "Component.tsx",
+        `function Component({ value }: { value: number }) {
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          const doubled = value * 2;
+          return <div>{doubled}</div>;
+        }`,
+        {
+          panicThreshold,
+          environment: {
+            validateExhaustiveMemoizationDependencies: false,
+          },
+        },
+      );
+
+      expect(result.fatal).toBe(true);
+      expect(result.code).toBe("");
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+    },
+  );
+
+  it("makes warning bailouts fatal at panicThreshold all_errors", () => {
+    const result = transformSync(
+      "Table.tsx",
+      `import { useReactTable } from "@tanstack/react-table";
+      function Table() {
+        const table = useReactTable({});
+        return <div>{table}</div>;
+      }`,
+      { panicThreshold: "all_errors" },
+    );
+
+    expect(result.fatal).toBe(true);
     expect(result.code).toBe("");
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({
+      severity: "Warning",
+      message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library",
+    });
   });
 });
 
