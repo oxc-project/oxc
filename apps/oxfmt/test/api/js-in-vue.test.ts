@@ -134,4 +134,18 @@ const q = graphql\`
     expect(result2.code).toBe(result.code);
     expect(result2.errors).toStrictEqual([]);
   });
+
+  it('should format <script lang="tsx"> blocks', async () => {
+    const input = `
+<script lang="tsx">
+export default {
+  render(h): VNode {  return <div>{ this.foo }</div> },
+}
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toContain(`return <div>{this.foo}</div>;`);
+    expect(result.errors).toStrictEqual([]);
+  });
 });
