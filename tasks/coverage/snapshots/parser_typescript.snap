@@ -6772,6 +6772,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  32 │     export import M5 = require("M5");
     ╰────
 
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/es5ModuleInternalNamedImports.ts:32:5]
+ 31 │     import M4 from "M4";
+ 32 │     export import M5 = require("M5");
+    ·     ─────────────────────────────────
+ 33 │ }
+    ╰────
+
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tests/cases/compiler/es6ClassTest.ts:25:44]
  24 │     constructor();
@@ -10948,6 +10956,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
 
   × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:81:5]
+ 80 │     export import m1_im2_public = m1_M2_private;
+ 81 │     export import m1_im3_public = require("m1_M3_public");
+    ·     ──────────────────────────────────────────────────────
+ 82 │     export import m1_im4_public = require("m1_M4_private");
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:82:5]
+ 81 │     export import m1_im3_public = require("m1_M3_public");
+ 82 │     export import m1_im4_public = require("m1_M4_private");
+    ·     ───────────────────────────────────────────────────────
+ 83 │ }
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
      ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:121:9]
  120 │     namespace m2 {
  121 │         import errorImport = require("glo_M2_public");
@@ -11004,6 +11028,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
 
   × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:81:5]
+ 80 │     export import m1_im2_public = m1_M2_private;
+ 81 │     export import m1_im3_public = require("m1_M3_public");
+    ·     ──────────────────────────────────────────────────────
+ 82 │     export import m1_im4_public = require("m1_M4_private");
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:82:5]
+ 81 │     export import m1_im3_public = require("m1_M3_public");
+ 82 │     export import m1_im4_public = require("m1_M4_private");
+    ·     ───────────────────────────────────────────────────────
+ 83 │ }
+    ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:143:5]
  142 │ 
  143 │     import m1_im3_private = require("m2_M3_public");
@@ -11017,6 +11057,22 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  153 │     import m1_im4_private = require("m2_M4_private");
      ·     ─────────────────────────────────────────────────
  154 │     export var m1_im4_private_v1_public = m1_im4_private.c1;
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:166:5]
+ 165 │     export import m1_im2_public = m2_M2_private;
+ 166 │     export import m1_im3_public = require("m2_M3_public");
+     ·     ──────────────────────────────────────────────────────
+ 167 │     export import m1_im4_public = require("m2_M4_private");
+     ╰────
+
+  × TS(1147): Import declarations in a namespace cannot reference a module.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:167:5]
+ 166 │     export import m1_im3_public = require("m2_M3_public");
+ 167 │     export import m1_im4_public = require("m2_M4_private");
+     ·     ───────────────────────────────────────────────────────
+ 168 │ }
      ╰────
 
   × TS(1147): Import declarations in a namespace cannot reference a module.

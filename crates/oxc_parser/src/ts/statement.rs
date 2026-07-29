@@ -451,6 +451,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Statement::ExportNamedDeclaration(decl) if decl.source.is_some() => {
                 self.error(diagnostics::export_in_namespace(decl.span));
             }
+            // `export import x = require("...")` is wrapped in an export declaration.
+            Statement::ExportNamedDeclaration(decl)
+                if matches!(
+                    &decl.declaration,
+                    Some(Declaration::TSImportEqualsDeclaration(import_decl))
+                        if import_decl.module_reference.is_external()
+                ) =>
+            {
+                self.error(diagnostics::import_in_namespace(decl.span));
+            }
             Statement::ExportAllDeclaration(decl) => {
                 self.error(diagnostics::export_in_namespace(decl.span));
             }
