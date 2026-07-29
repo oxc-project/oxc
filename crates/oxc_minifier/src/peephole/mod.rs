@@ -3,6 +3,7 @@ mod fold_constants;
 mod inline;
 mod minimize_conditional_expression;
 mod minimize_conditions;
+mod minimize_exit_points;
 mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
@@ -396,7 +397,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::minimize_statements(stmts, &Self::get_jump_type(ctx), ctx);
+        Self::minimize_statements(stmts, Self::get_jump_type(ctx), ctx);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -404,7 +405,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::try_minify_statements(stmt, ctx);
+        Self::remove_exit_statements(stmt, ctx);
 
         if ctx.is_tree_shake_only() {
             match stmt {

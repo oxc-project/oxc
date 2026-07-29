@@ -1,7 +1,6 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
-use bitflags::bitflags;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -12,9 +11,9 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 
-use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
-
 use super::PeepholeOptimizations;
+use crate::peephole::minimize_exit_points::JumpType;
+use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
 /// `false` when dropping `stmt` produces a byte-identical AST — a `var`
 /// with no initializers, which `KeepVar` re-emits unchanged at the end of
@@ -28,14 +27,6 @@ fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
     !matches!(stmt, Statement::VariableDeclaration(decl)
         if decl.kind.is_var()
             && decl.declarations.iter().all(|d| d.init.is_none() && d.type_annotation.is_none()))
-}
-
-bitflags! {
-    pub struct JumpType: u8 {
-        const Return = 1;
-        const Continue = 1 << 1;
-        const Break = 1 << 2;
-    }
 }
 
 impl<'a> PeepholeOptimizations {
@@ -61,43 +52,15 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn try_minify_statements(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        match stmt {
-            Statement::IfStatement(if_stmt) => {
-                Self::handle_stmts(&mut if_stmt.consequent, &JumpType::empty(), ctx);
-                if let Some(alternate) = &mut if_stmt.alternate {
-                    Self::handle_stmts(alternate, &JumpType::empty(), ctx);
-                }
-            }
-            Statement::ForStatement(for_stmt) => {
-                Self::handle_stmts(&mut for_stmt.body, &JumpType::Continue, ctx);
-            }
-            Statement::ForInStatement(for_in_stmt) => {
-                Self::handle_stmts(&mut for_in_stmt.body, &JumpType::Continue, ctx);
-            }
-            Statement::ForOfStatement(for_of_stmt) => {
-                Self::handle_stmts(&mut for_of_stmt.body, &JumpType::Continue, ctx);
-            }
-            Statement::DoWhileStatement(do_while) => {
-                let jump_type = if do_while.test.get_side_free_boolean_value(ctx) == Some(false) {
-                    JumpType::Continue | JumpType::Break
-                } else {
-                    JumpType::Continue
-                };
-                Self::handle_stmts(&mut do_while.body, &jump_type, ctx);
-            }
-            Statement::LabeledStatement(label_stmt) => {
-                Self::handle_stmts(&mut label_stmt.body, &JumpType::Continue, ctx);
-            }
-            _ => {}
-        }
-    }
-
-    fn handle_stmts(stmt: &mut Statement<'a>, jump_type: &JumpType, ctx: &mut TraverseCtx<'a>) {
+    pub fn try_minify_statements(
+        stmt: &mut Statement<'a>,
+        jump_type: JumpType,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if !matches!(stmt, Statement::BlockStatement(_)) && !Self::statement_cares_about_scope(stmt)
         {
             let mut stmts = ArenaVec::from_value_in(stmt.take_in(ctx), ctx);
-            Self::minimize_statements(&mut stmts, &jump_type, ctx);
+            Self::minimize_statements(&mut stmts, jump_type, ctx);
             *stmt = match stmts.len() {
                 0 => Statement::new_empty_statement(stmt.span(), ctx),
                 1 => stmts[0].take_in(ctx),
@@ -130,7 +93,7 @@ impl<'a> PeepholeOptimizations {
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        jump_type: &JumpType,
+        jump_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let mut old_stmts = stmts.take_in(ctx);
@@ -426,7 +389,7 @@ impl<'a> PeepholeOptimizations {
         i: usize,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        jump_type: &JumpType,
+        jump_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         match stmt {
@@ -891,7 +854,7 @@ impl<'a> PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        jump_type: &JumpType,
+        jump_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) -> ControlFlow<()> {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
@@ -1329,13 +1292,13 @@ impl<'a> PeepholeOptimizations {
     fn handle_labeled_statement(
         mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        jump_type: &JumpType,
+        jump_type: JumpType,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
             Self::minimize_statements(&mut block_stmt.body, jump_type, ctx);
         } else if !Self::statement_cares_about_scope(&labeled_stmt.body) {
-            Self::handle_stmts(&mut labeled_stmt.body, jump_type, ctx);
+            Self::try_minify_statements(&mut labeled_stmt.body, jump_type, ctx);
         }
         result.push(Statement::LabeledStatement(labeled_stmt));
     }
@@ -2131,28 +2094,6 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
-    }
-
-    /// Returns `true` if the statement is an unconditional termination that can be
-    /// safely removed:
-    /// - Unlabeled `continue` statements that terminate a loop body
-    /// - Bare `return` statements that terminate a function body
-    fn can_remove_termination_statement(stmt: &Statement<'a>, jump_type: &JumpType) -> bool {
-        match stmt {
-            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, or `while` body.
-            Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                jump_type.contains(JumpType::Continue)
-            }
-            // unlabeled `break;` that terminates a `do...while` body if test is false.
-            Statement::BreakStatement(stmt) if stmt.label.is_none() => {
-                jump_type.contains(JumpType::Break)
-            }
-            // bare `return;` in function-body scope.
-            Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
-                jump_type.contains(JumpType::Return)
-            }
-            _ => false,
-        }
     }
 }
 
