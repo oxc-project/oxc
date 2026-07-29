@@ -268,7 +268,6 @@ pub struct Message {
     pub fixes: PossibleFixes,
     pub span: Span,
     fixed: bool,
-    pub section_offset: u32,
     /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
     pub rule: Option<MessageRule>,
 }
@@ -283,18 +282,12 @@ impl Message {
             .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
+        Self { error, span, fixes, fixed: false, rule: None }
     }
 
     #[must_use]
     pub fn with_rule(mut self, rule: MessageRule) -> Self {
         self.rule = Some(rule);
-        self
-    }
-
-    #[must_use]
-    pub fn with_section_offset(mut self, section_offset: u32) -> Self {
-        self.section_offset = section_offset;
         self
     }
 

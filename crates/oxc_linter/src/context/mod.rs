@@ -305,10 +305,7 @@ impl<'a> LintContext<'a> {
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
     #[inline]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.add_diagnostic(
-            Message::new(diagnostic, PossibleFixes::None)
-                .with_section_offset(self.parent.current_sub_host().source_text_offset),
-        );
+        self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
     }
 
     /// Report a lint rule violation and provide an automatic fix.
@@ -426,10 +423,7 @@ impl<'a> LintContext<'a> {
     /// monomorphized at every rule call site.
     fn emit_single_fix(&self, diagnostic: OxcDiagnostic, fix: Option<Fix>) {
         if let Some(fix) = fix {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Single(fix))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Single(fix)));
         } else {
             self.diagnostic(diagnostic);
         }
@@ -458,10 +452,7 @@ impl<'a> LintContext<'a> {
         if fixes_result.is_empty() {
             self.diagnostic(diagnostic);
         } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Multiple(fixes_result)));
         }
     }
 
@@ -499,10 +490,7 @@ impl<'a> LintContext<'a> {
         if fixes_result.is_empty() {
             self.diagnostic(diagnostic);
         } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Multiple(fixes_result)));
         }
     }
 
