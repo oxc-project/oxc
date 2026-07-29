@@ -52,7 +52,6 @@ const categories: Category[] = [
       { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
     ],
     notes: {
-      "externals/prettier/vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
       "externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue":
         "`<T = any,>() => {}` comma in generic param is removed even in .ts(x) file",
     },

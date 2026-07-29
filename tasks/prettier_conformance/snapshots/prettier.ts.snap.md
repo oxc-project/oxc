@@ -1,10 +1,9 @@
-ts compatibility: 621/659 (94.23%), 15 files skipped
+ts compatibility: 622/659 (94.39%), 15 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| typescript/arrow/return-type/18588.ts | 💥 | 58.82% |
 | typescript/as/as.ts | 💥 | 97.74% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 93.33% |
 | typescript/as/comments/17407.ts | 💥 | 47.06% |

@@ -1,6 +1,6 @@
 ## js-in-vue
 
-### Option 1: 422/425 (99.29%)
+### Option 1: 423/425 (99.53%)
 
 ```json
 {"printWidth":80}
@@ -8,11 +8,10 @@
 
 | File | Note |
 | :--- | :--- |
-| [externals/prettier/vue/multiparser/lang-tsx.vue](diffs/js-in-vue/externals__prettier__vue__multiparser__lang-tsx.vue.md) | `lang=tsx` is not supported |
 | [externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue](diffs/js-in-vue/externals__vue-vben-admin__@core__ui-kit__shadcn-ui__src__components__render-content__render-content.vue.md) |  |
 | [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md) | `<T = any,>() => {}` comma in generic param is removed even in .ts(x) file |
 
-### Option 2: 423/425 (99.53%)
+### Option 2: 424/425 (99.76%)
 
 ```json
 {"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}
@@ -20,7 +19,6 @@
 
 | File | Note |
 | :--- | :--- |
-| [externals/prettier/vue/multiparser/lang-tsx.vue](diffs/js-in-vue/externals__prettier__vue__multiparser__lang-tsx.vue.md) | `lang=tsx` is not supported |
 | [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md) | `<T = any,>() => {}` comma in generic param is removed even in .ts(x) file |
 
 ## gql-in-js

@@ -34,7 +34,7 @@ pub type TailwindCallback = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync
 /// - Embedded language formatting (CSS, GraphQL, HTML in template literals)
 ///   via the orchestrator-assembled [`FormatDispatcher`]
 /// - Tailwind CSS class sorting
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ExternalCallbacks {
     embedded_formatter: Option<EmbeddedFormatterCallback>,
     dispatcher: Option<FormatDispatcher>,

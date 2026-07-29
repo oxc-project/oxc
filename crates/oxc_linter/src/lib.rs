@@ -81,7 +81,10 @@ pub use crate::{
         JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
+    fixer::{
+        Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes, disable_for_this_line,
+        disable_for_this_section,
+    },
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,

@@ -27,7 +27,9 @@ impl MessageRule {
 
 use crate::LintContext;
 
+mod disable_fix;
 mod fix;
+pub use disable_fix::{disable_for_this_line, disable_for_this_section};
 pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
