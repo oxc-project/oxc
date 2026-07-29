@@ -1,0 +1,21 @@
+tasks/transform_conformance/tests/babel-preset-typescript/test/fixtures/rewriteImportExtensions/input.ts
+  s_3c6685d7796530::t_b8a24bb7829f58 5
+tasks/transform_conformance/tests/babel-preset-typescript/test/fixtures/rewriteImportExtensions/output.js
+  s_3c6685d7796530::t_ccce70aa7f34fe 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c0fa17a07279dfff14a9a22e2c2557d897e57e69",
+  "prompts": {},
+  "sessions": {
+    "s_3c6685d7796530": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae75-63a0-7af3-842b-7952f9a40266",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

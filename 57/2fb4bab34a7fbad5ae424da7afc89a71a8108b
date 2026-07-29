@@ -1,0 +1,19 @@
+crates/oxc_codegen/src/gen.rs
+  s_60ae018ae28f5b::t_5d43d0ba88e7a7 1250
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "572fb4bab34a7fbad5ae424da7afc89a71a8108b",
+  "prompts": {},
+  "sessions": {
+    "s_60ae018ae28f5b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae74-13c4-7363-a7d6-0613cbd8cd14",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
