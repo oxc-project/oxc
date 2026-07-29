@@ -126,6 +126,7 @@ pub struct LintOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub show_suppressed_violations: Option<bool>,
     /// Severity used to render bulk-suppressed violations when they are shown.
+    #[schemars(with = "Option<SuppressedViolationSeverity>")]
     pub suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
