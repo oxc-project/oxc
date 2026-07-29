@@ -2,6 +2,7 @@ import "./a.js";
 import "./a.mjs";
 import "./a.cjs";
 import "./react.js";
+export { x } from "./a.mjs";
 // .mtsx and .ctsx are not valid and should not be transformed.
 import "./react.mtsx";
 import "./react.ctsx";
