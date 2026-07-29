@@ -7,7 +7,7 @@ use oxc_span::SourceType;
 use oxc_str::Str;
 use oxc_syntax::scope::ScopeId;
 
-use crate::{CompressOptions, symbol_state::SymbolState};
+use crate::{CompressOptions, spread_cleanup::SpreadCleanup, symbol_state::SymbolState};
 
 /// Compression pipeline selected for this run.
 #[derive(Clone, Copy)]
@@ -111,6 +111,16 @@ pub struct MinifierState<'a> {
     /// consumed by `compression_pass` after Normalize and every peephole pass.
     pub(crate) pass_changes: PassChanges<'a>,
 
+    /// Marks and settled candidates for the quiet-pass object-spread cleanup.
+    pub(crate) spread_cleanup: SpreadCleanup<'a>,
+
+    /// Whether `exit_statements` is re-processing an already-traversed
+    /// statement list. Entry existence in `SymbolState::values` is a
+    /// traversal-order proof everywhere else, but not here: the list also
+    /// carries entries for declarators positioned LATER than the node being
+    /// visited.
+    pub(crate) reprocessing_statements: bool,
+
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
@@ -135,6 +145,8 @@ impl<'a> MinifierState<'a> {
                 this_initialized_at: None,
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
+            spread_cleanup: SpreadCleanup::new(scoping, allocator),
+            reprocessing_statements: false,
             concat_scratch: String::new(),
         }
     }
