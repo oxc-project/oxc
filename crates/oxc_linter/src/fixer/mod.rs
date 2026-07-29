@@ -261,7 +261,6 @@ pub struct Message {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
     pub span: Span,
-    fixed: bool,
 }
 
 impl Message {
@@ -274,7 +273,7 @@ impl Message {
             .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false }
+        Self { error, fixes, span }
     }
 
     /// move the offset of all spans to the right
@@ -374,7 +373,7 @@ impl<'a> Fixer<'a> {
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
 
-        for mut m in self.messages {
+        for m in self.messages {
             let fix = match &m.fixes {
                 PossibleFixes::None => None,
                 PossibleFixes::Single(fix) => Some(fix),
@@ -405,7 +404,6 @@ impl<'a> Fixer<'a> {
                 continue;
             }
 
-            m.fixed = true;
             fixed = true;
             let offset = last_pos as usize;
             output.push_str(&source_text[offset..start as usize]);
