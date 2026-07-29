@@ -2376,6 +2376,7 @@ dependencies = [
 name = "oxc_napi"
 version = "0.142.0"
 dependencies = [
+ "libc",
  "napi",
  "napi-build",
  "napi-derive",
@@ -2384,6 +2385,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_span",
  "oxc_syntax",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

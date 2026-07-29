@@ -16,6 +16,11 @@ use crate::{
     result::CliRunResult,
 };
 
+// Keep the addon image mapped for process lifetime: napi-rs's background Tokio runtime
+// shutdown can otherwise let Node unload this library while runtime threads still
+// execute its code (see `oxc_napi::pin_module_image`).
+oxc_napi::pin_addon_image!();
+
 /// JS callback to load a JS plugin.
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<

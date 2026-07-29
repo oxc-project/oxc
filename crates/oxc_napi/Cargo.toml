@@ -31,6 +31,12 @@ oxc_syntax = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true, features = ["Win32_Foundation", "Win32_System_LibraryLoader"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = { workspace = true }
+
 [build-dependencies]
 napi-build = { workspace = true }
 
