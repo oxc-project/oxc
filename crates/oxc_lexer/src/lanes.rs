@@ -1007,8 +1007,15 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     let a = hexd(*src.add(i as usize));
                     let c = hexd(*src.add((i + 1) as usize));
                     if let (Some(a), Some(c)) = (a, c) {
-                        *out.add(wi as usize) = (a << 4) | c;
-                        wi += 1;
+                        let v = (u32::from(a) << 4) | u32::from(c);
+                        if v < 0x80 {
+                            *out.add(wi as usize) = v as u8;
+                            wi += 1;
+                        } else {
+                            *out.add(wi as usize) = 0xC0 | ((v >> 6) as u8);
+                            *out.add((wi + 1) as usize) = 0x80 | ((v & 0x3F) as u8);
+                            wi += 2;
+                        }
                         i += 2;
                     } else {
                         *out.add(wi as usize) = b'x';
@@ -1251,6 +1258,38 @@ mod tests {
         assert_eq!(cook(br"\u{xyz").0, b"uxyz");
         assert_eq!(cook(br"\u{}").0, b"u}");
         assert_eq!(cook(br"\u{12").0, b"u");
+    }
+
+    #[test]
+    fn cook_hex_escape_is_a_code_point() {
+        assert_eq!(
+            cook(br"\x41\x7f\x80\xa0\xe9\xff").0,
+            "A\u{7f}\u{80}\u{a0}\u{e9}\u{ff}".as_bytes()
+        );
+        assert_eq!(
+            cook(br"\x41\x7f\x80\xa0\xe9\xff").0,
+            &[0x41, 0x7F, 0xC2, 0x80, 0xC2, 0xA0, 0xC3, 0xA9, 0xC3, 0xBF]
+        );
+        assert_eq!(cook(br"\x00\x01\x1f").0, &[0x00, 0x01, 0x1F]);
+        for cp in 0u32..=0xFF {
+            let src = format!("\\x{cp:02x}");
+            let want = char::from_u32(cp).unwrap().to_string();
+            assert_eq!(cook(src.as_bytes()).0, want.as_bytes(), "\\x{cp:02x}");
+        }
+        assert!(std::str::from_utf8(&cook(br"\xff").0).is_ok());
+    }
+
+    #[test]
+    fn cook_escape_forms_agree() {
+        for cp in 0u32..=0xFF {
+            let hex = cook(format!("\\x{cp:02x}").as_bytes()).0;
+            let uni = cook(format!("\\u{cp:04x}").as_bytes()).0;
+            assert_eq!(hex, uni, "\\x vs \\u for U+{cp:04X}");
+            if cp <= 0o377 {
+                let oct = cook(format!("\\{cp:o}").as_bytes()).0;
+                assert_eq!(hex, oct, "\\x vs octal for U+{cp:04X}");
+            }
+        }
     }
 
     #[test]
