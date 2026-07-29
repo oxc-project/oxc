@@ -1364,6 +1364,15 @@ fn test_fold_invalid_typeof_comparison() {
     fold("typeof foo != undefined", "!0");
     fold("typeof foo === 'string'", "typeof foo == 'string'");
     fold("typeof foo === 'number'", "typeof foo == 'number'");
+
+    // strict equality with an object is always false
+    fold("typeof foo === [1]", "!1");
+    fold("typeof foo !== [1]", "!0");
+    // but loose equality with an object can be true via ToPrimitive:
+    // `typeof foo == ['object']` is true when foo is an object
+    fold_same("typeof foo == ['object']");
+    fold_same("typeof foo != ['object']");
+    fold_same("typeof foo == [1]");
 }
 
 #[test]

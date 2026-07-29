@@ -768,6 +768,13 @@ impl<'a> PeepholeOptimizations {
 
             if !right_ty.is_undetermined()
                 && right_ty != ValueType::String
+                // a loose comparison with an object can be `true` via ToPrimitive
+                // (e.g. `typeof foo == ['object']` is true when `foo` is an object)
+                && (right_ty != ValueType::Object
+                    || matches!(
+                        e.operator,
+                        BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
+                    ))
                 && !e.right.may_have_side_effects(ctx)
             {
                 let new_expr = Expression::new_boolean_literal(
