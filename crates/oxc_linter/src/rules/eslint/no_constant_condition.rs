@@ -80,7 +80,7 @@ pub struct NoConstantCondition {
     /// Configuration option to specify whether to check for constant conditions in loops.
     ///
     /// - `"all"` or `true` disallows constant expressions in loops
-    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
+    /// - `"allExceptWhileTrue"` disallows constant expressions in loops except `while` and `do...while` loops with expression `true`
     /// - `"none"` or `false` allows constant expressions in loops
     #[schemars(with = "CheckLoopsConfig")]
     check_loops: CheckLoops,
@@ -156,7 +156,7 @@ impl Rule for NoConstantCondition {
                 });
             }
             AstKind::DoWhileStatement(do_while_stmt) => {
-                self.check_loop(ctx, &do_while_stmt.test, false, || {
+                self.check_loop(ctx, &do_while_stmt.test, true, || {
                     has_yield_before_loop_exit_in_same_generator(ctx, node.id(), None, |finder| {
                         finder.visit_do_while_statement(do_while_stmt);
                     })
@@ -188,12 +188,12 @@ impl NoConstantCondition {
         &self,
         ctx: &LintContext<'a>,
         test: &'a Expression<'_>,
-        is_while: bool,
+        allows_true_condition: bool,
         has_yield_before_loop_exit: impl FnOnce() -> bool,
     ) {
         match self.check_loops {
             CheckLoops::None => return,
-            CheckLoops::AllExceptWhileTrue if is_while => match test {
+            CheckLoops::AllExceptWhileTrue if allows_true_condition => match test {
                 Expression::BooleanLiteral(bool) if bool.value => return,
                 _ => {}
             },
@@ -402,11 +402,13 @@ fn test() {
         ("while(true);", Some(json!([{ "checkLoops": false }]))),
         ("for(;true;);", Some(json!([{ "checkLoops": false }]))),
         ("do{}while(true)", Some(json!([{ "checkLoops": "none" }]))),
+        ("do{}while(true)", Some(json!([{ "checkLoops": "allExceptWhileTrue" }]))),
         ("while(true);", Some(json!([{ "checkLoops": "none" }]))),
         ("for(;true;);", Some(json!([{ "checkLoops": "none" }]))),
         ("do{ }while(x);", Some(json!([{ "checkLoops": "all" }]))),
         ("while(true);", Some(json!([{ "checkLoops": "allExceptWhileTrue" }]))),
         ("while(true);", None),
+        ("do{}while(true)", None),
         ("while(a == b);", Some(json!([{ "checkLoops": "all" }]))),
         ("for (let x = 0; x <= 10; x++) {};", Some(json!([{ "checkLoops": "all" }]))),
         ("do{}while(true)", Some(json!([{ "checkLoops": false }]))),
@@ -544,7 +546,7 @@ fn test() {
         ("for(;``;);", None),
         ("for(;`foo`;);", None),
         ("for(;`foo${bar}`;);", None),
-        ("do{}while(true)", None),
+        ("do{}while(true)", Some(json!([{ "checkLoops": "all" }]))),
         ("do{}while('1')", None),
         ("do{}while(0)", None),
         ("do{}while(t = -2)", None),
