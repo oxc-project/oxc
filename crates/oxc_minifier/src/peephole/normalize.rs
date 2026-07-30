@@ -2,7 +2,7 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, ValueType},
+    constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
     side_effects::{is_typed_array_constructor, is_valid_regexp},
 };
 use oxc_semantic::IsGlobalReference;
@@ -143,6 +143,15 @@ impl<'a> Traverse<'a> for Normalize {
             Expression::UnaryExpression(e) if e.operator.is_void() => {
                 Self::fold_void_ident(e, ctx);
                 None
+            }
+            // `-1` parses as unary negation of `1`. Collapsing it into a negative
+            // literal does not change the output, so do it here instead of letting
+            // the loop count it as compression progress on every run.
+            Expression::UnaryExpression(e)
+                if e.operator == UnaryOperator::UnaryNegation
+                    && let Expression::NumericLiteral(lit) = &e.argument =>
+            {
+                Some(ctx.value_to_expr(e.span, ConstantValue::Number(-lit.value)))
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
