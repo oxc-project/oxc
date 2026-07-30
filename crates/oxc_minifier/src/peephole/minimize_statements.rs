@@ -2015,29 +2015,48 @@ impl<'a> PeepholeOptimizations {
     /// safely removed:
     /// - Unlabeled `continue` statements that terminate a loop body
     /// - Bare `return` statements that terminate a function body
+    /// - Unlabeled `break` statements that terminate a `do...while` body whose test is statically `false`
+    ///
+    /// Limitations:
+    /// A single wrapping block is also transparent (caller guarantees it is the last statement),
+    /// but deeper nested block (statements) are not — we cannot verify they are last in their parent.
     fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                matches!(
-                    ctx.ancestors().nth(1),
-                    Some(
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
                         Ancestor::ForStatementBody(_)
-                            | Ancestor::ForInStatementBody(_)
-                            | Ancestor::ForOfStatementBody(_)
-                            | Ancestor::WhileStatementBody(_)
-                            | Ancestor::DoWhileStatementBody(_)
-                    )
-                )
+                        | Ancestor::ForInStatementBody(_)
+                        | Ancestor::ForOfStatementBody(_)
+                        | Ancestor::WhileStatementBody(_)
+                        | Ancestor::DoWhileStatementBody(_) => {
+                            return true;
+                        }
+                        Ancestor::BlockStatementBody(_) if index == 0 => {}
+                        Ancestor::IfStatementConsequent(_)
+                        | Ancestor::IfStatementAlternate(_)
+                        | Ancestor::LabeledStatementBody(_) => {}
+                        _ => return false,
+                    }
+                }
+                false
             }
             // unlabeled `break;` that terminates a `do...while` body if test is false.
             Statement::BreakStatement(stmt) if stmt.label.is_none() => {
-                match ctx.ancestors().nth(1) {
-                    Some(Ancestor::DoWhileStatementBody(do_while)) => {
-                        do_while.test().get_side_free_boolean_value(ctx) == Some(false)
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
+                        Ancestor::DoWhileStatementBody(do_while) => {
+                            return do_while.test().get_side_free_boolean_value(ctx) == Some(false);
+                        }
+                        Ancestor::BlockStatementBody(_) if index == 0 => {}
+                        Ancestor::IfStatementConsequent(_)
+                        | Ancestor::IfStatementAlternate(_)
+                        | Ancestor::LabeledStatementBody(_) => {}
+                        _ => return false,
                     }
-                    _ => false,
                 }
+                false
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
