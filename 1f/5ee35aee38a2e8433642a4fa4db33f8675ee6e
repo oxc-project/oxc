@@ -1,0 +1,19 @@
+crates/oxc_isolated_declarations/src/module.rs
+  s_19be0e1e1edea5::t_20684325cd4a3e 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1f5ee35aee38a2e8433642a4fa4db33f8675ee6e",
+  "prompts": {},
+  "sessions": {
+    "s_19be0e1e1edea5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb011-8320-71a3-8c32-3e4cdbe39197",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
