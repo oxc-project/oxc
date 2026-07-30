@@ -1242,7 +1242,7 @@ impl GenExpr for Expression<'_> {
             // Literals (very common)
             Self::NumericLiteral(lit) => lit.print_expr(p, precedence, ctx),
             Self::StringLiteral(lit) => lit.print(p, ctx),
-            Self::BooleanLiteral(lit) => lit.print(p, ctx),
+            Self::BooleanLiteral(lit) => lit.print_expr(p, precedence, ctx),
             Self::NullLiteral(lit) => lit.print(p, ctx),
             // Binary and logical operations (common)
             Self::BinaryExpression(expr) => expr.print_expr(p, precedence, ctx),
@@ -1366,6 +1366,22 @@ impl Gen for BooleanLiteral {
         p.add_source_mapping(self.span);
         p.print_space_before_identifier();
         p.print_str(self.as_str());
+    }
+}
+
+impl GenExpr for BooleanLiteral {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
+        p.add_source_mapping(self.span);
+        if p.options.minify {
+            // `!0` and `!1` are shorter than `true` and `false`. They parse as
+            // unary expressions, so wrap when the position binds tighter.
+            p.wrap(precedence >= Precedence::Prefix, |p| {
+                p.print_str(if self.value { "!0" } else { "!1" });
+            });
+        } else {
+            p.print_space_before_identifier();
+            p.print_str(self.as_str());
+        }
     }
 }
 

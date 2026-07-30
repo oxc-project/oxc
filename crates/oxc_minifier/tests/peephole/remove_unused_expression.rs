@@ -477,8 +477,8 @@ fn test_fold_iife() {
     test("(async () => { let b = a; b() })()", "(async () => { a() })();");
     test("var a = (function() {})()", "var a = void 0;");
     test("a((() => b())());", "a(b())");
-    test("a((() => true)());", "a(!0)");
-    test("a((() => { return true })());", "a(!0)");
+    test("a((() => true)());", "a(true)");
+    test("a((() => { return true })());", "a(true)");
 
     test_same("var a = (function () { b() })()");
     test_same("var a = (function () { return b() })()");

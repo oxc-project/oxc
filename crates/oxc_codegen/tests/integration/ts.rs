@@ -203,7 +203,7 @@ fn minify_return_type_colon() {
     min("function f(): Promise<void> {}", "function f():Promise<void>{}");
     min(
         "function g(a: string): boolean { return true; }",
-        "function g(a:string):boolean{return true}",
+        "function g(a:string):boolean{return!0}",
     );
     min("function h(this: Foo): void {}", "function h(this:Foo):void{}");
 }

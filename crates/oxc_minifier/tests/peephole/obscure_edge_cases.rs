@@ -81,33 +81,33 @@ fn test_typeof_optimization_edge_cases() {
 #[test]
 fn test_numeric_comparison_edge_cases() {
     // Test numeric comparisons that get optimized to constants
-    test("return 5 > 3", "return !0"); // optimized to true constant
-    test("return 10 <= 5", "return !1"); // optimized to false constant
-    test("return 7 === 7", "return !0"); // optimized to true constant
-    test("return 3 !== 5", "return !0"); // optimized to true constant
+    test("return 5 > 3", "return true"); // optimized to true constant
+    test("return 10 <= 5", "return false"); // optimized to false constant
+    test("return 7 === 7", "return true"); // optimized to true constant
+    test("return 3 !== 5", "return true"); // optimized to true constant
 
     // Test string comparisons (in return context)
-    test("return 'a' < 'b'", "return !0"); // optimized to true constant
-    test("return 'hello' === 'hello'", "return !0"); // optimized to true constant
-    test("return 'abc' !== 'def'", "return !0"); // optimized to true constant
+    test("return 'a' < 'b'", "return true"); // optimized to true constant
+    test("return 'hello' === 'hello'", "return true"); // optimized to true constant
+    test("return 'abc' !== 'def'", "return true"); // optimized to true constant
 
     // Test special value comparisons get optimized
-    test("return null == undefined", "return !0"); // optimized to true constant
-    test("return null === undefined", "return !1"); // optimized to false constant
-    test("return null == null", "return !0"); // optimized to true constant
-    test("return undefined === undefined", "return !0"); // optimized to true constant
+    test("return null == undefined", "return true"); // optimized to true constant
+    test("return null === undefined", "return false"); // optimized to false constant
+    test("return null == null", "return true"); // optimized to true constant
+    test("return undefined === undefined", "return true"); // optimized to true constant
 
     // Test type coercion comparisons get optimized
-    test("return 0 == false", "return !0"); // optimized to true constant
-    test("return '' == false", "return !0"); // optimized to true constant
-    test("return '0' == false", "return !0"); // optimized to true constant
-    test("return 0 === false", "return !1"); // optimized to false constant
+    test("return 0 == false", "return true"); // optimized to true constant
+    test("return '' == false", "return true"); // optimized to true constant
+    test("return '0' == false", "return true"); // optimized to true constant
+    test("return 0 === false", "return false"); // optimized to false constant
 
     // Test NaN comparisons get optimized
-    test("return NaN === NaN", "return !1"); // optimized to false constant
-    test("return NaN == NaN", "return !1"); // optimized to false constant
-    test("return NaN !== NaN", "return !0"); // optimized to true constant
-    test("return NaN != NaN", "return !0"); // optimized to true constant
+    test("return NaN === NaN", "return false"); // optimized to false constant
+    test("return NaN == NaN", "return false"); // optimized to false constant
+    test("return NaN !== NaN", "return true"); // optimized to true constant
+    test("return NaN != NaN", "return true"); // optimized to true constant
 }
 
 #[test]
@@ -142,8 +142,8 @@ fn test_function_call_optimization_edge_cases() {
     // Test constructor calls that get optimized
     test("return String(42)", "return '42'"); // string constructor optimization
     test("return Number('123')", "return 123"); // number constructor optimization
-    test("return Boolean(1)", "return !0"); // boolean constructor optimization
-    test("return Boolean(0)", "return !1"); // boolean constructor optimization
+    test("return Boolean(1)", "return true"); // boolean constructor optimization
+    test("return Boolean(0)", "return false"); // boolean constructor optimization
 
     // Test cases that should NOT be optimized due to side effects
     test_same("console.log('test')");
@@ -257,12 +257,12 @@ fn test_variable_elimination_edge_cases() {
     // Test unused variable elimination with boolean optimization
     test_same("var unused = 5;"); // could be eliminated if truly unused
     test_same("let unused = 'hello';"); // could be eliminated if truly unused
-    test("const unused = true", "const unused = !0"); // boolean gets optimized
+    test("const unused = true", "const unused = true"); // boolean gets optimized
 
     // Test used variables that should not be eliminated - but inlining happens
     test("var used = 5; console.log(used);", "console.log(5);");
     test("let used = 'hello'; return used;", "let used = 'hello';\nreturn 'hello';"); // variable gets inlined
-    test("const used = true; if (used) foo();", "const used = !0;\nfoo();"); // constant inlined and optimized
+    test("const used = true; if (used) foo();", "const used = true;\nfoo();"); // constant inlined and optimized
 
     // Test variable inlining
     test("const y = 'hello'; return y;", "const y = 'hello';\nreturn 'hello';"); // check if const also gets inlined
@@ -284,9 +284,9 @@ fn test_loop_optimization_edge_cases() {
     // Test while loops get optimized
     test("while (true) { infiniteLoop(); }", "for (;;) infiniteLoop();"); // optimized loop form
 
-    // Test do-while loops - false becomes !1, braces may be removed, true becomes !0
-    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (!1);");
-    test("do { body(); } while (true);", "do\n\tbody();\nwhile (!0);");
+    // Test do-while loops - braces may be removed
+    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (false);");
+    test("do { body(); } while (true);", "do\n\tbody();\nwhile (true);");
 
     // Test for loops with analyzable bounds
     test(
@@ -528,7 +528,7 @@ fn test_esm_module_patterns() {
     );
     test(
         "export const isProduction = 'production' === 'production';",
-        "export const isProduction = !0;",
+        "export const isProduction = true;",
     );
 
     // Dynamic re-exports with computed properties
@@ -615,8 +615,8 @@ fn test_bigint_edge_cases() {
     test("return 1n + 2n", "return 3n");
     test_same("return 10n * 5n");
     test_same("return 100n / 4n");
-    test("return 123n > 456n", "return !1");
-    test("return 456n > 123n", "return !0");
+    test("return 123n > 456n", "return false");
+    test("return 456n > 123n", "return true");
 
     // Test mixed BigInt and Number (should NOT optimize - runtime error)
     test_same("1n + 2"); // TypeError at runtime
@@ -634,7 +634,7 @@ fn test_unicode_string_edge_cases() {
     test_same("return '\\u{1F680}'");
 
     // Test normalization issues (in return context)
-    test("return 'é' === '\\u0065\\u0301'", "return !1"); // composed vs decomposed - could be optimized
+    test("return 'é' === '\\u0065\\u0301'", "return false"); // composed vs decomposed - could be optimized
 }
 
 #[test]

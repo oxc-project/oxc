@@ -1629,21 +1629,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    pub fn substitute_boolean(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::BooleanLiteral(lit) = expr else { return };
-        let num = Expression::new_numeric_literal(
-            lit.span,
-            if lit.value { 0.0 } else { 1.0 },
-            None,
-            NumberBase::Decimal,
-            ctx,
-        );
-        let new_value =
-            Expression::new_unary_expression(lit.span, UnaryOperator::LogicalNot, num, ctx);
-        ctx.replace_expression(expr, new_value);
-    }
-
     /// Flatten the spread of constant array literals inside array expressions:
     /// `[a, ...[1, 2, 3]]` -> `[a, 1, 2, 3]`
     ///

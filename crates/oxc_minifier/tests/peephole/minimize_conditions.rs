@@ -257,7 +257,7 @@ fn test_fold_not() {
     test("x = !(y() && true)", "x = !y()");
 
     // This will be further optimized by PeepholeFoldConstants.
-    test("x = !true", "x = !1");
+    test("x = !true", "x = false");
 }
 
 #[test]
@@ -442,12 +442,12 @@ fn test_minimize_for_condition() {
     test_same("for(a in b) foo()");
     test_same("for(a in {}) foo()");
     test_same("for(a in []) foo()");
-    test("for(a in !!true) foo()", "for(a in !0) foo()");
+    test("for(a in !!true) foo()", "for(a in true) foo()");
 
     test_same("for(a of b) foo()");
     test_same("for(a of {}) foo()");
     test_same("for(a of []) foo()");
-    test("for(a of !!true) foo()", "for(a of !0) foo()");
+    test("for(a of !!true) foo()", "for(a of true) foo()");
 }
 
 #[test]
@@ -826,15 +826,15 @@ fn test_issue925() {
 #[test]
 fn test_coercion_substitution_disabled() {
     test("var x = {}; if (x != null) throw 'a';", "throw 'a';");
-    test("var x = {}; var y = x != null;", "var y = !0;");
+    test("var x = {}; var y = x != null;", "var y = true;");
 
     test("var x = 1; if (x != 0) throw 'a';", "throw 'a';");
-    test("var x = 1; var y = x != 0;", "var y = !0;");
+    test("var x = 1; var y = x != 0;", "var y = true;");
 }
 
 #[test]
 fn test_coercion_substitution_boolean_result0() {
-    test("var x = {}, y = x != null;", "var y = !0;");
+    test("var x = {}, y = x != null;", "var y = true;");
 }
 
 #[test]
@@ -992,7 +992,7 @@ fn compress_binary_number() {
 
     test("v = (x = 1) === 1", "v = (x = 1) == 1");
     test("v = (x = 1) !== 1", "v = (x = 1) != 1");
-    test("v = !0 + null !== 1", "v = !1");
+    test("v = !0 + null !== 1", "v = false");
 }
 
 #[test]

@@ -23,7 +23,7 @@ fn test_same(source_text: &str) {
 
 #[test]
 fn test_comparison() {
-    fold("(1, 2) !== 2", "!1");
+    fold("(1, 2) !== 2", "false");
     fold_same("({} <= {})");
     fold_same("({} >= {})");
     fold_same("({} > {})");
@@ -36,93 +36,93 @@ fn test_comparison() {
 
 #[test]
 fn undefined_comparison1() {
-    fold("undefined == undefined", "!0");
-    fold("undefined == null", "!0");
-    fold("undefined == void 0", "!0");
+    fold("undefined == undefined", "true");
+    fold("undefined == null", "true");
+    fold("undefined == void 0", "true");
 
-    fold("undefined == 0", "!1");
-    fold("undefined == 1", "!1");
-    fold("undefined == 'hi'", "!1");
-    fold("undefined == true", "!1");
-    fold("undefined == false", "!1");
+    fold("undefined == 0", "false");
+    fold("undefined == 1", "false");
+    fold("undefined == 'hi'", "false");
+    fold("undefined == true", "false");
+    fold("undefined == false", "false");
 
-    fold("undefined === undefined", "!0");
-    fold("undefined === null", "!1");
-    fold("undefined === void 0", "!0");
+    fold("undefined === undefined", "true");
+    fold("undefined === null", "false");
+    fold("undefined === void 0", "true");
 
     fold("undefined == this", "this == null");
     fold("undefined == x", "x == null");
 
-    fold("undefined != undefined", "!1");
-    fold("undefined != null", "!1");
-    fold("undefined != void 0", "!1");
+    fold("undefined != undefined", "false");
+    fold("undefined != null", "false");
+    fold("undefined != void 0", "false");
 
-    fold("undefined != 0", "!0");
-    fold("undefined != 1", "!0");
-    fold("undefined != 'hi'", "!0");
-    fold("undefined != true", "!0");
-    fold("undefined != false", "!0");
+    fold("undefined != 0", "true");
+    fold("undefined != 1", "true");
+    fold("undefined != 'hi'", "true");
+    fold("undefined != true", "true");
+    fold("undefined != false", "true");
 
-    fold("undefined !== undefined", "!1");
-    fold("undefined !== void 0", "!1");
-    fold("undefined !== null", "!0");
+    fold("undefined !== undefined", "false");
+    fold("undefined !== void 0", "false");
+    fold("undefined !== null", "true");
 
     fold("undefined != this", "this != null");
     fold("undefined != x", "x != null");
 
-    fold("undefined < undefined", "!1");
-    fold("undefined > undefined", "!1");
-    fold("undefined >= undefined", "!1");
-    fold("undefined <= undefined", "!1");
+    fold("undefined < undefined", "false");
+    fold("undefined > undefined", "false");
+    fold("undefined >= undefined", "false");
+    fold("undefined <= undefined", "false");
 
-    fold("0 < undefined", "!1");
-    fold("true > undefined", "!1");
-    fold("'hi' >= undefined", "!1");
-    fold("null <= undefined", "!1");
+    fold("0 < undefined", "false");
+    fold("true > undefined", "false");
+    fold("'hi' >= undefined", "false");
+    fold("null <= undefined", "false");
 
-    fold("undefined < 0", "!1");
-    fold("undefined > true", "!1");
-    fold("undefined >= 'hi'", "!1");
-    fold("undefined <= null", "!1");
+    fold("undefined < 0", "false");
+    fold("undefined > true", "false");
+    fold("undefined >= 'hi'", "false");
+    fold("undefined <= null", "false");
 
-    fold("null == undefined", "!0");
-    fold("0 == undefined", "!1");
-    fold("1 == undefined", "!1");
-    fold("'hi' == undefined", "!1");
-    fold("true == undefined", "!1");
-    fold("false == undefined", "!1");
-    fold("null === undefined", "!1");
-    fold("void 0 === undefined", "!0");
+    fold("null == undefined", "true");
+    fold("0 == undefined", "false");
+    fold("1 == undefined", "false");
+    fold("'hi' == undefined", "false");
+    fold("true == undefined", "false");
+    fold("false == undefined", "false");
+    fold("null === undefined", "false");
+    fold("void 0 === undefined", "true");
 
-    fold("undefined == NaN", "!1");
-    fold("NaN == undefined", "!1");
-    fold("undefined == Infinity", "!1");
-    fold("Infinity == undefined", "!1");
-    fold("undefined == -Infinity", "!1");
-    fold("-Infinity == undefined", "!1");
-    fold("({}) == undefined", "!1");
-    fold("undefined == ({})", "!1");
-    fold("([]) == undefined", "!1");
-    fold("undefined == ([])", "!1");
-    fold("(/a/g) == undefined", "!1");
-    fold("undefined == (/a/g)", "!1");
-    fold("(function(){}) == undefined", "!1");
-    fold("undefined == (function(){})", "!1");
+    fold("undefined == NaN", "false");
+    fold("NaN == undefined", "false");
+    fold("undefined == Infinity", "false");
+    fold("Infinity == undefined", "false");
+    fold("undefined == -Infinity", "false");
+    fold("-Infinity == undefined", "false");
+    fold("({}) == undefined", "false");
+    fold("undefined == ({})", "false");
+    fold("([]) == undefined", "false");
+    fold("undefined == ([])", "false");
+    fold("(/a/g) == undefined", "false");
+    fold("undefined == (/a/g)", "false");
+    fold("(function(){}) == undefined", "false");
+    fold("undefined == (function(){})", "false");
 
-    fold("undefined != NaN", "!0");
-    fold("NaN != undefined", "!0");
-    fold("undefined != Infinity", "!0");
-    fold("Infinity != undefined", "!0");
-    fold("undefined != -Infinity", "!0");
-    fold("-Infinity != undefined", "!0");
-    fold("({}) != undefined", "!0");
-    fold("undefined != ({})", "!0");
-    fold("([]) != undefined", "!0");
-    fold("undefined != ([])", "!0");
-    fold("(/a/g) != undefined", "!0");
-    fold("undefined != (/a/g)", "!0");
-    fold("(function(){}) != undefined", "!0");
-    fold("undefined != (function(){})", "!0");
+    fold("undefined != NaN", "true");
+    fold("NaN != undefined", "true");
+    fold("undefined != Infinity", "true");
+    fold("Infinity != undefined", "true");
+    fold("undefined != -Infinity", "true");
+    fold("-Infinity != undefined", "true");
+    fold("({}) != undefined", "true");
+    fold("undefined != ({})", "true");
+    fold("([]) != undefined", "true");
+    fold("undefined != ([])", "true");
+    fold("(/a/g) != undefined", "true");
+    fold("undefined != (/a/g)", "true");
+    fold("(function(){}) != undefined", "true");
+    fold("undefined != (function(){})", "true");
 
     fold("this == undefined", "this == null");
     fold("x == undefined", "x == null");
@@ -130,124 +130,124 @@ fn undefined_comparison1() {
 
 #[test]
 fn test_undefined_comparison2() {
-    fold("\"123\" !== void 0", "!0");
-    fold("\"123\" === void 0", "!1");
+    fold("\"123\" !== void 0", "true");
+    fold("\"123\" === void 0", "false");
 
-    fold("void 0 !== \"123\"", "!0");
-    fold("void 0 === \"123\"", "!1");
+    fold("void 0 !== \"123\"", "true");
+    fold("void 0 === \"123\"", "false");
 }
 
 #[test]
 fn test_undefined_comparison3() {
-    fold("\"123\" !== undefined", "!0");
-    fold("\"123\" === undefined", "!1");
+    fold("\"123\" !== undefined", "true");
+    fold("\"123\" === undefined", "false");
 
-    fold("undefined !== \"123\"", "!0");
-    fold("undefined === \"123\"", "!1");
+    fold("undefined !== \"123\"", "true");
+    fold("undefined === \"123\"", "false");
 }
 
 #[test]
 fn test_null_comparison1() {
-    fold("null == undefined", "!0");
-    fold("null == null", "!0");
-    fold("null == void 0", "!0");
+    fold("null == undefined", "true");
+    fold("null == null", "true");
+    fold("null == void 0", "true");
 
-    fold("null == 0", "!1");
-    fold("null == 1", "!1");
-    fold("null == 0n", "!1");
-    fold("null == 1n", "!1");
-    fold("null == 'hi'", "!1");
-    fold("null == true", "!1");
-    fold("null == false", "!1");
+    fold("null == 0", "false");
+    fold("null == 1", "false");
+    fold("null == 0n", "false");
+    fold("null == 1n", "false");
+    fold("null == 'hi'", "false");
+    fold("null == true", "false");
+    fold("null == false", "false");
 
-    fold("null === undefined", "!1");
-    fold("null === null", "!0");
-    fold("null === void 0", "!1");
+    fold("null === undefined", "false");
+    fold("null === null", "true");
+    fold("null === void 0", "false");
     fold_same("x===null");
 
     fold_same("this==null");
     fold_same("x==null");
 
-    fold("null != undefined", "!1");
-    fold("null != null", "!1");
-    fold("null != void 0", "!1");
+    fold("null != undefined", "false");
+    fold("null != null", "false");
+    fold("null != void 0", "false");
 
-    fold("null != 0", "!0");
-    fold("null != 1", "!0");
-    fold("null != 0n", "!0");
-    fold("null != 1n", "!0");
-    fold("null != 'hi'", "!0");
-    fold("null != true", "!0");
-    fold("null != false", "!0");
+    fold("null != 0", "true");
+    fold("null != 1", "true");
+    fold("null != 0n", "true");
+    fold("null != 1n", "true");
+    fold("null != 'hi'", "true");
+    fold("null != true", "true");
+    fold("null != false", "true");
 
-    fold("null !== undefined", "!0");
-    fold("null !== void 0", "!0");
-    fold("null !== null", "!1");
+    fold("null !== undefined", "true");
+    fold("null !== void 0", "true");
+    fold("null !== null", "false");
 
     fold_same("this!=null");
     fold_same("x!=null");
 
-    fold("null < null", "!1");
-    fold("null > null", "!1");
-    fold("null >= null", "!0");
-    fold("null <= null", "!0");
+    fold("null < null", "false");
+    fold("null > null", "false");
+    fold("null >= null", "true");
+    fold("null <= null", "true");
 
-    fold("0 < null", "!1");
-    fold("0 > null", "!1");
-    fold("0 >= null", "!0");
-    fold("0n < null", "!1");
-    fold("0n > null", "!1");
-    fold("0n >= null", "!0");
-    fold("true > null", "!0");
-    fold("'hi' < null", "!1");
-    fold("'hi' >= null", "!1");
-    fold("null <= null", "!0");
+    fold("0 < null", "false");
+    fold("0 > null", "false");
+    fold("0 >= null", "true");
+    fold("0n < null", "false");
+    fold("0n > null", "false");
+    fold("0n >= null", "true");
+    fold("true > null", "true");
+    fold("'hi' < null", "false");
+    fold("'hi' >= null", "false");
+    fold("null <= null", "true");
 
-    fold("null < 0", "!1");
-    fold("null < 0n", "!1");
-    fold("null > true", "!1");
-    fold("null < 'hi'", "!1");
-    fold("null >= 'hi'", "!1");
-    fold("null <= null", "!0");
+    fold("null < 0", "false");
+    fold("null < 0n", "false");
+    fold("null > true", "false");
+    fold("null < 'hi'", "false");
+    fold("null >= 'hi'", "false");
+    fold("null <= null", "true");
 
-    fold("null == null", "!0");
-    fold("0 == null", "!1");
-    fold("1 == null", "!1");
-    fold("'hi' == null", "!1");
-    fold("true == null", "!1");
-    fold("false == null", "!1");
-    fold("null === null", "!0");
-    fold("void 0 === null", "!1");
+    fold("null == null", "true");
+    fold("0 == null", "false");
+    fold("1 == null", "false");
+    fold("'hi' == null", "false");
+    fold("true == null", "false");
+    fold("false == null", "false");
+    fold("null === null", "true");
+    fold("void 0 === null", "false");
 
-    fold("null == NaN", "!1");
-    fold("NaN == null", "!1");
-    fold("null == Infinity", "!1");
-    fold("Infinity == null", "!1");
-    fold("null == -Infinity", "!1");
-    fold("-Infinity == null", "!1");
-    fold("({}) == null", "!1");
-    fold("null == ({})", "!1");
-    fold("([]) == null", "!1");
-    fold("null == ([])", "!1");
-    fold("(/a/g) == null", "!1");
-    fold("null == (/a/g)", "!1");
-    fold("(function(){}) == null", "!1");
-    fold("null == (function(){})", "!1");
+    fold("null == NaN", "false");
+    fold("NaN == null", "false");
+    fold("null == Infinity", "false");
+    fold("Infinity == null", "false");
+    fold("null == -Infinity", "false");
+    fold("-Infinity == null", "false");
+    fold("({}) == null", "false");
+    fold("null == ({})", "false");
+    fold("([]) == null", "false");
+    fold("null == ([])", "false");
+    fold("(/a/g) == null", "false");
+    fold("null == (/a/g)", "false");
+    fold("(function(){}) == null", "false");
+    fold("null == (function(){})", "false");
 
-    fold("null != NaN", "!0");
-    fold("NaN != null", "!0");
-    fold("null != Infinity", "!0");
-    fold("Infinity != null", "!0");
-    fold("null != -Infinity", "!0");
-    fold("-Infinity != null", "!0");
-    fold("({}) != null", "!0");
-    fold("null != ({})", "!0");
-    fold("([]) != null", "!0");
-    fold("null != ([])", "!0");
-    fold("(/a/g) != null", "!0");
-    fold("null != (/a/g)", "!0");
-    fold("(function(){}) != null", "!0");
-    fold("null != (function(){})", "!0");
+    fold("null != NaN", "true");
+    fold("NaN != null", "true");
+    fold("null != Infinity", "true");
+    fold("Infinity != null", "true");
+    fold("null != -Infinity", "true");
+    fold("-Infinity != null", "true");
+    fold("({}) != null", "true");
+    fold("null != ({})", "true");
+    fold("([]) != null", "true");
+    fold("null != ([])", "true");
+    fold("(/a/g) != null", "true");
+    fold("null != (/a/g)", "true");
+    fold("(function(){}) != null", "true");
+    fold("null != (function(){})", "true");
 
     fold_same("({a:f()})==null");
     fold_same("[f()]==null");
@@ -297,9 +297,9 @@ fn test_string_boolean_comparison() {
 
 #[test]
 fn test_number_number_comparison() {
-    fold("1 > 1", "!1");
-    fold("2 == 3", "!1");
-    fold("3.6 === 3.6", "!0");
+    fold("1 > 1", "false");
+    fold("2 == 3", "false");
+    fold("3.6 === 3.6", "true");
     fold_same("+x > +y");
     fold_same("+x == +y");
     fold("+x === +y", "+x == +y");
@@ -310,23 +310,23 @@ fn test_number_number_comparison() {
 
 #[test]
 fn test_string_string_comparison() {
-    fold("'a' < 'b'", "!0");
-    fold("'a' <= 'b'", "!0");
-    fold("'a' > 'b'", "!1");
-    fold("'a' >= 'b'", "!1");
-    fold("+'a' < +'b'", "!1");
+    fold("'a' < 'b'", "true");
+    fold("'a' <= 'b'", "true");
+    fold("'a' > 'b'", "false");
+    fold("'a' >= 'b'", "false");
+    fold("+'a' < +'b'", "false");
     fold_same("typeof a < 'a'");
     fold_same("'a' >= typeof a");
     fold_same("typeof a < typeof a");
     fold_same("typeof a >= typeof a");
-    fold("typeof 3 > typeof 4", "!1");
-    fold("typeof function() {} < typeof function() {}", "!1");
-    fold("'a' == 'a'", "!0");
-    fold("'b' != 'a'", "!0");
+    fold("typeof 3 > typeof 4", "false");
+    fold("typeof function() {} < typeof function() {}", "false");
+    fold("'a' == 'a'", "true");
+    fold("'b' != 'a'", "true");
     fold_same("typeof a != 'number'");
     fold_same("typeof a != 'unknown'"); // IE
-    fold("'a' === 'a'", "!0");
-    fold("'b' !== 'a'", "!0");
+    fold("'a' === 'a'", "true");
+    fold("'b' !== 'a'", "true");
     fold_same("'' + x <= '' + y");
     fold_same("'' + x != '' + y");
     fold("'' + x === '' + y", "'' + x == '' + y");
@@ -340,15 +340,15 @@ fn test_string_string_comparison() {
 
 #[test]
 fn test_number_string_comparison() {
-    fold("1 < '2'", "!0");
-    fold("2 > '1'", "!0");
-    fold("123 > '34'", "!0");
-    fold("NaN >= 'NaN'", "!1");
-    fold("1 == '2'", "!1");
-    fold("1 != '1'", "!1");
-    fold("NaN == 'NaN'", "!1");
-    fold("1 === '1'", "!1");
-    fold("1 !== '1'", "!0");
+    fold("1 < '2'", "true");
+    fold("2 > '1'", "true");
+    fold("123 > '34'", "true");
+    fold("NaN >= 'NaN'", "false");
+    fold("1 == '2'", "false");
+    fold("1 != '1'", "false");
+    fold("NaN == 'NaN'", "false");
+    fold("1 === '1'", "false");
+    fold("1 !== '1'", "true");
     fold_same("+x>''+y");
     fold_same("+x==''+y");
     fold_same("+x !== '' + y");
@@ -356,15 +356,15 @@ fn test_number_string_comparison() {
 
 #[test]
 fn test_string_number_comparison() {
-    fold("'1' < 2", "!0");
-    fold("'2' > 1", "!0");
-    fold("'123' > 34", "!0");
-    fold("'NaN' < NaN", "!1");
-    fold("'1' == 2", "!1");
-    fold("'1' != 1", "!1");
-    fold("'NaN' == NaN", "!1");
-    fold("'1' === 1", "!1");
-    fold("'1' !== 1", "!0");
+    fold("'1' < 2", "true");
+    fold("'2' > 1", "true");
+    fold("'123' > 34", "true");
+    fold("'NaN' < NaN", "false");
+    fold("'1' == 2", "false");
+    fold("'1' != 1", "false");
+    fold("'NaN' == NaN", "false");
+    fold("'1' === 1", "false");
+    fold("'1' !== 1", "true");
     fold_same("''+x<+y");
     fold_same("''+x==+y");
     fold_same("'' + x === +y");
@@ -372,31 +372,31 @@ fn test_string_number_comparison() {
 
 #[test]
 fn test_nan_comparison() {
-    fold("NaN < 1", "!1");
-    fold("NaN <= 1", "!1");
-    fold("NaN > 1", "!1");
-    fold("NaN >= 1", "!1");
-    fold("NaN < 1n", "!1");
-    fold("NaN <= 1n", "!1");
-    fold("NaN > 1n", "!1");
-    fold("NaN >= 1n", "!1");
+    fold("NaN < 1", "false");
+    fold("NaN <= 1", "false");
+    fold("NaN > 1", "false");
+    fold("NaN >= 1", "false");
+    fold("NaN < 1n", "false");
+    fold("NaN <= 1n", "false");
+    fold("NaN > 1n", "false");
+    fold("NaN >= 1n", "false");
 
-    fold("NaN < NaN", "!1");
-    fold("NaN >= NaN", "!1");
-    fold("NaN == NaN", "!1");
-    fold("NaN === NaN", "!1");
+    fold("NaN < NaN", "false");
+    fold("NaN >= NaN", "false");
+    fold("NaN == NaN", "false");
+    fold("NaN === NaN", "false");
 
-    fold("NaN < null", "!1");
-    fold("null >= NaN", "!1");
-    fold("NaN == null", "!1");
-    fold("null != NaN", "!0");
-    fold("null === NaN", "!1");
+    fold("NaN < null", "false");
+    fold("null >= NaN", "false");
+    fold("NaN == null", "false");
+    fold("null != NaN", "true");
+    fold("null === NaN", "false");
 
-    fold("NaN < undefined", "!1");
-    fold("undefined >= NaN", "!1");
-    fold("NaN == undefined", "!1");
-    fold("undefined != NaN", "!0");
-    fold("undefined === NaN", "!1");
+    fold("NaN < undefined", "false");
+    fold("undefined >= NaN", "false");
+    fold("NaN == undefined", "false");
+    fold("undefined != NaN", "true");
+    fold("undefined === NaN", "false");
 
     fold_same("NaN<x");
     fold_same("x>=NaN");
@@ -409,18 +409,18 @@ fn test_nan_comparison() {
 
 #[test]
 fn test_object_comparison1() {
-    fold("!new Date()", "!1");
-    fold("!!new Date()", "!0");
+    fold("!new Date()", "false");
+    fold("!!new Date()", "true");
     fold_same("!new Date(foo)");
 
-    fold("new Date() == null", "!1");
-    fold("new Date() == undefined", "!1");
-    fold("new Date() != null", "!0");
-    fold("new Date() != undefined", "!0");
-    fold("null == new Date()", "!1");
-    fold("undefined == new Date()", "!1");
-    fold("null != new Date()", "!0");
-    fold("undefined != new Date()", "!0");
+    fold("new Date() == null", "false");
+    fold("new Date() == undefined", "false");
+    fold("new Date() != null", "true");
+    fold("new Date() != undefined", "true");
+    fold("null == new Date()", "false");
+    fold("undefined == new Date()", "false");
+    fold("null != new Date()", "true");
+    fold("undefined != new Date()", "true");
     fold("new Date(foo) != undefined", "new Date(foo) != null");
 }
 
@@ -456,9 +456,9 @@ fn test_fold_unary() {
     fold_same("~foo()");
     fold_same("-foo()");
 
-    fold("a=!true", "a=!1");
-    fold("a=!10", "a=!1");
-    fold("a=!false", "a=!0");
+    fold("a=!true", "a=false");
+    fold("a=!10", "a=false");
+    fold("a=!false", "a=true");
     fold_same("a=!foo()");
     fold_same("a = !!void b");
 
@@ -513,7 +513,7 @@ fn test_fold_unary() {
 fn test_fold_unary_big_int() {
     fold("-(1n)", "-1n");
     fold("- -1n", "1n");
-    fold("!1n", "!1");
+    fold("!1n", "false");
     fold("~0n", "-1n");
 
     fold("~-1n", "0n");
@@ -545,8 +545,8 @@ fn test_fold_logical_op() {
     fold("x = true && x", "x = x");
     fold("x = [foo()] && x", "x = (foo(),x)");
 
-    fold("x = false && x", "x = !1");
-    fold("x = true || x", "x = !0");
+    fold("x = false && x", "x = false");
+    fold("x = true || x", "x = true");
     fold("x = false || x", "x = x");
     fold("x = 0 && x", "x = 0");
     fold("x = 3 || x", "x = 3");
@@ -555,27 +555,27 @@ fn test_fold_logical_op() {
     fold("x = false || 0", "x = 0");
 
     // unfoldable, because the right-side may be the result
-    fold("a = x && true", "a=x && !0");
-    fold("a = x && false", "a=x && !1");
+    fold("a = x && true", "a=x && true");
+    fold("a = x && false", "a=x && false");
     fold("a = x || 3", "a=x || 3");
-    fold("a = x || false", "a=x || !1");
-    fold("a = b ? c : x || false", "a=b ? c : x || !1");
-    fold("a = b ? x || false : c", "a=b ? x || !1 : c");
-    fold("a = b ? c : x && true", "a=b ? c : x && !0");
-    fold("a = b ? x && true : c", "a=b ? x && !0 : c");
+    fold("a = x || false", "a=x || false");
+    fold("a = b ? c : x || false", "a=b ? c : x || false");
+    fold("a = b ? x || false : c", "a=b ? x || false : c");
+    fold("a = b ? c : x && true", "a=b ? c : x && true");
+    fold("a = b ? x && true : c", "a=b ? x && true : c");
 
     fold("a = x || false ? b : c", "a = x ? b : c");
     fold("a = x && true ? b : c", "a = x ? b : c");
 
-    fold("x = foo() || true || bar()", "x = foo() || !0");
+    fold("x = foo() || true || bar()", "x = foo() || true");
     fold("x = foo() || true && bar()", "x = foo() || bar()");
-    fold("x = foo() || false && bar()", "x = foo() || !1");
-    fold("x = foo() && false && bar()", "x = foo() && !1");
+    fold("x = foo() || false && bar()", "x = foo() || false");
+    fold("x = foo() && false && bar()", "x = foo() && false");
     fold("x = foo() && false || bar()", "x = (foo(), bar())");
     fold("x = foo() || false || bar()", "x = foo() || bar()");
     fold("x = foo() && true && bar()", "x = foo() && bar()");
-    fold("x = foo() || true || bar()", "x = foo() || !0");
-    fold("x = foo() && false && bar()", "x = foo() && !1");
+    fold("x = foo() || true || bar()", "x = foo() || true");
+    fold("x = foo() && false && bar()", "x = foo() && false");
     fold("x = foo() && 0 && bar()", "x = foo() && 0");
     fold("x = foo() && 1 && bar()", "x = foo() && bar()");
     fold("x = foo() || 0 || bar()", "x = foo() || bar()");
@@ -603,8 +603,8 @@ fn test_fold_logical_op() {
     // An example would be if foo() is 1 (truthy) and bar() is 0 (falsey):
     // (1 && true) || 0 == true
     // 1 || 0 == 1, but true =/= 1
-    fold("x = foo() && true || bar()", "x = foo() && !0 || bar()");
-    fold("foo() && true || bar()", "foo() && !0 || bar()");
+    fold("x = foo() && true || bar()", "x = foo() && true || bar()");
+    fold("foo() && true || bar()", "foo() && true || bar()");
 
     test("var y; x = (true && y)()", "var y; x = y()");
     test("var y; x = (true && y.z)()", "var y; x = (0, y.z)()");
@@ -642,31 +642,31 @@ fn test_preserve_cjs_module_lexer_hint() {
 fn test_fold_nullish_coalesce() {
     // fold if left is null/undefined
     fold("null ?? 1", "1");
-    fold("undefined ?? false", "!1");
+    fold("undefined ?? false", "false");
     fold("(a(), null) ?? 1", "(a(), 1)");
 
     fold("x = [foo()] ?? x", "x = [foo()]");
 
     // short circuit on all non nullish LHS
-    fold("x = false ?? x", "x = !1");
-    fold("x = true ?? x", "x = !0");
+    fold("x = false ?? x", "x = false");
+    fold("x = true ?? x", "x = true");
     fold("x = 0 ?? x", "x = 0");
     fold("x = 3 ?? x", "x = 3");
 
     // unfoldable, because the right-side may be the result
-    fold("a = x ?? true", "a = x ?? !0");
-    fold("a = x ?? false", "a = x ?? !1");
+    fold("a = x ?? true", "a = x ?? true");
+    fold("a = x ?? false", "a = x ?? false");
     fold_same("a = x ?? 3");
-    fold("a = b ? c : x ?? false", "a = b ? c : x ?? !1");
-    fold("a = b ? x ?? false : c", "a = b ? x ?? !1 : c");
+    fold("a = b ? c : x ?? false", "a = b ? c : x ?? false");
+    fold("a = b ? x ?? false : c", "a = b ? x ?? false : c");
 
     // folded, but not here.
-    fold("a = x ?? false ? b : c", "a = x ?? !1 ? b : c");
-    fold("a = x ?? true ? b : c", "a = x ?? !0 ? b : c");
+    fold("a = x ?? false ? b : c", "a = x ?? false ? b : c");
+    fold("a = x ?? true ? b : c", "a = x ?? true ? b : c");
 
-    fold("x = foo() ?? true ?? bar()", "x = foo() ?? !0 ?? bar()");
+    fold("x = foo() ?? true ?? bar()", "x = foo() ?? true ?? bar()");
     fold("x = foo() ?? (true && bar())", "x = foo() ?? bar()");
-    fold("x = (foo() || false) ?? bar()", "x = (foo() || !1) ?? bar()");
+    fold("x = (foo() || false) ?? bar()", "x = (foo() || false) ?? bar()");
 
     fold("a() ?? (1 ?? b())", "a() ?? 1");
     fold("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
@@ -1225,23 +1225,23 @@ fn test_fold_string_length() {
 #[test]
 fn test_fold_instance_of() {
     // Non object types are never instances of anything.
-    fold("64 instanceof Object", "!1");
-    fold("64 instanceof Number", "!1");
-    fold("'' instanceof Object", "!1");
-    fold("'' instanceof String", "!1");
-    fold("true instanceof Object", "!1");
-    fold("true instanceof Boolean", "!1");
-    fold("!0 instanceof Object", "!1");
-    fold("!0 instanceof Boolean", "!1");
-    fold("false instanceof Object", "!1");
-    fold("null instanceof Object", "!1");
-    fold("undefined instanceof Object", "!1");
-    fold("NaN instanceof Object", "!1");
-    fold("Infinity instanceof Object", "!1");
+    fold("64 instanceof Object", "false");
+    fold("64 instanceof Number", "false");
+    fold("'' instanceof Object", "false");
+    fold("'' instanceof String", "false");
+    fold("true instanceof Object", "false");
+    fold("true instanceof Boolean", "false");
+    fold("!0 instanceof Object", "false");
+    fold("!0 instanceof Boolean", "false");
+    fold("false instanceof Object", "false");
+    fold("null instanceof Object", "false");
+    fold("undefined instanceof Object", "false");
+    fold("NaN instanceof Object", "false");
+    fold("Infinity instanceof Object", "false");
 
     // Array and object literals are known to be objects.
-    fold("[] instanceof Object", "!0");
-    fold("({}) instanceof Object", "!0");
+    fold("[] instanceof Object", "true");
+    fold("({}) instanceof Object", "true");
 
     // These cases is foldable, but no handled currently.
     fold_same("new Foo() instanceof Object");
@@ -1249,7 +1249,7 @@ fn test_fold_instance_of() {
     fold_same("[] instanceof Foo");
     fold_same("({}) instanceof Foo");
 
-    fold("(function() {}) instanceof Object", "!0");
+    fold("(function() {}) instanceof Object", "true");
 
     // An unknown value should never be folded.
     fold_same("x instanceof Foo");
@@ -1260,13 +1260,13 @@ fn test_fold_instance_of() {
 
 #[test]
 fn test_fold_instance_of_additional() {
-    fold("(typeof {}) instanceof Object", "!1");
-    fold("(+{}) instanceof Number", "!1");
+    fold("(typeof {}) instanceof Object", "false");
+    fold("(+{}) instanceof Number", "false");
     fold_same("({ __proto__: null }) instanceof Object");
-    fold("/foo/ instanceof Object", "!0");
-    fold("(() => {}) instanceof Object", "!0");
-    fold("(function(){}) instanceof Object", "!0");
-    fold("(class{}) instanceof Object", "!0");
+    fold("/foo/ instanceof Object", "true");
+    fold("(() => {}) instanceof Object", "true");
+    fold("(function(){}) instanceof Object", "true");
+    fold("(class{}) instanceof Object", "true");
 }
 
 #[test]
@@ -1358,14 +1358,14 @@ fn test_fold_same_typeof() {
 
 #[test]
 fn test_fold_invalid_typeof_comparison() {
-    fold("typeof foo == 123", "!1");
-    fold("typeof foo == '123'", "!1");
-    fold("typeof foo === null", "!1");
-    fold("typeof foo === undefined", "!1");
-    fold("typeof foo !== 123", "!0");
-    fold("typeof foo !== '123'", "!0");
-    fold("typeof foo != null", "!0");
-    fold("typeof foo != undefined", "!0");
+    fold("typeof foo == 123", "false");
+    fold("typeof foo == '123'", "false");
+    fold("typeof foo === null", "false");
+    fold("typeof foo === undefined", "false");
+    fold("typeof foo !== 123", "true");
+    fold("typeof foo !== '123'", "true");
+    fold("typeof foo != null", "true");
+    fold("typeof foo != undefined", "true");
     fold("typeof foo === 'string'", "typeof foo == 'string'");
     fold("typeof foo === 'number'", "typeof foo == 'number'");
 }
@@ -1490,66 +1490,66 @@ mod bigint {
 
     #[test]
     fn test_bigint_number_comparison() {
-        fold("1n < 2", "!0");
-        fold("1n > 2", "!1");
-        fold("1n == 1", "!0");
-        fold("1n == 2", "!1");
+        fold("1n < 2", "true");
+        fold("1n > 2", "false");
+        fold("1n == 1", "true");
+        fold("1n == 2", "false");
 
         // comparing with decimals is allowed
-        fold("1n < 1.1", "!0");
-        fold("1n < 1.9", "!0");
-        fold("1n < 0.9", "!1");
-        fold("-1n < -1.1", "!1");
-        fold("-1n < -1.9", "!1");
-        fold("-1n < -0.9", "!0");
-        fold("1n > 1.1", "!1");
-        fold("1n > 0.9", "!0");
-        fold("-1n > -1.1", "!0");
-        fold("-1n > -0.9", "!1");
+        fold("1n < 1.1", "true");
+        fold("1n < 1.9", "true");
+        fold("1n < 0.9", "false");
+        fold("-1n < -1.1", "false");
+        fold("-1n < -1.9", "false");
+        fold("-1n < -0.9", "true");
+        fold("1n > 1.1", "false");
+        fold("1n > 0.9", "true");
+        fold("-1n > -1.1", "true");
+        fold("-1n > -0.9", "false");
 
         // Don't fold unsafely large numbers because there might be floating-point error
-        fold(&format!("0n > {MAX_SAFE_INT}"), "!1");
-        fold(&format!("0n < {MAX_SAFE_INT}"), "!0");
-        fold(&format!("0n > {NEG_MAX_SAFE_INT}"), "!0");
-        fold(&format!("0n < {NEG_MAX_SAFE_INT}"), "!1");
-        fold(&format!("0n > {MAX_SAFE_FLOAT}"), "!1");
-        fold(&format!("0n < {MAX_SAFE_FLOAT}"), "!0");
-        fold(&format!("0n > {NEG_MAX_SAFE_FLOAT}"), "!0");
-        fold(&format!("0n < {NEG_MAX_SAFE_FLOAT}"), "!1");
+        fold(&format!("0n > {MAX_SAFE_INT}"), "false");
+        fold(&format!("0n < {MAX_SAFE_INT}"), "true");
+        fold(&format!("0n > {NEG_MAX_SAFE_INT}"), "true");
+        fold(&format!("0n < {NEG_MAX_SAFE_INT}"), "false");
+        fold(&format!("0n > {MAX_SAFE_FLOAT}"), "false");
+        fold(&format!("0n < {MAX_SAFE_FLOAT}"), "true");
+        fold(&format!("0n > {NEG_MAX_SAFE_FLOAT}"), "true");
+        fold(&format!("0n < {NEG_MAX_SAFE_FLOAT}"), "false");
 
         // comparing with Infinity is allowed
-        fold("1n < Infinity", "!0");
-        fold("1n > Infinity", "!1");
-        fold("1n < -Infinity", "!1");
-        fold("1n > -Infinity", "!0");
+        fold("1n < Infinity", "true");
+        fold("1n > Infinity", "false");
+        fold("1n < -Infinity", "false");
+        fold("1n > -Infinity", "true");
 
         // null is interpreted as 0 when comparing with bigint
-        fold("1n < null", "!1");
-        fold("1n > null", "!0");
+        fold("1n < null", "false");
+        fold("1n > null", "true");
     }
 
     #[test]
     fn test_bigint_string_comparison() {
-        fold("1n < '2'", "!0");
-        fold("2n > '1'", "!0");
-        fold("123n > '34'", "!0");
-        fold("1n == '1'", "!0");
-        fold("1n == '2'", "!1");
-        fold("1n != '1'", "!1");
-        fold("1n === '1'", "!1");
-        fold("1n !== '1'", "!0");
+        fold("1n < '2'", "true");
+        fold("2n > '1'", "true");
+        fold("123n > '34'", "true");
+        fold("1n == '1'", "true");
+        fold("1n == '2'", "false");
+        fold("1n != '1'", "false");
+        fold("1n === '1'", "false");
+        fold("1n !== '1'", "true");
     }
 
     #[test]
     fn test_string_bigint_comparison() {
-        fold("'1' < 2n", "!0");
-        fold("'2' > 1n", "!0");
-        fold("'123' > 34n", "!0");
-        fold("'1' == 1n", "!0");
-        fold("'1' == 2n", "!1");
-        fold("'1' != 1n", "!1");
-        fold("'1' === 1n", "!1");
-        fold("'1' !== 1n", "!0");
+        fold("'1' < 2n", "true");
+        fold("'2' > 1n", "true");
+        fold("'123' > 34n", "true");
+        fold("'1' == 1n", "true");
+        fold("'1' == 2n", "false");
+        fold("'1' != 1n", "false");
+        fold("'1' === 1n", "false");
+        fold("'1' !== 1n", "true");
     }
 
     #[test]

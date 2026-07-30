@@ -59,22 +59,22 @@ fn test_fold_true_false_comparison() {
     test("v = x == true", "v = x == 1");
     test("v = x == false", "v = x == 0");
     test("v = x != true", "v = x != 1");
-    test("v = x < true", "v = x < !0");
-    test("v = x <= true", "v = x <= !0");
-    test("v = x > true", "v = x > !0");
-    test("v = x >= true", "v = x >= !0");
+    test("v = x < true", "v = x < true");
+    test("v = x <= true", "v = x <= true");
+    test("v = x > true", "v = x > true");
+    test("v = x >= true", "v = x >= true");
 
-    test("v = x instanceof true", "v = x instanceof !0");
-    test("v = x + false", "v = x + !1");
+    test("v = x instanceof true", "v = x instanceof true");
+    test("v = x + false", "v = x + false");
 
     // Order: should perform the nearest.
-    test("v = x == x instanceof false", "v = x == x instanceof !1");
-    test("v = x in x >> true", "v = x in x >> !0");
-    test("v = x == fake(false)", "v = x == fake(!1)");
+    test("v = x == x instanceof false", "v = x == x instanceof false");
+    test("v = x in x >> true", "v = x in x >> true");
+    test("v = x == fake(false)", "v = x == fake(false)");
 
     // The following should not be folded.
-    test("v = x === true", "v = x === !0");
-    test("v = x !== false", "v = x !== !1");
+    test("v = x === true", "v = x === true");
+    test("v = x !== false", "v = x !== false");
 }
 
 /// Based on https://github.com/terser/terser/blob/58ba5c163fa1684f2a63c7bc19b7ebcf85b74f73/test/compress/assignment.js
@@ -712,15 +712,15 @@ fn fold_function_spread_args() {
 
 #[test]
 fn test_fold_boolean_constructor() {
-    test("var a = Boolean(true)", "var a = !0");
+    test("var a = Boolean(true)", "var a = true");
     // Don't fold the existence check to preserve behavior
-    test("var a = Boolean?.(true)", "var a = Boolean?.(!0)");
+    test("var a = Boolean?.(true)", "var a = Boolean?.(true)");
 
-    test("var a = Boolean(false)", "var a = !1");
+    test("var a = Boolean(false)", "var a = false");
     // Don't fold the existence check to preserve behavior
-    test("var a = Boolean?.(false)", "var a = Boolean?.(!1)");
+    test("var a = Boolean?.(false)", "var a = Boolean?.(false)");
 
-    test("var a = Boolean(1)", "var a = !0");
+    test("var a = Boolean(1)", "var a = true");
     // Don't fold the existence check to preserve behavior
     test_same("var a = Boolean?.(1)");
 
@@ -728,11 +728,11 @@ fn test_fold_boolean_constructor() {
     // Don't fold the existence check to preserve behavior
     test_same("var a = Boolean?.(x)");
 
-    test("var a = Boolean({})", "var a = !0");
+    test("var a = Boolean({})", "var a = true");
     // Don't fold the existence check to preserve behavior
     test_same("var a = Boolean?.({})");
 
-    test("var a = Boolean()", "var a = !1;");
+    test("var a = Boolean()", "var a = false;");
     test_same("var a = Boolean(!0, !1);");
 }
 

@@ -23,7 +23,9 @@ impl<'a> PeepholeOptimizations {
         match e.operator {
             // Do not fold `void 0` back to `undefined`.
             UnaryOperator::Void if e.argument.is_number_0() => {}
-            // Do not fold `true` and `false` back to `!0` and `!1`
+            // Do not fold `!0` and `!1`: codegen prints the booleans in exactly
+            // this form, so folding them cannot shrink the output and only
+            // records a change on every run over printed output.
             UnaryOperator::LogicalNot if matches!(&e.argument, Expression::NumericLiteral(lit) if lit.value == 0.0 || lit.value == 1.0) =>
                 {}
             // Do not fold big int.

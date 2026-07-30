@@ -201,25 +201,25 @@ fn for_stmt() {
 #[test]
 fn do_while_stmt() {
     test("do ; while (true)", "do;\nwhile (true);\n");
-    test_minify("do ; while (true)", "do;while(true);");
-    test_minify("do break; while (true)", "do break;while(true);");
-    test_minify("do continue; while (true)", "do continue;while(true);");
-    test_minify("do debugger; while (true)", "do debugger;while(true);");
-    test_minify("do for(x in y); while (true)", "do for(x in y);while(true);");
-    test_minify("do for(x of y); while (true)", "do for(x of y);while(true);");
-    test_minify("do for(;;); while (true)", "do for(;;);while(true);");
-    test_minify("do if (test) {} while (true)", "do if(test){}while(true);");
-    test_minify("do foo:; while (true)", "do foo:;while(true);");
-    test_minify("function a() { do return; while (true) }", "function a(){do return;while(true)}");
-    test_minify("do switch(test){} while (true)", "do switch(test){}while(true);");
-    test_minify("do throw x; while (true)", "do throw x;while(true);");
-    test_minify("do with(x); while (true)", "do with(x);while(true);");
-    test_minify("do try{} catch{} while (true)", "do try{}catch{}while(true);");
+    test_minify("do ; while (true)", "do;while(!0);");
+    test_minify("do break; while (true)", "do break;while(!0);");
+    test_minify("do continue; while (true)", "do continue;while(!0);");
+    test_minify("do debugger; while (true)", "do debugger;while(!0);");
+    test_minify("do for(x in y); while (true)", "do for(x in y);while(!0);");
+    test_minify("do for(x of y); while (true)", "do for(x of y);while(!0);");
+    test_minify("do for(;;); while (true)", "do for(;;);while(!0);");
+    test_minify("do if (test) {} while (true)", "do if(test){}while(!0);");
+    test_minify("do foo:; while (true)", "do foo:;while(!0);");
+    test_minify("function a() { do return; while (true) }", "function a(){do return;while(!0)}");
+    test_minify("do switch(test){} while (true)", "do switch(test){}while(!0);");
+    test_minify("do throw x; while (true)", "do throw x;while(!0);");
+    test_minify("do with(x); while (true)", "do with(x);while(!0);");
+    test_minify("do try{} catch{} while (true)", "do try{}catch{}while(!0);");
     test_minify(
         "try { x } catch (err) /* v8 ignore next */ { y }",
         "try{x}catch(err)/* v8 ignore next */{y}",
     );
-    test_minify("do do ; while(true) while (true)", "do do;while(true);while(true);");
+    test_minify("do do ; while(true) while (true)", "do do;while(!0);while(!0);");
 }
 
 #[test]
@@ -314,7 +314,7 @@ fn assignment() {
     test_minify("a /= () => {}", "a/=()=>{};");
     test_minify("a %= async () => {}", "a%=async()=>{};");
     test_minify("a -= (1, 2)", "a-=(1,2);");
-    test_minify("({ x: x = flag1 = true } = {})", "({x=flag1=true}={});");
+    test_minify("({ x: x = flag1 = true } = {})", "({x=flag1=!0}={});");
 
     test_minify("({ 0: x } = foo);", "({0:x}=foo);");
     test_minify("({ [0]: x } = foo);", "({[0]:x}=foo);");
@@ -721,15 +721,15 @@ fn string() {
     // https://github.com/oxc-project/oxc/issues/22342
     test_minify(
         r#"Object.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
-        r#"Object.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+        r#"Object.defineProperty(exports,"getInclusionReasons",{enumerable:!0});"#,
     );
     test_minify(
         r#"Reflect.defineProperty(exports, "getInclusionReasons", { enumerable: true });"#,
-        r#"Reflect.defineProperty(exports,"getInclusionReasons",{enumerable:true});"#,
+        r#"Reflect.defineProperty(exports,"getInclusionReasons",{enumerable:!0});"#,
     );
     test_minify(
         r#"exports["has-dash"] = a; module.exports["__esModule"] = true;"#,
-        r#"exports["has-dash"]=a;module.exports["__esModule"]=true;"#,
+        r#"exports["has-dash"]=a;module.exports["__esModule"]=!0;"#,
     );
     test_minify(r#"obj["not-exports"] = a;"#, "obj[`not-exports`]=a;");
 

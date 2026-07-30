@@ -202,7 +202,8 @@ impl<'a> BinaryExpressionVisitor<'a> {
             BinaryishOperator::Binary(BinaryOperator::Exponential) => {
                 // The base of `**` must be an `UpdateExpression`, so a unary/await base
                 // must be parenthesized. Negative numbers and BigInts print with a
-                // leading `-`, i.e. as a unary operator.
+                // leading `-`, and booleans print as `!0` and `!1` when minifying,
+                // i.e. as unary operators.
                 if matches!(
                     e.left(),
                     Expression::UnaryExpression(_)
@@ -210,6 +211,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
                         | Expression::TSTypeAssertion(_)
                         | Expression::NumericLiteral(_)
                         | Expression::BigIntLiteral(_)
+                        | Expression::BooleanLiteral(_)
                 ) {
                     self.left_precedence = Precedence::Call;
                 }

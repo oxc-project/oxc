@@ -17,13 +17,13 @@ fn test_minimize_expr_condition() {
     test("(x || false) && y()", "x && y()");
 
     test("let x = foo ? true : false", "let x = !!foo");
-    test("let x = foo ? true : bar", "let x = foo ? !0 : bar");
-    test("let x = foo ? bar : false", "let x = foo ? bar : !1");
+    test("let x = foo ? true : bar", "let x = foo ? true : bar");
+    test("let x = foo ? bar : false", "let x = foo ? bar : false");
     test("function x () { return a ? true : false }", "function x() { return !!a }");
     test("function x () { return a ? false : true }", "function x() { return !a }");
-    test("function x () { return a ? true : b }", "function x() { return a ? !0 : b }");
+    test("function x () { return a ? true : b }", "function x() { return a ? true : b }");
     // can't be minified e.g. `a = ''` would return `''`
-    test("function x() { return a && true }", "function x() { return a && !0 }");
+    test("function x() { return a && true }", "function x() { return a && true }");
 
     test("foo ? bar : bar", "foo, bar");
     test_same("foo ? bar : baz");
@@ -134,7 +134,7 @@ fn test_minimize_conditional_boolean_value_context() {
 
     // A sequence branch already needs parentheses in a conditional, so using it
     // as a logical operand does not add any bytes.
-    test("use(flag ? false : (touch(), true))", "use(!flag && (touch(), !0))");
+    test("use(flag ? false : (touch(), true))", "use(!flag && (touch(), true))");
     test("use(flag ? (touch(), value) : true)", "use(!flag || (touch(), value))");
     test("use(a === b ? true : (touch(), value))", "use(a === b || (touch(), value))");
     test("use(a === b ? (touch(), value) : false)", "use(a === b && (touch(), value))");
@@ -153,13 +153,13 @@ fn test_minimize_conditional_boolean_value_context() {
     );
 
     // Negative: forms 3/4 require a boolean-typed test, else the value changes.
-    test("let x = num ? true : y", "let x = num ? !0 : y");
-    test("let x = num ? y : false", "let x = num ? y : !1");
+    test("let x = num ? true : y", "let x = num ? true : y");
+    test("let x = num ? y : false", "let x = num ? y : false");
 
     // Negative: size guard. `!(a || b) && c` is longer than `a || b ? !1 : c`.
-    test("let x = a || b ? false : c", "let x = a || b ? !1 : c");
+    test("let x = a || b ? false : c", "let x = a || b ? false : c");
     // Negative: `x` needing parens as a logical operand would not save bytes.
-    test("let x = a ? false : b ? c : d", "let x = a ? !1 : b ? c : d");
-    test("use(flag ? false : (value = touch()))", "use(flag ? !1 : value = touch())");
-    test("use(a === b || c === d ? value : false)", "use(a === b || c === d ? value : !1)");
+    test("let x = a ? false : b ? c : d", "let x = a ? false : b ? c : d");
+    test("use(flag ? false : (value = touch()))", "use(flag ? false : value = touch())");
+    test("use(a === b || c === d ? value : false)", "use(a === b || c === d ? value : false)");
 }

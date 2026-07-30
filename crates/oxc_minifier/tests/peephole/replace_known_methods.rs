@@ -619,29 +619,29 @@ fn test_fold_math_functions_pow() {
 
 #[test]
 fn test_fold_number_functions_is_safe_integer() {
-    test_value("Number.isSafeInteger(1)", "!0");
-    test_value("Number.isSafeInteger(1.5)", "!1");
-    test_value("Number.isSafeInteger(9007199254740991)", "!0");
-    test_value("Number.isSafeInteger(9007199254740992)", "!1");
-    test_value("Number.isSafeInteger(-9007199254740991)", "!0");
-    test_value("Number.isSafeInteger(-9007199254740992)", "!1");
+    test_value("Number.isSafeInteger(1)", "true");
+    test_value("Number.isSafeInteger(1.5)", "false");
+    test_value("Number.isSafeInteger(9007199254740991)", "true");
+    test_value("Number.isSafeInteger(9007199254740992)", "false");
+    test_value("Number.isSafeInteger(-9007199254740991)", "true");
+    test_value("Number.isSafeInteger(-9007199254740992)", "false");
 }
 
 #[test]
 fn test_fold_number_functions_is_finite() {
-    test_value("Number.isFinite(1)", "!0");
-    test_value("Number.isFinite(1.5)", "!0");
-    test_value("Number.isFinite(NaN)", "!1");
-    test_value("Number.isFinite(Infinity)", "!1");
-    test_value("Number.isFinite(-Infinity)", "!1");
+    test_value("Number.isFinite(1)", "true");
+    test_value("Number.isFinite(1.5)", "true");
+    test_value("Number.isFinite(NaN)", "false");
+    test_value("Number.isFinite(Infinity)", "false");
+    test_value("Number.isFinite(-Infinity)", "false");
     test_same_value("Number.isFinite('a')");
 }
 
 #[test]
 fn test_fold_number_functions_is_nan() {
-    test_value("Number.isNaN(1)", "!1");
-    test_value("Number.isNaN(1.5)", "!1");
-    test_value("Number.isNaN(NaN)", "!0");
+    test_value("Number.isNaN(1)", "false");
+    test_value("Number.isNaN(1.5)", "false");
+    test_value("Number.isNaN(NaN)", "true");
     test_same_value("Number.isNaN('a')");
     // unknown function may have side effects
     test_same_value("Number.isNaN(+(void unknown()))");
@@ -977,8 +977,8 @@ fn test_to_string() {
     test("x = 0 .toString(36)", "x = '0'");
     test("x = 0.5.toString()", "x = '0.5'");
 
-    test("false.toString(b)", "(!1).toString(b)");
-    test("true.toString(b)", "(!0).toString(b)");
+    test("false.toString(b)", "false.toString(b)");
+    test("true.toString(b)", "true.toString(b)");
     test("'xy'.toString(b)", "'xy'.toString(b)");
     test("123 .toString(b)", "123 .toString(b)");
     test("1e99.toString(b)", "1e99.toString(b)");
@@ -1092,11 +1092,11 @@ fn test_fold_integer_index_access() {
 #[test]
 fn test_fold_starts_with() {
     test_same("v = 'production'.startsWith('prod', 'bar')");
-    test("v = 'production'.startsWith('prod')", "v = !0");
-    test("v = 'production'.startsWith('dev')", "v = !1");
+    test("v = 'production'.startsWith('prod')", "v = true");
+    test("v = 'production'.startsWith('dev')", "v = false");
     test(
         "const node_env = 'production'; v = node_env.toLowerCase().startsWith('prod')",
-        "const node_env = 'production'; v = !0",
+        "const node_env = 'production'; v = true",
     );
 }
 
@@ -1200,16 +1200,16 @@ fn test_fold_uri_roundtrip() {
 
 #[test]
 fn test_fold_global_is_nan() {
-    test_value("isNaN()", "!0");
-    test_value("isNaN(NaN)", "!0");
-    test_value("isNaN(123)", "!1");
-    test_value("isNaN('123')", "!1");
-    test_value("isNaN('abc')", "!0");
-    test_value("isNaN('')", "!1");
-    test_value("isNaN(' ')", "!1");
-    test_value("isNaN(null)", "!1");
-    test_value("isNaN(Infinity)", "!1");
-    test_value("isNaN(-Infinity)", "!1");
+    test_value("isNaN()", "true");
+    test_value("isNaN(NaN)", "true");
+    test_value("isNaN(123)", "false");
+    test_value("isNaN('123')", "false");
+    test_value("isNaN('abc')", "true");
+    test_value("isNaN('')", "false");
+    test_value("isNaN(' ')", "false");
+    test_value("isNaN(null)", "false");
+    test_value("isNaN(Infinity)", "false");
+    test_value("isNaN(-Infinity)", "false");
 
     test_same_value("isNaN(unknown)");
     test_same_value("isNaN((foo, 0))"); // foo may have sideeffect
@@ -1217,17 +1217,17 @@ fn test_fold_global_is_nan() {
 
 #[test]
 fn test_fold_global_is_finite() {
-    test_value("isFinite()", "!1");
-    test_value("isFinite(123)", "!0");
-    test_value("isFinite(123.45)", "!0");
-    test_value("isFinite('123')", "!0");
-    test_value("isFinite('')", "!0");
-    test_value("isFinite(' ')", "!0");
-    test_value("isFinite(null)", "!0");
-    test_value("isFinite(NaN)", "!1");
-    test_value("isFinite(Infinity)", "!1");
-    test_value("isFinite(-Infinity)", "!1");
-    test_value("isFinite('abc')", "!1");
+    test_value("isFinite()", "false");
+    test_value("isFinite(123)", "true");
+    test_value("isFinite(123.45)", "true");
+    test_value("isFinite('123')", "true");
+    test_value("isFinite('')", "true");
+    test_value("isFinite(' ')", "true");
+    test_value("isFinite(null)", "true");
+    test_value("isFinite(NaN)", "false");
+    test_value("isFinite(Infinity)", "false");
+    test_value("isFinite(-Infinity)", "false");
+    test_value("isFinite('abc')", "false");
     test_same_value("isFinite(unknown)");
     test_same_value("isFinite((foo, 0))"); // foo may have sideeffect
 }

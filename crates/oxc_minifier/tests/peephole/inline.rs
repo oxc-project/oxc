@@ -14,13 +14,13 @@ fn conditional_var_declarator_not_inlined() {
     let options = CompressOptions::smallest();
     test_options(
         "function t() { if (window.x) { var callback = true } return () => callback ? 'ng' : 'ok'; } NOOP(t());",
-        "function t() { if (window.x) var callback = !0; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
+        "function t() { if (window.x) var callback = true; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
         &options,
     );
     // The already-flattened form.
     test_options(
         "function t() { if (window.x) var callback = true; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
-        "function t() { if (window.x) var callback = !0; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
+        "function t() { if (window.x) var callback = true; return () => callback ? 'ng' : 'ok'; } NOOP(t());",
         &options,
     );
 }
@@ -31,7 +31,7 @@ fn conditional_var_alternate_after_declarative_consequent_not_inlined() {
     // declarative and therefore has not ended the body's prelude.
     test_smallest(
         "function t(c) { if (c) var a = 1; else var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
-        "function t(c) { if (c) var a = 1; else var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+        "function t(c) { if (c) var a = 1; else var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
     );
 }
 
@@ -51,7 +51,7 @@ fn single_conditional_falsy_var_still_folds_in_boolean_context() {
     // boolean-context fact remains valid for a symbol with one declaration.
     test_smallest(
         "export function f(a) { if (a) var x = false; return x ? 'bad' : 'ok'; }",
-        "export function f(a) { if (a) var x = !1; return 'ok'; }",
+        "export function f(a) { if (a) var x = false; return 'ok'; }",
     );
 }
 
@@ -60,12 +60,12 @@ fn single_conditional_falsy_var_still_folds_in_boolean_context() {
 fn conditional_var_redeclarations_do_not_overwrite_reaching_values() {
     test_smallest(
         "export function f(a) { if (a) var x = true; else var x = false; return x ? 'ok' : 'fail'; }",
-        "export function f(a) { if (a) var x = !0; else var x = !1; return x ? 'ok' : 'fail'; }",
+        "export function f(a) { if (a) var x = true; else var x = false; return x ? 'ok' : 'fail'; }",
     );
     // The result must not depend on which branch traversal visits last.
     test_smallest(
         "export function f(a) { if (a) var x = false; else var x = true; return x ? 'ok' : 'fail'; }",
-        "export function f(a) { if (a) var x = !1; else var x = !0; return x ? 'ok' : 'fail'; }",
+        "export function f(a) { if (a) var x = false; else var x = true; return x ? 'ok' : 'fail'; }",
     );
 }
 
@@ -76,13 +76,13 @@ fn redeclared_falsy_var_is_not_assumed_falsy() {
     // traversal reaches the later declaration.
     test_smallest(
         "export function outer() { sideEffect(); var x = false; function read() { return x ? 'T' : 'F'; } var x = true; return read(); }",
-        "export function outer() { sideEffect(); var x = !1; function read() { return x ? 'T' : 'F'; } var x = !0; return read(); }",
+        "export function outer() { sideEffect(); var x = false; function read() { return x ? 'T' : 'F'; } var x = true; return read(); }",
     );
     // A conditional `var` that redeclares a parameter may leave the argument
     // value untouched, so the falsy initializer is not the only runtime value.
     test_smallest(
         "export function f(x, c) { if (c) var x = false; return x ? 'T' : 'F'; }",
-        "export function f(x, c) { if (c) var x = !1; return x ? 'T' : 'F'; }",
+        "export function f(x, c) { if (c) var x = false; return x ? 'T' : 'F'; }",
     );
 }
 
@@ -93,7 +93,7 @@ fn redeclared_var_facts_are_disabled_before_first_use() {
     // immediately; invalidating the slot on the second visit is too late.
     test_smallest(
         "export function outer() { var x = false; function read() { return x ? 'ok' : 'fail'; } var x = true; return read(); }",
-        "export function outer() { var x = !1; function read() { return x ? 'ok' : 'fail'; } var x = !0; return read(); }",
+        "export function outer() { var x = false; function read() { return x ? 'ok' : 'fail'; } var x = true; return read(); }",
     );
 }
 
@@ -130,7 +130,7 @@ fn conditional_labeled_var_declarator_not_inlined() {
     // conditional body explicitly.
     test_smallest(
         "function t(c) { if (c) L: var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
-        "function t(c) { if (c) L: var flag = !0; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
+        "function t(c) { if (c) L: var flag = true; return () => flag ? 'ng' : 'ok'; } NOOP(t());",
     );
 }
 
@@ -153,7 +153,7 @@ fn unconditional_var_declarator_positions_still_inline() {
     // module's ProgramBody ancestor.
     test_options(
         "export var flag = true; export function f() { return flag ? 'a' : 'b'; }",
-        "export var flag = !0; export function f() { return 'a'; }",
+        "export var flag = true; export function f() { return 'a'; }",
         &options,
     );
 }
@@ -184,7 +184,7 @@ fn readonly_var_unsafe_preceding_call() {
     // `foo` to `true` would change observable behavior — `foo` must stay.
     test_smallest(
         "output(); var foo = true; function output() { if (!foo) log('foo'); }",
-        "output(); var foo = !0; function output() { foo || log('foo'); }",
+        "output(); var foo = true; function output() { foo || log('foo'); }",
     );
 }
 
@@ -232,7 +232,7 @@ fn readonly_var_reader_declared_before_var() {
     // conscious change rather than a silent one.
     test_smallest(
         "function f() { return foo; } var foo = true; log(f());",
-        "function f() { return foo; } var foo = !0; log(f());",
+        "function f() { return foo; } var foo = true; log(f());",
     );
 }
 
@@ -245,7 +245,7 @@ fn readonly_var_with_imports_present() {
     // hazard Codex flagged. Must NOT inline.
     test_smallest(
         "import './b.js'; var flag = true; export function check() { return flag; }",
-        "import './b.js'; var flag = !0; export function check() { return flag; }",
+        "import './b.js'; var flag = true; export function check() { return flag; }",
     );
     // A write-once falsy `var` read only in boolean context (`if (DEBUG)`) folds
     // even with imports present: the cyclic-import hazard is that an observer sees
@@ -261,7 +261,7 @@ fn readonly_var_with_imports_present() {
     // still triggers the gate — the pre-scan checks the whole body.
     test_smallest(
         "var flag = true; import './b.js'; export function check() { return flag; }",
-        "var flag = !0; import './b.js'; export function check() { return flag; }",
+        "var flag = true; import './b.js'; export function check() { return flag; }",
     );
 }
 
@@ -271,11 +271,11 @@ fn readonly_var_with_reexports_present() {
     // evaluate foreign modules and create the same cyclic-eval hazard.
     test_smallest(
         "export * from './other.js'; var flag = true; export function check() { return flag; }",
-        "export * from './other.js'; var flag = !0; export function check() { return flag; }",
+        "export * from './other.js'; var flag = true; export function check() { return flag; }",
     );
     test_smallest(
         "export { y } from './y.js'; var flag = true; export function check() { return flag; }",
-        "export { y } from './y.js'; var flag = !0; export function check() { return flag; }",
+        "export { y } from './y.js'; var flag = true; export function check() { return flag; }",
     );
 }
 
@@ -312,7 +312,7 @@ fn readonly_var_unsafe_destructuring_default_prelude() {
     // would observe `true` instead of the required hoisted `undefined`.
     test_smallest(
         "var [x = inner()] = ''; var flag = true; function inner() { return flag; } log(x);",
-        "var [x = inner()] = '', flag = !0; function inner() { return flag; } log(x);",
+        "var [x = inner()] = '', flag = true; function inner() { return flag; } log(x);",
     );
 }
 
@@ -334,7 +334,7 @@ fn readonly_var_in_function_body_unsafe_preceding_call() {
     // reads `flag` as `undefined`. Skip.
     test_smallest(
         "function outer() { sideEffect(); var flag = true; function inner() { return flag; } return inner(); } log(outer());",
-        "function outer() { sideEffect(); var flag = !0; function inner() { return flag; } return inner(); } log(outer());",
+        "function outer() { sideEffect(); var flag = true; function inner() { return flag; } return inner(); } log(outer());",
     );
 }
 
@@ -345,7 +345,7 @@ fn readonly_var_script_mode() {
     // Don't inline.
     test_options_source_type(
         "var used = false; function test() { if (used) return 123; return 321; } log(test());",
-        "var used = !1; function test() { return used ? 123 : 321; } log(test());",
+        "var used = false; function test() { return used ? 123 : 321; } log(test());",
         SourceType::cjs().with_script(true),
         &CompressOptions::smallest(),
     );
@@ -380,16 +380,16 @@ fn fold_writeonce_falsy_var_in_boolean_context() {
     // Value context must NOT fold (a pre-init read would observe `undefined`).
     test_smallest(
         "g(); var h = false; function f() { sink(h) } f()",
-        "g(); var h = !1; function f() { sink(h); } f();",
+        "g(); var h = false; function f() { sink(h); } f();",
     );
     // Reassigned => not write-once => not folded.
-    test_smallest("var h = false; h = 1; if (h) a()", "var h = !1; h = 1, h && a();");
+    test_smallest("var h = false; h = 1; if (h) a()", "var h = false; h = 1, h && a();");
 
     // Script mode: a top-level `var` is a global another script can reassign, so
     // an in-module write count of 0 doesn't prove write-once — not folded.
     test_options_source_type(
         "var h = false; function f() { if (h) a() } f()",
-        "var h = !1; function f() { h && a(); } f();",
+        "var h = false; function f() { h && a(); } f();",
         SourceType::cjs().with_script(true),
         &CompressOptions::smallest(),
     );
@@ -474,7 +474,7 @@ fn keep_value_context_read_of_uninitialized_binding() {
     test_options("let u; export function f() { if (u) g(); }", "export function f() {}", &options);
     test_options(
         "let u; export function f() { return u === void 0; }",
-        "export function f() { return !0; }",
+        "export function f() { return true; }",
         &options,
     );
     // Near-miss: an explicit `undefined` initializer still inlines — the inline
@@ -499,8 +499,8 @@ fn small_value() {
     test_options("const foo = 'aaa'; log(foo), log(foo)", "log('aaa'), log('aaa')", &options);
     test_same_options("const foo = 'aaaa'; log(foo), log(foo)", &options);
 
-    test_options("const foo = true; log(foo), log(foo)", "log(!0), log(!0)", &options);
-    test_options("const foo = false; log(foo), log(foo)", "log(!1), log(!1)", &options);
+    test_options("const foo = true; log(foo), log(foo)", "log(true), log(true)", &options);
+    test_options("const foo = false; log(foo), log(foo)", "log(false), log(false)", &options);
     test_options("const foo = undefined; log(foo), log(foo)", "log(void 0), log(void 0)", &options);
     test_options("const foo = null; log(foo), log(foo)", "log(null), log(null)", &options);
 

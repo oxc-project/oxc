@@ -10,7 +10,13 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub single_quote: bool,
 
-    /// Remove whitespace.
+    /// Produce the smallest equivalent output.
+    ///
+    /// Removes whitespace and unnecessary semicolons, and prints values in
+    /// their shortest spelling: `true` as `!0`, `Infinity` as `1/0`, strings
+    /// with whichever quote needs the fewest escapes, and numbers in their
+    /// shortest form. The printed output stays semantically identical; only
+    /// the text differs.
     ///
     /// Default is `false`.
     pub minify: bool,

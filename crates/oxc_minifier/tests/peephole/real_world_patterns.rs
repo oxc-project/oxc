@@ -16,9 +16,9 @@ fn test_function_call_optimization() {
     test("return String(null)", "return 'null'");
 
     // Boolean constructors get optimized
-    test("return Boolean(1)", "return !0");
-    test("return Boolean(0)", "return !1");
-    test("return Boolean('')", "return !1");
+    test("return Boolean(1)", "return true");
+    test("return Boolean(0)", "return false");
+    test("return Boolean('')", "return false");
 
     // Number constructors - eliminated as unused expressions
     test("Number('42')", "");
@@ -53,10 +53,10 @@ fn test_logical_operator_optimization() {
     test("!false", "");
 
     // In return context they are optimized
-    test("return !!true", "return !0");
-    test("return !!false", "return !1");
-    test("return !true", "return !1");
-    test("return !false", "return !0");
+    test("return !!true", "return true");
+    test("return !!false", "return false");
+    test("return !true", "return false");
+    test("return !false", "return true");
 }
 
 #[test]
