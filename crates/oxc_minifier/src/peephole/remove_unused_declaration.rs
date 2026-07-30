@@ -5,7 +5,7 @@ use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 use oxc_syntax::symbol::SymbolId;
 
 impl<'a> PeepholeOptimizations {
-    pub(super) fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
+    pub(crate) fn can_remove_unused_declarators(ctx: &TraverseCtx<'a>) -> bool {
         ctx.options().unused != CompressOptionsUnused::Keep
             && !Self::is_script_root_scope(ctx)
             && !ctx.scoping().root_scope_flags().contains_direct_eval()

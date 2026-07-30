@@ -27,7 +27,7 @@ RadixUIAdoptionSection.jsx:
   sys deallocs: 21
   sys alloc bytes: 17400 # 17.40 kB
   sys peak growth: 11628 # 11.63 kB
-  arena allocs: 33
+  arena allocs: 32
   arena reallocs: 6
   arena size: 35632 # 35.63 kB
 
