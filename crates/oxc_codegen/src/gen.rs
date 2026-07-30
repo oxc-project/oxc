@@ -240,7 +240,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
                 p.print_soft_newline();
             }
         }
-        stmt if wrap_to_avoid_ambiguous_else(stmt) => {
+        stmt if stmt.ends_with_dangling_if() => {
             p.print_soft_space();
             p.print_block_start(stmt.span());
             stmt.print(p, ctx);
@@ -274,29 +274,6 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
                 print_if(if_stmt, p, ctx);
             }
             stmt => p.print_body(stmt, ctx),
-        }
-    }
-}
-
-// <https://github.com/evanw/esbuild/blob/e6a8169c3a574f4c67d4cdd5f31a938b53eb7421/internal/js_printer/js_printer.go#L3444>
-fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
-    let mut current = stmt;
-    loop {
-        current = match current {
-            Statement::IfStatement(if_stmt) => {
-                if let Some(stmt) = &if_stmt.alternate {
-                    stmt
-                } else {
-                    return true;
-                }
-            }
-            Statement::ForStatement(for_stmt) => &for_stmt.body,
-            Statement::ForOfStatement(for_of_stmt) => &for_of_stmt.body,
-            Statement::ForInStatement(for_in_stmt) => &for_in_stmt.body,
-            Statement::WhileStatement(while_stmt) => &while_stmt.body,
-            Statement::WithStatement(with_stmt) => &with_stmt.body,
-            Statement::LabeledStatement(labeled_stmt) => &labeled_stmt.body,
-            _ => return false,
         }
     }
 }
