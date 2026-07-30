@@ -5,7 +5,7 @@ use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    BoundNames, ToJsString, ToNumber,
+    BoundNames, ToNumber,
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, is_typed_array_constructor},
 };
@@ -1392,16 +1392,6 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(&mut call_expr.callee, new_callee);
             }
         }
-    }
-
-    pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::TemplateLiteral(t) = expr else { return };
-        let Some(val) = t.to_js_string(ctx).filter(|_| !t.may_have_side_effects(ctx)) else {
-            return;
-        };
-        let new_value =
-            Expression::new_string_literal(t.span(), Str::from_cow_in(&val, ctx), None, ctx);
-        ctx.replace_expression(expr, new_value);
     }
 
     // <https://github.com/swc-project/swc/blob/4e2dae558f60a9f5c6d2eac860743e6c0b2ec562/crates/swc_ecma_minifier/src/compress/pure/properties.rs>

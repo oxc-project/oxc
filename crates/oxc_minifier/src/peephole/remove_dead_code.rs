@@ -44,6 +44,17 @@ impl<'a> PeepholeOptimizations {
                 {
                     return;
                 }
+                // Keep blocks codegen would restore around a dangling `if`.
+                // Direct else-less nesting can be unwrapped and merged.
+                if matches!(
+                    ctx.parent(),
+                    Ancestor::IfStatementConsequent(p)
+                        if p.alternate().is_some()
+                            || !matches!(first, Statement::IfStatement(i) if i.alternate.is_none())
+                ) && first.ends_with_dangling_if()
+                {
+                    return;
+                }
                 let new_stmt = s.body.remove(0);
                 ctx.replace_statement(stmt, new_stmt);
             }
