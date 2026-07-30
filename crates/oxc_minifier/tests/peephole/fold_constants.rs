@@ -1173,6 +1173,7 @@ fn test_fold_singleton_object_property_access() {
     fold("v = ({ a: true }).a", "v = !0");
     fold("v = ({ a: null }).a", "v = null");
     fold("v = ({ a: 1n }).a", "v = 1n");
+    fold("v = ({ a: /x/g }).a", "v = /x/g");
     fold("v = ({ a: -0 }).a", "v = -0");
 
     fold_same("v = ({ a: 1 }).b");
@@ -1183,6 +1184,7 @@ fn test_fold_singleton_object_property_access() {
     fold_same("v = ({ __proto__: 1 }).__proto__");
     fold_same("v = ({ a: value }).a");
     test_same("({ a: 1 }).a()");
+    test_same("({ a: /x/ }).a()");
     test_same("new ({ a: 1 }).a()");
     test_same("({ a: 'tag' }).a``");
     test_same("delete ({ a: 1 }).a");

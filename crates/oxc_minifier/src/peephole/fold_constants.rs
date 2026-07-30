@@ -38,16 +38,20 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let can_fold_object_property = !ctx.is_tree_shake_only()
-            && matches!(
-                expr,
-                Expression::StaticMemberExpression(member)
-                    if !member.optional && matches!(member.object, Expression::ObjectExpression(_))
-            )
-            && !Self::should_keep_indirect_access(expr, ctx)
-            && !matches!(ctx.parent(), Ancestor::NewExpressionCallee(_));
         let Expression::StaticMemberExpression(e) = expr else { return };
-        let StaticMemberExpression { object, property, .. } = e.as_mut();
+        let StaticMemberExpression { object, property, optional, .. } = e.as_mut();
+        let can_fold_object_property = !ctx.is_tree_shake_only()
+            && !*optional
+            && matches!(object, Expression::ObjectExpression(_))
+            && !match ctx.parent() {
+                Ancestor::CallExpressionCallee(_)
+                | Ancestor::TaggedTemplateExpressionTag(_)
+                | Ancestor::NewExpressionCallee(_) => true,
+                Ancestor::UnaryExpressionArgument(unary) => {
+                    *unary.operator() == UnaryOperator::Delete
+                }
+                _ => false,
+            };
         if can_fold_object_property
             && let Some(changed) =
                 Self::try_fold_singleton_object_property(object, property.name.as_str(), ctx)
@@ -92,19 +96,13 @@ impl<'a> PeepholeOptimizations {
         else {
             return None;
         };
-        let value_is_primitive = matches!(
-            property.value,
-            Expression::BooleanLiteral(_)
-                | Expression::NullLiteral(_)
-                | Expression::NumericLiteral(_)
-                | Expression::BigIntLiteral(_)
-                | Expression::StringLiteral(_)
-        ) || matches!(
-            &property.value,
-            Expression::UnaryExpression(unary)
-                if unary.operator == UnaryOperator::LogicalNot
-                    && matches!(&unary.argument, Expression::NumericLiteral(_))
-        );
+        let value_is_literal = property.value.is_literal()
+            || matches!(
+                &property.value,
+                Expression::UnaryExpression(unary)
+                    if unary.operator == UnaryOperator::LogicalNot
+                        && matches!(&unary.argument, Expression::NumericLiteral(_))
+            );
 
         if property.kind != PropertyKind::Init
             || property.method
@@ -112,7 +110,7 @@ impl<'a> PeepholeOptimizations {
             || property.computed
             || accessed_name == "__proto__"
             || !property.key.is_specific_static_name(accessed_name)
-            || !value_is_primitive
+            || !value_is_literal
         {
             return None;
         }
