@@ -405,6 +405,8 @@ fn ts_instantiation_expression() {
 
 #[test]
 fn ts_satisfies_expression() {
+    test_same("(foo satisfies null) | ~\"\";\n");
+    test_same("(foo satisfies null) & ~\"\";\n");
     test_idempotency("d = x satisfies y");
     test_idempotency("const Foo = (() => {})() satisfies X");
     test_idempotency("const Bar = (x as Y) satisfies Z");
