@@ -8,6 +8,7 @@ use crate::LintContext;
 
 mod disable_fix;
 mod fix;
+pub use disable_fix::IgnoreFixContext;
 pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
 
 pub fn oxc_code_short_canonical_name(code: &OxcCode) -> Option<String> {

@@ -10,12 +10,21 @@ enum DisableDirective {
     Section,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IgnoreFixContext {
+    JavaScript,
+    JsxChild(u32),
+    JsxExpression(u32),
+    Unavailable,
+}
+
 impl Message {
     pub(crate) fn add_ignore_fix(
         &mut self,
         section_offset: u32,
         section_source_text: &str,
-        jsx_child_offset: Option<u32>,
+        context: IgnoreFixContext,
+        respect_eslint_disable_directives: bool,
     ) {
         // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
         // and attaching a ignore comment would not ignore the error.
@@ -26,16 +35,24 @@ impl Message {
 
         let Some(rule_name) = oxc_code_short_canonical_name(&self.error.code) else { return };
 
-        self.fixes.extend_fix(vec![
-            disable_for_this_line_with_jsx_child(
+        let mut fixes = Vec::with_capacity(2);
+        if context != IgnoreFixContext::Unavailable {
+            fixes.push(disable_for_this_line_with_context(
                 &rule_name,
                 self.span.start,
                 section_offset,
                 section_source_text,
-                jsx_child_offset,
-            ),
-            disable_for_this_section(&rule_name, section_offset, section_source_text),
-        ]);
+                context,
+                respect_eslint_disable_directives,
+            ));
+        }
+        fixes.push(disable_for_this_section_with_respect(
+            &rule_name,
+            section_offset,
+            section_source_text,
+            respect_eslint_disable_directives,
+        ));
+        self.fixes.extend_fix(fixes);
     }
 }
 
@@ -46,15 +63,17 @@ fn disable_for_this_line(
     section_offset: u32,
     section_source_text: &str,
 ) -> Fix {
-    disable_for_this_line_with_jsx_child(
+    disable_for_this_line_with_context(
         rule_name,
         error_offset,
         section_offset,
         section_source_text,
-        None,
+        IgnoreFixContext::JavaScript,
+        true,
     )
 }
 
+#[cfg(test)]
 fn disable_for_this_line_with_jsx_child(
     rule_name: &str,
     error_offset: u32,
@@ -62,10 +81,45 @@ fn disable_for_this_line_with_jsx_child(
     section_source_text: &str,
     jsx_child_offset: Option<u32>,
 ) -> Fix {
+    disable_for_this_line_with_context(
+        rule_name,
+        error_offset,
+        section_offset,
+        section_source_text,
+        jsx_child_offset.map_or(IgnoreFixContext::JavaScript, IgnoreFixContext::JsxChild),
+        true,
+    )
+}
+
+fn disable_for_this_line_with_context(
+    rule_name: &str,
+    error_offset: u32,
+    section_offset: u32,
+    section_source_text: &str,
+    context: IgnoreFixContext,
+    respect_eslint_disable_directives: bool,
+) -> Fix {
     let bytes = section_source_text.as_bytes();
     let message = format!("Disable {rule_name} for this line");
 
-    if let Some(jsx_child_offset) = jsx_child_offset {
+    if let IgnoreFixContext::JsxExpression(insert_offset) = context {
+        let line_start = line_start_offset(insert_offset, bytes) as usize;
+        let indentation_len = bytes[line_start..insert_offset as usize]
+            .iter()
+            .take_while(|byte| matches!(byte, b' ' | b'\t'))
+            .count();
+        let indentation = String::from_utf8_lossy(&bytes[line_start..line_start + indentation_len]);
+        return Fix {
+            message: Some(Cow::Owned(message)),
+            content: Cow::Owned(format!(
+                "\n{indentation}  // oxlint-disable-next-line {rule_name}\n{indentation}  "
+            )),
+            span: Span::empty(insert_offset),
+            kind: FixKind::IgnoreFix,
+        };
+    }
+
+    if let IgnoreFixContext::JsxChild(jsx_child_offset) = context {
         let child_line_start = line_start_offset(jsx_child_offset, bytes);
         let error_line_start = line_start_offset(error_offset, bytes);
         let target_offset =
@@ -86,9 +140,11 @@ fn disable_for_this_line_with_jsx_child(
             whitespace_range.iter().take_while(|c| matches!(c, b' ' | b'\t')).count();
         let whitespace = String::from_utf8_lossy(&whitespace_range[..whitespace_len]);
 
-        if let Some(existing_comment_end) =
-            get_existing_jsx_disable_comment_end(target_offset, bytes)
-        {
+        if let Some(existing_comment_end) = get_existing_jsx_disable_comment_end(
+            target_offset,
+            bytes,
+            respect_eslint_disable_directives,
+        ) {
             return Fix {
                 message: Some(Cow::Owned(message)),
                 content: Cow::Owned(format!(" {rule_name}")),
@@ -108,7 +164,9 @@ fn disable_for_this_line_with_jsx_child(
     }
 
     // Reuse an inline disable-line comment on the same line when present.
-    if let Some(existing_comment_end) = get_inline_disable_line_comment_end(error_offset, bytes) {
+    if let Some(existing_comment_end) =
+        get_inline_disable_line_comment_end(error_offset, bytes, respect_eslint_disable_directives)
+    {
         return Fix {
             message: Some(Cow::Owned(message)),
             content: Cow::Owned(format!(" {rule_name}")),
@@ -130,9 +188,12 @@ fn disable_for_this_line_with_jsx_child(
         get_section_insert_position(section_offset, line_break_offset, bytes);
 
     // Reuse an existing disable-next-line comment when present by appending the rule.
-    if let Some(existing_comment_end) =
-        get_existing_disable_comment_end(insert_offset, DisableDirective::NextLine, bytes)
-    {
+    if let Some(existing_comment_end) = get_existing_disable_comment_end(
+        insert_offset,
+        DisableDirective::NextLine,
+        bytes,
+        respect_eslint_disable_directives,
+    ) {
         return Fix {
             message: Some(Cow::Owned(message)),
             content: Cow::Owned(format!(" {rule_name}")),
@@ -176,7 +237,11 @@ fn line_start_offset(offset: u32, bytes: &[u8]) -> u32 {
 }
 
 #[expect(clippy::cast_possible_truncation)]
-fn get_existing_jsx_disable_comment_end(target_offset: u32, bytes: &[u8]) -> Option<u32> {
+fn get_existing_jsx_disable_comment_end(
+    target_offset: u32,
+    bytes: &[u8],
+    respect_eslint_disable_directives: bool,
+) -> Option<u32> {
     let target_offset = target_offset as usize;
     let prefix = bytes.get(..target_offset)?;
     let comment_start = prefix.windows(3).rposition(|window| window == b"{/*")?;
@@ -216,11 +281,16 @@ fn get_existing_jsx_disable_comment_end(target_offset: u32, bytes: &[u8]) -> Opt
         index += 1;
     }
 
-    let directive = b"oxlint-disable-next-line";
-    if !content[index..].starts_with(directive) {
+    let directive_len = if content[index..].starts_with(b"oxlint-disable-next-line") {
+        b"oxlint-disable-next-line".len()
+    } else if respect_eslint_disable_directives
+        && content[index..].starts_with(b"eslint-disable-next-line")
+    {
+        b"eslint-disable-next-line".len()
+    } else {
         return None;
-    }
-    index += directive.len();
+    };
+    index += directive_len;
 
     if index < content.len() && !content[index].is_ascii_whitespace() {
         return None;
@@ -234,10 +304,20 @@ fn get_existing_jsx_disable_comment_end(target_offset: u32, bytes: &[u8]) -> Opt
     Some((content_start + merge_end) as u32)
 }
 
+#[cfg(test)]
 fn disable_for_this_section(
     rule_name: &str,
     section_offset: u32,
     section_source_text: &str,
+) -> Fix {
+    disable_for_this_section_with_respect(rule_name, section_offset, section_source_text, true)
+}
+
+fn disable_for_this_section_with_respect(
+    rule_name: &str,
+    section_offset: u32,
+    section_source_text: &str,
+    respect_eslint_disable_directives: bool,
 ) -> Fix {
     let bytes = section_source_text.as_bytes();
     let message = format!("Disable {rule_name} for this whole file");
@@ -245,9 +325,12 @@ fn disable_for_this_section(
     let (content_prefix, insert_offset) = get_section_insert_position(section_offset, 0, bytes);
 
     // Reuse an existing section disable comment when present by appending the rule.
-    if let Some(existing_comment_end) =
-        get_existing_disable_comment_end(insert_offset, DisableDirective::Section, bytes)
-    {
+    if let Some(existing_comment_end) = get_existing_disable_comment_end(
+        insert_offset,
+        DisableDirective::Section,
+        bytes,
+        respect_eslint_disable_directives,
+    ) {
         return Fix {
             message: Some(Cow::Owned(message)),
             content: Cow::Owned(format!(" {rule_name}")),
@@ -315,7 +398,11 @@ fn get_section_insert_position(
 }
 
 #[expect(clippy::cast_possible_truncation)]
-fn get_inline_disable_line_comment_end(error_offset: u32, bytes: &[u8]) -> Option<u32> {
+fn get_inline_disable_line_comment_end(
+    error_offset: u32,
+    bytes: &[u8],
+    respect_eslint_disable_directives: bool,
+) -> Option<u32> {
     let error_offset = error_offset as usize;
     if error_offset > bytes.len() {
         return None;
@@ -329,14 +416,20 @@ fn get_inline_disable_line_comment_end(error_offset: u32, bytes: &[u8]) -> Optio
     let comment_start = bytes[error_offset..line_end].windows(2).position(|w| w == b"//")?;
     let comment_offset = error_offset + comment_start;
 
-    get_disable_comment_end_at_comment_start(comment_offset, DisableDirective::Line, bytes)
-        .map(|offset| offset as u32)
+    get_disable_comment_end_at_comment_start(
+        comment_offset,
+        DisableDirective::Line,
+        bytes,
+        respect_eslint_disable_directives,
+    )
+    .map(|offset| offset as u32)
 }
 
 fn get_disable_comment_end_at_line_start(
     line_start: usize,
     directive: DisableDirective,
     bytes: &[u8],
+    respect_eslint_disable_directives: bool,
 ) -> Option<usize> {
     if line_start > bytes.len() {
         return None;
@@ -346,7 +439,12 @@ fn get_disable_comment_end_at_line_start(
         return None;
     }
 
-    get_disable_comment_end_at_comment_start(line_start, directive, bytes)
+    get_disable_comment_end_at_comment_start(
+        line_start,
+        directive,
+        bytes,
+        respect_eslint_disable_directives,
+    )
 }
 
 #[expect(clippy::cast_possible_truncation)]
@@ -354,6 +452,7 @@ fn get_existing_disable_comment_end(
     insert_offset: u32,
     directive: DisableDirective,
     bytes: &[u8],
+    respect_eslint_disable_directives: bool,
 ) -> Option<u32> {
     let insert_offset = insert_offset as usize;
 
@@ -362,7 +461,12 @@ fn get_existing_disable_comment_end(
     }
 
     // First check the insertion line itself (e.g. section offsets that already point at a comment).
-    if let Some(line_end) = get_disable_comment_end_at_line_start(insert_offset, directive, bytes) {
+    if let Some(line_end) = get_disable_comment_end_at_line_start(
+        insert_offset,
+        directive,
+        bytes,
+        respect_eslint_disable_directives,
+    ) {
         return Some(line_end as u32);
     }
 
@@ -390,14 +494,20 @@ fn get_existing_disable_comment_end(
         line_start -= 1;
     }
 
-    get_disable_comment_end_at_line_start(line_start, directive, bytes)
-        .map(|line_end| line_end as u32)
+    get_disable_comment_end_at_line_start(
+        line_start,
+        directive,
+        bytes,
+        respect_eslint_disable_directives,
+    )
+    .map(|line_end| line_end as u32)
 }
 
 fn get_disable_comment_end_at_comment_start(
     comment_start: usize,
     directive: DisableDirective,
     bytes: &[u8],
+    respect_eslint_disable_directives: bool,
 ) -> Option<usize> {
     if comment_start > bytes.len() {
         return None;
@@ -429,7 +539,9 @@ fn get_disable_comment_end_at_comment_start(
         DisableDirective::NextLine => {
             if line[idx..].starts_with(b"oxlint-disable-next-line") {
                 Some(b"oxlint-disable-next-line".len())
-            } else if line[idx..].starts_with(b"eslint-disable-next-line") {
+            } else if respect_eslint_disable_directives
+                && line[idx..].starts_with(b"eslint-disable-next-line")
+            {
                 Some(b"eslint-disable-next-line".len())
             } else {
                 None
@@ -438,7 +550,9 @@ fn get_disable_comment_end_at_comment_start(
         DisableDirective::Line => {
             if line[idx..].starts_with(b"oxlint-disable-line") {
                 Some(b"oxlint-disable-line".len())
-            } else if line[idx..].starts_with(b"eslint-disable-line") {
+            } else if respect_eslint_disable_directives
+                && line[idx..].starts_with(b"eslint-disable-line")
+            {
                 Some(b"eslint-disable-line".len())
             } else {
                 None
@@ -447,7 +561,9 @@ fn get_disable_comment_end_at_comment_start(
         DisableDirective::Section => {
             if line[idx..].starts_with(b"oxlint-disable") {
                 Some(b"oxlint-disable".len())
-            } else if line[idx..].starts_with(b"eslint-disable") {
+            } else if respect_eslint_disable_directives
+                && line[idx..].starts_with(b"eslint-disable")
+            {
                 Some(b"eslint-disable".len())
             } else {
                 None
@@ -1016,16 +1132,21 @@ mod tests {
     }
 
     #[test]
-    fn disable_for_this_line_keeps_js_comment_for_jsx_attribute() {
+    fn disable_for_this_line_uses_js_comment_inside_multiline_jsx_attribute_expression() {
         let source = "const node = (\n  <div\n    value={foo}\n  />\n);";
         let error_offset = source.find("foo").unwrap() as u32;
-        let line_start = source.find("    value").unwrap() as u32;
 
-        let fix =
-            super::disable_for_this_line_with_jsx_child("no-undef", error_offset, 0, source, None);
+        let fix = super::disable_for_this_line_with_context(
+            "no-undef",
+            error_offset,
+            0,
+            source,
+            super::IgnoreFixContext::JsxExpression(error_offset),
+            true,
+        );
 
-        assert_eq!(fix.content, "    // oxlint-disable-next-line no-undef\n");
-        assert_eq!(fix.span, Span::empty(line_start));
+        assert_eq!(fix.content, "\n      // oxlint-disable-next-line no-undef\n      ");
+        assert_eq!(fix.span, Span::empty(error_offset));
     }
 
     #[test]
@@ -1046,6 +1167,49 @@ mod tests {
 
         assert_eq!(fix.content, " jsx-a11y/control-has-associated-label");
         assert_eq!(fix.span, Span::empty(insert_offset as u32));
+    }
+
+    #[test]
+    fn disable_for_this_line_merges_respected_eslint_jsx_comment() {
+        let existing = "{/* eslint-disable-next-line no-alert */}";
+        let source = format!("const node = <div>\n  {existing}\n  <button />\n</div>;");
+        let child_offset = source.find("<button").unwrap() as u32;
+        let insert_offset = source.find(existing).unwrap() + existing.find(" */}").unwrap();
+
+        let fix = super::disable_for_this_line_with_context(
+            "jsx-a11y/control-has-associated-label",
+            child_offset,
+            0,
+            &source,
+            super::IgnoreFixContext::JsxChild(child_offset),
+            true,
+        );
+
+        assert_eq!(fix.content, " jsx-a11y/control-has-associated-label");
+        assert_eq!(fix.span, Span::empty(insert_offset as u32));
+    }
+
+    #[test]
+    fn disable_for_this_line_does_not_merge_ignored_eslint_jsx_comment() {
+        let existing = "{/* eslint-disable-next-line no-alert */}";
+        let source = format!("const node = <div>\n  {existing}\n  <button />\n</div>;");
+        let child_offset = source.find("<button").unwrap() as u32;
+        let line_start = source.find("  <button").unwrap() as u32;
+
+        let fix = super::disable_for_this_line_with_context(
+            "jsx-a11y/control-has-associated-label",
+            child_offset,
+            0,
+            &source,
+            super::IgnoreFixContext::JsxChild(child_offset),
+            false,
+        );
+
+        assert_eq!(
+            fix.content,
+            "  {/* oxlint-disable-next-line jsx-a11y/control-has-associated-label */}\n"
+        );
+        assert_eq!(fix.span, Span::empty(line_start));
     }
 
     #[test]
