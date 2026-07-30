@@ -329,7 +329,7 @@ impl<'a> PeepholeOptimizations {
                         break 'jump_loop;
                     };
                     if let Some(alternate) = &if_stmt.alternate {
-                        if Self::jump_stmts_look_the_same(stmts.last().unwrap(), &alternate) {
+                        if Self::jump_stmts_look_the_same(stmts.last().unwrap(), alternate) {
                             let Statement::IfStatement(prev_if) = &mut stmts[prev_index] else {
                                 unreachable!()
                             };
