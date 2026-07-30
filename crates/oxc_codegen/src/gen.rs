@@ -11,7 +11,9 @@ use oxc_syntax::{
 
 use crate::{
     Codegen, Context, Operator, Quote,
-    binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
+    binary_expr_visitor::{
+        BinaryExpressionVisitor, Binaryish, BinaryishOperator, expression_starts_with_regexp,
+    },
     cjs_module_lexer,
     comment::AnnotationKind,
 };
@@ -1584,9 +1586,12 @@ impl GenExpr for CallExpression<'_> {
 
 impl Gen for Argument<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
-            Self::SpreadElement(elem) => elem.print(p, ctx),
-            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
+        if let Self::SpreadElement(elem) = self {
+            elem.print(p, ctx);
+        } else {
+            let expression = self.to_expression();
+            let precedence = comma_list_expression_precedence(p, expression);
+            expression.print_expr(p, precedence, Context::empty());
         }
     }
 }
@@ -1596,8 +1601,39 @@ impl Gen for ArrayExpressionElement<'_> {
         match self {
             Self::SpreadElement(elem) => elem.print(p, ctx),
             Self::Elision(_span) => {}
-            _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
+            _ => {
+                let expression = self.to_expression();
+                let precedence = comma_list_expression_precedence(p, expression);
+                expression.print_expr(p, precedence, Context::empty());
+            }
         }
+    }
+}
+
+fn comma_list_expression_precedence(p: &Codegen, expression: &Expression) -> Precedence {
+    if p.is_typescript && expression_starts_with_ts_type_argument_closer(expression) {
+        Precedence::Compare
+    } else {
+        Precedence::Comma
+    }
+}
+
+fn expression_starts_with_ts_type_argument_closer(expression: &Expression) -> bool {
+    match expression.without_parentheses() {
+        Expression::BinaryExpression(binary) => {
+            if binary.operator == BinaryOperator::GreaterThan {
+                expression_starts_with_regexp(&binary.right)
+                    || matches!(binary.right.without_parentheses(), Expression::TemplateLiteral(_))
+            } else if binary.operator.precedence() < Precedence::Compare {
+                expression_starts_with_ts_type_argument_closer(&binary.left)
+            } else {
+                false
+            }
+        }
+        Expression::LogicalExpression(logical) => {
+            expression_starts_with_ts_type_argument_closer(&logical.left)
+        }
+        _ => false,
     }
 }
 
@@ -1605,7 +1641,8 @@ impl Gen for SpreadElement<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ellipsis();
-        self.argument.print_expr(p, Precedence::Comma, Context::empty());
+        let precedence = comma_list_expression_precedence(p, &self.argument);
+        self.argument.print_expr(p, precedence, Context::empty());
     }
 }
 
@@ -2236,7 +2273,28 @@ impl Gen for AssignmentTargetRest<'_> {
 impl GenExpr for SequenceExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
-            p.print_expressions(&self.expressions, Precedence::Lowest, ctx.and_forbid_call(false));
+            // In TypeScript, flattening `x, (a < b), c > /x/` creates the instantiation
+            // expression `a<b, c>` followed by division. Keep preceding sequence items grouped
+            // so a nested `<` cannot pair with the closing comparison.
+            let last_closing_comparison = p
+                .is_typescript
+                .then(|| {
+                    self.expressions
+                        .iter()
+                        .rposition(expression_starts_with_ts_type_argument_closer)
+                })
+                .flatten();
+            p.print_expressions(
+                &self.expressions,
+                |index, _| {
+                    if last_closing_comparison.is_some_and(|closing| index < closing) {
+                        Precedence::Compare
+                    } else {
+                        Precedence::Lowest
+                    }
+                },
+                ctx.and_forbid_call(false),
+            );
         });
     }
 }

@@ -12,7 +12,7 @@ use oxc_syntax::{
 
 use crate::{Codegen, Context, Operator, cjs_module_lexer, r#gen::GenExpr};
 
-fn expression_starts_with_regexp(expression: &Expression) -> bool {
+pub fn expression_starts_with_regexp(expression: &Expression) -> bool {
     match expression.without_parentheses() {
         Expression::RegExpLiteral(_) => true,
         Expression::BinaryExpression(expression) => expression_starts_with_regexp(&expression.left),
@@ -262,10 +262,20 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 if operator.is_compare()
                     && p.is_typescript
                     && matches!(e.left(), Expression::BinaryExpression(left) if left.operator.is_compare())
-                    && expression_starts_with_regexp(e.right()) =>
+                    && (expression_starts_with_regexp(e.right())
+                        || matches!(e.right(), Expression::TemplateLiteral(_))) =>
             {
                 // TypeScript parses `a < b > / x` as an instantiation expression followed by
                 // division. Preserve `(a < b) > /x/` so `/x/` remains a regexp literal.
+                self.left_precedence = Precedence::Compare;
+            }
+            BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd)
+                if p.is_typescript
+                    && matches!(e.left(), Expression::BinaryExpression(left) if left.operator == BinaryOperator::LessThan)
+                    && matches!(e.right(), Expression::BinaryExpression(right) if right.operator == BinaryOperator::GreaterThan && expression_starts_with_regexp(&right.right)) =>
+            {
+                // TypeScript treats `|` and `&` as type separators inside `a<T | U>` and
+                // `a<T & U>`. Keep the opening comparison grouped so it cannot become type args.
                 self.left_precedence = Precedence::Compare;
             }
 

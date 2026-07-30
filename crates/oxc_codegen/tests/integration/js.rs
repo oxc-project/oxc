@@ -465,6 +465,10 @@ fn equality() {
         "for (value of (this < \"hello\") > (/a/ / value?.value));",
         "for (value of this < \"hello\" > /a/ / value?.value);\n",
     );
+    test_unambiguous("(\"hello\" < false), null > /a/;", "\"hello\" < false, null > /a/;\n");
+    test_unambiguous("0, (\"hello\" < false), null > /a/;", "0, \"hello\" < false, null > /a/;\n");
+    test_unambiguous("x((true < 0n), c > /a/);", "x(true < 0n, c > /a/);\n");
+    test_unambiguous("(c < \"key\") & 618 > /a/;", "c < \"key\" & 618 > /a/;\n");
     test_minify("a == b != c === d !== e", "a==b!=c===d!==e;");
     test_minify("a == (b != (c === (d !== e)))", "a==(b!=(c===(d!==e)));");
     test_minify("(((a == b) != c) === d) !== e", "a==b!=c===d!==e;");
