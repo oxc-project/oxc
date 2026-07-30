@@ -1032,6 +1032,39 @@ impl Statement<'_> {
         }
     }
 
+    /// Returns `true` if this statement's trailing body chain ends in an `if`
+    /// without an `else`.
+    ///
+    /// Printing such a statement as an `if` consequent requires wrapping it in
+    /// a block: an `else` following it in the flat text would otherwise bind to
+    /// the trailing `if` instead of the outer one.
+    ///
+    /// Ported from [esbuild](https://github.com/evanw/esbuild/blob/e6a8169c3a574f4c67d4cdd5f31a938b53eb7421/internal/js_printer/js_printer.go#L3444).
+    ///
+    /// ## Example
+    ///
+    /// - `if (a) b;` => `true`
+    /// - `if (a) b; else c;` => `false`
+    /// - `while (a) if (b) c;` => `true`
+    pub fn ends_with_dangling_if(&self) -> bool {
+        let mut current = self;
+        loop {
+            current = match current {
+                Statement::IfStatement(if_stmt) => {
+                    let Some(alternate) = &if_stmt.alternate else { return true };
+                    alternate
+                }
+                Statement::ForStatement(for_stmt) => &for_stmt.body,
+                Statement::ForOfStatement(for_of_stmt) => &for_of_stmt.body,
+                Statement::ForInStatement(for_in_stmt) => &for_in_stmt.body,
+                Statement::WhileStatement(while_stmt) => &while_stmt.body,
+                Statement::WithStatement(with_stmt) => &with_stmt.body,
+                Statement::LabeledStatement(labeled_stmt) => &labeled_stmt.body,
+                _ => return false,
+            }
+        }
+    }
+
     /// Returns `true` if this statement uses iteration like `do`, `for`, or `while`.
     ///
     /// ## Example
