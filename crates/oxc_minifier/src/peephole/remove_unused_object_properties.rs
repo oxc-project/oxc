@@ -166,10 +166,9 @@ impl<'a> PeepholeOptimizations {
 }
 
 struct UnusedObjectPropertyPruner<'ctx, 'a> {
-    ctx: &'ctx TraverseCtx<'a>,
+    ctx: &'ctx mut TraverseCtx<'a>,
     used_properties: &'ctx UsedProperties<'a>,
     escaped_or_unknown_symbols: &'ctx FxHashSet<SymbolId>,
-    changed: bool,
 }
 
 impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
@@ -214,17 +213,18 @@ impl<'a> UnusedObjectPropertyPruner<'_, 'a> {
             return;
         }
 
-        let old_len = object_expr.properties.len();
-        object_expr.properties.retain(|property| match property {
-            ObjectPropertyKind::SpreadProperty(_) => true,
-            ObjectPropertyKind::ObjectProperty(property) => {
-                self.should_keep_property(property, used_properties)
+        object_expr.properties.retain(|property| {
+            let keep = match property {
+                ObjectPropertyKind::SpreadProperty(_) => true,
+                ObjectPropertyKind::ObjectProperty(property) => {
+                    self.should_keep_property(property, used_properties)
+                }
+            };
+            if !keep {
+                self.ctx.drop_object_property_kind(property);
             }
+            keep
         });
-
-        if object_expr.properties.len() != old_len {
-            self.changed = true;
-        }
     }
 
     fn should_keep_property(
@@ -278,13 +278,7 @@ impl<'a> PeepholeOptimizations {
             ctx,
             used_properties: &usage.used_properties,
             escaped_or_unknown_symbols: &usage.escaped_or_unknown_symbols,
-            changed: false,
         };
         pruner.visit_program(program);
-        let changed = pruner.changed;
-
-        if changed {
-            ctx.state.record_ast_change();
-        }
     }
 }

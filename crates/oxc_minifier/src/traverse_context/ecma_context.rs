@@ -530,6 +530,14 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.record_ast_change();
     }
 
+    /// Mark an object property subtree as about to be dropped. Same contract as
+    /// `drop_expression`.
+    #[inline]
+    pub fn drop_object_property_kind(&mut self, property: &ObjectPropertyKind<'a>) {
+        self.dropped_subtree_collector().visit_object_property_kind(property);
+        self.state.record_ast_change();
+    }
+
     /// Mark a variable declarator as about to be dropped. Walks the whole
     /// declarator — binding pattern, TS type annotation (which can contain
     /// references, e.g. computed keys in a type literal), and init if still
