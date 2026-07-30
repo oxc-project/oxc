@@ -927,6 +927,9 @@ fn test_fold_bit_shifts() {
 #[test]
 fn test_string_add() {
     fold("x = 'a' + 'bc'", "x = 'abc'");
+    // Lone surrogates are stored escaped in the string value; folding would
+    // materialize the escape encoding as literal text.
+    fold_same("x = '\\ud800' + 'y'");
     fold("x = 'a' + 5", "x = 'a5'");
     fold("x = 5 + 'a'", "x = '5a'");
     fold("x = 'a' + 5n", "x = 'a5'");
