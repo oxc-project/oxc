@@ -758,9 +758,27 @@ fn keep_calls_before_var_function_assignment() {
         "f(); var f = () => {};",
     );
 
-    // Order-proven calls keep optimizing: the declarator precedes them.
+    // A conditionally-initialized `var` is VISITED on every traversal and
+    // assigns on none, so a value entry proves nothing about the binding. Here
+    // `test(unknownGlobal)` with a falsy argument calls `f` while it is still
+    // `undefined`.
+    test(
+        "function test(flag) { if (flag) var f = () => { const P = {}; ({ ...P }); ({ ...P }); }; f(); } test(unknownGlobal);",
+        "function test(flag) { if (flag) var f = () => {}; f(); } test(unknownGlobal);",
+    );
+
+    // Traversal reaches the declarator before `g`'s body, but `g` runs first.
+    // The call must be in the same function as the declarator.
+    test(
+        "g(); var f = () => {}; function g() { f(); } var unused = 1;",
+        "g(); var f = () => {}; function g() { f(); }",
+    );
+
+    // Order-proven calls keep optimizing: the declarator precedes them, in the
+    // same function, unconditionally.
     test("var f = () => {}; f(); f();", "");
     test("const g = () => {}; g();", "");
+    test("function h() { var f = () => {}; f(); } h();", "");
 }
 
 #[test]

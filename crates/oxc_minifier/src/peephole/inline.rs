@@ -49,7 +49,14 @@ impl<'a> PeepholeOptimizations {
         } else {
             FreshValueKind::None
         };
-        ctx.init_value(symbol_id, value, kind, falsy_init, decl.init.is_none());
+        ctx.init_value(
+            symbol_id,
+            value,
+            kind,
+            falsy_init,
+            decl.init.is_none(),
+            declaration_in_body_statement_list,
+        );
     }
 
     /// A `ConstantValue` that coerces to `false` (`false`, `0`/`-0`/`NaN`, `""`,
@@ -243,7 +250,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Some(id) = id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        ctx.init_value(symbol_id, None, FreshValueKind::Function, false, false);
+        ctx.init_value(symbol_id, None, FreshValueKind::Function, false, false, true);
     }
 
     /// Initialize symbol value for class declarations.
@@ -257,7 +264,7 @@ impl<'a> PeepholeOptimizations {
         } else {
             FreshValueKind::Class
         };
-        ctx.init_value(symbol_id, None, kind, false, false);
+        ctx.init_value(symbol_id, None, kind, false, false, true);
     }
 
     fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {

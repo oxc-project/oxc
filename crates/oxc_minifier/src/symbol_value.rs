@@ -102,6 +102,18 @@ pub struct SymbolValue<'a> {
     /// object/array/function/class literals. See `FreshValueKind`.
     pub kind: FreshValueKind,
 
+    /// Whether a `var` declarator is a direct item of a function body's or the
+    /// Program's statement list, rather than nested in a conditional, a loop,
+    /// or another statement position.
+    ///
+    /// Only meaningful for `var`: a value entry proves the declarator was
+    /// *visited*, never that its initializer *ran*, and `if (flag) var f = …`
+    /// is visited on every traversal while assigning on none. Recorded here
+    /// because the consumer (`PeepholeOptimizations::summary_order_proven`)
+    /// sees a `SymbolId`, not the declarator. Other producers pass `true`; they
+    /// classify bindings the `var` arm never reaches.
+    pub declarator_in_body_statement_list: bool,
+
     /// The symbol is provably falsy in **boolean context** but not necessarily
     /// foldable in value context. Set for a write-once binding with a falsy
     /// constant initializer whose `initialized_constant` was withheld (a hoisted

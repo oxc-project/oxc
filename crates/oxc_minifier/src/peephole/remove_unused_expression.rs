@@ -687,27 +687,61 @@ impl<'a> PeepholeOptimizations {
     /// binding holds `undefined` until the assignment runs, and a call reached
     /// first throws `TypeError`, which erasing the call would silently drop.
     ///
-    /// So a `var` binding additionally needs proof that its declarator already
-    /// ran. Reuse the traversal-order proof: `SymbolState::values` is per-pass
-    /// scratch, reset at pass start and written by `exit_variable_declarator`,
-    /// so an entry existing when this call site is visited proves the
-    /// declarator precedes it in this pass's traversal — with a carve-out for
-    /// statement-list re-processing, where the list also holds entries for
-    /// declarators positioned later.
-    ///
     /// `let` / `const` need no proof: a call before their declarator is a TDZ
     /// `ReferenceError`, inside the minifier's documented `No TDZ Violation`
-    /// assumption.
+    /// assumption. A `var` binding needs all three of the following, because
+    /// each closes a different way the assignment can fail to have run.
     ///
-    /// Conservative case: a call inside a function body traversed before the
-    /// declarator loses the optimization even when the body only runs later
-    /// (`function g() { f(); } var f = () => {}; g();`). Proving that needs
-    /// reachability, not traversal order.
+    /// 1. A value entry exists. `SymbolState::values` is per-pass scratch
+    ///    written by `exit_variable_declarator`, so an entry proves the
+    ///    declarator precedes this call in the pass's traversal. The
+    ///    `reprocessing_statements` carve-out applies: re-processing a
+    ///    statement list also surfaces entries for declarators positioned
+    ///    later.
+    /// 2. The declarator is a direct body statement-list item
+    ///    (`SymbolValue::declarator_in_body_statement_list`). Traversal order
+    ///    is not execution order: `if (flag) var f = () => {}` is visited every
+    ///    pass and assigns on none, so an entry alone says nothing about
+    ///    whether the binding holds the function.
+    /// 3. The call is in the same function as the declarator. Traversal reaches
+    ///    a declarator before a later function body, but that body can run
+    ///    first — `g(); var f = () => {}; function g() { f(); }` calls `f`
+    ///    while it is still `undefined`.
+    ///
+    /// Conservative cases: a call in a nested function loses the optimization
+    /// even when it only runs later, and a conditionally-initialized `var`
+    /// loses it outright. Proving either needs reachability, not traversal
+    /// order.
     pub(super) fn summary_order_proven(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
         if !ctx.scoping().symbol_flags(symbol_id).contains(SymbolFlags::FunctionScopedVariable) {
             return true;
         }
-        !ctx.state.reprocessing_statements && ctx.state.symbols.value(symbol_id).is_some()
+        if ctx.state.reprocessing_statements {
+            return false;
+        }
+        let Some(value) = ctx.state.symbols.value(symbol_id) else { return false };
+        if !value.declarator_in_body_statement_list {
+            return false;
+        }
+        // A `var`'s declaring scope IS its enclosing function body or the
+        // Program, so comparing against the call site's own nearest such scope
+        // answers "same function".
+        let scoping = ctx.scoping();
+        Self::nearest_function_or_program_scope(ctx.current_scope_id(), ctx)
+            == scoping.symbol_scope_id(symbol_id)
+    }
+
+    /// The nearest enclosing function body or Program scope, starting from
+    /// `scope_id` itself. Class static blocks and other non-function var scopes
+    /// are deliberately walked past: the comparison then fails and the caller
+    /// bails, which is the conservative direction.
+    fn nearest_function_or_program_scope(scope_id: ScopeId, ctx: &TraverseCtx<'a>) -> ScopeId {
+        let scoping = ctx.scoping();
+        let root_scope_id = scoping.root_scope_id();
+        scoping
+            .scope_ancestors(scope_id)
+            .find(|&id| id == root_scope_id || scoping.scope_flags(id).is_function())
+            .unwrap_or(root_scope_id)
     }
 
     fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
