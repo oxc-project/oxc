@@ -1242,7 +1242,7 @@ export interface DummyRuleMap {
   "no-useless-return"?: RuleNoConfig;
   "no-var"?: RuleNoConfig;
   "no-void"?: RuleNoConfig | [AllowWarnDeny, NoVoid];
-  "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfigJson];
+  "no-warning-comments"?: RuleNoConfig | [AllowWarnDeny, NoWarningCommentsConfig];
   "no-with"?: RuleNoConfig;
   "node/callback-return"?: RuleNoConfig | [AllowWarnDeny, CallbackReturn];
   "node/exports-style"?:
@@ -4166,9 +4166,20 @@ export interface NoVoid {
    */
   allowAsStatement?: boolean;
 }
-export interface NoWarningCommentsConfigJson {
+export interface NoWarningCommentsConfig {
+  /**
+   * An array of characters to ignore at the start of comments when `location` is `"start"`.
+   *
+   * Useful for ignoring common comment decorations like `*` in JSDoc-style comments.
+   */
   decoration?: string[];
+  /**
+   * Where to check for the terms.
+   */
   location?: Location;
+  /**
+   * An array of terms to match. The matching is case-insensitive.
+   */
   terms?: string[];
 }
 export interface ExportsStyleOptions {
