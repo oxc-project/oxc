@@ -14,7 +14,7 @@ use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
     ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileResult, LoadPluginResult,
+    LintFileOutput, LintFileResult, LoadPluginResult,
 };
 
 use crate::{
@@ -142,6 +142,7 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
 #[derive(Clone, Debug, Deserialize)]
 pub enum LintFileReturnValue {
     Success(Vec<LintFileResult>),
+    SuccessWithTimings(LintFileOutput),
     Failure(String),
 }
 
@@ -162,6 +163,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
               settings_json: String,
               globals_json: String,
               workspace_uri: Option<String>,
+              timings: bool,
               allocator: &Allocator| {
             let (tx, rx) = channel();
 
@@ -184,6 +186,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     settings_json,
                     globals_json,
                     workspace_uri,
+                    timings,
                 )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
@@ -199,12 +202,15 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             if status == Status::Ok {
                 match rx.recv() {
                     // `lintFile` returns `null` if no diagnostics reported, and no error occurred
-                    Ok(Ok(None)) => Ok(Vec::new()),
+                    Ok(Ok(None)) => Ok(LintFileOutput::default()),
                     // `lintFile` returns JSON string if diagnostics reported, or an error occurred
                     Ok(Ok(Some(json))) => {
                         match serde_json::from_str(&json) {
                             // Diagnostics reported
-                            Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                            Ok(LintFileReturnValue::Success(diagnostics)) => {
+                                Ok(LintFileOutput { diagnostics, timings: Vec::new() })
+                            }
+                            Ok(LintFileReturnValue::SuccessWithTimings(output)) => Ok(output),
                             // Error occurred on JS side
                             Ok(LintFileReturnValue::Failure(err)) => Err(err),
                             // JSON deserialization failure.
@@ -365,4 +371,26 @@ fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWork
             Err(format!("Failed to schedule `destroyWorkspace` callback: {status:?}"))
         }
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::LintFileReturnValue;
+
+    #[test]
+    fn deserialize_lint_file_output_with_timings() {
+        let result = serde_json::from_str::<LintFileReturnValue>(
+            r#"{"SuccessWithTimings":{"diagnostics":[],"timings":[{"ruleIndex":2,"duration":123456,"calls":7}]}}"#,
+        )
+        .unwrap();
+
+        let LintFileReturnValue::SuccessWithTimings(output) = result else {
+            panic!("expected timing-enabled success");
+        };
+        assert!(output.diagnostics.is_empty());
+        assert_eq!(output.timings.len(), 1);
+        assert_eq!(output.timings[0].rule_index, 2);
+        assert_eq!(output.timings[0].duration, 123_456);
+        assert_eq!(output.timings[0].calls, 7);
+    }
 }
