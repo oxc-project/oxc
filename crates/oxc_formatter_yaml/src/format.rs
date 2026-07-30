@@ -5,10 +5,10 @@ use oxc_formatter_core::{
     builders::{hard_line_break, text},
     write,
 };
-use oxc_span::Span;
 use oxc_yaml_parser::{Parser, ast::Root};
 
 use crate::{
+    comments::SourceComment,
     context::YamlFormatContext,
     options::YamlFormatOptions,
     print::{self, YamlFormatter, to_span},
@@ -81,12 +81,11 @@ pub fn format_to_ir<'a>(
 fn parse_root<'a>(
     allocator: &'a Allocator,
     source_text: &str,
-) -> Result<(&'a Root<'a>, &'a str, &'a [Span]), OxcDiagnostic> {
+) -> Result<(&'a Root<'a>, &'a str, &'a [SourceComment]), OxcDiagnostic> {
     let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
-    // NOTE: Normalize line endings BEFORE parsing like Prettier, unlike other `oxc_formatter_xxx`.
+    // NOTE: Normalize line endings BEFORE parsing, unlike other `oxc_formatter_xxx`.
     // For YAML formatter, the printer slices verbatim text from the source in many places.
-    // And a raw `\r` reaching the core `text()` builder panics.
-    // Spans stay consistent because parse and print both use the normalized copy.
+    // YAML is also unusual in that line breaks and whitespace have meaning.
     let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
     let source: &'a str = allocator.alloc_str(&source_text);
 
@@ -97,9 +96,13 @@ fn parse_root<'a>(
 
     let root = allocator.alloc(root);
 
-    let comments: &'a [Span] =
-        ArenaVec::from_iter_in(root.comments.iter().map(|c| to_span(c.span)), &allocator)
-            .into_arena_slice();
+    let comments: &'a [SourceComment] = ArenaVec::from_iter_in(
+        root.comments
+            .iter()
+            .map(|c| SourceComment { span: to_span(c.span), own_line_column: c.own_line_column }),
+        &allocator,
+    )
+    .into_arena_slice();
 
     Ok((root, source, comments))
 }

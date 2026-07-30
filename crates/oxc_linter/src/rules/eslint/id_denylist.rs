@@ -129,7 +129,7 @@ declare_oxc_lint!(
     eslint,
     style,
     config = IdDenylist,
-    version = "next",
+    version = "1.76.0",
     short_description = "Disallow specified identifiers.",
 );
 

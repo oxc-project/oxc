@@ -4,7 +4,7 @@
 use std::mem;
 
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::static_ident;
 use oxc_syntax::{reference::ReferenceId, symbol::SymbolId};
@@ -1830,7 +1830,7 @@ impl<'a> ClassProperties<'a> {
             ctx,
         );
         let arguments = ArenaVec::from_value_in(Argument::from(context), ctx);
-        Expression::new_call_expression(field_expr.span, callee, NONE, arguments, false, ctx)
+        Expression::new_call_expression(field_expr.span, callee, None, arguments, false, ctx)
     }
 
     /// Transform private field in assignment pattern.
@@ -1929,7 +1929,7 @@ impl<'a> ClassProperties<'a> {
         };
         let callee = create_member_callee(callee, static_ident!("has"), span, ctx);
         let argument = Argument::from(self.create_check_in_rhs(right, ctx));
-        Expression::new_call_expression(span, callee, NONE, [argument], false, ctx)
+        Expression::new_call_expression(span, callee, None, [argument], false, ctx)
     }
 
     /// Duplicate object to be used in get/set pair.
@@ -2215,7 +2215,7 @@ impl<'a> ClassProperties<'a> {
                 ArenaVec::from_array_in([Argument::from(object), Argument::from(value)], ctx);
             let callee = create_member_callee(prop_ident, static_ident!("call"), span, ctx);
             // `_prop.call(_assertClassBrand(Class, object), value)`
-            Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+            Expression::new_call_expression(span, callee, None, arguments, false, ctx)
         } else {
             // `_privateFieldSet(_prop, object, value)`
             self.create_private_field_set(prop_ident, object, value, ctx)

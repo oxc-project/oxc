@@ -1,6 +1,6 @@
 use crate::TraverseCtx;
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
@@ -284,7 +284,7 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     );
                     return Some(Expression::new_call_expression(
-                        expr.span, callee, NONE, args, false, ctx,
+                        expr.span, callee, None, args, false, ctx,
                     ));
                 }
                 // `a ? b(c) : b(e)` -> `b(a ? c : e)`
@@ -308,7 +308,7 @@ impl<'a> PeepholeOptimizations {
                     );
                     args[0] = Argument::from(cond_expr);
                     return Some(Expression::new_call_expression(
-                        expr.span, callee, NONE, args, false, ctx,
+                        expr.span, callee, None, args, false, ctx,
                     ));
                 }
             }

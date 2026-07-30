@@ -33,7 +33,7 @@
 use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
 use oxc_allocator::ArenaVec;
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
 use oxc_str::{Str, static_ident};
@@ -164,7 +164,7 @@ impl<'a> ModuleImportsStore<'a> {
             Some(specifiers),
             StringLiteral::new(SPAN, source, None, ctx),
             None,
-            NONE,
+            None,
             ImportOrExportKind::Value,
             ctx,
         )
@@ -191,8 +191,8 @@ impl<'a> ModuleImportsStore<'a> {
         let id = local.create_binding_pattern(ctx);
         let var_kind = VariableDeclarationKind::Var;
         let decl = {
-            let init = Expression::new_call_expression(SPAN, callee, NONE, args, false, ctx);
-            let decl = VariableDeclarator::new(SPAN, var_kind, id, NONE, Some(init), false, ctx);
+            let init = Expression::new_call_expression(SPAN, callee, None, args, false, ctx);
+            let decl = VariableDeclarator::new(SPAN, var_kind, id, None, Some(init), false, ctx);
             [decl]
         };
         Statement::new_variable_declaration(SPAN, var_kind, decl, false, ctx)

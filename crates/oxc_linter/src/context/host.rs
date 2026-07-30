@@ -169,6 +169,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// If true, the linter will create "ignore this section / line" fixes for all diagnostics
+    with_ignore_fixes: bool,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -207,6 +209,7 @@ impl<'a> ContextHost<'a> {
             file_extension,
             config,
             frameworks: options.framework_hints,
+            with_ignore_fixes: options.with_ignore_fixes,
         }
         .sniff_for_frameworks()
     }
@@ -311,6 +314,10 @@ impl<'a> ContextHost<'a> {
     /// by any rule to report issues.
     #[inline]
     pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
+        if self.with_ignore_fixes {
+            let source_text = self.semantic().source_text();
+            diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
+        }
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }
@@ -319,6 +326,12 @@ impl<'a> ContextHost<'a> {
 
     // Append a list of diagnostics. Only used in report_unused_directives.
     fn append_diagnostics(&self, mut diagnostics: Vec<Message>) {
+        if self.with_ignore_fixes {
+            let source_text = self.semantic().source_text();
+            for diagnostic in &mut diagnostics {
+                diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
+            }
+        }
         if self.current_sub_host().source_text_offset != 0 {
             let offset = self.current_sub_host().source_text_offset;
             for diagnostic in &mut diagnostics {

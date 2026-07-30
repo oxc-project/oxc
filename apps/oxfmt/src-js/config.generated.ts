@@ -8,6 +8,8 @@ export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
+export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
+export type LineWrappingStyleConfig = "greedy" | "balance";
 export type ObjectWrapConfig = "preserve" | "collapse";
 /**
  * A set of glob patterns.
@@ -295,7 +297,7 @@ export interface JsdocConfig {
    *
    * - Default: `"singleLine"`
    */
-  commentLineStrategy?: string;
+  commentLineStrategy?: CommentLineStrategyConfig;
   /**
    * Emit `@description` tag instead of inline description.
    *
@@ -322,7 +324,7 @@ export interface JsdocConfig {
    *
    * - Default: `"greedy"`
    */
-  lineWrappingStyle?: string;
+  lineWrappingStyle?: LineWrappingStyleConfig;
   /**
    * Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
    *

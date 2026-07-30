@@ -1,8 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
-use oxc_ast::{
-    ast::*,
-    builder::{GetAstBuilder, NONE},
-};
+use oxc_ast::{ast::*, builder::GetAstBuilder};
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
@@ -81,7 +78,7 @@ impl<'a> KeepVar<'a> {
                         )
                     },
                 );
-                VariableDeclarator::new(span, kind, id, NONE, None, false, ast)
+                VariableDeclarator::new(span, kind, id, None, None, false, ast)
             }),
             ast,
         );

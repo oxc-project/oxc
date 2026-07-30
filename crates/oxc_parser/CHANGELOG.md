@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- 4d6f623 parser: Emit error for type args in JS files (#24896) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- 9fbbaf8 parser: Clarify return in class static blocks (#24899) (camc314)
+- 5b4ae54 parser: Use specific for-await diagnostic (#24856) (camc314)
+- ffcc33a parser: Report for-await in non-async functions (#24855) (camc314)
+- 582805d parser: Parse unary conditional after satisfies (#24807) (Boshen)
+- 3048594 parser: Use correct diagnostic for `await using` in bare switch case (#24798) (camc314)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

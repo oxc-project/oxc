@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
@@ -54,7 +54,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let return_type = {
             let return_type_span = self.start_span();
             let return_type = self.parse_return_type();
-            TSTypeAnnotation::new(self.end_span(return_type_span), return_type, self)
+            TSTypeAnnotation::boxed(self.end_span(return_type_span), return_type, self)
         };
 
         let span = self.end_span(span);
@@ -742,7 +742,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> TSType<'a> {
         self.bump_any(); // bump `is`
         let ty = self.parse_ts_type();
-        let type_annotation = Some(TSTypeAnnotation::new(ty.span(), ty, self));
+        let type_annotation = Some(TSTypeAnnotation::boxed(ty.span(), ty, self));
         TSType::new_ts_type_predicate(
             self.end_span(span),
             TSTypePredicateName::This(this_ty),
@@ -823,7 +823,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.eat(Kind::Is) {
             let type_span = self.start_span();
             let ty = self.parse_ts_type();
-            type_annotation = Some(TSTypeAnnotation::new(self.end_span(type_span), ty, self));
+            type_annotation = Some(TSTypeAnnotation::boxed(self.end_span(type_span), ty, self));
         }
         TSType::new_ts_type_predicate(
             self.end_span(asserts_start_span),
@@ -1349,7 +1349,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let ty = self.parse_ts_type();
         if let Some(parameter_name) = type_predicate_variable {
-            let type_annotation = Some(TSTypeAnnotation::new(ty.span(), ty, self));
+            let type_annotation = Some(TSTypeAnnotation::boxed(ty.span(), ty, self));
             return TSType::new_ts_type_predicate(
                 self.end_span(span),
                 parameter_name,
@@ -1472,7 +1472,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             computed,
             /* optional */ false,
             kind,
-            NONE,
+            None,
             this_param,
             params,
             return_type,

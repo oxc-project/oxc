@@ -933,8 +933,8 @@ fn constant_evaluation_test() {
     test("x = 3 - 6", "x = -3;");
     test("x = 3 * 6", "x = 18;");
     test("x = 3 / 6", "x = 3 / 6;");
-    test("x = 3 % 6", "x = 3 % 6;");
-    test("x = 3 ** 6", "x = 3 ** 6;");
+    test("x = 3 % 6", "x = 3;");
+    test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
     test("x = 123 / 0", "x = Infinity;");
     test("x = 123 / -0", "x = -Infinity;");

@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{SPAN, Span};
 
 use crate::{
@@ -33,7 +33,7 @@ impl<'a> IsolatedDeclarations<'a> {
             func.this_param.clone_in(self.allocator()),
             params,
             return_type,
-            NONE,
+            None,
             self,
         )
     }
@@ -92,7 +92,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
                             // union with `undefined`
-                            return TSTypeAnnotation::new(
+                            return TSTypeAnnotation::boxed(
                                 SPAN,
                                 TSType::new_ts_union_type(
                                     SPAN,
@@ -104,7 +104,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
 
-                    TSTypeAnnotation::new(SPAN, ts_type, self)
+                    TSTypeAnnotation::boxed(SPAN, ts_type, self)
                 });
 
             let optional =
@@ -116,7 +116,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 // not used afterwards, so move it in directly instead of cloning again.
                 pattern,
                 type_annotation,
-                NONE,
+                None,
                 optional,
                 None,
                 false,
@@ -130,7 +130,7 @@ impl<'a> IsolatedDeclarations<'a> {
             [],
             pattern,
             param.type_annotation.clone_in(self.allocator()),
-            NONE,
+            None,
             param.optional,
             None,
             false,

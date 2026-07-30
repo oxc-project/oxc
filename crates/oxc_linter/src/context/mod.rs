@@ -1,6 +1,6 @@
 #![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
 
-use std::{borrow::Cow, ffi::OsStr, ops::Deref, path::Path, rc::Rc};
+use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
 
@@ -17,7 +17,7 @@ use crate::{
     FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings, WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
     disable_directives::DisableDirectives,
-    fixer::{Fix, FixKind, Message, MessageRule, PossibleFixes, RuleFix, RuleFixer},
+    fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
 };
 
@@ -292,10 +292,6 @@ impl<'a> LintContext<'a> {
         if message.error.severity != self.severity {
             message.error = message.error.with_severity(self.severity);
         }
-        message.rule = Some(MessageRule {
-            plugin_name: Cow::Borrowed(self.current_plugin_name),
-            rule_name: Cow::Borrowed(self.current_rule_name),
-        });
 
         self.parent.push_diagnostic(message);
     }
@@ -305,10 +301,7 @@ impl<'a> LintContext<'a> {
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
     #[inline]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.add_diagnostic(
-            Message::new(diagnostic, PossibleFixes::None)
-                .with_section_offset(self.parent.current_sub_host().source_text_offset),
-        );
+        self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
     }
 
     /// Report a lint rule violation and provide an automatic fix.
@@ -426,10 +419,7 @@ impl<'a> LintContext<'a> {
     /// monomorphized at every rule call site.
     fn emit_single_fix(&self, diagnostic: OxcDiagnostic, fix: Option<Fix>) {
         if let Some(fix) = fix {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Single(fix))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Single(fix)));
         } else {
             self.diagnostic(diagnostic);
         }
@@ -458,10 +448,7 @@ impl<'a> LintContext<'a> {
         if fixes_result.is_empty() {
             self.diagnostic(diagnostic);
         } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Multiple(fixes_result)));
         }
     }
 
@@ -499,10 +486,7 @@ impl<'a> LintContext<'a> {
         if fixes_result.is_empty() {
             self.diagnostic(diagnostic);
         } else {
-            self.add_diagnostic(
-                Message::new(diagnostic, PossibleFixes::Multiple(fixes_result))
-                    .with_section_offset(self.parent.current_sub_host().source_text_offset),
-            );
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Multiple(fixes_result)));
         }
     }
 

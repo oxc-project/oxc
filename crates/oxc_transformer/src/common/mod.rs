@@ -1,8 +1,9 @@
 //! Utility transforms which are in common between other transforms.
 
 use arrow_function_converter::ArrowFunctionConverter;
-use oxc_allocator::ArenaVec;
+use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 use oxc_str::static_ident;
 use oxc_traverse::{Ancestor, Traverse};
 
@@ -114,6 +115,41 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.arrow_function_converter.exit_arrow_function_expression(arrow, ctx);
+    }
+
+    fn enter_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if body.is_expression() {
+            ctx.state.var_declarations.record_entering_statements();
+        }
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if body.is_expression()
+            && let Some((var_statement, let_statement)) =
+                ctx.state.var_declarations.get_var_statement(&ctx.ast)
+        {
+            body.replace_with(|body| {
+                let expression = body.into_expression();
+                let span = expression.span();
+                let mut statements = ArenaVec::with_capacity_in(
+                    usize::from(var_statement.is_some()) + usize::from(let_statement.is_some()) + 1,
+                    ctx,
+                );
+                statements.extend(var_statement);
+                statements.extend(let_statement);
+                statements.push(Statement::new_return_statement(span, Some(expression), ctx));
+                ArrowFunctionBody::FunctionBody(FunctionBody::boxed(span, [], statements, ctx))
+            });
+        }
+        self.arrow_function_converter.exit_arrow_function_body(body, ctx);
     }
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {

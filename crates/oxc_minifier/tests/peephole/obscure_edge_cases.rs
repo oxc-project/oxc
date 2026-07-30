@@ -113,15 +113,15 @@ fn test_numeric_comparison_edge_cases() {
 #[test]
 fn test_mathematical_expression_edge_cases() {
     // Test operations with special numeric values get optimized
-    test("return 1 / 0", "return Infinity"); // optimized to Infinity
-    test("return -1 / 0", "return -Infinity"); // optimized to -Infinity
+    test_same("return 1 / 0"); // canonical printed spelling of Infinity
+    test_same("return -1 / 0"); // canonical printed spelling of -Infinity
     test("return 0 / 0", "return NaN"); // optimized to NaN
 
     // Test simple arithmetic - these ARE optimized by oxc
     test("return 2 + 3", "return 5");
     test("return 10 - 4", "return 6");
     test("return 3 * 7", "return 21");
-    test_same("return 15 / 3"); // division might not be optimized consistently
+    test("return 15 / 3", "return 5");
 
     // Test cases that are eliminated as dead code (unused expressions)
     test("NaN + 1", ""); // eliminated as unused expression

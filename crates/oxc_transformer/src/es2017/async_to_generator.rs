@@ -53,8 +53,8 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, TakeIn};
+use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
@@ -69,7 +69,7 @@ use crate::{
     common::helper_loader::{Helper, helper_call_expr},
     context::TraverseCtx,
     state::TransformState,
-    utils::sync_function_symbol_flags,
+    utils::{ast_builder::arrow_function_body_as_function_body_mut, sync_function_symbol_flags},
 };
 
 pub struct AsyncToGenerator<'a> {
@@ -292,7 +292,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             (callee, ArenaVec::new_in(ctx))
         };
 
-        let expression = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
+        let expression = Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expression), ctx);
 
         // Modify the wrapper function
@@ -411,7 +411,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
 
         // Construct the IIFE
         let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx));
-        Expression::new_call_expression_with_pure(span, callee, NONE, [], false, true, ctx)
+        Expression::new_call_expression_with_pure(span, callee, None, [], false, true, ctx)
     }
 
     /// Transforms async function declarations into generator functions wrapped in the asyncToGenerator helper.
@@ -527,17 +527,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let arrow_span = arrow.span;
-        let mut body = arrow.body.take_in_box(ctx);
-
-        // If the arrow's expression is true, we need to wrap the only one expression with return statement.
-        if arrow.expression {
-            let statement = body.statements.first_mut().unwrap();
-            statement.replace_with(|statement| {
-                let Statement::ExpressionStatement(es) = statement else { unreachable!() };
-                let expression = es.unbox().expression;
-                Statement::new_return_statement(expression.span(), Some(expression), ctx)
-            });
-        }
+        let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx).take_in_box(ctx);
 
         let params = arrow.params.take_in_box(ctx);
         let generator_function_id = arrow.scope_id();
@@ -604,7 +594,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             );
             // Construct the IIFE
             let callee = Expression::FunctionExpression(wrapper_function);
-            Expression::new_call_expression(arrow_span, callee, NONE, [], false, ctx)
+            Expression::new_call_expression(arrow_span, callee, None, [], false, ctx)
         }
     }
 
@@ -703,10 +693,10 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             false,
             false,
             false,
-            NONE,
-            NONE,
+            None,
+            None,
             params,
-            NONE,
+            None,
             Some(body),
             scope_id,
             ctx,
@@ -753,7 +743,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             false,
             ctx,
         );
-        let argument = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
+        let argument = Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx);
         Statement::new_return_statement(SPAN, Some(argument), ctx)
     }
 
@@ -810,7 +800,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 bound_ident.create_binding_pattern(ctx),
-                NONE,
+                None,
                 Some(init),
                 false,
                 ctx,
@@ -873,13 +863,13 @@ impl<'a> AsyncGeneratorExecutor<'a> {
             ));
         }
 
-        FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, parameters, NONE, ctx)
+        FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, parameters, None, ctx)
     }
 
     /// Creates an empty [FormalParameters] with [FormalParameterKind::FormalParameter].
     #[inline]
     fn create_empty_params(ctx: &TraverseCtx<'a>) -> ArenaBox<'a, FormalParameters<'a>> {
-        FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx)
+        FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx)
     }
 
     /// Creates a [`BoundIdentifier`] for the id of the function.

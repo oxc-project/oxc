@@ -1,6 +1,9 @@
 use core::ptr;
 
+use oxc_span::Span;
+
 use crate::error::Diagnostic;
+use crate::token::SPAN_SENTINELS;
 
 #[repr(C)]
 #[derive(Clone, Copy, Default, Debug)]
@@ -52,17 +55,27 @@ impl LexResult {
         unsafe { core::slice::from_raw_parts(self.diagnostics, self.diagnostic_count as usize) }
     }
 
-    lane_accessor!(tok_kinds, tok_kinds, token_count, u8);
-
     #[must_use]
-    pub fn tok_starts<'a>(&'a self, arena: &'a Arena) -> &'a [u32] {
-        if arena.tok_starts.is_null() {
+    pub fn tok_kinds<'a>(&'a self, arena: &'a Arena) -> &'a [crate::token::TokenKind] {
+        if arena.tok_kinds.is_null() {
             return &[];
         }
         let n = self.token_count as usize;
-        let len_with_sentinel = if n == 0 { 0 } else { n + 1 };
-        // SAFETY: the lexer wrote `token_count` starts plus the sentinel.
-        unsafe { core::slice::from_raw_parts(arena.tok_starts, len_with_sentinel) }
+        // SAFETY: the lexer wrote `token_count` kinds plus the EOF sentinels.
+        let bytes = unsafe { core::slice::from_raw_parts(arena.tok_kinds, n + SPAN_SENTINELS) };
+        crate::token::debug_assert_kind_bytes(bytes);
+        // SAFETY: every kind the pipeline writes is a declared discriminant.
+        unsafe { crate::token::kinds_from_bytes(bytes) }
+    }
+
+    #[must_use]
+    pub fn tok_spans<'a>(&'a self, arena: &'a Arena) -> &'a [Span] {
+        if arena.tok_spans.is_null() {
+            return &[];
+        }
+        let n = self.token_count as usize;
+        // SAFETY: the lexer wrote `token_count` spans plus the EOF sentinels.
+        unsafe { core::slice::from_raw_parts(arena.tok_spans, n + SPAN_SENTINELS) }
     }
 
     lane_accessor!(numbers, numbers, numbers_count, f64);
@@ -85,8 +98,8 @@ pub struct Arena {
 
     pub tok_kinds: *mut u8,
     pub tok_kinds_capacity: u32,
-    pub tok_starts: *mut u32,
-    pub tok_starts_capacity: u32,
+    pub tok_spans: *mut Span,
+    pub tok_spans_capacity: u32,
     pub numbers: *mut f64,
     pub numbers_capacity: u32,
     pub atoms: *mut crate::token::StringSpan,
@@ -116,8 +129,8 @@ impl Arena {
             lines_capacity,
             tok_kinds: ptr::null_mut(),
             tok_kinds_capacity: 0,
-            tok_starts: ptr::null_mut(),
-            tok_starts_capacity: 0,
+            tok_spans: ptr::null_mut(),
+            tok_spans_capacity: 0,
             numbers: ptr::null_mut(),
             numbers_capacity: 0,
             atoms: ptr::null_mut(),
@@ -147,8 +160,8 @@ impl Arena {
         }
         self.tok_kinds = alloc_uninit::<u8>(cap);
         self.tok_kinds_capacity = cap;
-        self.tok_starts = alloc_uninit::<u32>(cap + 1);
-        self.tok_starts_capacity = cap + 1;
+        self.tok_spans = alloc_uninit::<Span>(cap + 1);
+        self.tok_spans_capacity = cap + 1;
 
         self.numbers = alloc_uninit::<f64>((cap / 2) + 64);
         self.numbers_capacity = (cap / 2) + 64;
@@ -198,7 +211,7 @@ impl Drop for Arena {
             free_uninit::<Diagnostic>(self.diags, self.diags_capacity);
             free_uninit::<LineEntry>(self.lines, self.lines_capacity);
             free_uninit::<u8>(self.tok_kinds, self.tok_kinds_capacity);
-            free_uninit::<u32>(self.tok_starts, self.tok_starts_capacity);
+            free_uninit::<Span>(self.tok_spans, self.tok_spans_capacity);
             free_uninit::<f64>(self.numbers, self.numbers_capacity);
             free_uninit::<crate::token::StringSpan>(self.atoms, self.atoms_capacity);
             free_uninit::<crate::token::StringSpan>(self.strings, self.strings_capacity);
@@ -211,7 +224,7 @@ impl Drop for Arena {
         self.diags = ptr::null_mut();
         self.lines = ptr::null_mut();
         self.tok_kinds = ptr::null_mut();
-        self.tok_starts = ptr::null_mut();
+        self.tok_spans = ptr::null_mut();
         self.numbers = ptr::null_mut();
         self.atoms = ptr::null_mut();
         self.strings = ptr::null_mut();

@@ -38,7 +38,7 @@ use std::mem;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{SPAN, Span};
@@ -109,7 +109,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 SPAN,
                 variable_decl_kind,
                 binding_pattern,
-                NONE,
+                None,
                 Some(temp_id.create_read_expression(ctx)),
                 false,
                 ctx,
@@ -213,7 +213,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             block.set_scope_id(static_block_new_scope_id);
             block.body = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
                     &using_ctx,
                     static_block_new_scope_id,
                     needs_await,
@@ -278,7 +278,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
             body.statements = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
                     &using_ctx,
                     current_scope_id,
                     needs_await,
@@ -341,7 +341,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
             node.block.body = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
                     &using_ctx,
                     block_stmt_scope_id,
                     needs_await,
@@ -434,7 +434,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                     span,
                                     VariableDeclarationKind::Var,
                                     var_id.create_spanned_binding_pattern(span, ctx),
-                                    NONE,
+                                    None,
                                     Some(expr),
                                     false,
                                     ctx,
@@ -457,7 +457,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 )],
                                 None,
                                 ImportOrExportKind::Value,
-                                NONE,
+                                None,
                                 ctx,
                             ));
                         }
@@ -557,7 +557,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 export_specifiers,
                                 None,
                                 export_kind,
-                                NONE,
+                                None,
                                 ctx,
                             ));
                         }
@@ -633,7 +633,7 @@ impl<'a> ExplicitResourceManagement<'a> {
             let current_scope_id = ctx.current_scope_id();
 
             *stmt = Self::create_try_stmt(
-                BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt.scope_id(), ctx),
+                BlockStatement::boxed_with_scope_id(SPAN, new_stmts, block_stmt.scope_id(), ctx),
                 &using_ctx,
                 current_scope_id,
                 needs_await,
@@ -725,7 +725,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                                 false,
                                 ctx,
                             ),
-                            NONE,
+                            None,
                             [Argument::from(old_init)],
                             false,
                             ctx,
@@ -754,11 +754,11 @@ impl<'a> ExplicitResourceManagement<'a> {
                                 SPAN,
                                 VariableDeclarationKind::Var,
                                 using_ctx.create_binding_pattern(ctx),
-                                NONE,
+                                None,
                                 Some(Expression::new_call_expression(
                                     SPAN,
                                     callee,
-                                    NONE,
+                                    None,
                                     [],
                                     false,
                                     ctx,
@@ -774,7 +774,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                     ctx,
                 );
 
-                BlockStatement::new_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
+                BlockStatement::boxed_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
             };
 
             let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
@@ -867,7 +867,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                             false,
                             ctx,
                         ),
-                        NONE,
+                        None,
                         [Argument::from(old_init)],
                         false,
                         ctx,
@@ -889,8 +889,8 @@ impl<'a> ExplicitResourceManagement<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 using_ctx.create_binding_pattern(ctx),
-                NONE,
-                Some(Expression::new_call_expression(SPAN, callee, NONE, [], false, ctx)),
+                None,
+                Some(Expression::new_call_expression(SPAN, callee, None, [], false, ctx)),
                 false,
                 ctx,
             )],
@@ -903,7 +903,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     }
 
     fn create_try_stmt(
-        body: BlockStatement<'a>,
+        body: ArenaBox<'a, BlockStatement<'a>>,
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
         needs_await: bool,
@@ -936,7 +936,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         );
 
         let catch_parameter =
-            CatchParameter::new(SPAN, ident.create_binding_pattern(ctx), NONE, ctx);
+            CatchParameter::new(SPAN, ident.create_binding_pattern(ctx), None, ctx);
 
         // `_usingCtx.e = _;`
         let stmt = Statement::new_expression_statement(
@@ -961,7 +961,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         CatchClause::boxed_with_scope_id(
             SPAN,
             Some(catch_parameter),
-            BlockStatement::new_with_scope_id(SPAN, [stmt], block_scope_id, ctx),
+            BlockStatement::boxed_with_scope_id(SPAN, [stmt], block_scope_id, ctx),
             catch_scope_id,
             ctx,
         )
@@ -986,7 +986,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                 false,
                 ctx,
             ),
-            NONE,
+            None,
             [],
             false,
             ctx,
@@ -1020,7 +1020,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 binding.create_spanned_binding_pattern(original_span, ctx),
-                NONE,
+                None,
                 Some(class_expr),
                 false,
                 ctx,

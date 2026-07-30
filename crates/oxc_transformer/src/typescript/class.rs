@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -352,7 +352,7 @@ impl<'a> TypeScript<'a> {
             PropertyDefinitionType::PropertyDefinition,
             [],
             key,
-            NONE,
+            None,
             None,
             false,
             false,

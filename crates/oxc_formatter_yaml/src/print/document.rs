@@ -7,9 +7,9 @@ use oxc_yaml_parser::ast::{Directive, Document, Root};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, gap_upper_bound, is_suppressed_last_before,
-        write_blank_preserving_break, write_single_comment, write_suppressed_node,
-        write_trailing_same_line_comment,
+        Gap, SourceComment, classify_gap, flush_leading_comments, gap_upper_bound,
+        is_suppressed_last_before, write_blank_preserving_break, write_single_comment,
+        write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{
         YamlFormatter,
@@ -41,8 +41,8 @@ pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool
                 let comments = f.context().comments().take_before(marker.start);
                 write_end_comments(Some(anchor), comments, f);
             }
-            // After a keep-chomped block scalar the verbatim content already
-            // ends with a newline; `...` starts a fresh line without one.
+            // After a keep-chomped block scalar the verbatim content already ends with a newline;
+            // `...` starts a fresh line without one.
             if !(keep_chomped_tail && i + 1 == documents.len()) {
                 write!(f, hard_line_break());
             }
@@ -73,7 +73,10 @@ fn document_end_comment_anchor(document: &Document<'_>, f: &YamlFormatter<'_, '_
 /// or the end of its body (adjusted for a block scalar tail, whose span consumes the trailing line breaks).
 fn document_gap_anchor(document: &Document<'_>, f: &YamlFormatter<'_, '_>) -> u32 {
     document.document_end_marker.map_or_else(
-        || item_gap_anchor(document.body.content.as_deref(), document.body.span.end, f),
+        || {
+            let block = document.body.content.as_deref().and_then(last_descendant_block_scalar);
+            item_gap_anchor(block, document.body.span.end, f)
+        },
         |marker| marker.end,
     )
 }
@@ -99,12 +102,13 @@ fn write_document_separator<'a>(
 /// See [`write_document_separator`] for the deliberate non-follow.
 fn write_end_comments(
     anchor: Option<u32>,
-    comments: &[oxc_span::Span],
+    comments: &[SourceComment],
     f: &mut YamlFormatter<'_, '_>,
 ) {
     let source = f.context().source_text();
-    for (i, &span) in comments.iter().enumerate() {
-        let prev_end = if i == 0 { anchor } else { Some(comments[i - 1].end) };
+    for (i, comment) in comments.iter().enumerate() {
+        let span = comment.span;
+        let prev_end = if i == 0 { anchor } else { Some(comments[i - 1].span.end) };
         let blank = prev_end.is_some_and(|prev_end| {
             prev_end < span.start
                 && classify_gap(source.bytes_range(prev_end, span.start)) == Gap::Blank
@@ -144,8 +148,7 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
         needs_line = true;
     }
 
-    // `# prettier-ignore` as the head's LAST end comment suppresses the whole
-    // document body (Prettier's `hasPrettierIgnore` for `documentBody`).
+    // Suppress comment as the head's LAST end comment suppresses the whole document body
     let mut head_ignores_body = false;
     if let Some(marker) = document.directives_end_marker {
         if needs_line {

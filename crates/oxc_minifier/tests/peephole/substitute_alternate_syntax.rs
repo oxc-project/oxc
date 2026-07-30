@@ -328,6 +328,9 @@ fn test_string_array_splitting() {
 #[test]
 fn test_template_string_to_string() {
     test("x = `abcde`", "x = 'abcde'");
+    // Lone surrogates are stored escaped in the cooked value; converting to a
+    // string literal would materialize the escape encoding as literal text.
+    test_same("x = `\\ud800y`");
     test("x = `ab cd ef`", "x = 'ab cd ef'");
     test_same("x = `hello ${name}`");
     test_same("tag `hello ${name}`");

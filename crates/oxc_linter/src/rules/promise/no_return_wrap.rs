@@ -8,7 +8,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        ReturnStatement, Statement,
+        ReturnStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -222,14 +222,12 @@ fn check_arrow_cb_arg<'a>(
     allow_reject: bool,
     arrow_expr: &ArrowFunctionExpression<'a>,
 ) {
-    if arrow_expr.expression {
-        if let Some(Statement::ExpressionStatement(expr_stmt)) = arrow_expr.body.statements.first()
-            && let Expression::CallExpression(call_expr) = &expr_stmt.expression
-        {
+    if arrow_expr.is_expression() {
+        if let Some(Expression::CallExpression(call_expr)) = arrow_expr.get_expression() {
             check_for_resolve_reject(ctx, allow_reject, call_expr);
         }
     } else {
-        check_function_body(ctx, allow_reject, &arrow_expr.body);
+        check_function_body(ctx, allow_reject, arrow_expr.get_function_body().unwrap());
     }
 }
 

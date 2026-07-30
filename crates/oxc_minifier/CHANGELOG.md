@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- c7c5696 minifier: Fold parenthesized boolean ternary tests (#24968) (Dunqing)
+- 82c5806 minifier: Fold sequence branches in boolean ternaries (#24943) (Dunqing)
+- b31713a minifier: Add new IsTerminated trait and use it in exit-point optimization (#24950) (Armano)
+- e9e0f24 minifier: Shorten integer zero comparisons (#24933) (Dunqing)
+- 34f5559 minifier: Convert switch with one case to if statement (#24611) (Armano)
+
+### 🐛 Bug Fixes
+
+- cb5acfb minifier: Optimize termination statements in labeled statements (#24813) (Armano)
+- 4618300 minifier: Avoid longer numeric constant folds (#24875) (Dunqing)
+- f7971f1 minifier: Keep side effects in typeof comparisons (#24940) (sapphi-red)
+- 4597d6f minifier: Keep side effects when compressing `== true` to `== 1` (#24939) (sapphi-red)
+- c3a48df minifier: Keep side effects values in template literals (#24938) (sapphi-red)
+- e19f183 minifier: Keep side effects when folding `Number` call (#24937) (sapphi-red)
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- 07e9acc ecmascript: Keep side effects in parent of `toString` calls (#24846) (sapphi-red)
+- 16a40ad ecmascript: Detect side effects in unused arguments to `charCodeAt` (#24845) (sapphi-red)
+- df230d0 minifier: Avoid reordering this in nested class keys (#24785) (Dunqing)
+- d24b76b minifier: Isolate derived constructor this state (#24784) (Dunqing)
+- 23b904f minifier: Preserve default parameter side effects (#24791) (Dunqing)
+- 4b12840 minifier: Do not fold a `-0` ternary branch to `+a` (loses the sign) (#23637) (Jerry Zhao)
+- 133bb35 ecmascript: Detect side effects of `foo().#bar` correctly when PropertyReadSideEffects::None (#24769) (sapphi-red)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

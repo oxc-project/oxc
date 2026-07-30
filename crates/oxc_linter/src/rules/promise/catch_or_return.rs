@@ -293,7 +293,7 @@ fn is_arrow_function_expression_return(node: &AstNode, ctx: &LintContext) -> boo
     }
 
     if let AstKind::ArrowFunctionExpression(arrow_func) = ctx.nodes().parent_kind(parent.id()) {
-        return arrow_func.expression;
+        return arrow_func.is_expression();
     }
 
     false

@@ -21,11 +21,11 @@ doctest = false
 
 [dependencies]
 oxc_ast = { workspace = true }
+oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 memchr = { workspace = true }
 
 oxc_diagnostics = { workspace = true, optional = true }
-oxc_span = { workspace = true, optional = true }
 
 [features]
-oxc_diagnostics = ["dep:oxc_diagnostics", "dep:oxc_span"]
+oxc_diagnostics = ["dep:oxc_diagnostics"]

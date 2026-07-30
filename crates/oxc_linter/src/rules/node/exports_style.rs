@@ -110,7 +110,7 @@ declare_oxc_lint!(
     style,
     pending,
     config = ExportsStyle,
-    version = "next",
+    version = "1.76.0",
     short_description = "Enforce either `module.exports` or `exports`.",
 );
 

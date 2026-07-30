@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
 
@@ -361,7 +361,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
-    fn parse_import_attributes(&mut self) -> Option<WithClause<'a>> {
+    fn parse_import_attributes(&mut self) -> Option<ArenaBox<'a, WithClause<'a>>> {
         let keyword_kind = self.cur_kind();
         let keyword = match keyword_kind {
             Kind::With => WithClauseKeyword::With,
@@ -392,7 +392,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        Some(WithClause::new(self.end_span(span), keyword, with_entries, self))
+        Some(WithClause::boxed(self.end_span(span), keyword, with_entries, self))
     }
 
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {
@@ -466,7 +466,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         [],
                         None,
                         ImportOrExportKind::Value,
-                        NONE,
+                        None,
                         self,
                     );
                     if self.ctx.has_top_level() {
@@ -496,7 +496,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     [],
                     None,
                     ImportOrExportKind::Value,
-                    NONE,
+                    None,
                     self,
                 );
                 if self.ctx.has_top_level() {
@@ -665,7 +665,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             [],
             None,
             export_kind,
-            NONE,
+            None,
             self,
         );
         if self.ctx.has_top_level() {

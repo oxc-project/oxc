@@ -811,31 +811,14 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // Misc
 // ----------------------------------------
 
-/// Serializer for `body` field of `ArrowFunctionExpression`.
-///
-/// Serialize as either an expression (if `expression` property is set),
-/// or a `BlockStatement` (if it's not).
+/// Serializer for the derived `expression` field of [`ArrowFunctionExpression`].
 #[ast_meta]
-#[estree(
-    ts_type = "FunctionBody | Expression",
-    raw_deser = "
-        let body = DESER[Box<FunctionBody>](POS_OFFSET.body);
-        if (THIS.expression === true) {
-            body = body.body[0].expression;
-            if (PARENT) body.parent = parent;
-        }
-        body
-    "
-)]
-pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
+#[estree(ts_type = "boolean", raw_deser = "uint8[POS_OFFSET.body] !== 64", raw_deser_inline)]
+pub struct ArrowFunctionExpressionExpression<'a>(pub &'a ArrowFunctionExpression<'a>);
 
-impl ESTree for ArrowFunctionExpressionBody<'_> {
+impl ESTree for ArrowFunctionExpressionExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(expression) = self.0.get_expression() {
-            expression.serialize(serializer);
-        } else {
-            self.0.body.serialize(serializer);
-        }
+        self.0.is_expression().serialize(serializer);
     }
 }
 

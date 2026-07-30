@@ -1,0 +1,17 @@
+root:
+  items:
+    - key: a
+      val: b
+
+      # sequence end comment
+  next: 1
+map:
+  child: 1
+
+  # mapping end comment
+seq:
+  - "A"
+  - "B"
+
+  # same-column comment after sequence
+tail: 2

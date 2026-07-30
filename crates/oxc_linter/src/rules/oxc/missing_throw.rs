@@ -59,20 +59,11 @@ impl Rule for MissingThrow {
 
 impl MissingThrow {
     fn has_missing_throw<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-        if !matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExpressionStatement(_)) {
-            return false;
+        match ctx.nodes().parent_kind(node.id()) {
+            AstKind::ArrowFunctionExpression(arrow) => !arrow.is_expression(),
+            AstKind::ExpressionStatement(_) => true,
+            _ => false,
         }
-
-        let expression_statement_id = ctx.nodes().parent_id(node.id());
-        let expression_statement_parent_id = ctx.nodes().parent_id(expression_statement_id);
-        if !matches!(ctx.nodes().kind(expression_statement_parent_id), AstKind::FunctionBody(_)) {
-            return true;
-        }
-
-        !matches!(
-            ctx.nodes().parent_kind(expression_statement_parent_id),
-            AstKind::ArrowFunctionExpression(arrow_expr) if arrow_expr.expression
-        )
     }
 }
 

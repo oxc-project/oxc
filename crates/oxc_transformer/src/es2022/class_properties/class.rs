@@ -2,7 +2,7 @@
 //! Transform of class itself.
 
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
@@ -901,7 +901,7 @@ fn create_new_weakmap<'a>(
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), weak_map));
     let ident = ctx.create_ident_expr(SPAN, weak_map, symbol_id, ReferenceFlags::Read);
-    Expression::new_new_expression_with_pure(SPAN, ident, NONE, [], true, ctx)
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }
 
 /// Create `new WeakSet()` expression.
@@ -909,5 +909,5 @@ fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
     let weak_set = static_ident!("WeakSet");
     let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
     let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
-    Expression::new_new_expression_with_pure(SPAN, ident, NONE, [], true, ctx)
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }

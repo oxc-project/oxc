@@ -209,7 +209,7 @@ expr1 = html`
 ## Option 2
 
 `````json
-{"printWith":100}
+{"printWidth":100}
 `````
 
 ### Diff

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- cc623d9 ast_visit: Add VisitJsMut visitor (#24828) (Boshen)
+- 11f5d1f ast_visit: Add `Utf8ToUtf16::convert_program_and_comments` (#24859) (overlookmotel)
+
 ## [0.141.0] - 2026-07-20
 
 ### 💥 BREAKING CHANGES

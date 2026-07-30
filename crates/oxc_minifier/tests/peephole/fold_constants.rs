@@ -927,6 +927,9 @@ fn test_fold_bit_shifts() {
 #[test]
 fn test_string_add() {
     fold("x = 'a' + 'bc'", "x = 'abc'");
+    // Lone surrogates are stored escaped in the string value; folding would
+    // materialize the escape encoding as literal text.
+    fold_same("x = '\\ud800' + 'y'");
     fold("x = 'a' + 5", "x = 'a5'");
     fold("x = 5 + 'a'", "x = '5a'");
     fold("x = 'a' + 5n", "x = 'a5'");
@@ -1062,27 +1065,75 @@ fn test_fold_multiply() {
 fn test_fold_division() {
     fold("x = Infinity / Infinity", "x = NaN");
     fold("x = Infinity / 0", "x = Infinity");
-    fold("x = 1 / 0", "x = Infinity");
+    // `1 / 0` is the canonical printed spelling of Infinity and is kept as-is.
+    fold_same("x = 1 / 0");
+    fold_same("x = -1 / 0");
+    // A negative-zero divisor is not canonical and can still be folded.
+    fold("x = 1 / -0", "x = -Infinity");
+    fold("x = -1 / -0", "x = Infinity");
     fold("x = 0 / 0", "x = NaN");
+    fold("x = 360 / 360", "x = 1");
+    fold("x = 10.5 / 0.75", "x = 14");
+    fold("x = -10.5 / 0.75", "x = -14");
+    fold("x = 0 / -1", "x = -0");
+    fold("x = -0 / 1", "x = -0");
+    fold("x = -5e-324 / 2", "x = -0");
+    fold("x = 9007199254740992 / 2", "x = 4503599627370496");
+
     fold_same("x = 2 / 4");
+    fold_same("x = 0.3 / 0.1");
+    fold_same("x = 1e-323 / 2");
+    fold_same("x = 1 / 1e-15");
+    fold_same("x = 9007199254740991 / 0.5");
+    fold_same("x = f() / 2");
+    fold_same("x = (void f()) / 1");
+    fold_same("x = ({ valueOf: f }) / 2");
+    fold_same("x = 4n / 2n");
+    fold_same("x = 4n / 2");
+    fold_same("x = 4n / 0n");
     fold_same("x = y / 2 / 4");
 }
 
 #[test]
 fn test_fold_remainder() {
-    fold_same("x = 3 % 2");
-    fold_same("x = 3 % -2");
-    fold_same("x = -1 % 3");
+    fold("x = 3 % 2", "x = 1");
+    fold("x = 3 % -2", "x = 1");
+    fold("x = -1 % 3", "x = -1");
+    fold("x = -1 % 1", "x = -0");
+    fold("x = 5.5 % 1.5", "x = 1");
     fold("x = 1 % 0", "x = NaN");
     fold("x = 0 % 0", "x = NaN");
+
+    fold_same("x = 18014398509481982 % 18014398509481984");
+    fold_same("x = 0.3 % 0.1");
+    fold_same("x = f() % 2");
+    fold_same("x = 1 % f()");
+    fold_same("x = 5n % 2n");
+    fold_same("x = 4n % 3n");
 }
 
 #[test]
 fn test_fold_exponential() {
-    fold_same("x = 2 ** 3");
+    fold("x = 2 ** 3", "x = 8");
+    fold("x = 10 ** 4", "x = 1e4");
+    fold("x = (-2) ** 3", "x = -8");
+
+    fold_same("x = 0.5 ** -2");
+    fold_same("x = 4 ** 0.5");
+    fold_same("x = (-5e-324) ** 3");
     fold_same("x = 2 ** -3");
+    fold_same("x = 2 ** 50");
     fold_same("x = 2 ** 55");
+    fold_same("x = 1e8 ** 2");
     fold_same("x = 3 ** -1");
+    fold_same("x = f() ** 2");
+    fold_same("x = 2 ** f()");
+    fold_same("x = ({ valueOf: f }) ** 2");
+    fold_same("x = 2n ** 3n");
+    fold_same("x = 2n ** 3");
+    fold_same("x = 2 ** 3n");
+    fold_same("x = (void f()) ** 0");
+    test_same("function f(Infinity) {\n\treturn Infinity ** 0;\n}");
     fold_same("x = (-1) ** 0.5");
     fold("x = (-0) ** 3", "x = -0");
     fold("x = null ** 0", "x = 1");
@@ -1321,6 +1372,26 @@ fn test_fold_invalid_typeof_comparison() {
     fold("typeof foo != undefined", "!0");
     fold("typeof foo === 'string'", "typeof foo == 'string'");
     fold("typeof foo === 'number'", "typeof foo == 'number'");
+
+    // strict equality with an object is always false
+    fold("typeof foo === [1]", "!1");
+    fold("typeof foo !== [1]", "!0");
+    fold("typeof foo === ['object']", "!1");
+    // but loose equality with an object can be true via ToPrimitive:
+    // `typeof foo == ['object']` is true when foo is an object
+    fold_same("typeof foo == ['object']");
+    fold_same("typeof foo != ['object']");
+    fold_same("typeof foo == ['function']");
+    fold_same("typeof foo == [['object']]");
+    fold_same("typeof foo == { toString: () => 'object' }");
+    fold_same("typeof foo == [x]");
+    // folds when the object's string value is statically known
+    // to not be a typeof result
+    fold("typeof foo == [1]", "!1");
+    fold("typeof foo == ['x']", "!1");
+    fold("typeof foo == []", "!1");
+    fold("typeof foo == [1, 2]", "!1");
+    fold("typeof foo == {}", "!1");
 }
 
 #[test]

@@ -3,6 +3,7 @@ use std::{
     fmt::{self, Display},
 };
 
+use oxc_allocator::Box as ArenaBox;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
@@ -1579,25 +1580,71 @@ impl FunctionBody<'_> {
     }
 }
 
+impl<'a> ArrowFunctionBody<'a> {
+    /// Returns `true` if this arrow function has a block body.
+    pub fn is_function_body(&self) -> bool {
+        matches!(self, Self::FunctionBody(_))
+    }
+
+    /// Returns the block body, if this arrow function has one.
+    pub fn as_function_body(&self) -> Option<&FunctionBody<'a>> {
+        match self {
+            Self::FunctionBody(body) => Some(body),
+            _ => None,
+        }
+    }
+
+    /// Returns the mutable block body, if this arrow function has one.
+    pub fn as_function_body_mut(&mut self) -> Option<&mut FunctionBody<'a>> {
+        match self {
+            Self::FunctionBody(body) => Some(body),
+            _ => None,
+        }
+    }
+
+    /// Converts this arrow function body into a block body, if it has one.
+    pub fn into_function_body(self) -> Option<ArenaBox<'a, FunctionBody<'a>>> {
+        match self {
+            Self::FunctionBody(body) => Some(body),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if this is an empty block body.
+    pub fn is_empty(&self) -> bool {
+        self.as_function_body().is_some_and(FunctionBody::is_empty)
+    }
+
+    /// Returns `true` if this block body has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.as_function_body().is_some_and(FunctionBody::has_use_strict_directive)
+    }
+}
+
 impl<'a> ArrowFunctionExpression<'a> {
+    /// Returns `true` if this arrow function has a concise expression body.
+    pub fn is_expression(&self) -> bool {
+        self.body.is_expression()
+    }
+
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        if self.expression
-            && let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0]
-        {
-            return Some(&expr_stmt.expression);
-        }
-        None
+        self.body.as_expression()
     }
 
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.expression
-            && let Statement::ExpressionStatement(expr_stmt) = &mut self.body.statements[0]
-        {
-            return Some(&mut expr_stmt.expression);
-        }
-        None
+        self.body.as_expression_mut()
+    }
+
+    /// Get block body of `ArrowFunctionExpression`: `() => { statements }`.
+    pub fn get_function_body(&self) -> Option<&FunctionBody<'a>> {
+        self.body.as_function_body()
+    }
+
+    /// Get mutable block body of `ArrowFunctionExpression`: `() => { statements }`.
+    pub fn get_function_body_mut(&mut self) -> Option<&mut FunctionBody<'a>> {
+        self.body.as_function_body_mut()
     }
 
     /// Returns `true` if this arrow function's body has a `"use strict"` directive.

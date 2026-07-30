@@ -2,7 +2,7 @@ use std::iter::repeat_with;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     BoundNames, ToJsString, ToNumber,
@@ -201,22 +201,16 @@ impl<'a> PeepholeOptimizations {
     /// `() => { return foo })` -> `() => foo`
     pub fn substitute_arrow_expression(
         arrow_expr: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
-        if !arrow_expr.expression
-            && arrow_expr.body.directives.is_empty()
-            && arrow_expr.body.statements.len() == 1
-            && let Some(body) = arrow_expr.body.statements.first_mut()
-            && let Statement::ReturnStatement(ret_stmt) = body
+        if let Some(body) = arrow_expr.get_function_body_mut()
+            && body.directives.is_empty()
+            && body.statements.len() == 1
+            && let Statement::ReturnStatement(return_statement) = &mut body.statements[0]
+            && let Some(expr) =
+                return_statement.argument.as_mut().map(|argument| argument.take_in(ctx))
         {
-            let return_stmt_arg = ret_stmt.argument.as_mut().map(|arg| arg.take_in(ctx));
-            if let Some(arg) = return_stmt_arg {
-                ctx.replace_statement(
-                    body,
-                    Statement::new_expression_statement(arg.span(), arg, ctx),
-                );
-                arrow_expr.expression = true;
-            }
+            arrow_expr.body = ArrowFunctionBody::from(expr);
         }
     }
 
@@ -992,7 +986,7 @@ impl<'a> PeepholeOptimizations {
                 Expression::new_call_expression(
                     SPAN,
                     callee,
-                    NONE,
+                    None,
                     [Argument::new_numeric_literal(SPAN, offset, None, NumberBase::Decimal, ctx)],
                     false,
                     ctx,
@@ -1002,7 +996,7 @@ impl<'a> PeepholeOptimizations {
             };
 
             let new_decl =
-                VariableDeclarator::new(SPAN, var_init.kind, r_id_pat, NONE, Some(arr), false, ctx);
+                VariableDeclarator::new(SPAN, var_init.kind, r_id_pat, None, Some(arr), false, ctx);
             // The old declarators (`e`, `a`, and `r`'s original init) are
             // replaced wholesale — walk them so refs inside (e.g. `e` in
             // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
@@ -1251,7 +1245,7 @@ impl<'a> PeepholeOptimizations {
                             let callee = callee.take_in(ctx);
                             let args = args.take_in(ctx);
                             let new_value = Expression::new_call_expression(
-                                *span, callee, NONE, args, false, ctx,
+                                *span, callee, None, args, false, ctx,
                             );
                             ctx.replace_expression(expr, new_value);
                         }
@@ -1270,7 +1264,7 @@ impl<'a> PeepholeOptimizations {
                         let callee = callee.take_in(ctx);
                         let args = args.take_in(ctx);
                         let new_value =
-                            Expression::new_call_expression(*span, callee, NONE, args, false, ctx);
+                            Expression::new_call_expression(*span, callee, None, args, false, ctx);
                         ctx.replace_expression(expr, new_value);
                     }
                 } else {
@@ -1344,7 +1338,7 @@ impl<'a> PeepholeOptimizations {
             let new_value = Expression::new_call_expression_with_pure(
                 e.span,
                 e.callee.take_in(ctx),
-                NONE,
+                None,
                 e.arguments.take_in(ctx),
                 false,
                 e.pure,
@@ -1770,7 +1764,7 @@ impl<'a> PeepholeOptimizations {
                 false,
                 ctx,
             ),
-            NONE,
+            None,
             [Argument::new_string_literal(
                 expr.span(),
                 Str::from_str_in(delimiter, ctx),
@@ -1950,7 +1944,6 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ArrowFunctionExpression(f) = &mut call_expr.callee
             && !f.r#async
             && !f.params.has_parameter()
-            && f.body.statements.len() == 1
         {
             if let Some(expr) = f.get_expression_mut() {
                 // Replace "(() => foo())()" with "foo()"
@@ -1964,7 +1957,11 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_expression(e, new_value);
                 return;
             }
-            match &mut f.body.statements[0] {
+            let Some(body) = f.get_function_body_mut() else { return };
+            if body.statements.len() != 1 {
+                return;
+            }
+            match &mut body.statements[0] {
                 Statement::ExpressionStatement(expr_stmt) => {
                     // Replace "(() => { foo() })()" with "(foo(), undefined)"
                     let new_value = if is_pure && Self::is_expression_result_unused(ctx) {

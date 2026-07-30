@@ -194,6 +194,8 @@ impl<'a> TakeIn<'a> for FormalParameterRest<'a> {}
 
 impl<'a> TakeIn<'a> for FunctionBody<'a> {}
 
+impl<'a> TakeIn<'a> for ArrowFunctionBody<'a> {}
+
 impl<'a> TakeIn<'a> for ArrowFunctionExpression<'a> {}
 
 impl<'a> TakeIn<'a> for YieldExpression<'a> {}

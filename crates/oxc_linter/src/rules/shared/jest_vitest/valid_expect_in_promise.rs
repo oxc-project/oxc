@@ -291,10 +291,10 @@ fn is_top_level_promise_chain(expr: &Expression) -> bool {
 fn get_checkable_callback_body<'a>(callback: &'a Argument<'a>) -> Option<&'a FunctionBody<'a>> {
     match callback {
         Argument::ArrowFunctionExpression(arrow) => {
-            if arrow.expression || !arrow.params.items.is_empty() {
+            if arrow.is_expression() || !arrow.params.items.is_empty() {
                 return None;
             }
-            Some(&arrow.body)
+            arrow.get_function_body()
         }
         Argument::FunctionExpression(func) => {
             if !func.params.items.is_empty() {

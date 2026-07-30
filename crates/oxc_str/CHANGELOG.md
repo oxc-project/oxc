@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- 9107e74 str: Add `static_str!` macro (#24887) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e7d5c78 str: Fix hygiene of `format_ident!` and `format_str!` macros (#24886) (overlookmotel)
+
 ## [0.141.0] - 2026-07-20
 
 ### 🚀 Features

@@ -180,6 +180,7 @@ impl ServerLinterBuilder {
                     _ => None,
                 },
             },
+            with_ignore_fixes: true,
             ..Default::default()
         };
 
@@ -214,6 +215,7 @@ impl ServerLinterBuilder {
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
             .with_fix_kind(fix_kind)
+            .with_ignore_fixes(true)
             .build()
         {
             Ok(runner) => runner,
@@ -225,6 +227,7 @@ impl ServerLinterBuilder {
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(fix_kind)
+                    .with_ignore_fixes(true)
                     .build()
                     .expect("Failed to build LintRunner without type-aware linting")
             }

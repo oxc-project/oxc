@@ -10,34 +10,44 @@ use oxc_span::Span;
 
 use crate::print::{YamlFormatter, format_with};
 
-/// Cursor over a sorted comment-span list that hands out unprinted slices in span order.
+/// A comment bridged from the parser: its span in the arena source,
+/// plus the parser-recorded layout fact print sites branch on.
+#[derive(Clone, Copy, Debug)]
+pub struct SourceComment {
+    pub span: Span,
+    /// The `#`'s 0-based column when only whitespace precedes it on its line;
+    /// `None` when the comment trails other content (see the parser's `Comment`).
+    pub own_line_column: Option<u32>,
+}
+
+/// Cursor over a sorted comment list that hands out unprinted slices in span order.
 ///
 /// YAML comments are always single-line (`# ...` to end of line);
-/// the parser collects them into a flat, source-ordered list and `format()` bridges them to [`Span`]s.
+/// the parser collects them into a flat, source-ordered list and `format()` bridges them to [`SourceComment`]s.
 /// Comment placement (leading / trailing / end) is decided positionally at print sites.
 ///
 /// `cursor` is a [`Cell`] so the API works through `&self`.
 pub struct Comments<'a> {
-    inner: &'a [Span],
+    inner: &'a [SourceComment],
     cursor: Cell<usize>,
 }
 
 impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [Span]) -> Self {
+    pub fn new(comments: &'a [SourceComment]) -> Self {
         Self { inner: comments, cursor: Cell::new(0) }
     }
 
     /// Returns the next unprinted comment without consuming it.
-    pub fn peek(&self) -> Option<Span> {
+    pub fn peek(&self) -> Option<SourceComment> {
         self.inner.get(self.cursor.get()).copied()
     }
 
     /// Returns unprinted comments whose `span.end <= upper_bound`,
     /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [Span] {
+    pub fn take_before(&self, upper_bound: u32) -> &'a [SourceComment] {
         let start = self.cursor.get();
         let mut end = start;
-        while end < self.inner.len() && self.inner[end].end <= upper_bound {
+        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
             end += 1;
         }
         self.cursor.set(end);
@@ -45,7 +55,7 @@ impl<'a> Comments<'a> {
     }
 
     /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [Span] {
+    pub fn take_remaining(&self) -> &'a [SourceComment] {
         let start = self.cursor.get();
         self.cursor.set(self.inner.len());
         &self.inner[start..]
@@ -53,9 +63,9 @@ impl<'a> Comments<'a> {
 
     /// Iterator over unprinted comments whose `span.end <= upper_bound`.
     /// Does NOT advance the cursor.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = Span> {
+    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = SourceComment> {
         let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |c| c.end <= upper_bound)
+        self.inner[start..].iter().copied().take_while(move |c| c.span.end <= upper_bound)
     }
 
     /// `anchor`, moved past the most recently consumed comment when that lies beyond it.
@@ -66,7 +76,7 @@ impl<'a> Comments<'a> {
     /// Gap measurement resuming from the unmoved anchor would observe that same spacing again
     /// and emit a second blank line.
     pub fn gap_anchor_after_consumed(&self, anchor: u32) -> u32 {
-        let last_consumed_end = self.cursor.get().checked_sub(1).map(|i| self.inner[i].end);
+        let last_consumed_end = self.cursor.get().checked_sub(1).map(|i| self.inner[i].span.end);
         last_consumed_end.map_or(anchor, |end| anchor.max(end))
     }
 }
@@ -132,26 +142,6 @@ fn gap_is_trivia_only(source: &str, from: u32, to: u32) -> bool {
     })
 }
 
-/// `true` when only whitespace precedes `offset` on its line
-/// (an own-line comment, as opposed to one trailing other content).
-pub fn is_own_line(source: &str, offset: u32) -> bool {
-    own_line_column(source, offset).is_some()
-}
-
-/// The 0-based column of `offset` when only whitespace precedes it on its line,
-/// in a single backward scan; `None` when other content does.
-fn own_line_column(source: &str, offset: u32) -> Option<u32> {
-    let mut column = 0u32;
-    for &byte in source.as_bytes()[..offset as usize].iter().rev() {
-        match byte {
-            b'\n' => break,
-            b' ' | b'\t' => column += 1,
-            _ => return None,
-        }
-    }
-    Some(column)
-}
-
 /// One line break, widened to a blank line when the source gap holds one.
 pub fn write_blank_preserving_break(
     prev_end: u32,
@@ -187,12 +177,16 @@ fn write_gap(gap: &[u8], f: &mut YamlFormatter<'_, '_>) {
 
 /// Emit comments that precede a node,
 /// preserving the source's vertical spacing (0/1/blank) between each comment and the next position.
-fn write_leading_comments(comments: &[Span], value_start: u32, f: &mut YamlFormatter<'_, '_>) {
+fn write_leading_comments(
+    comments: &[SourceComment],
+    value_start: u32,
+    f: &mut YamlFormatter<'_, '_>,
+) {
     let source = f.context().source_text();
-    for (i, &span) in comments.iter().enumerate() {
-        write_single_comment(span, f);
-        let next_pos = comments.get(i + 1).map_or(value_start, |c| c.start);
-        write_gap(source.bytes_range(span.end, next_pos), f);
+    for (i, comment) in comments.iter().enumerate() {
+        write_single_comment(comment.span, f);
+        let next_pos = comments.get(i + 1).map_or(value_start, |c| c.span.start);
+        write_gap(source.bytes_range(comment.span.end, next_pos), f);
     }
 }
 
@@ -204,7 +198,7 @@ pub fn flush_leading_comments(value_start: u32, f: &mut YamlFormatter<'_, '_>) {
 
 /// The next pending comment when it sits on the same line after `pos`
 /// (nothing but spaces/tabs between), without consuming it.
-pub fn pending_same_line_comment(pos: u32, f: &YamlFormatter<'_, '_>) -> Option<Span> {
+pub fn pending_same_line_comment(pos: u32, f: &YamlFormatter<'_, '_>) -> Option<SourceComment> {
     pending_same_line_comment_over(pos, &[], f)
 }
 
@@ -214,10 +208,10 @@ fn pending_same_line_comment_over(
     pos: u32,
     gap_punctuation: &[u8],
     f: &YamlFormatter<'_, '_>,
-) -> Option<Span> {
-    f.context().comments().peek().filter(|span| {
-        span.start >= pos
-            && f.context().source_text().all_bytes_match(pos, span.start, |b| {
+) -> Option<SourceComment> {
+    f.context().comments().peek().filter(|comment| {
+        comment.span.start >= pos
+            && f.context().source_text().all_bytes_match(pos, comment.span.start, |b| {
                 matches!(b, b' ' | b'\t') || gap_punctuation.contains(&b)
             })
     })
@@ -232,18 +226,28 @@ fn pending_same_line_comment_over(
 /// (`,` between flow entries, `:` after an implicit key), so syntax knowledge stays at the print site.
 /// Any other content means the comment trails a LATER node on the same line
 /// (`[a, b, c # comment` must not attach the comment to `a`).
-pub fn write_trailing_same_line_comment<'a>(
+pub fn write_trailing_same_line_comment(
     prev_end: u32,
     gap_punctuation: &[u8],
-    f: &mut YamlFormatter<'_, 'a>,
+    f: &mut YamlFormatter<'_, '_>,
 ) {
-    let Some(span) = pending_same_line_comment_over(prev_end, gap_punctuation, f) else { return };
-    f.context().comments().take_before(span.end);
+    let Some(comment) = pending_same_line_comment_over(prev_end, gap_punctuation, f) else {
+        return;
+    };
+    f.context().comments().take_before(comment.span.end);
+    write_comment_line_suffix(comment.span, f);
+    write!(f, expand_parent());
+}
+
+/// The ` # ...` emission of a same-line trailing comment: a `line_suffix`,
+/// so it never counts toward the `fits` measurement (see the "trailing comment width" divergence).
+/// Gating and consuming are the caller's.
+pub fn write_comment_line_suffix<'a>(span: Span, f: &mut YamlFormatter<'_, 'a>) {
     let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
         write!(f, space());
         write_single_comment(span, f);
     });
-    write!(f, [line_suffix(&content), expand_parent()]);
+    write!(f, line_suffix(&content));
 }
 
 /// Returns `true` if `span` is an ignore marker (`# oxfmt-ignore` / `# prettier-ignore`).
@@ -262,7 +266,11 @@ pub fn is_suppressed_last_before(f: &YamlFormatter<'_, '_>, before: u32) -> bool
 /// comment when it precedes it (so a blank line in front of a leading comment
 /// is still measured), else `next_start` itself.
 pub fn gap_upper_bound(next_start: u32, f: &YamlFormatter<'_, '_>) -> u32 {
-    f.context().comments().peek().filter(|c| c.start < next_start).map_or(next_start, |c| c.start)
+    f.context()
+        .comments()
+        .peek()
+        .filter(|c| c.span.start < next_start)
+        .map_or(next_start, |c| c.span.start)
 }
 
 /// The start of the LAST pending comment up to `before`, when it is a suppression marker.
@@ -272,8 +280,8 @@ fn suppression_marker_start_before(f: &YamlFormatter<'_, '_>, before: u32) -> Op
         .comments()
         .iter_before(before)
         .last()
-        .filter(|c| is_suppression_comment(source, *c))
-        .map(|c| c.start)
+        .filter(|c| is_suppression_comment(source, c.span))
+        .map(|c| c.span.start)
 }
 
 /// Flush bound for a block collection's leading comments:
@@ -308,22 +316,25 @@ pub fn write_suppressed_node(span: Span, f: &mut YamlFormatter<'_, '_>) {
 }
 
 /// Claims pending comments indented strictly deeper than `item_column` as the preceding item's end comments,
-/// printed one indent level in
+/// printed at the container's item-content column: `align_width` in from the items,
+/// the tab width for block mappings, the `- ` width (2) for block sequences
 /// (the placement effect of Prettier's `shouldOwnEndComment` + `mappingValue.endComments`, re-derived positionally).
+/// Its direct-block-scalar exclusion is the caller's gate: `ItemTail` in `print/block_collection.rs`.
 /// Returns the position after the last claimed comment so the caller can keep measuring gaps from it.
 pub fn flush_container_end_comments(
     item_column: u32,
+    align_width: u8,
     prev_end: u32,
     upper_bound: u32,
     f: &mut YamlFormatter<'_, '_>,
 ) -> u32 {
     let source = f.context().source_text();
-    let tab_width = f.options().indent_width.value();
     let mut prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
     loop {
-        let Some(span) = f.context().comments().peek() else { return prev_end };
+        let Some(comment) = f.context().comments().peek() else { return prev_end };
+        let span = comment.span;
         if span.end > upper_bound
-            || own_line_column(&source, span.start).is_none_or(|column| column <= item_column)
+            || comment.own_line_column.is_none_or(|column| column <= item_column)
             // An end-comment run directly follows its container;
             // other tokens in between mean the comment belongs to a LATER node
             // (a nested collection's unbounded tail flush must not jump over the parent's following items).
@@ -342,7 +353,7 @@ pub fn flush_container_end_comments(
             }
             write_single_comment(span, f);
         });
-        write!(f, align(tab_width, &inner));
+        write!(f, align(align_width, &inner));
         prev_end = span.end;
     }
 }
