@@ -9399,6 +9399,9 @@
         "unicorn/prefer-set-size": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-simple-condition-first": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-single-call": {
           "anyOf": [
             {
