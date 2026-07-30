@@ -1,0 +1,35 @@
+Cargo.lock
+  s_3c7a5db6237378::t_abeb6465194d69 144-149,1197-1209,1254-1264,1846,3136-3141,4115-4120,4237-4291
+Cargo.toml
+  s_5da6562f606377::t_24084354525b67 226
+tasks/ast_generator_fuzz/Cargo.toml
+  s_5da6562f606377::t_3fc1a2771e070a 26
+tasks/ast_generator_fuzz/src/lib.rs
+  s_3c7a5db6237378::t_06347c27eceab3 5,43-57,63,69-71,73-75
+tasks/ast_generator_fuzz/src/main.rs
+  s_3c7a5db6237378::t_7dc3bdc2846791 1,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c653eeb0fd7577ac3d6c472974d6747d9b1a02d4",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_5da6562f606377": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb028-4c3a-7d30-b26f-5154cdc35e58",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
