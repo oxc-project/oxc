@@ -367,6 +367,50 @@ fn comparison_before_regexp() {
 }
 
 #[test]
+fn sequence_comparison_before_regexp() {
+    test_same("(\"hello\" < false), null > /a/;\n");
+    test_same("for (;;) for (; 0n;) (\"hello\" < false), null > /a/;\n");
+    test_same("0, (\"hello\" < false), null > /a/;\n");
+    test_same("(\"a\" < A), (\"b\" < B), C > /x/;\n");
+    test_same("(\"a\" < A), B > /x/, 0;\n");
+    test_same("(x = a < b), c > /x/;\n");
+    test_options_with_source_type(
+        "0, (\"hello\" < false), null;\n",
+        "0, \"hello\" < false, null;\n",
+        SourceType::ts(),
+        default_options(),
+    );
+}
+
+#[test]
+fn comma_list_comparison_before_regexp() {
+    test_idempotency("x((true < 0n), c > /a/)");
+    test_idempotency("x<string>(null, .../a/, c, !null, (true < 0n), c > /a/)");
+    test_idempotency("new item(...899, value == 0n, y(false!), (0n < value), null > /a/)");
+    test_idempotency("new y<boolean[bigint]>(...281, (true < result), 950 > /a/, ...\"\")");
+    test_idempotency(
+        "let x = item = new result<bigint>(.../a/, (null < \"a\"), 635, \"key\" > /a/, {})",
+    );
+    test_idempotency(
+        "let value = b = new y<symbol | bigint>((null < `value`), \"value\" > /a/, [], ...`a`)",
+    );
+    test_idempotency("[(true < 0n), c > /a/]");
+    test_idempotency("x(...((true < 0n), c > /a/))");
+}
+
+#[test]
+fn comparison_before_template() {
+    test_idempotency("item = ((result?.[a] < \"hello\"), false > `hello` && (x ? x : false))");
+    test_idempotency("for (; (\"\"?.[\"a\"] < (() => {})) > `0`; { .../a/ });");
+}
+
+#[test]
+fn bitwise_comparison_before_regexp() {
+    test_idempotency("(c < \"key\") & 618 > /a/");
+    test_idempotency("(c < \"key\") | 618 > /a/");
+}
+
+#[test]
 fn ts_type_assertion() {
     // `<T>x` (TS angle-bracket assertion) is only valid in non-tsx source.
     let test_ts =

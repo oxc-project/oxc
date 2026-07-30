@@ -745,15 +745,18 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
-        let Some((first, rest)) = items.split_first() else {
-            return;
-        };
-        first.print_expr(self, precedence, ctx);
-        for item in rest {
-            self.print_comma();
-            self.print_soft_space();
-            item.print_expr(self, precedence, ctx);
+    fn print_expressions<T: GenExpr, F: FnMut(usize, &T) -> Precedence>(
+        &mut self,
+        items: &[T],
+        mut precedence: F,
+        ctx: Context,
+    ) {
+        for (index, item) in items.iter().enumerate() {
+            if index > 0 {
+                self.print_comma();
+                self.print_soft_space();
+            }
+            item.print_expr(self, precedence(index, item), ctx);
         }
     }
 
