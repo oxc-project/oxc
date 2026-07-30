@@ -1062,7 +1062,12 @@ fn test_fold_multiply() {
 fn test_fold_division() {
     fold("x = Infinity / Infinity", "x = NaN");
     fold("x = Infinity / 0", "x = Infinity");
-    fold("x = 1 / 0", "x = Infinity");
+    // `1 / 0` is the canonical printed spelling of Infinity and is kept as-is.
+    fold_same("x = 1 / 0");
+    fold_same("x = -1 / 0");
+    // A negative-zero divisor is not canonical and can still be folded.
+    fold("x = 1 / -0", "x = -Infinity");
+    fold("x = -1 / -0", "x = Infinity");
     fold("x = 0 / 0", "x = NaN");
     fold("x = 360 / 360", "x = 1");
     fold("x = 10.5 / 0.75", "x = 14");
