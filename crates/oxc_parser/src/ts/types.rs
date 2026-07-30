@@ -9,7 +9,10 @@ use crate::{
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
 };
 
-use super::{super::js::FunctionKind, statement::CallOrConstructorSignature};
+use super::{
+    super::js::{FunctionKind, operator::kind_to_precedence},
+    statement::CallOrConstructorSignature,
+};
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {
@@ -1639,7 +1642,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.ctx.has_in() && self.at(Kind::In) {
             return false;
         }
-        self.cur_kind().is_binary_operator()
+        kind_to_precedence(self.cur_kind()).is_some()
     }
 
     fn is_start_of_expression(&mut self) -> bool {
@@ -1649,11 +1652,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             kind if kind.is_unary_operator() => true,
             kind if kind.is_update_operator() => true,
-            Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At | Kind::Async => {
-                true
-            }
-            kind if kind.is_binary_operator() => true,
-            kind => kind.is_ts_identifier(self.ctx.has_yield(), self.ctx.has_await()),
+            Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At => true,
+            _ if self.is_binary_operator() => true,
+            kind => kind.is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }
 
@@ -1674,7 +1675,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Import => {
                 matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
             }
-            _ => false,
+            kind => kind.is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }
 }
