@@ -529,6 +529,11 @@ pub trait VisitJs<'a>: Sized {
     }
 
     #[inline]
+    fn visit_arrow_function_body(&mut self, it: &ArrowFunctionBody<'a>) {
+        walk_arrow_function_body(self, it);
+    }
+
+    #[inline]
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         walk_arrow_function_expression(self, it);
     }
@@ -2189,6 +2194,18 @@ pub mod walk_js {
     }
 
     #[inline]
+    pub fn walk_arrow_function_body<'a, V: VisitJs<'a>>(
+        visitor: &mut V,
+        it: &ArrowFunctionBody<'a>,
+    ) {
+        // No `AstKind` for this type
+        match it {
+            ArrowFunctionBody::FunctionBody(it) => visitor.visit_function_body(it),
+            match_expression!(ArrowFunctionBody) => visitor.visit_expression(it.to_expression()),
+        }
+    }
+
+    #[inline]
     pub fn walk_arrow_function_expression<'a, V: VisitJs<'a>>(
         visitor: &mut V,
         it: &ArrowFunctionExpression<'a>,
@@ -2207,7 +2224,7 @@ pub mod walk_js {
         );
         visitor.visit_span(&it.span);
         visitor.visit_formal_parameters(&it.params);
-        visitor.visit_function_body(&it.body);
+        visitor.visit_arrow_function_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
     }

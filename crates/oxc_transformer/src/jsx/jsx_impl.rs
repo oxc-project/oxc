@@ -89,10 +89,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
 use oxc_allocator::{ArenaBox, ArenaStringBuilder, ArenaVec, GetAllocator, ReplaceWith};
-use oxc_ast::{
-    ast::*,
-    builder::{AstBuilder, NONE},
-};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::PropName;
 use oxc_span::{SPAN, Span};
 use oxc_str::{Ident, Str};
@@ -808,7 +805,7 @@ impl<'a> JsxImpl<'a> {
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
         Expression::new_call_expression_with_pure(
-            span, callee, NONE, arguments, false, self.pure, ctx,
+            span, callee, None, arguments, false, self.pure, ctx,
         )
     }
 

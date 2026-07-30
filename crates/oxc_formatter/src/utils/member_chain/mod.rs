@@ -93,7 +93,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                     has_computed_property ||
                     is_factory(&identifier.name) ||
                     // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
-                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
+                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(_))
                         && has_short_name(&identifier.name, f.options().indent_width.value()))
                 }
                 Expression::ThisExpression(_) => true,

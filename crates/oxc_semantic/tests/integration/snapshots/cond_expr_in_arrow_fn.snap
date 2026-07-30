@@ -16,7 +16,7 @@ bb2: {
 }
 
 bb3: {
-	statement
+
 }
 
 bb4: {
@@ -40,8 +40,7 @@ digraph {
     1 [ label = "bb1
 VariableDeclaration" shape = box]
     2 [ label = "bb2" shape = box]
-    3 [ label = "bb3
-ExpressionStatement" shape = box]
+    3 [ label = "bb3" shape = box]
     4 [ label = "bb4
 Condition(CallExpression(a))" shape = box]
     5 [ label = "bb5" shape = box]

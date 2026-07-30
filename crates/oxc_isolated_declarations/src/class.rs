@@ -1,5 +1,5 @@
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
 use crate::{
@@ -205,7 +205,7 @@ impl<'a> IsolatedDeclarations<'a> {
             function.this_param.clone_in(self.allocator()),
             params,
             return_type,
-            NONE,
+            None,
             self,
         );
 
@@ -239,7 +239,7 @@ impl<'a> IsolatedDeclarations<'a> {
             r#type,
             [],
             key,
-            NONE,
+            None,
             None,
             false,
             r#static,
@@ -304,7 +304,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
                 let params =
-                    FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [], NONE, self);
+                    FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [], None, self);
                 self.transform_class_method_definition(method, params, None)
             }
             MethodDefinitionKind::Set => {
@@ -695,7 +695,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 r#type,
                 [],
                 ident,
-                NONE,
+                None,
                 None,
                 false,
                 false,
@@ -711,7 +711,7 @@ impl<'a> IsolatedDeclarations<'a> {
             elements.insert(0, element);
         }
 
-        let body = ClassBody::new(decl.body.span, elements, self);
+        let body = ClassBody::boxed(decl.body.span, elements, self);
 
         Class::boxed(
             decl.span,
@@ -734,7 +734,7 @@ impl<'a> IsolatedDeclarations<'a> {
         kind: BindingPattern<'a>,
     ) -> ArenaBox<'a, FormalParameters<'a>> {
         let parameter =
-            FormalParameter::new(SPAN, [], kind, NONE, NONE, false, None, false, false, self);
-        FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [parameter], NONE, self)
+            FormalParameter::new(SPAN, [], kind, None, None, false, None, false, false, self);
+        FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [parameter], None, self)
     }
 }

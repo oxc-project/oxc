@@ -2186,7 +2186,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.unresolved_references_checkpoint = saved_checkpoint;
 
-        self.visit_function_body(&expr.body);
+        self.visit_arrow_function_body(&expr.body);
 
         /* cfg */
         control_flow!(self, |cfg| {

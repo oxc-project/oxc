@@ -443,7 +443,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
             let mut await_expression = None;
             for ancestor in self.ancestors().skip(1) {
                 match ancestor {
-                    AstNodes::BlockStatement(_)
+                    AstNodes::ArrowFunctionExpression(_)
+                    | AstNodes::BlockStatement(_)
                     | AstNodes::FunctionBody(_)
                     | AstNodes::SwitchCase(_)
                     | AstNodes::Program(_)

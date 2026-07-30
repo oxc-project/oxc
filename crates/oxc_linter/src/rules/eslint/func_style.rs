@@ -340,7 +340,7 @@ impl FuncStyle {
 
 fn arrow_contains_this_or_super(arrow: &ArrowFunctionExpression) -> bool {
     let mut finder = ThisOrSuperFinder { found: false };
-    finder.visit_function_body(&arrow.body);
+    finder.visit_arrow_function_body(&arrow.body);
     finder.found
 }
 

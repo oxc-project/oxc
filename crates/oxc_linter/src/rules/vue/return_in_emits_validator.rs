@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement, Statement},
+    ast::{ArrowFunctionExpression, Expression, Function, ReturnStatement},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
@@ -158,30 +158,22 @@ fn analyze_return_value(kind: AstKind<'_>) -> (bool, bool) {
             }
         }
         AstKind::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
+            if arrow.is_expression() {
                 // Concise body `() => expr`: implicit return of `expr`.
                 visitor.has_return_value = true;
-                if let Some(expr) = arrow_expression_body(arrow)
+                if let Some(expr) = arrow.get_expression()
                     && !is_falsy(expr)
                 {
                     visitor.possible_of_return_true = true;
                 }
             } else {
-                visitor.visit_function_body(&arrow.body);
+                visitor.visit_function_body(arrow.get_function_body().unwrap());
             }
         }
         _ => {}
     }
 
     (visitor.has_return_value, visitor.possible_of_return_true)
-}
-
-fn arrow_expression_body<'a>(arrow: &'a ArrowFunctionExpression<'a>) -> Option<&'a Expression<'a>> {
-    let stmt = arrow.body.statements.first()?;
-    match stmt {
-        Statement::ExpressionStatement(expr_stmt) => Some(&expr_stmt.expression),
-        _ => None,
-    }
 }
 
 #[derive(Default)]

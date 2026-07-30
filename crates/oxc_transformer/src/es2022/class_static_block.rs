@@ -42,7 +42,7 @@
 use itoa::Buffer as ItoaBuffer;
 
 use oxc_allocator::TakeIn;
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::Traverse;
@@ -119,7 +119,7 @@ impl ClassStaticBlock {
             PropertyDefinitionType::PropertyDefinition,
             [],
             key,
-            NONE,
+            None,
             Some(expr),
             false,
             true,

@@ -519,7 +519,10 @@ fn expression_references_variable(expr: &Expression<'_>, var_name: &str) -> bool
                 return false;
             }
             // Check the function body for references
-            arrow.body.statements.iter().any(|stmt| {
+            if let Some(expression) = arrow.get_expression() {
+                return expression_references_variable(expression, var_name);
+            }
+            arrow.get_function_body().unwrap().statements.iter().any(|stmt| {
                 if let Statement::ExpressionStatement(expr_stmt) = stmt {
                     expression_references_variable(&expr_stmt.expression, var_name)
                 } else if let Statement::ReturnStatement(ret) = stmt {

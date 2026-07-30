@@ -356,7 +356,7 @@ fn is_acceptable_return_node<'a, 'b>(
             | AstKind::FunctionBody(_) => {
                 node = ctx.nodes().parent_node(node.id());
             }
-            AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.expression,
+            AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.is_expression(),
             AstKind::AwaitExpression(_) => return true,
             _ => return false,
         }

@@ -256,7 +256,7 @@ fn make_function_shorthand<'a>(
             }
             Either::Right(func) => {
                 let next_token = ctx
-                    .find_prev_token_from(func.body.span.start, "=>")
+                    .find_prev_token_from(func.body.span().start, "=>")
                     .map(|offset| offset + 2 /* "=>".len() */);
                 let Some(arrow_token) = next_token else {
                     return fixer.noop();
@@ -373,7 +373,7 @@ fn check_longform_methods<'a>(
     if rule.avoid_explicit_return_arrows
         && let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
         && !arrow_uses_lexical_identifiers(ctx, func)
-        && !func.expression
+        && !func.is_expression()
     {
         make_function_shorthand(ctx, property, Either::Right(func));
     }

@@ -988,6 +988,9 @@ fn write_sass_module_config<'a>(config: &SassModuleConfig<'a>, f: &mut CssFormat
 /// content (`$a: 1 /* c */,`); an own-line comment stops the loop and stays pending.
 /// Inline `//` comments ride a `line_suffix`,
 /// so a following `,` lands before the comment text (Prettier prints `$a: 1, // c`).
+/// Look-alike of `comments::write_trailing_same_line_comments`, minus its `expand_parent`:
+/// the map/config bodies this serves already hard-break,
+/// so propagating a break out of a still-flat head (`@use "a" /* c */ with (`) would be a behavior change.
 /// Returns the end offset of the last emitted comment.
 fn write_same_line_trailing_comments<'a>(
     upper_bound: u32,

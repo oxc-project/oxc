@@ -12,7 +12,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::{
     ast::*,
-    builder::{AstBuilder, GetAstBuilder, NONE},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
@@ -285,16 +285,23 @@ impl<'a> IsolatedDeclarations<'a> {
                             transformed_count += 1;
                             need_empty_export_marker = false;
                         }
+                        ModuleDeclaration::ExportAllDeclaration(decl) => {
+                            let new_decl = self.transform_export_all_declaration(decl);
+                            self.scope.visit_export_all_declaration(&new_decl);
+                            transformed_stmts[idx] =
+                                Some(Statement::ExportAllDeclaration(new_decl));
+                            transformed_count += 1;
+                            need_empty_export_marker = false;
+                        }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                            if decl.declaration.is_none() {
+                                need_empty_export_marker = false;
+                            }
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_export_named_declaration(&new_decl);
                                 transformed_stmts[idx] =
                                     Some(Statement::ExportNamedDeclaration(new_decl));
-                            } else if decl.declaration.is_none() {
-                                need_empty_export_marker = false;
-                                self.scope.visit_export_named_declaration(decl);
-                                transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             } else {
                                 // Declaration couldn't be transformed; preserve as-is
                                 transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
@@ -304,7 +311,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         ModuleDeclaration::ImportDeclaration(_) => {
                             // We must transform this in the end, because we need to know all references
                         }
-                        module_declaration => {
+                        module_declaration @ ModuleDeclaration::TSNamespaceExportDeclaration(_) => {
                             self.scope.visit_module_declaration(module_declaration);
                             transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             transformed_count += 1;
@@ -433,7 +440,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 [],
                 None,
                 kind,
-                NONE,
+                None,
                 self,
             ));
         } else if self.scope.is_ts_module_block() {

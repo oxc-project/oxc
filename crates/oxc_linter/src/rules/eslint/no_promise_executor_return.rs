@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -155,10 +155,10 @@ impl Rule for NoPromiseExecutorReturn {
                     if self.allow_void && expr.get_inner_expression().is_void() {
                         return;
                     }
-                    ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span));
+                    ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span()));
                 } else {
                     // Arrow function with block body: check for return statements
-                    self.check_function_body(&arrow.body, ctx);
+                    self.check_function_body(arrow.get_function_body().unwrap(), ctx);
                 }
             }
             Expression::FunctionExpression(func) => {

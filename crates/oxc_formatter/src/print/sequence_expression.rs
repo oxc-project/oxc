@@ -11,10 +11,7 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_arrow_body = matches!(
-            self.parent(),
-            AstNodes::ExpressionStatement(statement) if statement.is_arrow_function_body()
-        );
+        let is_arrow_body = matches!(self.parent(), AstNodes::ArrowFunctionExpression(_));
 
         let format_inner = format_with(|f| {
             let mut expressions = self.expressions().iter();
@@ -36,8 +33,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
             });
 
             if matches!(self.parent(), AstNodes::ForStatement(_))
-                || (matches!(self.parent(), AstNodes::ExpressionStatement(statement)
-                    if !statement.is_arrow_function_body()))
+                || matches!(self.parent(), AstNodes::ExpressionStatement(_))
             {
                 write!(f, [indent(&rest)]);
             } else {

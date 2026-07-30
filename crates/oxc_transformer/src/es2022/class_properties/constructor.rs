@@ -104,7 +104,7 @@ use std::iter;
 use oxc_allocator::{ArenaVec, ReplaceWith};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJsMut, VisitMut, walk_js_mut};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -237,7 +237,7 @@ impl<'a> ClassProperties<'a> {
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             let rest_element =
                 BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-            params_rest = Some(FormalParameterRest::boxed(SPAN, [], rest_element, NONE, ctx));
+            params_rest = Some(FormalParameterRest::boxed(SPAN, [], rest_element, None, ctx));
             stmts.push(Statement::new_expression_statement(
                 SPAN,
                 create_super_call(&args_binding, ctx),
@@ -310,21 +310,15 @@ impl<'a> ClassProperties<'a> {
             ),
             ctx,
         );
-        let body = ArenaVec::from_value_in(
-            Statement::new_expression_statement(SPAN, body_exprs, ctx),
-            ctx,
-        );
-
         // `(..._args) => (super(..._args), <inits>, this)`
         let super_func = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
-            true,
             false,
-            NONE,
+            None,
             {
                 let rest_element =
                     BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-                let rest = FormalParameterRest::boxed(SPAN, [], rest_element, NONE, ctx);
+                let rest = FormalParameterRest::boxed(SPAN, [], rest_element, None, ctx);
                 FormalParameters::boxed(
                     SPAN,
                     FormalParameterKind::ArrowFormalParameters,
@@ -333,8 +327,8 @@ impl<'a> ClassProperties<'a> {
                     ctx,
                 )
             },
-            NONE,
-            FunctionBody::boxed(SPAN, [], body, ctx),
+            None,
+            ArrowFunctionBody::from(body_exprs),
             super_func_scope_id,
             false,
             false,
@@ -349,7 +343,7 @@ impl<'a> ClassProperties<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 super_binding.create_binding_pattern(ctx),
-                NONE,
+                None,
                 Some(super_func),
                 false,
                 ctx,
@@ -399,10 +393,10 @@ impl<'a> ClassProperties<'a> {
             false,
             false,
             false,
-            NONE,
-            NONE,
-            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx),
-            NONE,
+            None,
+            None,
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx),
+            None,
             Some(FunctionBody::boxed(SPAN, directives, body_stmts, ctx)),
             super_func_scope_id,
             false,
@@ -601,7 +595,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
                     false,
                     ctx,
                 ),
-                NONE,
+                None,
                 [Argument::from(super_call)],
                 false,
                 ctx,

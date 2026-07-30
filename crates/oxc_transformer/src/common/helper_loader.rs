@@ -71,10 +71,7 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, IdentifierName},
-    builder::NONE,
-};
+use oxc_ast::ast::{Argument, CallExpression, Expression, IdentifierName};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_str::{Str, static_ident};
@@ -276,7 +273,7 @@ pub fn helper_call<'a>(
 ) -> ArenaBox<'a, CallExpression<'a>> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    CallExpression::boxed_with_pure(SPAN, callee, NONE, arguments, false, pure, ctx)
+    CallExpression::boxed_with_pure(SPAN, callee, None, arguments, false, pure, ctx)
 }
 
 /// Same as [`helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
@@ -289,7 +286,7 @@ pub fn helper_call_expr<'a>(
 ) -> Expression<'a> {
     let callee = helper_load(helper, ctx);
     let pure = helper.pure();
-    Expression::new_call_expression_with_pure(SPAN, callee, NONE, arguments, false, pure, ctx)
+    Expression::new_call_expression_with_pure(SPAN, callee, None, arguments, false, pure, ctx)
 }
 
 /// Load a helper function and return a callee expression.

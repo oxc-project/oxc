@@ -52,7 +52,7 @@ use oxc_allocator::{
     Address, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator, ReplaceWith, TakeIn,
     UnstableAddress,
 };
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJs, VisitMut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
@@ -413,7 +413,7 @@ impl<'a> LegacyDecorator<'a> {
                 PropertyDefinitionType::PropertyDefinition,
                 [],
                 PropertyKey::new_private_identifier(SPAN, storage_name, ctx),
-                NONE,
+                None,
                 accessor.value.take(),
                 false,
                 is_static,
@@ -499,7 +499,7 @@ impl<'a> LegacyDecorator<'a> {
 
         let (params, body_stmt) = if is_getter {
             let params =
-                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], NONE, ctx);
+                FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx);
             let field_expr = Expression::new_private_field_expression(
                 SPAN,
                 create_object(ctx),
@@ -519,8 +519,8 @@ impl<'a> LegacyDecorator<'a> {
                 SPAN,
                 [],
                 value_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
+                None,
+                None,
                 false,
                 None,
                 false,
@@ -531,7 +531,7 @@ impl<'a> LegacyDecorator<'a> {
                 SPAN,
                 FormalParameterKind::FormalParameter,
                 [param],
-                NONE,
+                None,
                 ctx,
             );
             let assign = Expression::new_assignment_expression(
@@ -1017,7 +1017,7 @@ impl<'a> LegacyDecorator<'a> {
             SPAN,
             VariableDeclarationKind::Let,
             binding.create_spanned_binding_pattern(binding_span, ctx),
-            NONE,
+            None,
             Some(initializer),
             false,
             ctx,
@@ -1463,7 +1463,7 @@ impl<'a> LegacyDecorator<'a> {
         let exported = ModuleExportName::new_identifier_name(SPAN, class_binding.name, ctx);
         let specifiers = [ExportSpecifier::new(SPAN, local, exported, kind, ctx)];
         let export_class_reference = ModuleDeclaration::new_export_named_declaration(
-            SPAN, None, specifiers, None, kind, NONE, ctx,
+            SPAN, None, specifiers, None, kind, None, ctx,
         );
         Statement::from(export_class_reference)
     }

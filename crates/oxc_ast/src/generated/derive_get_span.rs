@@ -973,6 +973,58 @@ impl GetSpan for FunctionBody<'_> {
     }
 }
 
+impl GetSpan for ArrowFunctionBody<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::FunctionBody(it) => GetSpan::span(&**it),
+            Self::BooleanLiteral(it) => GetSpan::span(&**it),
+            Self::NullLiteral(it) => GetSpan::span(&**it),
+            Self::NumericLiteral(it) => GetSpan::span(&**it),
+            Self::BigIntLiteral(it) => GetSpan::span(&**it),
+            Self::RegExpLiteral(it) => GetSpan::span(&**it),
+            Self::StringLiteral(it) => GetSpan::span(&**it),
+            Self::TemplateLiteral(it) => GetSpan::span(&**it),
+            Self::Identifier(it) => GetSpan::span(&**it),
+            Self::Super(it) => GetSpan::span(&**it),
+            Self::ArrayExpression(it) => GetSpan::span(&**it),
+            Self::ArrowFunctionExpression(it) => GetSpan::span(&**it),
+            Self::AssignmentExpression(it) => GetSpan::span(&**it),
+            Self::AwaitExpression(it) => GetSpan::span(&**it),
+            Self::BinaryExpression(it) => GetSpan::span(&**it),
+            Self::CallExpression(it) => GetSpan::span(&**it),
+            Self::ChainExpression(it) => GetSpan::span(&**it),
+            Self::ClassExpression(it) => GetSpan::span(&**it),
+            Self::ConditionalExpression(it) => GetSpan::span(&**it),
+            Self::FunctionExpression(it) => GetSpan::span(&**it),
+            Self::ImportExpression(it) => GetSpan::span(&**it),
+            Self::LogicalExpression(it) => GetSpan::span(&**it),
+            Self::NewExpression(it) => GetSpan::span(&**it),
+            Self::ObjectExpression(it) => GetSpan::span(&**it),
+            Self::ParenthesizedExpression(it) => GetSpan::span(&**it),
+            Self::SequenceExpression(it) => GetSpan::span(&**it),
+            Self::TaggedTemplateExpression(it) => GetSpan::span(&**it),
+            Self::ThisExpression(it) => GetSpan::span(&**it),
+            Self::UnaryExpression(it) => GetSpan::span(&**it),
+            Self::UpdateExpression(it) => GetSpan::span(&**it),
+            Self::YieldExpression(it) => GetSpan::span(&**it),
+            Self::PrivateInExpression(it) => GetSpan::span(&**it),
+            Self::ImportMeta(it) => GetSpan::span(&**it),
+            Self::NewTarget(it) => GetSpan::span(&**it),
+            Self::JSXElement(it) => GetSpan::span(&**it),
+            Self::JSXFragment(it) => GetSpan::span(&**it),
+            Self::TSAsExpression(it) => GetSpan::span(&**it),
+            Self::TSSatisfiesExpression(it) => GetSpan::span(&**it),
+            Self::TSTypeAssertion(it) => GetSpan::span(&**it),
+            Self::TSNonNullExpression(it) => GetSpan::span(&**it),
+            Self::TSInstantiationExpression(it) => GetSpan::span(&**it),
+            Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
+            Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
+            Self::StaticMemberExpression(it) => GetSpan::span(&**it),
+            Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
+        }
+    }
+}
+
 impl GetSpan for ArrowFunctionExpression<'_> {
     #[inline]
     fn span(&self) -> Span {

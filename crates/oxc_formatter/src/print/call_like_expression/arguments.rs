@@ -323,7 +323,7 @@ fn should_group_first_argument(
         // fit entirely on the line or break fully. Only a single arrow
         // with a block body can be grouped to collapse the braces.
         Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
+            if arrow.is_expression() {
                 return false;
             }
         }
@@ -573,50 +573,6 @@ fn can_group_arrow_function_expression_argument(
     is_arrow_recursion: bool,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    let body = &arrow_function.body;
-    let return_type_annotation = &arrow_function.return_type;
-
-    // Handles cases like:
-    //
-    // app.get("/", (req, res): void => {
-    //     res.send("Hello World!");
-    // });
-    //
-    // export class Thing implements OtherThing {
-    //   do: (type: Type) => Provider<Prop> = memoize(
-    //     (type: ObjectType): Provider<Opts> => {}
-    //   );
-    // }
-    let can_group_type = return_type_annotation.as_ref().is_none_or(|any_type| {
-        match &any_type.type_annotation {
-            TSType::TSTypeReference(_) => {
-                if arrow_function.expression {
-                    return false;
-                }
-                body.statements.iter().any(|statement| match statement {
-                    #[expect(clippy::match_same_arms)]
-                    Statement::EmptyStatement(_) => {
-                        // When the body contains an empty statement, comments in
-                        // the body will get attached to that statement rather than
-                        // the body itself, so they need to be checked for comments
-                        // as well to ensure that the body is still considered
-                        // groupable when those empty statements are removed by the
-                        // printer.
-                        // TODO: it seems no difference if we comment out this line
-                        // comments.has_comments(s.span)
-                        true
-                    }
-                    _ => true,
-                }) || (body.statements.is_empty() && f.comments().has_comment_before(body.span.end))
-            }
-            _ => true,
-        }
-    });
-
-    if !can_group_type {
-        return false;
-    }
-
     arrow_function.get_expression().is_none_or(|expr| match expr {
         Expression::ObjectExpression(_)
         | Expression::ArrayExpression(_)
@@ -1054,6 +1010,11 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
+            // The AMD layout only applies in statement position, matching Prettier's
+            // `parent.type === "ExpressionStatement"` check. A concise arrow body is not statement
+            // position: its parent is the `ArrowFunctionExpression`, so `() => define(...)` formats
+            // as a normal call. (oxc used to accept it, because concise bodies were wrapped in a
+            // synthetic `ExpressionStatement` before `ArrowFunctionBody` existed.)
             let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
@@ -1146,7 +1107,7 @@ fn is_react_hook_with_deps_array(
                 return false;
             }
 
-            if callback.expression {
+            if callback.is_expression() {
                 return false;
             }
 
@@ -1178,7 +1139,7 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
         return false;
     };
 
-    if arrow.expression {
+    if arrow.is_expression() {
         return false;
     }
 

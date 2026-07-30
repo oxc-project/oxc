@@ -579,8 +579,7 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 AstKind::Function(f) if f.is_declaration() => break,
                 // implicit return in an arrow function
-                AstKind::ArrowFunctionExpression(f) if f.expression =>
-                {
+                AstKind::ArrowFunctionExpression(f) if f.is_expression() => {
                     return false;
                 }
                 AstKind::ReturnStatement(_) => {
@@ -664,12 +663,7 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::ReturnStatement(_) => return true,
                 AstKind::ExpressionStatement(_) => {}
                 AstKind::Function(f) if f.is_expression() => {}
-                // note: intentionally not using
-                // ArrowFunctionExpression::get_expression since it returns
-                // `Some` even if
-                // 1. there are more than one statements
-                // 2. the expression is surrounded by braces
-                AstKind::ArrowFunctionExpression(f) if f.expression => {
+                AstKind::ArrowFunctionExpression(f) if f.is_expression() => {
                     return true;
                 }
                 x if x.is_statement() => return false,

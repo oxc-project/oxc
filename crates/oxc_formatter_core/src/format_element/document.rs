@@ -183,8 +183,7 @@ impl FormatElements for [FormatElement<'_>] {
 
         for element in self {
             match element {
-                // Line suffix
-                // Ignore if any of its content breaks
+                // Line suffix: Ignore its content, except for direct `Line` elements (see below)
                 FormatElement::Tag(StartLineSuffix) => {
                     ignore_depth += 1;
                 }
@@ -194,6 +193,10 @@ impl FormatElements for [FormatElement<'_>] {
                 FormatElement::Interned(interned) if ignore_depth == 0 && interned.will_break() => {
                     return true;
                 }
+                // No `ignore_depth` guard on purpose:
+                // like Prettier's `hardline` (which carries a `breakParent`),
+                // a hard line written directly inside a line suffix still propagates the break
+                // to the enclosing groups.
                 FormatElement::Line(line) if line.will_break() => {
                     return true;
                 }

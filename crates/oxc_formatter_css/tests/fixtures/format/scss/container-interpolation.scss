@@ -1,0 +1,13 @@
+// Sass interpolation in `@container` preludes is kept verbatim as a raw
+// prelude (oxc-project/oxc#25075).
+@container row #{breakpoints.$lmn-breakpoints-sm-up} {
+	.offsets-selection-table__checkbox-wrapper {
+		padding-top: var(--lmn-spacing-000);
+	}
+}
+@container not #{$condition} {
+	.a { color: red; }
+}
+@container (min-width: #{$min}) and #{$extra} {
+	.a { color: red; }
+}

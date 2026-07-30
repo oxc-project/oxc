@@ -110,14 +110,14 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let function_body_opt = match &setup_prop.value {
-        Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
-        Expression::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
-        _ => None,
+    let has_body = match &setup_prop.value {
+        Expression::FunctionExpression(func) => func.body.is_some(),
+        Expression::ArrowFunctionExpression(_) => true,
+        _ => false,
     };
-    let Some(function_body) = function_body_opt else {
+    if !has_body {
         return;
-    };
+    }
 
     let module_record = ctx.module_record();
     let scoping = ctx.scoping();
@@ -141,7 +141,15 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
     }
 
     let mut visitor = WatchAfterAwaitVisitor::new(scoping, symbol_to_import_entry);
-    visitor.visit_function_body(function_body);
+    match &setup_prop.value {
+        Expression::FunctionExpression(func) => {
+            visitor.visit_function_body(func.body.as_deref().unwrap());
+        }
+        Expression::ArrowFunctionExpression(arrow) => {
+            visitor.visit_arrow_function_body(&arrow.body);
+        }
+        _ => unreachable!(),
+    }
 
     visitor.errors.iter().for_each(|(span, name)| {
         ctx.diagnostic(no_watch_after_await_diagnostic(*span, name));

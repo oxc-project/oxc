@@ -1,24 +1,41 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, ReplaceWith};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 
 use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
 impl<'a> IsolatedDeclarations<'a> {
+    pub(crate) fn transform_export_all_declaration(
+        &self,
+        prev_decl: &ExportAllDeclaration<'a>,
+    ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
+        ExportAllDeclaration::boxed(
+            prev_decl.span,
+            prev_decl.exported.clone_in(self.allocator()),
+            prev_decl.source.clone(),
+            None,
+            prev_decl.export_kind,
+            self,
+        )
+    }
+
     pub(crate) fn transform_export_named_declaration(
         &mut self,
         prev_decl: &ExportNamedDeclaration<'a>,
     ) -> Option<ArenaBox<'a, ExportNamedDeclaration<'a>>> {
-        let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
+        let declaration = match &prev_decl.declaration {
+            Some(decl) => Some(self.transform_declaration(decl, false)?),
+            None => None,
+        };
 
         Some(ExportNamedDeclaration::boxed(
             prev_decl.span,
-            Some(decl),
-            [],
+            declaration,
+            prev_decl.specifiers.clone_in(self.allocator()),
+            prev_decl.source.clone(),
+            prev_decl.export_kind,
             None,
-            ImportOrExportKind::Value,
-            NONE,
             self,
         ))
     }
@@ -100,7 +117,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let id = BindingPattern::new_binding_identifier(SPAN, name, self);
             let type_annotation = self
                 .infer_type_from_expression(expr)
-                .map(|ts_type| TSTypeAnnotation::new(SPAN, ts_type, self));
+                .map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
 
             if type_annotation.is_none() {
                 self.error(default_export_inferred(expr.span()));

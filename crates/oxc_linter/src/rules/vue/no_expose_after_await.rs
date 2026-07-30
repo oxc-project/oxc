@@ -106,13 +106,10 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let (params, body) = match &setup_prop.value {
-        Expression::FunctionExpression(func) => (&func.params, func.body.as_ref()),
-        Expression::ArrowFunctionExpression(arrow) => (&arrow.params, Some(&arrow.body)),
+    let params = match &setup_prop.value {
+        Expression::FunctionExpression(func) if func.body.is_some() => &func.params,
+        Expression::ArrowFunctionExpression(arrow) => &arrow.params,
         _ => return,
-    };
-    let Some(body) = body else {
-        return;
     };
 
     let Some(second_param) = params.items.get(1) else {
@@ -142,7 +139,15 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
 
     let scoping = ctx.scoping();
     let mut visitor = ExposeAfterAwaitVisitor::new(scoping, binding);
-    visitor.visit_function_body(body);
+    match &setup_prop.value {
+        Expression::FunctionExpression(func) => {
+            visitor.visit_function_body(func.body.as_deref().unwrap());
+        }
+        Expression::ArrowFunctionExpression(arrow) => {
+            visitor.visit_arrow_function_body(&arrow.body);
+        }
+        _ => unreachable!(),
+    }
 
     visitor.errors.iter().for_each(|(span, name)| {
         ctx.diagnostic(no_expose_after_await_diagnostic(*span, name));

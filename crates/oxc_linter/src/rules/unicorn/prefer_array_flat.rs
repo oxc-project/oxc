@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
-        IdentifierReference, MemberExpression, Statement,
+        IdentifierReference, MemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -99,7 +99,13 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     };
 
-    let Some(return_param_name) = get_return_identifier_name(&first_argument.body) else {
+    let return_param_name = first_argument
+        .get_expression()
+        .and_then(|expression| {
+            expression.get_identifier_reference().map(|ident| ident.name.as_str())
+        })
+        .or_else(|| first_argument.get_function_body().and_then(get_return_identifier_name));
+    let Some(return_param_name) = return_param_name else {
         return;
     };
 
@@ -230,13 +236,10 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         return;
     };
 
-    let Some(Statement::ExpressionStatement(expr_stmt)) = first_argument.body.statements.first()
-    else {
-        return;
-    };
+    let Some(expression) = first_argument.get_expression() else { return };
 
     // `array.reduce((a, b) => a.concat(b), [])`
-    if let Expression::CallExpression(concat_call_expr) = &expr_stmt.expression
+    if let Expression::CallExpression(concat_call_expr) = expression
         && is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1))
         && let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0]
     {
@@ -272,7 +275,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 
     // `array.reduce((a, b) => [...a, ...b], [])`
-    if let Expression::ArrayExpression(array_expr) = &expr_stmt.expression {
+    if let Expression::ArrayExpression(array_expr) = expression {
         if array_expr.elements.len() != 2 {
             return;
         }

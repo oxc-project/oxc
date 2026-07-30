@@ -1261,15 +1261,23 @@ impl<'a> Dummy<'a> for FunctionBody<'a> {
     }
 }
 
+impl<'a> Dummy<'a> for ArrowFunctionBody<'a> {
+    /// Create a dummy [`ArrowFunctionBody`].
+    ///
+    /// Has cost of making 1 allocation (16 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::NullLiteral(Dummy::dummy(allocator))
+    }
+}
+
 impl<'a> Dummy<'a> for ArrowFunctionExpression<'a> {
     /// Create a dummy [`ArrowFunctionExpression`].
     ///
-    /// Has cost of making 2 allocations (112 bytes).
+    /// Has cost of making 2 allocations (64 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            expression: Dummy::dummy(allocator),
             r#async: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
             params: Dummy::dummy(allocator),

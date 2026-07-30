@@ -124,7 +124,7 @@ struct Param<'d> {
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
     ///   e.g. `name: S1 where S1: Into<Str<'a>>`.
     /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
-    ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>`.
+    ///   e.g. `params: T1 where T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>`.
     generic_type: Option<GenericType>,
 }
 
@@ -313,8 +313,8 @@ fn generate_builder_methods_for_struct_impl(
 ///
 /// ```
 /// //        ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ generic params
-/// pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, function: T1, builder: &B) -> Self
-///     where T1: IntoIn<'a, Box<'a, Function<'a>>>
+/// pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, params: T1, builder: &B) -> Self
+///     where T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>
 /// //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ where clause
 /// ```
 fn get_struct_params<'s>(
@@ -328,7 +328,7 @@ fn get_struct_params<'s>(
     TokenStream,    // `where` clause
     bool,           // Has default fields
 ) {
-    let mut generic_count = 0u32;
+    let mut vec_generic_count = 0u32;
     let mut str_generic_count = 0u32;
     let mut has_default_fields = false;
 
@@ -362,13 +362,9 @@ fn get_struct_params<'s>(
                     str_generic_count += 1;
                     Some((format_ident!("S{str_generic_count}"), GenericType::Into))
                 }
-                TypeDef::Box(_) | TypeDef::Vec(_) => {
-                    generic_count += 1;
-                    Some((format_ident!("T{generic_count}"), GenericType::IntoIn))
-                }
-                TypeDef::Option(option_def) if option_def.inner_type(schema).is_box() => {
-                    generic_count += 1;
-                    Some((format_ident!("T{generic_count}"), GenericType::IntoIn))
+                TypeDef::Vec(_) => {
+                    vec_generic_count += 1;
+                    Some((format_ident!("V{vec_generic_count}"), GenericType::IntoIn))
                 }
                 _ => None,
             };
