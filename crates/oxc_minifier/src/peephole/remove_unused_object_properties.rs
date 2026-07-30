@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{GetAllocator, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
@@ -86,6 +86,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::Identifier(ident) = object.without_parentheses() else { return None };
         let reference_id = ident.reference_id();
         let symbol_id = ctx.scoping().get_reference(reference_id).symbol_id()?;
+        let allocator = ctx.allocator();
         let usage = &mut ctx.state.object_property_usage;
         if !usage.candidate_symbols.contains(&symbol_id) {
             return None;
@@ -97,7 +98,7 @@ impl<'a> PeepholeOptimizations {
             let used_properties = usage
                 .used_properties
                 .entry(symbol_id)
-                .or_insert_with(|| ArenaVec::new_in(ctx.ast.allocator));
+                .or_insert_with(|| ArenaVec::new_in(&allocator));
             if !used_properties.contains(&property_name) {
                 used_properties.push(property_name);
             }
