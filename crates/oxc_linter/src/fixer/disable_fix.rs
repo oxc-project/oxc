@@ -11,7 +11,12 @@ enum DisableDirective {
 }
 
 impl Message {
-    pub(crate) fn add_ignore_fix(&mut self, section_offset: u32, section_source_text: &str) {
+    pub(crate) fn add_ignore_fix(
+        &mut self,
+        section_offset: u32,
+        section_source_text: &str,
+        jsx_child_offset: Option<u32>,
+    ) {
         // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
         // and attaching a ignore comment would not ignore the error.
         // This is because the ignore comment would need to be placed before the error offset, which is not possible.
@@ -22,20 +27,85 @@ impl Message {
         let Some(rule_name) = oxc_code_short_canonical_name(&self.error.code) else { return };
 
         self.fixes.extend_fix(vec![
-            disable_for_this_line(&rule_name, self.span.start, section_offset, section_source_text),
+            disable_for_this_line_with_jsx_child(
+                &rule_name,
+                self.span.start,
+                section_offset,
+                section_source_text,
+                jsx_child_offset,
+            ),
             disable_for_this_section(&rule_name, section_offset, section_source_text),
         ]);
     }
 }
 
+#[cfg(test)]
 fn disable_for_this_line(
     rule_name: &str,
     error_offset: u32,
     section_offset: u32,
     section_source_text: &str,
 ) -> Fix {
+    disable_for_this_line_with_jsx_child(
+        rule_name,
+        error_offset,
+        section_offset,
+        section_source_text,
+        None,
+    )
+}
+
+fn disable_for_this_line_with_jsx_child(
+    rule_name: &str,
+    error_offset: u32,
+    section_offset: u32,
+    section_source_text: &str,
+    jsx_child_offset: Option<u32>,
+) -> Fix {
     let bytes = section_source_text.as_bytes();
     let message = format!("Disable {rule_name} for this line");
+
+    if let Some(jsx_child_offset) = jsx_child_offset {
+        let child_line_start = line_start_offset(jsx_child_offset, bytes);
+        let error_line_start = line_start_offset(error_offset, bytes);
+        let target_offset =
+            if child_line_start == error_line_start { jsx_child_offset } else { error_offset };
+        let target_line_start = line_start_offset(target_offset, bytes);
+        let line_prefix = &bytes[target_line_start as usize..target_offset as usize];
+
+        let (content_prefix, insert_offset, trailing_indent) =
+            if line_prefix.iter().all(|byte| matches!(byte, b' ' | b'\t')) {
+                let (content_prefix, insert_offset) =
+                    get_section_insert_position(section_offset, target_line_start, bytes);
+                (content_prefix, insert_offset, String::new())
+            } else {
+                ("", target_offset, " ".repeat((target_offset - target_line_start) as usize))
+            };
+        let whitespace_range = &bytes[insert_offset as usize..target_offset as usize];
+        let whitespace_len =
+            whitespace_range.iter().take_while(|c| matches!(c, b' ' | b'\t')).count();
+        let whitespace = String::from_utf8_lossy(&whitespace_range[..whitespace_len]);
+
+        if let Some(existing_comment_end) =
+            get_existing_jsx_disable_comment_end(target_offset, bytes)
+        {
+            return Fix {
+                message: Some(Cow::Owned(message)),
+                content: Cow::Owned(format!(" {rule_name}")),
+                span: Span::empty(existing_comment_end),
+                kind: FixKind::IgnoreFix,
+            };
+        }
+
+        return Fix {
+            message: Some(Cow::Owned(message)),
+            content: Cow::Owned(format!(
+                "{content_prefix}{whitespace}{{/* oxlint-disable-next-line {rule_name} */}}\n{trailing_indent}"
+            )),
+            span: Span::empty(insert_offset),
+            kind: FixKind::IgnoreFix,
+        };
+    }
 
     // Reuse an inline disable-line comment on the same line when present.
     if let Some(existing_comment_end) = get_inline_disable_line_comment_end(error_offset, bytes) {
@@ -92,6 +162,76 @@ fn disable_for_this_line(
         span: Span::empty(insert_offset),
         kind: FixKind::IgnoreFix,
     }
+}
+
+fn line_start_offset(offset: u32, bytes: &[u8]) -> u32 {
+    let mut line_start = offset;
+    for byte in bytes[..offset as usize].iter().rev() {
+        if *byte == b'\n' || *byte == b'\r' {
+            break;
+        }
+        line_start -= 1;
+    }
+    line_start
+}
+
+#[expect(clippy::cast_possible_truncation)]
+fn get_existing_jsx_disable_comment_end(target_offset: u32, bytes: &[u8]) -> Option<u32> {
+    let target_offset = target_offset as usize;
+    let prefix = bytes.get(..target_offset)?;
+    let comment_start = prefix.windows(3).rposition(|window| window == b"{/*")?;
+    let content_start = comment_start + 3;
+    let close_start = content_start
+        + bytes
+            .get(content_start..target_offset)?
+            .windows(3)
+            .position(|window| window == b"*/}")?;
+
+    let between_comment_and_target = bytes.get(close_start + 3..target_offset)?;
+    if !between_comment_and_target.iter().all(u8::is_ascii_whitespace) {
+        return None;
+    }
+    let mut line_break_count = 0;
+    let mut index = 0;
+    while index < between_comment_and_target.len() {
+        match between_comment_and_target[index] {
+            b'\r' => {
+                line_break_count += 1;
+                if between_comment_and_target.get(index + 1) == Some(&b'\n') {
+                    index += 1;
+                }
+            }
+            b'\n' => line_break_count += 1,
+            _ => {}
+        }
+        index += 1;
+    }
+    if line_break_count != 1 {
+        return None;
+    }
+
+    let content = bytes.get(content_start..close_start)?;
+    let mut index = 0;
+    while index < content.len() && content[index].is_ascii_whitespace() {
+        index += 1;
+    }
+
+    let directive = b"oxlint-disable-next-line";
+    if !content[index..].starts_with(directive) {
+        return None;
+    }
+    index += directive.len();
+
+    if index < content.len() && !content[index].is_ascii_whitespace() {
+        return None;
+    }
+
+    let content_end =
+        content.iter().rposition(|byte| !byte.is_ascii_whitespace()).map_or(index, |last| last + 1);
+    let merge_end = find_description_start_offset(&content[index..content_end])
+        .map_or(content_end, |offset| index + offset);
+
+    Some((content_start + merge_end) as u32)
 }
 
 fn disable_for_this_section(
@@ -814,6 +954,98 @@ mod tests {
         let fix = super::disable_for_this_line("no-console", error_offset, 0, source);
 
         assert_eq!(fix.content, "// oxlint-disable-next-line no-console\n");
+    }
+
+    #[test]
+    fn disable_for_this_line_uses_jsx_comment_before_multiline_child() {
+        let source = "const node = (\n  <div>\n    <p>\n      \"\n    </p>\n  </div>\n);";
+        let error_offset = source.find('"').unwrap() as u32;
+        let child_offset = source.find("<p>").unwrap() as u32;
+        let line_start = source.find("      \"").unwrap() as u32;
+
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "react/no-unescaped-entities",
+            error_offset,
+            0,
+            source,
+            Some(child_offset),
+        );
+
+        assert_eq!(
+            fix.content,
+            "      {/* oxlint-disable-next-line react/no-unescaped-entities */}\n"
+        );
+        assert_eq!(fix.span, Span::empty(line_start));
+    }
+
+    #[test]
+    fn disable_for_this_line_uses_jsx_comment_before_same_line_child() {
+        let source = "return (\n  <div><button onClick={submit} /></div>\n);";
+        let child_offset = source.find("<button").unwrap() as u32;
+        let error_offset = source.find("submit").unwrap() as u32;
+
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "react/jsx-no-bind",
+            error_offset,
+            0,
+            source,
+            Some(child_offset),
+        );
+
+        assert_eq!(fix.content, "{/* oxlint-disable-next-line react/jsx-no-bind */}\n       ");
+        assert_eq!(fix.span, Span::empty(child_offset));
+    }
+
+    #[test]
+    fn disable_for_this_line_uses_jsx_comment_for_direct_expression_child() {
+        let source = "const node = <div>\n  {foo}\n</div>;";
+        let child_offset = source.find("{foo}").unwrap() as u32;
+        let error_offset = source.find("foo").unwrap() as u32;
+        let line_start = source.find("  {foo}").unwrap() as u32;
+
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "no-undef",
+            error_offset,
+            0,
+            source,
+            Some(child_offset),
+        );
+
+        assert_eq!(fix.content, "  {/* oxlint-disable-next-line no-undef */}\n");
+        assert_eq!(fix.span, Span::empty(line_start));
+    }
+
+    #[test]
+    fn disable_for_this_line_keeps_js_comment_for_jsx_attribute() {
+        let source = "const node = (\n  <div\n    value={foo}\n  />\n);";
+        let error_offset = source.find("foo").unwrap() as u32;
+        let line_start = source.find("    value").unwrap() as u32;
+
+        let fix =
+            super::disable_for_this_line_with_jsx_child("no-undef", error_offset, 0, source, None);
+
+        assert_eq!(fix.content, "    // oxlint-disable-next-line no-undef\n");
+        assert_eq!(fix.span, Span::empty(line_start));
+    }
+
+    #[test]
+    fn disable_for_this_line_merges_existing_jsx_comment() {
+        let existing = "{/* oxlint-disable-next-line no-alert */}";
+        let source = format!("const node = <div>\n  {existing}\n  <button />\n</div>;");
+        let child_offset = source.find("<button").unwrap() as u32;
+        let error_offset = child_offset;
+        let insert_offset = source.find(existing).unwrap() + existing.find(" */}").unwrap();
+
+        let fix = super::disable_for_this_line_with_jsx_child(
+            "jsx-a11y/control-has-associated-label",
+            error_offset,
+            0,
+            &source,
+            Some(child_offset),
+        );
+
+        assert_eq!(fix.content, " jsx-a11y/control-has-associated-label");
+        assert_eq!(fix.span, Span::empty(insert_offset as u32));
     }
 
     #[test]

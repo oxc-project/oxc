@@ -495,7 +495,7 @@ impl TsGoLintState {
                                 );
 
                                 if self.with_ignore_fixes {
-                                    message.add_ignore_fix(0, &source_text_owned);
+                                    message.add_ignore_fix(0, &source_text_owned, None);
                                 }
 
                                 message.error.severity = if severity == AllowWarnDeny::Deny {
