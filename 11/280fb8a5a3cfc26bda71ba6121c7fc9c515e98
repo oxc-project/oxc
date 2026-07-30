@@ -8,7 +8,7 @@ crates/oxc_codegen/src/gen.rs
 crates/oxc_codegen/tests/integration/ts.rs
   s_167e4aaf3623fe::t_9cecc52f1ac784 361-365
 crates/oxc_codegen/src/binary_expr_visitor.rs
-  s_167e4aaf3623fe::t_26214971963247 217-226
+  s_167e4aaf3623fe::t_26214971963247 217-226,223-224,226
 ---
 {
   "schema_version": "authorship/3.0.0",
