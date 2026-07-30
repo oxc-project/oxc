@@ -1204,6 +1204,16 @@ fn test_remove_dead_object_spread_of_local_literal() {
     test("const P = { a: 1 }; ({ ...P, t: 1 }); ({ ...P, u: 2 });", "const P = { a: 1 };");
 }
 
+/// See `remove_layered_object_spread_chain` in the dce suite. `unused: Keep`
+/// retains the declarations, so this pins the copy removal alone.
+#[test]
+fn test_remove_layered_object_spread_chain() {
+    test(
+        "const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; ({ ...P3 }); ({ ...P3 });",
+        "const P0 = {}, P1 = { ...P0, ...P0 }, P2 = { ...P1, ...P1 }, P3 = { ...P2, ...P2 };",
+    );
+}
+
 /// See `keep_object_spread_in_used_initializer` in the dce suite.
 #[test]
 fn test_keep_object_spread_in_used_initializer() {

@@ -1132,6 +1132,24 @@ fn remove_dead_object_spread_of_local_literal() {
     test("const P = { [\"__proto__\"]: base, a: 1 }; ({ ...P }); ({ ...P });", "base;");
 }
 
+// Each layer of a spread chain only reaches discarded position once the layer
+// above it is gone, so consuming candidates a pass at a time cost a global
+// iteration per layer and a four-layer chain exhausted the iteration budget.
+// The boundary batches its removals instead, and doubling each layer's copies
+// keeps single-use inlining from dissolving the chain first.
+#[test]
+fn remove_layered_object_spread_chain() {
+    test(
+        "const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; ({ ...P3 }); ({ ...P3 });",
+        "",
+    );
+    // Depth five, same shape.
+    test(
+        "const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; const P4 = { ...P3, ...P3 }; ({ ...P4 }); ({ ...P4 });",
+        "",
+    );
+}
+
 // A symbol whose every copy sits in a USED initializer passes the census but
 // has nothing removable, so it is never published. Were it published, the
 // cleanup pass would remove nothing, be quiet, and re-derive the identical

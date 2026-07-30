@@ -309,23 +309,43 @@ pub fn run_peephole_pass<'a>(
     // spread marks, its symbol values, its liveness data and the just-flushed
     // `Scoping` describe one and the same program.
     //
-    // Dropping the previous boundary's candidates here is also the terminal
-    // condition: a pass that consumed candidates and still changed nothing
-    // removed nothing, so re-publishing the same census would spin the loop.
-    // Every other route back to this point followed real progress.
-    //
-    // Defence in depth. `settle_candidates` only publishes a symbol with at
-    // least one copy in discarded position, so a published candidate always has
-    // something for the cleanup pass to remove and no constructible program
-    // reaches the suppression — which is also why no test can exercise it. Kept
-    // because the publish filter and the census are separate rules that can
-    // drift apart: relax the filter and this is what still terminates the loop.
-    let was_cleanup_pass = ctx.state.spread_cleanup.take_candidates();
-    if !needs_another_pass && !was_cleanup_pass && spread_cleanup::settle_candidates(program, ctx) {
-        needs_another_pass = true;
+    // The census's removals happen here and now, in a restricted walk, rather
+    // than by handing candidates to another peephole pass. Consuming them a
+    // pass at a time cost a global iteration per layer of spread dependency,
+    // because each layer's copies only reach discarded position once the layer
+    // above is gone — a four-layer chain exhausted the iteration budget. Batched
+    // locally, a chain of any depth costs one extra pass.
+    if !needs_another_pass && spread_cleanup::settle_candidates(program, ctx) {
+        while spread_cleanup::remove_dead_copies(program, ctx) {
+            needs_another_pass = true;
+            // Give the next round current reference counts: its declarator
+            // removals test bindings this round just orphaned.
+            prune_removed_references(program, ctx);
+        }
+        // The batch's own mutations are reported through `needs_another_pass`.
+        let _ = ctx.state.take_revisit_requested();
+        debug_assert_pass_changes_clean(ctx);
     }
 
     PassOutcome { needs_another_pass }
+}
+
+/// Prune the references a removal-batch round marked, so the next round sees
+/// current counts. The reference half of [`flush_pass_changes`], without the
+/// direct-eval and liveness work a restricted walk cannot invalidate.
+fn prune_removed_references(
+    #[cfg_attr(not(debug_assertions), expect(unused_variables))] program: &Program<'_>,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    if ctx.state.pass_changes.removed_references.is_empty() {
+        return;
+    }
+    #[cfg(debug_assertions)]
+    debug_assert_no_over_prune(program, &ctx.state.pass_changes.removed_references);
+    ctx.scoping
+        .scoping_mut()
+        .retain_resolved_references_excluding(&ctx.state.pass_changes.removed_references);
+    ctx.state.pass_changes.removed_references.clear();
 }
 
 #[inline]

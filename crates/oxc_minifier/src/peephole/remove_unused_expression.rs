@@ -1,8 +1,7 @@
 use std::iter;
 
 use crate::{
-    CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor, spread_cleanup,
-    symbol_value::FreshValueKind,
+    CompressOptionsUnused, TraverseCtx, generated::ancestor::Ancestor, symbol_value::FreshValueKind,
 };
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
@@ -448,10 +447,10 @@ impl<'a> PeepholeOptimizations {
         if object_expr.properties.iter().all(ObjectPropertyKind::is_spread) {
             // All-spread objects like `({...x})` can only be removed if
             // the spread arguments themselves have no side effects.
-            return !object_expr.properties.iter().any(|property| {
-                !spread_cleanup::is_dead_object_copy_spread(property, ctx)
-                    && property.may_have_side_effects(ctx)
-            });
+            return !object_expr
+                .properties
+                .iter()
+                .any(|property| property.may_have_side_effects(ctx));
         }
 
         let mut transformed_elements = ArenaVec::new_in(ctx);
@@ -459,17 +458,8 @@ impl<'a> PeepholeOptimizations {
 
         for prop in object_expr.properties.drain(..) {
             match prop {
-                ObjectPropertyKind::SpreadProperty(spread) => {
-                    // A copy the quiet-pass census proved dead contributes
-                    // nothing to the surviving groups. Dropping it here bypasses
-                    // the `replace_*` helpers, so walk its reference into
-                    // `pass_changes.removed_references` — same rationale as the
-                    // key and value branches below.
-                    if spread_cleanup::is_dead_object_copy_spread_argument(&spread.argument, ctx) {
-                        ctx.drop_expression(&spread.argument);
-                    } else {
-                        pending_spread_elements.push(ObjectPropertyKind::SpreadProperty(spread));
-                    }
+                ObjectPropertyKind::SpreadProperty(_) => {
+                    pending_spread_elements.push(prop);
                 }
                 ObjectPropertyKind::ObjectProperty(prop) => {
                     if !pending_spread_elements.is_empty() {
@@ -698,12 +688,18 @@ impl<'a> PeepholeOptimizations {
     ///    `reprocessing_statements` carve-out applies: re-processing a
     ///    statement list also surfaces entries for declarators positioned
     ///    later.
-    /// 2. The declarator is a direct body statement-list item
+    /// 2. The entry classifies the binding `FreshValueKind::Function`, i.e. the
+    ///    declarator visited THIS pass initializes it with a function literal.
+    ///    A summary is persistent state about a value; without this, one
+    ///    recorded before the declarator was folded away is still consumed
+    ///    against whatever `var f;` the hoist left behind
+    ///    (`while (0) { var f = () => {}; break; } x = f();`).
+    /// 3. The declarator is a direct body statement-list item
     ///    (`SymbolValue::declarator_in_body_statement_list`). Traversal order
     ///    is not execution order: `if (flag) var f = () => {}` is visited every
     ///    pass and assigns on none, so an entry alone says nothing about
     ///    whether the binding holds the function.
-    /// 3. The call is in the same function as the declarator. Traversal reaches
+    /// 4. The call is in the same function as the declarator. Traversal reaches
     ///    a declarator before a later function body, but that body can run
     ///    first — `g(); var f = () => {}; function g() { f(); }` calls `f`
     ///    while it is still `undefined`.
@@ -720,7 +716,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         let Some(value) = ctx.state.symbols.value(symbol_id) else { return false };
-        if !value.declarator_in_body_statement_list {
+        if value.kind != FreshValueKind::Function || !value.declarator_in_body_statement_list {
             return false;
         }
         // A `var`'s declaring scope IS its enclosing function body or the

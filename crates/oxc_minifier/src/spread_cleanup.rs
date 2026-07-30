@@ -38,12 +38,18 @@
 use oxc_allocator::{Allocator, BitSet, Vec as ArenaVec};
 #[cfg(debug_assertions)]
 use oxc_ast_visit::Visit;
+use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 
 use oxc_ast::ast::*;
 use oxc_semantic::Scoping;
 use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId};
 
-use crate::{TraverseCtx, generated::ancestor::Ancestor, symbol_value::FreshValueKind};
+use oxc_ecmascript::side_effects::MayHaveSideEffects;
+
+use crate::{
+    TraverseCtx, generated::ancestor::Ancestor, peephole::PeepholeOptimizations,
+    symbol_value::FreshValueKind,
+};
 
 /// Per-run state for the quiet-pass object-spread cleanup.
 pub struct SpreadCleanup<'a> {
@@ -60,68 +66,30 @@ pub struct SpreadCleanup<'a> {
     /// conservative direction, and the same capacity guard
     /// `PassChanges::removed_references` relies on.
     ///
-    /// FORWARD OBLIGATION. Every soundness argument here reduces to one
-    /// invariant: a transform that moves a marked identifier into an escaping
-    /// position necessarily records a pass change, so the pass is not quiet and
-    /// these marks are discarded unread. Any transform that changes which node
-    /// a `ReferenceId` occupies must therefore record a change. That is a
-    /// convention, not a mechanism — the one audited exception is
-    /// `dead_drop_mutates_ast` (`minimize_statements.rs`), which suppresses the
-    /// flag for identity drops of initializer-free `var` declarations to keep
-    /// the fixed-point loop from oscillating. Those declarations have no
-    /// initializer and so cannot relocate a spread.
     marks: BitSet<'a>,
 
-    /// The subset of [`Self::marks`] whose enclosing object literal is itself
-    /// discarded, so removing the copy is something the following cleanup pass
-    /// can actually do.
+    /// Symbols this boundary's census proved to hold a getter-free object
+    /// literal whose every live reference is a dead object-copy copy.
     ///
-    /// Purely an economy: a candidate whose copies all sit in live positions
-    /// (`const Q = { ...P };` with `Q` used) is real but useless, and
-    /// publishing it costs a full extra traversal that removes nothing. Only
-    /// [`Self::marks`] takes part in the census, so narrowing this set can lose
-    /// an optimization but never make one unsound.
-    removable_marks: BitSet<'a>,
-
-    /// Symbols the last quiet-pass boundary proved to hold a getter-free object
-    /// literal whose every live reference is a dead object-copy spread.
-    ///
-    /// Published by [`settle_candidates`], read by the single pass that follows
-    /// it, then dropped. Never carried across a boundary: the fact is about one
-    /// settled AST, and re-deriving it is what makes the construction
+    /// Written by [`settle_candidates`] and read only by the removal batch that
+    /// immediately follows it, within the same boundary. Nothing carries it
+    /// into an ordinary pass, so no transform can invalidate it while it is
+    /// live, and re-deriving it at each boundary is what makes the construction
     /// idempotent.
     candidates: BitSet<'a>,
-
-    /// Whether [`Self::candidates`] holds anything, so the per-spread test on
-    /// the removal path is a branch rather than a scan.
-    has_candidates: bool,
 }
 
 impl<'a> SpreadCleanup<'a> {
     pub fn new(scoping: &Scoping, allocator: &'a Allocator) -> Self {
         Self {
             marks: BitSet::new_in(scoping.references_len(), allocator),
-            removable_marks: BitSet::new_in(scoping.references_len(), allocator),
             candidates: BitSet::new_in(scoping.symbols_len(), allocator),
-            has_candidates: false,
         }
     }
 
     /// Discard the previous pass's marks. Called at the start of every pass.
     pub fn begin_pass(&mut self) {
         self.marks.clear();
-        self.removable_marks.clear();
-    }
-
-    /// Drop the published candidates and report whether there were any, i.e.
-    /// whether the pass that just finished was a cleanup pass.
-    pub fn take_candidates(&mut self) -> bool {
-        if !self.has_candidates {
-            return false;
-        }
-        self.candidates.clear();
-        self.has_candidates = false;
-        true
     }
 }
 
@@ -163,27 +131,7 @@ pub fn mark_object_copy_spread<'a>(spread: &SpreadElement<'a>, ctx: &mut Travers
     let index = reference_id.index();
     if index < ctx.state.spread_cleanup.marks.capacity() {
         ctx.state.spread_cleanup.marks.set_bit(index);
-        if enclosing_literal_is_discarded(ctx) {
-            ctx.state.spread_cleanup.removable_marks.set_bit(index);
-        }
     }
-}
-
-/// Whether the object literal holding the spread being exited is itself in a
-/// discarded position, i.e. one `remove_unused_expression` reaches.
-///
-/// The ancestor above `ObjectExpressionProperties` is the literal's own parent.
-/// An expression statement discards it outright; a sequence element discards
-/// every operand but the last, and treating the last one as discarded too is
-/// harmless here — this only decides whether publishing a candidate is worth a
-/// pass, never whether removing it is legal.
-fn enclosing_literal_is_discarded(ctx: &TraverseCtx<'_>) -> bool {
-    matches!(
-        ctx.ancestors().nth(1),
-        Some(
-            Ancestor::ExpressionStatementExpression(_) | Ancestor::SequenceExpressionExpressions(_)
-        )
-    )
 }
 
 /// Whether this spread may stand as evidence about the symbol's value.
@@ -262,7 +210,6 @@ pub fn settle_candidates(
             found_candidates = true;
         }
     }
-    ctx.state.spread_cleanup.has_candidates = found_candidates;
     #[cfg(debug_assertions)]
     if found_candidates {
         debug_assert_census_complete(program, ctx);
@@ -325,45 +272,169 @@ fn is_candidate(symbol_id: SymbolId, ctx: &TraverseCtx<'_>) -> bool {
     if liveness.is_implicitly_observable(symbol_id) {
         return false;
     }
-    let reference_ids = scoping.get_resolved_reference_ids(symbol_id);
-    reference_ids
+    scoping
+        .get_resolved_reference_ids(symbol_id)
         .iter()
         .all(|reference_id| ctx.state.spread_cleanup.marks.contains(reference_id.index()))
-        && reference_ids.iter().any(|reference_id| {
-            ctx.state.spread_cleanup.removable_marks.contains(reference_id.index())
-        })
 }
 
-/// Whether this object property is a spread the last quiet-pass boundary proved
-/// dead, and may therefore be dropped from a discarded object literal.
+/// One round of the boundary's removal batch: delete the dead object copies the
+/// census just proved, and report whether anything went.
 ///
-/// Candidacy survives everything the cleanup pass does to the AST. A transform
-/// can delete references, which only shrinks the census; it can move a spread
-/// wholesale, which leaves it a spread; and none converts a spread use into a
-/// use of another shape. A transform that ever does — one that rewrites
-/// `({ ...P })` into something reading `P` in another position — must clear the
-/// candidate set, or this fact stops being true mid-pass.
-pub fn is_dead_object_copy_spread<'a>(
-    property: &ObjectPropertyKind<'a>,
-    ctx: &TraverseCtx<'a>,
-) -> bool {
-    let ObjectPropertyKind::SpreadProperty(spread) = property else { return false };
-    is_dead_object_copy_spread_argument(&spread.argument, ctx)
+/// This is a restricted walk, not a peephole pass. Nothing else transforms
+/// while it runs, so the candidate set cannot be invalidated underneath it, and
+/// the two shapes it removes are the only ones it knows:
+///
+/// - an expression statement whose value is discarded and whose every effect is
+///   a candidate copy or an effect-free property;
+/// - a variable declarator with no live reference left whose initializer is the
+///   same.
+///
+/// The second is what makes a chain collapse. `const P1 = { ...P0 }` keeps `P0`
+/// alive only through `P1`'s declarator, so each layer becomes removable one
+/// round after the layer above it. The caller loops rounds — pruning references
+/// between them so the next round sees current counts — until a round removes
+/// nothing. References only ever shrink, so it terminates, and a census member
+/// stays a member: every remaining reference was already a mark.
+pub fn remove_dead_copies<'a>(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    let mut batch = RemovalBatch { ctx, removed: false };
+    batch.visit_program(program);
+    batch.removed
 }
 
-/// [`is_dead_object_copy_spread`] against a spread argument already
-/// destructured out of its property.
-pub fn is_dead_object_copy_spread_argument<'a>(
-    argument: &Expression<'a>,
-    ctx: &TraverseCtx<'a>,
-) -> bool {
-    if !ctx.state.spread_cleanup.has_candidates {
-        return false;
+struct RemovalBatch<'a, 'b> {
+    ctx: &'b mut TraverseCtx<'a>,
+    removed: bool,
+}
+
+impl<'a> VisitJsMut<'a> for RemovalBatch<'a, '_> {
+    fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
+        walk_js_mut::walk_statements(self, statements);
+        statements.retain_mut(|statement| !self.statement_is_dead(statement));
     }
-    let Expression::Identifier(ident) = argument else { return false };
-    let Some(reference_id) = ident.reference_id.get() else { return false };
-    ctx.scoping()
-        .get_reference(reference_id)
-        .symbol_id()
-        .is_some_and(|symbol_id| ctx.state.spread_cleanup.candidates.contains(symbol_id.index()))
+}
+
+impl<'a> RemovalBatch<'a, '_> {
+    fn statement_is_dead(&mut self, statement: &mut Statement<'a>) -> bool {
+        match statement {
+            Statement::ExpressionStatement(statement) => {
+                if !self.strip_discarded_expression(&mut statement.expression) {
+                    return false;
+                }
+                self.ctx.drop_expression(&statement.expression);
+                self.removed = true;
+                true
+            }
+            Statement::VariableDeclaration(declaration) => self.strip_dead_declarators(declaration),
+            _ => false,
+        }
+    }
+
+    /// Take the census-proven copies out of an expression whose value is
+    /// discarded, and report whether nothing effectful is left.
+    ///
+    /// Deliberately narrow: only the shapes this batch can rewrite. Anything
+    /// else is left to ordinary DCE, which sees it on the next pass.
+    ///
+    /// Every operand of a discarded sequence is itself discarded, the last one
+    /// included — true only because the statement's own value is unused, which
+    /// is why the position test lives here rather than at the mark site, where
+    /// a sequence in value position is indistinguishable. Full minify fuses
+    /// statements into sequences, so a copy routinely ends up beside operands
+    /// that must stay; stripping per operand rather than testing the whole
+    /// statement is what keeps those removals.
+    fn strip_discarded_expression(&mut self, expression: &mut Expression<'a>) -> bool {
+        match expression {
+            Expression::ObjectExpression(object) => {
+                if object.properties.iter().all(|property| self.property_is_dead(property)) {
+                    // The caller drops the literal whole, references included.
+                    return true;
+                }
+                // Something in the literal must stay, so take out only the
+                // copies themselves. Their argument is a bare identifier, so
+                // one `drop_expression` prunes exactly the reference that goes.
+                object.properties.retain(|property| {
+                    let ObjectPropertyKind::SpreadProperty(spread) = property else { return true };
+                    if !self.is_candidate_copy(&spread.argument) {
+                        return true;
+                    }
+                    self.ctx.drop_expression(&spread.argument);
+                    self.removed = true;
+                    false
+                });
+                false
+            }
+            Expression::SequenceExpression(sequence) => {
+                let mut retained = ArenaVec::new_in(&*self.ctx);
+                for mut operand in sequence.expressions.drain(..) {
+                    if self.strip_discarded_expression(&mut operand) {
+                        self.ctx.drop_expression(&operand);
+                        self.removed = true;
+                    } else {
+                        retained.push(operand);
+                    }
+                }
+                sequence.expressions = retained;
+                sequence.expressions.is_empty()
+            }
+            _ => false,
+        }
+    }
+
+    /// The non-mutating form, for an initializer that is about to be dropped
+    /// whole rather than rewritten in place.
+    fn discarded_expression_is_dead(&self, expression: &Expression<'a>) -> bool {
+        match expression {
+            Expression::ObjectExpression(object) => {
+                object.properties.iter().all(|property| self.property_is_dead(property))
+            }
+            Expression::SequenceExpression(sequence) => sequence
+                .expressions
+                .iter()
+                .all(|expression| self.discarded_expression_is_dead(expression)),
+            _ => false,
+        }
+    }
+
+    fn property_is_dead(&self, property: &ObjectPropertyKind<'a>) -> bool {
+        if let ObjectPropertyKind::SpreadProperty(spread) = property
+            && self.is_candidate_copy(&spread.argument)
+        {
+            return true;
+        }
+        !property.may_have_side_effects(self.ctx)
+    }
+
+    fn is_candidate_copy(&self, argument: &Expression<'a>) -> bool {
+        let Expression::Identifier(ident) = argument else { return false };
+        let Some(reference_id) = ident.reference_id.get() else { return false };
+        self.ctx.scoping().get_reference(reference_id).symbol_id().is_some_and(|symbol_id| {
+            self.ctx.state.spread_cleanup.candidates.contains(symbol_id.index())
+        })
+    }
+
+    /// Drop declarators whose binding has no live reference left and whose
+    /// initializer is dead, and report whether the declaration is now empty.
+    ///
+    /// `should_remove_unused_declarator` supplies the unusedness rule (and its
+    /// `using` and configuration guards); requiring the initializer to be dead
+    /// on top is what keeps this from discarding effects ordinary DCE would
+    /// have preserved by rewriting the declarator into an expression statement.
+    fn strip_dead_declarators(&mut self, declaration: &mut VariableDeclaration<'a>) -> bool {
+        if !PeepholeOptimizations::can_remove_unused_declarators(self.ctx) {
+            return false;
+        }
+        declaration.declarations.retain_mut(|declarator| {
+            let Some(init) = &declarator.init else { return true };
+            if !PeepholeOptimizations::should_remove_unused_declarator(declarator, self.ctx)
+                || !self.discarded_expression_is_dead(init)
+            {
+                return true;
+            }
+            self.ctx.drop_expression(init);
+            self.removed = true;
+            false
+        });
+        declaration.declarations.is_empty()
+    }
 }
