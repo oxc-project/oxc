@@ -15763,20 +15763,20 @@
       "type": "object",
       "properties": {
         "allowConstantLoopConditions": {
-          "description": "Whether to allow constant loop conditions.\n`true` is treated as `\"always\"`, `false` as `\"never\"`.",
+          "description": "Controls which constant conditions are allowed in `while`, `do...while`, and `for` loops.\n\n- `\"never\"` (or `false`) reports all constant loop conditions.\n- `\"always\"` (or `true`) allows conditions whose type is the literal type `true`, such as\n`while (true)` or `while (variable)` when `variable` has type `true`.\n- `\"only-allowed-literals\"` allows only the literal expressions `true`, `false`, `0`, and\n`1`. Variables whose types are those literal types are still reported.",
           "default": "never",
           "allOf": [
             {
               "$ref": "#/definitions/AllowConstantLoopConditions"
             }
           ],
-          "markdownDescription": "Whether to allow constant loop conditions.\n`true` is treated as `\"always\"`, `false` as `\"never\"`."
+          "markdownDescription": "Controls which constant conditions are allowed in `while`, `do...while`, and `for` loops.\n\n- `\"never\"` (or `false`) reports all constant loop conditions.\n- `\"always\"` (or `true`) allows conditions whose type is the literal type `true`, such as\n`while (true)` or `while (variable)` when `variable` has type `true`.\n- `\"only-allowed-literals\"` allows only the literal expressions `true`, `false`, `0`, and\n`1`. Variables whose types are those literal types are still reported."
         },
         "checkTypePredicates": {
-          "description": "Whether to check type predicate functions.",
+          "description": "Whether to check arguments passed to type predicate and assertion functions.\n\nWhen enabled, the rule reports a call if the argument already satisfies the predicate or\nif an assertion function receives an argument that is always truthy or always falsy.\n\nFor example, `narrow(value)` is unnecessary because `value` already has type `true`:\n\n```ts\ndeclare const narrow: (value: unknown) => value is true;\nconst value = true;\nif (narrow(value)) {\n// ...\n}\n```",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "Whether to check type predicate functions."
+          "markdownDescription": "Whether to check arguments passed to type predicate and assertion functions.\n\nWhen enabled, the rule reports a call if the argument already satisfies the predicate or\nif an assertion function receives an argument that is always truthy or always falsy.\n\nFor example, `narrow(value)` is unnecessary because `value` already has type `true`:\n\n```ts\ndeclare const narrow: (value: unknown) => value is true;\nconst value = true;\nif (narrow(value)) {\n// ...\n}\n```"
         }
       },
       "additionalProperties": false
