@@ -26,13 +26,13 @@ fn test_break_optimization() {
     test("f:{if(a)break f;break f;}", "f:{a;break f}"); // f:a;
     test("f:{if(a){c();}else{break f;}break f;}", "f:{a&&c();break f}"); // f:a&&c();
     test_same("f:{if(a)break g;break f;}"); // f:if(a)break g;
-    test("f:{if(a){break f;}else{c();}break f;}", "f:{if(a)break f;c();break f}"); // f:if(!a)c();
+    test("f:{if(a){break f;}else{c();}break f;}", "f:{if(a)break f;c();break f}"); // f:a||c();
     test("f:{if(a)break f;if(b)break f;break f;}", "f:{a||b;break f}"); // f:a||b;
     test("f:{if(a&&b){break f;}else{break f;}break f;}", "f:{a&&b;break f}"); // f:a&&b;
-    test("f:{if(a){break f;}else if(b){break f;}break f;}", "f:{if(a)break f;b;break f}"); // f:if(a)break f
-    test_same("f:{if(a){b();break f;}break f;}"); // f:{if(a){b();break f;}break f}
+    test("f:{if(a){break f;}else if(b){break f;}break f;}", "f:{if(a)break f;b;break f}"); // f:a
+    test_same("f:{if(a){b();break f;}break f;}"); // f:a&&b();
     test("f:{if(a){break f;}else{b();break f;}break f;}", "f:{if(a)break f;b();break f}");
-    test_same("f:{if(a){b();break g;}break f;}"); // f:{if(a){b();break g;}break f}
+    test_same("f:{if(a){b();break g;}break f;}");
 }
 
 #[test]
