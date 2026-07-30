@@ -521,7 +521,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             match expr {
                 Expression::TemplateLiteral(t) => {
                     Self::inline_template_literal(t, ctx);
-                    Self::substitute_template_literal(expr, ctx);
+                    Normalize::convert_template_literal_to_string(expr, ctx);
                 }
                 Expression::ObjectExpression(e) => Self::fold_object_exp(e, ctx),
                 Expression::BinaryExpression(e) => {

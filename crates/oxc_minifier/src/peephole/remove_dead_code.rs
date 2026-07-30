@@ -44,6 +44,22 @@ impl<'a> PeepholeOptimizations {
                 {
                     return;
                 }
+                // Keep the block when codegen would print it back: an if
+                // consequent ending in a dangling `if` gets re-wrapped in a
+                // block, so unwrapping records a change every run without
+                // changing the output. A directly nested else-less `if` under
+                // an else-less outer `if` is exempt: unwrapping feeds the
+                // `if(a)if(b)` -> `if(a&&b)` merge, which consumes the
+                // dangling `if` entirely.
+                if matches!(
+                    ctx.parent(),
+                    Ancestor::IfStatementConsequent(p)
+                        if p.alternate().is_some()
+                            || !matches!(first, Statement::IfStatement(i) if i.alternate.is_none())
+                ) && first.ends_with_dangling_if()
+                {
+                    return;
+                }
                 let new_stmt = s.body.remove(0);
                 ctx.replace_statement(stmt, new_stmt);
             }

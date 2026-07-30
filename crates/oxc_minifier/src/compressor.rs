@@ -60,6 +60,7 @@ impl<'a> Compressor<'a> {
             convert_while_to_fors: true,
             convert_const_to_let: true,
             remove_unnecessary_use_strict: true,
+            convert_template_literals: true,
         };
         Normalize::new(normalize_options).build(program, &mut ctx);
         Self::run_in_loop(max_iterations, program, &mut ctx)
@@ -97,6 +98,7 @@ impl<'a> Compressor<'a> {
             convert_while_to_fors: false,
             convert_const_to_let: false,
             remove_unnecessary_use_strict: false,
+            convert_template_literals: false,
         };
         Normalize::new(normalize_options).build(program, &mut ctx);
         Self::run_in_loop(max_iterations, program, &mut ctx)

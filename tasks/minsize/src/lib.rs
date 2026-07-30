@@ -150,8 +150,17 @@ pub fn run() -> Result<(), io::Error> {
 fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
     let source_type = SourceType::cjs().with_script(true);
     let (code1, iterations) = minify(&file.source_text, source_type, options);
-    let (code2, _) = minify(&code1, source_type, options);
+    let (code2, iterations2) = minify(&code1, source_type, options);
     assert_eq_minified_code(&code1, &code2, &file.file_name);
+    // Minified output must be a fixed point of the compressor: parsing it back
+    // yields a canonical AST, so the first pass records no changes. A failure
+    // here means codegen prints some canonical form as a spelling the loop
+    // re-canonicalizes (see `Normalize`).
+    assert_eq!(
+        iterations2, 0,
+        "re-minifying {} must converge without recording loop changes",
+        file.file_name
+    );
     (code2, iterations)
 }
 

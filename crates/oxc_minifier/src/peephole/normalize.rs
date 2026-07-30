@@ -2,10 +2,13 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
+    ToJsString,
     constant_evaluation::{ConstantValue, DetermineValueType, ValueType},
-    side_effects::{is_typed_array_constructor, is_valid_regexp},
+    side_effects::{MayHaveSideEffects, is_typed_array_constructor, is_valid_regexp},
 };
 use oxc_semantic::IsGlobalReference;
+use oxc_span::GetSpan;
+use oxc_str::Str;
 use oxc_syntax::scope::ScopeFlags;
 
 use super::PeepholeOptimizations;
@@ -19,6 +22,7 @@ pub struct NormalizeOptions {
     pub convert_while_to_fors: bool,
     pub convert_const_to_let: bool,
     pub remove_unnecessary_use_strict: bool,
+    pub convert_template_literals: bool,
 }
 
 /// Normalize AST
@@ -138,6 +142,19 @@ impl<'a> Traverse<'a> for Normalize {
             ctx.replace_expression(expr, new_expr);
             return;
         }
+        // Convert constant template literals to strings before the fixed-point
+        // loop. Minify codegen prints escape-free strings with backticks, so
+        // re-minified input is full of constant templates; converting them in
+        // the loop records a change for every one and forces an extra pass.
+        // Only no-substitution templates: they cover every template codegen
+        // prints for a string, and attempting the rest here would allocate a
+        // transient string per template the loop has to process anyway.
+        if self.options.convert_template_literals
+            && matches!(expr, Expression::TemplateLiteral(t) if t.is_no_substitution_template())
+        {
+            Self::convert_template_literal_to_string(expr, ctx);
+            return;
+        }
         if let Some(e) = match expr {
             Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
             Expression::UnaryExpression(e) if e.operator.is_void() => {
@@ -243,6 +260,22 @@ impl<'a> Normalize {
         let obj = member_expr.object();
         let Some(ident) = obj.get_identifier_reference() else { return false };
         ident.name == "console"
+    }
+
+    /// Convert a template literal with a statically known string value to a
+    /// string literal. Also called from the peephole loop for templates that
+    /// only become constant after mid-loop inlining.
+    pub fn convert_template_literal_to_string(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::TemplateLiteral(t) = expr else { return };
+        let Some(val) = t.to_js_string(ctx).filter(|_| !t.may_have_side_effects(ctx)) else {
+            return;
+        };
+        let new_value =
+            Expression::new_string_literal(t.span(), Str::from_cow_in(&val, ctx), None, ctx);
+        ctx.replace_expression(expr, new_value);
     }
 
     fn convert_while_to_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
