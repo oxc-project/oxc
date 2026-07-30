@@ -57,32 +57,37 @@ pub fn run(
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<String> {
-    let source_type = SourceType::from_extension(source_ext)
-        .expect("text-to-doc.ts should pass `source_ext` as one of 'jsx', 'ts', or 'tsx'");
+    // Embedded text belongs to the host file (`.vue`, `.md`, ...),
+    // so the `SourceType` carries no file extension of its own.
+    // `source_ext` selects the parse grammar only,
+    // and extension-keyed formatter rules (e.g. the `.mts`/`.cts` trailing comma reservation) must not fire from it.
+    //
+    // The JS side owns the grammar resolution (including the `lang="tsx"` scan for Vue, see `hasTsxScriptBlock` in `apis.ts`),
+    // so there is no parse retry here: a block
+    // that fails to parse under its declared grammar is left unformatted
+    // (`textToDoc()` error → Prettier keeps the original text).
+    let source_type = match source_ext {
+        "jsx" => SourceType::unambiguous().with_jsx(true),
+        "ts" => SourceType::ts(),
+        "tsx" => SourceType::tsx(),
+        _ => {
+            unreachable!("text-to-doc.ts should pass `source_ext` as one of 'jsx', 'ts', or 'tsx'")
+        }
+    };
 
-    let (fragment_kind, is_vue_script) = match parent_context {
-        "vue-for-binding-left" => (Some(FragmentKind::VueForBindingLeft), false),
-        "vue-bindings" => (Some(FragmentKind::VueBindings), false),
-        "vue-script-generic" => (Some(FragmentKind::VueScriptGeneric), false),
-        "vue-script" => (None, true),
-        // "svelte-script"
-        _ => (None, false),
+    let fragment_kind = match parent_context {
+        "vue-for-binding-left" => Some(FragmentKind::VueForBindingLeft),
+        "vue-bindings" => Some(FragmentKind::VueBindings),
+        "vue-script-generic" => Some(FragmentKind::VueScriptGeneric),
+        // "vue-script" | "svelte-script"
+        _ => None,
     };
 
     let doc_json = if let Some(kind) = fragment_kind {
         run_fragment(source_type, source_text, oxfmt_plugin_options_json, kind)?
     } else {
-        // NOTE: `<script lang="tsx">` in Vue has no signal to detect, the JS side resolves it to "ts".
-        // Retry a failed "ts" parse as "tsx": no source is valid under both grammars,
-        // so this order only affects cost (common ts path stays single-parse), not output.
-        // Markdown has the `dummy.ts(x)` extension signal and Svelte has no JSX, so neither needs this.
-        let fallback_source_type =
-            (is_vue_script && source_type.is_typescript() && !source_type.is_jsx())
-                .then(|| source_type.with_jsx(true));
-
         run_full(
             source_type,
-            fallback_source_type,
             source_text,
             oxfmt_plugin_options_json,
             format_file_cb,
@@ -111,7 +116,6 @@ pub fn run(
 #[instrument(level = "debug", name = "oxfmt::text_to_doc::full", skip_all, fields(?source_type))]
 fn run_full(
     source_type: SourceType,
-    fallback_source_type: Option<SourceType>,
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     format_file_cb: JsFormatFileCb,
@@ -156,28 +160,22 @@ fn run_full(
         css_options,
     );
 
-    // A failed attempt is parse-failure only (no embed callbacks have run yet),
-    // so retrying with the fallback source type on the same allocator is safe.
     let allocator = Allocator::default();
-    let Some(formatted) =
-        std::iter::once(source_type).chain(fallback_source_type).find_map(|source_type| {
-            tokio::task::block_in_place(|| {
-                oxc_formatter::format(
-                    &allocator,
-                    source_text,
-                    source_type,
-                    resolved.format_options.as_ref().clone(),
-                    Some(external_callbacks.clone()),
-                )
-            })
-            .inspect_err(|err| {
-                debug!("`oxc_formatter::format()` failed for {source_type:?}: {err:?}");
-            })
-            .ok()
-        })
-    else {
-        external_formatter.cleanup();
-        return None;
+    let formatted = match tokio::task::block_in_place(|| {
+        oxc_formatter::format(
+            &allocator,
+            source_text,
+            source_type,
+            *resolved.format_options,
+            Some(external_callbacks),
+        )
+    }) {
+        Ok(formatted) => formatted,
+        Err(err) => {
+            debug!("`oxc_formatter::format()` failed for {source_type:?}: {err:?}");
+            external_formatter.cleanup();
+            return None;
+        }
     };
 
     let (elements, sorted_tailwind_classes) =
