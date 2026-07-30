@@ -311,8 +311,18 @@ impl<'a> PeepholeOptimizations {
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    #[expect(clippy::float_cmp)]
     pub fn fold_binary_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
+        // Do not fold `1/0` and `-1/0`: codegen prints the non-finite numbers
+        // in exactly this form, so like `!0` and `void 0` above, folding them
+        // cannot shrink the output and only records a change on every run.
+        if e.operator == BinaryOperator::Division
+            && matches!(&e.right, Expression::NumericLiteral(r) if r.value == 0.0)
+            && matches!(&e.left, Expression::NumericLiteral(l) if l.value.abs() == 1.0)
+        {
+            return;
+        }
         // TODO: tryReduceOperandsForOp
 
         // https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L1136
