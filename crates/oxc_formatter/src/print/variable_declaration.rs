@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
 use crate::print::semicolon::{FormatContentWithSemicolon, keeps_trailing_comment_inside_parens};
@@ -7,9 +8,7 @@ use crate::utils::assignment_like::AssignmentLike;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter, prelude::*, separated::FormatSeparatedIter,
-    },
+    formatter::{JsFormatContext, JsFormatter, prelude::*, separated::FormatSeparatedIter},
     options::TrailingSeparator,
     write,
 };

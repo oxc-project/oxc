@@ -1,12 +1,13 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format, GroupId};
 use oxc_span::FileExtension;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, GroupId, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },

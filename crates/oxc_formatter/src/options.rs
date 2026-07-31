@@ -1,10 +1,12 @@
 use std::{fmt, str::FromStr};
 
-use oxc_formatter_core::{CoreFormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{
+    Buffer, CoreFormatOptions, Format, IndentStyle, IndentWidth, LineEnding, LineWidth,
+};
 
 use crate::{
     formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::{if_group_breaks, token},
     },
     ir_transform::options::SortImportsOptions,

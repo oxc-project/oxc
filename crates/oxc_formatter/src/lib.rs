@@ -17,6 +17,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_formatter_core::Formatted;
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
@@ -41,9 +42,8 @@ pub use detect_code_removal::detect_code_removal;
 pub(crate) use oxc_formatter_core::{best_fitting, format_args, write};
 // Internal-only re-exports so crate-local `use crate::{Buffer, Format};` continues to work
 // without leaking these IR primitives in the public API.
-pub(crate) use crate::formatter::{Buffer, Format};
+pub(crate) use oxc_formatter_core::{Buffer, Format};
 
-use self::formatter::Formatted;
 use self::formatter::prelude::tag::Label;
 use crate::print::{FormatFunctionParams, FormatTypeParameters};
 
@@ -256,7 +256,7 @@ fn format_node<'a, F: Format<'a, JsFormatContext<'a>>>(
     formatter::format(
         context,
         allocator,
-        formatter::Arguments::new(&[formatter::Argument::new(node)]),
+        oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(node)]),
     )
 }
 

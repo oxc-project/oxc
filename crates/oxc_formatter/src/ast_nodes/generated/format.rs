@@ -3,12 +3,13 @@
 
 #![expect(clippy::match_same_arms)]
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
     formatter::{
-        Format, JsFormatContext, JsFormatter, JsFormatterExt as _,
+        JsFormatContext, JsFormatter, JsFormatterExt as _,
         trivia::{format_leading_comments, format_trailing_comments},
     },
     parentheses::NeedsParentheses,

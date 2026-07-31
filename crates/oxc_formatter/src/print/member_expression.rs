@@ -1,11 +1,12 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
 use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Buffer, Format, JsFormatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{JsFormatter, prelude::*, trivia::FormatLeadingComments},
     utils::{
         expression::as_call_expression_without_chain_wrappers,
         member_chain::chain_member::FormatComputedMemberExpressionWithoutObject,

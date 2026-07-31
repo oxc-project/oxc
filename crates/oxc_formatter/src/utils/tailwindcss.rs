@@ -8,12 +8,13 @@
 //! Based on [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
 
 use oxc_ast::ast::*;
+use oxc_formatter_core::FormatElement;
 use oxc_span::GetSpan;
 
 use crate::{
     Buffer, SortTailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatElement, TailwindContextEntry, prelude::*},
+    formatter::{TailwindContextEntry, prelude::*},
     write,
 };
 

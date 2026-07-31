@@ -1,11 +1,12 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Buffer;
 
 use super::FormatWrite;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Buffer, prelude::*},
+    formatter::prelude::*,
     write,
 };
 

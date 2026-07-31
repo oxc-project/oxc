@@ -1,14 +1,13 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::IndentWidth;
+use oxc_formatter_core::{
+    FormatElement, IndentWidth,
+    format_element::{LineMode, TextWidth},
+};
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{
-        FormatElement,
-        format_element::{LineMode, TextWidth},
-        prelude::*,
-    },
+    formatter::prelude::*,
     print::template::{
         FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
     },

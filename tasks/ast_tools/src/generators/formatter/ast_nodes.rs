@@ -106,13 +106,14 @@ impl Generator for FormatterAstNodesGenerator {
             ///@@line_break
             use oxc_allocator::ArenaVec;
             use oxc_ast::ast::*;
+            use oxc_formatter_core::Format;
             use oxc_span::GetSpan;
             use oxc_str::Ident;
             use oxc_syntax::node::NodeId;
             ///@@line_break
             use crate::ast_nodes::AstNode;
             use crate::formatter::{
-                Format, JsFormatter,
+                JsFormatter,
                 trivia::{format_leading_comments, format_trailing_comments},
             };
 
