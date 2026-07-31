@@ -372,7 +372,7 @@ impl<'a> PeepholeOptimizations {
     /// Attempt to replace jump statements with empty statements when the parent is not a block-like statement.
     pub fn try_remove_jump_statement(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if Self::can_remove_termination_statement(stmt, false, ctx) {
-            ctx.replace_statement(stmt, Statement::new_empty_statement(stmt.span(), ctx));
+            ctx.replace_statement(stmt, Statement::new_empty_statement(stmt.span(), ctx))
         }
     }
 
