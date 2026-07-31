@@ -25,7 +25,7 @@ use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, ReplaceWith, TakeIn, Unstab
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_str::Str;
+use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeId};
 
 use super::{js::*, literal::*};
@@ -1147,8 +1147,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 pub struct TSIndexSignatureName<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
-    pub name: Str<'a>,
+    pub name: Ident<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 

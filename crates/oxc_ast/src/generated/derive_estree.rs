@@ -2958,7 +2958,7 @@ impl ESTree for TSIndexSignatureName<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("decorators", &crate::serialize::basic::EmptyArray(self));
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_field("name", &self.name);
         state.serialize_field("optional", &crate::serialize::basic::False(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_span(self.span);

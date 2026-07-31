@@ -26249,7 +26249,7 @@ impl<'a> TSIndexSignatureName<'a> {
         builder: &B,
     ) -> Self
     where
-        S1: Into<Str<'a>>,
+        S1: Into<Ident<'a>>,
     {
         let builder = builder.builder();
         TSIndexSignatureName {

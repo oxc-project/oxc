@@ -9369,7 +9369,7 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     }
 
     #[inline]
-    pub fn name(&self) -> Str<'a> {
+    pub fn name(&self) -> Ident<'a> {
         self.inner.name
     }
 

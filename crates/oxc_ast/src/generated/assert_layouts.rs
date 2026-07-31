@@ -3384,12 +3384,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSConstructSignatureDeclaration, return_type) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<TSIndexSignatureName>() == 24);
+    assert!(size_of::<TSIndexSignatureName>() == 28);
     assert!(align_of::<TSIndexSignatureName>() == 4);
     assert!(offset_of!(TSIndexSignatureName, span) == 0);
     assert!(offset_of!(TSIndexSignatureName, node_id) == 8);
     assert!(offset_of!(TSIndexSignatureName, name) == 12);
-    assert!(offset_of!(TSIndexSignatureName, type_annotation) == 20);
+    assert!(offset_of!(TSIndexSignatureName, type_annotation) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<TSInterfaceHeritage>() == 24);
