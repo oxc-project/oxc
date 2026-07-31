@@ -4,6 +4,27 @@ import { format } from "../../dist/index.js";
 // NOTE: For now, Vue files are partially handled by Prettier
 
 describe("Format js-in-vue with prettier-plugin-oxfmt", () => {
+  it("should not indent a comments-only script block", async () => {
+    // A comments-only program used to go through the trailing-comments path,
+    // whose separator emitted a leading space (` /**`). Oxc's own printer trims
+    // it at the line start, but the Prettier doc bridge renders it verbatim.
+    const input = `
+<script lang="ts">
+/**
+ * Docs.
+ */
+</script>
+
+<template>
+  <div>x</div>
+</template>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toContain('<script lang="ts">\n/**\n * Docs.\n */\n</script>');
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should format .vue w/ sort-imports", async () => {
     const input = `
 <script lang="ts">

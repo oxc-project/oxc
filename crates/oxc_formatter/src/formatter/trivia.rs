@@ -81,7 +81,7 @@ use super::prelude::*;
 /// There isn't much documentation about this behavior, but it is mentioned on the JSDoc repo
 /// for documentation: <https://github.com/jsdoc/jsdoc.github.io/issues/40>. Prettier also
 /// implements the same behavior: <https://github.com/prettier/prettier/pull/13445/files#diff-3d5eaa2a1593372823589e6e55e7ca905f7c64203ecada0aa4b3b0cdddd5c3ddR160-R178>
-fn should_nestle_adjacent_doc_comments(current: &Comment, next: &Comment) -> bool {
+pub fn should_nestle_adjacent_doc_comments(current: &Comment, next: &Comment) -> bool {
     matches!(current.content, CommentContent::Jsdoc)
         && matches!(next.content, CommentContent::Jsdoc)
         && current.is_multiline_block()
