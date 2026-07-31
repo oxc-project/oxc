@@ -1493,6 +1493,21 @@ pub trait Traverse<'a, State> {
     }
 
     #[inline]
+    fn enter_export_declaration(
+        &mut self,
+        node: &mut ExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_declaration(
+        &mut self,
+        node: &mut ExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,
@@ -1503,6 +1518,21 @@ pub trait Traverse<'a, State> {
     fn exit_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
         ctx: &mut TraverseCtx<'a, State>,
     ) {
     }

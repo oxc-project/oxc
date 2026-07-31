@@ -61,10 +61,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
-                Statement::ExportNamedDeclaration(decl)
-                    if let Some(declaration) = &decl.declaration =>
-                {
-                    !declaration.is_typescript_syntax()
+                Statement::ExportDeclaration(decl) => {
+                    !decl.declaration.is_typescript_syntax()
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
@@ -77,6 +75,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         decl.specifiers
                             .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
                         // Keep the export declaration if there are still specifiers after removing type exports
+                        !decl.specifiers.is_empty()
+                    }
+                }
+                Statement::ExportFromDeclaration(decl) => {
+                    if decl.export_kind.is_type() {
+                        false
+                    } else if decl.specifiers.is_empty() {
+                        true
+                    } else {
+                        decl.specifiers
+                            .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
                         !decl.specifiers.is_empty()
                     }
                 }
@@ -164,9 +173,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
         if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
-            let export_decl = Statement::ExportNamedDeclaration(
-                ExportNamedDeclaration::boxed_plain(SPAN, [], None, ctx),
-            );
+            let export_decl = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
+                SPAN,
+                [],
+                ImportOrExportKind::Value,
+                ctx,
+            ));
             program.body.push(export_decl);
         }
     }

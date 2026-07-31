@@ -236,7 +236,11 @@ impl<'a> TakeIn<'a> for ImportAttribute<'a> {}
 
 impl<'a> TakeIn<'a> for ImportAttributeKey<'a> {}
 
+impl<'a> TakeIn<'a> for ExportDeclaration<'a> {}
+
 impl<'a> TakeIn<'a> for ExportNamedDeclaration<'a> {}
+
+impl<'a> TakeIn<'a> for ExportFromDeclaration<'a> {}
 
 impl<'a> TakeIn<'a> for ExportDefaultDeclaration<'a> {}
 

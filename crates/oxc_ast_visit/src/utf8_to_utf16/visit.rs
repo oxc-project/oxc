@@ -78,16 +78,13 @@ impl Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut prop.span.end);
     }
 
-    pub(crate) fn convert_export_named_declaration(
-        &mut self,
-        decl: &mut ExportNamedDeclaration<'_>,
-    ) {
+    pub(crate) fn convert_export_declaration(&mut self, decl: &mut ExportDeclaration<'_>) {
         // Special case logic for `@dec export class C {}`
-        if let Some(Declaration::ClassDeclaration(class)) = &mut decl.declaration {
+        if let Declaration::ClassDeclaration(class) = &mut decl.declaration {
             self.convert_exported_class(class, &mut decl.span);
         } else {
             self.convert_offset(&mut decl.span.start);
-            walk_mut::walk_export_named_declaration(self, decl);
+            walk_mut::walk_export_declaration(self, decl);
             self.convert_offset(&mut decl.span.end);
         }
     }
@@ -106,7 +103,7 @@ impl Utf8ToUtf16Converter<'_> {
         }
     }
 
-    /// Visit `ExportNamedDeclaration` or `ExportDefaultDeclaration` containing a `Class`.
+    /// Visit `ExportDeclaration` or `ExportDefaultDeclaration` containing a `Class`.
     /// e.g. `export class C {}`, `export default class {}`
     ///
     /// These need special handing because decorators before the `export` keyword

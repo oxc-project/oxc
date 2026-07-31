@@ -875,8 +875,8 @@ fn collect_exported_symbols<'a>(
     let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
     let mut exported_names = ArenaHashSet::new_in(allocator);
     for statement in &program.body {
-        let Statement::ExportNamedDeclaration(v) = statement else { continue };
-        let Some(decl) = &v.declaration else { continue };
+        let Statement::ExportDeclaration(v) = statement else { continue };
+        let decl = &v.declaration;
         if let Declaration::VariableDeclaration(decl) = decl {
             // Use `bound_names` rather than `get_binding_identifier`: a destructuring
             // pattern (`export const { find } = x`) exports every bound name, and

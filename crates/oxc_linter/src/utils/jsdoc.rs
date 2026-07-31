@@ -104,7 +104,7 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
                 // export const foo = () => {}
                 let parent_node = semantic.nodes().parent_node(current_node.id());
                 match parent_node.kind() {
-                    AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => return Some(parent_node),
+                    AstKind::ExportDefaultDeclaration(_) | AstKind::ExportDeclaration(_) => return Some(parent_node),
                     _ => return None
                 }
             },

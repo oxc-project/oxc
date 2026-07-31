@@ -489,7 +489,7 @@ impl<'a> ClassProperties<'a> {
         // Insert statements before/after class
         let stmt_address = match ctx.parent() {
             parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
-            | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
+            | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
             // `Class` is always stored in a `Box`, so has a stable memory location
             _ => class.unstable_address(),
         };

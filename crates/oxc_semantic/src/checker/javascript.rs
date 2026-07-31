@@ -31,9 +31,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
     let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
-        if let Statement::ExportNamedDeclaration(decl) = stmt
-            && decl.source.is_none()
-        {
+        if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
@@ -522,8 +520,10 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
     let text = match decl {
         ModuleDeclarationKind::Import(_) => "import statement",
         ModuleDeclarationKind::ExportAll(_)
+        | ModuleDeclarationKind::Export(_)
         | ModuleDeclarationKind::ExportDefault(_)
         | ModuleDeclarationKind::ExportNamed(_)
+        | ModuleDeclarationKind::ExportFrom(_)
         | ModuleDeclarationKind::TSExportAssignment(_)
         | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
     };

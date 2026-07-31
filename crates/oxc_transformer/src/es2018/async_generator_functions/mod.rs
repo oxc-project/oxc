@@ -128,8 +128,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a> {
                     None
                 }
             }
-            Statement::ExportNamedDeclaration(decl) => {
-                if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
+            Statement::ExportDeclaration(decl) => {
+                if let Declaration::FunctionDeclaration(func) = &mut decl.declaration {
                     Some(func)
                 } else {
                     None

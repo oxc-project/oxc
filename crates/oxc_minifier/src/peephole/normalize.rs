@@ -82,6 +82,14 @@ impl<'a> Traverse<'a> for Normalize {
         symbol_liveness::register_named_export(node, ctx);
     }
 
+    fn enter_export_declaration(
+        &mut self,
+        node: &mut ExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        symbol_liveness::register_export_declaration(node, ctx);
+    }
+
     fn enter_export_default_declaration(
         &mut self,
         node: &mut ExportDefaultDeclaration<'a>,

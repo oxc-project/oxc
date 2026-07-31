@@ -1685,6 +1685,22 @@ impl ImportAttribute<'_> {
     }
 }
 
+impl ExportDeclaration<'_> {
+    /// Get [`NodeId`] of [`ExportDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ExportDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
 impl ExportNamedDeclaration<'_> {
     /// Get [`NodeId`] of [`ExportNamedDeclaration`].
     ///
@@ -1695,6 +1711,22 @@ impl ExportNamedDeclaration<'_> {
     }
 
     /// Set [`NodeId`] of [`ExportNamedDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ExportFromDeclaration<'_> {
+    /// Get [`NodeId`] of [`ExportFromDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ExportFromDeclaration`].
     #[inline]
     pub fn set_node_id(&self, node_id: NodeId) {
         self.node_id.set(node_id);
@@ -3853,7 +3885,9 @@ impl Statement<'_> {
             Self::ImportDeclaration(it) => it.node_id(),
             Self::ExportAllDeclaration(it) => it.node_id(),
             Self::ExportDefaultDeclaration(it) => it.node_id(),
+            Self::ExportDeclaration(it) => it.node_id(),
             Self::ExportNamedDeclaration(it) => it.node_id(),
+            Self::ExportFromDeclaration(it) => it.node_id(),
             Self::TSExportAssignment(it) => it.node_id(),
             Self::TSNamespaceExportDeclaration(it) => it.node_id(),
         }
@@ -4048,7 +4082,9 @@ impl ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => it.node_id(),
             Self::ExportAllDeclaration(it) => it.node_id(),
             Self::ExportDefaultDeclaration(it) => it.node_id(),
+            Self::ExportDeclaration(it) => it.node_id(),
             Self::ExportNamedDeclaration(it) => it.node_id(),
+            Self::ExportFromDeclaration(it) => it.node_id(),
             Self::TSExportAssignment(it) => it.node_id(),
             Self::TSNamespaceExportDeclaration(it) => it.node_id(),
         }

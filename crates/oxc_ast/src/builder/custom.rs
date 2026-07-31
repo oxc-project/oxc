@@ -11,7 +11,7 @@
 
 use std::{alloc::Layout, mem::MaybeUninit, slice, str};
 
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, IntoIn};
+use oxc_allocator::{Allocator, ArenaBox, GetAllocator};
 use oxc_span::{SPAN, Span};
 use oxc_str::Str;
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
@@ -172,61 +172,6 @@ impl<'a> Function<'a> {
             scope_id,
             false,
             false,
-            builder,
-        )
-    }
-}
-
-impl<'a> ExportNamedDeclaration<'a> {
-    /// Build an [`ExportNamedDeclaration`] with no modifiers, containing a set of
-    /// [exported symbol names](ExportSpecifier), and store it in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `specifiers`
-    /// * `source`
-    #[inline]
-    pub fn boxed_plain<B: GetAstBuilder<'a>, V1>(
-        span: Span,
-        specifiers: V1,
-        source: Option<StringLiteral<'a>>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        V1: IntoIn<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
-    {
-        let builder = builder.builder();
-        ExportNamedDeclaration::boxed(
-            span,
-            None,
-            specifiers,
-            source,
-            ImportOrExportKind::Value,
-            None,
-            builder,
-        )
-    }
-
-    /// Build an [`ExportNamedDeclaration`] with no modifiers, wrapping a [`Declaration`],
-    /// and store it in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `declaration`
-    #[inline]
-    pub fn boxed_plain_declaration<B: GetAstBuilder<'a>>(
-        span: Span,
-        declaration: Declaration<'a>,
-        builder: &B,
-    ) -> ArenaBox<'a, Self> {
-        let builder = builder.builder();
-        ExportNamedDeclaration::boxed(
-            span,
-            Some(declaration),
-            [],
-            None,
-            ImportOrExportKind::Value,
-            None,
             builder,
         )
     }

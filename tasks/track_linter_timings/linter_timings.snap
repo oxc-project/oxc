@@ -149,7 +149,7 @@ eslint/no-useless-computed-key                             |  36054
 eslint/no-useless-concat                                   |  20604
 eslint/no-useless-constructor                              |   1916
 eslint/no-useless-escape                                   |  63282
-eslint/no-useless-rename                                   |   2345
+eslint/no-useless-rename                                   |   2288
 eslint/no-useless-return                                   |  14199
 eslint/no-var                                              |  31363
 eslint/no-void                                             |   9106
@@ -203,14 +203,14 @@ import/no-default-export                                   |      7
 import/no-duplicates                                       |      7
 import/no-dynamic-require                                  |  62623
 import/no-empty-named-blocks                               |    103
-import/no-mutable-exports                                  |     68
+import/no-mutable-exports                                  |     64
 import/no-named-as-default                                 |      7
 import/no-named-as-default-member                          |      7
 import/no-named-default                                    |      7
 import/no-named-export                                     |     68
 import/no-namespace                                        |      7
-import/no-nodejs-modules                                   |  62796
-import/no-relative-parent-imports                          |  62794
+import/no-nodejs-modules                                   |  62734
+import/no-relative-parent-imports                          |  62732
 import/no-self-import                                      |      7
 import/no-unassigned-import                                |  24905
 import/no-webpack-loader-syntax                            |  62709
@@ -387,7 +387,7 @@ oxc/no-const-enum                                          |     23
 oxc/no-map-spread                                          |  62606
 oxc/no-optional-chaining                                   |    792
 oxc/no-rest-spread-properties                              |    564
-oxc/no-this-in-exported-function                           |    121
+oxc/no-this-in-exported-function                           |    112
 oxc/number-arg-out-of-range                                |  62606
 oxc/only-used-in-recursion                                 |  16812
 oxc/uninvoked-array-callback                               |   1421
@@ -486,7 +486,7 @@ typescript/consistent-type-definitions                     |    503
 typescript/consistent-type-imports                         |   1969
 typescript/explicit-function-return-type                   |   5917
 typescript/explicit-member-accessibility                   |  10183
-typescript/explicit-module-boundary-types                  |     67
+typescript/explicit-module-boundary-types                  |     63
 typescript/method-signature-style                          |   2675
 typescript/no-confusing-non-null-assertion                 |  14772
 typescript/no-duplicate-enum-values                        |     23
@@ -510,7 +510,7 @@ typescript/no-unnecessary-parameter-property-assignment    |   1916
 typescript/no-unnecessary-type-constraint                  |    362
 typescript/no-unsafe-declaration-merging                   |    500
 typescript/no-unsafe-function-type                         |  13199
-typescript/no-useless-empty-export                         |     66
+typescript/no-useless-empty-export                         |      5
 typescript/no-var-requires                                 |  24652
 typescript/no-wrapper-object-types                         |  13199
 typescript/parameter-properties                            |   1070
@@ -537,7 +537,7 @@ unicorn/escape-case                                        |  63282
 unicorn/explicit-length-check                              |  76337
 unicorn/explicit-timer-delay                               |  62606
 unicorn/filename-case                                      |      7
-unicorn/import-style                                       |  62489
+unicorn/import-style                                       |  62427
 unicorn/max-nested-calls                                   |  64027
 unicorn/new-for-builtins                                   |  64027
 unicorn/no-abusive-eslint-disable                          |      7
@@ -628,7 +628,7 @@ unicorn/prefer-modern-math-apis                            |  83210
 unicorn/prefer-module                                      | 226148
 unicorn/prefer-native-coercion-functions                   |  16812
 unicorn/prefer-negative-index                              |  62606
-unicorn/prefer-node-protocol                               |  62794
+unicorn/prefer-node-protocol                               |  62732
 unicorn/prefer-number-coercion                             |  62606
 unicorn/prefer-number-properties                           | 157910
 unicorn/prefer-object-from-entries                         |  62606
@@ -653,8 +653,8 @@ unicorn/prefer-top-level-await                             |  62606
 unicorn/prefer-type-error                                  |    224
 unicorn/relative-url-style                                 |   1421
 unicorn/require-array-join-separator                       |  62606
-unicorn/require-module-attributes                          |    188
-unicorn/require-module-specifiers                          |    169
+unicorn/require-module-attributes                          |    126
+unicorn/require-module-specifiers                          |    112
 unicorn/require-number-to-fixed-digits-argument            |  62606
 unicorn/require-post-message-target-origin                 |  62606
 unicorn/switch-case-braces                                 |    284

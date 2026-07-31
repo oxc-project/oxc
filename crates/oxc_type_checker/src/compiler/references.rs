@@ -178,12 +178,14 @@ impl Collector {
                     self.add_static(decl.source.span.start, &decl.source.value, true);
                 }
             }
-            Statement::ExportNamedDeclaration(decl) => {
-                if in_ambient_module && let Some(source) = &decl.source {
-                    self.add_static(source.span.start, &source.value, true);
+            Statement::ExportFromDeclaration(decl) => {
+                if in_ambient_module {
+                    self.add_static(decl.source.span.start, &decl.source.value, true);
                 }
+            }
+            Statement::ExportDeclaration(decl) => {
                 // `export import A = require("...")` wraps the import-equals declaration.
-                if let Some(Declaration::TSImportEqualsDeclaration(decl)) = &decl.declaration
+                if let Declaration::TSImportEqualsDeclaration(decl) = &decl.declaration
                     && let TSModuleReference::ExternalModuleReference(reference) =
                         &decl.module_reference
                 {

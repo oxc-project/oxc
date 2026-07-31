@@ -294,18 +294,29 @@ impl<'a> IsolatedDeclarations<'a> {
                             need_empty_export_marker = false;
                         }
 
-                        ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                            if decl.declaration.is_none() {
-                                need_empty_export_marker = false;
-                            }
-                            if let Some(new_decl) = self.transform_export_named_declaration(decl) {
-                                self.scope.visit_export_named_declaration(&new_decl);
+                        ModuleDeclaration::ExportDeclaration(decl) => {
+                            if let Some(new_decl) = self.transform_export_declaration(decl) {
+                                self.scope.visit_export_declaration(&new_decl);
                                 transformed_stmts[idx] =
-                                    Some(Statement::ExportNamedDeclaration(new_decl));
+                                    Some(Statement::ExportDeclaration(new_decl));
                             } else {
                                 // Declaration couldn't be transformed; preserve as-is
                                 transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
                             }
+                            transformed_count += 1;
+                        }
+                        ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                            need_empty_export_marker = false;
+                            self.scope.visit_export_named_declaration(decl);
+                            transformed_stmts[idx] = Some(stmt.clone_in(self.allocator()));
+                            transformed_count += 1;
+                        }
+                        ModuleDeclaration::ExportFromDeclaration(decl) => {
+                            let new_decl = self.transform_export_from_declaration(decl);
+                            need_empty_export_marker = false;
+                            self.scope.visit_export_from_declaration(&new_decl);
+                            transformed_stmts[idx] =
+                                Some(Statement::ExportFromDeclaration(new_decl));
                             transformed_count += 1;
                         }
                         ModuleDeclaration::ImportDeclaration(_) => {
@@ -434,15 +445,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if need_empty_export_marker {
             let kind = ImportOrExportKind::Value;
-            new_stmts.push(Statement::new_export_named_declaration(
-                SPAN,
-                None,
-                [],
-                None,
-                kind,
-                None,
-                self,
-            ));
+            new_stmts.push(Statement::new_export_named_declaration(SPAN, [], kind, self));
         } else if self.scope.is_ts_module_block() {
             // If we are in a module block and we don't need to add `export {}`, in that case we need to remove `export` keyword from all ExportNamedDeclaration
             // <https://github.com/microsoft/TypeScript/blob/a709f9899c2a544b6de65a0f2623ecbbe1394eab/src/compiler/transformers/declarations.ts#L1556-L1563>
@@ -478,8 +481,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 true
             }
-            Statement::ExportNamedDeclaration(decl) => {
-                if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
+            Statement::ExportDeclaration(decl) => {
+                if let Declaration::FunctionDeclaration(func) = &decl.declaration {
                     let name: Str<'a> = func
                         .id
                         .as_ref()
@@ -530,9 +533,9 @@ impl<'a> IsolatedDeclarations<'a> {
         let TSModuleDeclarationName::Identifier(ident) = &decl.id else { return };
         let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &decl.body else { return };
         for stmt in &block.body {
-            let Statement::ExportNamedDeclaration(decl) = stmt else { continue };
+            let Statement::ExportDeclaration(decl) = stmt else { continue };
             match &decl.declaration {
-                Some(Declaration::VariableDeclaration(var)) => {
+                Declaration::VariableDeclaration(var) => {
                     for declarator in &var.declarations {
                         if let Some(name) = declarator.id.get_identifier_name() {
                             assignable_properties
@@ -542,7 +545,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                 }
-                Some(Declaration::FunctionDeclaration(func)) => {
+                Declaration::FunctionDeclaration(func) => {
                     if let Some(name) = func.name() {
                         assignable_properties
                             .entry(ident.name.as_str())
@@ -550,7 +553,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             .insert(name.into());
                     }
                 }
-                Some(Declaration::ClassDeclaration(cls)) => {
+                Declaration::ClassDeclaration(cls) => {
                     if let Some(id) = cls.id.as_ref() {
                         assignable_properties
                             .entry(ident.name.as_str())
@@ -558,7 +561,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             .insert(id.name.into());
                     }
                 }
-                Some(Declaration::TSEnumDeclaration(decl)) => {
+                Declaration::TSEnumDeclaration(decl) => {
                     assignable_properties
                         .entry(ident.name.as_str())
                         .or_default()
@@ -574,15 +577,15 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut can_expando_function_names = IdentHashSet::default();
         for stmt in stmts {
             match stmt {
-                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
-                    Some(Declaration::FunctionDeclaration(func)) => {
+                Statement::ExportDeclaration(decl) => match &decl.declaration {
+                    Declaration::FunctionDeclaration(func) => {
                         if func.body.is_some()
                             && let Some(id) = func.id.as_ref()
                         {
                             can_expando_function_names.insert(id.name);
                         }
                     }
-                    Some(Declaration::VariableDeclaration(decl)) => {
+                    Declaration::VariableDeclaration(decl) => {
                         for declarator in &decl.declarations {
                             if declarator.type_annotation.is_none()
                                 && declarator.init.as_ref().is_some_and(Expression::is_function)
@@ -592,7 +595,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                         }
                     }
-                    Some(Declaration::TSModuleDeclaration(decl)) => {
+                    Declaration::TSModuleDeclaration(decl) => {
                         Self::collect_namespace_properties(
                             decl,
                             &mut assignable_properties_for_namespace,

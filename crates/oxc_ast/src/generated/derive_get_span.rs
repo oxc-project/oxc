@@ -625,7 +625,9 @@ impl GetSpan for Statement<'_> {
             Self::ImportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
             Self::ExportDefaultDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportNamedDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportFromDeclaration(it) => GetSpan::span(&**it),
             Self::TSExportAssignment(it) => GetSpan::span(&**it),
             Self::TSNamespaceExportDeclaration(it) => GetSpan::span(&**it),
         }
@@ -1100,7 +1102,9 @@ impl GetSpan for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
             Self::ExportDefaultDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportNamedDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportFromDeclaration(it) => GetSpan::span(&**it),
             Self::TSExportAssignment(it) => GetSpan::span(&**it),
             Self::TSNamespaceExportDeclaration(it) => GetSpan::span(&**it),
         }
@@ -1182,7 +1186,21 @@ impl GetSpan for ImportAttributeKey<'_> {
     }
 }
 
+impl GetSpan for ExportDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for ExportNamedDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ExportFromDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span

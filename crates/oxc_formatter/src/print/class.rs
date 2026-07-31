@@ -290,7 +290,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
         if self.is_expression()
             || !matches!(
                 self.parent(),
-                AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
+                AstNodes::ExportDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
             )
         {
             write!(f, decorators);
