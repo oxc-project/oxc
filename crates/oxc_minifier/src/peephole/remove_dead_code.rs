@@ -43,6 +43,7 @@ impl<'a> PeepholeOptimizations {
                     || matches!(first, Statement::FunctionDeclaration(_))
                     || (matches!(first, Statement::IfStatement(decl) if decl.alternate.is_some())
                         && matches!(ctx.parent(), Ancestor::IfStatementConsequent(_)))
+                    || (first.is_iteration_statement() && ctx.parent().is_labeled_statement())
                 {
                     return;
                 }
