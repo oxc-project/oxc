@@ -13,6 +13,11 @@ use oxc_span::Span;
 
 use crate::print::{GraphqlFormatter, format_with};
 
+/// Comma note (why token-sensitivity matters for GraphQL):
+/// Prettier's `isNextLineEmpty` skips commas only on the current line's tail,
+/// so an insignificant comma-only line still counts as content (`a\n,\nb` has no blank line).
+pub use oxc_formatter_core::spec::{Gap, classify_gap};
+
 /// Cursor over a sorted comment-span list that hands out unprinted slices in span order.
 ///
 /// GraphQL comments are always single-line (`# ...` to end of line).
@@ -57,58 +62,6 @@ impl<'a> Comments<'a> {
     pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = Span> {
         let start = self.cursor.get();
         self.inner[start..].iter().copied().take_while(move |c| c.end <= upper_bound)
-    }
-}
-
-/// Vertical spacing implied by an inter-token source gap.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Gap {
-    /// Same line (no line terminator).
-    None,
-    /// One or more line breaks, but no blank line.
-    Line,
-    /// At least one blank line.
-    Blank,
-}
-
-/// Classifies the gap `slice` between two source positions.
-///
-/// A blank line is a line strictly inside the gap consisting solely of whitespace.
-/// Tokens in the gap make their line non-blank, so newline counting alone would
-/// over-report blank lines. This includes insignificant commas: Prettier's
-/// `isNextLineEmpty` skips commas only on the current line's tail, so a comma-only
-/// line still counts as content (`a\n,\nb` has no blank line).
-/// Recognizes GraphQL line terminators: `\n`, lone `\r`, `\r\n`.
-pub fn classify_gap(slice: &[u8]) -> Gap {
-    let mut newline_count = 0;
-    let mut line_has_content = false;
-    let mut blank = false;
-    let mut i = 0;
-    while i < slice.len() {
-        match slice[i] {
-            b'\r' | b'\n' => {
-                // A line strictly between two terminators with no content is blank.
-                if newline_count > 0 && !line_has_content {
-                    blank = true;
-                }
-                newline_count += 1;
-                line_has_content = false;
-                // Collapse `\r\n` into one break.
-                if slice[i] == b'\r' && slice.get(i + 1) == Some(&b'\n') {
-                    i += 1;
-                }
-            }
-            b' ' | b'\t' => {}
-            _ => line_has_content = true,
-        }
-        i += 1;
-    }
-    if blank {
-        Gap::Blank
-    } else if newline_count > 0 {
-        Gap::Line
-    } else {
-        Gap::None
     }
 }
 
@@ -331,41 +284,4 @@ pub fn write_suppressed_node(span: Span, f: &mut GraphqlFormatter<'_, '_>) {
     // The verbatim text already includes inside-span comments;
     // advance the cursor so they aren't re-emitted later.
     let _ = f.context().comments().take_before(span.end);
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Gap, classify_gap};
-
-    // Whitebox coverage of `classify_gap`'s line-terminator handling.
-    // End-to-end CRLF behavior of the suppress path is covered by the
-    // `tests/fixtures/graphql/crlf/` fixtures.
-    #[test]
-    fn classify_gap_counts_line_terminators() {
-        assert_eq!(classify_gap(b" \t "), Gap::None);
-        assert_eq!(classify_gap(b"a"), Gap::None);
-        assert_eq!(classify_gap(b"\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\n  \n"), Gap::Blank);
-        // CRLF must collapse to one break, never two (otherwise blank lines are invented).
-        assert_eq!(classify_gap(b"\r\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\n\r\n"), Gap::Blank);
-        // Lone CR is a GraphQL line terminator.
-        assert_eq!(classify_gap(b"\r"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\r"), Gap::Blank);
-        // Mixed endings.
-        assert_eq!(classify_gap(b"\n\r\n"), Gap::Blank);
-    }
-
-    #[test]
-    fn classify_gap_treats_tokens_as_content() {
-        // A token on its own line (e.g. the `&` between two `implements` comments)
-        // is not a blank line.
-        assert_eq!(classify_gap(b"\n&\n"), Gap::Line);
-        // Comma-only lines count as content too (mirrors Prettier's `isNextLineEmpty`,
-        // which skips commas only on the current line's tail).
-        assert_eq!(classify_gap(b"\n,\n"), Gap::Line);
-        assert_eq!(classify_gap(b",\n\n"), Gap::Blank);
-        // Content on the tail of the first or last line is not "inside" the gap.
-        assert_eq!(classify_gap(b",\n  "), Gap::Line);
-    }
 }

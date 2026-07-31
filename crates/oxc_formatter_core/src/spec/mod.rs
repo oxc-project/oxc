@@ -13,10 +13,12 @@
 //! Import discipline: files here import only `std` + `cow_utils`,
 //! never `oxc_*` crates or engine IR types via `crate::`.
 
+mod gap;
 mod number;
 pub mod string;
 mod suppression;
 
+pub use gap::{Gap, classify_gap};
 pub use number::{format_trimmed_number, is_simple_number};
 pub use string::normalize_string;
 pub use suppression::is_suppression_marker;

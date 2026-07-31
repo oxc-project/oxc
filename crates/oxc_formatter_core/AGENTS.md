@@ -112,7 +112,14 @@ Parameterizing language differences (sharpened gate 2), when a shared helper nee
 
 `SourceText` follows this line. Core owns mechanical, offset-keyed access only (slicing, raw-byte lookups).
 Lexical-semantic scanning whose answer is language-defined, what counts as a newline (U+2028/U+2029), a comment, or ASI/parens trivia lives in the consumer (`oxc_formatter`'s `SourceTextExt`), not here.
-Even raw newline detection proved to be consumer-owned (every consumer needs the LS/PS-aware variant in addition to `\r|\n`), so core keeps no newline helpers.
+
+Newline-adjacent helpers split along the same line:
+
+- `spec/gap.rs` is the shared gap classifier for the CR, LF and CRLF terminator family
+  - It takes a raw `&[u8]` slice, never offsets (`SourceText` addresses), `spec/` interprets, consumers compose the two at the call site
+- Precedent for gate 2: json/js measure gaps under ECMAScript lexis (LS/PS terminators, blanks before a separator comma ignored)
+  - So they keep their own helpers instead of a parameter here
+
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 
 ## Cargo features

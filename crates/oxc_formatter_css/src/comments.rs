@@ -67,51 +67,7 @@ impl<'a> Comments<'a> {
     }
 }
 
-/// Vertical spacing implied by an inter-token source gap.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Gap {
-    /// Same line (no line terminator).
-    None,
-    /// One or more line breaks, but no blank line.
-    Line,
-    /// At least one blank line.
-    Blank,
-}
-
-/// Classifies the gap `slice` between two source positions.
-///
-/// A blank line is a line strictly inside the gap consisting solely of whitespace.
-/// Recognizes `\n`, lone `\r`, and `\r\n` line terminators.
-pub fn classify_gap(slice: &[u8]) -> Gap {
-    let mut newline_count = 0;
-    let mut line_has_content = false;
-    let mut blank = false;
-    let mut i = 0;
-    while i < slice.len() {
-        match slice[i] {
-            b'\r' | b'\n' => {
-                if newline_count > 0 && !line_has_content {
-                    blank = true;
-                }
-                newline_count += 1;
-                line_has_content = false;
-                if slice[i] == b'\r' && slice.get(i + 1) == Some(&b'\n') {
-                    i += 1;
-                }
-            }
-            b' ' | b'\t' => {}
-            _ => line_has_content = true,
-        }
-        i += 1;
-    }
-    if blank {
-        Gap::Blank
-    } else if newline_count > 0 {
-        Gap::Line
-    } else {
-        Gap::None
-    }
-}
+pub use oxc_formatter_core::spec::{Gap, classify_gap};
 
 /// Emit a single comment verbatim.
 /// Mirrors Prettier's `css-comment` case: the original text slice,
@@ -250,20 +206,4 @@ pub fn is_suppression_comment(source: SourceText<'_>, comment: CssComment) -> bo
 /// the next line instead of following on the same one.
 pub fn last_line_has_inline_comment(raw: &str) -> bool {
     raw.rsplit('\n').next().unwrap_or(raw).contains("//")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Gap, classify_gap};
-
-    #[test]
-    fn classify_gap_counts_line_terminators() {
-        assert_eq!(classify_gap(b" \t "), Gap::None);
-        assert_eq!(classify_gap(b"\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\n  \n"), Gap::Blank);
-        assert_eq!(classify_gap(b"\r\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\n\r\n"), Gap::Blank);
-        assert_eq!(classify_gap(b"\r"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\r"), Gap::Blank);
-    }
 }
