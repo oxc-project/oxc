@@ -816,7 +816,7 @@ fn js_parser_test() {
     );
     test(
         "function _() { if (a) x: { if (b) break x } else return c }",
-        "function _() { if (a) { x: if (b) break x;} else return c; }",
+        "function _() { if (a) x: b; else return c; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b : undefined }",

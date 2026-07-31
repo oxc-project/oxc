@@ -374,9 +374,6 @@ impl<'a> PeepholeOptimizations {
             Statement::ForOfStatement(for_of_stmt) => {
                 Self::handle_for_of_statement(for_of_stmt, result, ctx);
             }
-            Statement::LabeledStatement(label_stmt) => {
-                Self::handle_labeled_statement(label_stmt, result, ctx);
-            }
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
         }
@@ -1244,33 +1241,6 @@ impl<'a> PeepholeOptimizations {
         result.push(Statement::ForOfStatement(for_of_stmt));
     }
 
-    fn handle_labeled_statement(
-        mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
-        result: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
-            Self::minimize_statements(&mut block_stmt.body, ctx);
-        } else if !Self::statement_cares_about_scope(&labeled_stmt.body) {
-            let mut stmts = ArenaVec::from_value_in(labeled_stmt.body.take_in(ctx), ctx);
-            Self::minimize_statements(&mut stmts, ctx);
-            labeled_stmt.body = match stmts.len() {
-                0 => Statement::new_empty_statement(labeled_stmt.body.span(), ctx),
-                1 => stmts[0].take_in(ctx),
-                _ => {
-                    ctx.notice_change();
-                    Statement::new_block_statement_with_scope_id(
-                        labeled_stmt.span,
-                        stmts,
-                        ctx.create_child_scope_of_current(ScopeFlags::empty()),
-                        ctx,
-                    )
-                }
-            };
-        }
-        result.push(Statement::LabeledStatement(labeled_stmt));
-    }
-
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
     fn handle_block(
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -2103,17 +2073,20 @@ impl<'a> PeepholeOptimizations {
                 false
             }
             // unlabeled `break;` that terminates a `do...while` body if test is false.
-            Statement::BreakStatement(stmt) if stmt.label.is_none() => {
+            Statement::BreakStatement(stmt) => {
                 for (index, ancestor) in ctx.ancestors().enumerate() {
                     match ancestor {
                         Ancestor::DoWhileStatementBody(do_while) => {
-                            return do_while.test().get_side_free_boolean_value(ctx) == Some(false);
+                            return stmt.label.is_none()
+                                && do_while.test().get_side_free_boolean_value(ctx) == Some(false);
                         }
-                        Ancestor::BlockStatementBody(_)
-                            if skip_first_transparent_body && index == 0 => {}
-                        Ancestor::IfStatementConsequent(_)
-                        | Ancestor::IfStatementAlternate(_)
-                        | Ancestor::LabeledStatementBody(_) => {}
+                        Ancestor::BlockStatementBody(_) if index == 0 => {}
+                        Ancestor::LabeledStatementBody(label_stmt) => {
+                            if let Some(label) = &stmt.label {
+                                return label.name.eq(&label_stmt.label().name);
+                            }
+                        }
+                        Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_) => {}
                         _ => return false,
                     }
                 }

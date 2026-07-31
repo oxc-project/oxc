@@ -56,6 +56,7 @@ fn test_fold_block() {
 
 #[test]
 fn test_remove_no_op_labelled_statement() {
+    test("a: {}", "");
     test("a: break a;", "");
     test("a: { break a; }", "");
 
