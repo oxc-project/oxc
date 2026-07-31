@@ -2083,7 +2083,7 @@ impl<'a> PeepholeOptimizations {
                         Ancestor::BlockStatementBody(_) if index == 0 => {}
                         Ancestor::LabeledStatementBody(label_stmt) => {
                             if let Some(label) = &stmt.label {
-                                return label.name.eq(&label_stmt.label().name);
+                                return label.name == label_stmt.label().name;
                             }
                         }
                         Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_) => {}
