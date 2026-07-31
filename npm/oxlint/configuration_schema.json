@@ -9115,6 +9115,9 @@
         "unicorn/no-useless-collection-argument": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-useless-continue": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-useless-error-capture-stack-trace": {
           "$ref": "#/definitions/RuleNoConfig"
         },

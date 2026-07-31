@@ -1,0 +1,209 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 process(x);
+ 3 │                 continue;
+   ·                 ─────────
+ 4 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:2:17]
+ 1 │ for (const x of xs) {
+ 2 │                 continue;
+   ·                 ─────────
+ 3 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 doX();
+ 3 │                 continue;
+   ·                 ─────────
+ 4 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 doX();
+ 3 │                 continue;
+   ·                 ─────────
+ 4 │             } while (cond);
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 doX();
+ 3 │                 continue;
+   ·                 ─────────
+ 4 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 doX();
+ 3 │                 continue;
+   ·                 ─────────
+ 4 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:1:30]
+ 1 │ for (const x of xs) if (a) { continue; }
+   ·                              ─────────
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:21]
+ 2 │                 if (a) {
+ 3 │                     continue;
+   ·                     ─────────
+ 4 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:4:25]
+ 3 │                     if (b) {
+ 4 │                         continue;
+   ·                         ─────────
+ 5 │                     }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:4:21]
+ 3 │                     doX();
+ 4 │                     continue;
+   ·                     ─────────
+ 5 │                 } else {
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:6:21]
+ 5 │                     doY();
+ 6 │                     continue;
+   ·                     ─────────
+ 7 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:6:21]
+ 5 │                     doY();
+ 6 │                     continue;
+   ·                     ─────────
+ 7 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:4:21]
+ 3 │                     process(x);
+ 4 │                     continue;
+   ·                     ─────────
+ 5 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:21]
+ 2 │                 {
+ 3 │                     continue;
+   ·                     ─────────
+ 4 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:4:21]
+ 3 │                     process(y);
+ 4 │                     continue;
+   ·                     ─────────
+ 5 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:21]
+ 2 │                 for (const y of ys) {
+ 3 │                     continue;
+   ·                     ─────────
+ 4 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:5:17]
+ 4 │                 }
+ 5 │                 continue;
+   ·                 ─────────
+ 6 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 doX();
+ 3 │                 continue;
+   ·                 ─────────
+ 4 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 continue;
+ 3 │                 continue;
+   ·                 ─────────
+ 4 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:6:25]
+ 5 │                     if (b) {
+ 6 │                         continue;
+   ·                         ─────────
+ 7 │                     }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:21]
+ 2 │                 if (a) {
+ 3 │                     continue;
+   ·                     ─────────
+ 4 │                 }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:3:17]
+ 2 │                 doX();
+ 3 │                 continue; // trailing comment
+   ·                 ─────────
+ 4 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
+
+  ⚠ unicorn(no-useless-continue): Unnecessary `continue` statement.
+   ╭─[no_useless_continue.tsx:4:17]
+ 3 │                 // leading comment
+ 4 │                 continue;
+   ·                 ─────────
+ 5 │             }
+   ╰────
+  help: Remove this redundant `continue` statement.
