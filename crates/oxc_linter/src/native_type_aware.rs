@@ -12,7 +12,7 @@ use oxc_checker::{
         FsProgramHost, HostModuleResolution, ProgramEntry, ProgramHost, ProgramStoreBuilder,
         ProgramStoreError,
     },
-    types::{CheckerArena, Ty, TypeData, TypeId},
+    types::{CheckerArena, SignatureKind, Ty, TypeData, TypeId},
 };
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 use oxc_parser::Parser;
@@ -28,7 +28,7 @@ use crate::{
 
 pub fn is_native_type_aware_rule(rule: &RuleEnum) -> bool {
     // TODO: This would actually be part of the generated code, but this is just a proof of concept
-    rule.name() == "no-unsafe-unary-minus"
+    matches!(rule.name(), "no-floating-promises" | "no-unsafe-unary-minus")
 }
 
 pub fn is_type_aware_rule(rule: &RuleEnum) -> bool {
@@ -39,6 +39,9 @@ pub struct TypedApiContext<'a> {
     arena: CheckerArena<'a>,
     types_by_span: FxHashMap<Span, Ty<'a>>,
     type_names: FxHashMap<(Span, TypeId), String>,
+    callable_by_span: FxHashMap<Span, bool>,
+    promise_like_by_span: FxHashMap<Span, [bool; 2]>,
+    promise_array_by_span: FxHashMap<Span, [bool; 2]>,
 }
 
 impl<'a> TypedApiContext<'a> {
@@ -46,6 +49,9 @@ impl<'a> TypedApiContext<'a> {
         let arena = checker.arena();
         let mut types_by_span = FxHashMap::default();
         let mut type_names = FxHashMap::default();
+        let mut callable_by_span = FxHashMap::default();
+        let mut promise_like_by_span = FxHashMap::default();
+        let mut promise_array_by_span = FxHashMap::default();
         for (node_id, node) in entry.semantic().nodes().iter_enumerated() {
             let span = node.kind().span();
             let node = NodeRef::new(entry.id(), node_id);
@@ -54,7 +60,33 @@ impl<'a> TypedApiContext<'a> {
             types_by_span.insert(span, ty);
             cache_type_names(checker, arena, ty, node, span, &mut type_names);
         }
-        Self { arena, types_by_span, type_names }
+        let builtin_promises =
+            arena.types().filter(|ty| is_builtin_promise(checker, arena, *ty)).collect::<Vec<_>>();
+        for (span, ty) in &types_by_span {
+            callable_by_span.insert(*span, is_callable(checker, arena, *ty));
+            promise_like_by_span.insert(
+                *span,
+                [
+                    is_promise_like(checker, arena, *ty, false, &builtin_promises),
+                    is_promise_like(checker, arena, *ty, true, &builtin_promises),
+                ],
+            );
+            promise_array_by_span.insert(
+                *span,
+                [
+                    is_promise_array(checker, arena, *ty, false, &builtin_promises),
+                    is_promise_array(checker, arena, *ty, true, &builtin_promises),
+                ],
+            );
+        }
+        Self {
+            arena,
+            types_by_span,
+            type_names,
+            callable_by_span,
+            promise_like_by_span,
+            promise_array_by_span,
+        }
     }
 
     #[inline]
@@ -70,6 +102,135 @@ impl<'a> TypedApiContext<'a> {
     #[inline]
     pub fn type_name(&self, span: Span, ty: Ty<'a>) -> Option<&str> {
         self.type_names.get(&(span, ty.id())).map(String::as_str)
+    }
+
+    #[inline]
+    pub fn is_callable(&self, span: Span) -> bool {
+        self.callable_by_span.get(&span).copied().unwrap_or(false)
+    }
+
+    #[inline]
+    pub fn is_promise_like(&self, span: Span, check_thenables: bool) -> bool {
+        self.promise_like_by_span
+            .get(&span)
+            .is_some_and(|result| result[usize::from(check_thenables)])
+    }
+
+    #[inline]
+    pub fn is_promise_array(&self, span: Span, check_thenables: bool) -> bool {
+        self.promise_array_by_span
+            .get(&span)
+            .is_some_and(|result| result[usize::from(check_thenables)])
+    }
+}
+
+fn is_builtin_promise<'a>(
+    checker: &CheckerReturn<'a, '_>,
+    arena: CheckerArena<'a>,
+    ty: Ty<'a>,
+) -> bool {
+    let TypeData::TypeReference(reference) = arena.type_data(ty) else {
+        return false;
+    };
+    if !matches!(reference.name, "Promise" | "PromiseLike") {
+        return false;
+    }
+    reference.target.is_none_or(|target| {
+        checker.store.entry(target.program_id).is_some_and(ProgramEntry::is_lib)
+    })
+}
+
+fn is_callable<'a>(checker: &CheckerReturn<'a, '_>, arena: CheckerArena<'a>, ty: Ty<'a>) -> bool {
+    match arena.type_data(ty) {
+        TypeData::Function(_) => true,
+        TypeData::Object(object) => {
+            object.signatures.iter().any(|signature| signature.kind == SignatureKind::Call)
+        }
+        TypeData::Union(union) => union.types.iter().any(|ty| is_callable(checker, arena, *ty)),
+        TypeData::Intersection(intersection) => {
+            intersection.types.iter().any(|ty| is_callable(checker, arena, *ty))
+        }
+        _ => !checker.get_signatures_of_type(ty, SignatureKind::Call).is_empty(),
+    }
+}
+
+fn is_promise_like<'a>(
+    checker: &CheckerReturn<'a, '_>,
+    arena: CheckerArena<'a>,
+    ty: Ty<'a>,
+    check_thenables: bool,
+    builtin_promises: &[Ty<'a>],
+) -> bool {
+    match arena.type_data(ty) {
+        TypeData::Union(union) => {
+            return union
+                .types
+                .iter()
+                .any(|ty| is_promise_like(checker, arena, *ty, check_thenables, builtin_promises));
+        }
+        TypeData::Intersection(intersection)
+            if intersection.types.iter().any(|ty| {
+                is_promise_like(checker, arena, *ty, check_thenables, builtin_promises)
+            }) =>
+        {
+            return true;
+        }
+        _ => {}
+    }
+    if is_builtin_promise(checker, arena, ty)
+        || builtin_promises.iter().any(|promise| checker.is_assignable_to(ty, *promise))
+    {
+        return true;
+    }
+    check_thenables && is_rejectable_thenable(checker, arena, ty)
+}
+
+fn is_rejectable_thenable<'a>(
+    checker: &CheckerReturn<'a, '_>,
+    arena: CheckerArena<'a>,
+    ty: Ty<'a>,
+) -> bool {
+    match arena.type_data(ty) {
+        TypeData::Object(object) => object.properties.iter().any(|property| {
+            property.name == "then"
+                && checker.get_signatures_of_type(property.ty, SignatureKind::Call).iter().any(
+                    |signature| {
+                        let parameters = &signature.function(arena).parameters;
+                        parameters.len() >= 2
+                            && is_callable(checker, arena, parameters[0].ty)
+                            && is_callable(checker, arena, parameters[1].ty)
+                    },
+                )
+        }),
+        TypeData::Union(union) => {
+            union.types.iter().any(|ty| is_rejectable_thenable(checker, arena, *ty))
+        }
+        TypeData::Intersection(intersection) => {
+            intersection.types.iter().any(|ty| is_rejectable_thenable(checker, arena, *ty))
+        }
+        _ => false,
+    }
+}
+
+fn is_promise_array<'a>(
+    checker: &CheckerReturn<'a, '_>,
+    arena: CheckerArena<'a>,
+    ty: Ty<'a>,
+    check_thenables: bool,
+    builtin_promises: &[Ty<'a>],
+) -> bool {
+    match arena.type_data(ty) {
+        TypeData::Union(union) => union
+            .types
+            .iter()
+            .any(|ty| is_promise_array(checker, arena, *ty, check_thenables, builtin_promises)),
+        TypeData::Array(array) => {
+            is_promise_like(checker, arena, array.element_type, check_thenables, builtin_promises)
+        }
+        TypeData::Tuple(tuple) => tuple.elements.iter().any(|element| {
+            is_promise_like(checker, arena, element.ty(), check_thenables, builtin_promises)
+        }),
+        _ => false,
     }
 }
 
@@ -102,6 +263,7 @@ fn cache_type_names<'a>(
 pub struct NativeTypeAwareRunner {
     cwd: PathBuf,
     config_store: ConfigStore,
+    lint_options: LintOptions,
 }
 
 struct RuntimeProgramHost<'a> {
@@ -133,8 +295,8 @@ impl ProgramHost for RuntimeProgramHost<'_> {
 }
 
 impl NativeTypeAwareRunner {
-    pub fn new(cwd: PathBuf, config_store: ConfigStore) -> Self {
-        Self { cwd, config_store }
+    pub fn new(cwd: PathBuf, config_store: ConfigStore, lint_options: LintOptions) -> Self {
+        Self { cwd, config_store, lint_options }
     }
 
     pub fn lint(
@@ -231,7 +393,7 @@ impl NativeTypeAwareRunner {
                     selected_path,
                     vec![sub_host],
                     &allocator,
-                    LintOptions::default(),
+                    self.lint_options,
                     Arc::clone(&resolved.config),
                 )
                 .with_type_aware(typed_api),

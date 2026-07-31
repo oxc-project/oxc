@@ -225,9 +225,14 @@ impl LintRunnerBuilder {
         };
 
         let cwd = self.lint_service_options.cwd().to_path_buf();
-        let native_type_aware_linter = self
-            .type_aware_enabled
-            .then(|| NativeTypeAwareRunner::new(cwd.clone(), self.regular_linter.config.clone()));
+        let lint_options = *self.regular_linter.options();
+        let native_type_aware_linter = self.type_aware_enabled.then(|| {
+            NativeTypeAwareRunner::new(
+                cwd.clone(),
+                self.regular_linter.config.clone(),
+                lint_options,
+            )
+        });
         let mut lint_service = LintService::new(self.regular_linter, self.lint_service_options);
         lint_service.set_disable_directives_map(directives_coordinator.map());
 

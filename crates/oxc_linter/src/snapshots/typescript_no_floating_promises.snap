@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ╭─[no_floating_promises.tsx:1:1]
+ 1 │ Promise.resolve();
+   · ────────┬────────
+   ·         ╰── This unhandled promise-like value has type `Promise<void>`.
+   ╰────
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ⚠ typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ╭─[no_floating_promises.tsx:1:1]
+ 1 │ Promise.resolve().then(() => {});
+   · ────────────────┬───────────────
+   ·                 ╰── This unhandled promise-like value has type `Promise<void>`.
+   ╰────
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ⚠ typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ╭─[no_floating_promises.tsx:1:1]
+ 1 │ Promise.resolve().catch();
+   · ────────────┬────────────
+   ·             ╰── This unhandled promise-like value has type `Promise<void>`.
+   ╰────
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ⚠ typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ╭─[no_floating_promises.tsx:1:1]
+ 1 │ Promise.resolve().catch(undefined);
+   · ─────────────────┬────────────────
+   ·                  ╰── This unhandled promise-like value has type `Promise<void>`.
+   ╰────
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator. The rejection handler has type `undefined`, which is not callable.
+
+  ⚠ typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ╭─[no_floating_promises.tsx:1:1]
+ 1 │ Promise.resolve().finally(() => {});
+   · ─────────────────┬─────────────────
+   ·                  ╰── This unhandled promise-like value has type `Promise<void>`.
+   ╰────
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+  ⚠ typescript(no-floating-promises): An array of Promises may be unintentional.
+   ╭─[no_floating_promises.tsx:1:1]
+ 1 │ [Promise.resolve()];
+   · ─────────┬─────────
+   ·          ╰── This array contains Promises and has type `Promise<void>[]`.
+   ╰────
+  help: Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking the expression as ignored with the `void` operator.
