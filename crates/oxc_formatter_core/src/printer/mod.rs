@@ -12,7 +12,7 @@ use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
-    InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextRange, TextWidth,
+    InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
 };
 
 use self::call_stack::{
@@ -29,23 +29,16 @@ pub type PrintResult<T> = Result<T, PrintError>;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Printed {
     code: String,
-    range: Option<TextRange>,
 }
 
 impl Printed {
-    pub fn new(code: String, range: Option<TextRange>) -> Self {
-        Self { code, range }
+    pub fn new(code: String) -> Self {
+        Self { code }
     }
 
     /// Construct an empty formatter result
     pub fn new_empty() -> Self {
-        Self { code: String::new(), range: None }
-    }
-
-    /// Range of the input source file covered by this formatted code,
-    /// or None if the entire file is covered in this instance
-    pub fn range(&self) -> Option<TextRange> {
-        self.range
+        Self { code: String::new() }
     }
 
     /// Access the resulting code, borrowing the result
@@ -125,7 +118,7 @@ impl<'a> Printer<'a> {
             }
         }
 
-        Ok(Printed::new(self.state.buffer.into_string(), None))
+        Ok(Printed::new(self.state.buffer.into_string()))
     }
 
     /// Prints a single element and push the following elements to queue
