@@ -1,0 +1,51 @@
+Cargo.lock
+  s_94b6e2b4cf7b72::t_ccccdbaba20e3a 1812-1824
+Cargo.toml
+  s_94b6e2b4cf7b72::t_77e0d53e0c9141 160
+crates/oxc_ast/src/ast/js.rs
+  s_94b6e2b4cf7b72::t_eb7f13680fd9b2 67,575,606,1169,2069
+crates/oxc_ast_generator/src/custom.rs
+  s_3c7a5db6237378::t_4837a81da745ce 20-22,73-92,127-141,191-198,212-213,226-238,276-283,360-414
+crates/oxc_ast_generator/src/generated.rs
+  s_3c7a5db6237378::t_0656d71478e561 32,317,325,874,1459,2462,2675-2676,2680,2683,2925,2937,2949,3767
+tasks/ast_generator_fuzz/Cargo.toml
+  s_94b6e2b4cf7b72::t_ba15e38c28a43b 1-27
+tasks/ast_generator_fuzz/src/main.rs
+  s_94b6e2b4cf7b72::t_e51883aac88d71 1-16
+crates/oxc_ast/src/ast/ts.rs
+  s_3c7a5db6237378::t_a0b0f096345fd9 250,840,868,890,1822
+tasks/ast_generator_fuzz/src/lib.rs
+  s_38ae44d6719eec::t_9f775e60fbbf51 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6256b21566d7abdc186a65e29d91943048519ece",
+  "prompts": {},
+  "sessions": {
+    "s_38ae44d6719eec": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb016-5d89-7991-a4b7-84561c085015",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_94b6e2b4cf7b72": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb007-9d82-7220-9b0e-b78e29a5f9bf",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

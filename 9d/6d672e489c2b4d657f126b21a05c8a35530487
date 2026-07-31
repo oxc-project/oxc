@@ -1,0 +1,27 @@
+crates/oxc_codegen/src/binary_expr_visitor.rs
+  s_167e4aaf3623fe::t_26214971963247 217-226
+crates/oxc_codegen/src/gen.rs
+  s_167e4aaf3623fe::t_ccccf41fb6aa90 48
+crates/oxc_codegen/src/lib.rs
+  s_167e4aaf3623fe::t_fda07015a825a4 112-113,197
+crates/oxc_codegen/tests/integration/js.rs
+  s_167e4aaf3623fe::t_d3113cc874536a 463
+crates/oxc_codegen/tests/integration/ts.rs
+  s_167e4aaf3623fe::t_9cecc52f1ac784 361-365
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "9d6d672e489c2b4d657f126b21a05c8a35530487",
+  "prompts": {},
+  "sessions": {
+    "s_167e4aaf3623fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb2a6-6088-7ba0-bdd4-d3d9f14dea02",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
