@@ -5,6 +5,7 @@
 
 use oxc_span::{GetSpan, Span};
 
+use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -2240,6 +2241,13 @@ impl GetSpan for JSDocNonNullableType<'_> {
 }
 
 impl GetSpan for JSDocUnknownType {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for Comment {
     #[inline]
     fn span(&self) -> Span {
         self.span
