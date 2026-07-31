@@ -1974,8 +1974,9 @@ impl RuleRunner for crate::rules::typescript::no_unsafe_type_assertion::NoUnsafe
 }
 
 impl RuleRunner for crate::rules::typescript::no_unsafe_unary_minus::NoUnsafeUnaryMinus {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::UnaryExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner

@@ -40,6 +40,7 @@ mod frameworks;
 mod globals;
 mod module_graph_visitor;
 mod module_record;
+mod native_type_aware;
 mod options;
 mod rule;
 mod service;
@@ -382,7 +383,7 @@ impl Linter {
             let rules = rules
                 .iter()
                 .filter(|(rule, _)| {
-                    if rule.is_tsgolint_rule() {
+                    if native_type_aware::is_type_aware_rule(rule) {
                         return false;
                     }
 

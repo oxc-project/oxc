@@ -19,6 +19,7 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, MessageRule, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
+    native_type_aware::TypedApiContext,
 };
 
 mod host;
@@ -78,6 +79,12 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
         self.parent.semantic()
+    }
+
+    /// Type information for rules running in the native type-aware pass.
+    #[inline]
+    pub fn type_aware(&self) -> Option<&TypedApiContext<'a>> {
+        self.parent.type_aware()
     }
 
     /// Allocator that owns the parsed AST and semantic data.

@@ -17,10 +17,11 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 
 use crate::{
-    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
-    Linter, Oxlintrc, RuleEnum,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintRunner, LintService,
+    LintServiceOptions, Linter, Oxlintrc, RuleEnum,
     external_plugin_store::ExternalPluginStore,
     fixer::{FixKind, Fixer},
+    native_type_aware::is_native_type_aware_rule,
     options::LintOptions,
     rules::RULES,
     service::RuntimeFileSystem,
@@ -633,6 +634,7 @@ impl Tester {
             );
         }
         let rule = self.find_rule().from_configuration(rule_config.unwrap_or_default()).unwrap();
+        let is_native_type_aware = is_native_type_aware_rule(&rule);
         let mut external_plugin_store = ExternalPluginStore::default();
         let linter = Linter::new(
             self.lint_options,
@@ -679,11 +681,19 @@ impl Tester {
         let cwd = self.current_working_directory.clone();
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options = LintServiceOptions::new(cwd).with_cross_module(self.plugins.has_import());
-        let lint_service = LintService::new(linter, options);
         let file_system = TesterFileSystem::new(path_to_lint.clone(), source_text.to_string());
-
-        let (sender, _receiver) = mpsc::channel();
-        let result = lint_service.run_test_source(&file_system, paths, false, &sender);
+        let result = if is_native_type_aware {
+            LintRunner::builder(options, linter)
+                .with_type_aware(true)
+                .build()
+                .unwrap()
+                .run_source(&paths, &file_system)
+                .unwrap()
+        } else {
+            let lint_service = LintService::new(linter, options);
+            let (sender, _receiver) = mpsc::channel();
+            lint_service.run_test_source(&file_system, paths, false, &sender)
+        };
 
         if result.is_empty() {
             return TestResult::Passed;

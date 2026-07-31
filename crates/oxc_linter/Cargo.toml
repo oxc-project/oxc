@@ -30,6 +30,7 @@ oxc_ast = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_cfg = { workspace = true }
+oxc_checker = { workspace = true }
 oxc_codegen = { workspace = true, default-features = false }
 oxc_config = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["box_macros"] }
@@ -46,6 +47,8 @@ oxc_semantic = { workspace = true, features = ["cfg", "linter"] }
 oxc_span = { workspace = true, features = ["schemars", "serialize"] }
 oxc_str = { workspace = true, features = ["serialize"] }
 oxc_syntax = { workspace = true, features = ["serialize"] }
+oxc_ast_checker = { package = "oxc_ast", version = "0.142.0" }
+oxc_span_checker = { package = "oxc_span", version = "0.142.0" }
 
 #
 bitflags = { workspace = true }

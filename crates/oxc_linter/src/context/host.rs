@@ -20,6 +20,7 @@ use crate::{
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkOptions,
     module_record::ModuleRecord,
+    native_type_aware::TypedApiContext,
     options::LintOptions,
     rules::RuleEnum,
 };
@@ -169,6 +170,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// Type information populated for native type-aware linting.
+    type_aware: Option<TypedApiContext<'a>>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -207,8 +210,18 @@ impl<'a> ContextHost<'a> {
             file_extension,
             config,
             frameworks: options.framework_hints,
+            type_aware: None,
         }
         .sniff_for_frameworks()
+    }
+
+    pub(crate) fn with_type_aware(mut self, type_aware: TypedApiContext<'a>) -> Self {
+        self.type_aware = Some(type_aware);
+        self
+    }
+
+    pub fn type_aware(&self) -> Option<&TypedApiContext<'a>> {
+        self.type_aware.as_ref()
     }
 
     /// The current [`ContextSubHost`]

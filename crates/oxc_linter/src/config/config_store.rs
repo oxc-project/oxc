@@ -8,6 +8,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     AllowWarnDeny,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
+    native_type_aware::is_type_aware_rule,
     rules::{RULES, RuleEnum},
 };
 
@@ -307,6 +308,22 @@ impl ConfigStore {
         }
     }
 
+    pub(crate) fn has_tsgolint_rules(&self) -> bool {
+        fn config_has_tsgolint_rules(config: &Config) -> bool {
+            config.base.rules.iter().any(|(rule, _)| rule.is_tsgolint_rule())
+                || config.overrides.iter().any(|override_config| {
+                    override_config
+                        .rules
+                        .builtin_rules
+                        .iter()
+                        .any(|(rule, severity)| severity.is_warn_deny() && rule.is_tsgolint_rule())
+                })
+        }
+
+        config_has_tsgolint_rules(&self.base)
+            || self.nested_configs.values().any(config_has_tsgolint_rules)
+    }
+
     /// Returns the total number of rules, inclusive of JS Plugin rules and overrides, optionally filtering out tsgolint rules if type_aware_enabled is false.
     pub fn number_of_rules(&self, type_aware_enabled: bool) -> Option<usize> {
         // If there are nested configs the number of rules may vary per-file, so return `None`.
@@ -321,7 +338,7 @@ impl ConfigStore {
                 .base
                 .rules
                 .iter()
-                .filter(|(rule, _)| !rule.is_tsgolint_rule())
+                .filter(|(rule, _)| !is_type_aware_rule(rule))
                 .map(|(rule, _)| rule.clone())
                 .collect::<FxHashSet<_>>()
         };
@@ -339,7 +356,7 @@ impl ConfigStore {
                 if !severity.is_warn_deny() {
                     continue;
                 }
-                if !type_aware_enabled && rule.is_tsgolint_rule() {
+                if !type_aware_enabled && is_type_aware_rule(rule) {
                     continue;
                 }
                 builtin_rules.insert(rule.clone());

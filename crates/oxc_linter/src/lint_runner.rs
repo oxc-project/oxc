@@ -11,7 +11,8 @@ use oxc_span::Span;
 
 use crate::{
     AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
-    OsFileSystem, RuleTimingStore, TsGoLintState, suppression::DiffManager,
+    OsFileSystem, RuleTimingStore, TsGoLintState, native_type_aware::NativeTypeAwareRunner,
+    suppression::DiffManager,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -21,6 +22,8 @@ pub struct LintRunner {
     lint_service: LintService,
     /// Type-aware tsgolint
     type_aware_linter: Option<TsGoLintState>,
+    /// Native checker-backed type-aware rules
+    native_type_aware_linter: Option<NativeTypeAwareRunner>,
     /// Shared disable directives coordinator
     directives_store: DirectivesStore,
     /// Current working directory
@@ -202,7 +205,8 @@ impl LintRunnerBuilder {
     pub fn build(self) -> Result<LintRunner, String> {
         let directives_coordinator = DirectivesStore::new();
 
-        let type_aware_linter = if self.type_aware_enabled {
+        let needs_tsgolint = self.type_check || self.regular_linter.config.has_tsgolint_rules();
+        let type_aware_linter = if self.type_aware_enabled && needs_tsgolint {
             match TsGoLintState::try_new(
                 self.lint_service_options.cwd(),
                 self.regular_linter.config.clone(),
@@ -221,12 +225,16 @@ impl LintRunnerBuilder {
         };
 
         let cwd = self.lint_service_options.cwd().to_path_buf();
+        let native_type_aware_linter = self
+            .type_aware_enabled
+            .then(|| NativeTypeAwareRunner::new(cwd.clone(), self.regular_linter.config.clone()));
         let mut lint_service = LintService::new(self.regular_linter, self.lint_service_options);
         lint_service.set_disable_directives_map(directives_coordinator.map());
 
         Ok(LintRunner {
             lint_service,
             type_aware_linter,
+            native_type_aware_linter,
             directives_store: directives_coordinator,
             cwd,
             type_check_only: self.type_check_only,
@@ -264,6 +272,10 @@ impl LintRunner {
             );
         }
 
+        if let Some(native_type_aware_linter) = &self.native_type_aware_linter {
+            native_type_aware_linter.lint(files, &self.directives_store, &tx_error)?;
+        }
+
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
             type_aware_linter.lint(
                 files,
@@ -289,6 +301,10 @@ impl LintRunner {
         file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
     ) -> Result<Vec<Message>, String> {
         let mut messages = self.lint_service.run_source(file_system, files.to_owned());
+
+        if let Some(native_type_aware_linter) = &self.native_type_aware_linter {
+            messages.extend(native_type_aware_linter.lint_source(files, file_system)?);
+        }
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
             let tsgo_messages =
@@ -317,6 +333,6 @@ impl LintRunner {
 
     /// Check if type-aware linting is enabled
     pub fn has_type_aware(&self) -> bool {
-        self.type_aware_linter.is_some()
+        self.type_aware_linter.is_some() || self.native_type_aware_linter.is_some()
     }
 }

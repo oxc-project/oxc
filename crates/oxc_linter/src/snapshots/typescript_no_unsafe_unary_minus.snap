@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is string instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:16]
+ 1 │ (a: string) => -a;
+   ·                ──
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is {} instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:12]
+ 1 │ (a: {}) => -a;
+   ·            ──
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is number[] instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:18]
+ 1 │ (a: number[]) => -a;
+   ·                  ──
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is "hello" instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:1]
+ 1 │ -'hello';
+   · ────────
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is "hello" instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:1]
+ 1 │ -`hello`;
+   · ────────
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is { x: number; } instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:23]
+ 1 │ (a: { x: number }) => -a;
+   ·                       ──
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is unknown instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:17]
+ 1 │ (a: unknown) => -a;
+   ·                 ──
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is void instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:14]
+ 1 │ (a: void) => -a;
+   ·              ──
+   ╰────
+
+  ⚠ typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is T instead.
+   ╭─[no_unsafe_unary_minus.tsx:1:15]
+ 1 │ <T,>(t: T) => -t;
+   ·               ──
+   ╰────
