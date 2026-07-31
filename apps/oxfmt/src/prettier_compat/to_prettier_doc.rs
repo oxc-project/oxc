@@ -91,7 +91,7 @@ enum StartTagInfo {
 /// otherwise the `Doc` would contain redundant spaces/lines that the printer would have suppressed.
 ///
 /// Each field corresponds to a specific printer behavior in
-/// `crates/oxc_formatter/src/formatter/printer/mod.rs`.
+/// `crates/oxc_formatter_core/src/printer/mod.rs`.
 ///
 /// NOTE: If the printer gains new runtime optimizations that affect output,
 /// this struct may need corresponding updates.

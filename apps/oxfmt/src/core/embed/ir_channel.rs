@@ -11,11 +11,10 @@ use serde::Deserialize;
 use serde_json::Value;
 use tracing::{debug, debug_span};
 
-use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
+use oxc_allocator::Allocator;
 use oxc_formatter::HtmlEmbedMeta;
 use oxc_formatter_core::{
-    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, FormatElement, LineMode,
-    UniqueGroupIdBuilder,
+    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, UniqueGroupIdBuilder,
 };
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
@@ -182,7 +181,7 @@ fn to_format_elements_for_template<'a>(
             )?;
             let html_has_multiple_root_elements =
                 metadata.get("htmlHasMultipleRootElements").and_then(Value::as_bool);
-            postprocess(&mut ir, allocator);
+            from_prettier_doc::postprocess(&mut ir, allocator);
             Ok(DispatchResult {
                 docs: vec![ir],
                 tailwind_classes: Vec::new(),
@@ -197,99 +196,11 @@ fn to_format_elements_for_template<'a>(
                 allocator,
                 group_id_builder,
             )?;
-            postprocess(&mut ir, allocator);
+            from_prettier_doc::postprocess(&mut ir, allocator);
             Ok(DispatchResult { docs: vec![ir], tailwind_classes: Vec::new(), meta: None })
         }
         // NOTE: no "css" / "graphql" arms
         // Those languages never reach the Prettier Doc path (their dispatcher branches are Rust-only).
         _ => unreachable!("Unsupported embedded_doc language: {language}"),
     }
-}
-
-/// Post-process FormatElements in a single compaction pass:
-/// - strip trailing hardline (useless for embedded parts)
-/// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
-/// - merge consecutive Text nodes (the Prettier Doc path can emit adjacent `Text`s)
-/// - trim a Text's trailing spaces/tabs when a hard/empty line follows:
-///   Prettier's own printer trims at every line break,
-///   so a Doc can rightfully carry them, but the core printer does not.
-///   Untrimmed they would leak into the output verbatim.
-///   (A single trailing space before a MAY-break line is already mapped to `Space` at conversion,
-///   see `convert_doc`'s String arm; this pass covers the statically-known hard breaks,
-///   where full runs and tabs can be dropped.)
-fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a Allocator) {
-    // Strip trailing hardline
-    if ir.len() >= 2
-        && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
-        && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::Hard))
-    {
-        let new_len = ir.len() - 2;
-        ir.truncate(new_len);
-    }
-
-    let mut write = 0;
-    let mut read = 0;
-    while read < ir.len() {
-        // Collapse double-hardline → empty line
-        if read + 3 < ir.len()
-            && matches!(ir[read], FormatElement::Line(LineMode::Hard))
-            && matches!(ir[read + 1], FormatElement::ExpandParent)
-            && matches!(ir[read + 2], FormatElement::Line(LineMode::Hard))
-            && matches!(ir[read + 3], FormatElement::ExpandParent)
-        {
-            ir[write] = FormatElement::Line(LineMode::Empty);
-            ir[write + 1] = FormatElement::ExpandParent;
-            write += 2;
-            read += 4;
-        } else if matches!(ir[read], FormatElement::Text { .. }) {
-            // Merge consecutive Text nodes
-            let run_start = read;
-            read += 1;
-            while read < ir.len() && matches!(ir[read], FormatElement::Text { .. }) {
-                read += 1;
-            }
-            let single = read - run_start == 1;
-            let text: &str = if single {
-                let FormatElement::Text { text, .. } = ir[run_start] else { unreachable!() };
-                text
-            } else {
-                let mut sb = ArenaStringBuilder::new_in(allocator);
-                for element in &ir[run_start..read] {
-                    if let FormatElement::Text { text, .. } = element {
-                        sb.push_str(text);
-                    }
-                }
-                sb.into_str()
-            };
-            // Prettier's own printer trims at every line break regardless of the doc structure around it,
-            // so a break hiding behind tags (`Text("a  "), StartIndent, Hard` from `["a  ", indent([hardline, ..])]`) still trims,
-            // look through tag/expand-parent markers for it (only when there is anything to trim in the first place).
-            let trimmed = if text.ends_with([' ', '\t'])
-                && ir[read..]
-                    .iter()
-                    .find(|el| !matches!(el, FormatElement::Tag(_) | FormatElement::ExpandParent))
-                    .is_some_and(|el| {
-                        matches!(el, FormatElement::Line(LineMode::Hard | LineMode::Empty))
-                    }) {
-                text.trim_end_matches([' ', '\t'])
-            } else {
-                text
-            };
-            if single && trimmed.len() == text.len() {
-                if write != run_start {
-                    ir[write] = ir[run_start].clone();
-                }
-            } else {
-                ir[write] = from_prettier_doc::text_element(trimmed);
-            }
-            write += 1;
-        } else {
-            if write != read {
-                ir[write] = ir[read].clone();
-            }
-            write += 1;
-            read += 1;
-        }
-    }
-    ir.truncate(write);
 }

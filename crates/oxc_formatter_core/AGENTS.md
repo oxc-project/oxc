@@ -30,6 +30,9 @@ Unlike Prettier's `printDocToString`, this printer emits exactly what was writte
 end-of-line whitespace never appearing in the output is guaranteed by construction (pending space/indention, no indention on blank lines), not by a trimming pass.
 Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
 
+NOTE: The printer's runtime optimizations (pending-space dedup, consecutive-hardline merging, this no-trim rule, ...) are mirrored downstream by `apps/oxfmt`'s `prettier_compat` (IR ↔ Prettier Doc interop; kept there because core never learns Prettier-as-a-system).
+When changing printer runtime behavior, update that mirror in the same PR; oxfmt's embedded/E2E conformance is the backstop that catches drift.
+
 ### Choosing a staging buffer
 
 The arena is a bump allocator and never reclaims, so a vector grown in it strands every grown-out-of allocation for the rest of the format run.
