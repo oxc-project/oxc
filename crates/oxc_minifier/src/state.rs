@@ -117,6 +117,9 @@ pub struct MinifierState<'a> {
     /// Per-pass scratch for removing unused object literal properties.
     pub object_property_usage: ObjectPropertyUsageState<'a>,
 
+    /// Whether the one-shot unused object property analysis still needs to run.
+    pub object_property_pruning_pending: bool,
+
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
@@ -142,6 +145,7 @@ impl<'a> MinifierState<'a> {
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
             object_property_usage: ObjectPropertyUsageState::default(),
+            object_property_pruning_pending: true,
             concat_scratch: String::new(),
         }
     }

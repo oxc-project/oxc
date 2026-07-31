@@ -322,7 +322,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             hoisted_var_inlining_unsafe: module_has_loaders,
             this_initialized_at: None,
         };
-        ctx.state.object_property_usage = crate::state::ObjectPropertyUsageState::default();
+        if ctx.state.object_property_pruning_pending {
+            ctx.state.object_property_usage = crate::state::ObjectPropertyUsageState::default();
+        }
         // `PassChanges` is managed by pass completion, not reset per
         // traversal.
     }
@@ -389,8 +391,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !ctx.is_tree_shake_only() {
+        if !ctx.is_tree_shake_only() && ctx.state.object_property_pruning_pending {
             Self::remove_unused_object_properties(program, ctx);
+            ctx.state.object_property_pruning_pending = false;
         }
         // Private member usage is collected only in full optimization mode.
         debug_assert!(ctx.is_tree_shake_only() || ctx.state.private_member_usage.is_at_root());
@@ -509,7 +512,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::init_symbol_value(decl, ctx);
-        Self::collect_object_property_candidate(decl, ctx);
+        if ctx.state.object_property_pruning_pending {
+            Self::collect_object_property_candidate(decl, ctx);
+        }
         // Per-declarator update of the body-unsafe flag. Catches multi-declarator
         // statements (`var [x=call()] = '', flag = true;`, possibly produced by
         // join-vars) where an earlier declarator runs user code via a
@@ -664,8 +669,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if !ctx.is_tree_shake_only() {
             Self::substitute_call_expression(e, ctx);
             Self::remove_empty_spread_arguments(&mut e.arguments);
-            // A method call receives the object as `this`, so the callee can inspect any property.
-            Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
+            if ctx.state.object_property_pruning_pending {
+                // A method call receives the object as `this`, so the callee can inspect any
+                // property.
+                Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
+            }
         }
         // Re-evaluate each iteration: peephole folding/inlining may expose a
         // pure-eligible arg shape that `Normalize`'s one-shot pass missed.
@@ -676,7 +684,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         if !ctx.is_tree_shake_only() {
             Self::substitute_new_expression(e, ctx);
             Self::remove_empty_spread_arguments(&mut e.arguments);
-            Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
+            if ctx.state.object_property_pruning_pending {
+                Self::mark_object_property_member_call_as_unknown(&e.callee, ctx);
+            }
         }
         Normalize::set_pure_or_no_side_effects_to_new_expr(e, ctx);
     }
@@ -759,19 +769,25 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
             return;
         }
         Self::convert_to_dotted_properties(expr, ctx);
-        match expr {
-            MemberExpression::StaticMemberExpression(member_expr) => {
-                Self::record_object_property_member_access(
-                    &member_expr.object,
-                    Some(member_expr.property.name.into()),
-                    ctx,
-                );
+        if ctx.state.object_property_pruning_pending {
+            match expr {
+                MemberExpression::StaticMemberExpression(member_expr) => {
+                    Self::record_object_property_member_access(
+                        &member_expr.object,
+                        Some(member_expr.property.name.into()),
+                        ctx,
+                    );
+                }
+                MemberExpression::ComputedMemberExpression(member_expr) => {
+                    let property_name = member_expr.static_property_name();
+                    Self::record_object_property_member_access(
+                        &member_expr.object,
+                        property_name,
+                        ctx,
+                    );
+                }
+                MemberExpression::PrivateFieldExpression(_) => {}
             }
-            MemberExpression::ComputedMemberExpression(member_expr) => {
-                let property_name = member_expr.static_property_name();
-                Self::record_object_property_member_access(&member_expr.object, property_name, ctx);
-            }
-            MemberExpression::PrivateFieldExpression(_) => {}
         }
     }
 

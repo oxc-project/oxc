@@ -1,23 +1,23 @@
 checker.ts:
   file size: 2922154 # 2.92 MB
-  sys allocs: 188
+  sys allocs: 161
   sys reallocs: 5
-  sys deallocs: 188
+  sys deallocs: 161
   sys alloc bytes: 14998728 # 15.00 MB
   sys peak growth: 10169560 # 10.17 MB
-  arena allocs: 148505
-  arena reallocs: 28480
+  arena allocs: 148496
+  arena reallocs: 28471
   arena size: 19207984 # 19.21 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
-  sys allocs: 94
+  sys allocs: 74
   sys reallocs: 8
-  sys deallocs: 94
+  sys deallocs: 74
   sys alloc bytes: 2130807 # 2.13 MB
   sys peak growth: 1612427 # 1.61 MB
-  arena allocs: 16052
-  arena reallocs: 2730
+  arena allocs: 16048
+  arena reallocs: 2724
   arena size: 2889040 # 2.89 MB
 
 RadixUIAdoptionSection.jsx:
@@ -33,25 +33,25 @@ RadixUIAdoptionSection.jsx:
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
-  sys allocs: 2527
+  sys allocs: 2489
   sys reallocs: 205
-  sys deallocs: 2527
+  sys deallocs: 2489
   sys alloc bytes: 5343835 # 5.34 MB
   sys peak growth: 3693355 # 3.69 MB
-  arena allocs: 45912
-  arena reallocs: 7767
-  arena size: 6329016 # 6.33 MB
+  arena allocs: 45892
+  arena reallocs: 7735
+  arena size: 6327320 # 6.33 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
-  sys allocs: 1196
+  sys allocs: 1071
   sys reallocs: 56
-  sys deallocs: 1196
+  sys deallocs: 1071
   sys alloc bytes: 30038231 # 30.04 MB
   sys peak growth: 19934725 # 19.93 MB
-  arena allocs: 371822
-  arena reallocs: 76411
-  arena size: 49117336 # 49.12 MB
+  arena allocs: 371752
+  arena reallocs: 76311
+  arena size: 49112456 # 49.11 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
@@ -66,12 +66,12 @@ binder.ts:
 
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
-  sys allocs: 2021
+  sys allocs: 1883
   sys reallocs: 174
-  sys deallocs: 2021
+  sys deallocs: 1883
   sys alloc bytes: 5343060 # 5.34 MB
   sys peak growth: 3707425 # 3.71 MB
-  arena allocs: 66935
-  arena reallocs: 12371
-  arena size: 9435504 # 9.44 MB
+  arena allocs: 66826
+  arena reallocs: 12269
+  arena size: 9427712 # 9.43 MB
 
