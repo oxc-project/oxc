@@ -61,7 +61,7 @@ pub use formatted::Formatted;
 pub use formatter::{Formatter, arena_cow_str};
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
-    IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
+    CoreFormatOptions, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
     LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};

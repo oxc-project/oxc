@@ -55,8 +55,11 @@ The core is parameterized over a consumer-supplied context so it stays language-
 - `FormatContext` trait: no lifetime parameter
   - (avoids `oxc_allocator`'s `'ast` propagating through struct bounds and blocking anonymous lifetimes)
   - The allocator lives on `FormatState`, not the context
-- `FormatOptions` trait: `indent_style()`, `indent_width()`, `line_width()`, `line_ending()`, `as_print_options() -> PrinterOptions`
+- `FormatOptions` trait: `indent_style()`, `indent_width()`, `line_width()`, `line_ending()`, `apply_core(CoreFormatOptions)`;
+  - `as_print_options() -> PrinterOptions` is provided from the getters
   - Core option types: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding` (exactly the `PrinterOptions` inputs; see the boundary section below)
+  - `CoreFormatOptions`: the four bundled, for handing them across a host boundary (config resolver → language options) in one piece;
+    - `apply_core` is the write half of the trait's read-only getters
 - `Format<'ast, C>` trait + `FormatState<'ast, C>`, `Formatted<'ast, C>`, `Formatter<'buf, 'ast, C>`, `Buffer<'ast, C>`
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned

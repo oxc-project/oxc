@@ -1,11 +1,9 @@
-use crate::{
-    FormatContext, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions,
-};
+use crate::{CoreFormatOptions, FormatContext};
 
 /// Simple format context useful for testing.
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct SimpleFormatContext<'src> {
-    options: SimpleFormatOptions,
+    options: CoreFormatOptions,
     source_code: &'src str,
     tailwind_classes: Vec<String>,
 }
@@ -25,7 +23,7 @@ impl<'src> SimpleFormatContext<'src> {
 }
 
 impl FormatContext for SimpleFormatContext<'_> {
-    type Options = SimpleFormatOptions;
+    type Options = CoreFormatOptions;
 
     fn options(&self) -> &Self::Options {
         &self.options
@@ -37,39 +35,5 @@ impl FormatContext for SimpleFormatContext<'_> {
 
     fn get_tailwind_class(&self, idx: usize) -> Option<&str> {
         self.tailwind_classes.get(idx).map(String::as_str)
-    }
-}
-
-#[derive(Debug, Default, Eq, PartialEq, Clone)]
-pub struct SimpleFormatOptions {
-    pub indent_style: IndentStyle,
-    pub indent_width: IndentWidth,
-    pub line_width: LineWidth,
-    pub line_ending: LineEnding,
-}
-
-impl FormatOptions for SimpleFormatOptions {
-    fn indent_style(&self) -> IndentStyle {
-        self.indent_style
-    }
-
-    fn indent_width(&self) -> IndentWidth {
-        self.indent_width
-    }
-
-    fn line_width(&self) -> LineWidth {
-        self.line_width
-    }
-
-    fn line_ending(&self) -> LineEnding {
-        self.line_ending
-    }
-
-    fn as_print_options(&self) -> PrinterOptions {
-        PrinterOptions::default()
-            .with_indent_style(self.indent_style)
-            .with_indent_width(self.indent_width)
-            .with_line_ending(self.line_ending)
-            .with_print_width(self.line_width.into())
     }
 }

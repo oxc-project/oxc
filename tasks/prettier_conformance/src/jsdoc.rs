@@ -292,8 +292,7 @@ impl JsdocTestRunner {
             return None;
         }
 
-        // Use printWidth=80 to match Prettier's default (oxfmt defaults to 100)
-        let width = line_width_override.unwrap_or(80);
+        let width = line_width_override.unwrap_or(crate::PRETTIER_DEFAULT_LINE_WIDTH);
         let options = JsFormatOptions {
             line_width: LineWidth::try_from(width).unwrap(),
             quote_style,

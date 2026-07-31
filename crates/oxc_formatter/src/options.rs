@@ -1,12 +1,11 @@
 use std::{fmt, str::FromStr};
 
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{CoreFormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth};
 
 use crate::{
     formatter::{
         Buffer, Format, JsFormatContext, JsFormatter,
         prelude::{if_group_breaks, token},
-        printer::PrinterOptions,
     },
     ir_transform::options::SortImportsOptions,
     write,
@@ -199,34 +198,6 @@ pub struct SortTailwindcssOptions {
     pub preserve_whitespace: bool,
 }
 
-impl JsFormatOptions {
-    pub fn new() -> Self {
-        Self {
-            indent_style: IndentStyle::default(),
-            indent_width: IndentWidth::default(),
-            line_ending: LineEnding::default(),
-            line_width: LineWidth::default(),
-            quote_style: QuoteStyle::default(),
-            jsx_quote_style: QuoteStyle::default(),
-            quote_properties: QuoteProperties::default(),
-            trailing_commas: TrailingCommas::default(),
-            semicolons: Semicolons::default(),
-            arrow_parentheses: ArrowParentheses::default(),
-            bracket_spacing: BracketSpacing::default(),
-            bracket_same_line: BracketSameLine::default(),
-            attribute_position: AttributePosition::default(),
-            expand: Expand::default(),
-            experimental_operator_position: OperatorPosition::default(),
-            experimental_ternaries: false,
-            html_whitespace_sensitivity_ignore: false,
-            embedded_language_formatting: EmbeddedLanguageFormatting::default(),
-            sort_imports: None,
-            sort_tailwindcss: None,
-            jsdoc: None,
-        }
-    }
-}
-
 impl oxc_formatter_core::FormatOptions for JsFormatOptions {
     fn indent_style(&self) -> IndentStyle {
         self.indent_style
@@ -244,12 +215,11 @@ impl oxc_formatter_core::FormatOptions for JsFormatOptions {
         self.line_ending
     }
 
-    fn as_print_options(&self) -> PrinterOptions {
-        PrinterOptions::default()
-            .with_indent_style(self.indent_style)
-            .with_indent_width(self.indent_width)
-            .with_print_width(self.line_width.into())
-            .with_line_ending(self.line_ending)
+    fn apply_core(&mut self, core: CoreFormatOptions) {
+        self.indent_style = core.indent_style;
+        self.indent_width = core.indent_width;
+        self.line_width = core.line_width;
+        self.line_ending = core.line_ending;
     }
 }
 

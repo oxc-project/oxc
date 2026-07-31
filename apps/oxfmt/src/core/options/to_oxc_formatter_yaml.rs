@@ -1,3 +1,4 @@
+use oxc_formatter_core::FormatOptions;
 use oxc_formatter_yaml::{
     BracketSpacing, ProseWrap, SingleQuote, TrailingCommas, YamlFormatOptions,
 };
@@ -17,13 +18,8 @@ use super::{
 pub fn to_oxc_formatter_yaml(config: &FormatConfig) -> Result<YamlFormatOptions, String> {
     let core = to_core_options(config)?;
 
-    let mut options = YamlFormatOptions {
-        indent_style: core.indent_style,
-        indent_width: core.indent_width,
-        line_width: core.line_width,
-        line_ending: core.line_ending,
-        ..YamlFormatOptions::default()
-    };
+    let mut options = YamlFormatOptions::default();
+    options.apply_core(core);
 
     // [Prettier] proseWrap: "preserve" | "always" | "never"
     if let Some(prose_wrap) = config.prose_wrap {

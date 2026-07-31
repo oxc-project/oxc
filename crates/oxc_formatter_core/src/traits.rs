@@ -1,4 +1,4 @@
-use crate::{IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions};
+use crate::{CoreFormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions};
 
 /// Language-agnostic formatting context trait.
 ///
@@ -47,5 +47,15 @@ pub trait FormatOptions {
     fn line_ending(&self) -> LineEnding;
 
     /// Convert to printer options.
-    fn as_print_options(&self) -> PrinterOptions;
+    fn as_print_options(&self) -> PrinterOptions {
+        PrinterOptions::default()
+            .with_indent_style(self.indent_style())
+            .with_indent_width(self.indent_width())
+            .with_line_ending(self.line_ending())
+            .with_print_width(self.line_width().into())
+    }
+
+    /// Overwrite the four core options with `core`'s values,
+    /// leaving language-specific options untouched.
+    fn apply_core(&mut self, core: CoreFormatOptions);
 }
