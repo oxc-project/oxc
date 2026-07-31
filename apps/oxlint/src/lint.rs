@@ -1607,6 +1607,12 @@ mod test {
             .test_and_snapshot(args);
     }
 
+    #[test]
+    fn test_native_type_aware_no_unsafe_unary_minus() {
+        let args = &["--type-aware", "no-unsafe-unary-minus.ts"];
+        Tester::new().with_cwd("fixtures/cli/native_type_aware".into()).test_and_snapshot(args);
+    }
+
     // ToDo: `tsgolint` does not support `big-endian`?
     #[test]
     #[cfg(not(target_endian = "big"))]

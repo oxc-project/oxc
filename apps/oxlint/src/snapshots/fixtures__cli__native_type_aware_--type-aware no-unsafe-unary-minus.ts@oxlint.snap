@@ -1,0 +1,144 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware no-unsafe-unary-minus.ts
+working directory: fixtures/cli/native_type_aware
+----------
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:11:1]
+ 10 | 
+ 11 | -numberValue;
+    : ^^^^^^^^^^^^^
+ 12 | -bigintValue;
+    `----
+  help: Consider using this expression or removing it
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:12:1]
+ 11 | -numberValue;
+ 12 | -bigintValue;
+    : ^^^^^^^^^^^^^
+ 13 | -anyValue;
+    `----
+  help: Consider using this expression or removing it
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:13:1]
+ 12 | -bigintValue;
+ 13 | -anyValue;
+    : ^^^^^^^^^^
+ 14 | -stringValue;
+    `----
+  help: Consider using this expression or removing it
+
+  x typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is string instead.
+    ,-[no-unsafe-unary-minus.ts:14:1]
+ 13 | -anyValue;
+ 14 | -stringValue;
+    : ^^^^^^^^^^^^
+ 15 | // eslint-disable-next-line typescript/no-unsafe-unary-minus
+    `----
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:14:1]
+ 13 | -anyValue;
+ 14 | -stringValue;
+    : ^^^^^^^^^^^^^
+ 15 | // eslint-disable-next-line typescript/no-unsafe-unary-minus
+    `----
+  help: Consider using this expression or removing it
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:16:1]
+ 15 | // eslint-disable-next-line typescript/no-unsafe-unary-minus
+ 16 | -unknownValue;
+    : ^^^^^^^^^^^^^^
+ 17 | -mixedValue;
+    `----
+  help: Consider using this expression or removing it
+
+  x typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is string instead.
+    ,-[no-unsafe-unary-minus.ts:17:1]
+ 16 | -unknownValue;
+ 17 | -mixedValue;
+    : ^^^^^^^^^^^
+ 18 | -importedString;
+    `----
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:17:1]
+ 16 | -unknownValue;
+ 17 | -mixedValue;
+    : ^^^^^^^^^^^^
+ 18 | -importedString;
+    `----
+  help: Consider using this expression or removing it
+
+  x typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is string instead.
+    ,-[no-unsafe-unary-minus.ts:18:1]
+ 17 | -mixedValue;
+ 18 | -importedString;
+    : ^^^^^^^^^^^^^^^
+ 19 | -importedResult();
+    `----
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:18:1]
+ 17 | -mixedValue;
+ 18 | -importedString;
+    : ^^^^^^^^^^^^^^^^
+ 19 | -importedResult();
+    `----
+  help: Consider using this expression or removing it
+
+  x typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is string instead.
+    ,-[no-unsafe-unary-minus.ts:19:1]
+ 18 | -importedString;
+ 19 | -importedResult();
+    : ^^^^^^^^^^^^^^^^^
+ 20 | -parseSync("example.ts", "const value = 1;");
+    `----
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:19:1]
+ 18 | -importedString;
+ 19 | -importedResult();
+    : ^^^^^^^^^^^^^^^^^^
+ 20 | -parseSync("example.ts", "const value = 1;");
+    `----
+  help: Consider using this expression or removing it
+
+  x typescript(no-unsafe-unary-minus): Argument of unary negation should be assignable to number | bigint but is ParseResult instead.
+    ,-[no-unsafe-unary-minus.ts:20:1]
+ 19 | -importedResult();
+ 20 | -parseSync("example.ts", "const value = 1;");
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 21 | 
+    `----
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[no-unsafe-unary-minus.ts:20:1]
+ 19 | -importedResult();
+ 20 | -parseSync("example.ts", "const value = 1;");
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 21 | 
+    `----
+  help: Consider using this expression or removing it
+
+  ! eslint(no-unused-vars): Function 'negate' is declared but never used.
+    ,-[no-unsafe-unary-minus.ts:22:10]
+ 21 | 
+ 22 | function negate<T extends number>(value: T) {
+    :          ^^^|^^
+    :             `-- 'negate' is declared here
+ 23 |   return -value;
+    `----
+  help: Consider removing this declaration.
+
+Found 10 warnings and 5 errors.
+Finished in <variable>ms on 1 file with 111 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
