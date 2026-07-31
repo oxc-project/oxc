@@ -277,28 +277,6 @@ impl fmt::Display for JsFormatOptions {
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Copy, Clone, Hash)]
-pub struct TabWidth(u8);
-
-impl TabWidth {
-    /// Returns the numeric value for this [TabWidth]
-    pub fn value(self) -> u8 {
-        self.0
-    }
-}
-
-impl From<u8> for TabWidth {
-    fn from(value: u8) -> Self {
-        TabWidth(value)
-    }
-}
-
-impl From<TabWidth> for u8 {
-    fn from(width: TabWidth) -> Self {
-        width.0
-    }
-}
-
 /// Which ASCII quote character delimits a string literal — JS/TS's public quote option.
 ///
 /// Owned by this crate: each language formatter owns its own quote-style vocabulary.
