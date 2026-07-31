@@ -2,6 +2,7 @@ use std::ops::Deref;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Buffer;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -9,7 +10,6 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer,
         prelude::*,
         separated::FormatSeparatedIter,
         trivia::{FormatLeadingComments, FormatTrailingComments},

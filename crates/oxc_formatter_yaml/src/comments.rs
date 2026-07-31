@@ -81,57 +81,7 @@ impl<'a> Comments<'a> {
     }
 }
 
-/// Vertical spacing implied by an inter-token source gap.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Gap {
-    /// Same line (no line terminator).
-    None,
-    /// One or more line breaks, but no blank line.
-    Line,
-    /// At least one blank line.
-    Blank,
-}
-
-/// Classifies the gap `slice` between two source positions.
-///
-/// A blank line is a line strictly inside the gap consisting solely of whitespace.
-/// Tokens in the gap make their line non-blank,
-/// so newline counting alone would over-report blank lines (e.g. an indicator such as `-` sitting on its own line).
-///
-/// The source is normalized to `\n` before parsing (see `format()`),
-/// but the CR-handling is kept so the helper stays correct on raw slices in tests.
-pub fn classify_gap(slice: &[u8]) -> Gap {
-    let mut newline_count = 0;
-    let mut line_has_content = false;
-    let mut blank = false;
-    let mut i = 0;
-    while i < slice.len() {
-        match slice[i] {
-            b'\r' | b'\n' => {
-                // A line strictly between two terminators with no content is blank.
-                if newline_count > 0 && !line_has_content {
-                    blank = true;
-                }
-                newline_count += 1;
-                line_has_content = false;
-                // Collapse `\r\n` into one break.
-                if slice[i] == b'\r' && slice.get(i + 1) == Some(&b'\n') {
-                    i += 1;
-                }
-            }
-            b' ' | b'\t' => {}
-            _ => line_has_content = true,
-        }
-        i += 1;
-    }
-    if blank {
-        Gap::Blank
-    } else if newline_count > 0 {
-        Gap::Line
-    } else {
-        Gap::None
-    }
-}
+pub use oxc_formatter_core::spec::{Gap, classify_gap};
 
 /// `true` when the source between `from` and `to` holds nothing but whitespace and comments
 /// (every line blank or `#`-only after indentation).
@@ -355,28 +305,5 @@ pub fn flush_container_end_comments(
         });
         write!(f, align(align_width, &inner));
         prev_end = span.end;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Gap, classify_gap};
-
-    #[test]
-    fn classify_gap_counts_line_terminators() {
-        assert_eq!(classify_gap(b" \t "), Gap::None);
-        assert_eq!(classify_gap(b"a"), Gap::None);
-        assert_eq!(classify_gap(b"\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\n  \n"), Gap::Blank);
-        assert_eq!(classify_gap(b"\r\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\n\r\n"), Gap::Blank);
-    }
-
-    #[test]
-    fn classify_gap_treats_tokens_as_content() {
-        // An indicator on its own line (e.g. `-` of a sequence item) is not a blank line.
-        assert_eq!(classify_gap(b"\n-\n"), Gap::Line);
-        // Content on the tail of the first or last line is not "inside" the gap.
-        assert_eq!(classify_gap(b"-\n  "), Gap::Line);
     }
 }

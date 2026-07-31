@@ -113,8 +113,8 @@ fn test_numeric_comparison_edge_cases() {
 #[test]
 fn test_mathematical_expression_edge_cases() {
     // Test operations with special numeric values get optimized
-    test("return 1 / 0", "return Infinity"); // optimized to Infinity
-    test("return -1 / 0", "return -Infinity"); // optimized to -Infinity
+    test_same("return 1 / 0"); // canonical printed spelling of Infinity
+    test_same("return -1 / 0"); // canonical printed spelling of -Infinity
     test("return 0 / 0", "return NaN"); // optimized to NaN
 
     // Test simple arithmetic - these ARE optimized by oxc

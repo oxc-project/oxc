@@ -1,5 +1,7 @@
 use rustc_hash::FxHashSet;
 
+use oxc_formatter_core::FormatOptions;
+
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
     CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier,
@@ -25,13 +27,8 @@ use super::{
 pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String> {
     let core = to_core_options(config)?;
 
-    let mut format_options = JsFormatOptions {
-        indent_style: core.indent_style,
-        indent_width: core.indent_width,
-        line_width: core.line_width,
-        line_ending: core.line_ending,
-        ..JsFormatOptions::default()
-    };
+    let mut format_options = JsFormatOptions::default();
+    format_options.apply_core(core);
 
     // NOTE: Not yet supported options:
     // [Prettier] experimentalOperatorPosition: "start" | "end"

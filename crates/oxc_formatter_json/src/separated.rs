@@ -1,8 +1,9 @@
-//! Light-weight separated-list helper for JSON,
-//! modelled after `oxc_formatter::formatter::separated::FormatSeparatedIter` but trimmed for JSON's needs:
-//! - only one separator character (`,`),
-//! - one inter-entry break style (`soft_line_break_or_space`),
-//! - and an optional trailing separator that only materializes when the surrounding group breaks
+//! Separated-list writer for JSON containers:
+//! - one separator character (`,`), one inter-entry break style (`soft_line_break_or_space`),
+//! - an optional trailing separator that only materializes when the surrounding group breaks,
+//! - and (the actual core of this module) comment threading around the `,`:
+//!   same-line trailing block comments print before it, a line comment after it via `line_suffix`,
+//!   plus blank-line preservation between entries.
 
 use oxc_formatter_core::{
     Buffer,

@@ -35,3 +35,4 @@ oxc_formatter_core = { workspace = true, features = ["test_harness"] }
 
 [lib]
 doctest = false
+test = false

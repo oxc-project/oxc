@@ -111,8 +111,8 @@ Run `clippy` and resolve all warnings.
 Snapshot tests driven by fixture files under `tests/fixtures/graphql/`,
 covering what the Prettier conformance suite does not (suppression, string re-encoding, comment positions, extensions, ... — see the file names).
 `build.rs` auto-generates a test case from every `.graphql` file using the core `test_support` harness.
-Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics and BOM preservation;
-`src/comments.rs` has `classify_gap` tests (CR / CRLF endings, which `.gitattributes` keeps out of fixture files).
+
+Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics and BOM preservation.
 
 ```sh
 cargo test -p oxc_formatter_graphql

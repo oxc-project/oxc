@@ -1,10 +1,11 @@
 use oxc_ast::ast::Statement;
+use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::{format_once, soft_line_indent_or_space, space},
         trivia::{FormatTrailingComments, format_leading_comments},
     },

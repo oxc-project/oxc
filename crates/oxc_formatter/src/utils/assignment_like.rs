@@ -1,10 +1,11 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, BufferExtensions, Format, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, JsFormatter, ScratchBuffer,
+        JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },

@@ -30,6 +30,9 @@ Unlike Prettier's `printDocToString`, this printer emits exactly what was writte
 end-of-line whitespace never appearing in the output is guaranteed by construction (pending space/indention, no indention on blank lines), not by a trimming pass.
 Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
 
+NOTE: The printer's runtime optimizations (pending-space dedup, consecutive-hardline merging, this no-trim rule, ...) are mirrored downstream by `apps/oxfmt`'s `prettier_compat` (IR ↔ Prettier Doc interop; kept there because core never learns Prettier-as-a-system).
+When changing printer runtime behavior, update that mirror in the same PR; oxfmt's embedded/E2E conformance is the backstop that catches drift.
+
 ### Choosing a staging buffer
 
 The arena is a bump allocator and never reclaims, so a vector grown in it strands every grown-out-of allocation for the rest of the format run.
@@ -55,8 +58,11 @@ The core is parameterized over a consumer-supplied context so it stays language-
 - `FormatContext` trait: no lifetime parameter
   - (avoids `oxc_allocator`'s `'ast` propagating through struct bounds and blocking anonymous lifetimes)
   - The allocator lives on `FormatState`, not the context
-- `FormatOptions` trait: `indent_style()`, `indent_width()`, `line_width()`, `line_ending()`, `as_print_options() -> PrinterOptions`
+- `FormatOptions` trait: `indent_style()`, `indent_width()`, `line_width()`, `line_ending()`, `apply_core(CoreFormatOptions)`;
+  - `as_print_options() -> PrinterOptions` is provided from the getters
   - Core option types: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding` (exactly the `PrinterOptions` inputs; see the boundary section below)
+  - `CoreFormatOptions`: the four bundled, for handing them across a host boundary (config resolver → language options) in one piece;
+    - `apply_core` is the write half of the trait's read-only getters
 - `Format<'ast, C>` trait + `FormatState<'ast, C>`, `Formatted<'ast, C>`, `Formatter<'buf, 'ast, C>`, `Buffer<'ast, C>`
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
@@ -112,7 +118,14 @@ Parameterizing language differences (sharpened gate 2), when a shared helper nee
 
 `SourceText` follows this line. Core owns mechanical, offset-keyed access only (slicing, raw-byte lookups).
 Lexical-semantic scanning whose answer is language-defined, what counts as a newline (U+2028/U+2029), a comment, or ASI/parens trivia lives in the consumer (`oxc_formatter`'s `SourceTextExt`), not here.
-Even raw newline detection proved to be consumer-owned (every consumer needs the LS/PS-aware variant in addition to `\r|\n`), so core keeps no newline helpers.
+
+Newline-adjacent helpers split along the same line:
+
+- `spec/gap.rs` is the shared gap classifier for the CR, LF and CRLF terminator family
+  - It takes a raw `&[u8]` slice, never offsets (`SourceText` addresses), `spec/` interprets, consumers compose the two at the call site
+- Precedent for gate 2: json/js measure gaps under ECMAScript lexis (LS/PS terminators, blanks before a separator comma ignored)
+  - So they keep their own helpers instead of a parameter here
+
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 
 ## Cargo features

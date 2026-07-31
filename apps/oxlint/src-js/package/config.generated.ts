@@ -5759,12 +5759,30 @@ export interface NoUnnecessaryBooleanLiteralCompareConfig {
 }
 export interface NoUnnecessaryConditionConfig {
   /**
-   * Whether to allow constant loop conditions.
-   * `true` is treated as `"always"`, `false` as `"never"`.
+   * Controls which constant conditions are allowed in `while`, `do...while`, and `for` loops.
+   *
+   * - `"never"` (or `false`) reports all constant loop conditions.
+   * - `"always"` (or `true`) allows conditions whose type is the literal type `true`, such as
+   * `while (true)` or `while (variable)` when `variable` has type `true`.
+   * - `"only-allowed-literals"` allows only the literal expressions `true`, `false`, `0`, and
+   * `1`. Variables whose types are those literal types are still reported.
    */
   allowConstantLoopConditions?: AllowConstantLoopConditions;
   /**
-   * Whether to check type predicate functions.
+   * Whether to check arguments passed to type predicate and assertion functions.
+   *
+   * When enabled, the rule reports a call if the argument already satisfies the predicate or
+   * if an assertion function receives an argument that is always truthy or always falsy.
+   *
+   * For example, `narrow(value)` is unnecessary because `value` already has type `true`:
+   *
+   * ```ts
+   * declare const narrow: (value: unknown) => value is true;
+   * const value = true;
+   * if (narrow(value)) {
+   * // ...
+   * }
+   * ```
    */
   checkTypePredicates?: boolean;
 }

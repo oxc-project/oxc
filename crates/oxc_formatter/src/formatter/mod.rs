@@ -27,37 +27,13 @@ pub mod separated;
 pub mod token;
 pub mod trivia;
 
-/// Re-export of the core printer module so it can still be reached
-/// via `crate::formatter::printer` from existing call-sites.
-pub mod printer {
-    pub use oxc_formatter_core::printer::*;
-}
-
-/// Re-export of the core format element module so it can still be reached
-/// via `crate::formatter::format_element` from existing call-sites.
-pub mod format_element {
-    pub use oxc_formatter_core::format_element::*;
-}
-
-/// Re-export of the core buffer module so it can still be reached
-/// via `crate::formatter::buffer` from existing call-sites.
-pub mod buffer {
-    pub use oxc_formatter_core::buffer::*;
-}
-
-pub use oxc_formatter_core::{
-    Argument, Arguments, Buffer, BufferExtensions, Format, FormatElement, FormatOptions,
-    FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized, ScratchBuffer, SourceText,
-    UniqueGroupIdBuilder, VecBuffer,
-};
-
 pub use self::builders::JoinBuilderJsExt;
 pub use self::comments::Comments;
 pub use self::{
     context::{JsFormatContext, TailwindContextEntry},
     formatter_js::{JsFormatter, JsFormatterExt},
 };
-use oxc_formatter_core::Document;
+use oxc_formatter_core::{Arguments, Buffer as _, Document, FormatState, Formatted, VecBuffer};
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
 ///

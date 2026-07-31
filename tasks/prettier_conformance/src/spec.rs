@@ -10,7 +10,9 @@ use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
     OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{
+    CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
+};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
@@ -151,13 +153,14 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
-        let mut js_options = JsFormatOptions {
-            // Use Prettier's default printWidth(80) instead of our default(100)
-            line_width: LineWidth::try_from(80).unwrap(),
+        // The four core options are collected once here and applied to the
+        // selected language's options via `apply_core` after parsing.
+        let mut core_options = CoreFormatOptions {
+            line_width: LineWidth::try_from(crate::PRETTIER_DEFAULT_LINE_WIDTH).unwrap(),
             ..Default::default()
         };
+        let mut js_options = JsFormatOptions::default();
         let mut json_options = JsonFormatOptions {
-            line_width: LineWidth::try_from(80).unwrap(),
             variant: match self.language {
                 TestLanguage::Jsonc => JsonVariant::Jsonc,
                 TestLanguage::Json5 => JsonVariant::Json5,
@@ -166,12 +169,8 @@ impl VisitMut<'_> for SpecParser {
             },
             ..Default::default()
         };
-        let mut graphql_options = GraphqlFormatOptions {
-            line_width: LineWidth::try_from(80).unwrap(),
-            ..Default::default()
-        };
+        let mut graphql_options = GraphqlFormatOptions::default();
         let mut css_options = CssFormatOptions {
-            line_width: LineWidth::try_from(80).unwrap(),
             variant: match self.language {
                 TestLanguage::Scss => CssVariant::Scss,
                 TestLanguage::Less => CssVariant::Less,
@@ -179,10 +178,7 @@ impl VisitMut<'_> for SpecParser {
             },
             ..Default::default()
         };
-        let mut yaml_options = YamlFormatOptions {
-            line_width: LineWidth::try_from(80).unwrap(),
-            ..Default::default()
-        };
+        let mut yaml_options = YamlFormatOptions::default();
 
         // Get options
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
@@ -224,16 +220,11 @@ impl VisitMut<'_> for SpecParser {
                                     QuoteStyle::Double
                                 };
                             } else if name == "useTabs" {
-                                let style = if literal.value {
+                                core_options.indent_style = if literal.value {
                                     IndentStyle::Tab
                                 } else {
                                     IndentStyle::Space
                                 };
-                                js_options.indent_style = style;
-                                json_options.indent_style = style;
-                                graphql_options.indent_style = style;
-                                css_options.indent_style = style;
-                                yaml_options.indent_style = style;
                             } else if name == "experimentalTernaries" {
                                 js_options.experimental_ternaries = literal.value;
                             } else if name == "singleAttributePerLine" {
@@ -247,20 +238,12 @@ impl VisitMut<'_> for SpecParser {
                         #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
                         Expression::NumericLiteral(literal) => match name.as_ref() {
                             "printWidth" => {
-                                let width = LineWidth::try_from(literal.value as u16).unwrap();
-                                js_options.line_width = width;
-                                json_options.line_width = width;
-                                graphql_options.line_width = width;
-                                css_options.line_width = width;
-                                yaml_options.line_width = width;
+                                core_options.line_width =
+                                    LineWidth::try_from(literal.value as u16).unwrap();
                             }
                             "tabWidth" => {
-                                let w = IndentWidth::try_from(literal.value as u8).unwrap();
-                                js_options.indent_width = w;
-                                json_options.indent_width = w;
-                                graphql_options.indent_width = w;
-                                css_options.indent_width = w;
-                                yaml_options.indent_width = w;
+                                core_options.indent_width =
+                                    IndentWidth::try_from(literal.value as u8).unwrap();
                             }
                             _ => {}
                         },
@@ -288,12 +271,8 @@ impl VisitMut<'_> for SpecParser {
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
-                                    let ending = LineEnding::from_str(s).unwrap_or_default();
-                                    js_options.line_ending = ending;
-                                    json_options.line_ending = ending;
-                                    graphql_options.line_ending = ending;
-                                    css_options.line_ending = ending;
-                                    yaml_options.line_ending = ending;
+                                    core_options.line_ending =
+                                        LineEnding::from_str(s).unwrap_or_default();
                                 }
                                 "proseWrap" => {
                                     yaml_options.prose_wrap = match s {
@@ -369,13 +348,26 @@ impl VisitMut<'_> for SpecParser {
             TestLanguage::Json
             | TestLanguage::Jsonc
             | TestLanguage::Json5
-            | TestLanguage::JsonStringify => SpecOptions::Json(json_options),
-            TestLanguage::Graphql => SpecOptions::Graphql(graphql_options),
+            | TestLanguage::JsonStringify => {
+                json_options.apply_core(core_options);
+                SpecOptions::Json(json_options)
+            }
+            TestLanguage::Graphql => {
+                graphql_options.apply_core(core_options);
+                SpecOptions::Graphql(graphql_options)
+            }
             TestLanguage::Css | TestLanguage::Scss | TestLanguage::Less => {
+                css_options.apply_core(core_options);
                 SpecOptions::Css(css_options)
             }
-            TestLanguage::Yaml => SpecOptions::Yaml(yaml_options),
-            TestLanguage::Js | TestLanguage::Ts => SpecOptions::Js(Box::new(js_options)),
+            TestLanguage::Yaml => {
+                yaml_options.apply_core(core_options);
+                SpecOptions::Yaml(yaml_options)
+            }
+            TestLanguage::Js | TestLanguage::Ts => {
+                js_options.apply_core(core_options);
+                SpecOptions::Js(Box::new(js_options))
+            }
         };
         self.calls.push((options, snapshot_options));
     }

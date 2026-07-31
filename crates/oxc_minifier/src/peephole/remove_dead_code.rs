@@ -41,9 +41,12 @@ impl<'a> PeepholeOptimizations {
                 if matches!(first, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
                     || matches!(first, Statement::ClassDeclaration(_))
                     || matches!(first, Statement::FunctionDeclaration(_))
+                    || (matches!(first, Statement::IfStatement(decl) if decl.alternate.is_some())
+                        && matches!(ctx.parent(), Ancestor::IfStatementConsequent(_)))
                 {
                     return;
                 }
+
                 let new_stmt = s.body.remove(0);
                 ctx.replace_statement(stmt, new_stmt);
             }

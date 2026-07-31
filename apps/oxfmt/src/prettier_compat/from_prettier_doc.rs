@@ -3,14 +3,15 @@
 //! [`convert_envelope`] is the public entry point:
 //! it unwraps the `[doc, metadata]` envelope sent from the JS side
 //! and converts the doc through the private `convert_*` walkers into a flat `FormatElement` IR.
-//! Language-specific routing and postprocessing live in `core::embed`.
+//! Language-specific routing lives in `core::embed`;
+//! [`postprocess`] here is the conversion's finishing pass (Prettier-fallback path only).
 
 use std::num::NonZeroU8;
 
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
     PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
@@ -393,4 +394,94 @@ fn extract_group_id(
             .ok_or_else(|| format!("Invalid group ID: {n}")),
         Some(other) => Err(format!("Invalid group ID: {other}")),
     }
+}
+
+/// Post-process converted FormatElements in a single compaction pass —
+/// the finishing step of the Doc→IR conversion (Prettier-fallback path only;
+/// Rust formatters write IR that never needs it):
+/// - strip trailing hardline (useless for embedded parts)
+/// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
+/// - merge consecutive Text nodes (the Prettier Doc path can emit adjacent `Text`s)
+/// - trim a Text's trailing spaces/tabs when a hard/empty line follows:
+///   Prettier's own printer trims at every line break,
+///   so a Doc can rightfully carry them, but the core printer does not.
+///   Untrimmed they would leak into the output verbatim.
+///   (A single trailing space before a MAY-break line is already mapped to `Space` at conversion,
+///   see `convert_doc`'s String arm; this pass covers the statically-known hard breaks,
+///   where full runs and tabs can be dropped.)
+pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a Allocator) {
+    // Strip trailing hardline
+    if ir.len() >= 2
+        && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
+        && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::Hard))
+    {
+        let new_len = ir.len() - 2;
+        ir.truncate(new_len);
+    }
+
+    let mut write = 0;
+    let mut read = 0;
+    while read < ir.len() {
+        // Collapse double-hardline → empty line
+        if read + 3 < ir.len()
+            && matches!(ir[read], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 1], FormatElement::ExpandParent)
+            && matches!(ir[read + 2], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 3], FormatElement::ExpandParent)
+        {
+            ir[write] = FormatElement::Line(LineMode::Empty);
+            ir[write + 1] = FormatElement::ExpandParent;
+            write += 2;
+            read += 4;
+        } else if matches!(ir[read], FormatElement::Text { .. }) {
+            // Merge consecutive Text nodes
+            let run_start = read;
+            read += 1;
+            while read < ir.len() && matches!(ir[read], FormatElement::Text { .. }) {
+                read += 1;
+            }
+            let single = read - run_start == 1;
+            let text: &str = if single {
+                let FormatElement::Text { text, .. } = ir[run_start] else { unreachable!() };
+                text
+            } else {
+                let mut sb = ArenaStringBuilder::new_in(allocator);
+                for element in &ir[run_start..read] {
+                    if let FormatElement::Text { text, .. } = element {
+                        sb.push_str(text);
+                    }
+                }
+                sb.into_str()
+            };
+            // Prettier's own printer trims at every line break regardless of the doc structure around it,
+            // so a break hiding behind tags (`Text("a  "), StartIndent, Hard` from `["a  ", indent([hardline, ..])]`) still trims,
+            // look through tag/expand-parent markers for it (only when there is anything to trim in the first place).
+            let trimmed = if text.ends_with([' ', '\t'])
+                && ir[read..]
+                    .iter()
+                    .find(|el| !matches!(el, FormatElement::Tag(_) | FormatElement::ExpandParent))
+                    .is_some_and(|el| {
+                        matches!(el, FormatElement::Line(LineMode::Hard | LineMode::Empty))
+                    }) {
+                text.trim_end_matches([' ', '\t'])
+            } else {
+                text
+            };
+            if single && trimmed.len() == text.len() {
+                if write != run_start {
+                    ir[write] = ir[run_start].clone();
+                }
+            } else {
+                ir[write] = text_element(trimmed);
+            }
+            write += 1;
+        } else {
+            if write != read {
+                ir[write] = ir[read].clone();
+            }
+            write += 1;
+            read += 1;
+        }
+    }
+    ir.truncate(write);
 }

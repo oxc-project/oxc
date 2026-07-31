@@ -1,8 +1,9 @@
 use oxc_ast::ast::{Comment, Expression};
+use oxc_formatter_core::{Buffer, Format};
 
 use crate::{
     ast_nodes::AstNodes,
-    formatter::{Buffer, Format, JsFormatContext, JsFormatter, trivia::FormatTrailingComments},
+    formatter::{JsFormatContext, JsFormatter, trivia::FormatTrailingComments},
     options::Semicolons,
     utils::format_node_without_trailing_comments::format_content_without_comments_after,
     write,

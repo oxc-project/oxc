@@ -1,16 +1,15 @@
 use std::ops::Deref;
 
+use oxc_formatter_core::{Format, GroupId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     formatter::{
-        Format, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::{group, if_group_breaks},
     },
     options::TrailingSeparator,
 };
-
-use super::GroupId;
 
 /// Formats a single element inside a separated list.
 #[derive(Debug, Clone, Eq, PartialEq)]

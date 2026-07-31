@@ -45,14 +45,14 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::arena_cow_str;
+use oxc_formatter_core::{Format, arena_cow_str};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
-        Format, JsFormatter,
+        JsFormatter,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{format_number_token, format_trimmed_number, is_simple_number},

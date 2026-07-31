@@ -1,3 +1,4 @@
+use oxc_formatter_core::FormatOptions;
 use oxc_formatter_json::{
     BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
 };
@@ -22,14 +23,8 @@ pub fn to_oxc_formatter_json(
 ) -> Result<JsonFormatOptions, String> {
     let core = to_core_options(config)?;
 
-    let mut options = JsonFormatOptions {
-        variant,
-        indent_style: core.indent_style,
-        indent_width: core.indent_width,
-        line_width: core.line_width,
-        line_ending: core.line_ending,
-        ..JsonFormatOptions::default()
-    };
+    let mut options = JsonFormatOptions { variant, ..JsonFormatOptions::default() };
+    options.apply_core(core);
 
     // [Prettier] trailingComma: "all" | "es5" | "none"
     if let Some(commas) = config.trailing_comma {

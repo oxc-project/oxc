@@ -1,3 +1,4 @@
+use oxc_formatter_core::FormatOptions;
 use oxc_formatter_css::{CssFormatOptions, CssVariant, SingleQuote, TrailingCommas};
 
 use super::{
@@ -18,14 +19,8 @@ pub fn to_oxc_formatter_css(
 ) -> Result<CssFormatOptions, String> {
     let core = to_core_options(config)?;
 
-    let mut options = CssFormatOptions {
-        indent_style: core.indent_style,
-        indent_width: core.indent_width,
-        line_width: core.line_width,
-        line_ending: core.line_ending,
-        variant,
-        ..CssFormatOptions::default()
-    };
+    let mut options = CssFormatOptions { variant, ..CssFormatOptions::default() };
+    options.apply_core(core);
 
     // [Prettier] singleQuote: boolean
     if let Some(single_quote) = config.single_quote {

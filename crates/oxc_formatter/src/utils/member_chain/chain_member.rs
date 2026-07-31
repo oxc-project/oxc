@@ -3,10 +3,11 @@ use std::ops::Deref;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Format, JsFormatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{JsFormatter, prelude::*, trivia::FormatLeadingComments},
     write,
 };
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 #[derive(Copy, Clone, Debug)]
