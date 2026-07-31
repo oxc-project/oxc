@@ -1,4 +1,6 @@
-use rustc_hash::FxHashSet;
+use oxc_allocator::Vec as ArenaVec;
+use oxc_semantic::ReferenceId;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
@@ -6,6 +8,7 @@ use oxc_semantic::Scoping;
 use oxc_span::SourceType;
 use oxc_str::Str;
 use oxc_syntax::scope::ScopeId;
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{CompressOptions, symbol_state::SymbolState};
 
@@ -111,6 +114,12 @@ pub struct MinifierState<'a> {
     /// consumed by `compression_pass` after Normalize and every peephole pass.
     pub(crate) pass_changes: PassChanges<'a>,
 
+    /// Per-pass scratch for removing unused object literal properties.
+    pub object_property_usage: ObjectPropertyUsageState<'a>,
+
+    /// Whether the one-shot unused object property analysis still needs to run.
+    pub object_property_pruning_pending: bool,
+
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
@@ -135,6 +144,8 @@ impl<'a> MinifierState<'a> {
                 this_initialized_at: None,
             }),
             pass_changes: PassChanges::new(scoping.references_len(), allocator),
+            object_property_usage: ObjectPropertyUsageState::default(),
+            object_property_pruning_pending: true,
             concat_scratch: String::new(),
         }
     }
@@ -191,6 +202,15 @@ impl<'a> MinifierState<'a> {
             && self.pass_changes.removed_references.is_empty()
             && !self.pass_changes.direct_eval_dropped
     }
+}
+
+#[derive(Default)]
+pub struct ObjectPropertyUsageState<'a> {
+    pub candidate_symbols: FxHashSet<SymbolId>,
+    pub prunable_property_counts: FxHashMap<SymbolId, u32>,
+    pub used_properties: FxHashMap<SymbolId, ArenaVec<'a, Str<'a>>>,
+    pub escaped_or_unknown_symbols: FxHashSet<SymbolId>,
+    pub member_object_references: FxHashSet<ReferenceId>,
 }
 
 /// Private member names used in each currently enclosing class.
