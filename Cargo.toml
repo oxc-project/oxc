@@ -167,6 +167,7 @@ oxc_language_server = { path = "crates/oxc_language_server", default-features = 
 oxc_lexer = { path = "crates/oxc_lexer" } # JS/TS lexer (incubating; x86_64 SIMD, stub elsewhere)
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
+oxc_checker = { path = "../oxc_checker" } # Experimental native type-aware linting
 oxc_tasks_common = { path = "tasks/common" } # Task utilities
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform validation
 website_common = { path = "tasks/website_common" } # Website utilities
