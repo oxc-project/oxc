@@ -160,6 +160,36 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         Ok(inner_writer(slot, f))
     }
 
+    /// Reserve space for an object in this `Arena`, without initializing it.
+    ///
+    /// Returns an exclusive reference to the uninitialized memory, which can be initialized
+    /// with [`MaybeUninit::write`].
+    ///
+    /// # Panics
+    /// Panics if reserving space for `T` fails.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use oxc_allocator::arena::Arena;
+    ///
+    /// let arena = Arena::new();
+    /// let x = arena.alloc_uninit::<[u8; 20]>();
+    /// let x = x.write([1u8; 20]);
+    /// assert_eq!(x, &[1u8; 20]);
+    /// ```
+    #[expect(clippy::mut_from_ref)]
+    #[inline(always)]
+    pub fn alloc_uninit<T>(&self) -> &mut MaybeUninit<T> {
+        let layout = Layout::new::<T>();
+        let mut ptr = self.alloc_layout(layout).cast::<MaybeUninit<T>>();
+
+        // SAFETY: `alloc_layout` returns a pointer to memory sized and aligned for a `T`,
+        // which nothing else holds a reference to.
+        // `MaybeUninit<T>` has no validity requirements, so the memory being uninitialized is fine.
+        unsafe { ptr.as_mut() }
+    }
+
     /// `Copy` a slice into this `Arena` and return an exclusive reference to the copy.
     ///
     /// # Panics

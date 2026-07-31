@@ -22,6 +22,7 @@
 #![cfg_attr(debug_assertions, expect(clippy::ignore_without_reason))]
 
 mod alloc_fill;
+mod alloc_uninit;
 mod alloc_with;
 mod capacity;
 mod quickcheck;

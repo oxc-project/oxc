@@ -1,5 +1,6 @@
 use std::{
     alloc::Layout,
+    mem::MaybeUninit,
     ptr::{self, NonNull},
     slice, str,
 };
@@ -279,6 +280,34 @@ impl Allocator {
         const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
 
         self.arena.alloc(val)
+    }
+
+    /// Reserve space for an object in this [`Allocator`], without initializing it.
+    ///
+    /// Returns an exclusive reference to the uninitialized memory, which can be initialized
+    /// with [`MaybeUninit::write`].
+    ///
+    /// # Panics
+    /// Panics if reserving space for `T` fails.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::Allocator;
+    ///
+    /// let allocator = Allocator::new();
+    /// let x = allocator.alloc_uninit::<[u8; 20]>();
+    /// let x = x.write([1u8; 20]);
+    /// assert_eq!(x, &[1u8; 20]);
+    /// ```
+    //
+    // `#[inline(always)]` because this is a hot path and `Arena::alloc_uninit` is a very small function.
+    // We always want it to be inlined.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn alloc_uninit<T>(&self) -> &mut MaybeUninit<T> {
+        const { assert!(!std::mem::needs_drop::<T>(), "Cannot allocate Drop type in arena") };
+
+        self.arena.alloc_uninit()
     }
 
     /// Copy a string slice into this [`Allocator`] and return a reference to it.
