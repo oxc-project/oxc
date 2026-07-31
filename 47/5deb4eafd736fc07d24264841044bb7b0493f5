@@ -1,0 +1,340 @@
+napi/parser/src-js/generated/lazy/constructors.js
+  s_d3ad640973ad49::t_e930ff6afac0b7 2693,2695,2697-2700,5494,5496,5498-5501,6023-6068,6094-6101,6103-6145,6152,6157,6167,6172,6183,6187,13569-13572,13577-13580
+crates/oxc_ast/src/generated/inherit_variants.rs
+  s_d3ad640973ad49::t_00edaf2f570e95 2769,2771,2871,2875,2897,2899,5621,5623
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_d3ad640973ad49::t_12fc70dea18b92 601-605,611-615,2811,2815-2817,2965-2976,2986-2998
+crates/oxc_transformer_plugins/src/module_runner_transform.rs
+  s_d3ad640973ad49::t_ef25a4fce30ef2 152-155,162-169,395-429,436-500,502-504,506-507,708,710
+napi/parser/src-js/generated/lazy/type_ids.js
+  s_d3ad640973ad49::t_35b265c332ed21 117-190,193
+crates/oxc_transformer/src/typescript/module.rs
+  s_d3ad640973ad49::t_180e3e0e5d8348 110
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_d3ad640973ad49::t_d061c7916b6046 629,640-641,1130,1136-1137,1204-1208,1210-1215
+crates/oxc_parser/src/module_record.rs
+  s_d3ad640973ad49::t_30ea4cd771e9b5 317-336,338,344-350,353-354,356-382,386,389
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_d3ad640973ad49::t_bfb3f0cef857b3 1469,1471,1646-1658,1667-1680
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_d3ad640973ad49::t_863365c5fba19e 912-918,920,925-935,2743-2749,2751,2756-2766
+crates/oxc_linter/src/rules/import/no_mutable_exports.rs
+  s_d3ad640973ad49::t_530ed73ea6ba2a 65,67-87
+crates/oxc_formatter/src/print/class.rs
+  s_d3ad640973ad49::t_4c50707c098cee 293
+crates/oxc_ast_macros/src/generated/enums.rs
+  s_d3ad640973ad49::t_17e97539b4e376 730-736,742-749,756,763
+crates/oxc_transformer/src/es2026/explicit_resource_management.rs
+  s_d3ad640973ad49::t_d60a0d7f44edfc 462-472,484,489,491
+crates/oxc_linter/src/rules/typescript/no_useless_empty_export.rs
+  s_d3ad640973ad49::t_2cfeac1d786f70 63
+crates/oxc_ast_visit/src/generated/visit_js.rs
+  s_d3ad640973ad49::t_78f4f5091ccb63 636-640,646-650,2360,2364-2366,2497-2508,2518-2530
+napi/parser/src-js/generated/lazy/walk.js
+  s_d3ad640973ad49::t_1d56a5905d0ed1 88,90,1533,1536,1539-1544,2718,2720-2735,2745-2763,2769,2785,2803,2986,3033,3051,3069,3085,3135,3152,3185,3361,3378,3453,3474,3491,3507,3543,3559,3718,3737,3753,3769,3785,3801,3817,3834,3850,3867,3883,4093,4126,4143,4159,4177,4193,4211,4228,4247,4263,4302,4319,4337,4356,4374,4390,4407,4437,4480,4496,4512,4528,4544,4580,4612,4629,4647,4665,4684,4701,4718,4735,4752,4785,4801,4817,4833,4849,4865,4882,4898,5564-5567,5572-5575
+crates/oxc_codegen/src/gen.rs
+  s_60ae018ae28f5b::t_5d43d0ba88e7a7 1250
+  s_d3ad640973ad49::t_6eed0f1034ffc7 6,155,157,1047,1050,1062-1064,1066-1085,1087-1110,1112-1136,1138
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_d3ad640973ad49::t_59bbcb0b88f725 1299,1301,1303-1306,2505-2521,2523-2539,2551-2553,5985-5988,5993-5996
+crates/oxc_transformer/src/decorator/legacy/mod.rs
+  s_d3ad640973ad49::t_1a0a22e81cb106 188,726,733-734,969,1066,1465-1466
+crates/oxc_ast/src/serialize/js.rs
+  s_d3ad640973ad49::t_512ee3c85a9d34 742,778,780,790-804
+crates/oxc_linter/src/utils/jsdoc.rs
+  s_d3ad640973ad49::t_d8a34b976fce04 107
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_d3ad640973ad49::t_ff23baa35614f4 184,186-324,631-632,635-640,1418-1422,1425-1429,1432-1434,2123,2427,2429-2431,11448-11480,11492,11497,11522,11529-11541,11544-11545,11549,11553,11560,11564,11566-11567,11574,11582,11588,11597-11598,11602,11606,11613,11619,11627,11635,11641,11650-11651,11655,11659,11666,11672,11678,11680-11681,11688,11694
+crates/oxc_linter/src/rules/eslint/no_shadow/mod.rs
+  s_d3ad640973ad49::t_6ca7f0e6c59ae8 752
+crates/oxc_ast/src/generated/derive_get_span_mut.rs
+  s_d3ad640973ad49::t_798f937cac2d23 627,629,1104,1106,1188-1194,1202-1208
+crates/oxc_linter/src/rules/eslint/no_unused_vars/symbol.rs
+  s_d3ad640973ad49::t_43eff667b87d85 191
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_d3ad640973ad49::t_d7cee7aae9fadb 629,1130,1204-1205
+crates/oxc_linter/src/rules/unicorn/prefer_node_protocol.rs
+  s_d3ad640973ad49::t_01b2db3d9f016c 68-69
+crates/oxc_transformer/src/typescript/rewrite_extensions.rs
+  s_0d417fb46163f1::t_d5549f43911be2 9,94,96,102
+crates/oxc_linter/src/rules/eslint/no_unused_vars/usage.rs
+  s_d3ad640973ad49::t_6b8a858e2f2210 321,323
+crates/oxc_ast_visit/src/generated/visit_js_mut.rs
+  s_d3ad640973ad49::t_ab4ead18d3de7e 628-632,638-642,2462,2466-2468,2611-2622,2632-2644
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_d3ad640973ad49::t_82eae151542d3a 9455-9470,9491-9520,16306-16321,16342-16371,16965-17002,17013-17066,17072,17081,17091,17094,17100,17106,17116
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_d3ad640973ad49::t_47a61626fe5bb2 11-13,17,19-20,23-24,26-30,32-34,36-41,43-44,46-48,50-53,56-61,63-70,72-90,94,96,101,103,111,113,119-127,135-147,149,155-156,159,161-162,167-171,173,187-188,191,193-194,199,207,209,215,223-227,229,235-236,239-251,253,258,260,262,268-276,284,286-287,292-300,304-312,314,320,328-336,338,344-345,347,349,357,359,365,367,373-378,380,386,394,396,402,409,411,415,417,423,427-428,435,438,440-441,448,450,456-457,460-461,464,466,472,474,480,482,488-493,495,501-506,509,517,519,525,527-528,533,535,541-545,549-553,555-556,561,563,569,573,575,581-586,589-594,597,599,605-610,613,621-626,629-634,637-638,641,643,648,650,652,658-659,666,668,673,675-680,682,684,688-693,696,700,702,708-709,712,720,722,728,730,736-744,746,752,754,760-764,772-776,778,784,786,792,794,800,802,808,811,813,816,818,820,826-831,833,835,839,841,847,849,855,863,867,869,875-876,879,883,887,889,895,899-900,903,905,911-912,915,917,923,931,934,936-937,940-941,944,946,952,954,960,962-963,968,970,976,978,984,992-997,1000-1001,1004-1005,1008,1010,1016,1020,1022-1023,1028,1030,1036-1040,1042,1048,1050,1056,1058,1064-1072,1074,1080,1082,1088,1092-1097,1100,1108,1110,1116,1124-1125,1128-1132,1140,1142,1148,1150,1156-1161,1164,1166,1171,1173,1175,1181,1185,1193,1195,1201,1205,1207,1213-1221,1229-1230,1233,1235,1241,1243,1249-1254,1257,1259-1260,1265,1269,1273-1274,1277,1279,1285,1289-1290,1293,1295,1301-1302,1305,1309,1311,1317,1325-1326,1329,1331,1337-1338,1341-1342,1345-1346,1349,1351,1357,1359,1365,1373-1377,1381,1383,1388-1389,1391-1392,1395,1397-1398,1403,1405,1411,1413,1419,1421,1427-1431,1433,1438,1440-1441,1444,1446,1452-1453,1456-1460,1462,1468,1470,1476,1478,1484,1486
+crates/oxc_linter/src/rules/unicorn/require_module_specifiers.rs
+  s_d3ad640973ad49::t_bcb891dda38449 70,78-83
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_d3ad640973ad49::t_1f1ea63c0f717b 237-238,241-242
+tasks/track_memory_allocations/allocs_transformer.yaml
+  s_d3ad640973ad49::t_fe9d5e39b519f3 10,21,76
+crates/oxc_react_compiler/src/react_compiler_lowering/build_hir.rs
+  s_d3ad640973ad49::t_559ae8532432d9 6301,6303
+crates/oxc_minifier/src/symbol_liveness/mod.rs
+  s_d3ad640973ad49::t_4f9c1bb29a905e 493-495,497-498,500,502-504,508-509
+crates/oxc_transformer/src/typescript/enum.rs
+  s_d3ad640973ad49::t_4f1da8f6bf3e1d 45,47,313-314
+crates/oxc_linter/src/rules/oxc/no_this_in_exported_function.rs
+  s_d3ad640973ad49::t_3d9f66636838b0 71-72
+crates/oxc_linter/src/rules/eslint/no_inner_declarations.rs
+  s_d3ad640973ad49::t_a72a26fab402ea 179,197
+crates/oxc_traverse/src/generated/traverse.rs
+  s_d3ad640973ad49::t_696d2e5f7e4fbf 1495-1509,1525-1539
+crates/oxc_isolated_declarations/src/scope.rs
+  s_d3ad640973ad49::t_3b2caaeca47ee5 155-158,160-162,167-168
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_d3ad640973ad49::t_a32c1a50aba24c 1370,1372,1374-1377,2752-2776,2778-2795,2808-2810,6328-6331,6336-6339
+crates/oxc_transformer/src/typescript/namespace.rs
+  s_d3ad640973ad49::t_e514f48319b086 61-63,67,69,184-185,203-212,214-229,231,236-240,242-255,257-259,281-282,541-542
+crates/oxc_transformer/src/jsx/refresh.rs
+  s_d3ad640973ad49::t_497d93ae630010 249-250,728-730,732-736,898-907
+tasks/coverage/src/typescript/type_symbol_baseline.rs
+  s_d3ad640973ad49::t_6ec92fd33c70f3 134
+crates/oxc_traverse/src/generated/walk.rs
+  s_d3ad640973ad49::t_1237f91345845e 1385,1387,2801-2803,2807-2809,3056-3073,3080-3081,3088-3102,3104,3106-3112,3114,3117,3121
+crates/oxc_ast/src/serialize/mod.rs
+  s_d3ad640973ad49::t_4658e5e0971f72 192-193
+  s_e0ae719ccad812::t_3e42dd381360a7 89,92
+crates/oxc_linter/src/rules/typescript/adjacent_overload_signatures.rs
+  s_d3ad640973ad49::t_af9b9727512e30 209-210
+crates/oxc_mangler/src/lib.rs
+  s_d3ad640973ad49::t_50275450342c70 878-879
+crates/oxc_linter/src/rules/typescript/unified_signatures.rs
+  s_d3ad640973ad49::t_f9eb0325543b07 367-368,380
+crates/oxc_transformer/src/es2017/async_to_generator.rs
+  s_0d417fb46163f1::t_84d6848c4cc1d8 125-126
+crates/oxc_react_compiler/tests/transform.rs
+  s_d3ad640973ad49::t_a75c7743c61c42 521
+crates/oxc_semantic/src/checker/typescript.rs
+  s_d3ad640973ad49::t_5f55dca05e8313 277-281,283-285
+crates/oxc_formatter/src/print/program.rs
+  s_d3ad640973ad49::t_ad82a1bf730589 84-85
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_d3ad640973ad49::t_6be2679fe6ded0 609-613,619-623,2711,2715-2717,2850-2858,2868-2880
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_d3ad640973ad49::t_e7c5e223779020 710,712,1308,1310,1428,1431-1443
+crates/oxc_linter/src/rules/import/no_named_export.rs
+  s_d3ad640973ad49::t_6f883ef299b520 58-60,70-78
+crates/oxc_parser/src/js/statement.rs
+  s_d3ad640973ad49::t_0379c15084ef81 231-232,235
+crates/oxc_minifier/src/peephole/mod.rs
+  s_d3ad640973ad49::t_85f053c41e5464 72-74,79
+crates/oxc_linter/src/rules/eslint/func_style.rs
+  s_d3ad640973ad49::t_a551576b157363 212,271,280
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_d3ad640973ad49::t_385634df462dfd 8,10,19,21,30,41,63,74,76
+crates/oxc_ast/src/generated/derive_unstable_address.rs
+  s_d3ad640973ad49::t_768ca3ced04bc5 191-192,195-196
+crates/oxc_linter/src/rules/typescript/explicit_module_boundary_types.rs
+  s_d3ad640973ad49::t_e8e7b5a76eff36 184-187,189-192
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_d3ad640973ad49::t_26ee04c109b768 1484,1486,1488-1491,3026-3053,3055-3075,3091-3093,6913-6916,6921-6924
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_d3ad640973ad49::t_09b90050ab8ae2 1413,1415,1417-1420,2758-2777,2779-2798,2813-2815,6542-6545,6550-6553
+crates/oxc_linter/src/rules/eslint/no_unused_vars/allowed.rs
+  s_d3ad640973ad49::t_d30e7cf6b46837 104,106
+crates/oxc_ast/src/ast_impl/js.rs
+  s_d3ad640973ad49::t_74154a1c00789a 1905,1907,1925,1927,1949,1951-1952,1969,1971-1972,2020-2021,2023-2036,2038-2045,2047
+  s_60ae018ae28f5b::t_4d29b4fbf16798 2022
+crates/oxc_semantic/src/checker/javascript.rs
+  s_d3ad640973ad49::t_50c9c8c0b0b36d 34,523,526
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_d3ad640973ad49::t_f68e86730931c7 1417,1419,2677-2679,2683-2685,2943-2958,2970-2986
+crates/oxc_ast/src/generated/derive_get_address.rs
+  s_d3ad640973ad49::t_953647e793382e 324,326,514,516
+crates/oxc_linter/src/rules/nextjs/no_typos.rs
+  s_d3ad640973ad49::t_b02213adbee8ac 80-81
+crates/oxc_minifier/src/peephole/normalize.rs
+  s_d3ad640973ad49::t_e7e68ce5571fe0 85-92
+crates/oxc_linter/src/rules/eslint/no_useless_rename.rs
+  s_d3ad640973ad49::t_b1fabfb7b48faf 185-206
+crates/oxc_jsdoc/src/builder.rs
+  s_d3ad640973ad49::t_bcbcca094eb204 197,200
+crates/oxc_linter/src/generated/rule_runner_impls.rs
+  s_d3ad640973ad49::t_6679b9de754cc5 131,156-157,172,184,983,985,1272,1636,3075,3328-3329,3701,3864,3873,4286,4425
+crates/oxc_ast/src/generated/get_id.rs
+  s_d3ad640973ad49::t_b504782a26b991 1688-1703,1720-1735,3888,3890,4085,4087
+crates/oxc_transformer/src/typescript/mod.rs
+  s_d3ad640973ad49::t_413393d646cb21 322,324,328
+crates/oxc_isolated_declarations/src/module.rs
+  s_d3ad640973ad49::t_4061840fa818d8 37,39-42,191,204,206-207
+tasks/track_linter_timings/linter_timings.snap
+  s_d3ad640973ad49::t_503cb5b2adbb40 152,206,212-213,390,489,513,540,631,656-657
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_d3ad640973ad49::t_360332f8110a92 1302,1304,1306-1309,2511-2527,2529-2545,2558-2560,6020-6023,6028-6031
+crates/oxc_linter/src/rules/typescript/no_extraneous_class.rs
+  s_d3ad640973ad49::t_f3c0fd7da742a2 150
+napi/parser/src-js/generated/deserialize/js.js
+  s_d3ad640973ad49::t_b2b5bd49cc3a74 1187,1189,1191-1194,2257-2270,2272-2285,2295-2297,5462-5465,5470-5473
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_d3ad640973ad49::t_3df84bbe4a6fe2 10,21,76
+crates/oxc_ecmascript/src/bound_names.rs
+  s_d3ad640973ad49::t_acde1529b097f5 3-4,135,161,163
+crates/oxc_minifier/src/peephole/inline.rs
+  s_d3ad640973ad49::t_65ccd5a2ca9722 75
+apps/oxlint/src-js/generated/deserialize.js
+  s_d3ad640973ad49::t_f3253cbae06a00 1527,1529,1531-1534,3106-3134,3136-3157,3174-3176,6784-6787,6792-6795
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_d3ad640973ad49::t_57ab8e2a99dacc 239-240,243-244
+crates/oxc_ast/src/ast/js.rs
+  s_d3ad640973ad49::t_d2a3fe9c16834a 2404,2426-2427,2429-2431,2434,2436,2674-2714,2721-2723,2729-2734,2742-2769,2771
+crates/oxc_linter/src/rules/typescript/prefer_function_type.rs
+  s_d3ad640973ad49::t_812bbc886ba2b2 154
+crates/oxc_linter/src/rules/unicorn/no_thenable.rs
+  s_d3ad640973ad49::t_3a03a364e4e4e9 103,105-109,111-116,118-123,126,128-129,137-143
+crates/oxc_linter/src/rules/import/exports_last.rs
+  s_d3ad640973ad49::t_5790ef2d04d8bd 77,80
+tasks/ast_tools/src/generators/utf8_to_utf16.rs
+  s_d3ad640973ad49::t_a5ef5e50b6c82e 41,57
+crates/oxc_formatter/src/ast_nodes/iterator.rs
+  s_d3ad640973ad49::t_12ffd75057be59 54-55
+crates/oxc_transformer/src/es2020/export_namespace_from.rs
+  s_d3ad640973ad49::t_e9126f612806a7 98-99
+crates/oxc_linter/src/rules/unicorn/prefer_export_from.rs
+  s_d3ad640973ad49::t_0e95ad7402589c 10,107,147,320,433-434,464,669,819,873,904,918,940,959,1040,1051,1148,1179,1181,1193
+crates/oxc_linter/src/rules/import/no_nodejs_modules.rs
+  s_d3ad640973ad49::t_aa49c8fccceb4f 110
+crates/oxc_linter/src/rules/import/newline_after_import.rs
+  s_d3ad640973ad49::t_4dc41961584e36 488-490,492-493
+crates/oxc_transformer/src/es2022/class_properties/class.rs
+  s_0d417fb46163f1::t_f1506148dbb15c 492
+crates/oxc_ast/src/ast_kind_impl.rs
+  s_d3ad640973ad49::t_39e56f341b3fb0 68,70,520,522,780-781,784-785,800,802,815,817,831,833
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_d3ad640973ad49::t_081c97d99b4f7f 10,21,76
+crates/oxc_ast_visit/src/generated/utf8_to_utf16_converter.rs
+  s_d3ad640973ad49::t_c9578fc4dfb887 545,547-559
+crates/oxc_linter/src/rules/eslint/no_use_before_define.rs
+  s_d3ad640973ad49::t_236aabc50c4a5d 442-444
+crates/oxc_linter/src/rules/vue/no_dupe_keys.rs
+  s_d3ad640973ad49::t_f4c2c6ed1116cc 187
+crates/oxc_linter/src/rules/eslint/id_denylist.rs
+  s_d3ad640973ad49::t_b7ec19749f40ec 297-298
+crates/oxc_minifier/src/generated/walk.rs
+  s_d3ad640973ad49::t_16c5ef912c9659 1385,1387,2801-2803,2807-2809,3056-3073,3080-3081,3088-3102,3104,3106-3112,3114,3117,3121
+crates/oxc_linter/src/rules/import/no_relative_parent_imports.rs
+  s_d3ad640973ad49::t_bf12abc690433a 64-66
+crates/oxc_react_compiler/src/react_compiler/entrypoint/program.rs
+  s_d3ad640973ad49::t_7ceb601e7809e3 1462-1463,2290-2291,2300,2307,2648-2649
+crates/oxc_traverse/src/ast_operations/gather_node_parts.rs
+  s_d3ad640973ad49::t_722c38b3e139b5 139-144,147-148,153-158
+crates/oxc_formatter/src/print/decorators.rs
+  s_d3ad640973ad49::t_ecb6fa973c4fd1 41
+tasks/ast_tools/src/generators/formatter/format.rs
+  s_d3ad640973ad49::t_c8aa4a0ee6229c 25,27
+crates/oxc_linter/src/rules/eslint/no_restricted_exports.rs
+  s_d3ad640973ad49::t_5c562f75a709fb 10-13,216,218,251-265,283,286,288,290-293,297,301-310
+crates/oxc_transformer/src/typescript/annotations.rs
+  s_d3ad640973ad49::t_90162d61909d7a 64-65,81-91,176-181
+crates/oxc_ast_visit/src/utf8_to_utf16/visit.rs
+  s_d3ad640973ad49::t_3526eea699c341 81,83,87,106
+crates/oxc_ast/src/generated/derive_get_span.rs
+  s_d3ad640973ad49::t_b88e92f294c0e7 628,630,1105,1107,1189-1195,1203-1209
+crates/oxc_minifier/src/generated/traverse.rs
+  s_d3ad640973ad49::t_a452f931953f3c 1203-1217,1233-1247
+crates/oxc_type_checker/src/compiler/references.rs
+  s_d3ad640973ad49::t_53f43de90e2ab6 181-183,185-186,188
+crates/oxc_transformer/src/es2018/async_generator_functions/mod.rs
+  s_0d417fb46163f1::t_1104e815b7295d 131-132
+crates/oxc_linter/src/rules/import/group_exports.rs
+  s_d3ad640973ad49::t_f3c9b0473e8aca 78,80-83,86-89,92-99
+crates/oxc_linter/src/rules/unicorn/prefer_string_raw.rs
+  s_d3ad640973ad49::t_6676e16ac43c6a 91-92
+crates/oxc_formatter/src/ast_nodes/generated/format.rs
+  s_d3ad640973ad49::t_d1073b958e9a72 2753-2762,2773-2782,2988-3000,3014-3026
+crates/oxc_linter/src/rules/react/only_export_components.rs
+  s_d3ad640973ad49::t_f976c842be70f3 258-261,291-294,452,455,458-491,493-497,500-502,504-505
+  s_24c7ed7665ef98::t_2f66043f8b57d2 298-304,503,506-511,513-514,516-522,797-798,914
+crates/oxc_linter/src/rules/unicorn/require_module_attributes.rs
+  s_d3ad640973ad49::t_0fdea61305c9a8 138-144
+crates/oxc_linter/src/rules/unicorn/import_style.rs
+  s_d3ad640973ad49::t_234b1309767c39 15,328,378,384,496
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_d3ad640973ad49::t_7e9d379fc1ed4a 834,836,1605,1607,1757,1762-1792,1798
+crates/oxc_semantic/src/binder.rs
+  s_d3ad640973ad49::t_3182270e48e841 575-576,589-593,596,643-644,651
+crates/oxc_isolated_declarations/src/lib.rs
+  s_d3ad640973ad49::t_e4f20785584b59 297-299,301,308-314,316,320-321,448,484-485,536,538,548,556,564,580-581,588,598
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_d3ad640973ad49::t_be4370e4a2482c 1373,1375,1377-1380,2760-2784,2786-2803,2817-2819,6361-6364,6369-6372
+napi/parser/src-js/generated/deserialize/ts.js
+  s_d3ad640973ad49::t_08655bae66f4d0 1258,1260,1262-1265,2485-2506,2508-2522,2533-2535,5775-5778,5783-5786
+crates/oxc_ast/src/builder/custom.rs
+  s_d3ad640973ad49::t_5f96f7666ca2bc 14
+crates/oxc_parser/src/ts/statement.rs
+  s_d3ad640973ad49::t_3b6f584539c57d 451
+  s_e0ae719ccad812::t_2f8a366aa16153 455,458
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_d3ad640973ad49::t_135d3131b0a2f2 184,186-324,631-632,635-640,1418-1422,1425-1429,1432-1434,2123,2427,2429-2431,11448-11480,11492,11497,11522,11529-11541,11544-11545,11549,11553,11560,11564,11566-11567,11574,11582,11588,11597-11598,11602,11606,11613,11619,11627,11635,11641,11650-11651,11655,11659,11666,11672,11678,11680-11681,11688,11694
+crates/oxc_linter/src/rules/eslint/vars_on_top.rs
+  s_d3ad640973ad49::t_4029ae7f4243d3 113,146-147
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_d3ad640973ad49::t_4f66ee71db203a 120,122,322,324,524,526,721,723,5520-5527,5536-5543,6013,6020-6043,6048,6058-6090,6092-6097,6112
+crates/oxc_ast/src/generated/ast_kind.rs
+  s_d3ad640973ad49::t_7b92d535801305 11,106-206,311,313,520,522,719,721,920,922,1122,1124,1682-1686,1692-1696
+crates/oxc_linter/src/rules/typescript/no_invalid_void_type.rs
+  s_d3ad640973ad49::t_9a652e931a00a1 411,477-478
+crates/oxc_formatter/src/print/variable_declaration.rs
+  s_255411dcc7e3f7::t_71108d5002ab7c 27
+crates/oxc_linter/src/snapshots/react_only_export_components.snap
+  s_e0ae719ccad812::t_3f9671318e722b 41-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "475deb4eafd736fc07d24264841044bb7b0493f5",
+  "prompts": {},
+  "sessions": {
+    "s_0d417fb46163f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae1d-7d80-71e1-a657-209bd5460c73",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_24c7ed7665ef98": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae8e-9732-7950-801e-8884368fdaab",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_255411dcc7e3f7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae8e-6676-70e2-add2-8034c2438de0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_60ae018ae28f5b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae74-13c4-7363-a7d6-0613cbd8cd14",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_d3ad640973ad49": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fa96b-09c1-7881-b0ca-127222b208ef",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e0ae719ccad812": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fae8d-8a2b-7ea2-b984-d15fbe800cee",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
