@@ -31,7 +31,6 @@ mod simple_context;
 mod source_text;
 pub mod spec;
 mod state;
-mod text_range;
 mod traits;
 
 #[cfg(feature = "test_harness")]
@@ -68,7 +67,6 @@ pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source_text::SourceText;
 pub use state::FormatState;
-pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};
 
 /// Public return type of the formatter
