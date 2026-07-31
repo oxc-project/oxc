@@ -592,6 +592,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
+        // Check for-in initializer: only `var` declarations are allowed to have an initializer
+        // per Annex B.3.5 of the ECMAScript spec.
+        if let ForStatementLeft::VariableDeclaration(decl) = &left {
+            if decl.kind != VariableDeclarationKind::Var {
+                for declarator in &decl.declarations {
+                    if let Some(init) = &declarator.init {
+                        self.error(diagnostics::for_in_initializer(init.span()));
+                    }
+                }
+            }
+        }
+
         self.bump_any(); // bump `in`
         let right = self.parse_expr();
         self.expect_closing(Kind::RParen, parenthesis_opening_span);

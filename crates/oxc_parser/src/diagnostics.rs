@@ -735,6 +735,13 @@ pub fn using_declaration_not_allowed_in_for_in_statement(span: Span) -> OxcDiagn
 }
 
 #[cold]
+pub fn for_in_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("for..in loop variable declaration may not have an initializer.")
+        .with_label(span)
+        .with_help("Remove the initializer to fix this error.")
+}
+
+#[cold]
 pub fn using_declarations_must_be_initialized(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Using declarations must have an initializer.")
         .with_label(span)
