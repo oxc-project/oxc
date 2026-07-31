@@ -13,6 +13,11 @@ pub fn is_js_config_path(path: &Path) -> bool {
     )
 }
 
+/// Return `true` when `path` uses a TOML config extension.
+pub fn is_toml_config_path(path: &Path) -> bool {
+    matches!(path.extension().and_then(OsStr::to_str), Some("toml"))
+}
+
 /// A supported configuration file discovered on disk.
 ///
 /// The variant identifies which config source matched, while the contained path
@@ -22,6 +27,7 @@ pub fn is_js_config_path(path: &Path) -> bool {
 pub enum DiscoveredConfigFile {
     Json(PathBuf),
     Jsonc(PathBuf),
+    Toml(PathBuf),
     Js(PathBuf),
     Vite(PathBuf),
 }
@@ -30,7 +36,11 @@ impl DiscoveredConfigFile {
     /// Return the filesystem path for the discovered config file.
     pub fn path(&self) -> &Path {
         match self {
-            Self::Json(path) | Self::Jsonc(path) | Self::Js(path) | Self::Vite(path) => path,
+            Self::Json(path)
+            | Self::Jsonc(path)
+            | Self::Toml(path)
+            | Self::Js(path)
+            | Self::Vite(path) => path,
         }
     }
 }
@@ -45,6 +55,8 @@ pub struct ConfigFileNames {
     pub json: &'static str,
     /// JSONC config file name, such as `.oxlintrc.jsonc`.
     pub jsonc: &'static str,
+    /// TOML config file name, such as `.oxlintrc.toml`.
+    pub toml: &'static str,
     /// JavaScript or TypeScript config file names, such as `oxlint.config.ts`
     /// and `oxlint.config.mts`.
     pub js: &'static [&'static str],
@@ -68,14 +80,18 @@ impl ConfigDiscovery {
     /// Return supported config file names in discovery order.
     ///
     /// In Vite+ mode, only the configured Vite file name is returned. In
-    /// regular mode, JSON, JSONC, and JavaScript/TypeScript config names are
+    /// regular mode, JSON, JSONC, TOML, and JavaScript/TypeScript config names are
     /// returned in that order.
     pub fn config_file_names(&self) -> Vec<&'static str> {
         if self.vite_plus_mode {
             return vec![self.config_file_names.vite];
         }
 
-        let mut names = vec![self.config_file_names.json, self.config_file_names.jsonc];
+        let mut names = vec![
+            self.config_file_names.json,
+            self.config_file_names.jsonc,
+            self.config_file_names.toml,
+        ];
         names.extend_from_slice(self.config_file_names.js);
         names
     }
@@ -111,7 +127,10 @@ impl ConfigDiscovery {
             let name_supported = if self.vite_plus_mode {
                 name == names.vite
             } else {
-                name == names.json || name == names.jsonc || names.js.iter().any(|js| name == *js)
+                name == names.json
+                    || name == names.jsonc
+                    || name == names.toml
+                    || names.js.iter().any(|js| name == *js)
             };
             if !name_supported {
                 continue;
@@ -160,6 +179,9 @@ impl ConfigDiscovery {
         }
         if file_name == self.config_file_names.jsonc {
             return Some(DiscoveredConfigFile::Jsonc(candidate.to_path_buf()));
+        }
+        if file_name == self.config_file_names.toml {
+            return Some(DiscoveredConfigFile::Toml(candidate.to_path_buf()));
         }
         if self.config_file_names.js.iter().any(|js| file_name == *js) {
             return Some(DiscoveredConfigFile::Js(candidate.to_path_buf()));
@@ -257,11 +279,15 @@ fn format_conflicting_config_names(config_names: &[String]) -> String {
 mod test {
     use std::{fs, path::Path};
 
-    use super::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
+    use super::{
+        ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+        is_toml_config_path,
+    };
 
     const NAMES: ConfigFileNames = ConfigFileNames {
         json: ".oxlintrc.json",
         jsonc: ".oxlintrc.jsonc",
+        toml: ".oxlintrc.toml",
         js: &["oxlint.config.ts", "oxlint.config.mts"],
         vite: "vite.config.ts",
     };
@@ -283,6 +309,12 @@ mod test {
         assert!(is_js_config_path(Path::new("my-config.cts")));
         assert!(is_js_config_path(Path::new("my-config.mts")));
         assert!(!is_js_config_path(Path::new("oxlint.config.json")));
+    }
+
+    #[test]
+    fn test_is_toml_config_path() {
+        assert!(is_toml_config_path(Path::new("my-config.toml")));
+        assert!(!is_toml_config_path(Path::new("oxlint.config.json")));
     }
 
     #[test]

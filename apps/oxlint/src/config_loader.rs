@@ -8,6 +8,7 @@ use ignore::DirEntry;
 
 use oxc_config::{
     ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+    is_toml_config_path,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
@@ -18,7 +19,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use crate::utils::normalize_path;
 use crate::{
     DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_MTS_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME,
-    DEFAULT_TS_OXLINTRC_NAME,
+    DEFAULT_TOML_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME,
 };
 use crate::{VITE_CONFIG_NAME, vp_version};
 
@@ -38,6 +39,7 @@ pub struct JsConfigResult {
 const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: DEFAULT_OXLINTRC_NAME,
     jsonc: DEFAULT_JSONC_OXLINTRC_NAME,
+    toml: DEFAULT_TOML_OXLINTRC_NAME,
     js: &[DEFAULT_TS_OXLINTRC_NAME, DEFAULT_MTS_OXLINTRC_NAME],
     vite: VITE_CONFIG_NAME,
 };
@@ -318,6 +320,12 @@ impl<'a> ConfigLoader<'a> {
             .map_err(|error| ConfigLoadError::Parse { path: path.to_path_buf(), error })
     }
 
+    /// Load a single config from a file path
+    fn load_toml(path: &Path) -> Result<Oxlintrc, ConfigLoadError> {
+        Oxlintrc::from_toml_file(path)
+            .map_err(|error| ConfigLoadError::Parse { path: path.to_path_buf(), error })
+    }
+
     pub fn load_js_configs(
         &self,
         paths: &[PathBuf],
@@ -391,6 +399,10 @@ impl<'a> ConfigLoader<'a> {
                         Err(e) => errors.push(e),
                     }
                 }
+                Some(DiscoveredConfigFile::Toml(path)) => match Self::load_toml(path.as_path()) {
+                    Ok(config) => configs.push(config),
+                    Err(e) => errors.push(e),
+                },
                 Some(DiscoveredConfigFile::Js(path) | DiscoveredConfigFile::Vite(path)) => {
                     js_configs.push(path);
                 }
@@ -506,8 +518,8 @@ impl<'a> ConfigLoader<'a> {
     /// Try to load config from a specific directory.
     ///
     /// In Vite+ mode (`VP_VERSION` set): only checks for `vite.config.ts`.
-    /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`,
-    /// and `oxlint.config.mts`.
+    /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, `.oxlintrc.toml`,
+    /// `oxlint.config.ts`, and `oxlint.config.mts`.
     ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(
@@ -522,6 +534,7 @@ impl<'a> ConfigLoader<'a> {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {
                 Oxlintrc::from_file(&path).map(Some)
             }
+            Some(DiscoveredConfigFile::Toml(path)) => Oxlintrc::from_toml_file(&path).map(Some),
             Some(DiscoveredConfigFile::Js(path)) => {
                 let config = self.load_root_js_config(&path)?;
                 debug_assert!(
@@ -588,6 +601,9 @@ impl<'a> ConfigLoader<'a> {
                     full_path.display()
                 ))
             });
+        }
+        if is_toml_config_path(&full_path) {
+            return Oxlintrc::from_toml_file(&full_path);
         }
         Oxlintrc::from_file(&full_path)
     }
@@ -711,7 +727,7 @@ fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
         "JavaScript/TypeScript config file ({}) found but JS runtime not available.",
         path.display()
     ))
-    .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json or .oxlintrc.jsonc).")
+    .with_help("Run oxlint via the npm package, or use JSON/TOML config files (.oxlintrc.json, .oxlintrc.jsonc, or .oxlintrc.toml).")
 }
 
 fn nested_type_aware_not_supported(path: &Path) -> OxcDiagnostic {
@@ -1272,6 +1288,25 @@ mod test {
     }
 
     #[test]
+    fn test_toml_config_discovery() {
+        let root_dir = tempfile::tempdir().unwrap();
+        // Create only a .oxlintrc.toml file
+        std::fs::write(root_dir.path().join(".oxlintrc.toml"), r#"# Comment\n[rules]"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(result.is_ok(), "Expected .oxlintrc.toml to be discovered and loaded");
+        let config = result.unwrap();
+        assert!(
+            config.path.to_string_lossy().ends_with(".oxlintrc.toml"),
+            "Expected config path to end with .oxlintrc.toml, got: {}",
+            config.path.display()
+        );
+    }
+
+    #[test]
     fn test_json_and_jsonc_conflict() {
         let root_dir = tempfile::tempdir().unwrap();
         // Create both .oxlintrc.json and .oxlintrc.jsonc
@@ -1290,6 +1325,23 @@ mod test {
     }
 
     #[test]
+    fn test_json_and_toml_conflict() {
+        let root_dir = tempfile::tempdir().unwrap();
+        // Create both .oxlintrc.json and .oxlintrc.jsonc
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.toml"), r#"# Comment\n[rules]"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(
+            result.is_err(),
+            "Expected an error when both .oxlintrc.json and .oxlintrc.toml exist"
+        );
+    }
+
+    #[test]
     fn test_json_and_ts_conflict() {
         let root_dir = tempfile::tempdir().unwrap();
         std::fs::write(root_dir.path().join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
@@ -1300,6 +1352,20 @@ mod test {
 
         let result = loader.load_root_config(root_dir.path(), None);
         assert!(result.is_err(), "Expected an error when both JSON and TS configs exist");
+    }
+
+    #[test]
+    fn test_jsonc_and_toml_conflict() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.jsonc"), r#"{ /* comment */ "rules": {} }"#)
+            .unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.toml"), r#"# Comment\n[rules]"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(result.is_err(), "Expected an error when both JSONC and TOML configs exist");
     }
 
     #[test]
@@ -1314,6 +1380,19 @@ mod test {
 
         let result = loader.load_root_config(root_dir.path(), None);
         assert!(result.is_err(), "Expected an error when both JSONC and TS configs exist");
+    }
+
+    #[test]
+    fn test_toml_and_ts_conflict() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.toml"), r#"# Comment\n[rules]"#).unwrap();
+        std::fs::write(root_dir.path().join("oxlint.config.ts"), "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(result.is_err(), "Expected an error when both TOML and TS configs exist");
     }
 
     #[test]

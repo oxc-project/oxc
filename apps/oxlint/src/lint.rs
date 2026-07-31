@@ -290,7 +290,7 @@ impl CliRunner {
                                 ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
                                     "Error: JavaScript/TypeScript config files found but JS runtime not available.\n\
                                      This is an experimental feature that requires running oxlint via Node.js.\n\
-                                     Please use JSON config files (.oxlintrc.json or .oxlintrc.jsonc) instead, or run oxlint via the npm package.\n".to_string()
+                                     Please use JSON/TOML config files (.oxlintrc.json, .oxlintrc.jsonc, or .oxlintrc.toml) instead, or run oxlint via the npm package.\n".to_string()
                                 }
                                 ConfigLoadError::Diagnostic(error) => {
                                     let report = render_report(&handler, error);
@@ -966,6 +966,14 @@ mod test {
         let args = &["debugger.js"];
         Tester::new()
             .with_cwd("fixtures/cli/auto_config_detection_jsonc".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn oxlint_config_auto_detection_toml() {
+        let args = &["debugger.js"];
+        Tester::new()
+            .with_cwd("fixtures/cli/auto_config_detection_toml".into())
             .test_and_snapshot(args);
     }
 

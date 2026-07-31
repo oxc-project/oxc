@@ -2259,6 +2259,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "toml",
  "unicode-segmentation",
  "url",
 ]
@@ -2869,6 +2870,7 @@ dependencies = [
  "sort-package-json",
  "tempfile",
  "tokio",
+ "toml",
  "tower-lsp-server",
  "tracing",
  "tracing-subscriber",
@@ -2908,6 +2910,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
+ "toml",
  "tower-lsp-server",
  "tracing",
  "tracing-subscriber",

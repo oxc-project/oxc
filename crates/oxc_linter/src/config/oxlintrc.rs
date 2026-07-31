@@ -368,14 +368,6 @@ impl Oxlintrc {
         Ok(config)
     }
 
-    /// Returns the directory containing this configuration file.
-    ///
-    /// Returns `None` when the configuration was not loaded from a file (`path` is empty),
-    /// e.g. when no configuration file was found.
-    pub fn dir(&self) -> Option<&Path> {
-        self.path.parent()
-    }
-
     /// # Errors
     ///
     /// * Parse Failure
@@ -392,6 +384,58 @@ impl Oxlintrc {
         Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })
+    }
+
+    /// # Errors
+    ///
+    /// * Parse Failure
+    pub fn from_toml_file(path: &Path) -> Result<Self, OxcDiagnostic> {
+        let string = read_to_string(path).map_err(|e| {
+            OxcDiagnostic::error(format!(
+                "Failed to parse config {} with error {e:?}",
+                path.display()
+            ))
+        })?;
+
+        let toml = toml::from_str::<toml::Table>(&string).map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to parse oxlint config {}.\n{err}",
+                path.display()
+            ))
+        })?;
+
+        let mut config = Self::deserialize(toml).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
+        })?;
+
+        config.path = path.to_path_buf();
+
+        #[expect(clippy::missing_panics_doc)]
+        let config_dir =
+            config.path.parent().expect("config path should have a parent directory").to_path_buf();
+        config.set_config_dir(&config_dir);
+
+        Ok(config)
+    }
+
+    /// # Errors
+    ///
+    /// * Parse Failure
+    pub fn from_toml_string(toml_string: &str) -> Result<Self, OxcDiagnostic> {
+        let toml =
+            toml::from_str::<toml::Table>(toml_string).unwrap_or_else(|_| toml::Table::new());
+
+        Self::deserialize(toml).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
+        })
+    }
+
+    /// Returns the directory containing this configuration file.
+    ///
+    /// Returns `None` when the configuration was not loaded from a file (`path` is empty),
+    /// e.g. when no configuration file was found.
+    pub fn dir(&self) -> Option<&Path> {
+        self.path.parent()
     }
 
     /// Merges two [Oxlintrc] files together.
@@ -509,6 +553,7 @@ fn is_json_ext(ext: &str) -> bool {
 mod test {
     use rustc_hash::FxHashSet;
     use serde_json::json;
+    use toml::toml;
 
     use crate::config::{external_plugins::ExternalPluginEntry, plugins::LintPlugins};
 
@@ -517,6 +562,24 @@ mod test {
     #[test]
     fn test_oxlintrc_de_empty() {
         let config: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        assert_eq!(config.plugins, None);
+        assert_eq!(config.rules, OxlintRules::default());
+        assert!(config.rules.is_empty());
+        assert_eq!(config.settings, OxlintSettings::default());
+        assert_eq!(config.env, OxlintEnv::default());
+        assert_eq!(config.path, PathBuf::default());
+        assert_eq!(config.extends, Vec::<PathBuf>::default());
+        assert_eq!(config.options.type_aware, None);
+        assert_eq!(config.options.type_check, None);
+        assert_eq!(config.options.deny_warnings, None);
+        assert_eq!(config.options.max_warnings, None);
+        assert_eq!(config.options.report_unused_disable_directives, None);
+        assert_eq!(config.options.respect_eslint_disable_directives, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_de_empty_toml() {
+        let config: Oxlintrc = toml::from_str::<Oxlintrc>("").unwrap();
         assert_eq!(config.plugins, None);
         assert_eq!(config.rules, OxlintRules::default());
         assert!(config.rules.is_empty());
@@ -646,6 +709,140 @@ mod test {
 
         let config: Result<Oxlintrc, _> =
             serde_json::from_value(json!({ "respectEslintDisableDirectives": false }));
+        assert!(config.is_err());
+    }
+
+    #[test]
+    fn test_oxlintrc_options_deserialize_toml() {
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            typeAware = true
+        })
+        .unwrap();
+        assert_eq!(config.options.type_aware, Some(true));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            typeAware = false
+        })
+        .unwrap();
+        assert_eq!(config.options.type_aware, Some(false));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            typeCheck = true
+        })
+        .unwrap();
+        assert_eq!(config.options.type_check, Some(true));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            typeCheck = false
+        })
+        .unwrap();
+        assert_eq!(config.options.type_check, Some(false));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            denyWarnings = true
+        })
+        .unwrap();
+        assert_eq!(config.options.deny_warnings, Some(true));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            denyWarnings = false
+        })
+        .unwrap();
+        assert_eq!(config.options.deny_warnings, Some(false));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            maxWarnings = 10
+        })
+        .unwrap();
+        assert_eq!(config.options.max_warnings, Some(10));
+
+        let config: Result<Oxlintrc, _> = Oxlintrc::deserialize(toml! {
+            [options]
+            maxWarnings = -1
+        });
+        assert!(config.is_err());
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            reportUnusedDisableDirectives = "warn"
+        })
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
+
+        // error and deny
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            reportUnusedDisableDirectives = "error"
+        })
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            reportUnusedDisableDirectives = "deny"
+        })
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // off and allow
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            reportUnusedDisableDirectives = "off"
+        })
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            reportUnusedDisableDirectives = "allow"
+        })
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            respectEslintDisableDirectives = false
+        })
+        .unwrap();
+        assert_eq!(config.options.respect_eslint_disable_directives, Some(false));
+
+        let config: Oxlintrc = Oxlintrc::deserialize(toml! {
+            [options]
+            respectEslintDisableDirectives = true
+        })
+        .unwrap();
+        assert_eq!(config.options.respect_eslint_disable_directives, Some(true));
+    }
+
+    #[test]
+    fn test_oxlintrc_top_level_options_rejected_toml() {
+        let config: Result<Oxlintrc, _> = Oxlintrc::deserialize(toml! { typeAware = true });
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = Oxlintrc::deserialize(toml! { typeCheck = true });
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = Oxlintrc::deserialize(toml! { denyWarnings = true });
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = Oxlintrc::deserialize(toml! { maxWarnings = 1 });
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> =
+            Oxlintrc::deserialize(toml! { reportUnusedDisableDirectives = "warn" });
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> =
+            Oxlintrc::deserialize(toml! { respectEslintDisableDirectives = false });
         assert!(config.is_err());
     }
 

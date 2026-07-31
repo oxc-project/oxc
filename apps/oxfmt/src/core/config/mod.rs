@@ -19,7 +19,9 @@ use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use serde_json::Value;
 use tracing::instrument;
 
-use oxc_config::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
+use oxc_config::{
+    ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path, is_toml_config_path,
+};
 #[cfg(feature = "napi")]
 use oxc_formatter::JsFormatOptions;
 
@@ -40,6 +42,7 @@ use super::{
 const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: ".oxfmtrc.json",
     jsonc: ".oxfmtrc.jsonc",
+    toml: ".oxfmtrc.toml",
     js: &["oxfmt.config.ts", "oxfmt.config.mts"],
     vite: "vite.config.ts",
 };
@@ -69,9 +72,12 @@ pub fn build_resolver_from_discovered(
         DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path) => {
             ConfigResolver::from_json_config(Some(&path), editorconfig).map(Some)
         }
+        DiscoveredConfigFile::Toml(path) => {
+            ConfigResolver::from_toml_config(Some(&path), editorconfig).map(Some)
+        }
         #[cfg(not(feature = "napi"))]
         DiscoveredConfigFile::Js(path) | DiscoveredConfigFile::Vite(path) => Err(format!(
-            "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
+            "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC/TOML instead.",
             path.display()
         )),
         #[cfg(feature = "napi")]
@@ -211,8 +217,9 @@ pub struct ConfigResolver {
 }
 
 impl ConfigResolver {
-    /// Shared internal constructor used by both:
+    /// Shared internal constructor used by:
     /// - `from_json_config()` (JSON/JSONC)
+    /// - `from_toml_config()` (TOML)
     /// - and `from_config()` (JS/TS config evaluated externally)
     fn new(
         raw_config: Value,
@@ -243,7 +250,7 @@ impl ConfigResolver {
         })
     }
 
-    /// Create a resolver, handling both JSON/JSONC and JS/TS config files.
+    /// Create a resolver, handling both JSON/JSONC/TOML and JS/TS config files.
     ///
     /// When `oxfmtrc_path` is `Some`, it is treated as an explicitly specified config file.
     /// When `oxfmtrc_path` is `None`, auto-discovery searches upwards from `cwd`.
@@ -271,7 +278,7 @@ impl ConfigResolver {
                 #[cfg(not(feature = "napi"))]
                 {
                     return Err(format!(
-                        "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC instead.",
+                        "JS/TS config file ({}) is not supported in pure Rust CLI.\nUse JSON/JSONC/TOML instead.",
                         path.display()
                     ));
                 }
@@ -296,6 +303,10 @@ impl ConfigResolver {
                         editorconfig,
                     ));
                 }
+            }
+
+            if is_toml_config_path(&path) {
+                return Self::from_toml_config(Some(&path), editorconfig);
             }
 
             return Self::from_json_config(Some(&path), editorconfig);
@@ -369,6 +380,35 @@ impl ConfigResolver {
         // Store the config directory for override path resolution
         let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
 
+        Ok(Self::new(raw_config, config_dir, editorconfig))
+    }
+
+    /// Create a resolver by loading TOML config from a file path.
+    ///
+    /// Also used as the default (empty config) fallback when no config file is found.
+    #[instrument(level = "debug", name = "oxfmt::config::from_toml_config", skip_all)]
+    pub(crate) fn from_toml_config(
+        oxfmtrc_path: Option<&Path>,
+        editorconfig: Option<EditorConfig>,
+    ) -> Result<Self, String> {
+        // Read and parse config file, or use empty TOML if not found
+        let toml_string = match oxfmtrc_path {
+            Some(path) => {
+                utils::read_to_string(path)
+                    // Do not include OS error, it differs between platforms
+                    .map_err(|_| format!("Failed to read {}: File not found", path.display()))?
+            }
+            None => "".to_string(),
+        };
+
+        // Parse as raw TOML value
+        let raw_config_table: toml::Table =
+            toml::from_str(&toml_string).map_err(|err| err.to_string())?;
+        // Store the config directory for override path resolution
+        let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
+
+        // Convert from TOML types to JSON types
+        let raw_config = raw_config_table.try_into().map_err(|err| err.to_string())?;
         Ok(Self::new(raw_config, config_dir, editorconfig))
     }
 

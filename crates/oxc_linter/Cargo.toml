@@ -75,6 +75,9 @@ serde_json = { workspace = true, features = [
 ] } # preserve_order: print config with ordered keys.
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
+toml = { workspace = true, features = [
+  "preserve_order",
+] } # preserve_order: print config with ordered keys.
 unicode-segmentation = { workspace = true }
 url = { workspace = true }
 

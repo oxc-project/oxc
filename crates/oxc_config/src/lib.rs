@@ -7,6 +7,7 @@ mod walk;
 
 pub use discovery::{
     ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+    is_toml_config_path,
 };
 pub use glob_set::{GlobSet, validate_glob_pattern};
 pub use ignore_patterns::validate_ignore_pattern;
