@@ -172,6 +172,7 @@ const categories: Category[] = [
         excludes: ["syntax-error"],
         resolveFilePath: (name) => name.replace("/input.html", ".svelte"),
       },
+      { dir: join(FIXTURES_DIR, "edge-cases", "svelte") },
     ],
     optionSets: [
       { printWidth: 80, svelte: {} },
