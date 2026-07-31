@@ -2706,12 +2706,12 @@ impl<'a> Dummy<'a> for TSSignature<'a> {
 impl<'a> Dummy<'a> for TSIndexSignature<'a> {
     /// Create a dummy [`TSIndexSignature`].
     ///
-    /// Has cost of making 2 allocations (48 bytes).
+    /// Has cost of making 4 allocations (96 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            parameters: Dummy::dummy(allocator),
+            parameter: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             readonly: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),

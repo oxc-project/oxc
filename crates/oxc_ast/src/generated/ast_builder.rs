@@ -15827,25 +15827,22 @@ impl<'a> ClassElement<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `parameters`
+    /// * `parameter`
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, V1>(
+    pub fn new_ts_index_signature<B: GetAstBuilder<'a>>(
         span: Span,
-        parameters: V1,
+        parameter: TSIndexSignatureName<'a>,
         type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
-    ) -> Self
-    where
-        V1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-    {
+    ) -> Self {
         Self::TSIndexSignature(TSIndexSignature::boxed(
             span,
-            parameters,
+            parameter,
             type_annotation,
             readonly,
             r#static,
@@ -25475,25 +25472,22 @@ impl<'a> TSSignature<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `parameters`
+    /// * `parameter`
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new_ts_index_signature<B: GetAstBuilder<'a>, V1>(
+    pub fn new_ts_index_signature<B: GetAstBuilder<'a>>(
         span: Span,
-        parameters: V1,
+        parameter: TSIndexSignatureName<'a>,
         type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
-    ) -> Self
-    where
-        V1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-    {
+    ) -> Self {
         Self::TSIndexSignature(TSIndexSignature::boxed(
             span,
-            parameters,
+            parameter,
             type_annotation,
             readonly,
             r#static,
@@ -25743,27 +25737,24 @@ impl<'a> TSIndexSignature<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `parameters`
+    /// * `parameter`
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn new<B: GetAstBuilder<'a>, V1>(
+    pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
-        parameters: V1,
+        parameter: TSIndexSignatureName<'a>,
         type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
-    ) -> Self
-    where
-        V1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-    {
+    ) -> Self {
         let builder = builder.builder();
         TSIndexSignature {
             node_id: Cell::new(builder.node_id()),
             span,
-            parameters: parameters.into_in(builder.allocator()),
+            parameter,
             type_annotation,
             readonly,
             r#static,
@@ -25777,25 +25768,22 @@ impl<'a> TSIndexSignature<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `parameters`
+    /// * `parameter`
     /// * `type_annotation`
     /// * `readonly`
     /// * `static`
     #[inline]
-    pub fn boxed<B: GetAstBuilder<'a>, V1>(
+    pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
-        parameters: V1,
+        parameter: TSIndexSignatureName<'a>,
         type_annotation: ArenaBox<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
         r#static: bool,
         builder: &B,
-    ) -> ArenaBox<'a, Self>
-    where
-        V1: IntoIn<'a, ArenaVec<'a, TSIndexSignatureName<'a>>>,
-    {
+    ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new(span, parameters, type_annotation, readonly, r#static, builder),
+            Self::new(span, parameter, type_annotation, readonly, r#static, builder),
             &builder.allocator(),
         )
     }

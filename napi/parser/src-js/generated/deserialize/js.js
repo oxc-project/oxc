@@ -3681,8 +3681,8 @@ function deserializeTSIndexSignature(pos) {
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
-  node.parameters = deserializeVecTSIndexSignatureName(pos + 16);
-  node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 40);
+  node.parameters = [deserializeTSIndexSignatureName(pos + 16)];
+  node.typeAnnotation = deserializeBoxTSTypeAnnotation(pos + 56);
   return node;
 }
 
@@ -5891,18 +5891,6 @@ function deserializeBoxTSConstructSignatureDeclaration(pos) {
 
 function deserializeBoxTSMethodSignature(pos) {
   return deserializeTSMethodSignature(int32[pos >> 2]);
-}
-
-function deserializeVecTSIndexSignatureName(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
-  pos = int32[pos32];
-  let endPos = pos + int32[pos32 + 2] * 40;
-  for (; pos !== endPos;) {
-    arr.push(deserializeTSIndexSignatureName(pos));
-    pos += 40;
-  }
-  return arr;
 }
 
 function deserializeOptionTSModuleDeclarationBody(pos) {

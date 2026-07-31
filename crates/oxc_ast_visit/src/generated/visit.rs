@@ -1361,11 +1361,6 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_index_signature_names(&mut self, it: &ArenaVec<'a, TSIndexSignatureName<'a>>) {
-        walk_ts_index_signature_names(self, it);
-    }
-
-    #[inline]
     fn visit_spans(&mut self, it: &ArenaVec<'a, Span>) {
         walk_spans(self, it);
     }
@@ -3785,7 +3780,7 @@ pub mod walk {
         let kind = AstKind::TSIndexSignature(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_index_signature_names(&it.parameters);
+        visitor.visit_ts_index_signature_name(&it.parameter);
         visitor.visit_ts_type_annotation(&it.type_annotation);
         visitor.leave_node(kind);
     }
@@ -4539,16 +4534,6 @@ pub mod walk {
     ) {
         for el in it {
             visitor.visit_ts_signature(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_ts_index_signature_names<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &ArenaVec<'a, TSIndexSignatureName<'a>>,
-    ) {
-        for el in it {
-            visitor.visit_ts_index_signature_name(el);
         }
     }
 

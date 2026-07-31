@@ -1900,7 +1900,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_index_signature(&mut self, it: &TSIndexSignature<'a>) {
-        self.visit_ts_index_signature_names(&it.parameters);
+        self.visit_ts_index_signature_name(&it.parameter);
         self.visit_ts_type_annotation(&it.type_annotation);
     }
 

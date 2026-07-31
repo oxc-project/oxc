@@ -4853,14 +4853,15 @@ unsafe fn walk_ts_index_signature<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_ts_index_signature(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameters(
-        ancestor::TSIndexSignatureWithoutParameters(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameter(
+        ancestor::TSIndexSignatureWithoutParameter(node, PhantomData),
     ));
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
-        as *mut ArenaVec<TSIndexSignatureName>)
-    {
-        walk_ts_index_signature_name(traverser, item as *mut _, ctx);
-    }
+    walk_ts_index_signature_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETER)
+            as *mut TSIndexSignatureName,
+        ctx,
+    );
     ctx.retag_stack(AncestorType::TSIndexSignatureTypeAnnotation);
     walk_ts_type_annotation(
         traverser,

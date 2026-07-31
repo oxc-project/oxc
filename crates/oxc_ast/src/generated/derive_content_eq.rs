@@ -2263,7 +2263,7 @@ impl ContentEq for TSSignature<'_> {
 
 impl ContentEq for TSIndexSignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.parameters, &other.parameters)
+        ContentEq::content_eq(&self.parameter, &other.parameter)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
             && ContentEq::content_eq(&self.r#static, &other.r#static)

@@ -1,7 +1,9 @@
 use std::cell::Cell;
 
 use oxc_ast_macros::ast_meta;
-use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_estree::{
+    Concat2, ESTree, JsonSafeString, SequenceSerializer, Serializer, StructSerializer,
+};
 use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
@@ -401,6 +403,25 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 e.serialize(serializer);
             }
         }
+    }
+}
+
+/// Serializer for `parameters` field of `TSIndexSignature`.
+///
+/// The Rust AST stores the single parameter required by the TypeScript grammar directly, while
+/// TS-ESTree represents it as a one-element array.
+#[ast_meta]
+#[estree(
+    ts_type = "Array<TSIndexSignatureName>",
+    raw_deser = "[DESER[TSIndexSignatureName](POS_OFFSET.parameter)]"
+)]
+pub struct TSIndexSignatureParameters<'a, 'b>(pub &'b TSIndexSignature<'a>);
+
+impl ESTree for TSIndexSignatureParameters<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+        seq.serialize_element(&self.0.parameter);
+        seq.end();
     }
 }
 
