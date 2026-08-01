@@ -17,23 +17,25 @@ impl<'a> JSDocFinder<'a> {
         Self { attached, not_attached }
     }
 
+    /// Borrows rather than clones: `JSDoc` caches its parse in a `OnceCell`, so a clone
+    /// would hand each caller an empty cache and reparse the comment once per caller.
     pub fn get_one_by_node<'b>(
         &'b self,
         nodes: &AstNodes<'a>,
         node: &AstNode<'a>,
-    ) -> Option<JSDoc<'a>> {
+    ) -> Option<&'b JSDoc<'a>> {
         let jsdocs = self.get_all_by_node(nodes, node)?;
 
         // If flagged, at least 1 JSDoc is attached
         // If multiple JSDocs are attached, return the last = nearest
-        jsdocs.last().cloned()
+        jsdocs.last()
     }
 
     pub fn get_all_by_node<'b>(
         &'b self,
         nodes: &AstNodes<'a>,
         node: &AstNode<'a>,
-    ) -> Option<Vec<JSDoc<'a>>> {
+    ) -> Option<&'b [JSDoc<'a>]> {
         if !nodes.flags(node.id()).has_jsdoc() {
             return None;
         }
@@ -42,8 +44,8 @@ impl<'a> JSDocFinder<'a> {
         self.get_all_by_span(span)
     }
 
-    pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDoc<'a>>> {
-        self.attached.get(&span.start).cloned()
+    pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<&'b [JSDoc<'a>]> {
+        self.attached.get(&span.start).map(Vec::as_slice)
     }
 
     pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &'b JSDoc<'a>> + 'b {
@@ -83,7 +85,7 @@ mod test {
         let semantic = build_semantic(allocator, source_text, source_type);
         let start = u32::try_from(source_text.find(symbol).unwrap_or(0)).unwrap();
         let span = Span::sized(start, u32::try_from(symbol.len()).unwrap());
-        semantic.jsdoc().get_all_by_span(span)
+        semantic.jsdoc().get_all_by_span(span).map(<[JSDoc]>::to_vec)
     }
 
     fn test_jsdoc_found(source_text: &str, symbol: &str, source_type: Option<SourceType>) {
