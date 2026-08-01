@@ -183,10 +183,13 @@ impl<'a> Transformer<'a> {
             common: Common::new(&self.env),
             decorator: Decorator::new(self.decorator),
             plugins: Plugins::new(self.plugins),
-            x0_typescript: program
-                .source_type
-                .is_typescript()
-                .then(|| TypeScript::new(&self.typescript, &self.state)),
+            // Static ETS is a TypeScript-family source language, but it is not
+            // TypeScript syntax that can be erased into JavaScript. Running the
+            // TypeScript transform here would drop ETS-only declarations,
+            // modifiers and type operands, producing invalid/lossy output.
+            x0_typescript: (program.source_type.is_typescript()
+                && !program.source_type.is_ets_static())
+            .then(|| TypeScript::new(&self.typescript, &self.state)),
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,

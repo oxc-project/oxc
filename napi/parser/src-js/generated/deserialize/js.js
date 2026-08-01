@@ -4570,13 +4570,11 @@ function deserializeETSNewArrayInstanceExpression(pos) {
     type: "ETSNewArrayInstanceExpression",
     typeAnnotation: null,
     dimension: null,
-    initializer: null,
     start: deserializeI32(pos),
     end: deserializeI32(pos + 4),
   };
   node.typeAnnotation = deserializeTSType(pos + 16);
   node.dimension = deserializeExpression(pos + 32);
-  node.initializer = deserializeOptionExpression(pos + 48);
   return node;
 }
 

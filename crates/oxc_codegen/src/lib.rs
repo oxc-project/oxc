@@ -133,6 +133,11 @@ pub struct Codegen<'a> {
     /// Skip printing struct decorators (they're handled by the parent export)
     skip_struct_decorators: bool,
 
+    /// Annotation values in static ETS only accept es2panda's restricted
+    /// constant-expression grammar. In particular, a string literal must not
+    /// be re-quoted as a no-substitution template literal while minifying.
+    in_ets_annotation_value: bool,
+
     /// Track the current indentation level
     indent: u32,
 
@@ -207,6 +212,7 @@ impl<'a> Codegen<'a> {
             skip_function_decorators: false,
             skip_class_decorators: false,
             skip_struct_decorators: false,
+            in_ets_annotation_value: false,
             is_jsx: false,
             is_arkui: false,
             indent: 0,

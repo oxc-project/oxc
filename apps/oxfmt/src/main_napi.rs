@@ -97,7 +97,7 @@ pub async fn run_cli(
     utils::init_tracing();
     let result = match command.mode {
         Mode::Lsp => {
-            run_lsp(js_config_loader, external_formatter.clone()).await;
+            run_lsp(js_config_loader, external_formatter.clone(), command.lang).await;
 
             ("lsp".to_string(), Some(0))
         }

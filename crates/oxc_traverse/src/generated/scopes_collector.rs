@@ -2259,9 +2259,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_ets_new_array_instance_expression(&mut self, it: &ETSNewArrayInstanceExpression<'a>) {
         self.visit_ts_type(&it.type_annotation);
         self.visit_expression(&it.dimension);
-        if let Some(initializer) = &it.initializer {
-            self.visit_expression(initializer);
-        }
     }
 
     #[inline]

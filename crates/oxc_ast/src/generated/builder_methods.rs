@@ -1609,20 +1609,17 @@ impl<'a> Expression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
             span,
             type_annotation,
             dimension,
-            initializer,
             builder,
         ))
     }
@@ -3563,20 +3560,17 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
             span,
             type_annotation,
             dimension,
-            initializer,
             builder,
         ))
     }
@@ -5406,20 +5400,17 @@ impl<'a> PropertyKey<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
             span,
             type_annotation,
             dimension,
-            initializer,
             builder,
         ))
     }
@@ -7844,20 +7835,17 @@ impl<'a> Argument<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
             span,
             type_annotation,
             dimension,
-            initializer,
             builder,
         ))
     }
@@ -14229,20 +14217,17 @@ impl<'a> ForStatementInit<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
             span,
             type_annotation,
             dimension,
-            initializer,
             builder,
         ))
     }
@@ -20964,20 +20949,17 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
             span,
             type_annotation,
             dimension,
-            initializer,
             builder,
         ))
     }
@@ -23651,20 +23633,17 @@ impl<'a> JSXExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
             span,
             type_annotation,
             dimension,
-            initializer,
             builder,
         ))
     }
@@ -31910,13 +31889,11 @@ impl<'a> ETSNewArrayInstanceExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn new<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> Self {
         let builder = builder.builder();
@@ -31925,7 +31902,6 @@ impl<'a> ETSNewArrayInstanceExpression<'a> {
             span,
             type_annotation,
             dimension,
-            initializer,
         }
     }
 
@@ -31938,19 +31914,14 @@ impl<'a> ETSNewArrayInstanceExpression<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[inline]
     pub fn boxed<B: GetAstBuilder<'a>>(
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
         builder: &B,
     ) -> ArenaBox<'a, Self> {
-        ArenaBox::new_in(
-            Self::new(span, type_annotation, dimension, initializer, builder),
-            builder.builder(),
-        )
+        ArenaBox::new_in(Self::new(span, type_annotation, dimension, builder), builder.builder())
     }
 }
 

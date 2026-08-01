@@ -69,7 +69,7 @@ impl WalkRunner {
         let start_time = Instant::now();
 
         let cwd = self.cwd;
-        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options } =
+        let FormatCommand { paths, mode, config_options, ignore_options, runtime_options, lang } =
             self.options;
         // If `napi` feature is disabled, there is no other mode.
         #[cfg_attr(not(feature = "napi"), expect(irrefutable_let_patterns))]
@@ -159,7 +159,7 @@ impl WalkRunner {
 
         // Run scoped walks (root + nested) sends entries to `tx_entry` and errors to `tx_error`.
         // Manually drop after the walk to signal the formatting service that no more entries will be sent.
-        let any_config_found = match ScopedWalker::new(cwd, &paths).run(
+        let any_config_found = match ScopedWalker::new(cwd, &paths).with_language(lang).run(
             root_config_resolver,
             &resolved_ignore_paths,
             ignore_options.with_node_modules,

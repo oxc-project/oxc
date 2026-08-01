@@ -1,5 +1,6 @@
 mod enum_eval;
 mod es_target;
+mod ets_static;
 mod helper_call;
 #[cfg(feature = "react_compiler")]
 mod react_compiler;
@@ -28,9 +29,19 @@ pub fn codegen(source_text: &str, source_type: SourceType) -> String {
 }
 
 pub(crate) fn test(source_text: &str, options: &TransformOptions) -> Result<String, Diagnostics> {
-    let source_type = SourceType::default();
+    test_with_source_type(source_text, SourceType::default(), options)
+}
+
+pub(crate) fn test_with_source_type(
+    source_text: &str,
+    source_type: SourceType,
+    options: &TransformOptions,
+) -> Result<String, Diagnostics> {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
+    if !ret.diagnostics.is_empty() {
+        return Err(ret.diagnostics);
+    }
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let ret = Transformer::new(&allocator, Path::new(""), options)

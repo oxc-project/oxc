@@ -1424,50 +1424,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::RBrack);
             }
 
-            if self.at(Kind::LParen) {
-                let opening_span = self.cur_token().span();
-                self.expect(Kind::LParen);
-                let (mut initializers, _) = self.context_add(Context::In, |p| {
-                    p.parse_delimited_list(
-                        Kind::RParen,
-                        Kind::Comma,
-                        opening_span,
-                        Self::parse_assignment_expression_or_higher,
-                    )
-                });
-                self.expect(Kind::RParen);
-                if initializers.len() != 1 {
-                    self.error(diagnostics::ets_array_initializer_count(self.end_span(span)));
-                }
-                let initializer = (!initializers.is_empty()).then(|| initializers.remove(0));
-
-                if dimensions.len() == 1 {
-                    return Expression::ETSNewArrayInstanceExpression(
-                        ETSNewArrayInstanceExpression::boxed(
-                            self.end_span(span),
-                            type_annotation,
-                            dimensions.remove(0),
-                            initializer,
-                            self,
-                        ),
-                    );
-                }
-
-                self.error(diagnostics::ets_multidimensional_array(self.end_span(span)));
-                return Expression::ETSNewMultiDimArrayInstanceExpression(
-                    ETSNewMultiDimArrayInstanceExpression::boxed(
+            if dimensions.len() == 1 {
+                return Expression::ETSNewArrayInstanceExpression(
+                    ETSNewArrayInstanceExpression::boxed(
                         self.end_span(span),
                         type_annotation,
-                        dimensions,
+                        dimensions.remove(0),
                         self,
                     ),
                 );
             }
 
-            // Match es2panda's error-recovery shape: after reporting a missing
-            // array initializer, it falls through and produces a class-instance
-            // node for the parsed type. The invalid dimensions are discarded.
-            self.error(diagnostics::ets_array_initializer_required(self.end_span(span)));
+            return Expression::ETSNewMultiDimArrayInstanceExpression(
+                ETSNewMultiDimArrayInstanceExpression::boxed(
+                    self.end_span(span),
+                    type_annotation,
+                    dimensions,
+                    self,
+                ),
+            );
         }
 
         let has_arguments = self.at(Kind::LParen);
@@ -2264,6 +2239,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// ``AwaitExpression`[Yield]` :
     ///     await `UnaryExpression`[?Yield, +Await]
     fn parse_await_expression(&mut self, lhs_span: u32) -> Expression<'a> {
+        // es2panda parses `await` independently of whether the enclosing
+        // function is marked `async`; contextual validity is checked after
+        // parsing. Keep the JavaScript/TypeScript diagnostics unchanged.
+        if self.source_type.is_ets_static() {
+            let span = self.start_span();
+            self.bump_any(); // consume `await`
+            let argument = self.context_add(Context::Await, |p| {
+                p.parse_unary_expression_or_higher(p.start_span())
+            });
+            return Expression::new_await_expression(self.end_span(span), argument, self);
+        }
+
         // Case 1: In await context (async function, module top-level, unambiguous mode top-level)
         // Always parse as await expression
         if self.ctx.has_await() {

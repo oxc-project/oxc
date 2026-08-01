@@ -2,6 +2,7 @@ use std::{path::PathBuf, str::FromStr, sync::OnceLock};
 
 use bpaf::{Bpaf, doc::Style};
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
+use oxc_span::ExplicitLanguage;
 
 use crate::output_formatter::OutputFormat;
 
@@ -67,6 +68,14 @@ pub struct LintCommand {
 
     #[bpaf(external)]
     pub suppression_options: SuppressionOptions,
+
+    /// Explicitly select a language grammar that cannot be inferred from the
+    /// file extension. Currently supported: `ets-static`.
+    ///
+    /// This option only affects `.ets` files. Without it, `.ets` keeps using
+    /// the ArkUI/ArkTS 1.1 grammar.
+    #[bpaf(long, argument("LANG"), optional, hide_usage)]
+    pub lang: Option<ExplicitLanguage>,
 
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
@@ -651,6 +660,16 @@ mod lint_options {
         assert!(!options.list_rules);
         assert_eq!(options.output_options.format, OutputFormat::Default);
         assert_eq!(options.output_options.debug, DebugOptions::default());
+        assert_eq!(options.lang, None);
+    }
+
+    #[test]
+    fn explicit_static_ets_language() {
+        let options = get_lint_options("--lang ets-static example.ets");
+        assert_eq!(options.lang, Some(oxc_span::ExplicitLanguage::EtsStatic));
+
+        let result = lint_command().run_inner(&["--lang", "ets", "example.ets"]);
+        assert!(result.is_err());
     }
 
     #[test]

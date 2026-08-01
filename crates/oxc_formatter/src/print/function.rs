@@ -77,18 +77,36 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
         }
 
         let head = format_with(|f| {
-            write!(
-                f,
-                [
-                    self.declare.then_some("declare "),
-                    self.r#async.then_some("async "),
-                    "function",
-                    self.generator().then_some("*"),
-                    space(),
-                    self.id(),
-                    group(&self.type_parameters()),
-                ]
-            );
+            if self.r#final || self.native {
+                write!(
+                    f,
+                    [
+                        self.declare.then_some("declare "),
+                        self.r#final.then_some("final "),
+                        self.native.then_some("native "),
+                        self.r#async.then_some("async "),
+                        "function",
+                        self.generator().then_some("*"),
+                        space(),
+                        self.id(),
+                        group(&self.type_parameters()),
+                    ]
+                );
+            } else {
+                // Keep the existing JS/TS path allocation-for-allocation identical.
+                write!(
+                    f,
+                    [
+                        self.declare.then_some("declare "),
+                        self.r#async.then_some("async "),
+                        "function",
+                        self.generator().then_some("*"),
+                        space(),
+                        self.id(),
+                        group(&self.type_parameters()),
+                    ]
+                );
+            }
         });
         FormatContentWithCacheMode::new(self.span, head, self.options.cache_mode).fmt(f);
 

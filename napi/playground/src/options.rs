@@ -42,6 +42,10 @@ pub struct OxcRunOptions {
 #[derive(Default, Clone)]
 pub struct OxcParserOptions {
     pub extension: String,
+    /// Explicitly parse `.ets` input as static ETS. Without this option, `.ets`
+    /// continues to use the ArkUI/ArkTS 1.1 grammar.
+    #[napi(ts_type = "'ets-static'")]
+    pub lang: Option<String>,
     pub allow_return_outside_function: bool,
     pub preserve_parens: bool,
     pub allow_v8_intrinsics: bool,

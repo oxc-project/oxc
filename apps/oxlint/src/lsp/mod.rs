@@ -2,6 +2,7 @@ use std::{fmt::Write, sync::Arc};
 
 use oxc_language_server::{WorkerManager, run_server};
 use oxc_linter::ExternalLinter;
+use oxc_span::ExplicitLanguage;
 
 #[cfg(feature = "napi")]
 use crate::js_config::JsConfigLoaderCb;
@@ -20,6 +21,7 @@ pub mod options;
 /// Run the language server
 pub async fn run_lsp(
     external_linter: Option<ExternalLinter>,
+    language: Option<ExplicitLanguage>,
     #[cfg(feature = "napi")] js_config_loader: Option<JsConfigLoaderCb>,
 ) {
     let version = {
@@ -34,6 +36,7 @@ pub async fn run_lsp(
         version,
         WorkerManager::new(Arc::new(crate::lsp::server_linter::ServerLinterBuilder::new(
             external_linter,
+            language,
             #[cfg(feature = "napi")]
             js_config_loader,
         ))),

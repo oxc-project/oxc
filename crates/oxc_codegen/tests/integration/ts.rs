@@ -103,8 +103,10 @@ class Value {
 }
 let character: char = c'a'
 let instance: Value = new Value()
-let values: int[] = new int[2](0)
+let values: int[] = new int[2]
+let matrix: int[][] = new int[2][3]
 let matches: boolean = instance instanceof Value
+function resolve(promise: Promise<int>): int { return await promise }
 function consume(): void {}
 consume() { let nested: int = 1 }
 "#;
@@ -114,7 +116,9 @@ consume() { let nested: int = 1 }
     let code = Codegen::new().with_options(default_options()).build(&ret.program).code;
     assert!(code.contains("package example.codegen;"), "package was lost:\n{code}");
     assert!(code.contains("c'a'"), "char literal was lost:\n{code}");
-    assert!(code.contains("new int[2](0)"), "array construction was lost:\n{code}");
+    assert!(code.contains("new int[2]"), "array construction was lost:\n{code}");
+    assert!(code.contains("new int[2][3]"), "multi-array construction was lost:\n{code}");
+    assert!(code.contains("return await promise"), "await expression was lost:\n{code}");
     assert!(code.contains("instance instanceof Value"), "ETS instanceof was lost:\n{code}");
     assert!(code.contains("value = \"ok\""), "annotation initializer was lost:\n{code}");
     assert!(code.contains("consume() {"), "trailing block was lost:\n{code}");

@@ -358,14 +358,13 @@ pub(crate) enum AncestorType {
     ETSNewClassInstanceExpressionArguments = 334,
     ETSNewArrayInstanceExpressionTypeAnnotation = 335,
     ETSNewArrayInstanceExpressionDimension = 336,
-    ETSNewArrayInstanceExpressionInitializer = 337,
-    ETSNewMultiDimArrayInstanceExpressionTypeAnnotation = 338,
-    ETSNewMultiDimArrayInstanceExpressionDimensions = 339,
-    ETSTrailingBlockExpressionCall = 340,
-    ETSTrailingBlockExpressionBlock = 341,
-    ETSOverloadDeclarationDecorators = 342,
-    ETSOverloadDeclarationKey = 343,
-    ETSOverloadDeclarationOverloads = 344,
+    ETSNewMultiDimArrayInstanceExpressionTypeAnnotation = 337,
+    ETSNewMultiDimArrayInstanceExpressionDimensions = 338,
+    ETSTrailingBlockExpressionCall = 339,
+    ETSTrailingBlockExpressionBlock = 340,
+    ETSOverloadDeclarationDecorators = 341,
+    ETSOverloadDeclarationKey = 342,
+    ETSOverloadDeclarationOverloads = 343,
 }
 
 /// Ancestor type used in AST traversal.
@@ -1020,9 +1019,6 @@ pub enum Ancestor<'a, 't> {
     ) = AncestorType::ETSNewArrayInstanceExpressionTypeAnnotation as u16,
     ETSNewArrayInstanceExpressionDimension(ETSNewArrayInstanceExpressionWithoutDimension<'a, 't>) =
         AncestorType::ETSNewArrayInstanceExpressionDimension as u16,
-    ETSNewArrayInstanceExpressionInitializer(
-        ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't>,
-    ) = AncestorType::ETSNewArrayInstanceExpressionInitializer as u16,
     ETSNewMultiDimArrayInstanceExpressionTypeAnnotation(
         ETSNewMultiDimArrayInstanceExpressionWithoutTypeAnnotation<'a, 't>,
     ) = AncestorType::ETSNewMultiDimArrayInstanceExpressionTypeAnnotation as u16,
@@ -2136,7 +2132,6 @@ impl<'a, 't> Ancestor<'a, 't> {
             self,
             Self::ETSNewArrayInstanceExpressionTypeAnnotation(_)
                 | Self::ETSNewArrayInstanceExpressionDimension(_)
-                | Self::ETSNewArrayInstanceExpressionInitializer(_)
         )
     }
 
@@ -2282,7 +2277,6 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::ArkUIComponentExpressionCallee(_)
                 | Self::ETSInstanceOfExpressionLeft(_)
                 | Self::ETSNewArrayInstanceExpressionDimension(_)
-                | Self::ETSNewArrayInstanceExpressionInitializer(_)
                 | Self::ETSNewMultiDimArrayInstanceExpressionDimensions(_)
                 | Self::ETSOverloadDeclarationOverloads(_)
         )
@@ -2891,7 +2885,6 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::ETSNewClassInstanceExpressionArguments(a) => a.address(),
             Self::ETSNewArrayInstanceExpressionTypeAnnotation(a) => a.address(),
             Self::ETSNewArrayInstanceExpressionDimension(a) => a.address(),
-            Self::ETSNewArrayInstanceExpressionInitializer(a) => a.address(),
             Self::ETSNewMultiDimArrayInstanceExpressionTypeAnnotation(a) => a.address(),
             Self::ETSNewMultiDimArrayInstanceExpressionDimensions(a) => a.address(),
             Self::ETSTrailingBlockExpressionCall(a) => a.address(),
@@ -21828,8 +21821,6 @@ pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION: usize
     offset_of!(ETSNewArrayInstanceExpression, type_annotation);
 pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_DIMENSION: usize =
     offset_of!(ETSNewArrayInstanceExpression, dimension);
-pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER: usize =
-    offset_of!(ETSNewArrayInstanceExpression, initializer);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -21860,14 +21851,6 @@ impl<'a, 't> ETSNewArrayInstanceExpressionWithoutTypeAnnotation<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_DIMENSION)
                 as *const Expression<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn initializer(self) -> &'t Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER)
-                as *const Option<Expression<'a>>)
         }
     }
 }
@@ -21910,65 +21893,9 @@ impl<'a, 't> ETSNewArrayInstanceExpressionWithoutDimension<'a, 't> {
                 as *const TSType<'a>)
         }
     }
-
-    #[inline]
-    pub fn initializer(self) -> &'t Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER)
-                as *const Option<Expression<'a>>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for ETSNewArrayInstanceExpressionWithoutDimension<'a, 't> {
-    #[inline]
-    fn address(&self) -> Address {
-        unsafe { Address::from_ptr(self.0) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't>(
-    pub(crate) *const ETSNewArrayInstanceExpression<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't> {
-    #[inline]
-    pub fn node_id(self) -> &'t Cell<NodeId> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_NODE_ID)
-                as *const Cell<NodeId>)
-        }
-    }
-
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_SPAN)
-                as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn type_annotation(self) -> &'t TSType<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
-                as *const TSType<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn dimension(self) -> &'t Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_DIMENSION)
-                as *const Expression<'a>)
-        }
-    }
-}
-
-impl<'a, 't> GetAddress for ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }

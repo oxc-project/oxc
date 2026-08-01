@@ -99,6 +99,63 @@ pub enum LanguageVariant {
     EtsStatic = 3,
 }
 
+/// Language modes that cannot be inferred from a file extension and must be
+/// selected explicitly by a tool or API caller.
+///
+/// Static ETS intentionally lives here instead of in [`FileExtension`]: it
+/// shares `.ets` with ArkUI/ArkTS 1.1, and changing extension inference would
+/// silently change existing users' parser behavior.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ExplicitLanguage {
+    /// Static ETS as implemented by `es2panda`.
+    EtsStatic,
+}
+
+impl ExplicitLanguage {
+    /// Canonical command-line/API spelling.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::EtsStatic => "ets-static",
+        }
+    }
+
+    /// Source type selected by this explicit language mode.
+    pub const fn source_type(self) -> SourceType {
+        match self {
+            Self::EtsStatic => SourceType::ets_static(),
+        }
+    }
+}
+
+impl Display for ExplicitLanguage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl FromStr for ExplicitLanguage {
+    type Err = UnknownExplicitLanguage;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "ets-static" => Ok(Self::EtsStatic),
+            _ => Err(UnknownExplicitLanguage(value.to_string())),
+        }
+    }
+}
+
+/// Error returned when an explicitly selected language mode is unknown.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnknownExplicitLanguage(String);
+
+impl Display for UnknownExplicitLanguage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Unknown language '{}'. Supported explicit languages: ets-static.", self.0)
+    }
+}
+
+impl Error for UnknownExplicitLanguage {}
+
 impl Default for SourceType {
     #[inline]
     fn default() -> Self {
@@ -776,7 +833,22 @@ impl Error for UnknownExtension {}
 
 #[cfg(test)]
 mod tests {
-    use super::{FileExtension, SourceType};
+    use super::{ExplicitLanguage, FileExtension, SourceType};
+
+    #[test]
+    fn test_explicit_language() {
+        let language = "ets-static".parse::<ExplicitLanguage>().unwrap();
+        assert_eq!(language, ExplicitLanguage::EtsStatic);
+        assert_eq!(language.as_str(), "ets-static");
+        assert_eq!(language.to_string(), "ets-static");
+        assert!(language.source_type().is_ets_static());
+
+        let error = "ets".parse::<ExplicitLanguage>().unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "Unknown language 'ets'. Supported explicit languages: ets-static."
+        );
+    }
 
     #[test]
     fn test_ts_from_path() {

@@ -55,3 +55,61 @@ fn snapshots() {
         });
     });
 }
+
+#[test]
+fn static_ets_declarations_round_trip() {
+    let source = r#"package example.declarations;
+export @interface Mark { value: string = "ok" }
+export final class Value {
+  constructor named(value: int) {}
+  overload constructor { named }
+  method(value: int): int { return value }
+}
+export interface Consumer {
+  value: int;
+  consume(value: int): int { return value }
+}
+export final struct Point {
+  x: int = 0;
+  static { initialize() }
+  move(delta: int): int { return this.x + delta }
+}
+export native function consume(value: char): void;
+"#;
+    let allocator = Allocator::default();
+    let source_type = SourceType::ets_static();
+    let parser_ret = Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_ret.diagnostics.is_empty(), "Parse errors: {:?}", parser_ret.diagnostics);
+
+    let ret = IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions::default())
+        .build(&parser_ret.program);
+    assert!(ret.diagnostics.is_empty(), "Declaration errors: {:?}", ret.diagnostics);
+    let output = Codegen::new().build(&ret.program).code;
+
+    for syntax in [
+        "export declare @interface Mark",
+        "export declare final class Value",
+        "constructor named(value: int)",
+        "overload constructor {",
+        "method(value: int): int;",
+        "export interface Consumer",
+        "value: int;",
+        "consume(value: int): int;",
+        "export declare final struct Point",
+        "x: int;",
+        "move(delta: int): int;",
+        "export declare native function consume(value: char): void;",
+    ] {
+        assert!(output.contains(syntax), "`{syntax}` was lost:\n{output}");
+    }
+    assert!(!output.contains("static {"), "static block was retained:\n{output}");
+    assert!(!output.contains("return "), "implementation body was retained:\n{output}");
+
+    let reparsed_allocator = Allocator::default();
+    let reparsed = Parser::new(&reparsed_allocator, &output, source_type).parse();
+    assert!(
+        reparsed.diagnostics.is_empty(),
+        "Reparse errors: {:?}\n{output}",
+        reparsed.diagnostics
+    );
+}

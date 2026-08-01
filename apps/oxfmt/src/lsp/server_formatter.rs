@@ -11,23 +11,29 @@ use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
     offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
 };
+use oxc_span::ExplicitLanguage;
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
+    ResolveOutcome, SourceFormatter, classify_file_kind_with_language, config_discovery,
     resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
-use crate::lsp::create_fake_file_path_from_language_id;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
+use crate::lsp::{create_fake_file_path_from_language_id, get_explicit_language_from_language_id};
 
 pub struct ServerFormatterBuilder {
     js_config_loader: JsConfigLoaderCb,
     external_formatter: ExternalFormatter,
+    language: Option<ExplicitLanguage>,
 }
 
 impl ServerFormatterBuilder {
-    pub fn new(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) -> Self {
-        Self { js_config_loader, external_formatter }
+    pub fn new(
+        js_config_loader: JsConfigLoaderCb,
+        external_formatter: ExternalFormatter,
+        language: Option<ExplicitLanguage>,
+    ) -> Self {
+        Self { js_config_loader, external_formatter, language }
     }
 
     /// Create a dummy `ServerFormatterBuilder` for testing.
@@ -38,6 +44,7 @@ impl ServerFormatterBuilder {
                 Err("JS config not supported in tests".to_string())
             }),
             external_formatter: ExternalFormatter::dummy(),
+            language: None,
         }
     }
 
@@ -79,6 +86,7 @@ impl ServerFormatterBuilder {
             JsConfigLoaderCb::clone(&self.js_config_loader),
             prettierignore_glob,
             explicit_config_path,
+            options.language.map(|language| language.explicit()).or(self.language),
         )
     }
 }
@@ -137,6 +145,8 @@ pub struct ServerFormatter {
     /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
     /// config discovery; all files use this single config.
     explicit_config_path: Option<PathBuf>,
+    /// Workspace/CLI-level explicit language. It only overrides `.ets` files.
+    language: Option<ExplicitLanguage>,
     /// Current config snapshot. Swapped wholesale on watched-file changes.
     state: RwLock<Arc<FormatterState>>,
 }
@@ -222,7 +232,8 @@ impl Tool for ServerFormatter {
                 &file_content
             };
 
-            let Some(result) = self.format_file(&path, source_text) else {
+            let document_language = get_explicit_language_from_language_id(&document.language_id);
+            let Some(result) = self.format_file(&path, source_text, document_language) else {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
@@ -273,6 +284,7 @@ impl ServerFormatter {
         js_config_loader: JsConfigLoaderCb,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
+        language: Option<ExplicitLanguage>,
     ) -> Self {
         let state =
             Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
@@ -282,6 +294,7 @@ impl ServerFormatter {
             js_config_loader,
             prettierignore_glob,
             explicit_config_path,
+            language,
             state: RwLock::new(Arc::new(state)),
         }
     }
@@ -348,7 +361,12 @@ impl ServerFormatter {
 
     /// Resolve config and format a file at the given path.
     /// Returns `None` if the file is unsupported or ignored.
-    fn resolve_and_format(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    fn resolve_and_format(
+        &self,
+        path: &Path,
+        source_text: &str,
+        document_language: Option<ExplicitLanguage>,
+    ) -> Option<FormatResult> {
         // Snapshot the current state.
         // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
         let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
@@ -372,7 +390,8 @@ impl ServerFormatter {
             return None;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(path)) else {
+        let language = document_language.or(self.language);
+        let Some(kind) = classify_file_kind_with_language(Arc::from(path), language) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return None;
         };
@@ -395,7 +414,12 @@ impl ServerFormatter {
         Some(tokio::task::block_in_place(|| self.source_formatter.format(source_text, strategy)))
     }
 
-    fn format_file(&self, path: &Path, source_text: &str) -> Option<FormatResult> {
+    fn format_file(
+        &self,
+        path: &Path,
+        source_text: &str,
+        language: Option<ExplicitLanguage>,
+    ) -> Option<FormatResult> {
         if self.prettierignore_glob.as_ref().is_some_and(|glob| {
             path.starts_with(glob.path())
                 && glob.matched_path_or_any_parents(path, path.is_dir()).is_ignore()
@@ -403,7 +427,7 @@ impl ServerFormatter {
             debug!("File is ignored by .prettierignore: {}", path.display());
             return None;
         }
-        self.resolve_and_format(path, source_text)
+        self.resolve_and_format(path, source_text, language)
     }
 
     fn format_in_memory(
@@ -417,7 +441,11 @@ impl ServerFormatter {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
             return None;
         };
-        self.resolve_and_format(&path, source_text)
+        self.resolve_and_format(
+            &path,
+            source_text,
+            get_explicit_language_from_language_id(language_id),
+        )
     }
 }
 

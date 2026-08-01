@@ -21,8 +21,13 @@ pub struct IsolatedDeclarationsResult {
 }
 
 #[napi(object)]
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone)]
 pub struct IsolatedDeclarationsOptions {
+    /// Explicitly parse the input as static ETS. A `.ets` filename without
+    /// `ets-static` keeps the existing ArkUI/ArkTS 1.1 behavior.
+    #[napi(ts_type = "'ets-static'")]
+    pub lang: Option<String>,
+
     /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
     /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
     ///
@@ -46,9 +51,13 @@ fn isolated_declaration_impl(
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
     let source_path = Path::new(filename);
-    let source_type = SourceType::from_path(source_path).unwrap_or_default().with_typescript(true);
-    let allocator = Allocator::default();
     let options = options.unwrap_or_default();
+    let source_type = if options.lang.as_deref() == Some("ets-static") {
+        SourceType::ets_static()
+    } else {
+        SourceType::from_path(source_path).unwrap_or_default().with_typescript(true)
+    };
+    let allocator = Allocator::default();
 
     let ret = Parser::new(&allocator, source_text, source_type).parse();
 

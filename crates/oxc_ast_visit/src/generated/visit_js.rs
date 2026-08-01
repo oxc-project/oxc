@@ -3455,9 +3455,6 @@ pub mod walk_js {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.dimension);
-        if let Some(initializer) = &it.initializer {
-            visitor.visit_expression(initializer);
-        }
         visitor.leave_node(kind);
     }
 

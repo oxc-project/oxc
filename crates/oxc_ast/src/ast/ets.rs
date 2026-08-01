@@ -69,11 +69,9 @@ pub struct ETSNewArrayInstanceExpression<'a> {
     pub span: Span,
     pub type_annotation: TSType<'a>,
     pub dimension: Expression<'a>,
-    pub initializer: Option<Expression<'a>>,
 }
 
-/// Static ETS multi-dimensional array construction. es2panda keeps this node
-/// even though the current language rules diagnose it as unsupported.
+/// Static ETS multi-dimensional array construction.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]

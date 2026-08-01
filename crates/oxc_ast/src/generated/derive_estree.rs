@@ -3574,7 +3574,6 @@ impl ESTree for ETSNewArrayInstanceExpression<'_> {
         state.serialize_field("type", &JsonSafeString("ETSNewArrayInstanceExpression"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("dimension", &self.dimension);
-        state.serialize_field("initializer", &self.initializer);
         state.serialize_span(self.span);
         state.end();
     }

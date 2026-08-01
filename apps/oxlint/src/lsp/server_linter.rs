@@ -26,6 +26,7 @@ use oxc_language_server::{
     Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, TextDocument, Tool,
     ToolBuilder, ToolRestartChanges, utils::normalize_user_config_path_to_watch_pattern,
 };
+use oxc_span::ExplicitLanguage;
 
 use crate::{
     config_loader::{
@@ -55,6 +56,7 @@ use crate::{
 #[derive(Default)]
 pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
+    language: Option<ExplicitLanguage>,
     #[cfg(feature = "napi")]
     js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
 }
@@ -62,10 +64,12 @@ pub struct ServerLinterBuilder {
 impl ServerLinterBuilder {
     pub fn new(
         external_linter: Option<ExternalLinter>,
+        language: Option<ExplicitLanguage>,
         #[cfg(feature = "napi")] js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
     ) -> Self {
         Self {
             external_linter,
+            language,
             #[cfg(feature = "napi")]
             js_config_loader,
         }
@@ -201,6 +205,13 @@ impl ServerLinterBuilder {
             .with_workspace_uri(Some(root_uri.as_str()));
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
+        if let Some(source_type) = options
+            .language
+            .map(|language| language.source_type())
+            .or_else(|| self.language.map(ExplicitLanguage::source_type))
+        {
+            lint_service_options = lint_service_options.with_source_type(source_type);
+        }
 
         if let Some(ts_path) = options.ts_config_path.as_ref() {
             let ts_path = Path::new(ts_path).to_path_buf();
@@ -845,6 +856,7 @@ impl ServerLinter {
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind != new_options.fix_kind
             || old_options.unused_disable_directives != new_options.unused_disable_directives
+            || old_options.language != new_options.language
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
     }
@@ -1095,6 +1107,18 @@ mod test_watchers {
             assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/oxlint.config.mts".to_string());
             assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
+        }
+
+        #[test]
+        fn test_static_ets_language_change_restarts_linter() {
+            let ToolRestartChanges { tool, watch_patterns } =
+                Tester::new("fixtures/lsp/watchers/default", json!({}))
+                    .handle_configuration_change(json!({
+                        "language": "ets-static"
+                    }));
+
+            assert!(tool.is_some());
+            assert!(watch_patterns.is_none());
         }
     }
 }

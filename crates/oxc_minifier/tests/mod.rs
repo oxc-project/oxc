@@ -1,6 +1,7 @@
 #![allow(clippy::literal_string_with_formatting_args)]
 
 mod ecmascript;
+mod ets_static;
 mod mangler;
 mod peephole;
 

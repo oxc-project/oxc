@@ -6151,7 +6151,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for ETSNewArrayInstanceExpression<'_> {
                 allocator,
             ),
             dimension: CloneIn::clone_in_impl(&self.dimension, with_semantic_ids, allocator),
-            initializer: CloneIn::clone_in_impl(&self.initializer, with_semantic_ids, allocator),
         }
     }
 }

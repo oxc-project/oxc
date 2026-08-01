@@ -357,6 +357,12 @@ impl CodegenOptions {
 #[napi(object)]
 #[derive(Default)]
 pub struct MinifyOptions {
+    /// Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts`, or explicitly
+    /// selected static ETS. A `.ets` filename without `ets-static` keeps using
+    /// the ArkUI/ArkTS 1.1 grammar.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets-static'")]
+    pub lang: Option<String>,
+
     /// Use when minifying an ES module.
     pub module: Option<bool>,
 

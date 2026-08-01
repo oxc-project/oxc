@@ -13,8 +13,8 @@ pub use cmp::ContentEq;
 pub use edit_distance::{best_match, min_edit_distance};
 use oxc_str::{CompactStr, Ident, Str};
 pub use source_type::{
-    FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
-    VALID_EXTENSIONS,
+    ExplicitLanguage, FileExtension, Language, LanguageVariant, ModuleKind, SourceType,
+    UnknownExplicitLanguage, UnknownExtension, VALID_EXTENSIONS,
 };
 pub use span::{GetSpan, GetSpanMut, SPAN, Span};
 

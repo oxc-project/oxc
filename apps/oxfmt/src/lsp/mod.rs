@@ -5,6 +5,7 @@ use std::{
 };
 
 use oxc_language_server::{LanguageId, run_server};
+use oxc_span::ExplicitLanguage;
 use tower_lsp_server::ls_types::Uri;
 
 use crate::core::{ExternalFormatter, JsConfigLoaderCb, utils};
@@ -18,6 +19,7 @@ fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'sta
         "typescript" => Some("ts"),
         "javascriptreact" => Some("jsx"),
         "typescriptreact" => Some("tsx"),
+        "ets" | "ets-static" => Some("ets"),
         "toml" => Some("toml"),
         "css" => Some("css"),
         "graphql" => Some("graphql"),
@@ -37,6 +39,10 @@ fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'sta
         "angular" => Some("component.html"),
         _ => None,
     }
+}
+
+fn get_explicit_language_from_language_id(language_id: &LanguageId) -> Option<ExplicitLanguage> {
+    (language_id.as_str() == "ets-static").then_some(ExplicitLanguage::EtsStatic)
 }
 
 pub fn create_fake_file_path_from_language_id(
@@ -60,7 +66,11 @@ pub fn create_fake_file_path_from_language_id(
 }
 
 /// Run the language server
-pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) {
+pub async fn run_lsp(
+    js_config_loader: JsConfigLoaderCb,
+    external_formatter: ExternalFormatter,
+    language: Option<ExplicitLanguage>,
+) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
         if let Some(vp_version) = utils::vp_version() {
@@ -73,7 +83,11 @@ pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: Ext
         "oxfmt".to_string(),
         version,
         oxc_language_server::WorkerManager::new_dynamic(Arc::new(
-            server_formatter::ServerFormatterBuilder::new(js_config_loader, external_formatter),
+            server_formatter::ServerFormatterBuilder::new(
+                js_config_loader,
+                external_formatter,
+                language,
+            ),
         )),
     )
     .await;
@@ -86,7 +100,9 @@ mod test {
     use oxc_language_server::LanguageId;
     use tower_lsp_server::ls_types::Uri;
 
-    use crate::lsp::create_fake_file_path_from_language_id;
+    use crate::lsp::{
+        create_fake_file_path_from_language_id, get_explicit_language_from_language_id,
+    };
 
     #[test]
     fn test_create_fake_file_path_from_language_id() {
@@ -102,5 +118,17 @@ mod test {
         let result = create_fake_file_path_from_language_id(&language_id, &root, &uri).unwrap();
         assert_eq!(result.extension().unwrap(), "jsonc");
         assert!(result.starts_with(&root));
+    }
+
+    #[test]
+    fn static_ets_language_id_is_explicit() {
+        let static_id = LanguageId::new("ets-static".to_string());
+        assert_eq!(
+            get_explicit_language_from_language_id(&static_id),
+            Some(oxc_span::ExplicitLanguage::EtsStatic)
+        );
+
+        let legacy_id = LanguageId::new("ets".to_string());
+        assert_eq!(get_explicit_language_from_language_id(&legacy_id), None);
     }
 }

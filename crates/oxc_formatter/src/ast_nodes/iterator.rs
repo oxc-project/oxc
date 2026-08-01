@@ -273,6 +273,7 @@ macro_rules! impl_ast_node_vec_for_option {
 }
 
 impl_ast_node_vec!(Expression<'a>);
+impl_ast_node_vec!(IdentifierName<'a>);
 impl_ast_node_vec!(ArrayExpressionElement<'a>);
 impl_ast_node_vec!(ObjectPropertyKind<'a>);
 impl_ast_node_vec!(TemplateElement<'a>);

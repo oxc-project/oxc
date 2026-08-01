@@ -1,10 +1,11 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::prelude::*,
     print::function::should_group_function_parameters,
+    print::semicolon::OptionalSemicolon,
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         object::format_property_key,
@@ -62,6 +63,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
             /* is_function_or_constructor_type */ false,
             f,
         );
+        if f.context().source_type().is_ets_static()
+            && matches!(self.parent(), AstNodes::ClassBody(_))
+        {
+            write!(f, OptionalSemicolon);
+        }
     }
 }
 

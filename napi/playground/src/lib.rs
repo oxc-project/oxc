@@ -123,8 +123,11 @@ impl Oxc {
         // Setup path and source type
         let filename = format!("test.{}", parser_options.extension);
         let path = PathBuf::from(filename);
-        let source_type =
-            SourceType::from_path(&path).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        let source_type = if parser_options.lang.as_deref() == Some("ets-static") {
+            SourceType::ets_static()
+        } else {
+            SourceType::from_path(&path).map_err(|e| napi::Error::from_reason(e.to_string()))?
+        };
 
         // Phase 1: Parse source
         let (mut program, mut module_record) =

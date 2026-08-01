@@ -49,4 +49,24 @@ describe("isolated declaration", () => {
     expect(asyncResult.errors.length).toBe(syncResult.errors.length);
     expect(asyncResult.map).toMatchObject(syncResult.map!);
   });
+
+  it("emits static ETS declarations only when explicitly selected", () => {
+    const source = [
+      "package example.declarations;",
+      "export final struct Point {",
+      "  x: int = 0;",
+      "  move(delta: int): int { return this.x + delta; }",
+      "}",
+    ].join("\n");
+
+    expect(isolatedDeclarationSync("test.ets", source).errors.length).toBeGreaterThan(0);
+
+    const ret = isolatedDeclarationSync("test.ets", source, { lang: "ets-static" });
+    expect(ret.errors).toEqual([]);
+    expect(ret.code).toContain("package example.declarations;");
+    expect(ret.code).toContain("export declare final struct Point");
+    expect(ret.code).toContain("x: int;");
+    expect(ret.code).toContain("move(delta: int): int;");
+    expect(ret.code).not.toContain("return ");
+  });
 });

@@ -11,13 +11,14 @@ use tracing::instrument;
 
 use oxc_config::{all_paths_have_vcs_boundary, configure_walk_builder};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+use oxc_span::ExplicitLanguage;
 
 use super::resolve::{build_global_ignore_matchers, is_ignored};
 #[cfg(feature = "napi")]
 use crate::core::JsConfigLoaderCb;
 use crate::core::{
-    ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome, classify_file_kind,
-    resolve_file_scope_config,
+    ConfigResolver, FormatStrategy, NestedConfigCtx, ResolveOutcome,
+    classify_file_kind_with_language, resolve_file_scope_config,
 };
 
 /// Orchestrates file discovery with nested config and ignore handling.
@@ -44,6 +45,7 @@ pub struct ScopedWalker {
     paths: Vec<PathBuf>,
     glob_patterns: Vec<String>,
     exclude_patterns: Vec<String>,
+    language: Option<ExplicitLanguage>,
 }
 
 impl ScopedWalker {
@@ -88,7 +90,14 @@ impl ScopedWalker {
             target_paths.push(full_path);
         }
 
-        Self { cwd, paths: target_paths, glob_patterns, exclude_patterns }
+        Self { cwd, paths: target_paths, glob_patterns, exclude_patterns, language: None }
+    }
+
+    /// Apply an explicitly selected language to matching inputs.
+    #[must_use]
+    pub fn with_language(mut self, language: Option<ExplicitLanguage>) -> Self {
+        self.language = language;
+        self
     }
 
     /// Run the walk across all scopes.
@@ -195,6 +204,7 @@ impl ScopedWalker {
                     &config_resolver,
                     tx_error,
                     &self.cwd,
+                    self.language,
                 ) else {
                     continue;
                 };
@@ -239,6 +249,7 @@ impl ScopedWalker {
                 nested_config_ctx: nested_config_ctx.clone(),
                 detect_nested,
                 walk_target_roots,
+                language: self.language,
             },
             WalkSinks {
                 tx_entry: tx_entry.clone(),
@@ -341,6 +352,7 @@ struct WalkConfigState {
     nested_config_ctx: NestedConfigCtx,
     detect_nested: bool,
     walk_target_roots: Arc<[PathBuf]>,
+    language: Option<ExplicitLanguage>,
 }
 
 /// Walk-wide filter inputs (ignore matchers, glob filter, dedup set).
@@ -584,9 +596,13 @@ impl WalkVisitor {
         {
             return ignore::WalkState::Continue;
         }
-        let Some(strategy) =
-            resolve_format_strategy(Arc::from(path), resolver, &self.sinks.tx_error, &self.cwd)
-        else {
+        let Some(strategy) = resolve_format_strategy(
+            Arc::from(path),
+            resolver,
+            &self.sinks.tx_error,
+            &self.cwd,
+            self.config_state.language,
+        ) else {
             return ignore::WalkState::Continue;
         };
 
@@ -664,8 +680,9 @@ fn resolve_format_strategy(
     resolver: &ConfigResolver,
     tx_error: &DiagnosticSender,
     cwd: &Path,
+    language: Option<ExplicitLanguage>,
 ) -> Option<FormatStrategy> {
-    let kind = classify_file_kind(Arc::clone(&path))?;
+    let kind = classify_file_kind_with_language(Arc::clone(&path), language)?;
     match resolver.resolve(kind) {
         Ok(ResolveOutcome::Format(strategy)) => Some(strategy),
         Ok(ResolveOutcome::MissingPlugin(_)) => None,
@@ -749,6 +766,7 @@ mod tests_scope_resolution {
                 nested_config_ctx: ctx,
                 detect_nested: true,
                 walk_target_roots: Arc::from(vec![walk_root.to_path_buf()]),
+                language: None,
             },
             sinks: WalkSinks { tx_entry, tx_error, fatal_error: Arc::new(OnceLock::new()) },
             scope_cache: FxHashMap::default(),

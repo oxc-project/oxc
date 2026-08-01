@@ -5213,7 +5213,6 @@ function walkETSNewArrayInstanceExpression(pos, ast, visitors) {
 
   walkTSType(pos + 16, ast, visitors);
   walkExpression(pos + 32, ast, visitors);
-  walkOptionExpression(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }

@@ -4607,9 +4607,6 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
         visitor.visit_expression(&it.dimension);
-        if let Some(initializer) = &it.initializer {
-            visitor.visit_expression(initializer);
-        }
         visitor.leave_node(kind);
     }
 

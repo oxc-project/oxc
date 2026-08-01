@@ -21,7 +21,7 @@ fn format_ets_static(source_text: &str) -> String {
 }
 
 #[test]
-fn ets_static_is_preserved_verbatim() {
+fn ets_static_is_formatted_and_idempotent() {
     let source = r#"package example.formatter;
 @interface Mark { value: string = "ok" }
 @Mark({ value = "ok" })
@@ -32,10 +32,40 @@ final class Value {
 enum Color: int { Red, Green }
 native function consume(value: char): void;
 let character: char = c'a'
+let values: int[] = new int[3]
+let matrix: int[][] = new int[2][3]
+function resolve(promise: Promise<int>): int { return await promise }
 consume(character) { let nested: int = 1 }
 "#;
 
-    assert_eq!(format_ets_static(source), source);
+    let expected = r#"package example.formatter;
+@interface Mark {
+  value: string = "ok";
+}
+@Mark({ value = "ok" })
+final class Value {
+  constructor named(value: int) {}
+  overload constructor { named }
+}
+enum Color: int {
+  Red,
+  Green,
+}
+native function consume(value: char): void;
+let character: char = c'a';
+let values: int[] = new int[3];
+let matrix: int[][] = new int[2][3];
+function resolve(promise: Promise<int>): int {
+  return await promise;
+}
+consume(character) {
+  let nested: int = 1;
+};
+"#;
+
+    let formatted = format_ets_static(source);
+    assert_eq!(formatted, expected);
+    assert_eq!(format_ets_static(&formatted), formatted);
 }
 
 #[test]

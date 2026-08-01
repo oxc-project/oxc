@@ -4846,9 +4846,6 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
         visitor.visit_expression(&mut it.dimension);
-        if let Some(initializer) = &mut it.initializer {
-            visitor.visit_expression(initializer);
-        }
         visitor.leave_node(kind);
     }
 

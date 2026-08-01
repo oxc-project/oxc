@@ -37,6 +37,8 @@ export interface OxfmtConfig extends Oxfmtrc {}
  * @deprecated Use `FormatConfig` instead.
  */
 export type FormatOptions = FormatConfig & {
+  /** Explicitly parse a `.ets` input as static ETS. Without this option, `.ets` remains ArkTS 1.1. */
+  lang?: "ets-static";
   /** @deprecated Use `sortImports` instead. */
   experimentalSortImports?: SortImportsConfig;
   /** @deprecated Use `sortPackageJson` instead. */
@@ -82,7 +84,7 @@ let BINDINGS_CACHE = null as typeof import("./bindings") | null;
 /**
  * Format the given source text according to the specified options.
  */
-export async function format(fileName: string, sourceText: string, options?: FormatConfig) {
+export async function format(fileName: string, sourceText: string, options?: FormatOptions) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
   if (typeof sourceText !== "string") throw new TypeError("`sourceText` must be a string");
 

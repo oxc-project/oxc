@@ -40,6 +40,30 @@ describe("simple", () => {
     expect(ret.errors.length).toBe(1);
   });
 
+  it("only enables static ETS through the explicit language option", () => {
+    const code = [
+      "package example.minify;",
+      "export final class Box { value: int = 1; }",
+      "export function make(): Box { return new Box(); }",
+      "export let character: char = c'a';",
+    ].join("\n");
+
+    expect(minifySync("test.ets", code).errors.length).toBeGreaterThan(0);
+
+    const ret = minifySync("test.ets", code, { lang: "ets-static" });
+    expect(ret.errors).toEqual([]);
+    expect(ret.code).toContain("package example.minify;");
+    expect(ret.code).toContain("final class Box");
+    expect(ret.code).toContain("c'a'");
+
+    const reparsed = minifySync("test.ets", ret.code, {
+      lang: "ets-static",
+      compress: false,
+      mangle: false,
+    });
+    expect(reparsed.errors).toEqual([]);
+  });
+
   it("supports drop_labels option", () => {
     const code = "PURE: { foo(); bar(); } OTHER: { baz(); }";
     const ret = minifySync("test.js", code, {

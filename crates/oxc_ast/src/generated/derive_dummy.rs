@@ -3461,7 +3461,6 @@ impl<'a> Dummy<'a> for ETSNewArrayInstanceExpression<'a> {
             span: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             dimension: Dummy::dummy(allocator),
-            initializer: Dummy::dummy(allocator),
         }
     }
 }

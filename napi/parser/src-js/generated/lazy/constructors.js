@@ -12872,11 +12872,6 @@ export class ETSNewArrayInstanceExpression {
     return constructExpression(internal.pos + 32, internal.ast);
   }
 
-  get initializer() {
-    const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 48, internal.ast);
-  }
-
   toJSON() {
     return {
       type: "ETSNewArrayInstanceExpression",
@@ -12884,7 +12879,6 @@ export class ETSNewArrayInstanceExpression {
       end: this.end,
       typeAnnotation: this.typeAnnotation,
       dimension: this.dimension,
-      initializer: this.initializer,
     };
   }
 

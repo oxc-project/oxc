@@ -97,6 +97,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if self.r#override {
             write!(f, ["override", space()]);
         }
+        if self.r#final {
+            write!(f, ["final", space()]);
+        }
+        if self.native {
+            write!(f, ["native", space()]);
+        }
         match &self.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
@@ -113,6 +119,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         }
         if value.generator {
             write!(f, "*");
+        }
+        if self.kind == MethodDefinitionKind::Constructor
+            && !self.key.is_specific_static_name("constructor")
+        {
+            write!(f, ["constructor", space()]);
         }
         format_property_key(self.key(), self.computed, f);
 
@@ -301,6 +312,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
         }
         if self.r#abstract {
             write!(f, ["abstract", space()]);
+        }
+        if self.r#static {
+            write!(f, ["static", space()]);
+        }
+        if self.r#final {
+            write!(f, ["final", space()]);
+        }
+        if self.native {
+            write!(f, ["native", space()]);
         }
 
         write!(f, "class");

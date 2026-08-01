@@ -24,10 +24,9 @@ use oxc_allocator::Allocator;
 use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_minifier::Minifier;
-use oxc_napi::OxcError;
+use oxc_napi::{OxcError, get_source_type};
 use oxc_parser::Parser;
 use oxc_sourcemap::napi::SourceMap;
-use oxc_span::SourceType;
 
 pub use crate::options::*;
 
@@ -62,11 +61,11 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
     let allocator = Allocator::default();
 
-    let source_type = if options.module == Some(true) {
-        SourceType::mjs()
-    } else {
-        SourceType::from_path(filename).unwrap_or_default()
-    };
+    let source_type = get_source_type(
+        filename,
+        options.lang.as_deref(),
+        options.module.is_some_and(|module| module).then_some("module"),
+    );
 
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = parser_ret.program;

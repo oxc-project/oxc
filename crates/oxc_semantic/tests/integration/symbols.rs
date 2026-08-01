@@ -124,6 +124,38 @@ fn test_types_simple() {
 }
 
 #[test]
+fn test_ets_static_declarations_and_expressions() {
+    let source = r#"
+        package example.semantic;
+        class Value {}
+        function fromValue(value: Value): Value { return value; }
+        overload convert { fromValue }
+        let instance: Value = new Value();
+        let matches: boolean = instance instanceof Value;
+        function consume(value: Value): void {}
+        consume(instance) { let nested: Value = new Value(); }
+    "#;
+
+    SemanticTester::ets_static(source)
+        .has_root_symbol("Value")
+        .contains_flags(SymbolFlags::Class)
+        .has_number_of_references(8)
+        .test();
+    SemanticTester::ets_static(source)
+        .has_root_symbol("fromValue")
+        .has_number_of_references(1)
+        .test();
+    SemanticTester::ets_static(source)
+        .has_root_symbol("instance")
+        .has_number_of_references(2)
+        .test();
+    SemanticTester::ets_static(source)
+        .has_root_symbol("consume")
+        .has_number_of_references(1)
+        .test();
+}
+
+#[test]
 fn test_multiple_ts_type_alias_declaration() {
     let tester = SemanticTester::ts(
         "

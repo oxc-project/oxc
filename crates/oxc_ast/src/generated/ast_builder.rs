@@ -1687,7 +1687,6 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[deprecated(
         note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
     )]
@@ -1697,13 +1696,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
     ) -> Expression<'a> {
         Expression::ETSNewArrayInstanceExpression(self.alloc_ets_new_array_instance_expression(
             span,
             type_annotation,
             dimension,
-            initializer,
         ))
     }
 
@@ -20137,7 +20134,6 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[deprecated(
         note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
     )]
@@ -20147,14 +20143,12 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
     ) -> ETSNewArrayInstanceExpression<'a> {
         ETSNewArrayInstanceExpression {
             node_id: Default::default(),
             span,
             type_annotation,
             dimension,
-            initializer,
         }
     }
 
@@ -20167,7 +20161,6 @@ impl<'a> AstBuilder<'a> {
     /// * `span`: The [`Span`] covering this node
     /// * `type_annotation`
     /// * `dimension`
-    /// * `initializer`
     #[deprecated(
         note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
     )]
@@ -20177,10 +20170,9 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
         dimension: Expression<'a>,
-        initializer: Option<Expression<'a>>,
     ) -> ArenaBox<'a, ETSNewArrayInstanceExpression<'a>> {
         ArenaBox::new_in(
-            self.ets_new_array_instance_expression(span, type_annotation, dimension, initializer),
+            self.ets_new_array_instance_expression(span, type_annotation, dimension),
             &self,
         )
     }

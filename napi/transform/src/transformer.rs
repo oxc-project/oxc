@@ -92,8 +92,10 @@ pub struct TransformResult {
 #[napi(object)]
 #[derive(Default)]
 pub struct TransformOptions {
-    /// Treat the source text as `js`, `jsx`, `ts`, `tsx`, or `dts`.
-    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts'")]
+    /// Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts`, or explicitly
+    /// selected static ETS. A `.ets` filename without `ets-static` keeps using
+    /// the ArkUI/ArkTS 1.1 grammar.
+    #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets-static'")]
     pub lang: Option<String>,
 
     /// Treat the source text as `script` or `module` code.
@@ -777,7 +779,7 @@ impl Compiler {
         let isolated_declaration_options = options
             .as_ref()
             .and_then(|o| o.typescript.as_ref())
-            .and_then(|o| o.declaration)
+            .and_then(|o| o.declaration.clone())
             .map(oxc::isolated_declarations::IsolatedDeclarationsOptions::from);
 
         let sourcemap = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
@@ -1009,6 +1011,11 @@ pub fn transform(
 #[derive(Default)]
 #[napi(object)]
 pub struct ModuleRunnerTransformOptions {
+    /// Explicitly parse `.ets` input as static ETS. Without this option, `.ets`
+    /// continues to use the ArkUI/ArkTS 1.1 grammar.
+    #[napi(ts_type = "'ets-static'")]
+    pub lang: Option<String>,
+
     /// Enable source map generation.
     ///
     /// When `true`, the `sourceMap` field of transform result objects will be populated.
@@ -1062,7 +1069,10 @@ fn module_runner_transform_impl(
     options: Option<ModuleRunnerTransformOptions>,
 ) -> ModuleRunnerTransformResult {
     let file_path = Path::new(filename);
-    let source_type = SourceType::from_path(file_path);
+    let source_type = match options.as_ref().and_then(|options| options.lang.as_deref()) {
+        Some("ets-static") => Ok(SourceType::ets_static()),
+        _ => SourceType::from_path(file_path),
+    };
     let source_type = match source_type {
         Ok(s) => s,
         Err(err) => {

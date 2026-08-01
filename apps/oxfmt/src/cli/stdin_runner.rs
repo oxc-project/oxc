@@ -11,7 +11,7 @@ use super::{
 };
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
-    ResolveOutcome, SourceFormatter, classify_file_kind, resolve_editorconfig_path,
+    ResolveOutcome, SourceFormatter, classify_file_kind_with_language, resolve_editorconfig_path,
     resolve_file_scope_config, utils,
 };
 
@@ -45,7 +45,7 @@ impl StdinRunner {
         let stderr = &mut BufWriter::new(io::stderr());
 
         let cwd = self.cwd;
-        let FormatCommand { mode, config_options, ignore_options, .. } = self.options;
+        let FormatCommand { mode, config_options, ignore_options, lang, .. } = self.options;
 
         let Mode::Stdin(filepath) = mode else {
             unreachable!("`StdinRunner::run()` called with non-Stdin mode");
@@ -136,7 +136,7 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+        let Some(kind) = classify_file_kind_with_language(Arc::from(filepath), lang) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };

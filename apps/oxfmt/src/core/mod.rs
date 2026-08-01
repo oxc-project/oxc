@@ -23,7 +23,7 @@ pub use config::{
     resolve_for_embedded_js,
 };
 pub use format::{FormatResult, FormatStrategy, SourceFormatter};
-pub use support::classify_file_kind;
+pub use support::classify_file_kind_with_language;
 
 #[cfg(feature = "napi")]
 pub use external_formatter::{

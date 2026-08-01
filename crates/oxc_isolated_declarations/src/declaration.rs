@@ -40,7 +40,12 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         declarations: ArenaVec<'a, VariableDeclarator<'a>>,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        VariableDeclaration::boxed(decl.span, decl.kind, declarations, self.is_declare(), self)
+        let mut transformed =
+            VariableDeclaration::boxed(decl.span, decl.kind, declarations, self.is_declare(), self);
+        if self.is_ets_static {
+            transformed.decorators = decl.decorators.clone_in(self.allocator());
+        }
+        transformed
     }
 
     pub(crate) fn transform_variable_declarator(
@@ -213,11 +218,8 @@ impl<'a> IsolatedDeclarations<'a> {
             Declaration::StructStatement(struct_decl) => {
                 let needs_transform =
                     !check_binding || self.scope.has_reference(&struct_decl.id.name);
-                needs_transform.then(|| {
-                    let mut decl = decl.clone_in(self.ast.allocator());
-                    self.visit_declaration(&mut decl);
-                    decl
-                })
+                needs_transform
+                    .then(|| Declaration::StructStatement(self.transform_struct(struct_decl, None)))
             }
             Declaration::TSModuleDeclaration(decl) => {
                 if !check_binding
@@ -249,11 +251,24 @@ impl<'a> IsolatedDeclarations<'a> {
                     !check_binding || self.scope.has_reference(&annotation_decl.id.name);
                 needs_transform.then(|| {
                     let mut decl = decl.clone_in(self.ast.allocator());
+                    if self.is_ets_static
+                        && let Declaration::AnnotationDeclaration(annotation_decl) = &mut decl
+                    {
+                        annotation_decl.declare = self.is_declare();
+                    }
                     self.visit_declaration(&mut decl);
                     decl
                 })
             }
-            Declaration::ETSOverloadDeclaration(_) => Some(decl.clone_in(self.allocator())),
+            Declaration::ETSOverloadDeclaration(_) => {
+                let mut decl = decl.clone_in(self.allocator());
+                if self.is_ets_static
+                    && let Declaration::ETSOverloadDeclaration(overload) = &mut decl
+                {
+                    overload.declare = self.is_declare();
+                }
+                Some(decl)
+            }
         }
     }
 

@@ -3,11 +3,12 @@ use std::{env, path::Path, sync::Arc};
 use serde_json::Value;
 
 use oxc_napi::OxcError;
+use oxc_span::ExplicitLanguage;
 
 use crate::core::{
     ExternalFormatter, FormatResult, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-    JsSortTailwindClassesCb, ResolveOutcome, SourceFormatter, classify_file_kind, resolve_for_api,
-    utils,
+    JsSortTailwindClassesCb, ResolveOutcome, SourceFormatter, classify_file_kind_with_language,
+    resolve_for_api, utils,
 };
 
 pub struct ApiFormatResult {
@@ -41,8 +42,29 @@ pub fn run(
         sort_tailwind_classes_cb,
     );
 
+    let language = match options.as_ref().and_then(|value| value.get("lang")) {
+        None | Some(Value::Null) => None,
+        Some(Value::String(language)) => match language.parse::<ExplicitLanguage>() {
+            Ok(language) => Some(language),
+            Err(error) => {
+                external_formatter.cleanup();
+                return ApiFormatResult {
+                    code: source_text,
+                    errors: vec![OxcError::new(error.to_string())],
+                };
+            }
+        },
+        Some(_) => {
+            external_formatter.cleanup();
+            return ApiFormatResult {
+                code: source_text,
+                errors: vec![OxcError::new("`lang` must be the string `ets-static`".to_string())],
+            };
+        }
+    };
+
     let filepath = utils::normalize_relative_path(&cwd, Path::new(filename));
-    let Some(kind) = classify_file_kind(Arc::from(filepath)) else {
+    let Some(kind) = classify_file_kind_with_language(Arc::from(filepath), language) else {
         external_formatter.cleanup();
         return ApiFormatResult {
             code: source_text,

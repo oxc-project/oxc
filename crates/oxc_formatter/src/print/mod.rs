@@ -116,33 +116,107 @@ pub trait FormatWrite<'ast, T = ()> {
     }
 }
 
-// Static ETS syntax has no Prettier-compatible formatting contract. Preserve
-// these es2panda-specific nodes byte-for-byte (apart from line-ending
-// normalization) so running oxfmt cannot rewrite or lose syntax it does not
-// own. The generated wrapper still handles surrounding parentheses and
-// leading/trailing comments.
-macro_rules! impl_ets_verbatim_format {
-    ($($ty:ty),+ $(,)?) => {
-        $(
-            impl<'a> FormatWrite<'a> for AstNode<'a, $ty> {
-                fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-                    FormatSuppressedNode(self.span()).fmt(f);
-                }
-            }
-        )+
-    };
+impl<'a> FormatWrite<'a> for AstNode<'a, CharLiteral<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Like numeric literals, keep the parser-validated token spelling. In
+        // particular this preserves the distinction between an escaped UTF-16
+        // code unit and the corresponding source character.
+        write!(f, text_without_whitespace(f.source_text().text_for(self)));
+    }
 }
 
-impl_ets_verbatim_format!(
-    CharLiteral<'a>,
-    ETSPackageDeclaration<'a>,
-    ETSInstanceOfExpression<'a>,
-    ETSNewClassInstanceExpression<'a>,
-    ETSNewArrayInstanceExpression<'a>,
-    ETSNewMultiDimArrayInstanceExpression<'a>,
-    ETSTrailingBlockExpression<'a>,
-    ETSOverloadDeclaration<'a>,
-);
+impl<'a> FormatWrite<'a> for AstNode<'a, ETSPackageDeclaration<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, ["package", space()]);
+        let mut names = self.name().iter();
+        if let Some(first) = names.next() {
+            write!(f, first);
+            for name in names {
+                write!(f, [".", name]);
+            }
+        }
+        write!(f, OptionalSemicolon);
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ETSInstanceOfExpression<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, group(&format_args!(self.left(), space(), "instanceof", space(), self.right())));
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ETSNewClassInstanceExpression<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, ["new", space(), self.type_annotation()]);
+        if self.has_arguments() {
+            write!(f, self.arguments());
+        }
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ETSNewArrayInstanceExpression<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, ["new", space(), self.type_annotation(), "[", self.dimension(), "]"]);
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ETSNewMultiDimArrayInstanceExpression<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, ["new", space(), self.type_annotation()]);
+        for dimension in self.dimensions().iter() {
+            write!(f, ["[", dimension, "]"]);
+        }
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ETSTrailingBlockExpression<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, [self.call(), space(), self.block()]);
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, ETSOverloadDeclaration<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !self.decorators.is_empty() {
+            write!(f, self.decorators());
+        }
+        if self.declare() {
+            write!(f, ["declare", space()]);
+        }
+        if let Some(accessibility) = self.accessibility() {
+            write!(f, [accessibility.as_str(), space()]);
+        }
+        if self.r#abstract() {
+            write!(f, ["abstract", space()]);
+        }
+        if self.r#static() {
+            write!(f, ["static", space()]);
+        }
+        if self.r#final() {
+            write!(f, ["final", space()]);
+        }
+        if self.native() {
+            write!(f, ["native", space()]);
+        }
+
+        let overloads = format_with(|f| {
+            let separator = format_with(|f| write!(f, [",", soft_line_break_or_space()]));
+            f.join_with(&separator).entries(self.overloads().iter());
+        });
+        write!(
+            f,
+            group(&format_args!(
+                "overload",
+                space(),
+                self.key(),
+                space(),
+                "{",
+                soft_block_indent_with_maybe_space(&overloads, true),
+                "}"
+            ))
+        );
+    }
+}
 
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -236,13 +310,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
             return;
         }
 
-        if self.kind() == PropertyKind::EtsEquals {
-            write!(f, [FormatSuppressedNode(self.span())]);
-            return;
-        }
-
         let is_accessor = match &self.kind() {
-            PropertyKind::Init => false,
+            PropertyKind::Init | PropertyKind::EtsEquals => false,
             PropertyKind::Get => {
                 write!(f, ["get", space()]);
                 true
@@ -251,7 +320,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
                 write!(f, ["set", space()]);
                 true
             }
-            PropertyKind::EtsEquals => unreachable!(),
         };
 
         if self.method || is_accessor {
@@ -1415,13 +1483,33 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if !f.context().source_type().is_ets_static() {
+            if self.declare() {
+                write!(f, ["declare", space()]);
+            }
+            if self.r#const() {
+                write!(f, ["const", space()]);
+            }
+            write!(f, ["enum", space(), self.id(), space(), "{", self.body(), "}"]);
+            return;
+        }
+
+        if self.decorators.is_some() {
+            write!(f, self.decorators());
+        }
         if self.declare() {
             write!(f, ["declare", space()]);
         }
         if self.r#const() {
             write!(f, ["const", space()]);
         }
-        write!(f, ["enum", space(), self.id(), space(), "{", self.body(), "}"]);
+        write!(f, ["enum", space(), self.id()]);
+        if self.underlying_type.is_some()
+            && let Some(underlying_type) = self.underlying_type()
+        {
+            write!(f, [":", space(), underlying_type]);
+        }
+        write!(f, [space(), "{", self.body(), "}"]);
     }
 }
 
@@ -1726,6 +1814,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if self.decorators.is_some() {
+            write!(f, self.decorators());
+        }
         let content = AssignmentLike::TSTypeAliasDeclaration(self);
         write!(
             f,
@@ -1740,6 +1831,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if self.decorators.is_some() {
+            write!(f, self.decorators());
+        }
         let id = self.id();
         let type_parameters = self.type_parameters();
         let extends = self.extends();
@@ -1904,6 +1998,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSSignature<'a, '_> {
         }
 
         write!(f, [&self.signature]);
+
+        if matches!(
+            self.signature.as_ref(),
+            TSSignature::MethodDefinition(method) if method.value.body.is_some()
+        ) || matches!(self.signature.as_ref(), TSSignature::ETSOverloadDeclaration(_))
+        {
+            return;
+        }
 
         match f.options().semicolons {
             Semicolons::Always => {
@@ -2238,10 +2340,31 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StructStatement<'a>> {
             write!(f, ["declare", space()]);
         }
 
+        if self.r#abstract() {
+            write!(f, ["abstract", space()]);
+        }
+        if self.r#static() {
+            write!(f, ["static", space()]);
+        }
+        if self.r#final() {
+            write!(f, ["final", space()]);
+        }
+        if self.native() {
+            write!(f, ["native", space()]);
+        }
+
         write!(f, ["struct", space(), id]);
 
         if let Some(type_parameters) = type_parameters {
             write!(f, type_parameters);
+        }
+
+        if let Some(super_class) = self.super_class() {
+            write!(f, [space(), "extends", space(), super_class, self.super_type_arguments()]);
+        }
+
+        if !self.implements().is_empty() {
+            write!(f, [space(), "implements", space(), self.implements()]);
         }
 
         write!(f, [space(), body]);

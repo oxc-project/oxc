@@ -153,16 +153,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
         let source = self.source();
 
         if let Some(decl) = declaration {
-            format_export_keyword_with_class_decorators(
-                self.span,
-                "export",
-                decl.as_ast_nodes(),
-                f,
-            );
+            let keyword = if self.ets_default() { "export default" } else { "export" };
+            format_export_keyword_with_class_decorators(self.span, keyword, decl.as_ast_nodes(), f);
             write!(f, decl);
         } else {
             self.format_leading_comments(f);
             write!(f, ["export", space()]);
+
+            if self.ets_single() {
+                debug_assert_eq!(specifiers.len(), 1);
+                if let Some(specifier) = specifiers.first() {
+                    write!(f, [specifier, OptionalSemicolon]);
+                }
+                self.format_trailing_comments(f);
+                return;
+            }
 
             let needs_space = f.options().bracket_spacing.value();
             if specifiers.is_empty() {

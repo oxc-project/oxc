@@ -24,6 +24,7 @@ fn main() -> CliRunResult {
         return runtime.block_on(async {
             run_lsp(
                 None,
+                command.lang,
                 #[cfg(feature = "napi")]
                 None,
             )

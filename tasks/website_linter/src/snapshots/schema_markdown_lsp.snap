@@ -74,6 +74,15 @@ type: `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_
 What kind of fixes to generate for code actions.
 
 
+## language
+
+type: `"ets-static"`
+
+
+Explicit language grammar for `.ets` documents. Without this option,
+`.ets` remains ArkUI/ArkTS 1.1.
+
+
 ## rulesCustomization
 
 type: `Record<string, object>`

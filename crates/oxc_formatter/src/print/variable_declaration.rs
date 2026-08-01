@@ -18,6 +18,10 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if self.decorators.is_some() {
+            write!(f, self.decorators());
+        }
+
         let semicolon = match self.parent() {
             AstNodes::ForStatement(stmt) => {
                 stmt.init().is_some_and(|init| init.span() != self.span())

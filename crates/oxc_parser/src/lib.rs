@@ -1197,7 +1197,7 @@ mod test {
         let source = r#"
             class Value {}
             let value: Value = new Value()
-            let values: int[] = new int[3](0)
+            let values: int[] = new int[3]
             let matches: boolean = value instanceof Value
             function consume(): void {}
             consume() { let nested: int = 1 }
@@ -1223,6 +1223,34 @@ mod test {
             panic!("Expected a trailing-block expression statement");
         };
         assert!(matches!(trailing_block.expression, Expression::ETSTrailingBlockExpression(_)));
+    }
+
+    #[test]
+    fn ets_static_matches_es2panda_array_and_await_parsing() {
+        let allocator = Allocator::default();
+        let source = r#"
+            let values: int[] = new int[3]
+            let matrix: int[][] = new int[2][3]
+            function resolve(promise: Promise<int>): int {
+                return await promise
+            }
+        "#;
+        let ret = Parser::new(&allocator, source, SourceType::ets_static()).parse();
+        assert!(ret.diagnostics.is_empty(), "Errors: {:?}", ret.diagnostics);
+
+        let initializers = ret.program.body.iter().take(2).map(|statement| {
+            let Statement::VariableDeclaration(declaration) = statement else {
+                panic!("Expected a variable declaration");
+            };
+            declaration.declarations[0].init.as_ref().expect("Expected an initializer")
+        });
+        assert!(matches!(
+            initializers.collect::<Vec<_>>().as_slice(),
+            [
+                Expression::ETSNewArrayInstanceExpression(_),
+                Expression::ETSNewMultiDimArrayInstanceExpression(_)
+            ]
+        ));
     }
 
     #[test]

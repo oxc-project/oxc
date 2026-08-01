@@ -6304,13 +6304,6 @@ unsafe fn walk_ets_new_array_instance_expression<'a, State, Tr: Traverse<'a, Sta
             as *mut Expression,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::ETSNewArrayInstanceExpressionInitializer);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_ets_new_array_instance_expression(&mut *node, ctx);
 }

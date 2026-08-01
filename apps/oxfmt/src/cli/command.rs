@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use bpaf::{Bpaf, Parser};
 #[cfg(feature = "napi")]
 use cow_utils::CowUtils;
+use oxc_span::ExplicitLanguage;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -28,6 +29,13 @@ pub struct FormatCommand {
     pub ignore_options: IgnoreOptions,
     #[bpaf(external)]
     pub runtime_options: RuntimeOptions,
+    /// Explicitly select a language grammar that cannot be inferred from the
+    /// file extension. Currently supported: `ets-static`.
+    ///
+    /// This option only affects `.ets` files. Without it, `.ets` keeps using
+    /// the ArkUI/ArkTS 1.1 grammar.
+    #[bpaf(long, argument("LANG"), optional, hide_usage)]
+    pub lang: Option<ExplicitLanguage>,
     /// Single file, path or list of paths.
     /// Glob patterns are also supported.
     /// (Be sure to quote them, otherwise your shell may expand them before passing.)

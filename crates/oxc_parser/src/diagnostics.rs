@@ -1608,23 +1608,6 @@ pub fn ets_array_dimension_required(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn ets_array_initializer_required(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Static ETS array construction requires an initializer").with_label(span)
-}
-
-#[cold]
-pub fn ets_array_initializer_count(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Static ETS array construction requires exactly one initializer")
-        .with_label(span)
-}
-
-#[cold]
-pub fn ets_multidimensional_array(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Multi-dimensional array construction is not supported in static ETS")
-        .with_label(span)
-}
-
-#[cold]
 pub fn ets_unsupported_syntax(feature: &str, span: Span) -> OxcDiagnostic {
     // Error recovery can synthesize nodes whose start is after the current
     // token. Keep diagnostics total even for severely malformed input.

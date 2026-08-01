@@ -122,8 +122,12 @@ export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, se
 export declare function parseRawSync(filename: string, buffer: Uint8Array, sourceStart: number, sourceLen: number, options?: ParserOptions | undefined | null): void
 
 export interface ParserOptions {
-  /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */
-  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
+  /**
+   * Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts`, or explicitly
+   * selected static ETS. A `.ets` filename without `ets-static` keeps using
+   * the ArkUI/ArkTS 1.1 grammar.
+   */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets-static'
   /** Treat the source text as `script` or `module` code. */
   sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
   /** Ignore non-fatal parsing errors */

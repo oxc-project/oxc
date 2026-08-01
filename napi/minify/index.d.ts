@@ -175,6 +175,12 @@ export interface MangleOptionsKeepNames {
 export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): Promise<MinifyResult>
 
 export interface MinifyOptions {
+  /**
+   * Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts`, or explicitly
+   * selected static ETS. A `.ets` filename without `ets-static` keeps using
+   * the ArkUI/ArkTS 1.1 grammar.
+   */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets-static'
   /** Use when minifying an ES module. */
   module?: boolean
   compress?: boolean | CompressOptions

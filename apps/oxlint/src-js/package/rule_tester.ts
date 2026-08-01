@@ -218,8 +218,9 @@ interface ParserOptions {
   /**
    * Language variant to parse file as.
    *
-   * If test case provides a filename, that takes precedence over `lang` option.
-   * Language will be inferred from file extension.
+   * If a test case provides a filename, its extension normally takes precedence
+   * over `lang`. `ets-static` is always passed explicitly because `.ets` is also
+   * used by ArkTS 1.1.
    */
   lang?: Language;
   /**
@@ -270,7 +271,7 @@ interface EcmaFeaturesInternal extends EcmaFeatures {
 /**
  * Parser language.
  */
-type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
+type Language = "js" | "jsx" | "ts" | "tsx" | "dts" | "ets-static";
 
 // Number of additional fix passes to apply after the first pass if `recursive: true`
 const RECURSIVE_TRUE_PASSES = 10;
@@ -1238,6 +1239,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
         ext = "js";
       } else if (ext === "dts") {
         ext = "d.ts";
+      } else if (ext === "ets-static") {
+        ext = "ets";
       }
       filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
     }
@@ -1353,9 +1356,10 @@ function getParseOptions(test: TestCase): ParseOptions {
     // Handle `parserOptions.ignoreNonFatalErrors`
     if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
 
-    // Handle `parserOptions.lang`. `filename` takes precedence over `lang` if provided.
-    if (test.filename == null) {
-      const { lang } = parserOptions;
+    // A filename normally takes precedence. Static ETS is the exception because
+    // both language versions intentionally share the `.ets` extension.
+    const { lang } = parserOptions;
+    if (lang === "ets-static" || test.filename == null) {
       if (lang != null) {
         parseOptions.lang = lang;
       } else if (parserOptions.ecmaFeatures?.jsx === true) {

@@ -89,6 +89,7 @@ impl CliRunner {
             disable_nested_config,
             inline_config_options,
             suppression_options,
+            lang,
             ..
         } = self.options;
 
@@ -365,6 +366,9 @@ impl CliRunner {
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
+        if let Some(language) = lang {
+            options = options.with_source_type(language.source_type());
+        }
 
         let mut suppression_manager = SuppressionManager::load(
             options.cwd(),
@@ -725,7 +729,7 @@ fn render_config_builder_error(
 mod test {
     use std::fs;
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, tester::Tester};
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -752,6 +756,38 @@ mod test {
     fn file() {
         let args = &["fixtures/cli/linter/debugger.js"];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn static_ets_cli_mode_lints_and_fixes_without_changing_default_ets() {
+        let temp_dir = tempfile::tempdir().expect("Could not create a temp dir");
+        let file_name = "static.ets";
+        let file_path = temp_dir.path().join(file_name);
+        let clean = "package example.lint;\nlet character: char = c'a';\n";
+        fs::write(&file_path, clean).unwrap();
+
+        let tester = Tester::new().with_cwd(temp_dir.path().to_path_buf());
+        let (_, legacy_result) = tester.test_output(&[file_name]);
+        assert!(matches!(legacy_result, CliRunResult::LintFoundErrors));
+
+        let (_, static_result) = tester.test_output(&["--lang", "ets-static", file_name]);
+        assert!(matches!(static_result, CliRunResult::LintSucceeded));
+
+        let before = "package example.lint;\nlet character: char = c'a';\n";
+        let after = "package example.lint;\nconst character: char = c'a';\n";
+        fs::write(&file_path, before).unwrap();
+        let (output, result) =
+            tester.test_output(&["--lang", "ets-static", "-D", "prefer-const", file_name]);
+        assert!(
+            matches!(result, CliRunResult::LintFoundErrors),
+            "static ETS rule did not run: {result:?}\n{output}"
+        );
+        tester.test_fix_with_args(
+            file_name,
+            before,
+            after,
+            &["--lang", "ets-static", "-D", "prefer-const"],
+        );
     }
 
     #[test]

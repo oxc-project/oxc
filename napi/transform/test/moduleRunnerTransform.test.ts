@@ -2,6 +2,17 @@ import { describe, expect, test } from "vitest";
 import { moduleRunnerTransform, moduleRunnerTransformSync } from "../index";
 
 describe("moduleRunnerTransformSync", () => {
+  test("only enables static ETS through the explicit language option", () => {
+    const code = "package example.runner;\nexport let character: char = c'a';";
+
+    expect(moduleRunnerTransformSync("index.ets", code).errors.length).toBeGreaterThan(0);
+
+    const result = moduleRunnerTransformSync("index.ets", code, { lang: "ets-static" });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("package example.runner;");
+    expect(result.code).toContain("c'a'");
+  });
+
   test("dynamic import", async () => {
     const result = moduleRunnerTransformSync("index.js", `export const i = () => import('./foo')`);
     expect(result?.code).toMatchInlineSnapshot(`

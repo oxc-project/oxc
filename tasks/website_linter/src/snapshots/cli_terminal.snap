@@ -106,5 +106,7 @@ Available options:
         --type-aware          Enable rules that require type information
         --type-check          Enable experimental type checking (includes TypeScript compiler
                               diagnostics)
+        --lang=LANG           Explicitly select a language grammar that cannot be inferred from the
+                              file extension. Currently supported: `ets-static`.
     -h, --help                Prints help information
     -V, --version             Prints version information

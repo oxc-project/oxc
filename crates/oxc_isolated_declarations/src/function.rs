@@ -22,7 +22,7 @@ impl<'a> IsolatedDeclarations<'a> {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
         }
         let params = self.transform_formal_parameters(&func.params, false);
-        Function::boxed(
+        let mut transformed = Function::boxed(
             func.span,
             func.r#type,
             func.id.clone_in(self.allocator()),
@@ -35,7 +35,13 @@ impl<'a> IsolatedDeclarations<'a> {
             return_type,
             NONE,
             self,
-        )
+        );
+        if self.is_ets_static {
+            transformed.decorators = func.decorators.clone_in(self.allocator());
+            transformed.r#final = func.r#final;
+            transformed.native = func.native;
+        }
+        transformed
     }
 
     pub(crate) fn transform_formal_parameter(
@@ -109,7 +115,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
             let optional =
                 param.optional || (!is_remaining_params_have_required && is_assignment_pattern);
-            return Some(FormalParameter::new(
+            let mut transformed = FormalParameter::new(
                 param.span,
                 [],
                 // `pattern` is already an owned, freshly-cloned binding (see above) and is
@@ -122,10 +128,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 false,
                 false,
                 self,
-            ));
+            );
+            if self.is_ets_static {
+                transformed.decorators = param.decorators.clone_in(self.allocator());
+            }
+            return Some(transformed);
         }
 
-        Some(FormalParameter::new(
+        let mut transformed = FormalParameter::new(
             param.span,
             [],
             pattern,
@@ -136,7 +146,11 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             self,
-        ))
+        );
+        if self.is_ets_static {
+            transformed.decorators = param.decorators.clone_in(self.allocator());
+        }
+        Some(transformed)
     }
 
     pub(crate) fn transform_formal_parameters(

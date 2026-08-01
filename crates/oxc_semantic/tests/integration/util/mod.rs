@@ -46,6 +46,11 @@ impl<'a> SemanticTester<'a> {
         Self::new(source_text, SourceType::ts())
     }
 
+    /// Create a new tester for an explicitly selected static ETS test case.
+    pub fn ets_static(source_text: &'static str) -> Self {
+        Self::new(source_text, SourceType::ets_static())
+    }
+
     /// Create a new tester for a TypeScript test case with JSX.
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases without JSX.

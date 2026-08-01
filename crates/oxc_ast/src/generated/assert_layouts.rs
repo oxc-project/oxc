@@ -1954,13 +1954,12 @@ const _: () = {
     assert!(offset_of!(ETSNewClassInstanceExpression, arguments) == 32);
 
     // Padding: 4 bytes
-    assert!(size_of::<ETSNewArrayInstanceExpression>() == 64);
+    assert!(size_of::<ETSNewArrayInstanceExpression>() == 48);
     assert!(align_of::<ETSNewArrayInstanceExpression>() == 8);
     assert!(offset_of!(ETSNewArrayInstanceExpression, span) == 0);
     assert!(offset_of!(ETSNewArrayInstanceExpression, node_id) == 8);
     assert!(offset_of!(ETSNewArrayInstanceExpression, type_annotation) == 16);
     assert!(offset_of!(ETSNewArrayInstanceExpression, dimension) == 32);
-    assert!(offset_of!(ETSNewArrayInstanceExpression, initializer) == 48);
 
     // Padding: 4 bytes
     assert!(size_of::<ETSNewMultiDimArrayInstanceExpression>() == 56);
@@ -3948,13 +3947,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(ETSNewClassInstanceExpression, arguments) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<ETSNewArrayInstanceExpression>() == 36);
+    assert!(size_of::<ETSNewArrayInstanceExpression>() == 28);
     assert!(align_of::<ETSNewArrayInstanceExpression>() == 4);
     assert!(offset_of!(ETSNewArrayInstanceExpression, span) == 0);
     assert!(offset_of!(ETSNewArrayInstanceExpression, node_id) == 8);
     assert!(offset_of!(ETSNewArrayInstanceExpression, type_annotation) == 12);
     assert!(offset_of!(ETSNewArrayInstanceExpression, dimension) == 20);
-    assert!(offset_of!(ETSNewArrayInstanceExpression, initializer) == 28);
 
     // Padding: 0 bytes
     assert!(size_of::<ETSNewMultiDimArrayInstanceExpression>() == 36);

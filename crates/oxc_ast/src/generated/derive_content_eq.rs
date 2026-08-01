@@ -2841,7 +2841,6 @@ impl ContentEq for ETSNewArrayInstanceExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.dimension, &other.dimension)
-            && ContentEq::content_eq(&self.initializer, &other.initializer)
     }
 }
 

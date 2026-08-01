@@ -63,6 +63,10 @@ search: false
 
 
 ## Available options:
+- **`    --lang`**=_`LANG`_ &mdash; 
+  Explicitly select a language grammar that cannot be inferred from the file extension. Currently supported: `ets-static`.
+
+  This option only affects `.ets` files. Without it, `.ets` keeps using the ArkUI/ArkTS 1.1 grammar.
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 

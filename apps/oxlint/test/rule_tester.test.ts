@@ -2803,6 +2803,33 @@ describe("RuleTester", () => {
         });
       });
 
+      describe("ets-static", () => {
+        it("overrides an `.ets` filename only when explicitly selected", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "let character: char = c'a';",
+                filename: "test.ets",
+                languageOptions: { parserOptions: { lang: "ets-static" } },
+              },
+              {
+                code: "let character: char = c'a';",
+                filename: "test.ets",
+              },
+            ],
+            invalid: [],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
+      });
+
       it("mixed across test cases", () => {
         const tester = new RuleTester();
         tester.run("no-foo", simpleRule, {

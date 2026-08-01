@@ -390,7 +390,11 @@ impl<'a> AssignmentLike<'a, '_> {
             }
             Self::ObjectProperty(property) => {
                 debug_assert!(!property.shorthand);
-                write!(f, [":"]);
+                if property.kind == PropertyKind::EtsEquals {
+                    write!(f, [space(), "="]);
+                } else {
+                    write!(f, [":"]);
+                }
             }
             Self::BindingProperty(property) => {
                 if !property.shorthand {

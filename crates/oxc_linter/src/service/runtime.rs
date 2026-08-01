@@ -46,6 +46,7 @@ pub struct Runtime {
     cwd: Box<Path>,
     pub(super) linter: Linter,
     resolver: Option<Resolver>,
+    source_type_override: Option<SourceType>,
 
     /// Pool of allocators for parsing and linting.
     allocator_pool: AllocatorPool,
@@ -205,6 +206,14 @@ impl RuntimeFileSystem for OsFileSystem {
 }
 
 impl Runtime {
+    fn source_type_override_for_path(&self, path: &Path) -> Option<SourceType> {
+        path.extension()
+            .and_then(OsStr::to_str)
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("ets"))
+            .then_some(self.source_type_override)
+            .flatten()
+    }
+
     pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
         // If global thread pool wasn't already initialized, do it now.
         // This "locks" config for the thread pool, which ensures `rayon::current_num_threads()`
@@ -265,6 +274,7 @@ impl Runtime {
             cwd: options.cwd,
             linter,
             resolver,
+            source_type_override: options.source_type_override,
             modules_by_path: papaya::HashMap::builder()
                 .hasher(BuildHasherDefault::default())
                 .resize_mode(papaya::ResizeMode::Blocking)
@@ -321,12 +331,17 @@ impl Runtime {
     }
 
     fn get_source_type_and_text<'a>(
+        &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
     ) -> Option<Result<(SourceType, &'a str), Error>> {
-        let source_type = SourceType::from_path(path);
+        let source_type = if ext.eq_ignore_ascii_case("ets") {
+            self.source_type_override_for_path(path).map_or_else(|| SourceType::from_path(path), Ok)
+        } else {
+            SourceType::from_path(path)
+        };
         let not_supported_yet =
             source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
         if not_supported_yet {
@@ -688,14 +703,18 @@ impl Runtime {
                         }
 
                         if me.linter.options().fix.is_some() {
-                            let fix_result = Fixer::new(
-                                dep.source_text,
-                                messages,
-                                SourceType::from_path(path).ok().map(|st| {
-                                    if st.is_javascript() { st.with_jsx(true) } else { st }
-                                }),
-                            )
-                            .fix();
+                            let fixer_source_type = me
+                                .source_type_override_for_path(path)
+                                .or_else(|| SourceType::from_path(path).ok())
+                                .map(|source_type| {
+                                    if source_type.is_javascript() {
+                                        source_type.with_jsx(true)
+                                    } else {
+                                        source_type
+                                    }
+                                });
+                            let fix_result =
+                                Fixer::new(dep.source_text, messages, fixer_source_type).fix();
                             if fix_result.fixed {
                                 // write to file, replacing only the changed part
                                 let start = 0;
@@ -1000,7 +1019,7 @@ impl Runtime {
                 let allocator = &**allocator_guard;
 
                 let Some(stt) =
-                    Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)
+                    self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)
                 else {
                     return Err(());
                 };
@@ -1034,7 +1053,8 @@ impl Runtime {
         } else {
             let allocator = &*allocator_guard;
 
-            let stt = Self::get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
+            let stt =
+                self.get_source_type_and_text(file_system, Path::new(path), ext, allocator)?;
 
             let (source_type, source_text) = match stt {
                 Ok(v) => v,
@@ -1132,6 +1152,7 @@ impl Runtime {
     {
         let collect_tokens = self.linter.has_external_linter();
         let ret = Parser::new(allocator, source_text, source_type)
+            .with_source_path(path)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,

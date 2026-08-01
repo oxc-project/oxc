@@ -1825,7 +1825,6 @@ export interface ETSNewArrayInstanceExpression extends Span {
   type: "ETSNewArrayInstanceExpression";
   typeAnnotation: TSType;
   dimension: Expression;
-  initializer: Expression | null;
   parent: Node;
 }
 

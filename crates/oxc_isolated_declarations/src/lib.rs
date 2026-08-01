@@ -65,6 +65,7 @@ pub struct IsolatedDeclarations<'a> {
     // state
     scope: ScopeTree<'a>,
     errors: RefCell<Diagnostics>,
+    is_ets_static: bool,
 
     // options
     strip_internal: bool,
@@ -83,6 +84,7 @@ impl<'a> IsolatedDeclarations<'a> {
             internal_annotations: FxHashSet::default(),
             scope: ScopeTree::new(),
             errors: RefCell::new(Diagnostics::new()),
+            is_ets_static: false,
         }
     }
 
@@ -90,12 +92,17 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
+        self.is_ets_static = program.source_type.is_ets_static();
         self.internal_annotations = if self.strip_internal {
             Self::build_internal_annotations(program)
         } else {
             FxHashSet::default()
         };
-        let source_type = SourceType::d_ts();
+        let source_type = if self.is_ets_static {
+            program.source_type.with_typescript_definition(true)
+        } else {
+            SourceType::d_ts()
+        };
         let stmts = self.transform_program(program);
         let program = Program::new(
             SPAN,
@@ -147,13 +154,24 @@ impl<'a> IsolatedDeclarations<'a> {
 
 impl<'a> IsolatedDeclarations<'a> {
     fn transform_program(&mut self, program: &Program<'a>) -> ArenaVec<'a, Statement<'a>> {
+        let package = self.is_ets_static.then(|| {
+            program
+                .body
+                .iter()
+                .find(|statement| matches!(statement, Statement::ETSPackageDeclaration(_)))
+                .map(|statement| statement.clone_in(self.allocator()))
+        });
         let has_import_or_export = program.body.iter().any(Statement::is_module_declaration);
 
-        if has_import_or_export {
+        let mut statements = if has_import_or_export {
             self.transform_statements_on_demand(&program.body)
         } else {
             self.transform_program_without_module_declaration(&program.body)
+        };
+        if let Some(Some(package)) = package {
+            statements.insert(0, package);
         }
+        statements
     }
 
     fn transform_program_without_module_declaration(
@@ -350,12 +368,9 @@ impl<'a> IsolatedDeclarations<'a> {
                             }),
                             self,
                         );
-                        let decl = VariableDeclaration::boxed(
-                            declaration.span,
-                            declaration.kind,
+                        let decl = self.transform_variable_declaration_with_new_declarations(
+                            declaration,
                             declarations,
-                            self.is_declare(),
-                            self,
                         );
                         transformed_stmts[idx] = Some(Statement::VariableDeclaration(decl));
                         transformed_count += 1;
@@ -413,12 +428,11 @@ impl<'a> IsolatedDeclarations<'a> {
                     if declarations.is_empty() {
                         continue;
                     }
-                    new_stmts.push(Statement::new_variable_declaration(
-                        decl.span,
-                        decl.kind,
-                        declarations,
-                        self.is_declare(),
-                        self,
+                    new_stmts.push(Statement::VariableDeclaration(
+                        self.transform_variable_declaration_with_new_declarations(
+                            decl,
+                            declarations,
+                        ),
                     ));
                 }
                 _ => {}

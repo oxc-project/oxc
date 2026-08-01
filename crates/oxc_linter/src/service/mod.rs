@@ -7,6 +7,7 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::DiagnosticSender;
+use oxc_span::SourceType;
 
 use crate::{Linter, RuleTimingStore, suppression::DiffManager};
 
@@ -21,6 +22,9 @@ pub struct LintServiceOptions {
     tsconfig: Option<PathBuf>,
 
     cross_module: bool,
+    /// Explicit source type for same-extension language modes. The runtime
+    /// applies it only to `.ets` files.
+    source_type_override: Option<SourceType>,
 }
 
 impl LintServiceOptions {
@@ -29,7 +33,7 @@ impl LintServiceOptions {
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), tsconfig: None, cross_module: false }
+        Self { cwd: cwd.into(), tsconfig: None, cross_module: false, source_type_override: None }
     }
 
     #[inline]
@@ -51,6 +55,15 @@ impl LintServiceOptions {
     #[must_use]
     pub fn with_cross_module(mut self, cross_module: bool) -> Self {
         self.cross_module = cross_module;
+        self
+    }
+
+    /// Explicitly select the grammar used for `.ets` inputs.
+    #[inline]
+    #[must_use]
+    pub fn with_source_type(mut self, source_type: SourceType) -> Self {
+        debug_assert!(source_type.is_ets_static());
+        self.source_type_override = Some(source_type);
         self
     }
 

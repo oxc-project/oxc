@@ -906,6 +906,12 @@ impl Gen for Function<'_> {
             if self.declare {
                 p.print_str("declare ");
             }
+            if self.r#final {
+                p.print_str("final ");
+            }
+            if self.native {
+                p.print_str("native ");
+            }
             if self.r#async {
                 p.print_str("async ");
             }
@@ -1738,7 +1744,7 @@ impl Gen for RegExpLiteral<'_> {
 
 impl Gen for StringLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_string_literal(self, true);
+        p.print_string_literal(self, !p.in_ets_annotation_value);
     }
 }
 
@@ -1913,7 +1919,7 @@ impl GenExpr for ETSInstanceOfExpression<'_> {
             self.left.print_expr(p, Precedence::Compare, ctx);
             p.print_space_before_identifier();
             p.print_str("instanceof");
-            p.print_soft_space();
+            p.print_hard_space();
             self.right.print(p, Context::empty());
         });
     }
@@ -1922,7 +1928,9 @@ impl GenExpr for ETSInstanceOfExpression<'_> {
 impl GenExpr for ETSNewClassInstanceExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::New, |p| {
-            p.print_str("new ");
+            p.print_space_before_identifier();
+            p.print_str("new");
+            p.print_hard_space();
             self.type_annotation.print(p, ctx);
             if self.has_arguments {
                 p.print_arguments(self.span, &self.arguments, ctx);
@@ -1934,16 +1942,13 @@ impl GenExpr for ETSNewClassInstanceExpression<'_> {
 impl GenExpr for ETSNewArrayInstanceExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::New, |p| {
-            p.print_str("new ");
+            p.print_space_before_identifier();
+            p.print_str("new");
+            p.print_hard_space();
             self.type_annotation.print(p, ctx);
             p.print_ascii_byte(b'[');
             self.dimension.print_expr(p, Precedence::Comma, Context::empty());
             p.print_ascii_byte(b']');
-            if let Some(initializer) = &self.initializer {
-                p.print_ascii_byte(b'(');
-                initializer.print_expr(p, Precedence::Comma, Context::empty());
-                p.print_ascii_byte(b')');
-            }
         });
     }
 }
@@ -1951,7 +1956,9 @@ impl GenExpr for ETSNewArrayInstanceExpression<'_> {
 impl GenExpr for ETSNewMultiDimArrayInstanceExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::New, |p| {
-            p.print_str("new ");
+            p.print_space_before_identifier();
+            p.print_str("new");
+            p.print_hard_space();
             self.type_annotation.print(p, ctx);
             for dimension in &self.dimensions {
                 p.print_ascii_byte(b'[');
@@ -2150,7 +2157,10 @@ impl Gen for ObjectProperty<'_> {
             p.print_soft_space();
             p.print_ascii_byte(b'=');
             p.print_soft_space();
+            let was_in_annotation_value = p.in_ets_annotation_value;
+            p.in_ets_annotation_value = true;
             self.value.print_expr(p, Precedence::Comma, Context::empty());
+            p.in_ets_annotation_value = was_in_annotation_value;
             return;
         }
 
@@ -2904,6 +2914,15 @@ impl Gen for Class<'_> {
             if self.r#abstract {
                 p.print_str("abstract ");
             }
+            if self.r#static {
+                p.print_str("static ");
+            }
+            if self.r#final {
+                p.print_str("final ");
+            }
+            if self.native {
+                p.print_str("native ");
+            }
             p.print_str("class");
             if let Some(id) = &self.id {
                 p.print_hard_space();
@@ -3068,6 +3087,15 @@ impl Gen for StructStatement<'_> {
         if self.r#abstract {
             p.print_str("abstract ");
         }
+        if self.r#static {
+            p.print_str("static ");
+        }
+        if self.r#final {
+            p.print_str("final ");
+        }
+        if self.native {
+            p.print_str("native ");
+        }
         p.print_str("struct");
         p.print_hard_space();
         self.id.print(p, ctx);
@@ -3128,7 +3156,10 @@ impl Gen for AnnotationBody<'_> {
                 p.print_semicolon_if_needed();
                 p.print_leading_comments(item.span().start);
                 p.print_indent();
+                let was_in_annotation_value = p.in_ets_annotation_value;
+                p.in_ets_annotation_value = true;
                 item.print(p, ctx);
+                p.in_ets_annotation_value = was_in_annotation_value;
             }
         });
     }
@@ -3225,6 +3256,7 @@ impl Gen for ETSOverloadDeclaration<'_> {
             p.print_soft_space();
         }
         p.print_ascii_byte(b'}');
+        p.print_semicolon();
     }
 }
 
@@ -3482,6 +3514,16 @@ impl Gen for MethodDefinition<'_> {
         if self.r#override {
             p.print_space_before_identifier();
             p.print_str("override");
+            p.print_soft_space();
+        }
+        if self.r#final {
+            p.print_space_before_identifier();
+            p.print_str("final");
+            p.print_soft_space();
+        }
+        if self.native {
+            p.print_space_before_identifier();
+            p.print_str("native");
             p.print_soft_space();
         }
         match &self.kind {
@@ -4247,7 +4289,12 @@ impl Gen for TSTypeLiteral<'_> {
                 p.print_leading_comments(item.span().start);
                 p.print_indent();
                 item.print(p, ctx);
-                p.print_semicolon();
+                if !matches!(
+                    item,
+                    TSSignature::MethodDefinition(_) | TSSignature::ETSOverloadDeclaration(_)
+                ) {
+                    p.print_semicolon();
+                }
                 p.print_soft_newline();
             }
         });
@@ -4764,7 +4811,12 @@ impl Gen for TSInterfaceDeclaration<'_> {
                 p.print_leading_comments(item.span().start);
                 p.print_indent();
                 item.print(p, ctx);
-                p.print_semicolon();
+                if !matches!(
+                    item,
+                    TSSignature::MethodDefinition(_) | TSSignature::ETSOverloadDeclaration(_)
+                ) {
+                    p.print_semicolon();
+                }
                 p.print_soft_newline();
             }
         });

@@ -53,10 +53,12 @@ impl<'a> IsolatedDeclarations<'a> {
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                 Some((None, decl.declaration.clone_in(self.allocator())))
             }
-            ExportDefaultDeclarationKind::StructStatement(_) => {
-                // StructStatement is ArkUI-specific syntax, clone as-is for declaration files
-                Some((None, decl.declaration.clone_in(self.ast.allocator())))
-            }
+            ExportDefaultDeclarationKind::StructStatement(struct_decl) => Some((
+                None,
+                ExportDefaultDeclarationKind::StructStatement(
+                    self.transform_struct(struct_decl, Some(false)),
+                ),
+            )),
             declaration @ match_expression!(ExportDefaultDeclarationKind) => self
                 .transform_export_expression(decl.span, declaration.to_expression())
                 .map(|(var_decl, expr)| (var_decl, ExportDefaultDeclarationKind::from(expr))),

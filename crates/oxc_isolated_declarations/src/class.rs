@@ -33,6 +33,104 @@ impl<'a> AccessorAnnotation<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
+    pub(crate) fn transform_struct(
+        &self,
+        decl: &StructStatement<'a>,
+        declare: Option<bool>,
+    ) -> ArenaBox<'a, StructStatement<'a>> {
+        // Static ETS structs share the same member grammar and declaration-emission
+        // rules as classes. Reuse the class transform so method bodies, static
+        // blocks, initializers, overload implementations, accessors, and inferred
+        // types are handled identically instead of maintaining a second partial
+        // implementation.
+        let class_elements = ArenaVec::from_iter_in(
+            decl.body.body.iter().map(|element| match element {
+                StructElement::PropertyDefinition(element) => {
+                    ClassElement::PropertyDefinition(element.clone_in(self.allocator()))
+                }
+                StructElement::MethodDefinition(element) => {
+                    ClassElement::MethodDefinition(element.clone_in(self.allocator()))
+                }
+                StructElement::StaticBlock(element) => {
+                    ClassElement::StaticBlock(element.clone_in(self.allocator()))
+                }
+                StructElement::TSIndexSignature(element) => {
+                    ClassElement::TSIndexSignature(element.clone_in(self.allocator()))
+                }
+                StructElement::AccessorProperty(element) => {
+                    ClassElement::AccessorProperty(element.clone_in(self.allocator()))
+                }
+                StructElement::ETSOverloadDeclaration(element) => {
+                    ClassElement::ETSOverloadDeclaration(element.clone_in(self.allocator()))
+                }
+            }),
+            self,
+        );
+        let class_body = ClassBody::boxed(decl.body.span, class_elements, self);
+        let mut class = Class::new(
+            decl.span,
+            ClassType::ClassDeclaration,
+            decl.decorators.clone_in(self.allocator()),
+            Some(decl.id.clone_in(self.allocator())),
+            decl.type_parameters.clone_in(self.allocator()),
+            decl.super_class.clone_in(self.allocator()),
+            decl.super_type_arguments.clone_in(self.allocator()),
+            decl.implements.clone_in(self.allocator()),
+            class_body,
+            decl.r#abstract,
+            decl.declare,
+            self,
+        );
+        class.r#final = decl.r#final;
+        class.native = decl.native;
+        class.r#static = decl.r#static;
+
+        let transformed_class = self.transform_class(&class, declare);
+        let struct_elements = ArenaVec::from_iter_in(
+            transformed_class.body.body.iter().filter_map(|element| match element {
+                ClassElement::PropertyDefinition(element) => {
+                    Some(StructElement::PropertyDefinition(element.clone_in(self.allocator())))
+                }
+                ClassElement::MethodDefinition(element) => {
+                    Some(StructElement::MethodDefinition(element.clone_in(self.allocator())))
+                }
+                ClassElement::StaticBlock(element) => {
+                    Some(StructElement::StaticBlock(element.clone_in(self.allocator())))
+                }
+                ClassElement::TSIndexSignature(element) => {
+                    Some(StructElement::TSIndexSignature(element.clone_in(self.allocator())))
+                }
+                ClassElement::AccessorProperty(element) => {
+                    Some(StructElement::AccessorProperty(element.clone_in(self.allocator())))
+                }
+                ClassElement::ETSOverloadDeclaration(element) => {
+                    Some(StructElement::ETSOverloadDeclaration(element.clone_in(self.allocator())))
+                }
+                // Struct bodies do not have a call-signature production.
+                ClassElement::TSCallSignatureDeclaration(_) => None,
+            }),
+            self,
+        );
+        let body = StructBody::boxed(decl.body.span, struct_elements, self);
+        let mut transformed = StructStatement::boxed(
+            decl.span,
+            decl.decorators.clone_in(self.allocator()),
+            decl.id.clone_in(self.allocator()),
+            decl.type_parameters.clone_in(self.allocator()),
+            decl.super_class.clone_in(self.allocator()),
+            decl.super_type_arguments.clone_in(self.allocator()),
+            decl.implements.clone_in(self.allocator()),
+            body,
+            decl.r#abstract,
+            declare.unwrap_or_else(|| self.is_declare()),
+            self,
+        );
+        transformed.r#final = decl.r#final;
+        transformed.native = decl.native;
+        transformed.r#static = decl.r#static;
+        transformed
+    }
+
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
         match key {
             PropertyKey::StringLiteral(_) | PropertyKey::NumericLiteral(_) => true,
@@ -93,7 +191,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    fn transform_class_property_definition(
+    pub(crate) fn transform_class_property_definition(
         &self,
         property: &PropertyDefinition<'a>,
     ) -> ClassElement<'a> {
@@ -129,7 +227,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        ClassElement::new_property_definition(
+        let mut transformed = ClassElement::new_property_definition(
             property.span,
             property.r#type,
             [],
@@ -145,7 +243,13 @@ impl<'a> IsolatedDeclarations<'a> {
             property.readonly,
             Self::transform_accessibility(property.accessibility),
             self,
-        )
+        );
+        if self.is_ets_static
+            && let ClassElement::PropertyDefinition(transformed) = &mut transformed
+        {
+            transformed.decorators = property.decorators.clone_in(self.allocator());
+        }
+        transformed
     }
 
     fn get_literal_initializer_without_const_assertion(
@@ -180,7 +284,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
-    fn transform_class_method_definition(
+    pub(crate) fn transform_class_method_definition(
         &self,
         definition: &MethodDefinition<'a>,
         params: ArenaBox<'a, FormalParameters<'a>>,
@@ -203,7 +307,7 @@ impl<'a> IsolatedDeclarations<'a> {
             self,
         );
 
-        ClassElement::new_method_definition(
+        let mut transformed = ClassElement::new_method_definition(
             definition.span,
             definition.r#type,
             [],
@@ -216,7 +320,15 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.optional,
             Self::transform_accessibility(definition.accessibility),
             self,
-        )
+        );
+        if self.is_ets_static
+            && let ClassElement::MethodDefinition(transformed) = &mut transformed
+        {
+            transformed.decorators = definition.decorators.clone_in(self.allocator());
+            transformed.r#final = definition.r#final;
+            transformed.native = definition.native;
+        }
+        transformed
     }
 
     fn create_class_property(
@@ -620,7 +732,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     };
 
                     // FIXME: missing many fields
-                    let new_element = ClassElement::new_accessor_property(
+                    let mut new_element = ClassElement::new_accessor_property(
                         property.span,
                         property.r#type,
                         [],
@@ -634,6 +746,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         Self::transform_accessibility(property.accessibility),
                         self,
                     );
+                    if self.is_ets_static
+                        && let ClassElement::AccessorProperty(transformed) = &mut new_element
+                    {
+                        transformed.decorators = property.decorators.clone_in(self.allocator());
+                    }
                     elements.push(new_element);
                 }
                 ClassElement::TSIndexSignature(signature) => elements.push({
@@ -679,7 +796,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = ClassBody::new(decl.body.span, elements, self);
 
-        Class::boxed(
+        let mut transformed = Class::boxed(
             decl.span,
             decl.r#type,
             [],
@@ -692,7 +809,14 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
             self,
-        )
+        );
+        if self.is_ets_static {
+            transformed.decorators = decl.decorators.clone_in(self.allocator());
+            transformed.r#static = decl.r#static;
+            transformed.r#final = decl.r#final;
+            transformed.native = decl.native;
+        }
+        transformed
     }
 
     pub(crate) fn create_formal_parameters(

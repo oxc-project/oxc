@@ -223,7 +223,7 @@ async fn lint_impl(
 
     // If --lsp flag is set, run the language server
     if command.lsp {
-        crate::lsp::run_lsp(external_linter, js_config_loader).await;
+        crate::lsp::run_lsp(external_linter, command.lang, js_config_loader).await;
         return CliRunResult::LintSucceeded;
     }
 

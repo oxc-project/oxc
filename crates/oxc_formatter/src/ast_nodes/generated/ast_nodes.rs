@@ -11713,32 +11713,13 @@ impl<'a> AstNode<'a, ETSNewArrayInstanceExpression<'a>> {
 
     #[inline]
     pub fn dimension(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_span_start = self
-            .inner
-            .initializer
-            .as_ref()
-            .map(|n| n.span().start)
-            .or(Some(self.following_span_start))
-            .unwrap_or(0);
+        let following_span_start = self.following_span_start;
         self.allocator.alloc(AstNode {
             inner: &self.inner.dimension,
             allocator: self.allocator,
             parent: AstNodes::ETSNewArrayInstanceExpression(transmute_self(self)),
             following_span_start,
         })
-    }
-
-    #[inline]
-    pub fn initializer(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.initializer.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ETSNewArrayInstanceExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {

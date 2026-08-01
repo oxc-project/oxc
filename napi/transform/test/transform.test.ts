@@ -26,6 +26,26 @@ describe("simple", () => {
     expect(ret.code).toEqual("export class A {}\n");
   });
 
+  it("only enables static ETS through the explicit language option", () => {
+    const code = [
+      "package example.transform;",
+      "final class Box { value: int = 1; }",
+      "function make(): Box { return new Box(); }",
+      "let character: char = c'a';",
+    ].join("\n");
+
+    expect(transformSync("test.ets", code).errors.length).toBeGreaterThan(0);
+
+    const ret = transformSync("test.ets", code, { lang: "ets-static" });
+    expect(ret.errors).toEqual([]);
+    expect(ret.code).toContain("package example.transform;");
+    expect(ret.code).toContain("final class Box");
+    expect(ret.code).toContain("value: int");
+    expect(ret.code).toContain("c'a'");
+
+    expect(transformSync("test.ets", ret.code, { lang: "ets-static" }).errors).toEqual([]);
+  });
+
   it("uses the `declaration` option", () => {
     const ret = transformSync("test.ts", code, { typescript: { declaration: {} } });
     expect(ret.declaration).toEqual("export declare class A<T> {}\n");

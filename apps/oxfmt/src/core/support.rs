@@ -4,7 +4,7 @@ use phf::phf_set;
 
 use oxc_formatter_css::CssVariant;
 use oxc_formatter_json::JsonVariant;
-use oxc_span::SourceType;
+use oxc_span::{ExplicitLanguage, SourceType};
 
 #[cfg(feature = "napi")]
 use super::oxfmtrc::FormatConfig;
@@ -12,14 +12,32 @@ use super::oxfmtrc::FormatConfig;
 /// Classify a file path into a [`FileKind`].
 ///
 /// Returns `None` when the file type is not a formatting target.
-pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
+#[cfg(test)]
+fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
+    classify_file_kind_with_language(path, None)
+}
+
+/// Classify a file path while applying an explicitly selected language mode.
+///
+/// `ets-static` only overrides `.ets` inputs. This makes a directory-wide
+/// `--lang ets-static` safe for mixed JS/TS/ETS projects while preserving the
+/// historical ArkUI/ArkTS 1.1 inference whenever the option is absent.
+pub fn classify_file_kind_with_language(
+    path: Arc<Path>,
+    language: Option<ExplicitLanguage>,
+) -> Option<FileKind> {
     // PERF: Standard JS/TS extensions are by far the most common case,
     // so resolve them straight from the path before extracting `file_name`/`extension` for anything else.
     // NOTE:
     // - Use `path` directly for `.d.ts` detection
     // - This relies on `EXCLUDE_FILENAMES` containing no file with a standard JS/TS extension
     //   - guarded by the `exclude_filenames_are_not_js_or_ts` test
-    if let Ok(source_type) = SourceType::from_path(&path) {
+    if let Ok(mut source_type) = SourceType::from_path(&path) {
+        if source_type.is_arkui()
+            && let Some(language) = language
+        {
+            source_type = language.source_type();
+        }
         return Some(FileKind::OxcFormatter { path, source_type });
     }
 
@@ -86,7 +104,7 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
 
 /// Internal classification of a file: which formatter handles it, plus minimal metadata.
 ///
-/// This is a transient type produced by [`classify_file_kind`] and consumed by the
+/// This is a transient type produced by [`classify_file_kind_with_language`] and consumed by the
 /// resolver to construct a public [`super::FormatStrategy`] (with options).
 pub enum FileKind {
     /// JS/TS files formatted by `oxc_formatter`.
@@ -527,7 +545,8 @@ static SPECIAL_JS_FILENAMES: phf::Set<&'static str> = phf_set! {
 /// Detects non-standard JS files that `SourceType::from_path` does not recognize,
 /// but Prettier supports as JS.
 ///
-/// Standard extensions are handled earlier in [`classify_file_kind`] via `SourceType::from_path`.
+/// Standard extensions are handled earlier in [`classify_file_kind_with_language`] via
+/// `SourceType::from_path`.
 fn is_extra_js_file(file_name: &str, extension: Option<&str>) -> bool {
     if SPECIAL_JS_FILENAMES.contains(file_name) {
         return true;
@@ -605,6 +624,39 @@ mod tests {
                 "`{file_name}` should NOT be routed to oxc_formatter"
             );
         }
+    }
+
+    #[test]
+    fn static_ets_requires_an_explicit_language() {
+        let legacy =
+            classify_file_kind_with_language(Arc::from(Path::new("component.ets")), None).unwrap();
+        let FileKind::OxcFormatter { source_type, .. } = legacy else {
+            panic!(".ets must use the Oxc formatter");
+        };
+        assert!(source_type.is_arkui());
+        assert!(!source_type.is_ets_static());
+
+        let explicit = classify_file_kind_with_language(
+            Arc::from(Path::new("component.ets")),
+            Some(ExplicitLanguage::EtsStatic),
+        )
+        .unwrap();
+        let FileKind::OxcFormatter { source_type, .. } = explicit else {
+            panic!(".ets must use the Oxc formatter");
+        };
+        assert!(source_type.is_ets_static());
+        assert!(!source_type.is_arkui());
+
+        let typescript = classify_file_kind_with_language(
+            Arc::from(Path::new("component.ts")),
+            Some(ExplicitLanguage::EtsStatic),
+        )
+        .unwrap();
+        let FileKind::OxcFormatter { source_type, .. } = typescript else {
+            panic!(".ts must use the Oxc formatter");
+        };
+        assert!(source_type.is_typescript());
+        assert!(!source_type.is_ets_static());
     }
 
     #[test]
