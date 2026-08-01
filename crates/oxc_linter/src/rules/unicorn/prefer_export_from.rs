@@ -910,8 +910,7 @@ impl PreferExportFrom {
         is_namespace: bool,
     ) {
         let last_specifier = re_export.specifiers.last();
-        let last_export_span =
-            Self::get_last_export_span(last_specifier, re_export_source_text, re_export);
+        let last_export_span = Self::get_last_export_span(fixer, last_specifier, re_export);
         let processed_exports_str = Self::get_processed_exports_str(exports_str, re_export);
 
         if is_namespace {
@@ -935,17 +934,17 @@ impl PreferExportFrom {
         }
     }
     fn get_last_export_span(
+        fixer: RuleFixer<'_, '_>,
         last_specifier: Option<&ExportSpecifier>,
-        re_export_source_text: &str,
         re_export: &ExportFromDeclaration,
     ) -> Span {
         if let Some(specifier) = last_specifier {
             specifier.span()
         } else {
-            let index = re_export_source_text.find('{').unwrap_or(0);
-            let start = re_export.span().start;
-            let end = start + u32::try_from(index).unwrap_or_default() + 1;
-            Span::new(start, end)
+            // the new specifiers go just after the `{` of `export {} from '...'`
+            let span = re_export.span();
+            let offset = fixer.find_next_token_within(span.start, span.end, "{").unwrap_or(0);
+            Span::new(span.start, span.start + offset + 1)
         }
     }
 
@@ -969,9 +968,12 @@ impl PreferExportFrom {
             let new_import_str =
                 Self::build_new_import_declaration(ctx, import_decl, retained_specifiers);
             if let Some(item) = re_export_decl {
-                let last_export_span = Self::get_last_export_span(item.specifiers.last(), "", item);
-                let replacement_str = format!(", {exports_str}");
-                rule_fixes.push(fixer.insert_text_after_range(last_export_span, replacement_str));
+                let last_specifier = item.specifiers.last();
+                let last_export_span = Self::get_last_export_span(fixer, last_specifier, item);
+                // with no existing specifier the insertion point is the `{`, so no comma
+                let comma = if last_specifier.is_some() { ", " } else { "" };
+                let insert_text = format!("{comma}{exports_str}");
+                rule_fixes.push(fixer.insert_text_after_range(last_export_span, insert_text));
                 rule_fixes.push(fixer.replace(import_decl.span(), new_import_str));
             } else {
                 let new_import_replacement_str = format!("{new_import_str}{replacement_str}");
@@ -1493,6 +1495,17 @@ fn test() {
     ];
 
     let fix = vec![
+        // the `{` inside the comment is not the start of the specifier list; the
+        // exported name used to be swallowed into the comment
+        (
+            "import {foo} from 'foo';\nexport {foo};\nexport /* { */ {} from 'foo';",
+            "export /* { */ {foo} from 'foo';",
+        ),
+        // merging into an empty re-export: the insertion point is the `{`, so no leading comma
+        (
+            "import {foo, bar} from 'foo';\nexport {foo};\nconsole.log(bar);\nexport {} from 'foo';",
+            "import {bar} from 'foo';\n\nconsole.log(bar);\nexport {foo} from 'foo';",
+        ),
         (
             "import defaultExport from 'foo';
             export default defaultExport;",
