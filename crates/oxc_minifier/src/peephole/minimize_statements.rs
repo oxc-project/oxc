@@ -206,13 +206,6 @@ impl<'a> PeepholeOptimizations {
         Expression::new_sequence_expression(span, exprs, ctx)
     }
 
-    fn jump_stmts_look_the_same(left: &Statement<'a>, right: &Statement<'a>) -> bool {
-        if left.is_jump_statement() && right.is_jump_statement() {
-            return left.content_eq(right);
-        }
-        false
-    }
-
     /// For variable declarations:
     /// * merge with the previous variable declarator if their kinds are the same
     /// * remove the variable declarator if it is unused
@@ -545,84 +538,77 @@ impl<'a> PeepholeOptimizations {
         // `a; if (b) c;` => `if (a, b) c;`
         Self::merge_last_expression_into_sequence(&mut if_stmt.test, result, ctx);
 
-        // Absorb a previous expression statement
         if ctx.options().sequences {
-            if if_stmt.consequent.is_jump_statement() {
-                // Absorb a previous if statement
-                if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
-                    && prev_if_stmt.alternate.is_none()
-                    && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
-                {
-                    // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
-                    // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
-                    // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
-                    // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                    let previous = result.pop().unwrap();
-                    let Statement::IfStatement(previous) = previous else { unreachable!() };
-                    let previous = previous.unbox();
-                    let span = if_stmt.test.span();
-                    ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
-                        Self::join_with_left_associative_op(
-                            span,
-                            LogicalOperator::Or,
-                            previous.test,
-                            test,
-                            ctx,
-                        )
-                    });
-                    ctx.drop_statement(&previous.consequent);
-                }
+            if if_stmt.alternate.is_none()
+                && let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
+                && prev_if_stmt.alternate.is_none()
+                && if_stmt.consequent.is_terminated()
+                && prev_if_stmt.consequent.content_eq(&if_stmt.consequent)
+            {
+                // Merge previous stmt if its terminated and both have same content
+                // `if (a) JUMP; if (b) JUMP;` => `if (a || b) JUMP;`
+                // `if (a) { b; JUMP }; if (b) { b; JUMP };` => `if (a || b) { b; JUMP };`
+                let previous = result.pop().unwrap();
+                let Statement::IfStatement(previous) = previous else { unreachable!() };
+                let previous = previous.unbox();
+                let span = if_stmt.test.span();
+                ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                    Self::join_with_left_associative_op(
+                        span,
+                        LogicalOperator::Or,
+                        previous.test,
+                        test,
+                        ctx,
+                    )
+                });
+                ctx.drop_statement(&previous.consequent);
+            }
 
-                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
-                    // Don't do this transformation if the branch condition could
-                    // potentially access symbols declared later on on this scope below.
-                    // If so, inverting the branch condition and nesting statements after
-                    // this in a block would break that access which is a behavior change.
-                    //
-                    //   // This transformation is incorrect
-                    //   if (a()) return; function a() {}
-                    //   if (!a()) { function a() {} }
-                    //
-                    //   // This transformation is incorrect
-                    //   if (a(() => b)) return; let b;
-                    //   if (a(() => b)) { let b; }
-                    //
-                    let can_move_branch_condition_outside_scope =
-                        !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
-                            && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
+            if if_stmt.consequent.is_jump_statement()
+                && Self::can_remove_termination_statement(&if_stmt.consequent, ctx)
+            {
+                // Don't do this transformation if the branch condition could
+                // potentially access symbols declared later on on this scope below.
+                // If so, inverting the branch condition and nesting statements after
+                // this in a block would break that access which is a behavior change.
+                //
+                //   // This transformation is incorrect
+                //   if (a()) return; function a() {}
+                //   if (!a()) { function a() {} }
+                //
+                //   // This transformation is incorrect
+                //   if (a(() => b)) return; let b;
+                //   if (a(() => b)) { let b; }
+                //
+                let can_move_branch_condition_outside_scope =
+                    !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
+                        && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
 
-                    if can_move_branch_condition_outside_scope {
-                        let drained_stmts = stmts.by_ref();
-                        let mut body = if let Some(alternate) = if_stmt.alternate.take() {
-                            ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
-                        } else {
-                            ArenaVec::from_iter_in(drained_stmts, ctx)
-                        };
+                if can_move_branch_condition_outside_scope {
+                    let drained_stmts = stmts.by_ref();
+                    let mut body = if let Some(alternate) = if_stmt.alternate.take() {
+                        ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
+                    } else {
+                        ArenaVec::from_iter_in(drained_stmts, ctx)
+                    };
 
-                        Self::minimize_statements(&mut body, ctx);
-                        let span = if body.is_empty() {
-                            if_stmt.consequent.span()
-                        } else {
-                            body[0].span()
-                        };
-                        let test = if_stmt.unbox().test;
-                        let test = Self::minimize_not(test.span(), test, ctx, true);
-                        let consequent = if body.len() == 1 {
-                            body.remove(0)
-                        } else {
-                            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                            Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
-                        };
-                        let mut if_stmt =
-                            IfStatement::new(test.span(), test, consequent, None, ctx);
-                        let if_stmt =
-                            Self::try_minimize_if(&mut if_stmt, ctx).unwrap_or_else(|| {
-                                Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx))
-                            });
-                        result.push(if_stmt);
-                        ctx.notice_change();
-                        return;
-                    }
+                    Self::minimize_statements(&mut body, ctx);
+                    let span =
+                        if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
+                    let test = if_stmt.unbox().test;
+                    let test = Self::minimize_not(test.span(), test, ctx, true);
+                    let consequent = if body.len() == 1 {
+                        body.remove(0)
+                    } else {
+                        let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                        Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
+                    };
+                    let mut if_stmt = IfStatement::new(test.span(), test, consequent, None, ctx);
+                    let if_stmt = Self::try_minimize_if(&mut if_stmt, ctx)
+                        .unwrap_or_else(|| Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx)));
+                    result.push(if_stmt);
+                    ctx.notice_change();
+                    return;
                 }
             }
 
