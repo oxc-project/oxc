@@ -15,7 +15,7 @@ fn disallow(span: Span, fn_name: &str) -> OxcDiagnostic {
 }
 
 fn error_date(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Use `String(new Date())` instead of `Date()`").with_label(span)
+    OxcDiagnostic::warn("Use `String(new Date())` instead of `Date()`").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
