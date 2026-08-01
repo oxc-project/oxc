@@ -42,9 +42,19 @@ impl<'a> TryStatement<'a> {
     }
 }
 
+impl GetSpan for TryStatementClauses<'_> {
+    fn span(&self) -> Span {
+        match self {
+            TryStatementClauses::Catch(catch_clause) => catch_clause.span(),
+            TryStatementClauses::Finally(block_statement) => block_statement.span(),
+            TryStatementClauses::CatchFinally(catch_finally) => catch_finally.span(),
+        }
+    }
+}
+
 impl GetSpan for CatchFinally<'_> {
     fn span(&self) -> Span {
-        self.handler.span
+        Span::new(self.handler.span().start, self.finalizer.span().end)
     }
 }
 
