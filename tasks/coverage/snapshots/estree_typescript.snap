@@ -2,7 +2,7 @@ commit: 637d5746
 
 estree_typescript Summary:
 AST Parsed     : 9719/9719 (100.00%)
-Positive Passed: 9701/9719 (99.81%)
+Positive Passed: 9704/9719 (99.85%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleDetectionIsolatedModulesCjsFileScope.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
@@ -22,12 +22,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewr
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferComments.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferDeclaration.ts
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
-
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsCjsFromJs.ts
 

@@ -41,6 +41,12 @@ pub fn is_meaningful_jsx_text(text: &str) -> bool {
     !has_newline
 }
 
+/// Get the source representation of JSX text, falling back to its semantic value for synthetic
+/// nodes.
+pub fn jsx_text_source<'a>(text: &JSXText<'a>) -> Str<'a> {
+    text.raw.unwrap_or(text.value)
+}
+
 /// Indicates that an element should always be wrapped in parentheses, should be wrapped
 /// only when it's line broken, or should not be wrapped at all.
 #[derive(Copy, Clone, Debug)]
@@ -274,8 +280,8 @@ pub fn jsx_split_children<'a, 'b>(
                 // Split the text into words
                 // Keep track if there's any leading/trailing empty line, new line or whitespace
 
-                let text_value = &text.value;
-                let mut chunks = JsxSplitChunksIterator::new(text_value).peekable();
+                let text_value = jsx_text_source(text);
+                let mut chunks = JsxSplitChunksIterator::new(text_value.as_str()).peekable();
 
                 // Text starting with a whitespace
                 if let Some(JsxTextChunk::Whitespace(_whitespace)) = chunks.peek() {

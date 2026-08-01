@@ -2,12 +2,4 @@ commit: e8fd1202
 
 estree_acorn_jsx Summary:
 AST Parsed     : 39/39 (100.00%)
-Positive Passed: 35/39 (89.74%)
-Mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/010.jsx
-
-Mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/013.jsx
-
-Mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/020.jsx
-
-Mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/046.jsx
-
+Positive Passed: 39/39 (100.00%)
