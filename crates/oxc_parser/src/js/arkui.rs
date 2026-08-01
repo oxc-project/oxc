@@ -18,7 +18,7 @@ use crate::{
 use super::FunctionKind;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ArkUIArgumentContext {
+pub enum ArkUIArgumentContext {
     None,
     SkipFirst,
     All,

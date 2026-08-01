@@ -345,7 +345,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_type_assertion_if_present(&mut self, expr: Expression<'a>) -> Expression<'a> {
         let kind = self.cur_kind();
         if matches!(kind, Kind::As | Kind::Satisfies) {
-            if !self.cur_token().is_on_new_line() {
+            if self.cur_token().is_on_new_line() {
+                expr
+            } else {
                 let lhs_span = self.start_span();
                 self.bump_any();
                 let type_annotation = self.parse_ts_type();
@@ -361,8 +363,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     Expression::new_ts_satisfies_expression(span, expr, type_annotation, self)
                 }
-            } else {
-                expr
             }
         } else {
             expr

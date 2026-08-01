@@ -600,12 +600,8 @@ impl<'a> ModuleRunnerTransform<'a> {
                 }
                 return;
             }
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                // Do nothing for `export default interface Foo {}`
-                return;
-            }
-            ExportDefaultDeclarationKind::StructStatement(_) => {
-                // Do nothing for `export default struct Foo {}` (ArkUI)
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
+            | ExportDefaultDeclarationKind::StructStatement(_) => {
                 return;
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => expr.into_expression(),

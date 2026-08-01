@@ -1891,8 +1891,8 @@ impl<'a> ModuleDeclaration<'a> {
     /// Returns `true` if this module declaration uses any TypeScript syntax such as the `type` or `declare` keywords.
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            ModuleDeclaration::ImportDeclaration(_) => false,
-            ModuleDeclaration::LazyImportDeclaration(_) => false,
+            ModuleDeclaration::ImportDeclaration(_)
+            | ModuleDeclaration::LazyImportDeclaration(_) => false,
             ModuleDeclaration::ExportDefaultDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportNamedDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportAllDeclaration(decl) => decl.is_typescript_syntax(),

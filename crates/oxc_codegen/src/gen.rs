@@ -1212,20 +1212,20 @@ impl Gen for ExportNamedDeclaration<'_> {
             } else {
                 false
             };
-        if has_function_decorators {
-            if let Some(Declaration::FunctionDeclaration(func)) = &self.declaration {
-                p.print_decorators(&func.decorators, ctx);
-            }
+        if has_function_decorators
+            && let Some(Declaration::FunctionDeclaration(func)) = &self.declaration
+        {
+            p.print_decorators(&func.decorators, ctx);
         }
         let has_arkui_class_decorators = p.is_arkui
             && matches!(
                 &self.declaration,
                 Some(Declaration::ClassDeclaration(class)) if !class.decorators.is_empty()
             );
-        if has_arkui_class_decorators {
-            if let Some(Declaration::ClassDeclaration(class)) = &self.declaration {
-                p.print_decorators(&class.decorators, ctx);
-            }
+        if has_arkui_class_decorators
+            && let Some(Declaration::ClassDeclaration(class)) = &self.declaration
+        {
+            p.print_decorators(&class.decorators, ctx);
         }
         let has_struct_decorators_before_export =
             if let Some(Declaration::StructStatement(struct_stmt)) = &self.declaration {
@@ -1234,10 +1234,10 @@ impl Gen for ExportNamedDeclaration<'_> {
             } else {
                 false
             };
-        if has_struct_decorators_before_export {
-            if let Some(Declaration::StructStatement(struct_stmt)) = &self.declaration {
-                p.print_decorators(&struct_stmt.decorators, ctx);
-            }
+        if has_struct_decorators_before_export
+            && let Some(Declaration::StructStatement(struct_stmt)) = &self.declaration
+        {
+            p.print_decorators(&struct_stmt.decorators, ctx);
         }
         p.add_source_mapping(self.span);
         p.print_str("export");
@@ -1447,10 +1447,10 @@ impl Gen for ExportDefaultDeclaration<'_> {
                 ExportDefaultDeclarationKind::ClassDeclaration(class)
                     if !class.decorators.is_empty()
             );
-        if has_arkui_class_decorators {
-            if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &self.declaration {
-                p.print_decorators(&class.decorators, ctx);
-            }
+        if has_arkui_class_decorators
+            && let ExportDefaultDeclarationKind::ClassDeclaration(class) = &self.declaration
+        {
+            p.print_decorators(&class.decorators, ctx);
         }
         let has_struct_decorators_before_export =
             if let ExportDefaultDeclarationKind::StructStatement(struct_stmt) = &self.declaration {
@@ -1459,10 +1459,10 @@ impl Gen for ExportDefaultDeclaration<'_> {
             } else {
                 false
             };
-        if has_struct_decorators_before_export {
-            if let ExportDefaultDeclarationKind::StructStatement(struct_stmt) = &self.declaration {
-                p.print_decorators(&struct_stmt.decorators, ctx);
-            }
+        if has_struct_decorators_before_export
+            && let ExportDefaultDeclarationKind::StructStatement(struct_stmt) = &self.declaration
+        {
+            p.print_decorators(&struct_stmt.decorators, ctx);
         }
         p.add_source_mapping(self.span);
         p.print_str("export default");

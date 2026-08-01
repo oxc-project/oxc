@@ -207,7 +207,7 @@ impl ServerLinterBuilder {
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
         if let Some(source_type) = options
             .language
-            .map(|language| language.source_type())
+            .map(super::options::Language::source_type)
             .or_else(|| self.language.map(ExplicitLanguage::source_type))
         {
             lint_service_options = lint_service_options.with_source_type(source_type);

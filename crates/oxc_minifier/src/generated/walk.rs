@@ -1591,7 +1591,7 @@ unsafe fn walk_variable_declaration<'a, Tr: Traverse<'a>>(
         .add(ancestor::OFFSET_VARIABLE_DECLARATION_DECORATORS)
         as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
     {
-        for item in (&mut **field).iter_mut() {
+        for item in field.iter_mut() {
             walk_decorator(traverser, item as *mut _, ctx);
         }
     }
@@ -3961,7 +3961,7 @@ unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
         .add(ancestor::OFFSET_TS_ENUM_DECLARATION_DECORATORS)
         as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
     {
-        for item in (&mut **field).iter_mut() {
+        for item in field.iter_mut() {
             walk_decorator(traverser, item as *mut _, ctx);
         }
     }
@@ -4795,7 +4795,7 @@ unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
         .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_DECORATORS)
         as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
     {
-        for item in (&mut **field).iter_mut() {
+        for item in field.iter_mut() {
             walk_decorator(traverser, item as *mut _, ctx);
         }
     }
@@ -4870,7 +4870,7 @@ unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
         .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_DECORATORS)
         as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
     {
-        for item in (&mut **field).iter_mut() {
+        for item in field.iter_mut() {
             walk_decorator(traverser, item as *mut _, ctx);
         }
     }

@@ -1078,19 +1078,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // dialects (ArkUI render decorators and static ETS annotations).
             if self.source_type.is_ets() {
                 return self.parse_function_declaration(span, r#async, stmt_ctx, decorators);
-            } else {
-                // In non-ArkUI mode, decorators on functions are not allowed
-                for decorator in &decorators {
-                    self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-                }
-                // Continue parsing the function without decorators
-                return self.parse_function_declaration(
-                    span,
-                    r#async,
-                    stmt_ctx,
-                    ArenaVec::new_in(self),
-                );
             }
+
+            // In non-ArkUI mode, decorators on functions are not allowed
+            for decorator in &decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+            // Continue parsing the function without decorators
+            return self.parse_function_declaration(
+                span,
+                r#async,
+                stmt_ctx,
+                ArenaVec::new_in(self),
+            );
         }
         self.unexpected()
     }

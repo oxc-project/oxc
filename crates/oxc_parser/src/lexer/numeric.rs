@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use crate::{config::LexerConfig as Config, diagnostics};
@@ -215,7 +216,10 @@ impl<C: Config> Lexer<'_, C> {
                 let source = &self.source.whole()
                     [literal_span.start as usize..(literal_span.end - 1) as usize];
                 if source.contains('_') {
-                    source.replace('_', "").parse::<f32>().map_or(true, |value| !value.is_finite())
+                    source
+                        .cow_replace('_', "")
+                        .parse::<f32>()
+                        .map_or(true, |value| !value.is_finite())
                 } else {
                     source.parse::<f32>().map_or(true, |value| !value.is_finite())
                 }

@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub(crate) enum CallOrConstructorSignature {
+pub enum CallOrConstructorSignature {
     Call,
     Constructor,
 }
@@ -32,15 +32,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let body = self.parse_ts_enum_body();
         if self.source_type.is_ets_static() {
             let non_integer = if let Some(annotation) = &underlying_type {
-                match Self::ets_enum_underlying_type(&annotation.type_annotation) {
-                    Some(non_integer) => non_integer,
-                    None => {
-                        self.error(diagnostics::ets_unsupported_syntax(
-                            "This enum underlying type",
-                            annotation.span,
-                        ));
-                        false
-                    }
+                if let Some(non_integer) =
+                    Self::ets_enum_underlying_type(&annotation.type_annotation)
+                {
+                    non_integer
+                } else {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "This enum underlying type",
+                        annotation.span,
+                    ));
+                    false
                 }
             } else {
                 body.members.first().is_some_and(|member| {
@@ -83,8 +84,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn ets_enum_underlying_type(ty: &TSType<'a>) -> Option<bool> {
         match ty {
-            TSType::TSStringKeyword(_) => Some(true),
-            TSType::TSNumberKeyword(_) => Some(true),
+            TSType::TSStringKeyword(_) | TSType::TSNumberKeyword(_) => Some(true),
             TSType::TSTypeReference(reference) => {
                 let TSTypeName::IdentifierReference(identifier) = &reference.type_name else {
                     return None;
@@ -513,11 +513,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             }
             if matches!(method.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
-                && method.value.body.is_some()
+                && let Some(body) = &method.value.body
             {
                 self.error(diagnostics::ets_unsupported_syntax(
                     "Accessor implementations in interfaces",
-                    method.value.body.as_ref().unwrap().span,
+                    body.span,
                 ));
             }
             if modifiers.contains(ModifierKind::Private)

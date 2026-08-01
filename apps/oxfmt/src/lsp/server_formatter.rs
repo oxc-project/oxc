@@ -86,7 +86,7 @@ impl ServerFormatterBuilder {
             JsConfigLoaderCb::clone(&self.js_config_loader),
             prettierignore_glob,
             explicit_config_path,
-            options.language.map(|language| language.explicit()).or(self.language),
+            options.language.map(super::options::LspLanguage::explicit).or(self.language),
         )
     }
 }

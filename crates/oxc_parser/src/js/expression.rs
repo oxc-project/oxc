@@ -309,7 +309,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // Parse the property name (we'll use it to build the initial call expression)
-        let _property = self.parse_identifier_name();
+        let property = self.parse_identifier_name();
 
         // Parse type arguments if present (TypeScript)
         let type_arguments =
@@ -352,9 +352,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // The expression field should start from fontSize(size) (without the leading dot)
             // So we create a CallExpression with Identifier as callee
             // Start the expression span from the property (not including the leading dot)
-            // Use _property.span.start as the expression start to ensure correct span
-            let expression_span_start = _property.span.start;
-            let property_ident = Expression::new_identifier(_property.span, _property.name, self);
+            // Use property.span.start as the expression start to ensure correct span
+            let expression_span_start = property.span.start;
+            let property_ident = Expression::new_identifier(property.span, property.name, self);
 
             // Create the initial CallExpression: fontSize(size)
             // Note: callee is Identifier, not StaticMemberExpression
@@ -420,7 +420,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // The expression field should start from fontSize(size) (without the leading dot)
         // Start the expression span from the property (not including the leading dot)
         let expression_start_span = self.start_span();
-        let property_ident = Expression::new_identifier(_property.span, _property.name, self);
+        let property_ident = Expression::new_identifier(property.span, property.name, self);
 
         // Create CallExpression with Identifier as callee (not StaticMemberExpression)
         let mut initial_call = Expression::new_call_expression(
@@ -435,8 +435,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Update the expression span to exclude the leading dot
         // Ensure end >= start to avoid assertion failures
         let initial_call_end = initial_call.span().end;
-        let expression_span_end = initial_call_end.max(_property.span.start);
-        *initial_call.span_mut() = Span::new(_property.span.start, expression_span_end);
+        let expression_span_end = initial_call_end.max(property.span.start);
+        *initial_call.span_mut() = Span::new(property.span.start, expression_span_end);
 
         // LeadingDotExpression span includes the leading dot, but expression span doesn't
         // Ensure end >= start to avoid assertion failures
@@ -456,7 +456,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse member expression rest starting from a given LHS for primary expressions
     /// Used for ArkUI expressions starting with dots in object literals and other contexts
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn parse_member_expression_rest_from_lhs_for_primary(
         &mut self,
         _lhs_span: u32,
@@ -527,24 +527,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         break;
                     }
                     continue;
-                } else {
-                    // Property access: .propertyName
-                    lhs = Expression::new_static_member_expression(
-                        self.end_span(ident_span),
-                        lhs,
-                        ident,
-                        false,
-                        self,
-                    );
-                    // Check if there are more chain expressions
-                    // Stop if next token is not a dot, or if it's semicolon/comma/brace
-                    if !self.at(Kind::Dot)
-                        || matches!(self.cur_kind(), Kind::Semicolon | Kind::Comma | Kind::RCurly)
-                    {
-                        break;
-                    }
-                    continue;
                 }
+
+                // Property access: .propertyName
+                lhs = Expression::new_static_member_expression(
+                    self.end_span(ident_span),
+                    lhs,
+                    ident,
+                    false,
+                    self,
+                );
+                // Check if there are more chain expressions
+                // Stop if next token is not a dot, or if it's semicolon/comma/brace
+                if !self.at(Kind::Dot)
+                    || matches!(self.cur_kind(), Kind::Semicolon | Kind::Comma | Kind::RCurly)
+                {
+                    break;
+                }
+                continue;
             }
 
             break;
@@ -669,12 +669,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut utf16 = value.encode_utf16();
         let first = utf16.next();
         let second = utf16.next();
-        let value = match (first, second) {
-            (Some(value), None) => u32::from(value),
-            _ => {
-                self.error(diagnostics::ets_char_literal_length(span));
-                0
-            }
+        let value = if let (Some(value), None) = (first, second) {
+            u32::from(value)
+        } else {
+            self.error(diagnostics::ets_char_literal_length(span));
+            0
         };
         self.bump_any();
         CharLiteral::boxed(span, value, Some(Str::from(raw)), self)

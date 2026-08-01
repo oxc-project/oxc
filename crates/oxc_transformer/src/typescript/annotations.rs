@@ -236,8 +236,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             ClassElement::AccessorProperty(prop) => {
                 matches!(prop.r#type, AccessorPropertyType::AccessorProperty)
             }
-            ClassElement::TSIndexSignature(_) => false,
-            ClassElement::ETSOverloadDeclaration(_)
+            ClassElement::TSIndexSignature(_)
+            | ClassElement::ETSOverloadDeclaration(_)
             | ClassElement::TSCallSignatureDeclaration(_) => false,
             ClassElement::StaticBlock(_) => true,
         });
@@ -511,7 +511,8 @@ impl<'a> TypeScriptAnnotations<'a> {
             // Remove type aliases, interfaces, and `declare global {}`
             Declaration::TSTypeAliasDeclaration(_)
             | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => false,
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::ETSOverloadDeclaration(_) => false,
             // Remove `declare var/let/const`
             Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
             // Remove `declare function` and function overload signatures (no body)
@@ -550,7 +551,6 @@ impl<'a> TypeScriptAnnotations<'a> {
             // ArkTS / ArkUI declarations. Keep them unless they're `declare`-only.
             Declaration::StructStatement(struct_decl) => !struct_decl.declare,
             Declaration::AnnotationDeclaration(annotation_decl) => !annotation_decl.declare,
-            Declaration::ETSOverloadDeclaration(_) => false,
         }
     }
 

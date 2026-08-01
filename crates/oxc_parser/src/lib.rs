@@ -783,7 +783,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         config: C,
         unique: UniquePromise,
     ) -> Self {
-        let ctx = Self::default_context(source_type, &options);
+        let ctx = Self::default_context(source_type, options);
         Self {
             options,
             arkts_options,
@@ -969,7 +969,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
     }
 
-    fn default_context(source_type: SourceType, options: &ParseOptions) -> Context {
+    fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
         if source_type.is_module() {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
@@ -1093,14 +1093,14 @@ mod test {
     #[test]
     fn ets_static_estree_metadata_is_conditional() {
         let allocator = Allocator::default();
-        let legacy_source = r#"
+        let legacy_source = r"
             const value: number = 1;
             class A {}
             function f(): void {}
             enum E { A }
             export { value };
             ({ key: 1 });
-        "#;
+        ";
         let legacy = Parser::new(&allocator, legacy_source, SourceType::ts()).parse();
         assert!(legacy.diagnostics.is_empty(), "Errors: {:?}", legacy.diagnostics);
         let legacy_json = legacy.program.to_estree_json(true, false);
@@ -1110,13 +1110,13 @@ mod test {
         }
 
         let allocator = Allocator::default();
-        let static_source = r#"
+        let static_source = r"
             @interface Mark {}
             @Mark const value: int = 1;
             final class A {}
             native function f(): void;
             enum E: int { A }
-        "#;
+        ";
         let static_ret = Parser::new(&allocator, static_source, SourceType::ets_static()).parse();
         assert!(static_ret.diagnostics.is_empty(), "Errors: {:?}", static_ret.diagnostics);
         let static_json = static_ret.program.to_estree_json(true, false);
@@ -1194,14 +1194,14 @@ mod test {
     #[test]
     fn ets_static_preserves_expression_nodes() {
         let allocator = Allocator::default();
-        let source = r#"
+        let source = r"
             class Value {}
             let value: Value = new Value()
             let values: int[] = new int[3]
             let matches: boolean = value instanceof Value
             function consume(): void {}
             consume() { let nested: int = 1 }
-        "#;
+        ";
         let ret = Parser::new(&allocator, source, SourceType::ets_static()).parse();
         assert!(ret.diagnostics.is_empty(), "Errors: {:?}", ret.diagnostics);
 
@@ -1228,13 +1228,13 @@ mod test {
     #[test]
     fn ets_static_matches_es2panda_array_and_await_parsing() {
         let allocator = Allocator::default();
-        let source = r#"
+        let source = r"
             let values: int[] = new int[3]
             let matrix: int[][] = new int[2][3]
             function resolve(promise: Promise<int>): int {
                 return await promise
             }
-        "#;
+        ";
         let ret = Parser::new(&allocator, source, SourceType::ets_static()).parse();
         assert!(ret.diagnostics.is_empty(), "Errors: {:?}", ret.diagnostics);
 
@@ -1256,12 +1256,12 @@ mod test {
     #[test]
     fn ets_static_validates_annotations_and_exports() {
         let allocator = Allocator::default();
-        let invalid_annotation = r#"
+        let invalid_annotation = r"
             class Value {}
             @interface Mark { value: string }
             @Mark({ value: new Value() })
             class Decorated {}
-        "#;
+        ";
         let ret = Parser::new(&allocator, invalid_annotation, SourceType::ets_static()).parse();
         assert!(!ret.diagnostics.is_empty());
 
@@ -1841,7 +1841,7 @@ mod test {
     fn arkui_ui_callback_context_does_not_leak_into_arbitrary_callbacks() {
         let allocator = Allocator::default();
         let source_type = SourceType::ets();
-        let source = r#"struct Test {
+        let source = r"struct Test {
   build() {
     ForEach(items, item => { Text(item) })
     helper(() => {
@@ -1850,7 +1850,7 @@ mod test {
     })
     Repeat(items).each(item => { Text(item) })
   }
-}"#;
+}";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.diagnostics.is_empty(), "Errors: {:?}", ret.diagnostics);
 
@@ -1969,12 +1969,12 @@ mod test {
             annotations: false,
             ..ArkTsOptions::default()
         };
-        let source = r#"struct Test {
+        let source = r"struct Test {
   render() {
     CustomRoot() {}
     Column()
   }
-}"#;
+}";
         let ret = Parser::new(&allocator, source, source_type)
             .with_arkts_options(options.clone())
             .parse();
@@ -2166,7 +2166,7 @@ mod test {
         assert_eq!(ret.program.body.len(), 1);
         // Verify it's an export statement
         let stmt = &ret.program.body[0];
-        assert!(stmt.is_module_declaration(), "Expected ModuleDeclaration, got: {:?}", stmt);
+        assert!(stmt.is_module_declaration(), "Expected ModuleDeclaration, got: {stmt:?}");
     }
 
     #[test]

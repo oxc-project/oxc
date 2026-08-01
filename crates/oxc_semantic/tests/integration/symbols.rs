@@ -125,7 +125,7 @@ fn test_types_simple() {
 
 #[test]
 fn test_ets_static_declarations_and_expressions() {
-    let source = r#"
+    let source = r"
         package example.semantic;
         class Value {}
         function fromValue(value: Value): Value { return value; }
@@ -134,7 +134,7 @@ fn test_ets_static_declarations_and_expressions() {
         let matches: boolean = instance instanceof Value;
         function consume(value: Value): void {}
         consume(instance) { let nested: Value = new Value(); }
-    "#;
+    ";
 
     SemanticTester::ets_static(source)
         .has_root_symbol("Value")

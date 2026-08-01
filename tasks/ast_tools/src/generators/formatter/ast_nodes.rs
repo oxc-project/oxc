@@ -539,36 +539,43 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let enum_ident = enum_def.ident();
     let type_ty = enum_def.ty(schema);
 
-    let variant_match_arms = enum_def.variants.iter().map(|variant| {
+    let mut variant_match_arms = Vec::new();
+    let mut no_kind_patterns = Vec::new();
+    for variant in &enum_def.variants {
         let variant_name = &variant.ident();
         let field_type = variant.field_type(schema).unwrap();
         let is_box = field_type.is_box();
-        let node_type_ident = field_type
-            .maybe_inner_type(schema)
-            .map_or_else(|| field_type.ident(), TypeDef::ident);
-
-        let inner_expr = if is_box { quote! { s.as_ref() } } else { quote! { s } };
-
         let has_kind = has_kind(field_type, schema);
-        let pat = if has_kind { quote!(s) } else { quote!(_) };
-
-        let implementation = if has_kind {
-            quote! {
+        if has_kind {
+            let node_type_ident = field_type
+                .maybe_inner_type(schema)
+                .map_or_else(|| field_type.ident(), TypeDef::ident);
+            let inner_expr = if is_box {
+                quote! { s.as_ref() }
+            } else {
+                quote! { s }
+            };
+            variant_match_arms.push(quote! {
+                #enum_ident::#variant_name(s) => {
                 AstNodes::#node_type_ident(self.allocator.alloc(AstNode {
                     inner: #inner_expr,
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
-            }
+                },
+            });
         } else {
-            // This panic might indicate a need for further refinement or configuration in your schema/generation
-            quote! {
+            no_kind_patterns.push(quote! { #enum_ident::#variant_name(_) });
+        }
+    }
+    if !no_kind_patterns.is_empty() {
+        variant_match_arms.push(quote! {
+            #(#no_kind_patterns)|* => {
                 panic!("No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`")
-            }
-        };
-        quote! { #enum_ident::#variant_name(#pat) => { #implementation }, }
-    });
+            },
+        });
+    }
 
     let inherits_match_arms = enum_def.inherits_enums(schema).map(|inherited_enum_def| {
         let inherits_snake_name = inherited_enum_def.snake_name();
@@ -587,7 +594,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     });
 
     let node_type = get_node_type(&type_ty);
-    let implementation = if variant_match_arms.len() == 0 {
+    let implementation = if variant_match_arms.is_empty() {
         quote! {
             #[expect(clippy::needless_return)]
             match self.inner {

@@ -201,27 +201,21 @@ impl Rule for ExplicitModuleBoundaryTypes {
             AstKind::TSExportAssignment(export) => {
                 self.run_on_exported_expression(ctx, &export.expression);
             }
-            AstKind::ExportDefaultDeclaration(export) => {
-                match &export.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
-                        let mut checker = ExplicitTypesChecker::new(self, ctx);
-                        checker.visit_function(func, ScopeFlags::Function);
-                    }
-                    ExportDefaultDeclarationKind::ClassDeclaration(class) => {
-                        let mut checker = ExplicitTypesChecker::new(self, ctx);
-                        walk_js::walk_class(&mut checker, class);
-                    }
-                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                        // nada
-                    }
-                    ExportDefaultDeclarationKind::StructStatement(_) => {
-                        // StructStatement is ArkUI-specific, skip type checking for now
-                    }
-                    match_expression!(ExportDefaultDeclarationKind) => {
-                        self.run_on_exported_expression(ctx, export.declaration.to_expression());
-                    }
+            AstKind::ExportDefaultDeclaration(export) => match &export.declaration {
+                ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                    let mut checker = ExplicitTypesChecker::new(self, ctx);
+                    checker.visit_function(func, ScopeFlags::Function);
                 }
-            }
+                ExportDefaultDeclarationKind::ClassDeclaration(class) => {
+                    let mut checker = ExplicitTypesChecker::new(self, ctx);
+                    walk_js::walk_class(&mut checker, class);
+                }
+                ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
+                | ExportDefaultDeclarationKind::StructStatement(_) => {}
+                match_expression!(ExportDefaultDeclarationKind) => {
+                    self.run_on_exported_expression(ctx, export.declaration.to_expression());
+                }
+            },
             _ => {}
         }
     }

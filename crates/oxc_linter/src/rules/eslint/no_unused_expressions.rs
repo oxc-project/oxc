@@ -153,7 +153,8 @@ impl NoUnusedExpressions {
             | Expression::V8IntrinsicExpression(_)
             | Expression::UpdateExpression(_)
             | Expression::TSSatisfiesExpression(_)
-            | Expression::YieldExpression(_) => false,
+            | Expression::YieldExpression(_)
+            | Expression::ArkUIComponentExpression(_) => false,
             Expression::ConditionalExpression(conditional_expression) => {
                 if self.0.allow_ternary {
                     return self.is_disallowed(&conditional_expression.alternate)
@@ -187,7 +188,6 @@ impl NoUnusedExpressions {
             Expression::TSInstantiationExpression(ts_instantiation_expression) => {
                 self.is_disallowed(&ts_instantiation_expression.expression)
             }
-            Expression::ArkUIComponentExpression(_) => false,
         }
     }
 }

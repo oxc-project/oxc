@@ -968,7 +968,7 @@ impl ESTree for ParenthesizedExpressionConverter<'_, '_> {
 
 /// Helper struct to serialize LeadingDotExpression's callee as a MemberExpression
 /// Since LeadingDotExpression no longer has a property field, we extract it from the expression
-#[allow(dead_code)]
+#[expect(dead_code)]
 struct LeadingDotExpressionCallee<'a, 'b>(&'b LeadingDotExpression<'a>);
 
 impl ESTree for LeadingDotExpressionCallee<'_, '_> {
@@ -993,7 +993,6 @@ impl ESTree for LeadingDotExpressionCallee<'_, '_> {
 /// LeadingDotExpression is similar to CallExpression but starts with a dot.
 /// We serialize it as a CallExpression-like structure for ESTree compatibility.
 #[ast_meta]
-#[allow(dead_code)]
 pub struct LeadingDotExpressionConverter<'a, 'b>(pub &'b LeadingDotExpression<'a>);
 
 impl ESTree for LeadingDotExpressionConverter<'_, '_> {

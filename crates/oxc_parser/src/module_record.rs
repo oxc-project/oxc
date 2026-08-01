@@ -101,8 +101,9 @@ impl<'a> ModuleRecordBuilder<'a> {
                     continue;
                 };
                 let source_name = match (&entry.local_name, &entry.import_name) {
-                    (ExportLocalName::Name(name), _) => Some(name.name),
-                    (_, ExportImportName::Name(name)) => Some(name.name),
+                    (ExportLocalName::Name(name), _) | (_, ExportImportName::Name(name)) => {
+                        Some(name.name)
+                    }
                     _ => None,
                 };
                 let Some(source_name) = source_name else { continue };

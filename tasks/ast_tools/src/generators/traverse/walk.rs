@@ -379,7 +379,7 @@ fn generate_field_walk_inner(
                         let walk_fn = format_ident!("walk_{inner_snake}");
                         return quote! {
                             if let Some(field) = &mut *((node as *mut u8).add(ancestor::#field_offset) as *mut #field_type_name) {
-                                for item in (&mut **field).iter_mut() {
+                                for item in field.iter_mut() {
                                     #walk_fn(traverser, item as *mut _, ctx);
                                 }
                             }
@@ -516,7 +516,7 @@ fn generate_field_walk_option_with_retag(
                 return quote! {
                     if let Some(field) = &mut *((node as *mut u8).add(ancestor::#field_offset) as *mut #field_type_name) {
                         #retag
-                        for item in (&mut **field).iter_mut() {
+                        for item in field.iter_mut() {
                             #walk_fn(traverser, item as *mut _, ctx);
                         }
                     }

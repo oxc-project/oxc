@@ -163,7 +163,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ETSNewArrayInstanceExpression<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, ETSNewMultiDimArrayInstanceExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["new", space(), self.type_annotation()]);
-        for dimension in self.dimensions().iter() {
+        for dimension in self.dimensions() {
             write!(f, ["[", dimension, "]"]);
         }
     }
@@ -370,7 +370,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
 fn is_arkui_leading_dot_expression<'a>(expr: &AstNode<'a, Expression<'a>>) -> bool {
     match expr.as_ast_nodes() {
         AstNodes::LeadingDotExpression(_) => true,
-        AstNodes::CallExpression(call) => is_arkui_leading_dot_expression(&call.callee()),
+        AstNodes::CallExpression(call) => is_arkui_leading_dot_expression(call.callee()),
         AstNodes::StaticMemberExpression(member) => {
             is_arkui_leading_dot_expression(member.object())
         }
@@ -384,7 +384,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, LeadingDotExpression<'a>> {
             f,
             [group(&format_args!(
                 soft_line_break_or_space(),
-                self.optional().then_some("?.").unwrap_or("."),
+                if self.optional() { "?." } else { "." },
                 self.expression()
             ))]
         );
@@ -2461,8 +2461,10 @@ impl<'a, 'b> FormatStructElementWithSemicolon<'a, 'b> {
         let Some(next_element) = next_element else { return false };
         matches!(
             (element.as_ref(), next_element.as_ref()),
-            (StructElement::PropertyDefinition(_), StructElement::PropertyDefinition(_))
-                | (StructElement::PropertyDefinition(_), StructElement::MethodDefinition(_))
+            (
+                StructElement::PropertyDefinition(_),
+                StructElement::PropertyDefinition(_) | StructElement::MethodDefinition(_),
+            )
         )
     }
 }
@@ -2480,11 +2482,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStructElementWithSemicolon<'a
         if needs_semi {
             write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
             // Print trailing comments after the semicolon
-            match self.element.as_ast_nodes() {
-                AstNodes::PropertyDefinition(prop) => {
-                    prop.format_trailing_comments(f);
-                }
-                _ => {}
+            if let AstNodes::PropertyDefinition(prop) = self.element.as_ast_nodes() {
+                prop.format_trailing_comments(f);
             }
         } else {
             self.element.fmt(f);
@@ -2653,28 +2652,20 @@ fn should_break_arkui_chain(
     }
 
     // Check if any chain expression has complex arguments (arrow functions, function expressions, etc.)
-    for chain_expr in chain_expressions.iter() {
+    for chain_expr in chain_expressions {
         // Check the arguments directly from the CallExpression
         let arguments = &chain_expr.arguments;
-        if arguments.len() > 0 {
+        if !arguments.is_empty() {
             // Check if any argument is an arrow function or function expression
-            for arg in arguments.iter() {
-                match arg {
-                    Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_) => {
-                        return true;
-                    }
-                    _ => {
-                        // Check if the argument is a complex expression (object, array, etc.)
-                        if let Some(expr) = arg.as_expression() {
-                            match expr {
-                                Expression::ObjectExpression(_)
-                                | Expression::ArrayExpression(_) => {
-                                    return true;
-                                }
-                                _ => {}
-                            }
-                        }
-                    }
+            for arg in arguments {
+                if matches!(
+                    arg,
+                    Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)
+                ) || matches!(
+                    arg.as_expression(),
+                    Some(Expression::ObjectExpression(_) | Expression::ArrayExpression(_))
+                ) {
+                    return true;
                 }
             }
         }
@@ -2725,7 +2716,8 @@ fn find_arkui_children_block_span(
     let mut block_end: Option<u32> = None;
 
     for (i, byte) in search_range.bytes().enumerate() {
-        let pos = search_start + i as u32;
+        let offset = u32::try_from(i).ok()?;
+        let pos = search_start.checked_add(offset)?;
         match byte {
             b'{' if block_start.is_none() => {
                 // Found the opening brace - content starts after it
@@ -2738,7 +2730,6 @@ fn find_arkui_children_block_span(
             }
             b' ' | b'\t' | b'\n' | b'\r' | b')' if block_start.is_none() => {
                 // Skip whitespace and closing paren before finding `{`
-                continue;
             }
             _ if block_start.is_none() => {
                 // Some other character before `{` - not a children block
@@ -2746,7 +2737,6 @@ fn find_arkui_children_block_span(
             }
             _ => {
                 // Inside the block, continue looking for `}`
-                continue;
             }
         }
     }
@@ -2802,7 +2792,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArkUIComponentExpression<'a>> {
             // This should be after the children block or arguments
             let initial_prev_end = if has_children && !children.as_ref().is_empty() {
                 // After children block - find the end of last child
-                children.as_ref().last().map(|c| c.span().end).unwrap_or(self.span.start)
+                children.as_ref().last().map_or(self.span.start, |c| c.span().end)
             } else if has_children
                 && let Some(block_span) =
                     find_arkui_children_block_span(self.as_ref(), f.source_text().as_ref())
@@ -2847,7 +2837,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArkUIComponentExpression<'a>> {
                 // In single-line format, chain expressions should be directly connected (no space)
                 let format_chains_single_line = format_with(|f| {
                     let mut prev_end = initial_prev_end;
-                    for chain_expr_node in chain_refs.iter() {
+                    for chain_expr_node in &chain_refs {
                         write!(f, [FormatArkUIChainExpression::new(chain_expr_node, prev_end)]);
                         prev_end = chain_expr_node.span.end;
                     }
@@ -2900,7 +2890,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArkUIComponentExpression<'a>> {
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ArkUIChild<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let mut join = f.join_nodes_with_hardline();
-        for child in self.iter() {
+        for child in self {
             join.entry(child.span(), child);
         }
     }

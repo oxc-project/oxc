@@ -1,7 +1,9 @@
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::ast::{ClassElement, MethodDefinitionKind, TSMethodSignatureKind, TSSignature};
+use oxc_ast::ast::{
+    ClassElement, MethodDefinitionKind, TSAccessibility, TSMethodSignatureKind, TSSignature,
+};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -30,9 +32,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     let function = &method.value;
                     let params = self.transform_formal_parameters(
                         &function.params,
-                        method
-                            .accessibility
-                            .is_some_and(|accessibility| accessibility.is_private()),
+                        method.accessibility.is_some_and(TSAccessibility::is_private),
                     );
                     let return_type = match method.kind {
                         MethodDefinitionKind::Method => {

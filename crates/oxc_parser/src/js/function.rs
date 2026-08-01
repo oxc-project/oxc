@@ -75,12 +75,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
         if self.source_type.is_ets_static()
-            && this_param.is_some()
             && matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
+            && let Some(this_param) = &this_param
         {
             self.error(diagnostics::ets_unsupported_syntax(
                 "Receiver parameters on class members",
-                this_param.as_ref().unwrap().span,
+                this_param.span,
             ));
         }
         let (list, rest) = self.parse_formal_parameters_list(func_kind, opening_span);

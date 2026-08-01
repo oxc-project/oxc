@@ -263,7 +263,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
                             // Check for arrow functions or function expressions
                             matches!(arg, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)) ||
                             // Check for complex expressions (objects, arrays)
-                            arg.as_expression().map_or(false, |expr| {
+                            arg.as_expression().is_some_and(|expr| {
                                 matches!(expr, Expression::ObjectExpression(_) | Expression::ArrayExpression(_))
                             })
                         })
@@ -286,9 +286,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
         // For ArkUI leading-dot expressions, don't indent on line breaks (align with first dot)
         let format_expanded = format_with(|f| {
             if is_arkui_leading_dot {
-                write!(f, [self.head, &format_tail])
+                write!(f, [self.head, &format_tail]);
             } else {
-                write!(f, [self.head, indent(&format_tail)])
+                write!(f, [self.head, indent(&format_tail)]);
             }
         });
 

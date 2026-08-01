@@ -178,7 +178,7 @@ fn arkui_chain_codegen_omits_internal_receiver() {
 fn arkui_regression_codegen_preserves_empty_children_and_generic_chain() {
     let allocator = Allocator::default();
     let source_type = SourceType::ets();
-    let source = r#"@Component
+    let source = r"@Component
 struct Regression {
   build() {
     Column() {}
@@ -187,7 +187,7 @@ struct Regression {
       this.b('two', true)
     }.attribute<number>(1)
   }
-}"#;
+}";
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
 
@@ -202,14 +202,14 @@ struct Regression {
 fn arkui_struct_and_annotation_codegen() {
     let allocator = Allocator::default();
     let source_type = SourceType::ets();
-    let source = r#"export abstract struct Derived<T> extends Base implements First, Second {
+    let source = r"export abstract struct Derived<T> extends Base implements First, Second {
   static { initialize() }
   readonly [key: string]: unknown
   accessor current: T
   constructor(value: T) { this.current = value }
   abstract render(): void
 }
-export declare @interface Metadata {}"#;
+export declare @interface Metadata {}";
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
 
