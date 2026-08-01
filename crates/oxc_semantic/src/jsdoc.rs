@@ -17,8 +17,9 @@ impl<'a> JSDocFinder<'a> {
         Self { attached, not_attached }
     }
 
-    /// Borrows rather than clones: `JSDoc` caches its parse in a `OnceCell`, so a clone
-    /// would hand each caller an empty cache and reparse the comment once per caller.
+    /// Borrows rather than clones: `JSDoc` caches its parse in a `OnceCell`. Handing out a clone
+    /// parses into the temporary, leaving the cell in the map uninitialized, so the next lookup
+    /// clones an empty cache and parses again - once per caller.
     pub fn get_one_by_node<'b>(
         &'b self,
         nodes: &AstNodes<'a>,
@@ -227,6 +228,28 @@ mod test {
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, Some(source_type));
         }
+    }
+
+    // Lookups must borrow, not clone: a clone parses into the temporary and leaves the cached
+    // `OnceCell` in the map uninitialized, so every lookup reparses.
+    #[test]
+    fn parse_cache_is_shared_across_lookups() {
+        let allocator = Allocator::default();
+        let source_text = "/** @param {number} a */ function f(a) {}";
+        let symbol = "function f(a) {}";
+        let semantic = build_semantic(&allocator, source_text, None);
+        let start = u32::try_from(source_text.find(symbol).unwrap()).unwrap();
+        let span = Span::sized(start, u32::try_from(symbol.len()).unwrap());
+
+        let first = semantic.jsdoc().get_all_by_span(span).unwrap()[0].tags();
+        assert_eq!(first.len(), 1);
+        let second = semantic.jsdoc().get_all_by_span(span).unwrap()[0].tags();
+
+        assert_eq!(
+            first.as_ptr(),
+            second.as_ptr(),
+            "second lookup reparsed instead of reusing the cache"
+        );
     }
 
     #[test]
