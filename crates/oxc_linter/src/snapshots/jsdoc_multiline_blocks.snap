@@ -1,0 +1,187 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(multiline-blocks): Should have no text on the "0th" line (after the `/**`).
+   ╭─[multiline_blocks.tsx:1:5]
+ 1 │ /** Reported up here
+   ·     ────────────────
+ 2 │  * because the rest is multiline
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Should have no text on the "0th" line (after the `/**`).
+   ╭─[multiline_blocks.tsx:1:5]
+ 1 │ /** Reported up here
+   ·     ────────────────
+ 2 │  * because the rest is multiline
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Should have no text on the "0th" line (after the `/**`).
+   ╭─[multiline_blocks.tsx:1:5]
+ 1 │ /** @abc {aType} aName Reported up here
+   ·     ───────────────────────────────────
+ 2 │  * because the rest is multiline
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Single line blocks are not permitted by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /** @tag */
+   · ───────────
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Single line blocks are not permitted by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /** @tag {someType} */
+   · ──────────────────────
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Single line blocks are not permitted by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /** @tag {someType} aName */
+   · ────────────────────────────
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Single line blocks are not permitted by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /** @tag */
+   · ───────────
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Single line blocks are not permitted by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /** desc */
+   · ───────────
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * Desc.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /** desc
+   · ───
+ 2 │  *
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration but fixing would result in a single line block which you have prohibited with `noSingleLineBlocks`.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /** desc
+   · ───
+ 2 │  *
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  *
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This is not long enough to be permitted.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This is not long enough to be permitted.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration but the block has a description with a tag.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This has the wrong tags so is not permitted.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration but the block has multiple tags.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This has too many tags so cannot be fixed to a single line.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration but the block has a description with a tag.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This has a tag and description so cannot be fixed to a single line.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This has no tags so is not permitted.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration but the block has a description with a tag.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This has the wrong tags so is not permitted.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * @lends This can be safely fixed to a single line.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * @type {aType} This can be safely fixed to a single line.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * @aTag
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration but fixing would result in a single line block which you have prohibited with `noSingleLineBlocks`.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * This is a problem when single and multiline are blocked.
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Should have no text on the "0th" line (after the `/**`).
+   ╭─[multiline_blocks.tsx:1:5]
+ 1 │ /** This comment is bad
+   ·     ───────────────────
+ 2 │  * It should not have text on line zero
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Multiline JSDoc blocks are prohibited by your configuration.
+   ╭─[multiline_blocks.tsx:1:1]
+ 1 │ /**
+   · ───
+ 2 │  * @lends This can be safely fixed
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Should have no text on the final line (before the `*/`).
+   ╭─[multiline_blocks.tsx:2:4]
+ 1 │ /**
+ 2 │  * @someTag {aType} with Description */
+   ·    ─────────────────────────────────
+   ╰────
+
+  ⚠ jsdoc(multiline-blocks): Should have no text on the final line (before the `*/`).
+   ╭─[multiline_blocks.tsx:2:4]
+ 1 │ /**
+ 2 │  * Description */
+   ·    ───────────
+   ╰────
