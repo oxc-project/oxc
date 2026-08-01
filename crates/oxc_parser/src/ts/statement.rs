@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub(super) enum CallOrConstructorSignature {
+pub(crate) enum CallOrConstructorSignature {
     Call,
     Constructor,
 }
@@ -25,8 +25,39 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier();
+        self.register_ets_type_name(id.name);
         self.check_reserved_type_name(&id, "Enum");
+        let underlying_type =
+            if self.source_type.is_ets_static() { self.parse_ts_type_annotation() } else { None };
         let body = self.parse_ts_enum_body();
+        if self.source_type.is_ets_static() {
+            let non_integer = if let Some(annotation) = &underlying_type {
+                match Self::ets_enum_underlying_type(&annotation.type_annotation) {
+                    Some(non_integer) => non_integer,
+                    None => {
+                        self.error(diagnostics::ets_unsupported_syntax(
+                            "This enum underlying type",
+                            annotation.span,
+                        ));
+                        false
+                    }
+                }
+            } else {
+                body.members.first().is_some_and(|member| {
+                    matches!(member.initializer, Some(Expression::StringLiteral(_)))
+                })
+            };
+            if non_integer {
+                for member in &body.members {
+                    if member.initializer.is_none() {
+                        self.error(diagnostics::ets_unsupported_syntax(
+                            "Uninitialized members of non-integer enums",
+                            member.span,
+                        ));
+                    }
+                }
+            }
+        }
         let span = self.end_span(span);
         self.verify_modifiers(
             modifiers,
@@ -34,14 +65,38 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        Declaration::new_ts_enum_declaration(
+        let mut declaration = Declaration::new_ts_enum_declaration(
             span,
             id,
             body,
             modifiers.contains_const(),
             modifiers.contains_declare(),
             self,
-        )
+        );
+        if let Some(underlying_type) = underlying_type
+            && let Declaration::TSEnumDeclaration(enum_decl) = &mut declaration
+        {
+            enum_decl.underlying_type = Some(self.alloc(underlying_type.unbox().type_annotation));
+        }
+        declaration
+    }
+
+    fn ets_enum_underlying_type(ty: &TSType<'a>) -> Option<bool> {
+        match ty {
+            TSType::TSStringKeyword(_) => Some(true),
+            TSType::TSNumberKeyword(_) => Some(true),
+            TSType::TSTypeReference(reference) => {
+                let TSTypeName::IdentifierReference(identifier) = &reference.type_name else {
+                    return None;
+                };
+                match identifier.name.as_str() {
+                    "byte" | "char" | "short" | "int" | "long" => Some(false),
+                    "float" | "double" | "string" => Some(true),
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
     }
 
     pub(crate) fn parse_ts_enum_body(&mut self) -> TSEnumBody<'a> {
@@ -103,6 +158,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => {
                 let ident_name = self.parse_identifier_name();
+                self.check_ets_binding_name(&ident_name.name, ident_name.span);
                 TSEnumMemberName::Identifier(self.alloc(ident_name))
             }
         }
@@ -133,6 +189,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Type);
 
         let id = self.parse_binding_identifier();
+        self.register_ets_type_name(id.name);
         self.check_reserved_type_name(&id, "Type alias");
         let params = self.parse_ts_type_parameters_with_variance();
         // A `const` modifier is only valid on a type parameter of a function, method, or class
@@ -203,6 +260,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         id: &BindingIdentifier<'a>,
         syntax_name: &'static str,
     ) {
+        if self.source_type.is_ets_static() {
+            return;
+        }
         if matches!(
             id.name.as_str(),
             "any"
@@ -227,6 +287,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
+        self.register_ets_type_name(id.name);
         self.check_reserved_type_name(&id, "Interface");
         let type_parameters = self.parse_ts_type_parameters_with_variance();
         if let Some(type_parameters) = &type_parameters {
@@ -304,9 +365,226 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
         let span = self.start_span();
-        let body_list =
-            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
+        let body_list = if self.source_type.is_ets_static() {
+            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ets_interface_signature)
+        } else {
+            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature)
+        };
+        if self.source_type.is_ets_static() {
+            let mut seen_index_signature = false;
+            for signature in &body_list {
+                if matches!(signature, TSSignature::TSIndexSignature(_)) {
+                    if seen_index_signature {
+                        self.error(diagnostics::ets_unsupported_syntax(
+                            "Multiple index signatures in one interface",
+                            signature.span(),
+                        ));
+                    }
+                    seen_index_signature = true;
+                }
+            }
+        }
         TSInterfaceBody::boxed(self.end_span(span), body_list, self)
+    }
+
+    /// Parse a static ETS interface member.
+    ///
+    /// Unlike a TypeScript interface, an ETS interface can contain concrete
+    /// methods, accessors, annotations, access modifiers, and managed overload
+    /// declarations. Those members use the same AST nodes as class members so
+    /// their bodies and modifiers remain lossless.
+    fn parse_ets_interface_signature(&mut self) -> TSSignature<'a> {
+        let span = self.start_span();
+
+        if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
+            if !self.ctx.has_ambient() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Call signatures in non-ambient interfaces",
+                    self.cur_token().span(),
+                ));
+            }
+            return self.parse_signature_member(CallOrConstructorSignature::Call);
+        }
+
+        if self.at(Kind::New)
+            && matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle)
+        {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Constructor signatures in interfaces",
+                self.cur_token().span(),
+            ));
+            return self.parse_signature_member(CallOrConstructorSignature::Constructor);
+        }
+
+        let decorators = self.parse_decorators();
+        if self.at(Kind::Readonly)
+            && matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle)
+        {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Readonly interface methods",
+                self.cur_token().span(),
+            ));
+        }
+        let modifiers = self.parse_modifiers(
+            /* permit_const_as_modifier */ true,
+            /* stop_on_start_of_class_static_block */ false,
+        );
+
+        if self.at(Kind::Overload) {
+            return TSSignature::ETSOverloadDeclaration(self.parse_ets_overload_declaration(
+                span,
+                decorators,
+                &modifiers,
+                ETSOverloadDeclarationKind::InterfaceMethod,
+            ));
+        }
+
+        if self.is_index_signature() {
+            for decorator in decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+            return TSSignature::TSIndexSignature(
+                self.parse_index_signature_declaration(span, &modifiers),
+            );
+        }
+
+        let method_kind = if self.parse_contextual_modifier(Kind::Get) {
+            Some(MethodDefinitionKind::Get)
+        } else if self.parse_contextual_modifier(Kind::Set) {
+            Some(MethodDefinitionKind::Set)
+        } else {
+            None
+        };
+        let generator = self.eat(Kind::Star);
+        let (key, computed) = self.parse_property_name();
+        let optional = self.eat(Kind::Question);
+
+        if method_kind.is_some()
+            || generator
+            || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle)
+        {
+            let allowed = ModifierKinds::new([
+                ModifierKind::Private,
+                ModifierKind::Declare,
+                ModifierKind::Default,
+            ]);
+            for modifier in modifiers.iter() {
+                if !allowed.contains(modifier.kind)
+                    || (modifier.kind == ModifierKind::Default && !self.ctx.has_ambient())
+                {
+                    self.error(diagnostics::ets_modifier_not_allowed(
+                        &modifier,
+                        "an interface method",
+                    ));
+                }
+            }
+            let mut value = self.parse_method(
+                modifiers.contains(ModifierKind::Async),
+                generator,
+                FunctionKind::ClassMethod,
+            );
+            value.declare = modifiers.contains(ModifierKind::Declare);
+            value.r#final = modifiers.contains(ModifierKind::Final);
+            value.native = modifiers.contains(ModifierKind::Native);
+            let r#type = if modifiers.contains(ModifierKind::Abstract) {
+                MethodDefinitionType::TSAbstractMethodDefinition
+            } else {
+                MethodDefinitionType::MethodDefinition
+            };
+            let mut method = MethodDefinition::boxed(
+                self.end_span(span),
+                r#type,
+                decorators,
+                key,
+                value,
+                method_kind.unwrap_or(MethodDefinitionKind::Method),
+                computed,
+                modifiers.contains(ModifierKind::Static),
+                modifiers.contains(ModifierKind::Override),
+                optional,
+                modifiers.accessibility(),
+                self,
+            );
+            method.r#final = modifiers.contains(ModifierKind::Final);
+            method.native = modifiers.contains(ModifierKind::Native);
+            match method.kind {
+                MethodDefinitionKind::Get => self.check_getter(&method.value),
+                MethodDefinitionKind::Set => self.check_setter(&method.value),
+                MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
+            }
+            if matches!(method.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
+                && method.value.body.is_some()
+            {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Accessor implementations in interfaces",
+                    method.value.body.as_ref().unwrap().span,
+                ));
+            }
+            if modifiers.contains(ModifierKind::Private)
+                && method.value.body.is_none()
+                && !self.ctx.has_ambient()
+            {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Private interface methods without an implementation",
+                    method.key.span(),
+                ));
+            }
+            return TSSignature::MethodDefinition(method);
+        }
+
+        let definite = self.eat(Kind::Bang);
+        let type_annotation = self.parse_ts_type_annotation();
+        let value = self
+            .eat(Kind::Eq)
+            .then(|| self.context_add(Context::In, Self::parse_assignment_expression_or_higher));
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Readonly {
+                self.error(diagnostics::ets_modifier_not_allowed(&modifier, "an interface field"));
+            }
+        }
+        if definite {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Definite assignment assertions on interface fields",
+                key.span(),
+            ));
+        }
+        if type_annotation.is_none() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Interface fields without an explicit type annotation",
+                key.span(),
+            ));
+        }
+        if let Some(value) = &value {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Interface field initializers",
+                value.span(),
+            ));
+        }
+        if !self.eat(Kind::Comma) {
+            self.asi();
+        }
+        let r#type = if modifiers.contains(ModifierKind::Abstract) {
+            PropertyDefinitionType::TSAbstractPropertyDefinition
+        } else {
+            PropertyDefinitionType::PropertyDefinition
+        };
+        TSSignature::PropertyDefinition(PropertyDefinition::boxed(
+            self.end_span(span),
+            r#type,
+            decorators,
+            key,
+            type_annotation,
+            value,
+            computed,
+            modifiers.contains(ModifierKind::Static),
+            modifiers.contains(ModifierKind::Declare),
+            modifiers.contains(ModifierKind::Override),
+            optional,
+            definite,
+            modifiers.contains(ModifierKind::Readonly),
+            modifiers.accessibility(),
+            self,
+        ))
     }
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> TSSignature<'a> {
@@ -359,7 +637,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn is_index_signature(&mut self) -> bool {
-        self.at(Kind::LBrack) && self.lookahead(Self::is_unambiguously_index_signature)
+        self.at(Kind::LBrack)
+            && (self.lookahead(Self::is_unambiguously_index_signature)
+                || (self.source_type.is_ets_static()
+                    && self.ctx.has_ambient()
+                    && self.lookahead(Self::is_ets_malformed_index_signature)))
+    }
+
+    fn is_ets_malformed_index_signature(&mut self) -> bool {
+        self.bump_any(); // `[`
+        if !self.cur_kind().is_identifier_name() {
+            return false;
+        }
+        self.bump_any();
+        if !self.eat(Kind::RBrack) {
+            return false;
+        }
+        self.at(Kind::Colon)
     }
 
     fn is_unambiguously_index_signature(&mut self) -> bool {
@@ -399,6 +693,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             self.expect(Kind::Module);
             if self.at(Kind::Str) {
+                if self.source_type.is_ets_static() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Ambient external module declarations",
+                        self.cur_token().span(),
+                    ));
+                }
                 return self.parse_ambient_external_module_declaration(span, modifiers);
             }
             TSModuleDeclarationKind::Module
@@ -560,6 +860,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let reserved_ctx = self.ctx;
         let modifiers = self.eat_modifiers_before_declaration();
+        if self.source_type.is_ets_static() && !self.state.ets_in_declaration_scope {
+            self.error(diagnostics::ets_nested_declaration(
+                self.cur_kind().to_str(),
+                self.cur_token().span(),
+            ));
+        }
         if let Some(modifier) = modifiers.get(ModifierKind::Declare)
             && reserved_ctx.has_ambient()
             && !reserved_ctx.has_top_level()
@@ -588,10 +894,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
         let kind = self.cur_kind();
-        // Allow decorators on classes, and on functions/structs in ArkUI mode
+        // Allow decorators on classes, and annotations on ETS functions/structs.
         let decorators_allowed = kind == Kind::Class
-            || (self.source_type.is_arkui()
-                && (kind == Kind::Struct || kind == Kind::At || self.at_function_with_async()));
+            || (self.source_type.is_ets()
+                && (kind == Kind::Struct
+                    || kind == Kind::At
+                    || (self.source_type.is_ets_static() && kind == Kind::Overload)
+                    || (self.source_type.is_ets_static()
+                        && matches!(
+                            kind,
+                            Kind::Var
+                                | Kind::Let
+                                | Kind::Const
+                                | Kind::Type
+                                | Kind::Enum
+                                | Kind::Interface
+                        ))
+                    || self.at_function_with_async()));
         if !decorators_allowed {
             for decorator in &decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
@@ -607,12 +926,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     true,
                     diagnostics::modifier_cannot_be_used_here,
                 );
-                let decl = self.parse_variable_declaration(
+                let mut decl = self.parse_variable_declaration(
                     start_span,
                     kind,
                     VariableDeclarationParent::Statement,
                     modifiers.contains_declare(),
                 );
+                if self.source_type.is_ets_static() {
+                    decl.decorators = self.alloc_ets_decorators(decorators);
+                }
                 Declaration::VariableDeclaration(decl)
             }
             Kind::Using if self.is_using_declaration() => {
@@ -659,19 +981,50 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let decl = self.parse_ts_global_declaration(start_span, modifiers);
                 Declaration::TSGlobalDeclaration(decl)
             }
-            Kind::Type if self.is_ts => self.parse_ts_type_alias_declaration(start_span, modifiers),
-            Kind::Enum if self.is_ts => self.parse_ts_enum_declaration(start_span, modifiers),
+            Kind::Type if self.is_ts => {
+                let mut declaration = self.parse_ts_type_alias_declaration(start_span, modifiers);
+                if self.source_type.is_ets_static()
+                    && let Declaration::TSTypeAliasDeclaration(declaration) = &mut declaration
+                {
+                    declaration.decorators = self.alloc_ets_decorators(decorators);
+                }
+                declaration
+            }
+            Kind::Enum if self.is_ts => {
+                let mut declaration = self.parse_ts_enum_declaration(start_span, modifiers);
+                if self.source_type.is_ets_static()
+                    && let Declaration::TSEnumDeclaration(declaration) = &mut declaration
+                {
+                    declaration.decorators = self.alloc_ets_decorators(decorators);
+                }
+                declaration
+            }
             Kind::Interface if self.is_ts => {
                 self.bump_any();
-                self.parse_ts_interface_declaration(start_span, modifiers)
+                let mut declaration = self.parse_ts_interface_declaration(start_span, modifiers);
+                if self.source_type.is_ets_static()
+                    && let Declaration::TSInterfaceDeclaration(declaration) = &mut declaration
+                {
+                    declaration.decorators = self.alloc_ets_decorators(decorators);
+                }
+                declaration
             }
-            Kind::Struct if self.source_type.is_arkui() => {
+            Kind::Struct if self.source_type.is_ets() => {
                 let decl = self.parse_struct_declaration(start_span, modifiers, decorators);
                 Declaration::StructStatement(decl)
             }
             Kind::At if self.at_arkts_annotation_declaration() => {
                 let decl = self.parse_annotation_declaration(start_span, modifiers, decorators);
                 Declaration::AnnotationDeclaration(decl)
+            }
+            Kind::Overload if self.source_type.is_ets_static() => {
+                let declaration = self.parse_ets_overload_declaration(
+                    start_span,
+                    decorators,
+                    modifiers,
+                    ETSOverloadDeclarationKind::Function,
+                );
+                Declaration::ETSOverloadDeclaration(declaration)
             }
             _ if self.at_function_with_async() => {
                 let declare = modifiers.contains(ModifierKind::Declare);
@@ -726,6 +1079,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Expression<'a> {
         let span = self.start_span();
+        if self.source_type.is_ets_static() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Angle-bracket type assertions",
+                self.cur_token().span(),
+            ));
+        }
         self.expect(Kind::LAngle);
         let type_annotation = self.parse_ts_type();
         self.expect(Kind::RAngle);
@@ -746,6 +1105,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         identifier: BindingIdentifier<'a>,
         span: u32,
     ) -> Declaration<'a> {
+        if self.source_type.is_ets_static() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Import-equals declarations",
+                self.cur_token().span(),
+            ));
+        }
         self.expect(Kind::Eq);
 
         let reference_span = self.start_span();
@@ -835,6 +1200,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match self.cur_kind() {
             // `var x`  `let x`  `const x`  `function f`  `class C`  `enum E`
             Kind::Var | Kind::Let | Kind::Const | Kind::Function | Kind::Class | Kind::Enum => true,
+            Kind::Overload if self.source_type.is_ets_static() => true,
             // `interface I`  `type T = …`  (keyword + binding ident on the same line)
             Kind::Interface | Kind::Type => {
                 let next = self.lexer.peek_token();
@@ -869,7 +1235,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Kind::Var | Kind::Let | Kind::Const | Kind::Function | Kind::Class | Kind::Enum => {
                     return true;
                 }
-                Kind::Struct if self.source_type.is_arkui() => return true,
+                Kind::Struct if self.source_type.is_ets() => return true,
+                Kind::Overload if self.source_type.is_ets_static() => return true,
                 Kind::At if self.at_arkts_annotation_declaration() => return true,
                 Kind::Interface | Kind::Type => {
                     self.bump_any();
@@ -886,6 +1253,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 | Kind::Accessor
                 | Kind::Async
                 | Kind::Declare
+                | Kind::Final
+                | Kind::Native
                 | Kind::Private
                 | Kind::Protected
                 | Kind::Public

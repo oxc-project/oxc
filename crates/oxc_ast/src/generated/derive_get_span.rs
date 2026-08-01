@@ -6,6 +6,7 @@
 use oxc_span::{GetSpan, Span};
 
 use crate::ast::arkui::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -64,6 +65,12 @@ impl GetSpan for Expression<'_> {
             Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ArkUIComponentExpression(it) => GetSpan::span(&**it),
             Self::LeadingDotExpression(it) => GetSpan::span(&**it),
+            Self::CharLiteral(it) => GetSpan::span(&**it),
+            Self::ETSTrailingBlockExpression(it) => GetSpan::span(&**it),
+            Self::ETSInstanceOfExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -161,6 +168,12 @@ impl GetSpan for ArrayExpressionElement<'_> {
             Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ArkUIComponentExpression(it) => GetSpan::span(&**it),
             Self::LeadingDotExpression(it) => GetSpan::span(&**it),
+            Self::CharLiteral(it) => GetSpan::span(&**it),
+            Self::ETSTrailingBlockExpression(it) => GetSpan::span(&**it),
+            Self::ETSInstanceOfExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -246,6 +259,12 @@ impl GetSpan for PropertyKey<'_> {
             Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ArkUIComponentExpression(it) => GetSpan::span(&**it),
             Self::LeadingDotExpression(it) => GetSpan::span(&**it),
+            Self::CharLiteral(it) => GetSpan::span(&**it),
+            Self::ETSTrailingBlockExpression(it) => GetSpan::span(&**it),
+            Self::ETSInstanceOfExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -394,6 +413,12 @@ impl GetSpan for Argument<'_> {
             Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ArkUIComponentExpression(it) => GetSpan::span(&**it),
             Self::LeadingDotExpression(it) => GetSpan::span(&**it),
+            Self::CharLiteral(it) => GetSpan::span(&**it),
+            Self::ETSTrailingBlockExpression(it) => GetSpan::span(&**it),
+            Self::ETSInstanceOfExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -628,6 +653,7 @@ impl GetSpan for Statement<'_> {
             Self::TryStatement(it) => GetSpan::span(&**it),
             Self::WhileStatement(it) => GetSpan::span(&**it),
             Self::WithStatement(it) => GetSpan::span(&**it),
+            Self::ETSPackageDeclaration(it) => GetSpan::span(&**it),
             Self::VariableDeclaration(it) => GetSpan::span(&**it),
             Self::FunctionDeclaration(it) => GetSpan::span(&**it),
             Self::ClassDeclaration(it) => GetSpan::span(&**it),
@@ -639,6 +665,7 @@ impl GetSpan for Statement<'_> {
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
             Self::StructStatement(it) => GetSpan::span(&**it),
             Self::AnnotationDeclaration(it) => GetSpan::span(&**it),
+            Self::ETSOverloadDeclaration(it) => GetSpan::span(&**it),
             Self::ImportDeclaration(it) => GetSpan::span(&**it),
             Self::LazyImportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
@@ -685,6 +712,7 @@ impl GetSpan for Declaration<'_> {
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
             Self::StructStatement(it) => GetSpan::span(&**it),
             Self::AnnotationDeclaration(it) => GetSpan::span(&**it),
+            Self::ETSOverloadDeclaration(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -792,6 +820,12 @@ impl GetSpan for ForStatementInit<'_> {
             Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ArkUIComponentExpression(it) => GetSpan::span(&**it),
             Self::LeadingDotExpression(it) => GetSpan::span(&**it),
+            Self::CharLiteral(it) => GetSpan::span(&**it),
+            Self::ETSTrailingBlockExpression(it) => GetSpan::span(&**it),
+            Self::ETSInstanceOfExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -1032,6 +1066,8 @@ impl GetSpan for ClassElement<'_> {
             Self::PropertyDefinition(it) => GetSpan::span(&**it),
             Self::AccessorProperty(it) => GetSpan::span(&**it),
             Self::TSIndexSignature(it) => GetSpan::span(&**it),
+            Self::ETSOverloadDeclaration(it) => GetSpan::span(&**it),
+            Self::TSCallSignatureDeclaration(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -1238,6 +1274,12 @@ impl GetSpan for ExportDefaultDeclarationKind<'_> {
             Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ArkUIComponentExpression(it) => GetSpan::span(&**it),
             Self::LeadingDotExpression(it) => GetSpan::span(&**it),
+            Self::CharLiteral(it) => GetSpan::span(&**it),
+            Self::ETSTrailingBlockExpression(it) => GetSpan::span(&**it),
+            Self::ETSInstanceOfExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -1284,6 +1326,13 @@ impl GetSpan for NumericLiteral<'_> {
 }
 
 impl GetSpan for StringLiteral<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for CharLiteral<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1436,6 +1485,12 @@ impl GetSpan for JSXExpression<'_> {
             Self::V8IntrinsicExpression(it) => GetSpan::span(&**it),
             Self::ArkUIComponentExpression(it) => GetSpan::span(&**it),
             Self::LeadingDotExpression(it) => GetSpan::span(&**it),
+            Self::CharLiteral(it) => GetSpan::span(&**it),
+            Self::ETSTrailingBlockExpression(it) => GetSpan::span(&**it),
+            Self::ETSInstanceOfExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpan::span(&**it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpan::span(&**it),
             Self::ComputedMemberExpression(it) => GetSpan::span(&**it),
             Self::StaticMemberExpression(it) => GetSpan::span(&**it),
             Self::PrivateFieldExpression(it) => GetSpan::span(&**it),
@@ -1945,6 +2000,9 @@ impl GetSpan for TSSignature<'_> {
             Self::TSCallSignatureDeclaration(it) => GetSpan::span(&**it),
             Self::TSConstructSignatureDeclaration(it) => GetSpan::span(&**it),
             Self::TSMethodSignature(it) => GetSpan::span(&**it),
+            Self::MethodDefinition(it) => GetSpan::span(&**it),
+            Self::PropertyDefinition(it) => GetSpan::span(&**it),
+            Self::ETSOverloadDeclaration(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -2252,6 +2310,7 @@ impl GetSpan for StructElement<'_> {
             Self::StaticBlock(it) => GetSpan::span(&**it),
             Self::TSIndexSignature(it) => GetSpan::span(&**it),
             Self::AccessorProperty(it) => GetSpan::span(&**it),
+            Self::ETSOverloadDeclaration(it) => GetSpan::span(&**it),
         }
     }
 }
@@ -2292,5 +2351,54 @@ impl GetSpan for AnnotationElement<'_> {
         match self {
             Self::PropertyDefinition(it) => GetSpan::span(&**it),
         }
+    }
+}
+
+impl GetSpan for ETSPackageDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ETSInstanceOfExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ETSNewClassInstanceExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ETSNewArrayInstanceExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ETSNewMultiDimArrayInstanceExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ETSTrailingBlockExpression<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ETSOverloadDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
     }
 }

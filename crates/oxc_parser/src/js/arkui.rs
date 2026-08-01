@@ -26,8 +26,9 @@ pub(crate) enum ArkUIArgumentContext {
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn at_arkts_annotation_declaration(&mut self) -> bool {
-        self.source_type.is_arkui()
-            && self.arkts_options.as_ref().is_none_or(|options| options.annotations)
+        (self.source_type.is_ets_static()
+            || (self.source_type.is_arkui()
+                && self.arkts_options.as_ref().is_none_or(|options| options.annotations)))
             && self.at(Kind::At)
             && self.lexer.peek_token().kind() == Kind::Interface
     }
@@ -280,6 +281,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
+        if self.source_type.is_ets_static() && !self.state.ets_in_declaration_scope {
+            self.error(diagnostics::ets_nested_declaration("Struct", Span::empty(start_span)));
+        }
         let decl = self.parse_struct_declaration(start_span, modifiers, decorators);
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::class_declaration(Span::new(
@@ -310,6 +314,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             self.unexpected::<BindingIdentifier<'a>>()
         };
+        self.register_ets_type_name(id.name);
 
         let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
         let (extends, implements) = self.parse_heritage_clause(Self::parse_class_extends_clause);
@@ -343,7 +348,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let r#abstract = modifiers.contains(ModifierKind::Abstract);
         let declare = modifiers.contains(ModifierKind::Declare);
 
-        StructStatement::boxed(
+        let mut strukt = StructStatement::boxed(
             span,
             decorators,
             id,
@@ -355,7 +360,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             r#abstract,
             declare,
             self,
-        )
+        );
+        if self.source_type.is_ets_static() {
+            strukt.r#final = modifiers.contains(ModifierKind::Final);
+            strukt.native = modifiers.contains(ModifierKind::Native);
+            strukt.r#static = modifiers.contains(ModifierKind::Static);
+        }
+        strukt
     }
 
     /// Parse an annotation statement
@@ -419,6 +430,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             self.unexpected::<BindingIdentifier<'a>>()
         };
+
+        self.register_ets_type_name(id.name);
+        if self.source_type.is_ets_static() {
+            self.module_record_builder.register_ets_annotation(id.name.into());
+            for modifier in modifiers.iter() {
+                if matches!(
+                    modifier.kind,
+                    ModifierKind::Public | ModifierKind::Private | ModifierKind::Protected
+                ) {
+                    self.error(diagnostics::ets_annotation_access_modifier(modifier.span()));
+                }
+            }
+        }
 
         let body = self.parse_annotation_body();
 
@@ -494,6 +518,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let initializer = self
             .eat(Kind::Eq)
             .then(|| self.context(Context::In, Context::Yield | Context::Await, Self::parse_expr));
+        if self.source_type.is_ets_static()
+            && let Some(initializer) = &initializer
+        {
+            self.check_ets_annotation_value(initializer);
+        }
 
         // Semicolon is optional in annotation bodies
         let _ = self.eat(Kind::Semicolon);
@@ -547,6 +576,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ true,
         );
+
+        if self.source_type.is_ets_static() && self.at(Kind::Overload) {
+            return StructElement::ETSOverloadDeclaration(self.parse_ets_overload_declaration(
+                span,
+                decorators,
+                &modifiers,
+                ETSOverloadDeclarationKind::StructMethod,
+            ));
+        }
 
         if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
             for decorator in decorators {
@@ -717,22 +755,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     .static_name()
                     .is_some_and(|name| self.is_arkui_render_method(name.as_ref())))
                 || self.decorators_enable_arkui_dsl(decorators.as_slice()));
-        let value = if is_arkui_dsl_method {
-            self.next_function_in_arkui_dsl(|p| {
-                p.parse_method(
-                    modifiers.contains(ModifierKind::Async),
-                    generator,
-                    FunctionKind::ClassMethod,
-                )
-            })
-        } else {
-            self.parse_method(
-                modifiers.contains(ModifierKind::Async),
-                generator,
-                FunctionKind::ClassMethod,
-            )
-        };
-        MethodDefinition::boxed(
+        let mut value =
+            self.with_ets_this_return_type(!modifiers.contains(ModifierKind::Static), |p| {
+                if is_arkui_dsl_method {
+                    p.next_function_in_arkui_dsl(|p| {
+                        p.parse_method(
+                            modifiers.contains(ModifierKind::Async),
+                            generator,
+                            FunctionKind::ClassMethod,
+                        )
+                    })
+                } else {
+                    p.parse_method(
+                        modifiers.contains(ModifierKind::Async),
+                        generator,
+                        FunctionKind::ClassMethod,
+                    )
+                }
+            });
+        if self.source_type.is_ets_static() {
+            value.r#final = modifiers.contains(ModifierKind::Final);
+            value.native = modifiers.contains(ModifierKind::Native);
+        }
+        let mut method = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -745,7 +790,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             optional,
             modifiers.accessibility(),
             self,
-        )
+        );
+        if self.source_type.is_ets_static() {
+            method.r#final = modifiers.contains(ModifierKind::Final);
+            method.native = modifiers.contains(ModifierKind::Native);
+        }
+        method
     }
 
     /// Parse property declaration for struct (similar to class)
@@ -810,12 +860,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, MethodDefinition<'a>> {
         let (name, computed) = self.parse_property_name();
-        let value = self.parse_method(
-            modifiers.contains(ModifierKind::Async),
-            false,
-            FunctionKind::ClassMethod,
-        );
-        let method_definition = MethodDefinition::boxed(
+        let mut value =
+            self.with_ets_this_return_type(!modifiers.contains(ModifierKind::Static), |p| {
+                p.parse_method(
+                    modifiers.contains(ModifierKind::Async),
+                    false,
+                    FunctionKind::ClassMethod,
+                )
+            });
+        if self.source_type.is_ets_static() {
+            value.r#final = modifiers.contains(ModifierKind::Final);
+            value.native = modifiers.contains(ModifierKind::Native);
+        }
+        let mut method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -829,6 +886,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.accessibility(),
             self,
         );
+        if self.source_type.is_ets_static() {
+            method_definition.r#final = modifiers.contains(ModifierKind::Final);
+            method_definition.native = modifiers.contains(ModifierKind::Native);
+        }
         match kind {
             MethodDefinitionKind::Get => self.check_getter(&method_definition.value),
             MethodDefinitionKind::Set => self.check_setter(&method_definition.value),

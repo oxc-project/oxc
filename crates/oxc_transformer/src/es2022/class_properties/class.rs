@@ -162,7 +162,9 @@ impl<'a> ClassProperties<'a> {
                         );
                     }
                 }
-                ClassElement::TSIndexSignature(_) => {
+                ClassElement::TSIndexSignature(_)
+                | ClassElement::ETSOverloadDeclaration(_)
+                | ClassElement::TSCallSignatureDeclaration(_) => {
                     // TODO: Need to handle this?
                 }
             }
@@ -280,7 +282,10 @@ impl<'a> ClassProperties<'a> {
                         constructor = Some(method.value.as_mut());
                     }
                 }
-                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
+                ClassElement::AccessorProperty(_)
+                | ClassElement::TSIndexSignature(_)
+                | ClassElement::ETSOverloadDeclaration(_)
+                | ClassElement::TSCallSignatureDeclaration(_) => {
                     // TODO: Need to handle these?
                 }
                 ClassElement::StaticBlock(_) => {}
@@ -812,7 +817,10 @@ impl<'a> ClassProperties<'a> {
                         return false;
                     }
                 }
-                ClassElement::AccessorProperty(_) | ClassElement::TSIndexSignature(_) => {
+                ClassElement::AccessorProperty(_)
+                | ClassElement::TSIndexSignature(_)
+                | ClassElement::ETSOverloadDeclaration(_)
+                | ClassElement::TSCallSignatureDeclaration(_) => {
                     // TODO: Need to handle these?
                 }
             }

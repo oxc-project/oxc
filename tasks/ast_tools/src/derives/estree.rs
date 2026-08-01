@@ -146,6 +146,9 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
         // `#[estree]` attr on struct field
         AttrLocation::StructField(struct_def, field_index) => match part {
             AttrPart::Tag("skip") => struct_def.fields[field_index].estree.skip = true,
+            AttrPart::Tag("omit_if_default") => {
+                struct_def.fields[field_index].estree.omit_if_default = true;
+            }
             AttrPart::Tag("flatten") => struct_def.fields[field_index].estree.flatten = true,
             AttrPart::Tag("no_flatten") => struct_def.fields[field_index].estree.no_flatten = true,
             AttrPart::Tag("json_safe") => struct_def.fields[field_index].estree.json_safe = true,
@@ -539,9 +542,31 @@ impl<'s> StructSerializerGenerator<'s> {
             "serialize_field"
         });
 
-        self.stmts.extend(quote! {
+        let serialize_stmt = quote! {
             state.#serialize_method_ident(#field_camel_name, &#value);
-        });
+        };
+
+        if field.estree.omit_if_default {
+            let condition = match field.type_def(self.schema) {
+                TypeDef::Primitive(primitive_def) if primitive_def.name() == "bool" => {
+                    quote!(#self_path.#field_name_ident)
+                }
+                TypeDef::Option(_) => quote!(#self_path.#field_name_ident.is_some()),
+                TypeDef::Vec(_) => quote!(!#self_path.#field_name_ident.is_empty()),
+                _ => panic!(
+                    "`#[estree(omit_if_default)]` is only valid on `bool`, `Option<T>`, or `Vec<T>` fields: {}::{}",
+                    struct_def.name(),
+                    field.name(),
+                ),
+            };
+            self.stmts.extend(quote! {
+                if #condition {
+                    #serialize_stmt
+                }
+            });
+        } else {
+            self.stmts.extend(serialize_stmt);
+        }
     }
 
     fn generate_stmt_for_added_field(

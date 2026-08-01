@@ -23,6 +23,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
+        if self.source_type.is_ets_static() && !self.state.ets_in_declaration_scope {
+            self.error(diagnostics::ets_nested_declaration("Class", Span::empty(start_span)));
+        }
         let decl = self.parse_class_declaration(start_span, modifiers, decorators);
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::class_declaration(Span::new(
@@ -88,6 +91,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.check_reserved_type_name(id, "Class");
         }
+        if let Some(id) = &id {
+            self.register_ets_type_name(id.name);
+        }
 
         let type_parameters =
             if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
@@ -110,6 +116,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let body = self.parse_class_body();
 
+        if self.source_type.is_ets_static() {
+            for modifier in modifiers.iter() {
+                let allowed = matches!(
+                    modifier.kind,
+                    ModifierKind::Declare
+                        | ModifierKind::Abstract
+                        | ModifierKind::Final
+                        | ModifierKind::Export
+                        | ModifierKind::Default
+                );
+                if !allowed {
+                    self.error(diagnostics::ets_modifier_not_allowed(&modifier, "a class"));
+                }
+            }
+        }
+
         self.verify_modifiers(
             modifiers,
             ModifierKinds::new([ModifierKind::Declare, ModifierKind::Abstract]),
@@ -117,7 +139,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        Class::boxed(
+        let mut class = Class::boxed(
             self.end_span(start_span),
             r#type,
             decorators,
@@ -130,7 +152,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.contains_abstract(),
             modifiers.contains_declare(),
             self,
-        )
+        );
+        if self.source_type.is_ets_static() {
+            class.r#final = modifiers.contains(ModifierKind::Final);
+            class.native = modifiers.contains(ModifierKind::Native);
+            class.r#static = modifiers.contains(ModifierKind::Static);
+        }
+        class
     }
 
     pub(crate) fn parse_heritage_clause<T, F>(
@@ -227,6 +255,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Some(Self::parse_class_element(p))
         });
+        if self.source_type.is_ets_static() {
+            let mut seen_index_signature = false;
+            for element in &class_elements {
+                if matches!(element, ClassElement::TSIndexSignature(_)) {
+                    if seen_index_signature {
+                        self.error(diagnostics::ets_unsupported_syntax(
+                            "Multiple index signatures in one class",
+                            element.span(),
+                        ));
+                    }
+                    seen_index_signature = true;
+                }
+            }
+        }
         ClassBody::boxed(self.end_span(span), class_elements, self)
     }
 
@@ -235,6 +277,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let ClassElement::MethodDefinition(def) = &elem
             && def.value.body.is_none()
             && !def.decorators.is_empty()
+            && !self.source_type.is_ets_static()
         {
             for decorator in &def.decorators {
                 self.error(diagnostics::decorator_on_overload(decorator.span));
@@ -246,11 +289,38 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_class_element_impl(&mut self) -> ClassElement<'a> {
         let span = self.start_span();
 
+        if self.source_type.is_ets_static()
+            && matches!(self.cur_kind(), Kind::LParen | Kind::LAngle)
+        {
+            let signature_span = self.cur_token().span();
+            if !self.ctx.has_ambient() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Call signatures in non-ambient classes",
+                    signature_span,
+                ));
+            }
+            let signature =
+                self.parse_signature_member(crate::ts::CallOrConstructorSignature::Call);
+            let TSSignature::TSCallSignatureDeclaration(signature) = signature else {
+                unreachable!()
+            };
+            return ClassElement::TSCallSignatureDeclaration(signature);
+        }
+
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(
             /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ true,
         );
+
+        if self.source_type.is_ets_static() && self.at(Kind::Overload) {
+            return ClassElement::ETSOverloadDeclaration(self.parse_ets_overload_declaration(
+                span,
+                decorators,
+                &modifiers,
+                ETSOverloadDeclarationKind::ClassMethod,
+            ));
+        }
 
         // static { block }
         if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
@@ -469,12 +539,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let (name, computed) = self.parse_class_element_name(modifiers);
-        let value = self.parse_method(
-            modifiers.contains(ModifierKind::Async),
-            false,
-            FunctionKind::ClassMethod,
-        );
-        let method_definition = MethodDefinition::boxed(
+        let mut value =
+            self.with_ets_this_return_type(!modifiers.contains(ModifierKind::Static), |p| {
+                p.parse_method(
+                    modifiers.contains(ModifierKind::Async),
+                    false,
+                    FunctionKind::ClassMethod,
+                )
+            });
+        if self.source_type.is_ets_static() {
+            value.r#final = modifiers.contains(ModifierKind::Final);
+            value.native = modifiers.contains(ModifierKind::Native);
+        }
+        let mut method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -488,6 +565,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.accessibility(),
             self,
         );
+        if self.source_type.is_ets_static() {
+            method_definition.r#final = modifiers.contains(ModifierKind::Final);
+            method_definition.native = modifiers.contains(ModifierKind::Native);
+            self.check_ets_class_method_modifiers(
+                modifiers,
+                MethodDefinitionKind::Get,
+                method_definition.value.body.is_some(),
+            );
+        }
         self.check_method_definition_accessor(&method_definition);
         self.verify_modifiers(
             modifiers,
@@ -510,12 +596,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::declare_constructor(modifier.span()));
         }
 
-        let value = self.parse_method(
+        let mut value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
             false,
             FunctionKind::Constructor,
         );
-        let method_definition = MethodDefinition::boxed(
+        if self.source_type.is_ets_static() {
+            value.r#final = modifiers.contains(ModifierKind::Final);
+            value.native = modifiers.contains(ModifierKind::Native);
+        }
+        let mut method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -529,6 +619,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.accessibility(),
             self,
         );
+        if self.source_type.is_ets_static() {
+            method_definition.r#final = modifiers.contains(ModifierKind::Final);
+            method_definition.native = modifiers.contains(ModifierKind::Native);
+            self.check_ets_class_method_modifiers(
+                modifiers,
+                MethodDefinitionKind::Constructor,
+                method_definition.value.body.is_some(),
+            );
+        }
         self.check_method_definition_constructor(&method_definition);
         ClassElement::MethodDefinition(method_definition)
     }
@@ -536,6 +635,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_constructor_name(&mut self) -> Option<PropertyKey<'a>> {
         if self.at(Kind::Constructor) {
             let ident = self.parse_identifier_name();
+            if self.source_type.is_ets_static()
+                && self.cur_kind().is_binding_identifier()
+                && self.lexer.peek_token().kind() == Kind::LParen
+            {
+                let named_constructor = self.parse_identifier_name();
+                return Some(PropertyKey::StaticIdentifier(self.alloc(named_constructor)));
+            }
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
         if self.at(Kind::Str)
@@ -645,22 +751,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ClassElement<'a> {
         let is_arkui_dsl_method =
             self.source_type.is_arkui() && self.decorators_enable_arkui_dsl(decorators.as_slice());
-        let value = if is_arkui_dsl_method {
-            self.next_function_in_arkui_dsl(|p| {
-                p.parse_method(
-                    modifiers.contains(ModifierKind::Async),
-                    generator,
-                    FunctionKind::ClassMethod,
-                )
-            })
-        } else {
-            self.parse_method(
-                modifiers.contains(ModifierKind::Async),
-                generator,
-                FunctionKind::ClassMethod,
-            )
-        };
-        let method_definition = MethodDefinition::boxed(
+        let mut value =
+            self.with_ets_this_return_type(!modifiers.contains(ModifierKind::Static), |p| {
+                if is_arkui_dsl_method {
+                    p.next_function_in_arkui_dsl(|p| {
+                        p.parse_method(
+                            modifiers.contains(ModifierKind::Async),
+                            generator,
+                            FunctionKind::ClassMethod,
+                        )
+                    })
+                } else {
+                    p.parse_method(
+                        modifiers.contains(ModifierKind::Async),
+                        generator,
+                        FunctionKind::ClassMethod,
+                    )
+                }
+            });
+        if self.source_type.is_ets_static() {
+            value.r#final = modifiers.contains(ModifierKind::Final);
+            value.native = modifiers.contains(ModifierKind::Native);
+        }
+        let mut method_definition = MethodDefinition::boxed(
             self.end_span(span),
             r#type,
             decorators,
@@ -674,6 +787,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             modifiers.accessibility(),
             self,
         );
+        if self.source_type.is_ets_static() {
+            method_definition.r#final = modifiers.contains(ModifierKind::Final);
+            method_definition.native = modifiers.contains(ModifierKind::Native);
+            self.check_ets_class_method_modifiers(
+                modifiers,
+                MethodDefinitionKind::Method,
+                method_definition.value.body.is_some(),
+            );
+            if method_definition.key.is_specific_static_name("new") {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Constructor signatures in classes",
+                    method_definition.key.span(),
+                ));
+            }
+        }
         self.check_method_definition_method(&method_definition);
         ClassElement::MethodDefinition(method_definition)
     }
@@ -715,7 +843,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             PropertyDefinitionType::PropertyDefinition
         };
         let r#static = modifiers.contains(ModifierKind::Static);
-        if !computed && let Some((name, span)) = name.prop_name() {
+        if !self.source_type.is_ets_static()
+            && !computed
+            && let Some((name, span)) = name.prop_name()
+        {
             if name == "constructor" {
                 self.error(diagnostics::field_constructor(span));
             }
@@ -723,17 +854,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::static_prototype(span));
             }
         }
-        if r#abstract && name.is_private_identifier() {
+        if !self.source_type.is_ets_static() && r#abstract && name.is_private_identifier() {
             self.error(diagnostics::abstract_with_private_identifier(name.span()));
         }
-        if r#abstract && initializer.is_some() {
+        if !self.source_type.is_ets_static() && r#abstract && initializer.is_some() {
             let (name, span) = name.prop_name().unwrap_or_else(|| {
                 let span = name.span();
                 (&self.source_text[span], span)
             });
             self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
         }
-        if self.ctx.has_ambient()
+        if !self.source_type.is_ets_static()
+            && self.ctx.has_ambient()
             && let Some(initializer) = &initializer
             && !(modifiers.contains(ModifierKind::Readonly) && type_annotation.is_none())
         {
@@ -743,13 +875,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         if let Some(definite_token_start) = definite {
             let definite_span = Span::sized(definite_token_start, 1);
+            if self.source_type.is_ets_static() && r#static {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Static late-initialized fields",
+                    definite_span,
+                ));
+            }
             if initializer.is_some() {
                 self.error(diagnostics::variable_declarator_definite(definite_span));
             } else if type_annotation.is_none() {
                 self.error(diagnostics::variable_declarator_definite_type_assertion(definite_span));
-            } else if self.ctx.has_ambient() || r#static || r#abstract {
+            } else if !self.source_type.is_ets_static()
+                && (self.ctx.has_ambient() || r#static || r#abstract)
+            {
                 self.error(diagnostics::definite_assignment_assertion_not_permitted(definite_span));
             }
+            if self.source_type.is_ets_static()
+                && (optional_span.is_some() || modifiers.contains(ModifierKind::Readonly))
+            {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Optional or readonly late-initialized fields",
+                    definite_span,
+                ));
+            }
+        }
+        if self.source_type.is_ets_static()
+            && r#static
+            && modifiers.contains(ModifierKind::Override)
+        {
+            self.error(diagnostics::ets_unsupported_syntax("Static override fields", name.span()));
         }
         ClassElement::new_property_definition(
             self.end_span(span),
@@ -805,6 +959,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn check_method_definition(&mut self, method: &MethodDefinition<'a>) {
+        if self.source_type.is_ets_static() {
+            if self.ctx.has_ambient()
+                && method.accessibility.is_some()
+                && let Some(body) = &method.value.body
+            {
+                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
+            }
+            if !method.computed
+                && method.r#static
+                && method.key.is_specific_static_name("prototype")
+            {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Runtime prototype members",
+                    method.key.span(),
+                ));
+            }
+            return;
+        }
         if method.r#type.is_abstract() && method.key.is_private_identifier() {
             self.error(diagnostics::abstract_with_private_identifier(method.key.span()));
         }
@@ -847,7 +1019,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             MethodDefinitionKind::Set => self.check_setter(&method.value),
             _ => {}
         }
-        if method.r#type.is_abstract() && method.value.body.is_some() {
+        if !self.source_type.is_ets_static()
+            && method.r#type.is_abstract()
+            && method.value.body.is_some()
+        {
             let (name, span) = method.key.prop_name().unwrap_or_else(|| {
                 let span = method.key.span();
                 (&self.source_text[span], span)
@@ -859,7 +1034,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn check_method_definition_method(&mut self, method: &MethodDefinition<'a>) {
         self.check_method_definition(method);
 
-        if method.r#type.is_abstract() && method.value.body.is_some() {
+        if self.source_type.is_ets_static() {
+            let expected = if method.key.is_specific_static_name("$_get") {
+                Some(1)
+            } else if method.key.is_specific_static_name("$_set") {
+                Some(2)
+            } else {
+                None
+            };
+            if let Some(expected) = expected {
+                let all_required = method.value.params.rest.is_none()
+                    && method
+                        .value
+                        .params
+                        .items
+                        .iter()
+                        .all(|param| !param.optional && param.initializer.is_none());
+                if method.value.params.parameters_count() != expected || !all_required {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Invalid predefined index-access method signature",
+                        method.key.span(),
+                    ));
+                }
+            }
+        }
+
+        if !self.source_type.is_ets_static()
+            && method.r#type.is_abstract()
+            && method.value.body.is_some()
+        {
             let (name, span) = method.key.prop_name().unwrap_or_else(|| {
                 let span = method.key.span();
                 (&self.source_text[span], span)
@@ -883,6 +1086,74 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && let Some(return_type) = &method.value.return_type
         {
             self.error(diagnostics::constructor_return_type(return_type.span));
+        }
+    }
+
+    fn check_ets_class_method_modifiers(
+        &mut self,
+        modifiers: &Modifiers,
+        kind: MethodDefinitionKind,
+        _has_body: bool,
+    ) {
+        debug_assert!(self.source_type.is_ets_static());
+
+        let allowed = match kind {
+            MethodDefinitionKind::Constructor => ModifierKinds::new([
+                ModifierKind::Public,
+                ModifierKind::Private,
+                ModifierKind::Protected,
+                ModifierKind::Native,
+                ModifierKind::Declare,
+            ]),
+            MethodDefinitionKind::Get | MethodDefinitionKind::Set => ModifierKinds::new([
+                ModifierKind::Public,
+                ModifierKind::Private,
+                ModifierKind::Protected,
+                ModifierKind::Abstract,
+                ModifierKind::Static,
+                ModifierKind::Final,
+                ModifierKind::Override,
+                ModifierKind::Native,
+            ]),
+            MethodDefinitionKind::Method => ModifierKinds::new([
+                ModifierKind::Public,
+                ModifierKind::Private,
+                ModifierKind::Protected,
+                ModifierKind::Abstract,
+                ModifierKind::Static,
+                ModifierKind::Final,
+                ModifierKind::Override,
+                ModifierKind::Native,
+                ModifierKind::Async,
+                ModifierKind::Declare,
+            ]),
+        };
+        for modifier in modifiers.iter() {
+            if !allowed.contains(modifier.kind) {
+                self.error(diagnostics::ets_modifier_not_allowed(
+                    &modifier,
+                    match kind {
+                        MethodDefinitionKind::Constructor => "a constructor",
+                        MethodDefinitionKind::Get | MethodDefinitionKind::Set => "an accessor",
+                        MethodDefinitionKind::Method => "a class method",
+                    },
+                ));
+            }
+        }
+
+        if modifiers.contains(ModifierKind::Async) {
+            if let Some(modifier) = modifiers.get(ModifierKind::Native) {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Async native methods",
+                    modifier.span(),
+                ));
+            }
+            if let Some(modifier) = modifiers.get(ModifierKind::Abstract) {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Async abstract methods",
+                    modifier.span(),
+                ));
+            }
         }
     }
 }

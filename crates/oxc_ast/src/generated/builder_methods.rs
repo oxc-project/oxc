@@ -1500,6 +1500,159 @@ impl<'a> Expression<'a> {
         ))
     }
 
+    /// Build an [`Expression::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new_char_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::CharLiteral(CharLiteral::boxed(span, value, raw, builder))
+    }
+
+    /// Build an [`Expression::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new_ets_trailing_block_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Self::ETSTrailingBlockExpression(ETSTrailingBlockExpression::boxed(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+            builder,
+        ))
+    }
+
+    /// Build an [`Expression::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_ets_instance_of_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build an [`Expression::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new_ets_new_class_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+            builder,
+        ))
+    }
+
+    /// Build an [`Expression::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+            builder,
+        ))
+    }
+
+    /// Build an [`Expression::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new_ets_new_multi_dim_array_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSNewMultiDimArrayInstanceExpression(ETSNewMultiDimArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimensions,
+            builder,
+        ))
+    }
+
     /// Build an [`Expression::ComputedMemberExpression`].
     ///
     /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
@@ -3301,6 +3454,159 @@ impl<'a> ArrayExpressionElement<'a> {
         ))
     }
 
+    /// Build an [`ArrayExpressionElement::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new_char_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::CharLiteral(CharLiteral::boxed(span, value, raw, builder))
+    }
+
+    /// Build an [`ArrayExpressionElement::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new_ets_trailing_block_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Self::ETSTrailingBlockExpression(ETSTrailingBlockExpression::boxed(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+            builder,
+        ))
+    }
+
+    /// Build an [`ArrayExpressionElement::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_ets_instance_of_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build an [`ArrayExpressionElement::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new_ets_new_class_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+            builder,
+        ))
+    }
+
+    /// Build an [`ArrayExpressionElement::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+            builder,
+        ))
+    }
+
+    /// Build an [`ArrayExpressionElement::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new_ets_new_multi_dim_array_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSNewMultiDimArrayInstanceExpression(ETSNewMultiDimArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimensions,
+            builder,
+        ))
+    }
+
     /// Build an [`ArrayExpressionElement::ComputedMemberExpression`].
     ///
     /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
@@ -4987,6 +5293,159 @@ impl<'a> PropertyKey<'a> {
             type_arguments,
             arguments,
             expression,
+            builder,
+        ))
+    }
+
+    /// Build a [`PropertyKey::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new_char_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::CharLiteral(CharLiteral::boxed(span, value, raw, builder))
+    }
+
+    /// Build a [`PropertyKey::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new_ets_trailing_block_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Self::ETSTrailingBlockExpression(ETSTrailingBlockExpression::boxed(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+            builder,
+        ))
+    }
+
+    /// Build a [`PropertyKey::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_ets_instance_of_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build a [`PropertyKey::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new_ets_new_class_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+            builder,
+        ))
+    }
+
+    /// Build a [`PropertyKey::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+            builder,
+        ))
+    }
+
+    /// Build a [`PropertyKey::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new_ets_new_multi_dim_array_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSNewMultiDimArrayInstanceExpression(ETSNewMultiDimArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimensions,
             builder,
         ))
     }
@@ -7276,6 +7735,159 @@ impl<'a> Argument<'a> {
         ))
     }
 
+    /// Build an [`Argument::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new_char_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::CharLiteral(CharLiteral::boxed(span, value, raw, builder))
+    }
+
+    /// Build an [`Argument::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new_ets_trailing_block_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Self::ETSTrailingBlockExpression(ETSTrailingBlockExpression::boxed(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+            builder,
+        ))
+    }
+
+    /// Build an [`Argument::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_ets_instance_of_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build an [`Argument::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new_ets_new_class_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+            builder,
+        ))
+    }
+
+    /// Build an [`Argument::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+            builder,
+        ))
+    }
+
+    /// Build an [`Argument::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new_ets_new_multi_dim_array_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSNewMultiDimArrayInstanceExpression(ETSNewMultiDimArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimensions,
+            builder,
+        ))
+    }
+
     /// Build an [`Argument::ComputedMemberExpression`].
     ///
     /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
@@ -9495,6 +10107,25 @@ impl<'a> Statement<'a> {
         ))
     }
 
+    /// Build a [`Statement::ETSPackageDeclaration`].
+    ///
+    /// This node contains an [`ETSPackageDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[inline]
+    pub fn new_ets_package_declaration<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        name: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, IdentifierName<'a>>>,
+    {
+        Self::ETSPackageDeclaration(ETSPackageDeclaration::boxed(span, name, builder))
+    }
+
     /// Build a [`Statement::VariableDeclaration`].
     ///
     /// This node contains a [`VariableDeclaration`] that will be stored in the memory arena.
@@ -10346,6 +10977,57 @@ impl<'a> Statement<'a> {
     {
         Self::AnnotationDeclaration(AnnotationDeclaration::boxed_with_scope_id(
             span, decorators, id, body, declare, scope_id, builder,
+        ))
+    }
+
+    /// Build a [`Statement::ETSOverloadDeclaration`].
+    ///
+    /// This node contains an [`ETSOverloadDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[inline]
+    pub fn new_ets_overload_declaration<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        overloads: T2,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSOverloadDeclaration(ETSOverloadDeclaration::boxed(
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
+            builder,
         ))
     }
 
@@ -11556,6 +12238,57 @@ impl<'a> Declaration<'a> {
             span, decorators, id, body, declare, scope_id, builder,
         ))
     }
+
+    /// Build a [`Declaration::ETSOverloadDeclaration`].
+    ///
+    /// This node contains an [`ETSOverloadDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[inline]
+    pub fn new_ets_overload_declaration<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        overloads: T2,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSOverloadDeclaration(ETSOverloadDeclaration::boxed(
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
+            builder,
+        ))
+    }
 }
 
 impl<'a> VariableDeclaration<'a> {
@@ -11584,6 +12317,7 @@ impl<'a> VariableDeclaration<'a> {
         VariableDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
+            decorators: Default::default(),
             kind,
             declarations: declarations.into_in(builder.allocator()),
             declare,
@@ -13386,6 +14120,159 @@ impl<'a> ForStatementInit<'a> {
         ))
     }
 
+    /// Build a [`ForStatementInit::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new_char_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::CharLiteral(CharLiteral::boxed(span, value, raw, builder))
+    }
+
+    /// Build a [`ForStatementInit::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new_ets_trailing_block_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Self::ETSTrailingBlockExpression(ETSTrailingBlockExpression::boxed(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+            builder,
+        ))
+    }
+
+    /// Build a [`ForStatementInit::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_ets_instance_of_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build a [`ForStatementInit::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new_ets_new_class_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+            builder,
+        ))
+    }
+
+    /// Build a [`ForStatementInit::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+            builder,
+        ))
+    }
+
+    /// Build a [`ForStatementInit::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new_ets_new_multi_dim_array_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSNewMultiDimArrayInstanceExpression(ETSNewMultiDimArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimensions,
+            builder,
+        ))
+    }
+
     /// Build a [`ForStatementInit::ComputedMemberExpression`].
     ///
     /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
@@ -14962,6 +15849,8 @@ impl<'a> Function<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(builder.allocator()),
             this_param: this_param.into_in(builder.allocator()),
             params: params.into_in(builder.allocator()),
@@ -15082,6 +15971,8 @@ impl<'a> Function<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(builder.allocator()),
             this_param: this_param.into_in(builder.allocator()),
             params: params.into_in(builder.allocator()),
@@ -15209,6 +16100,8 @@ impl<'a> Function<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(builder.allocator()),
             this_param: this_param.into_in(builder.allocator()),
             params: params.into_in(builder.allocator()),
@@ -15351,6 +16244,8 @@ impl<'a> Function<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(builder.allocator()),
             this_param: this_param.into_in(builder.allocator()),
             params: params.into_in(builder.allocator()),
@@ -15956,6 +16851,9 @@ impl<'a> Class<'a> {
             body: body.into_in(builder.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Default::default(),
         }
     }
@@ -16073,6 +16971,9 @@ impl<'a> Class<'a> {
             body: body.into_in(builder.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -16409,6 +17310,130 @@ impl<'a> ClassElement<'a> {
             builder,
         ))
     }
+
+    /// Build a [`ClassElement::ETSOverloadDeclaration`].
+    ///
+    /// This node contains an [`ETSOverloadDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[inline]
+    pub fn new_ets_overload_declaration<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        overloads: T2,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSOverloadDeclaration(ETSOverloadDeclaration::boxed(
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
+            builder,
+        ))
+    }
+
+    /// Build a [`ClassElement::TSCallSignatureDeclaration`].
+    ///
+    /// This node contains a [`TSCallSignatureDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`
+    /// * `this_param`
+    /// * `params`
+    /// * `return_type`
+    #[inline]
+    pub fn new_ts_call_signature_declaration<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Self::TSCallSignatureDeclaration(TSCallSignatureDeclaration::boxed(
+            span,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            builder,
+        ))
+    }
+
+    /// Build a [`ClassElement::TSCallSignatureDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSCallSignatureDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`
+    /// * `this_param`
+    /// * `params`
+    /// * `return_type`
+    /// * `scope_id`
+    #[inline]
+    pub fn new_ts_call_signature_declaration_with_scope_id<B: GetAstBuilder<'a>, T1, T2, T3, T4>(
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Self::TSCallSignatureDeclaration(TSCallSignatureDeclaration::boxed_with_scope_id(
+            span,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+            scope_id,
+            builder,
+        ))
+    }
 }
 
 impl<'a> MethodDefinition<'a> {
@@ -16462,6 +17487,8 @@ impl<'a> MethodDefinition<'a> {
             r#override,
             optional,
             accessibility,
+            r#final: Default::default(),
+            native: Default::default(),
         }
     }
 
@@ -17628,6 +18655,8 @@ impl<'a> ExportNamedDeclaration<'a> {
             source,
             export_kind,
             with_clause: with_clause.into_in(builder.allocator()),
+            ets_single: Default::default(),
+            ets_default: Default::default(),
         }
     }
 
@@ -17701,6 +18730,8 @@ impl<'a> ExportNamedDeclaration<'a> {
             source,
             export_kind,
             with_clause: with_clause.into_in(builder.allocator()),
+            ets_single: Default::default(),
+            ets_default: Default::default(),
         }
     }
 
@@ -19824,6 +20855,159 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         ))
     }
 
+    /// Build an [`ExportDefaultDeclarationKind::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new_char_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::CharLiteral(CharLiteral::boxed(span, value, raw, builder))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new_ets_trailing_block_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Self::ETSTrailingBlockExpression(ETSTrailingBlockExpression::boxed(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+            builder,
+        ))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_ets_instance_of_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new_ets_new_class_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+            builder,
+        ))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+            builder,
+        ))
+    }
+
+    /// Build an [`ExportDefaultDeclarationKind::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new_ets_new_multi_dim_array_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSNewMultiDimArrayInstanceExpression(ETSNewMultiDimArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimensions,
+            builder,
+        ))
+    }
+
     /// Build an [`ExportDefaultDeclarationKind::ComputedMemberExpression`].
     ///
     /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
@@ -20258,6 +21442,47 @@ impl<'a> StringLiteral<'a> {
             Self::new_with_lone_surrogates(span, value, raw, lone_surrogates, builder),
             builder.builder(),
         )
+    }
+}
+
+impl<'a> CharLiteral<'a> {
+    /// Build a [`CharLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`CharLiteral::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        let builder = builder.builder();
+        CharLiteral { node_id: Cell::new(builder.node_id()), span, value, raw }
+    }
+
+    /// Build a [`CharLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`CharLiteral::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> ArenaBox<'a, Self> {
+        ArenaBox::new_in(Self::new(span, value, raw, builder), builder.builder())
     }
 }
 
@@ -22317,6 +23542,159 @@ impl<'a> JSXExpression<'a> {
         ))
     }
 
+    /// Build a [`JSXExpression::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[inline]
+    pub fn new_char_literal<B: GetAstBuilder<'a>>(
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::CharLiteral(CharLiteral::boxed(span, value, raw, builder))
+    }
+
+    /// Build a [`JSXExpression::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new_ets_trailing_block_expression<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Self::ETSTrailingBlockExpression(ETSTrailingBlockExpression::boxed(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+            builder,
+        ))
+    }
+
+    /// Build a [`JSXExpression::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new_ets_instance_of_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(span, left, right, builder))
+    }
+
+    /// Build a [`JSXExpression::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new_ets_new_class_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        Self::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+            builder,
+        ))
+    }
+
+    /// Build a [`JSXExpression::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new_ets_new_array_instance_expression<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        Self::ETSNewArrayInstanceExpression(ETSNewArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+            builder,
+        ))
+    }
+
+    /// Build a [`JSXExpression::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new_ets_new_multi_dim_array_instance_expression<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSNewMultiDimArrayInstanceExpression(ETSNewMultiDimArrayInstanceExpression::boxed(
+            span,
+            type_annotation,
+            dimensions,
+            builder,
+        ))
+    }
+
     /// Build a [`JSXExpression::ComputedMemberExpression`].
     ///
     /// This node contains a [`ComputedMemberExpression`] that will be stored in the memory arena.
@@ -22979,7 +24357,9 @@ impl<'a> TSEnumDeclaration<'a> {
         TSEnumDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
+            decorators: Default::default(),
             id,
+            underlying_type: Default::default(),
             body,
             r#const,
             declare,
@@ -26341,6 +27721,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
         TSTypeAliasDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
             type_annotation,
@@ -26407,6 +27788,7 @@ impl<'a> TSTypeAliasDeclaration<'a> {
         TSTypeAliasDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
             type_annotation,
@@ -26514,6 +27896,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
         TSInterfaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
             extends: extends.into_in(builder.allocator()),
@@ -26589,6 +27972,7 @@ impl<'a> TSInterfaceDeclaration<'a> {
         TSInterfaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(builder.allocator()),
             extends: extends.into_in(builder.allocator()),
@@ -27052,6 +28436,168 @@ impl<'a> TSSignature<'a> {
             params,
             return_type,
             scope_id,
+            builder,
+        ))
+    }
+
+    /// Build a [`TSSignature::MethodDefinition`].
+    ///
+    /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`: Method definition type
+    /// * `decorators`
+    /// * `key`
+    /// * `value`
+    /// * `kind`
+    /// * `computed`
+    /// * `static`
+    /// * `override`
+    /// * `optional`
+    /// * `accessibility`
+    #[inline]
+    pub fn new_method_definition<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        r#type: MethodDefinitionType,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        value: T2,
+        kind: MethodDefinitionKind,
+        computed: bool,
+        r#static: bool,
+        r#override: bool,
+        optional: bool,
+        accessibility: Option<TSAccessibility>,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        Self::MethodDefinition(MethodDefinition::boxed(
+            span,
+            r#type,
+            decorators,
+            key,
+            value,
+            kind,
+            computed,
+            r#static,
+            r#override,
+            optional,
+            accessibility,
+            builder,
+        ))
+    }
+
+    /// Build a [`TSSignature::PropertyDefinition`].
+    ///
+    /// This node contains a [`PropertyDefinition`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `decorators`: Decorators applied to the property.
+    /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
+    /// * `value`: Initialized value in the declaration.
+    /// * `computed`: Property was declared with a computed key
+    /// * `static`: Property was declared with a `static` modifier
+    /// * `declare`: Property is declared with a `declare` modifier.
+    /// * `override`
+    /// * `optional`: `true` when created with an optional modifier (`?`)
+    /// * `definite`
+    /// * `readonly`: `true` when declared with a `readonly` modifier
+    /// * `accessibility`: Accessibility modifier.
+    #[inline]
+    pub fn new_property_definition<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        r#type: PropertyDefinitionType,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        type_annotation: T2,
+        value: Option<Expression<'a>>,
+        computed: bool,
+        r#static: bool,
+        declare: bool,
+        r#override: bool,
+        optional: bool,
+        definite: bool,
+        readonly: bool,
+        accessibility: Option<TSAccessibility>,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        Self::PropertyDefinition(PropertyDefinition::boxed(
+            span,
+            r#type,
+            decorators,
+            key,
+            type_annotation,
+            value,
+            computed,
+            r#static,
+            declare,
+            r#override,
+            optional,
+            definite,
+            readonly,
+            accessibility,
+            builder,
+        ))
+    }
+
+    /// Build a [`TSSignature::ETSOverloadDeclaration`].
+    ///
+    /// This node contains an [`ETSOverloadDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[inline]
+    pub fn new_ets_overload_declaration<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        overloads: T2,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        Self::ETSOverloadDeclaration(ETSOverloadDeclaration::boxed(
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
             builder,
         ))
     }
@@ -29731,6 +31277,9 @@ impl<'a> StructStatement<'a> {
             body: body.into_in(builder.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Default::default(),
         }
     }
@@ -29842,6 +31391,9 @@ impl<'a> StructStatement<'a> {
             body: body.into_in(builder.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -30205,5 +31757,441 @@ impl<'a> AnnotationBody<'a> {
         T1: IntoIn<'a, ArenaVec<'a, AnnotationElement<'a>>>,
     {
         ArenaBox::new_in(Self::new(span, body, builder), builder.builder())
+    }
+}
+
+impl<'a> ETSPackageDeclaration<'a> {
+    /// Build an [`ETSPackageDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ETSPackageDeclaration::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, name: T1, builder: &B) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, IdentifierName<'a>>>,
+    {
+        let builder = builder.builder();
+        ETSPackageDeclaration {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            name: name.into_in(builder.allocator()),
+        }
+    }
+
+    /// Build an [`ETSPackageDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ETSPackageDeclaration::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(span: Span, name: T1, builder: &B) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, IdentifierName<'a>>>,
+    {
+        ArenaBox::new_in(Self::new(span, name, builder), builder.builder())
+    }
+}
+
+impl<'a> ETSInstanceOfExpression<'a> {
+    /// Build an [`ETSInstanceOfExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ETSInstanceOfExpression::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> Self {
+        let builder = builder.builder();
+        ETSInstanceOfExpression { node_id: Cell::new(builder.node_id()), span, left, right }
+    }
+
+    /// Build an [`ETSInstanceOfExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ETSInstanceOfExpression::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>>(
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+        builder: &B,
+    ) -> ArenaBox<'a, Self> {
+        ArenaBox::new_in(Self::new(span, left, right, builder), builder.builder())
+    }
+}
+
+impl<'a> ETSNewClassInstanceExpression<'a> {
+    /// Build an [`ETSNewClassInstanceExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ETSNewClassInstanceExpression::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        let builder = builder.builder();
+        ETSNewClassInstanceExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            type_annotation,
+            arguments: arguments.into_in(builder.allocator()),
+            has_arguments,
+        }
+    }
+
+    /// Build an [`ETSNewClassInstanceExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ETSNewClassInstanceExpression::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: T1,
+        has_arguments: bool,
+        builder: &B,
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Argument<'a>>>,
+    {
+        ArenaBox::new_in(
+            Self::new(span, type_annotation, arguments, has_arguments, builder),
+            builder.builder(),
+        )
+    }
+}
+
+impl<'a> ETSNewArrayInstanceExpression<'a> {
+    /// Build an [`ETSNewArrayInstanceExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ETSNewArrayInstanceExpression::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> Self {
+        let builder = builder.builder();
+        ETSNewArrayInstanceExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+        }
+    }
+
+    /// Build an [`ETSNewArrayInstanceExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ETSNewArrayInstanceExpression::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+        builder: &B,
+    ) -> ArenaBox<'a, Self> {
+        ArenaBox::new_in(
+            Self::new(span, type_annotation, dimension, initializer, builder),
+            builder.builder(),
+        )
+    }
+}
+
+impl<'a> ETSNewMultiDimArrayInstanceExpression<'a> {
+    /// Build an [`ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ETSNewMultiDimArrayInstanceExpression::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        let builder = builder.builder();
+        ETSNewMultiDimArrayInstanceExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            type_annotation,
+            dimensions: dimensions.into_in(builder.allocator()),
+        }
+    }
+
+    /// Build an [`ETSNewMultiDimArrayInstanceExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ETSNewMultiDimArrayInstanceExpression::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>, T1>(
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: T1,
+        builder: &B,
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        ArenaBox::new_in(Self::new(span, type_annotation, dimensions, builder), builder.builder())
+    }
+}
+
+impl<'a> ETSTrailingBlockExpression<'a> {
+    /// Build an [`ETSTrailingBlockExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ETSTrailingBlockExpression::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        let builder = builder.builder();
+        ETSTrailingBlockExpression {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            call: call.into_in(builder.allocator()),
+            block: block.into_in(builder.allocator()),
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+        }
+    }
+
+    /// Build an [`ETSTrailingBlockExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ETSTrailingBlockExpression::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+        builder: &B,
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        ArenaBox::new_in(
+            Self::new(
+                span,
+                call,
+                block,
+                is_trailing_call,
+                is_block_on_new_line,
+                has_trailing_comma,
+                builder,
+            ),
+            builder.builder(),
+        )
+    }
+}
+
+impl<'a> ETSOverloadDeclaration<'a> {
+    /// Build an [`ETSOverloadDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`ETSOverloadDeclaration::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[inline]
+    pub fn new<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        overloads: T2,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+        builder: &B,
+    ) -> Self
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        let builder = builder.builder();
+        ETSOverloadDeclaration {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            decorators: decorators.into_in(builder.allocator()),
+            key,
+            overloads: overloads.into_in(builder.allocator()),
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
+        }
+    }
+
+    /// Build an [`ETSOverloadDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`ETSOverloadDeclaration::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[inline]
+    pub fn boxed<B: GetAstBuilder<'a>, T1, T2>(
+        span: Span,
+        decorators: T1,
+        key: PropertyKey<'a>,
+        overloads: T2,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+        builder: &B,
+    ) -> ArenaBox<'a, Self>
+    where
+        T1: IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
+        T2: IntoIn<'a, ArenaVec<'a, Expression<'a>>>,
+    {
+        ArenaBox::new_in(
+            Self::new(
+                span,
+                decorators,
+                key,
+                overloads,
+                kind,
+                accessibility,
+                r#static,
+                r#abstract,
+                r#final,
+                native,
+                declare,
+                builder,
+            ),
+            builder.builder(),
+        )
     }
 }

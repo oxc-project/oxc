@@ -28,7 +28,7 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_str::Str;
 use oxc_syntax::{node::NodeId, scope::ScopeId};
 
-use super::{js::*, literal::*};
+use super::{ets::*, js::*, literal::*};
 
 /// TypeScript `this` parameter
 ///
@@ -85,7 +85,19 @@ pub struct TSThisParameter<'a> {
 pub struct TSEnumDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// Static ETS annotations preceding the enum declaration.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[estree(ts_type = "Array<Decorator>")]
+    #[ts]
+    pub decorators: Option<Box<'a, Vec<'a, Decorator<'a>>>>,
     pub id: BindingIdentifier<'a>,
+    /// Explicit underlying type of a static ETS enum (`enum E: int`).
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[estree(ts_type = "TSType")]
+    #[ts]
+    pub underlying_type: Option<Box<'a, TSType<'a>>>,
     pub body: TSEnumBody<'a>,
     /// `true` for const enums
     pub r#const: bool,
@@ -906,6 +918,12 @@ pub struct TSTypeParameterDeclaration<'a> {
 pub struct TSTypeAliasDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// Static ETS annotations preceding the type alias.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[estree(ts_type = "Array<Decorator>")]
+    #[ts]
+    pub decorators: Option<Box<'a, Vec<'a, Decorator<'a>>>>,
     /// Type alias's identifier, e.g. `Foo` in `type Foo = number`.
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
@@ -970,6 +988,12 @@ pub struct TSClassImplements<'a> {
 pub struct TSInterfaceDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// Static ETS annotations preceding the interface declaration.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[estree(ts_type = "Array<Decorator>")]
+    #[ts]
+    pub decorators: Option<Box<'a, Vec<'a, Decorator<'a>>>>,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
     /// Type parameters that get bound to the interface.
@@ -1034,6 +1058,12 @@ pub enum TSSignature<'a> {
     TSCallSignatureDeclaration(Box<'a, TSCallSignatureDeclaration<'a>>) = 2,
     TSConstructSignatureDeclaration(Box<'a, TSConstructSignatureDeclaration<'a>>) = 3,
     TSMethodSignature(Box<'a, TSMethodSignature<'a>>) = 4,
+    /// Static ETS interface method, including optional implementation body.
+    MethodDefinition(Box<'a, MethodDefinition<'a>>) = 5,
+    /// Static ETS interface field with annotations and member modifiers.
+    PropertyDefinition(Box<'a, PropertyDefinition<'a>>) = 6,
+    /// Static ETS managed interface overload declaration.
+    ETSOverloadDeclaration(Box<'a, ETSOverloadDeclaration<'a>>) = 7,
 }
 
 /// An index signature within a class, type alias, etc.

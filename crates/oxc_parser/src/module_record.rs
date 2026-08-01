@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
@@ -13,16 +15,26 @@ pub struct ModuleRecordBuilder<'a> {
     module_record: ModuleRecord<'a>,
     export_entries: ArenaVec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
+    ets_annotation_names: ArenaVec<'a, Str<'a>>,
+    ets_local_bindings: ArenaVec<'a, Str<'a>>,
+    source_path: Option<PathBuf>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
-    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_type: SourceType,
+        source_path: Option<PathBuf>,
+    ) -> Self {
         Self {
             allocator,
             source_type,
             module_record: ModuleRecord::new(allocator),
             export_entries: ArenaVec::new_in(&allocator),
             exported_bindings_duplicated: ArenaVec::new_in(&allocator),
+            ets_annotation_names: ArenaVec::new_in(&allocator),
+            ets_local_bindings: ArenaVec::new_in(&allocator),
+            source_path,
         }
     }
 
@@ -74,6 +86,79 @@ impl<'a> ModuleRecordBuilder<'a> {
             }
         }
 
+        // Static ETS permits repeated exports to be resolved by the semantic
+        // phase when they refer to the same local/imported name. It does,
+        // however, reject two different names that use the same export alias
+        // while constructing the module record.
+        if self.source_type.is_ets_static() {
+            let mut seen_aliases = Vec::new();
+            for entry in module_record
+                .local_export_entries
+                .iter()
+                .chain(&module_record.indirect_export_entries)
+            {
+                let ExportExportName::Name(export_name) = &entry.export_name else {
+                    continue;
+                };
+                let source_name = match (&entry.local_name, &entry.import_name) {
+                    (ExportLocalName::Name(name), _) => Some(name.name),
+                    (_, ExportImportName::Name(name)) => Some(name.name),
+                    _ => None,
+                };
+                let Some(source_name) = source_name else { continue };
+
+                if let Some((_, old_source_name, old_span)) =
+                    seen_aliases.iter().find(|(name, _, _)| *name == export_name.name)
+                {
+                    if *old_source_name != source_name {
+                        errors.push(diagnostics::duplicate_export(
+                            &export_name.name,
+                            export_name.span,
+                            *old_span,
+                        ));
+                    }
+                } else {
+                    seen_aliases.push((export_name.name, source_name, export_name.span));
+                }
+            }
+
+            for entry in &module_record.local_export_entries {
+                let (ExportLocalName::Name(local_name), ExportExportName::Name(export_name)) =
+                    (&entry.local_name, &entry.export_name)
+                else {
+                    continue;
+                };
+                if local_name.name != export_name.name
+                    && self.ets_annotation_names.contains(&local_name.name)
+                {
+                    errors.push(diagnostics::ets_annotation_export_rename(export_name.span));
+                }
+            }
+
+            for entry in &module_record.local_export_entries {
+                let (ExportLocalName::Name(local_name), ExportExportName::Name(export_name)) =
+                    (&entry.local_name, &entry.export_name)
+                else {
+                    continue;
+                };
+                if !self.ets_local_bindings.contains(&local_name.name) {
+                    errors
+                        .push(diagnostics::ets_unknown_export(&local_name.name, export_name.span));
+                }
+            }
+
+            for entry in module_record
+                .indirect_export_entries
+                .iter()
+                .chain(&module_record.star_export_entries)
+            {
+                let Some(module_request) = &entry.module_request else { continue };
+                if self.is_ets_self_reexport(&module_request.name) {
+                    errors.push(diagnostics::ets_self_reexport(entry.statement_span));
+                }
+            }
+        }
+
         errors
     }
 
@@ -109,6 +194,31 @@ impl<'a> ModuleRecordBuilder<'a> {
         if let Some(old_node) = self.module_record.exported_bindings.insert(name, span) {
             self.exported_bindings_duplicated.push(NameSpan::new(name, old_node));
         }
+    }
+
+    pub fn register_ets_annotation(&mut self, name: Str<'a>) {
+        self.ets_annotation_names.push(name);
+    }
+
+    pub fn visit_ets_top_level_statement(&mut self, statement: &Statement<'a>) {
+        let declaration = if let Some(declaration) = statement.as_declaration() {
+            Some(declaration)
+        } else if let Statement::ExportNamedDeclaration(export) = statement {
+            export.declaration.as_ref()
+        } else {
+            None
+        };
+        if let Some(declaration) = declaration {
+            iter_binding_identifiers_of_declaration(declaration, &mut |identifier| {
+                self.ets_local_bindings.push(identifier.name.into());
+            });
+        }
+    }
+
+    fn is_ets_self_reexport(&self, module_request: &str) -> bool {
+        let Some(source_path) = &self.source_path else { return false };
+        let Some(parent) = source_path.parent() else { return false };
+        parent.join(module_request) == *source_path
     }
 
     /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
@@ -381,6 +491,30 @@ impl<'a> ModuleRecordBuilder<'a> {
             self.add_export_binding(specifier.exported.name(), specifier.exported.span());
         }
 
+        self.module_record.has_module_syntax = true;
+    }
+
+    /// Record each binding in an ETS `export default let/const` declaration as
+    /// a default export. ETS permits the syntax and diagnoses multiple bindings
+    /// later during semantic analysis.
+    pub fn visit_ets_default_declaration_export(
+        &mut self,
+        decl: &ExportNamedDeclaration<'a>,
+        default_keyword_span: Span,
+    ) {
+        debug_assert!(decl.ets_default);
+        let Some(declaration) = &decl.declaration else { return };
+        iter_binding_identifiers_of_declaration(declaration, &mut |ident| {
+            self.add_export_entry(ExportEntry {
+                statement_span: decl.span,
+                span: ident.span,
+                module_request: None,
+                import_name: ExportImportName::default(),
+                export_name: ExportExportName::Default(default_keyword_span),
+                local_name: ExportLocalName::Name(NameSpan::new(ident.name.into(), ident.span)),
+                is_type: false,
+            });
+        });
         self.module_record.has_module_syntax = true;
     }
 

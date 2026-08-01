@@ -179,6 +179,8 @@ impl<'a> PeepholeOptimizations {
             // install setters or define static properties.
             ClassElement::StaticBlock(_) => true,
             ClassElement::TSIndexSignature(_) => false,
+            ClassElement::TSCallSignatureDeclaration(_) => false,
+            ClassElement::ETSOverloadDeclaration(overload) => !overload.decorators.is_empty(),
         })
     }
 

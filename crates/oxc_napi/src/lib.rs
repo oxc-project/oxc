@@ -73,6 +73,7 @@ pub fn get_source_type(
         Some("ts") => SourceType::unambiguous().with_typescript(true),
         Some("tsx") => SourceType::unambiguous().with_typescript(true).with_jsx(true),
         Some("dts") => SourceType::d_ts(),
+        Some("ets-static") => SourceType::ets_static(),
         _ => SourceType::from_path(filename).unwrap_or_default(),
     };
     match source_type {
@@ -81,5 +82,21 @@ pub fn get_source_type(
         Some("commonjs") => ty.with_commonjs(true),
         Some("unambiguous") => ty.with_unambiguous(true),
         _ => ty,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::get_source_type;
+
+    #[test]
+    fn ets_static_language_is_explicit() {
+        let inferred = get_source_type("example.ets", None, None);
+        assert!(inferred.is_arkui());
+        assert!(!inferred.is_ets_static());
+
+        let explicit = get_source_type("example.ets", Some("ets-static"), None);
+        assert!(explicit.is_ets_static());
+        assert!(!explicit.is_arkui());
     }
 }

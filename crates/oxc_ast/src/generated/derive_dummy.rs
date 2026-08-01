@@ -8,6 +8,7 @@ use std::cell::Cell;
 use oxc_allocator::{Allocator, Dummy};
 
 use crate::ast::arkui::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -745,7 +746,7 @@ impl<'a> Dummy<'a> for BlockStatement<'a> {
 impl<'a> Dummy<'a> for Declaration<'a> {
     /// Create a dummy [`Declaration`].
     ///
-    /// Has cost of making 1 allocation (40 bytes).
+    /// Has cost of making 1 allocation (48 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::VariableDeclaration(Dummy::dummy(allocator))
     }
@@ -759,6 +760,7 @@ impl<'a> Dummy<'a> for VariableDeclaration<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            decorators: Dummy::dummy(allocator),
             kind: Dummy::dummy(allocator),
             declarations: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
@@ -1183,6 +1185,8 @@ impl<'a> Dummy<'a> for Function<'a> {
             generator: Dummy::dummy(allocator),
             r#async: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
+            r#final: Dummy::dummy(allocator),
+            native: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
             this_param: Dummy::dummy(allocator),
             params: Dummy::dummy(allocator),
@@ -1332,6 +1336,9 @@ impl<'a> Dummy<'a> for Class<'a> {
             body: Dummy::dummy(allocator),
             r#abstract: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
+            r#final: Dummy::dummy(allocator),
+            native: Dummy::dummy(allocator),
+            r#static: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
         }
     }
@@ -1387,6 +1394,8 @@ impl<'a> Dummy<'a> for MethodDefinition<'a> {
             r#override: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
             accessibility: Dummy::dummy(allocator),
+            r#final: Dummy::dummy(allocator),
+            native: Dummy::dummy(allocator),
         }
     }
 }
@@ -1682,6 +1691,8 @@ impl<'a> Dummy<'a> for ExportNamedDeclaration<'a> {
             source: Dummy::dummy(allocator),
             export_kind: Dummy::dummy(allocator),
             with_clause: Dummy::dummy(allocator),
+            ets_single: Dummy::dummy(allocator),
+            ets_default: Dummy::dummy(allocator),
         }
     }
 }
@@ -1810,6 +1821,20 @@ impl<'a> Dummy<'a> for StringLiteral<'a> {
             value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
             lone_surrogates: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for CharLiteral<'a> {
+    /// Create a dummy [`CharLiteral`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            value: Dummy::dummy(allocator),
+            raw: Dummy::dummy(allocator),
         }
     }
 }
@@ -2139,7 +2164,9 @@ impl<'a> Dummy<'a> for TSEnumDeclaration<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            decorators: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
+            underlying_type: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
             r#const: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
@@ -2613,6 +2640,7 @@ impl<'a> Dummy<'a> for TSTypeAliasDeclaration<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            decorators: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
@@ -2654,6 +2682,7 @@ impl<'a> Dummy<'a> for TSInterfaceDeclaration<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
+            decorators: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
             extends: Dummy::dummy(allocator),
@@ -3284,6 +3313,9 @@ impl<'a> Dummy<'a> for StructStatement<'a> {
             body: Dummy::dummy(allocator),
             r#abstract: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
+            r#final: Dummy::dummy(allocator),
+            native: Dummy::dummy(allocator),
+            r#static: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
         }
     }
@@ -3374,5 +3406,125 @@ impl<'a> Dummy<'a> for AnnotationElement<'a> {
     /// Has cost of making 2 allocations (104 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::PropertyDefinition(Dummy::dummy(allocator))
+    }
+}
+
+impl<'a> Dummy<'a> for ETSPackageDeclaration<'a> {
+    /// Create a dummy [`ETSPackageDeclaration`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            name: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ETSInstanceOfExpression<'a> {
+    /// Create a dummy [`ETSInstanceOfExpression`].
+    ///
+    /// Has cost of making 2 allocations (32 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            left: Dummy::dummy(allocator),
+            right: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ETSNewClassInstanceExpression<'a> {
+    /// Create a dummy [`ETSNewClassInstanceExpression`].
+    ///
+    /// Has cost of making 1 allocation (16 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
+            arguments: Dummy::dummy(allocator),
+            has_arguments: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ETSNewArrayInstanceExpression<'a> {
+    /// Create a dummy [`ETSNewArrayInstanceExpression`].
+    ///
+    /// Has cost of making 2 allocations (32 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
+            dimension: Dummy::dummy(allocator),
+            initializer: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ETSNewMultiDimArrayInstanceExpression<'a> {
+    /// Create a dummy [`ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// Has cost of making 1 allocation (16 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            type_annotation: Dummy::dummy(allocator),
+            dimensions: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ETSTrailingBlockExpression<'a> {
+    /// Create a dummy [`ETSTrailingBlockExpression`].
+    ///
+    /// Has cost of making 3 allocations (120 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            call: Dummy::dummy(allocator),
+            block: Dummy::dummy(allocator),
+            is_trailing_call: Dummy::dummy(allocator),
+            is_block_on_new_line: Dummy::dummy(allocator),
+            has_trailing_comma: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ETSOverloadDeclarationKind {
+    /// Create a dummy [`ETSOverloadDeclarationKind`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Function
+    }
+}
+
+impl<'a> Dummy<'a> for ETSOverloadDeclaration<'a> {
+    /// Create a dummy [`ETSOverloadDeclaration`].
+    ///
+    /// Has cost of making 1 allocation (16 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            decorators: Dummy::dummy(allocator),
+            key: Dummy::dummy(allocator),
+            overloads: Dummy::dummy(allocator),
+            kind: Dummy::dummy(allocator),
+            accessibility: Dummy::dummy(allocator),
+            r#static: Dummy::dummy(allocator),
+            r#abstract: Dummy::dummy(allocator),
+            r#final: Dummy::dummy(allocator),
+            native: Dummy::dummy(allocator),
+            declare: Dummy::dummy(allocator),
+        }
     }
 }

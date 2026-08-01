@@ -23,6 +23,11 @@ impl GetPrecedence for Expression<'_> {
             Self::AwaitExpression(expr) => expr.precedence(),
             Self::NewExpression(expr) => expr.precedence(),
             Self::CallExpression(expr) => expr.precedence(),
+            Self::ETSTrailingBlockExpression(_) => Precedence::Call,
+            Self::ETSInstanceOfExpression(_) => Precedence::Compare,
+            Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_) => Precedence::New,
             match_member_expression!(Self) => self.to_member_expression().precedence(),
             _ => panic!("All cases should be covered"),
         }

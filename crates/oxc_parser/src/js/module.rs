@@ -1,6 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::{ast::*, builder::NONE};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
@@ -34,6 +34,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
+        if self.source_type.is_ets_static() {
+            self.error(diagnostics::ets_unsupported_syntax("Dynamic imports", Span::empty(span)));
+        }
         self.expect(Kind::LParen);
         if self.eat(Kind::RParen) {
             let error = diagnostics::import_requires_a_specifier(self.end_span(span));
@@ -92,6 +95,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         let token_after_import = self.cur_token();
+        if self.source_type.is_ets_static() && token_after_import.kind() == Kind::Str {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Side-effect-only imports",
+                token_after_import.span(),
+            ));
+        }
         let mut identifier_after_import: Option<BindingIdentifier<'_>> =
             if self.cur_kind().is_binding_identifier() {
                 // `import something ...`
@@ -455,6 +464,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Assert if !self.cur_token().is_on_new_line() => WithClauseKeyword::Assert,
             _ => return None,
         };
+        if self.source_type.is_ets_static() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Import attributes",
+                self.cur_token().span(),
+            ));
+        }
         self.advance(keyword_kind);
 
         let span = self.start_span();
@@ -502,6 +517,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start_span: u32,
     ) -> ArenaBox<'a, TSExportAssignment<'a>> {
+        if self.source_type.is_ets_static() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Export assignments",
+                self.cur_token().span(),
+            ));
+        }
         self.expect(Kind::Eq);
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
@@ -596,7 +617,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 ModuleDeclaration::ExportNamedDeclaration(export_named_decl)
             }
-            Kind::Struct if self.source_type.is_arkui() => {
+            Kind::Struct if self.source_type.is_ets() => {
                 // Handle `export struct` in ArkUI mode
                 // Now StructStatement is a Declaration, so we can use the standard export handling
                 ModuleDeclaration::ExportNamedDeclaration(
@@ -627,6 +648,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self.parse_ts_export_namespace(span),
                 )
             }
+            Kind::Default
+                if self.source_type.is_ets_static()
+                    && Self::is_ets_default_declaration_start(self.lexer.peek_token().kind()) =>
+            {
+                ModuleDeclaration::ExportNamedDeclaration(
+                    self.parse_ets_default_declaration_export(span, decorators),
+                )
+            }
             Kind::Default => ModuleDeclaration::ExportDefaultDeclaration(
                 self.parse_export_default_declaration(span, decorators),
             ),
@@ -636,10 +665,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LCurly => {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
+            Kind::Ident if self.source_type.is_ets_static() => {
+                ModuleDeclaration::ExportNamedDeclaration(self.parse_ets_single_export(span))
+            }
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
+                    // Static ETS permits a type-only annotation declaration:
+                    // `export type @interface Annotation {}`.
+                    Kind::At
+                        if self.source_type.is_ets_static()
+                            && self.lookahead(|parser| {
+                                parser.bump_any();
+                                parser.at_arkts_annotation_declaration()
+                            }) =>
+                    {
+                        self.bump_any(); // `type`
+                        ModuleDeclaration::ExportNamedDeclaration(
+                            self.parse_export_named_declaration(span, decorators),
+                        )
+                    }
                     // `export type { ...`
                     Kind::LCurly => ModuleDeclaration::ExportNamedDeclaration(
                         self.parse_export_named_specifiers(span),
@@ -667,6 +713,93 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         Statement::from(decl)
+    }
+
+    /// Static ETS permits a single local export without braces: `export value;`.
+    fn parse_ets_single_export(&mut self, span: u32) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
+        let exported = self.parse_identifier_name();
+        let local = ModuleExportName::new_identifier_reference(exported.span, exported.name, self);
+        let specifier = ExportSpecifier::new(
+            exported.span,
+            local,
+            ModuleExportName::IdentifierName(exported),
+            ImportOrExportKind::Value,
+            self,
+        );
+        self.asi();
+
+        let mut declaration = ExportNamedDeclaration::boxed(
+            self.end_span(span),
+            None,
+            [specifier],
+            None,
+            ImportOrExportKind::Value,
+            NONE,
+            self,
+        );
+        declaration.ets_single = true;
+        if self.ctx.has_top_level() {
+            self.module_record_builder.visit_export_named_declaration(&declaration);
+        }
+        declaration
+    }
+
+    fn is_ets_default_declaration_start(kind: Kind) -> bool {
+        matches!(
+            kind,
+            Kind::Var
+                | Kind::Let
+                | Kind::Const
+                | Kind::Function
+                | Kind::Class
+                | Kind::Struct
+                | Kind::Interface
+                | Kind::Type
+                | Kind::Enum
+                | Kind::Module
+                | Kind::Namespace
+                | Kind::Declare
+                | Kind::Abstract
+                | Kind::Final
+                | Kind::Native
+                | Kind::Async
+                | Kind::Static
+                | Kind::Overload
+                | Kind::At
+        )
+    }
+
+    /// Static ETS applies `default` as a declaration modifier rather than
+    /// limiting it to ECMAScript's default-export declaration alternatives.
+    fn parse_ets_default_declaration_export(
+        &mut self,
+        span: u32,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
+        let default_keyword_span = self.cur_token().span();
+        self.expect(Kind::Default);
+        let declaration_span = self.start_span();
+        let reserved_ctx = self.ctx;
+        let modifiers = self.eat_modifiers_before_declaration();
+        self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
+        let declaration = self.parse_declaration(declaration_span, &modifiers, decorators);
+        self.ctx = reserved_ctx;
+
+        let mut export = ExportNamedDeclaration::boxed(
+            self.end_span(span),
+            Some(declaration),
+            [],
+            None,
+            ImportOrExportKind::Value,
+            NONE,
+            self,
+        );
+        export.ets_default = true;
+        if self.ctx.has_top_level() {
+            self.module_record_builder
+                .visit_ets_default_declaration_export(&export, default_keyword_span);
+        }
+        export
     }
 
     // export NamedExports ;
@@ -902,7 +1035,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         // export default struct ... (ArkUI)
-        if kind == Kind::Struct && self.source_type.is_arkui() {
+        if kind == Kind::Struct && self.source_type.is_ets() {
             let modifiers = Modifiers::empty();
             let struct_decl = self.parse_struct_declaration(decl_span, &modifiers, decorators);
             return ExportDefaultDeclarationKind::StructStatement(struct_decl);

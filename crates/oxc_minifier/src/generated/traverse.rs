@@ -1337,6 +1337,11 @@ pub trait Traverse<'a> {
     fn exit_string_literal(&mut self, node: &mut StringLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
+    fn enter_char_literal(&mut self, node: &mut CharLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_char_literal(&mut self, node: &mut CharLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
     fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
@@ -2588,6 +2593,111 @@ pub trait Traverse<'a> {
     fn exit_annotation_element(
         &mut self,
         node: &mut AnnotationElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ets_package_declaration(
+        &mut self,
+        node: &mut ETSPackageDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ets_package_declaration(
+        &mut self,
+        node: &mut ETSPackageDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ets_instance_of_expression(
+        &mut self,
+        node: &mut ETSInstanceOfExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ets_instance_of_expression(
+        &mut self,
+        node: &mut ETSInstanceOfExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ets_new_class_instance_expression(
+        &mut self,
+        node: &mut ETSNewClassInstanceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ets_new_class_instance_expression(
+        &mut self,
+        node: &mut ETSNewClassInstanceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ets_new_array_instance_expression(
+        &mut self,
+        node: &mut ETSNewArrayInstanceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ets_new_array_instance_expression(
+        &mut self,
+        node: &mut ETSNewArrayInstanceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ets_new_multi_dim_array_instance_expression(
+        &mut self,
+        node: &mut ETSNewMultiDimArrayInstanceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ets_new_multi_dim_array_instance_expression(
+        &mut self,
+        node: &mut ETSNewMultiDimArrayInstanceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ets_trailing_block_expression(
+        &mut self,
+        node: &mut ETSTrailingBlockExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ets_trailing_block_expression(
+        &mut self,
+        node: &mut ETSTrailingBlockExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ets_overload_declaration(
+        &mut self,
+        node: &mut ETSOverloadDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ets_overload_declaration(
+        &mut self,
+        node: &mut ETSOverloadDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }

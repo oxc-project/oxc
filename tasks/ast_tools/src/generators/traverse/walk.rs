@@ -373,6 +373,18 @@ fn generate_field_walk_inner(
                 }
                 TypeDef::Box(box_def) => {
                     let unboxed = box_def.inner_type(schema);
+                    if let TypeDef::Vec(vec_def) = unboxed {
+                        let innermost = vec_def.inner_type(schema).innermost_type(schema);
+                        let inner_snake = innermost.snake_name();
+                        let walk_fn = format_ident!("walk_{inner_snake}");
+                        return quote! {
+                            if let Some(field) = &mut *((node as *mut u8).add(ancestor::#field_offset) as *mut #field_type_name) {
+                                for item in (&mut **field).iter_mut() {
+                                    #walk_fn(traverser, item as *mut _, ctx);
+                                }
+                            }
+                        };
+                    }
                     let innermost = unboxed.innermost_type(schema);
                     let inner_snake = innermost.snake_name();
                     let walk_fn = format_ident!("walk_{inner_snake}");
@@ -497,6 +509,19 @@ fn generate_field_walk_option_with_retag(
         }
         TypeDef::Box(box_def) => {
             let unboxed = box_def.inner_type(schema);
+            if let TypeDef::Vec(vec_def) = unboxed {
+                let innermost = vec_def.inner_type(schema).innermost_type(schema);
+                let inner_snake = innermost.snake_name();
+                let walk_fn = format_ident!("walk_{inner_snake}");
+                return quote! {
+                    if let Some(field) = &mut *((node as *mut u8).add(ancestor::#field_offset) as *mut #field_type_name) {
+                        #retag
+                        for item in (&mut **field).iter_mut() {
+                            #walk_fn(traverser, item as *mut _, ctx);
+                        }
+                    }
+                };
+            }
             let innermost = unboxed.innermost_type(schema);
             let inner_snake = innermost.snake_name();
             let walk_fn = format_ident!("walk_{inner_snake}");

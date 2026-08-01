@@ -92,6 +92,11 @@ pub enum LanguageVariant {
     Jsx = 1,
     /// For sources using ArkUI (ETS files)
     Arkui = 2,
+    /// For sources using the static ETS language implemented by `ets2panda`.
+    ///
+    /// Static ETS shares the `.ets` extension with ArkUI/ArkTS 1.1, so this
+    /// variant is only selected explicitly and is never inferred from a path.
+    EtsStatic = 3,
 }
 
 impl Default for SourceType {
@@ -395,6 +400,31 @@ impl SourceType {
         }
     }
 
+    /// Creates a [`SourceType`] representing an explicitly selected static ETS file.
+    ///
+    /// Static ETS and ArkUI both use the `.ets` extension. Consequently,
+    /// [`SourceType::from_path`] continues to return [`SourceType::ets`] for
+    /// `.ets` paths; callers must opt in to this mode explicitly.
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let ets_static = SourceType::ets_static();
+    /// assert!(ets_static.is_typescript());
+    /// assert!(ets_static.is_module());
+    /// assert!(ets_static.is_ets_static());
+    /// assert!(!ets_static.is_arkui());
+    /// ```
+    pub const fn ets_static() -> Self {
+        Self {
+            language: Language::TypeScript,
+            module_kind: ModuleKind::Module,
+            variant: LanguageVariant::EtsStatic,
+            extension: Some(FileExtension::Ets),
+        }
+    }
+
     /// Creates a [`SourceType`] representing a [`TypeScript definition`] file.
     ///
     /// ## Example
@@ -477,6 +507,16 @@ impl SourceType {
     /// Returns `true` if this source type is using ArkUI (ETS files).
     pub fn is_arkui(self) -> bool {
         self.variant == LanguageVariant::Arkui
+    }
+
+    /// Returns `true` if static ETS syntax was selected explicitly.
+    pub fn is_ets_static(self) -> bool {
+        self.variant == LanguageVariant::EtsStatic
+    }
+
+    /// Returns `true` for either ArkUI/ArkTS 1.1 or static ETS sources.
+    pub fn is_ets(self) -> bool {
+        matches!(self.variant, LanguageVariant::Arkui | LanguageVariant::EtsStatic)
     }
 
     /// Does this source type implicitly use strict mode semantics?
@@ -607,6 +647,21 @@ impl SourceType {
     pub const fn with_arkui(mut self, yes: bool) -> Self {
         if yes {
             self.variant = LanguageVariant::Arkui;
+        }
+        self
+    }
+
+    /// Mark this [`SourceType`] as using static ETS if `yes` is `true`.
+    ///
+    /// This is an explicit opt-in. Inferring a source type from an `.ets` path
+    /// always remains on the ArkUI/ArkTS 1.1 path.
+    #[must_use]
+    pub const fn with_ets_static(mut self, yes: bool) -> Self {
+        if yes {
+            self.language = Language::TypeScript;
+            self.module_kind = ModuleKind::Module;
+            self.variant = LanguageVariant::EtsStatic;
+            self.extension = Some(FileExtension::Ets);
         }
         self
     }
@@ -854,6 +909,18 @@ mod tests {
         assert!(ets.is_strict());
 
         assert_eq!(SourceType::ets(), ets);
+
+        // `.ets` remains ArkUI/ArkTS 1.1 unless static ETS is requested explicitly.
+        assert!(!ets.is_ets_static());
+        assert!(ets.is_ets());
+
+        let ets_static = SourceType::ets_static();
+        assert!(ets_static.is_typescript());
+        assert!(ets_static.is_module());
+        assert!(ets_static.is_ets_static());
+        assert!(ets_static.is_ets());
+        assert!(!ets_static.is_arkui());
+        assert_eq!(ets_static.extension(), Some(FileExtension::Ets));
     }
 }
 

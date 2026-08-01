@@ -69,6 +69,11 @@ fieldless_enum! {
         Defer,    // import.defer https://github.com/tc39/proposal-defer-import-eval
         Lazy,     // import.lazy for ArkUI lazy imports
         Struct,   // ArkUI struct keyword
+        // Static ETS keywords. These token kinds are emitted only when the
+        // explicitly selected `ets-static` source mode is active.
+        Final,
+        Native,
+        Overload,
         // TypeScript Contextual Keywords
         Abstract,
         As,
@@ -194,6 +199,8 @@ fieldless_enum! {
         // 12.9.4 String Literals
         /// String Type
         Str,
+        /// Static ETS character literal (`c'a'`).
+        CharLiteral,
         // 12.9.5 Regular Expression Literals
         RegExp,
         // 12.9.6 Template Literal
@@ -310,7 +317,7 @@ impl Kind {
     ///     `StringLiteral`
     #[inline]
     pub const fn is_literal(self) -> bool {
-        matches!(self, Null | True | False | Str | RegExp) || self.is_number()
+        matches!(self, Null | True | False | Str | CharLiteral | RegExp) || self.is_number()
     }
 
     #[inline]
@@ -393,7 +400,7 @@ impl Kind {
             Await | Break | Case | Catch | Class | Const | Continue | Debugger | Default
             | Delete | Do | Else | Enum | Export | Extends | False | Finally | For | Function | If
             | Import | In | Instanceof | New | Null | Return | Super | Switch | This | Throw
-            | True | Try | Typeof | Var | Void | While | With | Yield
+            | True | Try | Typeof | Var | Void | While | With | Yield | Final | Native | Overload
         )
     }
 
@@ -433,7 +440,7 @@ impl Kind {
             self,
             Abstract | Accessor | Async | Const | Declare
             | In | Out | Public | Private | Protected | Readonly | Static | Override
-            | Default | Export
+            | Default | Export | Final | Native
         )
     }
 
@@ -624,6 +631,9 @@ impl Kind {
             Public => "public",
             Static => "static",
             Struct => "struct",
+            Final => "final",
+            Native => "native",
+            Overload => "overload",
             Let => "let",
             Yield => "yield",
             Amp => "&",
@@ -696,6 +706,7 @@ impl Kind {
             OctalBigInt => "octal bigint",
             HexBigInt => "hex bigint",
             Str | String => "string",
+            CharLiteral => "character",
             RegExp => "/regexp/",
             NoSubstitutionTemplate => "${}",
             TemplateHead => "${",

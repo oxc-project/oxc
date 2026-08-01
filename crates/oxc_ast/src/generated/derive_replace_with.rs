@@ -3,6 +3,7 @@
 
 use oxc_allocator::ReplaceWith;
 
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -254,6 +255,8 @@ impl<'a> ReplaceWith<'a> for NumericLiteral<'a> {}
 
 impl<'a> ReplaceWith<'a> for StringLiteral<'a> {}
 
+impl<'a> ReplaceWith<'a> for CharLiteral<'a> {}
+
 impl<'a> ReplaceWith<'a> for BigIntLiteral<'a> {}
 
 impl<'a> ReplaceWith<'a> for RegExpLiteral<'a> {}
@@ -475,3 +478,17 @@ impl<'a> ReplaceWith<'a> for JSDocNullableType<'a> {}
 impl<'a> ReplaceWith<'a> for JSDocNonNullableType<'a> {}
 
 impl ReplaceWith<'_> for JSDocUnknownType {}
+
+impl<'a> ReplaceWith<'a> for ETSPackageDeclaration<'a> {}
+
+impl<'a> ReplaceWith<'a> for ETSInstanceOfExpression<'a> {}
+
+impl<'a> ReplaceWith<'a> for ETSNewClassInstanceExpression<'a> {}
+
+impl<'a> ReplaceWith<'a> for ETSNewArrayInstanceExpression<'a> {}
+
+impl<'a> ReplaceWith<'a> for ETSNewMultiDimArrayInstanceExpression<'a> {}
+
+impl<'a> ReplaceWith<'a> for ETSTrailingBlockExpression<'a> {}
+
+impl<'a> ReplaceWith<'a> for ETSOverloadDeclaration<'a> {}

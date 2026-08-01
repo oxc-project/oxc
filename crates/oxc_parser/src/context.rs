@@ -56,6 +56,15 @@ bitflags! {
         /// or a class field initializer. Arrow functions inherit this from their
         /// surrounding context, and class bodies are transparent to it.
         const NewTarget = 1 << 8;
+
+        /// Static ETS only permits the comma operator in the clauses of a
+        /// traditional `for` statement.
+        const EtsAllowSequence = 1 << 9;
+
+        /// `this` may be parsed as the return type of the current static ETS
+        /// non-static method or receiver function.
+        const EtsAllowThisType = 1 << 10;
+
     }
 }
 
@@ -109,6 +118,16 @@ impl Context {
     #[inline]
     pub(crate) fn has_new_target(self) -> bool {
         self.contains(Self::NewTarget)
+    }
+
+    #[inline]
+    pub(crate) fn ets_allows_sequence(self) -> bool {
+        self.contains(Self::EtsAllowSequence)
+    }
+
+    #[inline]
+    pub(crate) fn ets_allows_this_type(self) -> bool {
+        self.contains(Self::EtsAllowThisType)
     }
 
     #[inline]

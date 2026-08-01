@@ -215,6 +215,10 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             Declaration::StructStatement(decl) => {
                 self.add_binding(decl.id.name.into(), KindFlags::Value);
             }
+            Declaration::ETSOverloadDeclaration(_) => {
+                // Managed overload declarations are an ETS-only construct and
+                // do not participate in TypeScript declaration reachability.
+            }
         }
         walk_declaration(self, declaration);
     }

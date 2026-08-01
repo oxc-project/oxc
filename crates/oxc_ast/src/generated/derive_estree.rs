@@ -9,6 +9,7 @@ use oxc_estree::{
 
 use crate::ast::arkui::*;
 use crate::ast::comment::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -66,6 +67,12 @@ impl ESTree for Expression<'_> {
             Self::V8IntrinsicExpression(it) => it.serialize(serializer),
             Self::ArkUIComponentExpression(it) => it.serialize(serializer),
             Self::LeadingDotExpression(it) => it.serialize(serializer),
+            Self::CharLiteral(it) => it.serialize(serializer),
+            Self::ETSTrailingBlockExpression(it) => it.serialize(serializer),
+            Self::ETSInstanceOfExpression(it) => it.serialize(serializer),
+            Self::ETSNewClassInstanceExpression(it) => it.serialize(serializer),
+            Self::ETSNewArrayInstanceExpression(it) => it.serialize(serializer),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.serialize(serializer),
             Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_member_expression().serialize(serializer),
@@ -195,6 +202,12 @@ impl ESTree for ArrayExpressionElement<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
@@ -291,6 +304,12 @@ impl ESTree for PropertyKey<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
@@ -304,6 +323,7 @@ impl ESTree for PropertyKind {
             Self::Init => JsonSafeString("init").serialize(serializer),
             Self::Get => JsonSafeString("get").serialize(serializer),
             Self::Set => JsonSafeString("set").serialize(serializer),
+            Self::EtsEquals => JsonSafeString("etsEquals").serialize(serializer),
         }
     }
 }
@@ -505,6 +525,12 @@ impl ESTree for Argument<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
@@ -834,6 +860,7 @@ impl ESTree for Statement<'_> {
             Self::TryStatement(it) => it.serialize(serializer),
             Self::WhileStatement(it) => it.serialize(serializer),
             Self::WithStatement(it) => it.serialize(serializer),
+            Self::ETSPackageDeclaration(it) => it.serialize(serializer),
             Self::VariableDeclaration(_)
             | Self::FunctionDeclaration(_)
             | Self::ClassDeclaration(_)
@@ -844,7 +871,8 @@ impl ESTree for Statement<'_> {
             | Self::TSGlobalDeclaration(_)
             | Self::TSImportEqualsDeclaration(_)
             | Self::StructStatement(_)
-            | Self::AnnotationDeclaration(_) => self.to_declaration().serialize(serializer),
+            | Self::AnnotationDeclaration(_)
+            | Self::ETSOverloadDeclaration(_) => self.to_declaration().serialize(serializer),
             Self::ImportDeclaration(_)
             | Self::LazyImportDeclaration(_)
             | Self::ExportAllDeclaration(_)
@@ -903,6 +931,7 @@ impl ESTree for Declaration<'_> {
             Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
             Self::StructStatement(it) => it.serialize(serializer),
             Self::AnnotationDeclaration(it) => it.serialize(serializer),
+            Self::ETSOverloadDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -911,6 +940,9 @@ impl ESTree for VariableDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VariableDeclaration"));
+        if self.decorators.is_some() {
+            state.serialize_ts_field("decorators", &self.decorators);
+        }
         state.serialize_field("kind", &self.kind);
         state.serialize_field("declarations", &self.declarations);
         state.serialize_ts_field("declare", &self.declare);
@@ -1060,6 +1092,12 @@ impl ESTree for ForStatementInit<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
@@ -1331,6 +1369,12 @@ impl ESTree for Function<'_> {
         state.serialize_field("generator", &self.generator);
         state.serialize_field("async", &self.r#async);
         state.serialize_ts_field("declare", &self.declare);
+        if self.r#final {
+            state.serialize_ts_field("final", &self.r#final);
+        }
+        if self.native {
+            state.serialize_ts_field("native", &self.native);
+        }
         state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &crate::serialize::js::FunctionParams(self));
         state.serialize_ts_field("returnType", &self.return_type);
@@ -1434,6 +1478,15 @@ impl ESTree for Class<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
+        if self.r#final {
+            state.serialize_ts_field("final", &self.r#final);
+        }
+        if self.native {
+            state.serialize_ts_field("native", &self.native);
+        }
+        if self.r#static {
+            state.serialize_ts_field("static", &self.r#static);
+        }
         state.serialize_span(self.span);
         state.end();
     }
@@ -1466,6 +1519,8 @@ impl ESTree for ClassElement<'_> {
             Self::PropertyDefinition(it) => it.serialize(serializer),
             Self::AccessorProperty(it) => it.serialize(serializer),
             Self::TSIndexSignature(it) => it.serialize(serializer),
+            Self::ETSOverloadDeclaration(it) => it.serialize(serializer),
+            Self::TSCallSignatureDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -1483,6 +1538,12 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("optional", &self.optional);
         state.serialize_ts_field("accessibility", &self.accessibility);
+        if self.r#final {
+            state.serialize_ts_field("final", &self.r#final);
+        }
+        if self.native {
+            state.serialize_ts_field("native", &self.native);
+        }
         state.serialize_span(self.span);
         state.end();
     }
@@ -1750,6 +1811,12 @@ impl ESTree for ExportNamedDeclaration<'_> {
             "attributes",
             &crate::serialize::js::ExportNamedDeclarationWithClause(self),
         );
+        if self.ets_single {
+            state.serialize_ts_field("etsSingle", &self.ets_single);
+        }
+        if self.ets_default {
+            state.serialize_ts_field("etsDefault", &self.ets_default);
+        }
         state.serialize_span(self.span);
         state.end();
     }
@@ -1844,6 +1911,12 @@ impl ESTree for ExportDefaultDeclarationKind<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
@@ -1910,6 +1983,17 @@ impl ESTree for StringLiteral<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("value", &crate::serialize::literal::StringLiteralValue(self));
+        state.serialize_field("raw", &self.raw);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for CharLiteral<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("CharLiteral"));
+        state.serialize_field("value", &self.value);
         state.serialize_field("raw", &self.raw);
         state.serialize_span(self.span);
         state.end();
@@ -2145,6 +2229,12 @@ impl ESTree for JSXExpression<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => self.to_expression().serialize(serializer),
@@ -2271,7 +2361,13 @@ impl ESTree for TSEnumDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSEnumDeclaration"));
+        if self.decorators.is_some() {
+            state.serialize_ts_field("decorators", &self.decorators);
+        }
         state.serialize_field("id", &self.id);
+        if self.underlying_type.is_some() {
+            state.serialize_ts_field("underlyingType", &self.underlying_type);
+        }
         state.serialize_field("body", &self.body);
         state.serialize_field("const", &self.r#const);
         state.serialize_field("declare", &self.declare);
@@ -2756,6 +2852,9 @@ impl ESTree for TSTypeAliasDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeAliasDeclaration"));
+        if self.decorators.is_some() {
+            state.serialize_ts_field("decorators", &self.decorators);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -2793,6 +2892,9 @@ impl ESTree for TSInterfaceDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceDeclaration"));
+        if self.decorators.is_some() {
+            state.serialize_ts_field("decorators", &self.decorators);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("extends", &self.extends);
@@ -2837,6 +2939,9 @@ impl ESTree for TSSignature<'_> {
             Self::TSCallSignatureDeclaration(it) => it.serialize(serializer),
             Self::TSConstructSignatureDeclaration(it) => it.serialize(serializer),
             Self::TSMethodSignature(it) => it.serialize(serializer),
+            Self::MethodDefinition(it) => it.serialize(serializer),
+            Self::PropertyDefinition(it) => it.serialize(serializer),
+            Self::ETSOverloadDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -3338,6 +3443,15 @@ impl ESTree for StructStatement<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
+        if self.r#final {
+            state.serialize_ts_field("final", &self.r#final);
+        }
+        if self.native {
+            state.serialize_ts_field("native", &self.native);
+        }
+        if self.r#static {
+            state.serialize_ts_field("static", &self.r#static);
+        }
         state.serialize_span(self.span);
         state.end();
     }
@@ -3361,6 +3475,7 @@ impl ESTree for StructElement<'_> {
             Self::StaticBlock(it) => it.serialize(serializer),
             Self::TSIndexSignature(it) => it.serialize(serializer),
             Self::AccessorProperty(it) => it.serialize(serializer),
+            Self::ETSOverloadDeclaration(it) => it.serialize(serializer),
         }
     }
 }
@@ -3417,5 +3532,105 @@ impl ESTree for AnnotationElement<'_> {
         match self {
             Self::PropertyDefinition(it) => it.serialize(serializer),
         }
+    }
+}
+
+impl ESTree for ETSPackageDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ETSPackageDeclaration"));
+        state.serialize_field("name", &self.name);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ETSInstanceOfExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ETSInstanceOfExpression"));
+        state.serialize_field("left", &self.left);
+        state.serialize_field("right", &self.right);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ETSNewClassInstanceExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ETSNewClassInstanceExpression"));
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("arguments", &self.arguments);
+        state.serialize_field("hasArguments", &self.has_arguments);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ETSNewArrayInstanceExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ETSNewArrayInstanceExpression"));
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("dimension", &self.dimension);
+        state.serialize_field("initializer", &self.initializer);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ETSNewMultiDimArrayInstanceExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ETSNewMultiDimArrayInstanceExpression"));
+        state.serialize_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("dimensions", &self.dimensions);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ETSTrailingBlockExpression<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ETSTrailingBlockExpression"));
+        state.serialize_field("call", &self.call);
+        state.serialize_field("block", &self.block);
+        state.serialize_field("isTrailingCall", &self.is_trailing_call);
+        state.serialize_field("isBlockOnNewLine", &self.is_block_on_new_line);
+        state.serialize_field("hasTrailingComma", &self.has_trailing_comma);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ETSOverloadDeclarationKind {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        match self {
+            Self::Function => JsonSafeString("function").serialize(serializer),
+            Self::ClassMethod => JsonSafeString("classMethod").serialize(serializer),
+            Self::InterfaceMethod => JsonSafeString("interfaceMethod").serialize(serializer),
+            Self::StructMethod => JsonSafeString("structMethod").serialize(serializer),
+        }
+    }
+}
+
+impl ESTree for ETSOverloadDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ETSOverloadDeclaration"));
+        state.serialize_field("decorators", &self.decorators);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("overloads", &self.overloads);
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("accessibility", &self.accessibility);
+        state.serialize_field("static", &self.r#static);
+        state.serialize_field("abstract", &self.r#abstract);
+        state.serialize_field("final", &self.r#final);
+        state.serialize_field("native", &self.native);
+        state.serialize_field("declare", &self.declare);
+        state.serialize_span(self.span);
+        state.end();
     }
 }

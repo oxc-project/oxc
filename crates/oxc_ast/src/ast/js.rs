@@ -172,6 +172,18 @@ pub enum Expression<'a> {
     ArkUIComponentExpression(Box<'a, ArkUIComponentExpression<'a>>) = 41,
     /// See [`LeadingDotExpression`] for AST node details.
     LeadingDotExpression(Box<'a, LeadingDotExpression<'a>>) = 42,
+    /// See [`CharLiteral`] for AST node details.
+    CharLiteral(Box<'a, CharLiteral<'a>>) = 43,
+    /// Static ETS call with a trailing lambda block.
+    ETSTrailingBlockExpression(Box<'a, ETSTrailingBlockExpression<'a>>) = 44,
+    /// Static ETS `instanceof`, whose right operand is a type.
+    ETSInstanceOfExpression(Box<'a, ETSInstanceOfExpression<'a>>) = 45,
+    /// Static ETS class construction.
+    ETSNewClassInstanceExpression(Box<'a, ETSNewClassInstanceExpression<'a>>) = 46,
+    /// Static ETS single-dimensional array construction.
+    ETSNewArrayInstanceExpression(Box<'a, ETSNewArrayInstanceExpression<'a>>) = 47,
+    /// Static ETS multi-dimensional array construction.
+    ETSNewMultiDimArrayInstanceExpression(Box<'a, ETSNewMultiDimArrayInstanceExpression<'a>>) = 51,
 
     // `MemberExpression` variants added here by `#[ast]` macro
     INHERIT(MemberExpression<'a>),
@@ -410,6 +422,8 @@ pub enum PropertyKind {
     Get = 1,
     /// `set a(value) { this._a = value; }` in `const obj = { set a(value) { this._a = value; } };`
     Set = 2,
+    /// Static ETS annotation field syntax: `{ name = value }`.
+    EtsEquals = 3,
 }
 
 /// `` `Hello, ${name}` `` in `` const foo = `Hello, ${name}` ``
@@ -1129,6 +1143,8 @@ pub enum Statement<'a> {
     TryStatement(Box<'a, TryStatement<'a>>) = 15,
     WhileStatement(Box<'a, WhileStatement<'a>>) = 16,
     WithStatement(Box<'a, WithStatement<'a>>) = 17,
+    /// Static ETS package header.
+    ETSPackageDeclaration(Box<'a, ETSPackageDeclaration<'a>>) = 18,
 
     // `Declaration` and `ModuleDeclaration` variants added here by `#[ast]` macro
     INHERIT(Declaration<'a>),
@@ -1199,6 +1215,7 @@ pub enum Declaration<'a> {
     TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
     StructStatement(Box<'a, StructStatement<'a>>) = 19,
     AnnotationDeclaration(Box<'a, AnnotationDeclaration<'a>>) = 20,
+    ETSOverloadDeclaration(Box<'a, ETSOverloadDeclaration<'a>>) = 21,
 }
 
 /// `let a;` in `let a; a = 1;`
@@ -1211,6 +1228,12 @@ pub enum Declaration<'a> {
 pub struct VariableDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    /// Static ETS annotations preceding the variable declaration.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[estree(ts_type = "Array<Decorator>")]
+    #[ts]
+    pub decorators: Option<Box<'a, Vec<'a, Decorator<'a>>>>,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
     #[ts]
@@ -1821,6 +1844,16 @@ pub struct Function<'a> {
     pub r#async: bool,
     #[ts]
     pub declare: bool,
+    /// Static ETS `final` modifier.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub r#final: bool,
+    /// Static ETS `native` modifier.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub native: bool,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
@@ -2140,6 +2173,22 @@ pub struct Class<'a> {
     /// ```
     #[ts]
     pub declare: bool,
+    /// Static ETS `final` modifier.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub r#final: bool,
+    /// Static ETS `native` modifier. Kept even when semantically invalid so
+    /// parser output remains lossless.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub native: bool,
+    /// Static ETS `static` modifier on nested class declarations.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub r#static: bool,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
     pub scope_id: Cell<Option<ScopeId>>,
@@ -2212,6 +2261,10 @@ pub enum ClassElement<'a> {
     /// }
     /// ```
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 4,
+    /// Static ETS managed overload declaration.
+    ETSOverloadDeclaration(Box<'a, ETSOverloadDeclaration<'a>>) = 5,
+    /// Static ETS ambient class call signature.
+    TSCallSignatureDeclaration(Box<'a, TSCallSignatureDeclaration<'a>>) = 6,
 }
 
 #[ast(visit)]
@@ -2243,6 +2296,16 @@ pub struct MethodDefinition<'a> {
     pub optional: bool,
     #[ts]
     pub accessibility: Option<TSAccessibility>,
+    /// Static ETS `final` modifier.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub r#final: bool,
+    /// Static ETS `native` modifier.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub native: bool,
 }
 
 #[ast]
@@ -2741,6 +2804,16 @@ pub struct ExportNamedDeclaration<'a> {
     /// Some(vec![]) for empty assertion
     #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
+    /// Static ETS single-name export syntax: `export name;`.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub ets_single: bool,
+    /// Static ETS declaration form: `export default let/const ...`.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub ets_default: bool,
 }
 
 /// Export Default Declaration

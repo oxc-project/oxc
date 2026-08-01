@@ -19,6 +19,40 @@ describe("parse", () => {
     expect(ret.errors.length).toBe(0);
   });
 
+  it("only enables static ETS through the explicit `ets-static` language", () => {
+    const staticEts = "let character: char = c'a'; let value: float = 1.25f;";
+
+    const inferred = parseSync("test.ets", staticEts);
+    expect(inferred.errors.length).toBeGreaterThan(0);
+
+    const explicit = parseSync("test.ets", staticEts, { lang: "ets-static" });
+    expect(explicit.errors.length).toBe(0);
+    expect(explicit.program.body.length).toBe(2);
+  });
+
+  it("serializes static ETS metadata without changing legacy TS node shapes", () => {
+    const legacy = parseSync(
+      "test.ts",
+      "const value: number = 1; class A {} function f(): void {}",
+    );
+    expect(legacy.errors.length).toBe(0);
+    expect(legacy.program.body[0]).not.toHaveProperty("decorators");
+    expect(legacy.program.body[1]).not.toHaveProperty("final");
+    expect(legacy.program.body[2]).not.toHaveProperty("native");
+
+    const source = [
+      "@interface Mark {}",
+      "@Mark const value: int = 1;",
+      "final class A {}",
+      "native function f(): void;",
+    ].join("\n");
+    const staticEts = parseSync("test.ets", source, { lang: "ets-static" });
+    expect(staticEts.errors.length).toBe(0);
+    expect(staticEts.program.body[1]).toHaveProperty("decorators");
+    expect(staticEts.program.body[2]).toHaveProperty("final", true);
+    expect(staticEts.program.body[3]).toHaveProperty("native", true);
+  });
+
   it("matches output", async () => {
     const ret = await parse("test.js", code);
     expect(ret.program.body.length).toBe(1);

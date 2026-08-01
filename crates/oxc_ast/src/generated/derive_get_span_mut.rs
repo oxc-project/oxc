@@ -6,6 +6,7 @@
 use oxc_span::{GetSpanMut, Span};
 
 use crate::ast::arkui::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -64,6 +65,12 @@ impl GetSpanMut for Expression<'_> {
             Self::V8IntrinsicExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArkUIComponentExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::LeadingDotExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CharLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSTrailingBlockExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSInstanceOfExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -161,6 +168,12 @@ impl GetSpanMut for ArrayExpressionElement<'_> {
             Self::V8IntrinsicExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArkUIComponentExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::LeadingDotExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CharLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSTrailingBlockExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSInstanceOfExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -246,6 +259,12 @@ impl GetSpanMut for PropertyKey<'_> {
             Self::V8IntrinsicExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArkUIComponentExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::LeadingDotExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CharLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSTrailingBlockExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSInstanceOfExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -394,6 +413,12 @@ impl GetSpanMut for Argument<'_> {
             Self::V8IntrinsicExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArkUIComponentExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::LeadingDotExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CharLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSTrailingBlockExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSInstanceOfExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -628,6 +653,7 @@ impl GetSpanMut for Statement<'_> {
             Self::TryStatement(it) => GetSpanMut::span_mut(&mut **it),
             Self::WhileStatement(it) => GetSpanMut::span_mut(&mut **it),
             Self::WithStatement(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSPackageDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::VariableDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::FunctionDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ClassDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -639,6 +665,7 @@ impl GetSpanMut for Statement<'_> {
             Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::StructStatement(it) => GetSpanMut::span_mut(&mut **it),
             Self::AnnotationDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSOverloadDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::LazyImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
@@ -685,6 +712,7 @@ impl GetSpanMut for Declaration<'_> {
             Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::StructStatement(it) => GetSpanMut::span_mut(&mut **it),
             Self::AnnotationDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSOverloadDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
@@ -792,6 +820,12 @@ impl GetSpanMut for ForStatementInit<'_> {
             Self::V8IntrinsicExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArkUIComponentExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::LeadingDotExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CharLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSTrailingBlockExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSInstanceOfExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1032,6 +1066,8 @@ impl GetSpanMut for ClassElement<'_> {
             Self::PropertyDefinition(it) => GetSpanMut::span_mut(&mut **it),
             Self::AccessorProperty(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSIndexSignature(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSOverloadDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSCallSignatureDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
@@ -1238,6 +1274,12 @@ impl GetSpanMut for ExportDefaultDeclarationKind<'_> {
             Self::V8IntrinsicExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArkUIComponentExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::LeadingDotExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CharLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSTrailingBlockExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSInstanceOfExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1284,6 +1326,13 @@ impl GetSpanMut for NumericLiteral<'_> {
 }
 
 impl GetSpanMut for StringLiteral<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for CharLiteral<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -1436,6 +1485,12 @@ impl GetSpanMut for JSXExpression<'_> {
             Self::V8IntrinsicExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ArkUIComponentExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::LeadingDotExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::CharLiteral(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSTrailingBlockExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSInstanceOfExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewClassInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::ComputedMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::StaticMemberExpression(it) => GetSpanMut::span_mut(&mut **it),
             Self::PrivateFieldExpression(it) => GetSpanMut::span_mut(&mut **it),
@@ -1945,6 +2000,9 @@ impl GetSpanMut for TSSignature<'_> {
             Self::TSCallSignatureDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSConstructSignatureDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSMethodSignature(it) => GetSpanMut::span_mut(&mut **it),
+            Self::MethodDefinition(it) => GetSpanMut::span_mut(&mut **it),
+            Self::PropertyDefinition(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSOverloadDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
@@ -2252,6 +2310,7 @@ impl GetSpanMut for StructElement<'_> {
             Self::StaticBlock(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSIndexSignature(it) => GetSpanMut::span_mut(&mut **it),
             Self::AccessorProperty(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ETSOverloadDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }
@@ -2292,5 +2351,54 @@ impl GetSpanMut for AnnotationElement<'_> {
         match self {
             Self::PropertyDefinition(it) => GetSpanMut::span_mut(&mut **it),
         }
+    }
+}
+
+impl GetSpanMut for ETSPackageDeclaration<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ETSInstanceOfExpression<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ETSNewClassInstanceExpression<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ETSNewArrayInstanceExpression<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ETSNewMultiDimArrayInstanceExpression<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ETSTrailingBlockExpression<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ETSOverloadDeclaration<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
     }
 }

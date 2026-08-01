@@ -80,15 +80,18 @@ fn parse_impl<'a>(
     allocator: &'a Allocator,
     source_type: SourceType,
     source_text: &'a str,
+    filename: &str,
     options: &ParserOptions,
 ) -> ParserReturn<'a> {
-    let parser = Parser::new(allocator, source_text, source_type).with_options(ParseOptions {
-        preserve_parens: options.preserve_parens.unwrap_or(true),
-        // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
-        // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
-        enable_ident_hashes: options.show_semantic_errors == Some(true),
-        ..ParseOptions::default()
-    });
+    let parser = Parser::new(allocator, source_text, source_type)
+        .with_source_path(filename)
+        .with_options(ParseOptions {
+            preserve_parens: options.preserve_parens.unwrap_or(true),
+            // Ident hashes are only consumed by semantic analysis, which this crate runs solely when
+            // semantic errors are requested. Skip hashing otherwise to speed up parse-and-serialize.
+            enable_ident_hashes: options.show_semantic_errors == Some(true),
+            ..ParseOptions::default()
+        });
 
     // When `tokens` feature is disabled, parser uses the default `NoTokensParserConfig`,
     // which avoids the runtime branch on whether to collect tokens, and so is faster.
@@ -105,7 +108,7 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
-    let ret = parse_impl(&allocator, source_type, source_text, options);
+    let ret = parse_impl(&allocator, source_type, source_text, filename, options);
 
     let mut program = ret.program;
     let mut module_record = ret.module_record;

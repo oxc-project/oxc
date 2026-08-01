@@ -182,6 +182,7 @@ pub use oxc_syntax::{
 
 pub(crate) mod arkui;
 pub(crate) mod comment;
+pub(crate) mod ets;
 pub(crate) mod js;
 pub(crate) mod jsx;
 pub(crate) mod literal;
@@ -189,6 +190,7 @@ pub(crate) mod ts;
 
 pub use arkui::*;
 pub use comment::*;
+pub use ets::*;
 pub use js::*;
 pub use jsx::*;
 pub use literal::*;

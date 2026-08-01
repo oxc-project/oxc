@@ -301,7 +301,12 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
     }
 
     let field_camel_name = get_struct_field_name(field);
-    let question_mark = if field.estree.is_js || field.estree.is_ts { "?" } else { "" };
+    let question_mark = if field.estree.is_js || field.estree.is_ts || field.estree.omit_if_default
+    {
+        "?"
+    } else {
+        ""
+    };
     write_it!(fields_str, "\n\t{field_camel_name}{question_mark}: {field_type_name};");
 }
 

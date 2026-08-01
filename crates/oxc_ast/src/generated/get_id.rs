@@ -1861,6 +1861,22 @@ impl StringLiteral<'_> {
     }
 }
 
+impl CharLiteral<'_> {
+    /// Get [`NodeId`] of [`CharLiteral`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`CharLiteral`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
 impl BigIntLiteral<'_> {
     /// Get [`NodeId`] of [`BigIntLiteral`].
     ///
@@ -3619,6 +3635,118 @@ impl AnnotationBody<'_> {
     }
 }
 
+impl ETSPackageDeclaration<'_> {
+    /// Get [`NodeId`] of [`ETSPackageDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ETSPackageDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ETSInstanceOfExpression<'_> {
+    /// Get [`NodeId`] of [`ETSInstanceOfExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ETSInstanceOfExpression`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ETSNewClassInstanceExpression<'_> {
+    /// Get [`NodeId`] of [`ETSNewClassInstanceExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ETSNewClassInstanceExpression`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ETSNewArrayInstanceExpression<'_> {
+    /// Get [`NodeId`] of [`ETSNewArrayInstanceExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ETSNewArrayInstanceExpression`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ETSNewMultiDimArrayInstanceExpression<'_> {
+    /// Get [`NodeId`] of [`ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ETSNewMultiDimArrayInstanceExpression`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ETSTrailingBlockExpression<'_> {
+    /// Get [`NodeId`] of [`ETSTrailingBlockExpression`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ETSTrailingBlockExpression`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
+impl ETSOverloadDeclaration<'_> {
+    /// Get [`NodeId`] of [`ETSOverloadDeclaration`].
+    ///
+    /// Only use this method on a post-semantic AST where [`NodeId`]s are always defined.
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.node_id.get()
+    }
+
+    /// Set [`NodeId`] of [`ETSOverloadDeclaration`].
+    #[inline]
+    pub fn set_node_id(&self, node_id: NodeId) {
+        self.node_id.set(node_id);
+    }
+}
+
 impl Expression<'_> {
     /// Get [`NodeId`] of [`Expression`].
     // `#[inline(always)]` because this should boil down to a single instruction.
@@ -3668,6 +3796,12 @@ impl Expression<'_> {
             Self::V8IntrinsicExpression(it) => it.node_id(),
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::LeadingDotExpression(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
@@ -3726,6 +3860,12 @@ impl ArrayExpressionElement<'_> {
             Self::V8IntrinsicExpression(it) => it.node_id(),
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::LeadingDotExpression(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
@@ -3796,6 +3936,12 @@ impl PropertyKey<'_> {
             Self::V8IntrinsicExpression(it) => it.node_id(),
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::LeadingDotExpression(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
@@ -3866,6 +4012,12 @@ impl Argument<'_> {
             Self::V8IntrinsicExpression(it) => it.node_id(),
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::LeadingDotExpression(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
@@ -3995,6 +4147,7 @@ impl Statement<'_> {
             Self::TryStatement(it) => it.node_id(),
             Self::WhileStatement(it) => it.node_id(),
             Self::WithStatement(it) => it.node_id(),
+            Self::ETSPackageDeclaration(it) => it.node_id(),
             Self::VariableDeclaration(it) => it.node_id(),
             Self::FunctionDeclaration(it) => it.node_id(),
             Self::ClassDeclaration(it) => it.node_id(),
@@ -4006,6 +4159,7 @@ impl Statement<'_> {
             Self::TSImportEqualsDeclaration(it) => it.node_id(),
             Self::StructStatement(it) => it.node_id(),
             Self::AnnotationDeclaration(it) => it.node_id(),
+            Self::ETSOverloadDeclaration(it) => it.node_id(),
             Self::ImportDeclaration(it) => it.node_id(),
             Self::LazyImportDeclaration(it) => it.node_id(),
             Self::ExportAllDeclaration(it) => it.node_id(),
@@ -4034,6 +4188,7 @@ impl Declaration<'_> {
             Self::TSImportEqualsDeclaration(it) => it.node_id(),
             Self::StructStatement(it) => it.node_id(),
             Self::AnnotationDeclaration(it) => it.node_id(),
+            Self::ETSOverloadDeclaration(it) => it.node_id(),
         }
     }
 }
@@ -4088,6 +4243,12 @@ impl ForStatementInit<'_> {
             Self::V8IntrinsicExpression(it) => it.node_id(),
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::LeadingDotExpression(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
@@ -4141,6 +4302,8 @@ impl ClassElement<'_> {
             Self::PropertyDefinition(it) => it.node_id(),
             Self::AccessorProperty(it) => it.node_id(),
             Self::TSIndexSignature(it) => it.node_id(),
+            Self::ETSOverloadDeclaration(it) => it.node_id(),
+            Self::TSCallSignatureDeclaration(it) => it.node_id(),
         }
     }
 }
@@ -4240,6 +4403,12 @@ impl ExportDefaultDeclarationKind<'_> {
             Self::V8IntrinsicExpression(it) => it.node_id(),
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::LeadingDotExpression(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
@@ -4338,6 +4507,12 @@ impl JSXExpression<'_> {
             Self::V8IntrinsicExpression(it) => it.node_id(),
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::LeadingDotExpression(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
             Self::ComputedMemberExpression(it) => it.node_id(),
             Self::StaticMemberExpression(it) => it.node_id(),
             Self::PrivateFieldExpression(it) => it.node_id(),
@@ -4548,6 +4723,9 @@ impl TSSignature<'_> {
             Self::TSCallSignatureDeclaration(it) => it.node_id(),
             Self::TSConstructSignatureDeclaration(it) => it.node_id(),
             Self::TSMethodSignature(it) => it.node_id(),
+            Self::MethodDefinition(it) => it.node_id(),
+            Self::PropertyDefinition(it) => it.node_id(),
+            Self::ETSOverloadDeclaration(it) => it.node_id(),
         }
     }
 }
@@ -4638,6 +4816,7 @@ impl StructElement<'_> {
             Self::StaticBlock(it) => it.node_id(),
             Self::TSIndexSignature(it) => it.node_id(),
             Self::AccessorProperty(it) => it.node_id(),
+            Self::ETSOverloadDeclaration(it) => it.node_id(),
         }
     }
 }

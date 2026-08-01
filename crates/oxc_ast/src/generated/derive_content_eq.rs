@@ -7,6 +7,7 @@ use oxc_span::ContentEq;
 
 use crate::ast::arkui::*;
 use crate::ast::comment::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -73,6 +74,21 @@ impl ContentEq for Expression<'_> {
                 a.content_eq(b)
             }
             (Self::LeadingDotExpression(a), Self::LeadingDotExpression(b)) => a.content_eq(b),
+            (Self::CharLiteral(a), Self::CharLiteral(b)) => a.content_eq(b),
+            (Self::ETSTrailingBlockExpression(a), Self::ETSTrailingBlockExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSInstanceOfExpression(a), Self::ETSInstanceOfExpression(b)) => a.content_eq(b),
+            (Self::ETSNewClassInstanceExpression(a), Self::ETSNewClassInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSNewArrayInstanceExpression(a), Self::ETSNewArrayInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (
+                Self::ETSNewMultiDimArrayInstanceExpression(a),
+                Self::ETSNewMultiDimArrayInstanceExpression(b),
+            ) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -173,6 +189,21 @@ impl ContentEq for ArrayExpressionElement<'_> {
                 a.content_eq(b)
             }
             (Self::LeadingDotExpression(a), Self::LeadingDotExpression(b)) => a.content_eq(b),
+            (Self::CharLiteral(a), Self::CharLiteral(b)) => a.content_eq(b),
+            (Self::ETSTrailingBlockExpression(a), Self::ETSTrailingBlockExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSInstanceOfExpression(a), Self::ETSInstanceOfExpression(b)) => a.content_eq(b),
+            (Self::ETSNewClassInstanceExpression(a), Self::ETSNewClassInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSNewArrayInstanceExpression(a), Self::ETSNewArrayInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (
+                Self::ETSNewMultiDimArrayInstanceExpression(a),
+                Self::ETSNewMultiDimArrayInstanceExpression(b),
+            ) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -270,6 +301,21 @@ impl ContentEq for PropertyKey<'_> {
                 a.content_eq(b)
             }
             (Self::LeadingDotExpression(a), Self::LeadingDotExpression(b)) => a.content_eq(b),
+            (Self::CharLiteral(a), Self::CharLiteral(b)) => a.content_eq(b),
+            (Self::ETSTrailingBlockExpression(a), Self::ETSTrailingBlockExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSInstanceOfExpression(a), Self::ETSInstanceOfExpression(b)) => a.content_eq(b),
+            (Self::ETSNewClassInstanceExpression(a), Self::ETSNewClassInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSNewArrayInstanceExpression(a), Self::ETSNewArrayInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (
+                Self::ETSNewMultiDimArrayInstanceExpression(a),
+                Self::ETSNewMultiDimArrayInstanceExpression(b),
+            ) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -452,6 +498,21 @@ impl ContentEq for Argument<'_> {
                 a.content_eq(b)
             }
             (Self::LeadingDotExpression(a), Self::LeadingDotExpression(b)) => a.content_eq(b),
+            (Self::CharLiteral(a), Self::CharLiteral(b)) => a.content_eq(b),
+            (Self::ETSTrailingBlockExpression(a), Self::ETSTrailingBlockExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSInstanceOfExpression(a), Self::ETSInstanceOfExpression(b)) => a.content_eq(b),
+            (Self::ETSNewClassInstanceExpression(a), Self::ETSNewClassInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSNewArrayInstanceExpression(a), Self::ETSNewArrayInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (
+                Self::ETSNewMultiDimArrayInstanceExpression(a),
+                Self::ETSNewMultiDimArrayInstanceExpression(b),
+            ) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -717,6 +778,7 @@ impl ContentEq for Statement<'_> {
             (Self::TryStatement(a), Self::TryStatement(b)) => a.content_eq(b),
             (Self::WhileStatement(a), Self::WhileStatement(b)) => a.content_eq(b),
             (Self::WithStatement(a), Self::WithStatement(b)) => a.content_eq(b),
+            (Self::ETSPackageDeclaration(a), Self::ETSPackageDeclaration(b)) => a.content_eq(b),
             (Self::VariableDeclaration(a), Self::VariableDeclaration(b)) => a.content_eq(b),
             (Self::FunctionDeclaration(a), Self::FunctionDeclaration(b)) => a.content_eq(b),
             (Self::ClassDeclaration(a), Self::ClassDeclaration(b)) => a.content_eq(b),
@@ -730,6 +792,7 @@ impl ContentEq for Statement<'_> {
             }
             (Self::StructStatement(a), Self::StructStatement(b)) => a.content_eq(b),
             (Self::AnnotationDeclaration(a), Self::AnnotationDeclaration(b)) => a.content_eq(b),
+            (Self::ETSOverloadDeclaration(a), Self::ETSOverloadDeclaration(b)) => a.content_eq(b),
             (Self::ImportDeclaration(a), Self::ImportDeclaration(b)) => a.content_eq(b),
             (Self::LazyImportDeclaration(a), Self::LazyImportDeclaration(b)) => a.content_eq(b),
             (Self::ExportAllDeclaration(a), Self::ExportAllDeclaration(b)) => a.content_eq(b),
@@ -781,6 +844,7 @@ impl ContentEq for Declaration<'_> {
             }
             (Self::StructStatement(a), Self::StructStatement(b)) => a.content_eq(b),
             (Self::AnnotationDeclaration(a), Self::AnnotationDeclaration(b)) => a.content_eq(b),
+            (Self::ETSOverloadDeclaration(a), Self::ETSOverloadDeclaration(b)) => a.content_eq(b),
             _ => false,
         }
     }
@@ -788,7 +852,8 @@ impl ContentEq for Declaration<'_> {
 
 impl ContentEq for VariableDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.kind, &other.kind)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.declarations, &other.declarations)
             && ContentEq::content_eq(&self.declare, &other.declare)
     }
@@ -906,6 +971,21 @@ impl ContentEq for ForStatementInit<'_> {
                 a.content_eq(b)
             }
             (Self::LeadingDotExpression(a), Self::LeadingDotExpression(b)) => a.content_eq(b),
+            (Self::CharLiteral(a), Self::CharLiteral(b)) => a.content_eq(b),
+            (Self::ETSTrailingBlockExpression(a), Self::ETSTrailingBlockExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSInstanceOfExpression(a), Self::ETSInstanceOfExpression(b)) => a.content_eq(b),
+            (Self::ETSNewClassInstanceExpression(a), Self::ETSNewClassInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSNewArrayInstanceExpression(a), Self::ETSNewArrayInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (
+                Self::ETSNewMultiDimArrayInstanceExpression(a),
+                Self::ETSNewMultiDimArrayInstanceExpression(b),
+            ) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1092,6 +1172,8 @@ impl ContentEq for Function<'_> {
             && ContentEq::content_eq(&self.generator, &other.generator)
             && ContentEq::content_eq(&self.r#async, &other.r#async)
             && ContentEq::content_eq(&self.declare, &other.declare)
+            && ContentEq::content_eq(&self.r#final, &other.r#final)
+            && ContentEq::content_eq(&self.native, &other.native)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.this_param, &other.this_param)
             && ContentEq::content_eq(&self.params, &other.params)
@@ -1182,6 +1264,9 @@ impl ContentEq for Class<'_> {
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
             && ContentEq::content_eq(&self.declare, &other.declare)
+            && ContentEq::content_eq(&self.r#final, &other.r#final)
+            && ContentEq::content_eq(&self.native, &other.native)
+            && ContentEq::content_eq(&self.r#static, &other.r#static)
     }
 }
 
@@ -1205,6 +1290,10 @@ impl ContentEq for ClassElement<'_> {
             (Self::PropertyDefinition(a), Self::PropertyDefinition(b)) => a.content_eq(b),
             (Self::AccessorProperty(a), Self::AccessorProperty(b)) => a.content_eq(b),
             (Self::TSIndexSignature(a), Self::TSIndexSignature(b)) => a.content_eq(b),
+            (Self::ETSOverloadDeclaration(a), Self::ETSOverloadDeclaration(b)) => a.content_eq(b),
+            (Self::TSCallSignatureDeclaration(a), Self::TSCallSignatureDeclaration(b)) => {
+                a.content_eq(b)
+            }
             _ => false,
         }
     }
@@ -1222,6 +1311,8 @@ impl ContentEq for MethodDefinition<'_> {
             && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.accessibility, &other.accessibility)
+            && ContentEq::content_eq(&self.r#final, &other.r#final)
+            && ContentEq::content_eq(&self.native, &other.native)
     }
 }
 
@@ -1416,6 +1507,8 @@ impl ContentEq for ExportNamedDeclaration<'_> {
             && ContentEq::content_eq(&self.source, &other.source)
             && ContentEq::content_eq(&self.export_kind, &other.export_kind)
             && ContentEq::content_eq(&self.with_clause, &other.with_clause)
+            && ContentEq::content_eq(&self.ets_single, &other.ets_single)
+            && ContentEq::content_eq(&self.ets_default, &other.ets_default)
     }
 }
 
@@ -1498,6 +1591,21 @@ impl ContentEq for ExportDefaultDeclarationKind<'_> {
                 a.content_eq(b)
             }
             (Self::LeadingDotExpression(a), Self::LeadingDotExpression(b)) => a.content_eq(b),
+            (Self::CharLiteral(a), Self::CharLiteral(b)) => a.content_eq(b),
+            (Self::ETSTrailingBlockExpression(a), Self::ETSTrailingBlockExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSInstanceOfExpression(a), Self::ETSInstanceOfExpression(b)) => a.content_eq(b),
+            (Self::ETSNewClassInstanceExpression(a), Self::ETSNewClassInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSNewArrayInstanceExpression(a), Self::ETSNewArrayInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (
+                Self::ETSNewMultiDimArrayInstanceExpression(a),
+                Self::ETSNewMultiDimArrayInstanceExpression(b),
+            ) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1548,6 +1656,12 @@ impl ContentEq for StringLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.lone_surrogates, &other.lone_surrogates)
+    }
+}
+
+impl ContentEq for CharLiteral<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
     }
 }
 
@@ -1715,6 +1829,21 @@ impl ContentEq for JSXExpression<'_> {
                 a.content_eq(b)
             }
             (Self::LeadingDotExpression(a), Self::LeadingDotExpression(b)) => a.content_eq(b),
+            (Self::CharLiteral(a), Self::CharLiteral(b)) => a.content_eq(b),
+            (Self::ETSTrailingBlockExpression(a), Self::ETSTrailingBlockExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSInstanceOfExpression(a), Self::ETSInstanceOfExpression(b)) => a.content_eq(b),
+            (Self::ETSNewClassInstanceExpression(a), Self::ETSNewClassInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (Self::ETSNewArrayInstanceExpression(a), Self::ETSNewArrayInstanceExpression(b)) => {
+                a.content_eq(b)
+            }
+            (
+                Self::ETSNewMultiDimArrayInstanceExpression(a),
+                Self::ETSNewMultiDimArrayInstanceExpression(b),
+            ) => a.content_eq(b),
             (Self::ComputedMemberExpression(a), Self::ComputedMemberExpression(b)) => {
                 a.content_eq(b)
             }
@@ -1815,7 +1944,9 @@ impl ContentEq for TSThisParameter<'_> {
 
 impl ContentEq for TSEnumDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.id, &other.id)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.id, &other.id)
+            && ContentEq::content_eq(&self.underlying_type, &other.underlying_type)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#const, &other.r#const)
             && ContentEq::content_eq(&self.declare, &other.declare)
@@ -2178,7 +2309,8 @@ impl ContentEq for TSTypeParameterDeclaration<'_> {
 
 impl ContentEq for TSTypeAliasDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.id, &other.id)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.declare, &other.declare)
@@ -2200,7 +2332,8 @@ impl ContentEq for TSClassImplements<'_> {
 
 impl ContentEq for TSInterfaceDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.id, &other.id)
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
             && ContentEq::content_eq(&self.extends, &other.extends)
             && ContentEq::content_eq(&self.body, &other.body)
@@ -2237,6 +2370,9 @@ impl ContentEq for TSSignature<'_> {
                 Self::TSConstructSignatureDeclaration(b),
             ) => a.content_eq(b),
             (Self::TSMethodSignature(a), Self::TSMethodSignature(b)) => a.content_eq(b),
+            (Self::MethodDefinition(a), Self::MethodDefinition(b)) => a.content_eq(b),
+            (Self::PropertyDefinition(a), Self::PropertyDefinition(b)) => a.content_eq(b),
+            (Self::ETSOverloadDeclaration(a), Self::ETSOverloadDeclaration(b)) => a.content_eq(b),
             _ => false,
         }
     }
@@ -2609,6 +2745,9 @@ impl ContentEq for StructStatement<'_> {
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
             && ContentEq::content_eq(&self.declare, &other.declare)
+            && ContentEq::content_eq(&self.r#final, &other.r#final)
+            && ContentEq::content_eq(&self.native, &other.native)
+            && ContentEq::content_eq(&self.r#static, &other.r#static)
     }
 }
 
@@ -2626,6 +2765,7 @@ impl ContentEq for StructElement<'_> {
             (Self::StaticBlock(a), Self::StaticBlock(b)) => a.content_eq(b),
             (Self::TSIndexSignature(a), Self::TSIndexSignature(b)) => a.content_eq(b),
             (Self::AccessorProperty(a), Self::AccessorProperty(b)) => a.content_eq(b),
+            (Self::ETSOverloadDeclaration(a), Self::ETSOverloadDeclaration(b)) => a.content_eq(b),
             _ => false,
         }
     }
@@ -2673,5 +2813,72 @@ impl ContentEq for AnnotationElement<'_> {
         match (self, other) {
             (Self::PropertyDefinition(a), Self::PropertyDefinition(b)) => a.content_eq(b),
         }
+    }
+}
+
+impl ContentEq for ETSPackageDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.name, &other.name)
+    }
+}
+
+impl ContentEq for ETSInstanceOfExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.left, &other.left)
+            && ContentEq::content_eq(&self.right, &other.right)
+    }
+}
+
+impl ContentEq for ETSNewClassInstanceExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+            && ContentEq::content_eq(&self.arguments, &other.arguments)
+            && ContentEq::content_eq(&self.has_arguments, &other.has_arguments)
+    }
+}
+
+impl ContentEq for ETSNewArrayInstanceExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+            && ContentEq::content_eq(&self.dimension, &other.dimension)
+            && ContentEq::content_eq(&self.initializer, &other.initializer)
+    }
+}
+
+impl ContentEq for ETSNewMultiDimArrayInstanceExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+            && ContentEq::content_eq(&self.dimensions, &other.dimensions)
+    }
+}
+
+impl ContentEq for ETSTrailingBlockExpression<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.call, &other.call)
+            && ContentEq::content_eq(&self.block, &other.block)
+            && ContentEq::content_eq(&self.is_trailing_call, &other.is_trailing_call)
+            && ContentEq::content_eq(&self.is_block_on_new_line, &other.is_block_on_new_line)
+            && ContentEq::content_eq(&self.has_trailing_comma, &other.has_trailing_comma)
+    }
+}
+
+impl ContentEq for ETSOverloadDeclarationKind {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentEq for ETSOverloadDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.decorators, &other.decorators)
+            && ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.overloads, &other.overloads)
+            && ContentEq::content_eq(&self.kind, &other.kind)
+            && ContentEq::content_eq(&self.accessibility, &other.accessibility)
+            && ContentEq::content_eq(&self.r#static, &other.r#static)
+            && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
+            && ContentEq::content_eq(&self.r#final, &other.r#final)
+            && ContentEq::content_eq(&self.native, &other.native)
+            && ContentEq::content_eq(&self.declare, &other.declare)
     }
 }

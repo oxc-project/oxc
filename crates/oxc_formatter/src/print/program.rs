@@ -11,7 +11,10 @@ use crate::{
     formatter::{prelude::*, trivia::FormatTrailingComments},
     ir_transform::sort_imports_chunk,
     print::semicolon::OptionalSemicolon,
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    utils::{
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
+        suppressed::FormatSuppressedNode,
+    },
     write,
 };
 
@@ -19,6 +22,16 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Static ETS follows es2panda rather than a Prettier formatting contract. Until oxfmt has
+        // such a contract, preserve an explicitly selected static ETS file byte-for-byte (apart
+        // from the configured line-ending normalization) instead of silently dropping syntax such
+        // as `final`, `native`, named constructors, enum underlying types, or annotation `=` values.
+        // ArkUI/ArkTS 1.1 `.ets` files use `SourceType::ets()` and continue through the formatter.
+        if f.context().source_type().is_ets_static() {
+            FormatSuppressedNode(self.span()).fmt(f);
+            return;
+        }
+
         let format_trailing_comments = format_with(|f| {
             write!(
                 f,

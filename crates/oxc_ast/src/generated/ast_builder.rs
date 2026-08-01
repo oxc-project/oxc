@@ -1569,6 +1569,171 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build an [`Expression::CharLiteral`].
+    ///
+    /// This node contains a [`CharLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_char_literal(
+        self,
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+    ) -> Expression<'a> {
+        Expression::CharLiteral(self.alloc_char_literal(span, value, raw))
+    }
+
+    /// Build an [`Expression::ETSTrailingBlockExpression`].
+    ///
+    /// This node contains an [`ETSTrailingBlockExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_ets_trailing_block<T1, T2>(
+        self,
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+    ) -> Expression<'a>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        Expression::ETSTrailingBlockExpression(self.alloc_ets_trailing_block_expression(
+            span,
+            call,
+            block,
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+        ))
+    }
+
+    /// Build an [`Expression::ETSInstanceOfExpression`].
+    ///
+    /// This node contains an [`ETSInstanceOfExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_ets_instance_of(
+        self,
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+    ) -> Expression<'a> {
+        Expression::ETSInstanceOfExpression(
+            self.alloc_ets_instance_of_expression(span, left, right),
+        )
+    }
+
+    /// Build an [`Expression::ETSNewClassInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewClassInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_ets_new_class_instance(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: ArenaVec<'a, Argument<'a>>,
+        has_arguments: bool,
+    ) -> Expression<'a> {
+        Expression::ETSNewClassInstanceExpression(self.alloc_ets_new_class_instance_expression(
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+        ))
+    }
+
+    /// Build an [`Expression::ETSNewArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_ets_new_array_instance(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+    ) -> Expression<'a> {
+        Expression::ETSNewArrayInstanceExpression(self.alloc_ets_new_array_instance_expression(
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+        ))
+    }
+
+    /// Build an [`Expression::ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// This node contains an [`ETSNewMultiDimArrayInstanceExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn expression_ets_new_multi_dim_array_instance(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: ArenaVec<'a, Expression<'a>>,
+    ) -> Expression<'a> {
+        Expression::ETSNewMultiDimArrayInstanceExpression(
+            self.alloc_ets_new_multi_dim_array_instance_expression(
+                span,
+                type_annotation,
+                dimensions,
+            ),
+        )
+    }
+
     /// Build an [`IdentifierName`].
     ///
     /// If you want the built node to be allocated in the memory arena,
@@ -4654,6 +4819,25 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`Statement::ETSPackageDeclaration`].
+    ///
+    /// This node contains an [`ETSPackageDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn statement_ets_package_declaration(
+        self,
+        span: Span,
+        name: ArenaVec<'a, IdentifierName<'a>>,
+    ) -> Statement<'a> {
+        Statement::ETSPackageDeclaration(self.alloc_ets_package_declaration(span, name))
+    }
+
     /// Build a [`Directive`].
     ///
     /// ## Parameters
@@ -5663,6 +5847,55 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`Declaration::ETSOverloadDeclaration`].
+    ///
+    /// This node contains an [`ETSOverloadDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn declaration_ets_overload(
+        self,
+        span: Span,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        overloads: ArenaVec<'a, Expression<'a>>,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+    ) -> Declaration<'a> {
+        Declaration::ETSOverloadDeclaration(self.alloc_ets_overload_declaration(
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
+        ))
+    }
+
     /// Build a [`VariableDeclaration`].
     ///
     /// If you want the built node to be allocated in the memory arena,
@@ -5684,7 +5917,14 @@ impl<'a> AstBuilder<'a> {
         declarations: ArenaVec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> VariableDeclaration<'a> {
-        VariableDeclaration { node_id: Default::default(), span, kind, declarations, declare }
+        VariableDeclaration {
+            node_id: Default::default(),
+            span,
+            decorators: Default::default(),
+            kind,
+            declarations,
+            declare,
+        }
     }
 
     /// Build a [`VariableDeclaration`], and store it in the memory arena.
@@ -7428,6 +7668,8 @@ impl<'a> AstBuilder<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(self.allocator()),
             this_param: this_param.into_in(self.allocator()),
             params: params.into_in(self.allocator()),
@@ -7552,6 +7794,8 @@ impl<'a> AstBuilder<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(self.allocator()),
             this_param: this_param.into_in(self.allocator()),
             params: params.into_in(self.allocator()),
@@ -7683,6 +7927,8 @@ impl<'a> AstBuilder<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(self.allocator()),
             this_param: this_param.into_in(self.allocator()),
             params: params.into_in(self.allocator()),
@@ -7822,6 +8068,8 @@ impl<'a> AstBuilder<'a> {
             generator,
             r#async,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
             type_parameters: type_parameters.into_in(self.allocator()),
             this_param: this_param.into_in(self.allocator()),
             params: params.into_in(self.allocator()),
@@ -8417,6 +8665,9 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Default::default(),
         }
     }
@@ -8534,6 +8785,9 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -8874,6 +9128,134 @@ impl<'a> AstBuilder<'a> {
         ))
     }
 
+    /// Build a [`ClassElement::ETSOverloadDeclaration`].
+    ///
+    /// This node contains an [`ETSOverloadDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn class_element_ets_overload_declaration(
+        self,
+        span: Span,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        overloads: ArenaVec<'a, Expression<'a>>,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+    ) -> ClassElement<'a> {
+        ClassElement::ETSOverloadDeclaration(self.alloc_ets_overload_declaration(
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
+        ))
+    }
+
+    /// Build a [`ClassElement::TSCallSignatureDeclaration`].
+    ///
+    /// This node contains a [`TSCallSignatureDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`
+    /// * `this_param`
+    /// * `params`
+    /// * `return_type`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn class_element_ts_call_signature_declaration<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+    ) -> ClassElement<'a>
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        ClassElement::TSCallSignatureDeclaration(self.alloc_ts_call_signature_declaration(
+            span,
+            type_parameters,
+            this_param,
+            params,
+            return_type,
+        ))
+    }
+
+    /// Build a [`ClassElement::TSCallSignatureDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSCallSignatureDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_parameters`
+    /// * `this_param`
+    /// * `params`
+    /// * `return_type`
+    /// * `scope_id`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn class_element_ts_call_signature_declaration_with_scope_id<T1, T2, T3, T4>(
+        self,
+        span: Span,
+        type_parameters: T1,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        scope_id: ScopeId,
+    ) -> ClassElement<'a>
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<ArenaBox<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, ArenaBox<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        ClassElement::TSCallSignatureDeclaration(
+            self.alloc_ts_call_signature_declaration_with_scope_id(
+                span,
+                type_parameters,
+                this_param,
+                params,
+                return_type,
+                scope_id,
+            ),
+        )
+    }
+
     /// Build a [`MethodDefinition`].
     ///
     /// If you want the built node to be allocated in the memory arena,
@@ -8925,6 +9307,8 @@ impl<'a> AstBuilder<'a> {
             r#override,
             optional,
             accessibility,
+            r#final: Default::default(),
+            native: Default::default(),
         }
     }
 
@@ -10132,6 +10516,8 @@ impl<'a> AstBuilder<'a> {
             source,
             export_kind,
             with_clause: with_clause.into_in(self.allocator()),
+            ets_single: Default::default(),
+            ets_default: Default::default(),
         }
     }
 
@@ -10215,6 +10601,8 @@ impl<'a> AstBuilder<'a> {
             source,
             export_kind,
             with_clause: with_clause.into_in(self.allocator()),
+            ets_single: Default::default(),
+            ets_default: Default::default(),
         }
     }
 
@@ -11346,6 +11734,45 @@ impl<'a> AstBuilder<'a> {
             self.string_literal_with_lone_surrogates(span, value, raw, lone_surrogates),
             &self,
         )
+    }
+
+    /// Build a [`CharLiteral`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_char_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn char_literal(self, span: Span, value: u32, raw: Option<Str<'a>>) -> CharLiteral<'a> {
+        CharLiteral { node_id: Default::default(), span, value, raw }
+    }
+
+    /// Build a [`CharLiteral`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::char_literal`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code.
+    /// * `value`: The UTF-16 code unit represented by this literal.
+    /// * `raw`: The character literal as it appears in source code.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_char_literal(
+        self,
+        span: Span,
+        value: u32,
+        raw: Option<Str<'a>>,
+    ) -> ArenaBox<'a, CharLiteral<'a>> {
+        ArenaBox::new_in(self.char_literal(span, value, raw), &self)
     }
 
     /// Build a [`BigIntLiteral`].
@@ -12677,7 +13104,16 @@ impl<'a> AstBuilder<'a> {
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration { node_id: Default::default(), span, id, body, r#const, declare }
+        TSEnumDeclaration {
+            node_id: Default::default(),
+            span,
+            decorators: Default::default(),
+            id,
+            underlying_type: Default::default(),
+            body,
+            r#const,
+            declare,
+        }
     }
 
     /// Build a [`TSEnumDeclaration`], and store it in the memory arena.
@@ -15406,6 +15842,7 @@ impl<'a> AstBuilder<'a> {
         TSTypeAliasDeclaration {
             node_id: Default::default(),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(self.allocator()),
             type_annotation,
@@ -15477,6 +15914,7 @@ impl<'a> AstBuilder<'a> {
         TSTypeAliasDeclaration {
             node_id: Default::default(),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(self.allocator()),
             type_annotation,
@@ -15585,6 +16023,7 @@ impl<'a> AstBuilder<'a> {
         TSInterfaceDeclaration {
             node_id: Default::default(),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(self.allocator()),
             extends,
@@ -15663,6 +16102,7 @@ impl<'a> AstBuilder<'a> {
         TSInterfaceDeclaration {
             node_id: Default::default(),
             span,
+            decorators: Default::default(),
             id,
             type_parameters: type_parameters.into_in(self.allocator()),
             extends,
@@ -16149,6 +16589,168 @@ impl<'a> AstBuilder<'a> {
             params,
             return_type,
             scope_id,
+        ))
+    }
+
+    /// Build a [`TSSignature::MethodDefinition`].
+    ///
+    /// This node contains a [`MethodDefinition`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`: Method definition type
+    /// * `decorators`
+    /// * `key`
+    /// * `value`
+    /// * `kind`
+    /// * `computed`
+    /// * `static`
+    /// * `override`
+    /// * `optional`
+    /// * `accessibility`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ts_signature_method_definition<T1>(
+        self,
+        span: Span,
+        r#type: MethodDefinitionType,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        value: T1,
+        kind: MethodDefinitionKind,
+        computed: bool,
+        r#static: bool,
+        r#override: bool,
+        optional: bool,
+        accessibility: Option<TSAccessibility>,
+    ) -> TSSignature<'a>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, Function<'a>>>,
+    {
+        TSSignature::MethodDefinition(self.alloc_method_definition(
+            span,
+            r#type,
+            decorators,
+            key,
+            value,
+            kind,
+            computed,
+            r#static,
+            r#override,
+            optional,
+            accessibility,
+        ))
+    }
+
+    /// Build a [`TSSignature::PropertyDefinition`].
+    ///
+    /// This node contains a [`PropertyDefinition`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type`
+    /// * `decorators`: Decorators applied to the property.
+    /// * `key`: The expression used to declare the property.
+    /// * `type_annotation`: Type annotation on the property.
+    /// * `value`: Initialized value in the declaration.
+    /// * `computed`: Property was declared with a computed key
+    /// * `static`: Property was declared with a `static` modifier
+    /// * `declare`: Property is declared with a `declare` modifier.
+    /// * `override`
+    /// * `optional`: `true` when created with an optional modifier (`?`)
+    /// * `definite`
+    /// * `readonly`: `true` when declared with a `readonly` modifier
+    /// * `accessibility`: Accessibility modifier.
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ts_signature_property_definition<T1>(
+        self,
+        span: Span,
+        r#type: PropertyDefinitionType,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        type_annotation: T1,
+        value: Option<Expression<'a>>,
+        computed: bool,
+        r#static: bool,
+        declare: bool,
+        r#override: bool,
+        optional: bool,
+        definite: bool,
+        readonly: bool,
+        accessibility: Option<TSAccessibility>,
+    ) -> TSSignature<'a>
+    where
+        T1: IntoIn<'a, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>>,
+    {
+        TSSignature::PropertyDefinition(self.alloc_property_definition(
+            span,
+            r#type,
+            decorators,
+            key,
+            type_annotation,
+            value,
+            computed,
+            r#static,
+            declare,
+            r#override,
+            optional,
+            definite,
+            readonly,
+            accessibility,
+        ))
+    }
+
+    /// Build a [`TSSignature::ETSOverloadDeclaration`].
+    ///
+    /// This node contains an [`ETSOverloadDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ts_signature_ets_overload_declaration(
+        self,
+        span: Span,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        overloads: ArenaVec<'a, Expression<'a>>,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+    ) -> TSSignature<'a> {
+        TSSignature::ETSOverloadDeclaration(self.alloc_ets_overload_declaration(
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
         ))
     }
 
@@ -18903,6 +19505,9 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Default::default(),
         }
     }
@@ -19014,6 +19619,9 @@ impl<'a> AstBuilder<'a> {
             body: body.into_in(self.allocator()),
             r#abstract,
             declare,
+            r#final: Default::default(),
+            native: Default::default(),
+            r#static: Default::default(),
             scope_id: Cell::new(Some(scope_id)),
         }
     }
@@ -19377,5 +19985,441 @@ impl<'a> AstBuilder<'a> {
         body: ArenaVec<'a, AnnotationElement<'a>>,
     ) -> ArenaBox<'a, AnnotationBody<'a>> {
         ArenaBox::new_in(self.annotation_body(span, body), &self)
+    }
+
+    /// Build an [`ETSPackageDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ets_package_declaration`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ets_package_declaration(
+        self,
+        span: Span,
+        name: ArenaVec<'a, IdentifierName<'a>>,
+    ) -> ETSPackageDeclaration<'a> {
+        ETSPackageDeclaration { node_id: Default::default(), span, name }
+    }
+
+    /// Build an [`ETSPackageDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ets_package_declaration`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_ets_package_declaration(
+        self,
+        span: Span,
+        name: ArenaVec<'a, IdentifierName<'a>>,
+    ) -> ArenaBox<'a, ETSPackageDeclaration<'a>> {
+        ArenaBox::new_in(self.ets_package_declaration(span, name), &self)
+    }
+
+    /// Build an [`ETSInstanceOfExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ets_instance_of_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ets_instance_of_expression(
+        self,
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+    ) -> ETSInstanceOfExpression<'a> {
+        ETSInstanceOfExpression { node_id: Default::default(), span, left, right }
+    }
+
+    /// Build an [`ETSInstanceOfExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ets_instance_of_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_ets_instance_of_expression(
+        self,
+        span: Span,
+        left: Expression<'a>,
+        right: TSType<'a>,
+    ) -> ArenaBox<'a, ETSInstanceOfExpression<'a>> {
+        ArenaBox::new_in(self.ets_instance_of_expression(span, left, right), &self)
+    }
+
+    /// Build an [`ETSNewClassInstanceExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ets_new_class_instance_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ets_new_class_instance_expression(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: ArenaVec<'a, Argument<'a>>,
+        has_arguments: bool,
+    ) -> ETSNewClassInstanceExpression<'a> {
+        ETSNewClassInstanceExpression {
+            node_id: Default::default(),
+            span,
+            type_annotation,
+            arguments,
+            has_arguments,
+        }
+    }
+
+    /// Build an [`ETSNewClassInstanceExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ets_new_class_instance_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `arguments`
+    /// * `has_arguments`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_ets_new_class_instance_expression(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        arguments: ArenaVec<'a, Argument<'a>>,
+        has_arguments: bool,
+    ) -> ArenaBox<'a, ETSNewClassInstanceExpression<'a>> {
+        ArenaBox::new_in(
+            self.ets_new_class_instance_expression(span, type_annotation, arguments, has_arguments),
+            &self,
+        )
+    }
+
+    /// Build an [`ETSNewArrayInstanceExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ets_new_array_instance_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ets_new_array_instance_expression(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+    ) -> ETSNewArrayInstanceExpression<'a> {
+        ETSNewArrayInstanceExpression {
+            node_id: Default::default(),
+            span,
+            type_annotation,
+            dimension,
+            initializer,
+        }
+    }
+
+    /// Build an [`ETSNewArrayInstanceExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ets_new_array_instance_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimension`
+    /// * `initializer`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_ets_new_array_instance_expression(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimension: Expression<'a>,
+        initializer: Option<Expression<'a>>,
+    ) -> ArenaBox<'a, ETSNewArrayInstanceExpression<'a>> {
+        ArenaBox::new_in(
+            self.ets_new_array_instance_expression(span, type_annotation, dimension, initializer),
+            &self,
+        )
+    }
+
+    /// Build an [`ETSNewMultiDimArrayInstanceExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ets_new_multi_dim_array_instance_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ets_new_multi_dim_array_instance_expression(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: ArenaVec<'a, Expression<'a>>,
+    ) -> ETSNewMultiDimArrayInstanceExpression<'a> {
+        ETSNewMultiDimArrayInstanceExpression {
+            node_id: Default::default(),
+            span,
+            type_annotation,
+            dimensions,
+        }
+    }
+
+    /// Build an [`ETSNewMultiDimArrayInstanceExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ets_new_multi_dim_array_instance_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `type_annotation`
+    /// * `dimensions`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_ets_new_multi_dim_array_instance_expression(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        dimensions: ArenaVec<'a, Expression<'a>>,
+    ) -> ArenaBox<'a, ETSNewMultiDimArrayInstanceExpression<'a>> {
+        ArenaBox::new_in(
+            self.ets_new_multi_dim_array_instance_expression(span, type_annotation, dimensions),
+            &self,
+        )
+    }
+
+    /// Build an [`ETSTrailingBlockExpression`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ets_trailing_block_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ets_trailing_block_expression<T1, T2>(
+        self,
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+    ) -> ETSTrailingBlockExpression<'a>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        ETSTrailingBlockExpression {
+            node_id: Default::default(),
+            span,
+            call: call.into_in(self.allocator()),
+            block: block.into_in(self.allocator()),
+            is_trailing_call,
+            is_block_on_new_line,
+            has_trailing_comma,
+        }
+    }
+
+    /// Build an [`ETSTrailingBlockExpression`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ets_trailing_block_expression`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `call`
+    /// * `block`
+    /// * `is_trailing_call`
+    /// * `is_block_on_new_line`
+    /// * `has_trailing_comma`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_ets_trailing_block_expression<T1, T2>(
+        self,
+        span: Span,
+        call: T1,
+        block: T2,
+        is_trailing_call: bool,
+        is_block_on_new_line: bool,
+        has_trailing_comma: bool,
+    ) -> ArenaBox<'a, ETSTrailingBlockExpression<'a>>
+    where
+        T1: IntoIn<'a, ArenaBox<'a, CallExpression<'a>>>,
+        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
+    {
+        ArenaBox::new_in(
+            self.ets_trailing_block_expression(
+                span,
+                call,
+                block,
+                is_trailing_call,
+                is_block_on_new_line,
+                has_trailing_comma,
+            ),
+            &self,
+        )
+    }
+
+    /// Build an [`ETSOverloadDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_ets_overload_declaration`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn ets_overload_declaration(
+        self,
+        span: Span,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        overloads: ArenaVec<'a, Expression<'a>>,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+    ) -> ETSOverloadDeclaration<'a> {
+        ETSOverloadDeclaration {
+            node_id: Default::default(),
+            span,
+            decorators,
+            key,
+            overloads,
+            kind,
+            accessibility,
+            r#static,
+            r#abstract,
+            r#final,
+            native,
+            declare,
+        }
+    }
+
+    /// Build an [`ETSOverloadDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::ets_overload_declaration`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `decorators`: Annotations preceding the declaration.
+    /// * `key`: Managed overload name, or the `constructor` identifier.
+    /// * `overloads`: Functions or named constructors participating in the overload.
+    /// * `kind`
+    /// * `accessibility`
+    /// * `static`
+    /// * `abstract`
+    /// * `final`
+    /// * `native`
+    /// * `declare`
+    #[deprecated(
+        note = "Migrate to new `AstBuilder` interface. See https://github.com/oxc-project/oxc/issues/23043"
+    )]
+    #[inline]
+    pub fn alloc_ets_overload_declaration(
+        self,
+        span: Span,
+        decorators: ArenaVec<'a, Decorator<'a>>,
+        key: PropertyKey<'a>,
+        overloads: ArenaVec<'a, Expression<'a>>,
+        kind: ETSOverloadDeclarationKind,
+        accessibility: Option<TSAccessibility>,
+        r#static: bool,
+        r#abstract: bool,
+        r#final: bool,
+        native: bool,
+        declare: bool,
+    ) -> ArenaBox<'a, ETSOverloadDeclaration<'a>> {
+        ArenaBox::new_in(
+            self.ets_overload_declaration(
+                span,
+                decorators,
+                key,
+                overloads,
+                kind,
+                accessibility,
+                r#static,
+                r#abstract,
+                r#final,
+                native,
+                declare,
+            ),
+            &self,
+        )
     }
 }

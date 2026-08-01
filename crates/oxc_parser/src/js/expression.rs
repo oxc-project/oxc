@@ -109,6 +109,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.check_identifier(cur, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.check_ets_binding_name(&name, span);
         BindingIdentifier::new(span, name, self)
     }
 
@@ -237,6 +238,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // AsyncFunctionExpression, AsyncGeneratorExpression
         if self.at_function_with_async() {
             let span = self.start_span();
+            if self.source_type.is_ets_static() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Function expressions",
+                    self.cur_token().span(),
+                ));
+            }
             let r#async = self.eat(Kind::Async);
             return self.parse_function_expression(span, r#async);
         }
@@ -249,11 +256,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // ObjectLiteral
             Kind::LCurly => Expression::ObjectExpression(self.parse_object_expression()),
             // ClassExpression
-            Kind::Class => self.parse_class_expression(
-                self.start_span(),
-                &Modifiers::empty(),
-                ArenaVec::new_in(self),
-            ),
+            Kind::Class => {
+                if self.source_type.is_ets_static() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Class expressions",
+                        self.cur_token().span(),
+                    ));
+                }
+                self.parse_class_expression(
+                    self.start_span(),
+                    &Modifiers::empty(),
+                    ArenaVec::new_in(self),
+                )
+            }
             // This
             Kind::This => self.parse_this_expression(),
             // TemplateLiteral
@@ -576,6 +591,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
+            if self.source_type.is_ets_static() && !self.ctx.ets_allows_sequence() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "The comma operator outside a `for` statement",
+                    expr_span,
+                ));
+            }
             Expression::new_sequence_expression(expr_span, expressions, self)
         };
 
@@ -618,6 +639,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let lit = self.parse_literal_string();
                 Expression::StringLiteral(self.alloc(lit))
             }
+            Kind::CharLiteral => Expression::CharLiteral(self.parse_ets_char_literal()),
             Kind::True | Kind::False => Expression::BooleanLiteral(self.parse_literal_boolean()),
             Kind::Null => Expression::NullLiteral(self.parse_literal_null()),
             Kind::DecimalBigInt | Kind::BinaryBigInt | Kind::OctalBigInt | Kind::HexBigInt => {
@@ -639,6 +661,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         BooleanLiteral::boxed(self.end_span(span), value, self)
     }
 
+    fn parse_ets_char_literal(&mut self) -> ArenaBox<'a, CharLiteral<'a>> {
+        let token = self.cur_token();
+        let span = token.span();
+        let raw = self.cur_src();
+        let value = self.cur_string();
+        let mut utf16 = value.encode_utf16();
+        let first = utf16.next();
+        let second = utf16.next();
+        let value = match (first, second) {
+            (Some(value), None) => u32::from(value),
+            _ => {
+                self.error(diagnostics::ets_char_literal_length(span));
+                0
+            }
+        };
+        self.bump_any();
+        CharLiteral::boxed(span, value, Some(Str::from(raw)), self)
+    }
+
     pub(crate) fn parse_literal_null(&mut self) -> ArenaBox<'a, NullLiteral> {
         let span = self.cur_token().span();
         self.bump_any(); // bump `null`
@@ -649,7 +690,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let token = self.cur_token();
         let span = token.span();
         let kind = token.kind();
-        let src = self.cur_src();
+        let raw = self.cur_src();
+        let src = if self.source_type.is_ets_static() {
+            raw.strip_suffix('f').unwrap_or(raw)
+        } else {
+            raw
+        };
         let has_separator = token.has_separator();
         let value = match kind {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
@@ -680,7 +726,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => return self.unexpected(),
         };
         self.bump_any();
-        NumericLiteral::boxed(span, value, Some(Str::from(src)), base, self)
+        NumericLiteral::boxed(span, value, Some(Str::from(raw)), base, self)
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> ArenaBox<'a, BigIntLiteral<'a>> {
@@ -801,7 +847,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_array_expression_element(&mut self) -> ArrayExpressionElement<'a> {
         match self.cur_kind() {
-            Kind::Comma => self.parse_elision(),
+            Kind::Comma => {
+                if self.source_type.is_ets_static() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Omitted array elements",
+                        self.cur_token().span(),
+                    ));
+                }
+                self.parse_elision()
+            }
             Kind::Dot3 => ArrayExpressionElement::SpreadElement(self.parse_spread_element()),
             _ => ArrayExpressionElement::from(self.parse_assignment_expression_or_higher()),
         }
@@ -1223,6 +1277,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             MemberExpression::new_private_field_expression(span, lhs, private_ident, optional, self)
         } else {
             let ident = self.parse_identifier_name();
+            if self.source_type.is_ets_static() && ident.name == "prototype" {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Runtime prototype access",
+                    ident.span,
+                ));
+            }
             MemberExpression::new_static_member_expression(
                 self.end_span(lhs_span),
                 lhs,
@@ -1242,6 +1302,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs: Expression<'a>,
         optional: bool,
     ) -> Expression<'a> {
+        self.check_ets_type_value(&lhs);
         self.bump_any(); // advance `[`
         let property = self.context_add(Context::In, Self::parse_expr);
         self.expect(Kind::RBrack);
@@ -1271,6 +1332,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.bump_any();
                 self.fatal_error(diagnostics::new_target(self.end_span(span)))
             };
+        }
+
+        if self.source_type.is_ets_static() {
+            return self.parse_ets_new_expression(span);
         }
 
         let rhs_span = self.start_span();
@@ -1335,8 +1400,105 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         Expression::new_new_expression(span, callee, type_arguments, arguments, self)
     }
 
+    fn parse_ets_new_expression(&mut self, span: u32) -> Expression<'a> {
+        let type_annotation = self.parse_non_array_type();
+
+        if self.at(Kind::LBrack) {
+            let mut dimensions = ArenaVec::with_capacity_in(1, self);
+            while self.eat(Kind::LBrack) {
+                if self.at(Kind::RBrack) {
+                    let error_span = self.cur_token().span();
+                    self.error(diagnostics::ets_array_dimension_required(error_span));
+                    dimensions.push(Expression::new_numeric_literal(
+                        error_span,
+                        0.0,
+                        None,
+                        NumberBase::Decimal,
+                        self,
+                    ));
+                } else {
+                    dimensions.push(
+                        self.context_add(Context::In, Self::parse_assignment_expression_or_higher),
+                    );
+                }
+                self.expect(Kind::RBrack);
+            }
+
+            if self.at(Kind::LParen) {
+                let opening_span = self.cur_token().span();
+                self.expect(Kind::LParen);
+                let (mut initializers, _) = self.context_add(Context::In, |p| {
+                    p.parse_delimited_list(
+                        Kind::RParen,
+                        Kind::Comma,
+                        opening_span,
+                        Self::parse_assignment_expression_or_higher,
+                    )
+                });
+                self.expect(Kind::RParen);
+                if initializers.len() != 1 {
+                    self.error(diagnostics::ets_array_initializer_count(self.end_span(span)));
+                }
+                let initializer = (!initializers.is_empty()).then(|| initializers.remove(0));
+
+                if dimensions.len() == 1 {
+                    return Expression::ETSNewArrayInstanceExpression(
+                        ETSNewArrayInstanceExpression::boxed(
+                            self.end_span(span),
+                            type_annotation,
+                            dimensions.remove(0),
+                            initializer,
+                            self,
+                        ),
+                    );
+                }
+
+                self.error(diagnostics::ets_multidimensional_array(self.end_span(span)));
+                return Expression::ETSNewMultiDimArrayInstanceExpression(
+                    ETSNewMultiDimArrayInstanceExpression::boxed(
+                        self.end_span(span),
+                        type_annotation,
+                        dimensions,
+                        self,
+                    ),
+                );
+            }
+
+            // Match es2panda's error-recovery shape: after reporting a missing
+            // array initializer, it falls through and produces a class-instance
+            // node for the parsed type. The invalid dimensions are discarded.
+            self.error(diagnostics::ets_array_initializer_required(self.end_span(span)));
+        }
+
+        let has_arguments = self.at(Kind::LParen);
+        let arguments = if has_arguments {
+            let opening_span = self.cur_token().span();
+            self.expect(Kind::LParen);
+            let (arguments, _) = self.context_add(Context::In, |p| {
+                p.parse_delimited_list(
+                    Kind::RParen,
+                    Kind::Comma,
+                    opening_span,
+                    Self::parse_call_argument,
+                )
+            });
+            self.expect(Kind::RParen);
+            arguments
+        } else {
+            ArenaVec::new_in(self)
+        };
+
+        Expression::ETSNewClassInstanceExpression(ETSNewClassInstanceExpression::boxed(
+            self.end_span(span),
+            type_annotation,
+            arguments,
+            has_arguments,
+            self,
+        ))
+    }
+
     /// Section 13.3 Call Expression
-    fn parse_call_expression_rest(
+    pub(super) fn parse_call_expression_rest(
         &mut self,
         lhs_span: u32,
         lhs: Expression<'a>,
@@ -1429,7 +1591,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let mut argument_index = 0usize;
-        let (call_arguments, _) = self.context(Context::In, Context::Decorator, |p| {
+        let (call_arguments, trailing_comma) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(Kind::RParen, Kind::Comma, opening_span, |p| {
                 let is_ui_callback = match arkui_argument_context {
                     ArkUIArgumentContext::None => false,
@@ -1459,14 +1621,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        Expression::new_call_expression(
+        let call = Expression::new_call_expression(
             self.end_span(lhs_span),
             lhs,
             type_parameters,
             call_arguments,
             optional,
             self,
-        )
+        );
+
+        if self.source_type.is_ets_static() && self.at(Kind::LCurly) {
+            let is_block_on_new_line = self.cur_token().is_on_new_line();
+            let block = self.parse_block();
+            let Expression::CallExpression(call) = call else { unreachable!() };
+            return Expression::new_ets_trailing_block_expression(
+                self.end_span(lhs_span),
+                call,
+                block,
+                false,
+                is_block_on_new_line,
+                trailing_comma.is_some(),
+                self,
+            );
+        }
+
+        call
     }
 
     fn parse_call_argument(&mut self) -> Argument<'a> {
@@ -1485,6 +1664,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let operator = map_update_operator(kind);
             self.bump_any();
             let argument = self.parse_unary_expression_or_higher(lhs_span);
+            self.check_ets_type_value(&argument);
             let argument = SimpleAssignmentTarget::cover(argument, self);
             return Expression::new_update_expression(
                 self.end_span(lhs_span),
@@ -1506,6 +1686,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if post_kind.is_update_operator() && !self.cur_token().is_on_new_line() {
             let operator = map_update_operator(post_kind);
             self.bump_any();
+            self.check_ets_type_value(&lhs);
             let lhs = SimpleAssignmentTarget::cover(lhs, self);
             return Expression::new_update_expression(
                 self.end_span(span),
@@ -1650,6 +1831,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     break;
                 }
                 self.bump_any();
+                if self.source_type.is_ets_static()
+                    && (kind == Kind::Satisfies || self.at(Kind::Const))
+                {
+                    let feature = if kind == Kind::Satisfies {
+                        "The `satisfies` operator"
+                    } else {
+                        "`as const` assertions"
+                    };
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        feature,
+                        self.cur_token().span(),
+                    ));
+                }
                 let type_annotation = self.parse_ts_type();
                 let span = self.end_span(lhs_span);
                 lhs = if kind == Kind::As {
@@ -1678,12 +1872,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
 
             self.bump_any(); // bump operator
+
+            if self.source_type.is_ets_static() && kind == Kind::Instanceof {
+                self.check_ets_type_value(&lhs);
+                let right = self.parse_ts_type();
+                lhs = Expression::ETSInstanceOfExpression(ETSInstanceOfExpression::boxed(
+                    self.end_span(lhs_span),
+                    lhs,
+                    right,
+                    self,
+                ));
+                last_operand_precedence = Some(left_precedence);
+                continue;
+            }
+
             let rhs_parenthesized = self.at(Kind::LParen);
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_span);
                 let op = map_logical_operator(kind);
+                if self.source_type.is_ets_static() {
+                    self.check_ets_type_value(&lhs);
+                    self.check_ets_type_value(&rhs);
+                }
                 // check mixed coalesce
                 if op == LogicalOperator::Coalesce {
                     let mut maybe_mixed_coalesce_expr = None;
@@ -1706,6 +1918,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else if kind.is_binary_operator() {
                 let span = self.end_span(lhs_span);
                 let op = map_binary_operator(kind);
+                if self.source_type.is_ets_static() {
+                    self.check_ets_type_value(&lhs);
+                    self.check_ets_type_value(&rhs);
+                }
+                if self.source_type.is_ets_static()
+                    && matches!(op, BinaryOperator::Division | BinaryOperator::Remainder)
+                    && rhs.is_number_0()
+                    && Self::ets_expression_is_integer(&lhs, self.source_text)
+                {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Division by zero in integer arithmetic",
+                        rhs.span(),
+                    ));
+                }
                 if op == BinaryOperator::Exponential && !lhs_parenthesized {
                     let diagnostic = match &lhs {
                         Expression::AwaitExpression(_) => Some(
@@ -1734,6 +1960,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         lhs
+    }
+
+    fn ets_expression_is_integer(expression: &Expression<'a>, source_text: &str) -> bool {
+        match expression {
+            Expression::NumericLiteral(literal) => {
+                let text = &source_text[literal.span.start as usize..literal.span.end as usize];
+                !text.bytes().any(|byte| matches!(byte, b'.' | b'e' | b'E' | b'f'))
+            }
+            Expression::UnaryExpression(unary) => {
+                Self::ets_expression_is_integer(&unary.argument, source_text)
+            }
+            Expression::BinaryExpression(binary) => {
+                Self::ets_expression_is_integer(&binary.left, source_text)
+                    && Self::ets_expression_is_integer(&binary.right, source_text)
+            }
+            Expression::ParenthesizedExpression(parenthesized) => {
+                Self::ets_expression_is_integer(&parenthesized.expression, source_text)
+            }
+            _ => false,
+        }
     }
 
     /// Section 13.14 Conditional Expression
@@ -1919,6 +2165,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let operator = map_assignment_operator(self.cur_kind());
+        if self.source_type.is_ets_static() {
+            self.check_ets_type_value(&lhs);
+        }
+        if self.source_type.is_ets_static() && operator.is_logical() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Logical assignment operators",
+                self.cur_token().span(),
+            ));
+        }
         // 13.15.5 Destructuring Assignment
         // LeftHandSideExpression = AssignmentExpression
         // is converted to
@@ -1941,6 +2196,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any();
         let right =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+        if self.source_type.is_ets_static() {
+            self.check_ets_type_value(&right);
+        }
         Expression::new_assignment_expression(self.end_span(span), operator, left, right, self)
     }
 
@@ -1950,6 +2208,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         first_expression: Expression<'a>,
     ) -> Expression<'a> {
+        if self.source_type.is_ets_static() && !self.ctx.ets_allows_sequence() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "The comma operator outside a `for` statement",
+                self.cur_token().span(),
+            ));
+        }
         let mut expressions = ArenaVec::with_capacity_in(2, self);
         expressions.push(first_expression);
         while self.eat(Kind::Comma) {
@@ -2077,6 +2341,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any(); // bump @
         let expr = self.context_add(Context::Decorator, Self::parse_lhs_expression_or_higher);
+        if self.source_type.is_ets_static() {
+            self.check_ets_annotation_usage(&expr);
+        }
         Decorator::new(self.end_span(span), expr, self)
     }
 

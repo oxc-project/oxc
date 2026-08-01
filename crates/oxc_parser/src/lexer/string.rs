@@ -266,6 +266,11 @@ impl<'a, C: Config> Lexer<'a, C> {
                 start += 1;
                 end -= 1;
             }
+            Kind::CharLiteral => {
+                // Omit the `c'` prefix and closing quote.
+                start += 2;
+                end -= 1;
+            }
             Kind::PrivateIdentifier => {
                 // Omit leading `#`
                 start += 1;

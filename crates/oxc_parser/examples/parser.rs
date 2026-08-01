@@ -7,7 +7,7 @@
 //!
 //! Create a `test.js` file and run:
 //! ```bash
-//! cargo run -p oxc_parser --example parser [filename] [--ast] [--estree] [--comments]
+//! cargo run -p oxc_parser --example parser [filename] [--lang ets-static] [--ast] [--estree] [--comments]
 //! ```
 //!
 //! ## Options
@@ -15,6 +15,8 @@
 //! - `--ast`: Display the parsed AST structure
 //! - `--estree`: Display the ESTree representation
 //! - `--comments`: Display extracted comments
+//! - `--lang ets-static`: Explicitly select the static ETS grammar. A plain
+//!   `.ets` filename continues to select ArkUI/ArkTS 1.1.
 
 use std::{fs, path::Path};
 
@@ -37,16 +39,22 @@ fn main() -> Result<(), String> {
     let show_ast = args.contains("--ast");
     let show_estree = args.contains("--estree");
     let show_comments = args.contains("--comments");
+    let lang = args.opt_value_from_str::<_, String>("--lang").map_err(|error| error.to_string())?;
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
     // Read source file
     let path = Path::new(&name);
     let source_text = fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
-    let source_type = SourceType::from_path(path).unwrap();
+    let source_type = match lang.as_deref() {
+        Some("ets-static") => SourceType::ets_static(),
+        Some(lang) => return Err(format!("Unsupported language '{lang}'")),
+        None => SourceType::from_path(path).unwrap(),
+    };
 
     // Parse the source code
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, &source_text, source_type)
+        .with_source_path(path)
         .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })
         .parse();
     let mut program = ret.program;

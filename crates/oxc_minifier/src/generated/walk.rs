@@ -201,6 +201,26 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         Expression::LeadingDotExpression(node) => {
             walk_leading_dot_expression(traverser, (&mut **node) as *mut _, ctx)
         }
+        Expression::CharLiteral(node) => walk_char_literal(traverser, (&mut **node) as *mut _, ctx),
+        Expression::ETSTrailingBlockExpression(node) => {
+            walk_ets_trailing_block_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ETSInstanceOfExpression(node) => {
+            walk_ets_instance_of_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ETSNewClassInstanceExpression(node) => {
+            walk_ets_new_class_instance_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ETSNewArrayInstanceExpression(node) => {
+            walk_ets_new_array_instance_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Expression::ETSNewMultiDimArrayInstanceExpression(node) => {
+            walk_ets_new_multi_dim_array_instance_expression(
+                traverser,
+                (&mut **node) as *mut _,
+                ctx,
+            )
+        }
         Expression::ComputedMemberExpression(_)
         | Expression::StaticMemberExpression(_)
         | Expression::PrivateFieldExpression(_) => {
@@ -329,6 +349,12 @@ unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         | ArrayExpressionElement::V8IntrinsicExpression(_)
         | ArrayExpressionElement::ArkUIComponentExpression(_)
         | ArrayExpressionElement::LeadingDotExpression(_)
+        | ArrayExpressionElement::CharLiteral(_)
+        | ArrayExpressionElement::ETSTrailingBlockExpression(_)
+        | ArrayExpressionElement::ETSInstanceOfExpression(_)
+        | ArrayExpressionElement::ETSNewClassInstanceExpression(_)
+        | ArrayExpressionElement::ETSNewArrayInstanceExpression(_)
+        | ArrayExpressionElement::ETSNewMultiDimArrayInstanceExpression(_)
         | ArrayExpressionElement::ComputedMemberExpression(_)
         | ArrayExpressionElement::StaticMemberExpression(_)
         | ArrayExpressionElement::PrivateFieldExpression(_) => {
@@ -462,6 +488,12 @@ unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         | PropertyKey::V8IntrinsicExpression(_)
         | PropertyKey::ArkUIComponentExpression(_)
         | PropertyKey::LeadingDotExpression(_)
+        | PropertyKey::CharLiteral(_)
+        | PropertyKey::ETSTrailingBlockExpression(_)
+        | PropertyKey::ETSInstanceOfExpression(_)
+        | PropertyKey::ETSNewClassInstanceExpression(_)
+        | PropertyKey::ETSNewArrayInstanceExpression(_)
+        | PropertyKey::ETSNewMultiDimArrayInstanceExpression(_)
         | PropertyKey::ComputedMemberExpression(_)
         | PropertyKey::StaticMemberExpression(_)
         | PropertyKey::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
@@ -813,6 +845,12 @@ unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
         | Argument::V8IntrinsicExpression(_)
         | Argument::ArkUIComponentExpression(_)
         | Argument::LeadingDotExpression(_)
+        | Argument::CharLiteral(_)
+        | Argument::ETSTrailingBlockExpression(_)
+        | Argument::ETSInstanceOfExpression(_)
+        | Argument::ETSNewClassInstanceExpression(_)
+        | Argument::ETSNewArrayInstanceExpression(_)
+        | Argument::ETSNewMultiDimArrayInstanceExpression(_)
         | Argument::ComputedMemberExpression(_)
         | Argument::StaticMemberExpression(_)
         | Argument::PrivateFieldExpression(_) => walk_expression(traverser, node as *mut _, ctx),
@@ -1412,6 +1450,9 @@ unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
         Statement::WithStatement(node) => {
             walk_with_statement(traverser, (&mut **node) as *mut _, ctx)
         }
+        Statement::ETSPackageDeclaration(node) => {
+            walk_ets_package_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
         Statement::VariableDeclaration(_)
         | Statement::FunctionDeclaration(_)
         | Statement::ClassDeclaration(_)
@@ -1422,7 +1463,8 @@ unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
         | Statement::TSGlobalDeclaration(_)
         | Statement::TSImportEqualsDeclaration(_)
         | Statement::StructStatement(_)
-        | Statement::AnnotationDeclaration(_) => walk_declaration(traverser, node as *mut _, ctx),
+        | Statement::AnnotationDeclaration(_)
+        | Statement::ETSOverloadDeclaration(_) => walk_declaration(traverser, node as *mut _, ctx),
         Statement::ImportDeclaration(_)
         | Statement::LazyImportDeclaration(_)
         | Statement::ExportAllDeclaration(_)
@@ -1529,6 +1571,9 @@ unsafe fn walk_declaration<'a, Tr: Traverse<'a>>(
         Declaration::AnnotationDeclaration(node) => {
             walk_annotation_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
+        Declaration::ETSOverloadDeclaration(node) => {
+            walk_ets_overload_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_declaration(&mut *node, ctx);
 }
@@ -1539,9 +1584,18 @@ unsafe fn walk_variable_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_variable_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::VariableDeclarationDeclarations(
-        ancestor::VariableDeclarationWithoutDeclarations(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::VariableDeclarationDecorators(
+        ancestor::VariableDeclarationWithoutDecorators(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_VARIABLE_DECLARATION_DECORATORS)
+        as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
+    {
+        for item in (&mut **field).iter_mut() {
+            walk_decorator(traverser, item as *mut _, ctx);
+        }
+    }
+    ctx.retag_stack(AncestorType::VariableDeclarationDeclarations);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATION_DECLARATIONS)
         as *mut ArenaVec<VariableDeclarator>)
     {
@@ -1783,6 +1837,12 @@ unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         | ForStatementInit::V8IntrinsicExpression(_)
         | ForStatementInit::ArkUIComponentExpression(_)
         | ForStatementInit::LeadingDotExpression(_)
+        | ForStatementInit::CharLiteral(_)
+        | ForStatementInit::ETSTrailingBlockExpression(_)
+        | ForStatementInit::ETSInstanceOfExpression(_)
+        | ForStatementInit::ETSNewClassInstanceExpression(_)
+        | ForStatementInit::ETSNewArrayInstanceExpression(_)
+        | ForStatementInit::ETSNewMultiDimArrayInstanceExpression(_)
         | ForStatementInit::ComputedMemberExpression(_)
         | ForStatementInit::StaticMemberExpression(_)
         | ForStatementInit::PrivateFieldExpression(_) => {
@@ -2669,6 +2729,12 @@ unsafe fn walk_class_element<'a, Tr: Traverse<'a>>(
         ClassElement::TSIndexSignature(node) => {
             walk_ts_index_signature(traverser, (&mut **node) as *mut _, ctx)
         }
+        ClassElement::ETSOverloadDeclaration(node) => {
+            walk_ets_overload_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ClassElement::TSCallSignatureDeclaration(node) => {
+            walk_ts_call_signature_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_class_element(&mut *node, ctx);
 }
@@ -3265,6 +3331,12 @@ unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         | ExportDefaultDeclarationKind::V8IntrinsicExpression(_)
         | ExportDefaultDeclarationKind::ArkUIComponentExpression(_)
         | ExportDefaultDeclarationKind::LeadingDotExpression(_)
+        | ExportDefaultDeclarationKind::CharLiteral(_)
+        | ExportDefaultDeclarationKind::ETSTrailingBlockExpression(_)
+        | ExportDefaultDeclarationKind::ETSInstanceOfExpression(_)
+        | ExportDefaultDeclarationKind::ETSNewClassInstanceExpression(_)
+        | ExportDefaultDeclarationKind::ETSNewArrayInstanceExpression(_)
+        | ExportDefaultDeclarationKind::ETSNewMultiDimArrayInstanceExpression(_)
         | ExportDefaultDeclarationKind::ComputedMemberExpression(_)
         | ExportDefaultDeclarationKind::StaticMemberExpression(_)
         | ExportDefaultDeclarationKind::PrivateFieldExpression(_) => {
@@ -3352,6 +3424,15 @@ unsafe fn walk_string_literal<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_string_literal(&mut *node, ctx);
     traverser.exit_string_literal(&mut *node, ctx);
+}
+
+unsafe fn walk_char_literal<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut CharLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_char_literal(&mut *node, ctx);
+    traverser.exit_char_literal(&mut *node, ctx);
 }
 
 unsafe fn walk_big_int_literal<'a, Tr: Traverse<'a>>(
@@ -3670,6 +3751,12 @@ unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
         | JSXExpression::V8IntrinsicExpression(_)
         | JSXExpression::ArkUIComponentExpression(_)
         | JSXExpression::LeadingDotExpression(_)
+        | JSXExpression::CharLiteral(_)
+        | JSXExpression::ETSTrailingBlockExpression(_)
+        | JSXExpression::ETSInstanceOfExpression(_)
+        | JSXExpression::ETSNewClassInstanceExpression(_)
+        | JSXExpression::ETSNewArrayInstanceExpression(_)
+        | JSXExpression::ETSNewMultiDimArrayInstanceExpression(_)
         | JSXExpression::ComputedMemberExpression(_)
         | JSXExpression::StaticMemberExpression(_)
         | JSXExpression::PrivateFieldExpression(_) => {
@@ -3867,14 +3954,30 @@ unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSEnumDeclarationId(
-        ancestor::TSEnumDeclarationWithoutId(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSEnumDeclarationDecorators(
+        ancestor::TSEnumDeclarationWithoutDecorators(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_ENUM_DECLARATION_DECORATORS)
+        as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
+    {
+        for item in (&mut **field).iter_mut() {
+            walk_decorator(traverser, item as *mut _, ctx);
+        }
+    }
+    ctx.retag_stack(AncestorType::TSEnumDeclarationId);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_ID) as *mut BindingIdentifier,
         ctx,
     );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_ENUM_DECLARATION_UNDERLYING_TYPE)
+        as *mut Option<ArenaBox<TSType>>)
+    {
+        ctx.retag_stack(AncestorType::TSEnumDeclarationUnderlyingType);
+        walk_ts_type(traverser, (&mut **field) as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::TSEnumDeclarationBody);
     walk_ts_enum_body(
         traverser,
@@ -4685,9 +4788,18 @@ unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_alias_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAliasDeclarationId(
-        ancestor::TSTypeAliasDeclarationWithoutId(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAliasDeclarationDecorators(
+        ancestor::TSTypeAliasDeclarationWithoutDecorators(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_DECORATORS)
+        as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
+    {
+        for item in (&mut **field).iter_mut() {
+            walk_decorator(traverser, item as *mut _, ctx);
+        }
+    }
+    ctx.retag_stack(AncestorType::TSTypeAliasDeclarationId);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
@@ -4751,9 +4863,18 @@ unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInterfaceDeclarationId(
-        ancestor::TSInterfaceDeclarationWithoutId(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSInterfaceDeclarationDecorators(
+        ancestor::TSInterfaceDeclarationWithoutDecorators(node, PhantomData),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_DECORATORS)
+        as *mut Option<ArenaBox<ArenaVec<Decorator>>>)
+    {
+        for item in (&mut **field).iter_mut() {
+            walk_decorator(traverser, item as *mut _, ctx);
+        }
+    }
+    ctx.retag_stack(AncestorType::TSInterfaceDeclarationId);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_ID)
@@ -4856,6 +4977,15 @@ unsafe fn walk_ts_signature<'a, Tr: Traverse<'a>>(
         }
         TSSignature::TSMethodSignature(node) => {
             walk_ts_method_signature(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSSignature::MethodDefinition(node) => {
+            walk_method_definition(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSSignature::PropertyDefinition(node) => {
+            walk_property_definition(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSSignature::ETSOverloadDeclaration(node) => {
+            walk_ets_overload_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
     }
     traverser.exit_ts_signature(&mut *node, ctx);
@@ -5945,6 +6075,9 @@ unsafe fn walk_struct_element<'a, Tr: Traverse<'a>>(
         StructElement::AccessorProperty(node) => {
             walk_accessor_property(traverser, (&mut **node) as *mut _, ctx)
         }
+        StructElement::ETSOverloadDeclaration(node) => {
+            walk_ets_overload_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_struct_element(&mut *node, ctx);
 }
@@ -6079,6 +6212,190 @@ unsafe fn walk_annotation_element<'a, Tr: Traverse<'a>>(
         }
     }
     traverser.exit_annotation_element(&mut *node, ctx);
+}
+
+unsafe fn walk_ets_package_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ETSPackageDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ets_package_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ETSPackageDeclarationName(
+        ancestor::ETSPackageDeclarationWithoutName(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_ETS_PACKAGE_DECLARATION_NAME)
+        as *mut ArenaVec<IdentifierName>)
+    {
+        walk_identifier_name(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ets_package_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ets_instance_of_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ETSInstanceOfExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ets_instance_of_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ETSInstanceOfExpressionLeft(
+        ancestor::ETSInstanceOfExpressionWithoutLeft(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ETS_INSTANCE_OF_EXPRESSION_LEFT) as *mut Expression,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ETSInstanceOfExpressionRight);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ETS_INSTANCE_OF_EXPRESSION_RIGHT) as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ets_instance_of_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_ets_new_class_instance_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ETSNewClassInstanceExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ets_new_class_instance_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ETSNewClassInstanceExpressionTypeAnnotation(
+        ancestor::ETSNewClassInstanceExpressionWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ETSNewClassInstanceExpressionArguments);
+    for item in &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_ARGUMENTS)
+        as *mut ArenaVec<Argument>)
+    {
+        walk_argument(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ets_new_class_instance_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_ets_new_array_instance_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ETSNewArrayInstanceExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ets_new_array_instance_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ETSNewArrayInstanceExpressionTypeAnnotation(
+        ancestor::ETSNewArrayInstanceExpressionWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ETSNewArrayInstanceExpressionDimension);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_DIMENSION)
+            as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::ETSNewArrayInstanceExpressionInitializer);
+        walk_expression(traverser, field as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ets_new_array_instance_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_ets_new_multi_dim_array_instance_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ETSNewMultiDimArrayInstanceExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ets_new_multi_dim_array_instance_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ETSNewMultiDimArrayInstanceExpressionTypeAnnotation(
+        ancestor::ETSNewMultiDimArrayInstanceExpressionWithoutTypeAnnotation(node, PhantomData),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8)
+            .add(ancestor::OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ETSNewMultiDimArrayInstanceExpressionDimensions);
+    for item in &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_DIMENSIONS)
+        as *mut ArenaVec<Expression>)
+    {
+        walk_expression(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ets_new_multi_dim_array_instance_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_ets_trailing_block_expression<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ETSTrailingBlockExpression<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ets_trailing_block_expression(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ETSTrailingBlockExpressionCall(
+        ancestor::ETSTrailingBlockExpressionWithoutCall(node, PhantomData),
+    ));
+    walk_call_expression(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_CALL)
+            as *mut ArenaBox<CallExpression>)) as *mut _,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ETSTrailingBlockExpressionBlock);
+    walk_block_statement(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_BLOCK)
+            as *mut ArenaBox<BlockStatement>)) as *mut _,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_ets_trailing_block_expression(&mut *node, ctx);
+}
+
+unsafe fn walk_ets_overload_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ETSOverloadDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ets_overload_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ETSOverloadDeclarationDecorators(
+        ancestor::ETSOverloadDeclarationWithoutDecorators(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_ETS_OVERLOAD_DECLARATION_DECORATORS)
+        as *mut ArenaVec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ETSOverloadDeclarationKey);
+    walk_property_key(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ETS_OVERLOAD_DECLARATION_KEY) as *mut PropertyKey,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::ETSOverloadDeclarationOverloads);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_ETS_OVERLOAD_DECLARATION_OVERLOADS)
+        as *mut ArenaVec<Expression>)
+    {
+        walk_expression(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_ets_overload_declaration(&mut *node, ctx);
 }
 
 unsafe fn walk_statements<'a, Tr: Traverse<'a>>(

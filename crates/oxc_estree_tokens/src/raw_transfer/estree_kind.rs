@@ -38,7 +38,7 @@ const KINDS_LEN: usize = Kind::VARIANTS.len();
 
 // Verify number of `Kind` variants, so we catch if new variants are added.
 // This fork adds ArkTS/ArkUI-specific `Kind` variants.
-const _: () = assert!(KINDS_LEN == 171);
+const _: () = assert!(KINDS_LEN == 175);
 
 // Verify that the `Kind` discriminants we rely on for `to_kind` haven't shifted.
 // If any of these assertions fail, the `to_kind` mapping needs updating.
@@ -102,7 +102,7 @@ static CONVERSION_TABLE: [ESTreeKind; KINDS_LEN] = {
             Kind::Ident | Kind::Await => ESTreeKind::Identifier,
             Kind::True | Kind::False => ESTreeKind::Boolean,
             Kind::Null => ESTreeKind::Null,
-            Kind::Str => ESTreeKind::String,
+            Kind::Str | Kind::CharLiteral => ESTreeKind::String,
             Kind::RegExp => ESTreeKind::RegularExpression,
             Kind::NoSubstitutionTemplate
             | Kind::TemplateHead

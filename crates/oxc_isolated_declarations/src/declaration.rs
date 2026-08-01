@@ -253,6 +253,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     decl
                 })
             }
+            Declaration::ETSOverloadDeclaration(_) => Some(decl.clone_in(self.allocator())),
         }
     }
 

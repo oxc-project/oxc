@@ -13,7 +13,7 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_str::Str;
 use oxc_syntax::node::NodeId;
 
-use super::{arkui::ArkUIComponentExpression, js::*, literal::*, ts::*};
+use super::{arkui::ArkUIComponentExpression, ets::*, js::*, literal::*, ts::*};
 
 // 1.2 JSX Elements
 

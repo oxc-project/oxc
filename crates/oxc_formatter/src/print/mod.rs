@@ -116,6 +116,34 @@ pub trait FormatWrite<'ast, T = ()> {
     }
 }
 
+// Static ETS syntax has no Prettier-compatible formatting contract. Preserve
+// these es2panda-specific nodes byte-for-byte (apart from line-ending
+// normalization) so running oxfmt cannot rewrite or lose syntax it does not
+// own. The generated wrapper still handles surrounding parentheses and
+// leading/trailing comments.
+macro_rules! impl_ets_verbatim_format {
+    ($($ty:ty),+ $(,)?) => {
+        $(
+            impl<'a> FormatWrite<'a> for AstNode<'a, $ty> {
+                fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+                    FormatSuppressedNode(self.span()).fmt(f);
+                }
+            }
+        )+
+    };
+}
+
+impl_ets_verbatim_format!(
+    CharLiteral<'a>,
+    ETSPackageDeclaration<'a>,
+    ETSInstanceOfExpression<'a>,
+    ETSNewClassInstanceExpression<'a>,
+    ETSNewArrayInstanceExpression<'a>,
+    ETSNewMultiDimArrayInstanceExpression<'a>,
+    ETSTrailingBlockExpression<'a>,
+    ETSOverloadDeclaration<'a>,
+);
+
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let text = text_without_whitespace(self.name().as_str());
@@ -208,6 +236,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
             return;
         }
 
+        if self.kind() == PropertyKind::EtsEquals {
+            write!(f, [FormatSuppressedNode(self.span())]);
+            return;
+        }
+
         let is_accessor = match &self.kind() {
             PropertyKind::Init => false,
             PropertyKind::Get => {
@@ -218,6 +251,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
                 write!(f, ["set", space()]);
                 true
             }
+            PropertyKind::EtsEquals => unreachable!(),
         };
 
         if self.method || is_accessor {

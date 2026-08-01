@@ -58,6 +58,12 @@ impl GetAddress for Expression<'_> {
             Self::V8IntrinsicExpression(it) => GetAddress::address(it),
             Self::ArkUIComponentExpression(it) => GetAddress::address(it),
             Self::LeadingDotExpression(it) => GetAddress::address(it),
+            Self::CharLiteral(it) => GetAddress::address(it),
+            Self::ETSTrailingBlockExpression(it) => GetAddress::address(it),
+            Self::ETSInstanceOfExpression(it) => GetAddress::address(it),
+            Self::ETSNewClassInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewArrayInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetAddress::address(it),
             Self::ComputedMemberExpression(it) => GetAddress::address(it),
             Self::StaticMemberExpression(it) => GetAddress::address(it),
             Self::PrivateFieldExpression(it) => GetAddress::address(it),
@@ -126,6 +132,12 @@ impl GetAddress for PropertyKey<'_> {
             Self::V8IntrinsicExpression(it) => GetAddress::address(it),
             Self::ArkUIComponentExpression(it) => GetAddress::address(it),
             Self::LeadingDotExpression(it) => GetAddress::address(it),
+            Self::CharLiteral(it) => GetAddress::address(it),
+            Self::ETSTrailingBlockExpression(it) => GetAddress::address(it),
+            Self::ETSInstanceOfExpression(it) => GetAddress::address(it),
+            Self::ETSNewClassInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewArrayInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetAddress::address(it),
             Self::ComputedMemberExpression(it) => GetAddress::address(it),
             Self::StaticMemberExpression(it) => GetAddress::address(it),
             Self::PrivateFieldExpression(it) => GetAddress::address(it),
@@ -194,6 +206,12 @@ impl GetAddress for Argument<'_> {
             Self::V8IntrinsicExpression(it) => GetAddress::address(it),
             Self::ArkUIComponentExpression(it) => GetAddress::address(it),
             Self::LeadingDotExpression(it) => GetAddress::address(it),
+            Self::CharLiteral(it) => GetAddress::address(it),
+            Self::ETSTrailingBlockExpression(it) => GetAddress::address(it),
+            Self::ETSInstanceOfExpression(it) => GetAddress::address(it),
+            Self::ETSNewClassInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewArrayInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetAddress::address(it),
             Self::ComputedMemberExpression(it) => GetAddress::address(it),
             Self::StaticMemberExpression(it) => GetAddress::address(it),
             Self::PrivateFieldExpression(it) => GetAddress::address(it),
@@ -316,6 +334,7 @@ impl GetAddress for Statement<'_> {
             Self::TryStatement(it) => GetAddress::address(it),
             Self::WhileStatement(it) => GetAddress::address(it),
             Self::WithStatement(it) => GetAddress::address(it),
+            Self::ETSPackageDeclaration(it) => GetAddress::address(it),
             Self::VariableDeclaration(it) => GetAddress::address(it),
             Self::FunctionDeclaration(it) => GetAddress::address(it),
             Self::ClassDeclaration(it) => GetAddress::address(it),
@@ -327,6 +346,7 @@ impl GetAddress for Statement<'_> {
             Self::TSImportEqualsDeclaration(it) => GetAddress::address(it),
             Self::StructStatement(it) => GetAddress::address(it),
             Self::AnnotationDeclaration(it) => GetAddress::address(it),
+            Self::ETSOverloadDeclaration(it) => GetAddress::address(it),
             Self::ImportDeclaration(it) => GetAddress::address(it),
             Self::LazyImportDeclaration(it) => GetAddress::address(it),
             Self::ExportAllDeclaration(it) => GetAddress::address(it),
@@ -354,6 +374,7 @@ impl GetAddress for Declaration<'_> {
             Self::TSImportEqualsDeclaration(it) => GetAddress::address(it),
             Self::StructStatement(it) => GetAddress::address(it),
             Self::AnnotationDeclaration(it) => GetAddress::address(it),
+            Self::ETSOverloadDeclaration(it) => GetAddress::address(it),
         }
     }
 }
@@ -407,6 +428,12 @@ impl GetAddress for ForStatementInit<'_> {
             Self::V8IntrinsicExpression(it) => GetAddress::address(it),
             Self::ArkUIComponentExpression(it) => GetAddress::address(it),
             Self::LeadingDotExpression(it) => GetAddress::address(it),
+            Self::CharLiteral(it) => GetAddress::address(it),
+            Self::ETSTrailingBlockExpression(it) => GetAddress::address(it),
+            Self::ETSInstanceOfExpression(it) => GetAddress::address(it),
+            Self::ETSNewClassInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewArrayInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetAddress::address(it),
             Self::ComputedMemberExpression(it) => GetAddress::address(it),
             Self::StaticMemberExpression(it) => GetAddress::address(it),
             Self::PrivateFieldExpression(it) => GetAddress::address(it),
@@ -457,6 +484,8 @@ impl GetAddress for ClassElement<'_> {
             Self::PropertyDefinition(it) => GetAddress::address(it),
             Self::AccessorProperty(it) => GetAddress::address(it),
             Self::TSIndexSignature(it) => GetAddress::address(it),
+            Self::ETSOverloadDeclaration(it) => GetAddress::address(it),
+            Self::TSCallSignatureDeclaration(it) => GetAddress::address(it),
         }
     }
 }
@@ -541,6 +570,12 @@ impl GetAddress for ExportDefaultDeclarationKind<'_> {
             Self::V8IntrinsicExpression(it) => GetAddress::address(it),
             Self::ArkUIComponentExpression(it) => GetAddress::address(it),
             Self::LeadingDotExpression(it) => GetAddress::address(it),
+            Self::CharLiteral(it) => GetAddress::address(it),
+            Self::ETSTrailingBlockExpression(it) => GetAddress::address(it),
+            Self::ETSInstanceOfExpression(it) => GetAddress::address(it),
+            Self::ETSNewClassInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewArrayInstanceExpression(it) => GetAddress::address(it),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => GetAddress::address(it),
             Self::ComputedMemberExpression(it) => GetAddress::address(it),
             Self::StaticMemberExpression(it) => GetAddress::address(it),
             Self::PrivateFieldExpression(it) => GetAddress::address(it),
@@ -767,6 +802,9 @@ impl GetAddress for TSSignature<'_> {
             Self::TSCallSignatureDeclaration(it) => GetAddress::address(it),
             Self::TSConstructSignatureDeclaration(it) => GetAddress::address(it),
             Self::TSMethodSignature(it) => GetAddress::address(it),
+            Self::MethodDefinition(it) => GetAddress::address(it),
+            Self::PropertyDefinition(it) => GetAddress::address(it),
+            Self::ETSOverloadDeclaration(it) => GetAddress::address(it),
         }
     }
 }
@@ -828,6 +866,7 @@ impl GetAddress for StructElement<'_> {
             Self::StaticBlock(it) => GetAddress::address(it),
             Self::TSIndexSignature(it) => GetAddress::address(it),
             Self::AccessorProperty(it) => GetAddress::address(it),
+            Self::ETSOverloadDeclaration(it) => GetAddress::address(it),
         }
     }
 }

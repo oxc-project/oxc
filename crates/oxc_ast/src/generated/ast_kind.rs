@@ -8,7 +8,7 @@ use oxc_syntax::node::NodeId;
 use crate::ast::*;
 
 /// The largest integer value that can be mapped to an `AstType`/`AstKind` enum variant.
-pub const AST_TYPE_MAX: u8 = 195;
+pub const AST_TYPE_MAX: u8 = 203;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -114,101 +114,109 @@ pub enum AstType {
     NullLiteral = 98,
     NumericLiteral = 99,
     StringLiteral = 100,
-    BigIntLiteral = 101,
-    RegExpLiteral = 102,
-    JSXElement = 103,
-    JSXOpeningElement = 104,
-    JSXClosingElement = 105,
-    JSXFragment = 106,
-    JSXOpeningFragment = 107,
-    JSXClosingFragment = 108,
-    JSXNamespacedName = 109,
-    JSXMemberExpression = 110,
-    JSXExpressionContainer = 111,
-    JSXEmptyExpression = 112,
-    JSXAttribute = 113,
-    JSXSpreadAttribute = 114,
-    JSXIdentifier = 115,
-    JSXSpreadChild = 116,
-    JSXText = 117,
-    TSThisParameter = 118,
-    TSEnumDeclaration = 119,
-    TSEnumBody = 120,
-    TSEnumMember = 121,
-    TSTypeAnnotation = 122,
-    TSLiteralType = 123,
-    TSConditionalType = 124,
-    TSUnionType = 125,
-    TSIntersectionType = 126,
-    TSParenthesizedType = 127,
-    TSTypeOperator = 128,
-    TSArrayType = 129,
-    TSIndexedAccessType = 130,
-    TSTupleType = 131,
-    TSNamedTupleMember = 132,
-    TSOptionalType = 133,
-    TSRestType = 134,
-    TSAnyKeyword = 135,
-    TSStringKeyword = 136,
-    TSBooleanKeyword = 137,
-    TSNumberKeyword = 138,
-    TSNeverKeyword = 139,
-    TSIntrinsicKeyword = 140,
-    TSUnknownKeyword = 141,
-    TSNullKeyword = 142,
-    TSUndefinedKeyword = 143,
-    TSVoidKeyword = 144,
-    TSSymbolKeyword = 145,
-    TSThisType = 146,
-    TSObjectKeyword = 147,
-    TSBigIntKeyword = 148,
-    TSTypeReference = 149,
-    TSQualifiedName = 150,
-    TSTypeParameterInstantiation = 151,
-    TSTypeParameter = 152,
-    TSTypeParameterDeclaration = 153,
-    TSTypeAliasDeclaration = 154,
-    TSClassImplements = 155,
-    TSInterfaceDeclaration = 156,
-    TSInterfaceBody = 157,
-    TSPropertySignature = 158,
-    TSIndexSignature = 159,
-    TSCallSignatureDeclaration = 160,
-    TSMethodSignature = 161,
-    TSConstructSignatureDeclaration = 162,
-    TSIndexSignatureName = 163,
-    TSInterfaceHeritage = 164,
-    TSTypePredicate = 165,
-    TSModuleDeclaration = 166,
-    TSGlobalDeclaration = 167,
-    TSModuleBlock = 168,
-    TSTypeLiteral = 169,
-    TSInferType = 170,
-    TSTypeQuery = 171,
-    TSImportType = 172,
-    TSImportTypeQualifiedName = 173,
-    TSFunctionType = 174,
-    TSConstructorType = 175,
-    TSMappedType = 176,
-    TSTemplateLiteralType = 177,
-    TSAsExpression = 178,
-    TSSatisfiesExpression = 179,
-    TSTypeAssertion = 180,
-    TSImportEqualsDeclaration = 181,
-    TSExternalModuleReference = 182,
-    TSNonNullExpression = 183,
-    Decorator = 184,
-    TSExportAssignment = 185,
-    TSNamespaceExportDeclaration = 186,
-    TSInstantiationExpression = 187,
-    JSDocNullableType = 188,
-    JSDocNonNullableType = 189,
-    JSDocUnknownType = 190,
-    StructStatement = 191,
-    StructBody = 192,
-    ArkUIComponentExpression = 193,
-    AnnotationDeclaration = 194,
-    AnnotationBody = 195,
+    CharLiteral = 101,
+    BigIntLiteral = 102,
+    RegExpLiteral = 103,
+    JSXElement = 104,
+    JSXOpeningElement = 105,
+    JSXClosingElement = 106,
+    JSXFragment = 107,
+    JSXOpeningFragment = 108,
+    JSXClosingFragment = 109,
+    JSXNamespacedName = 110,
+    JSXMemberExpression = 111,
+    JSXExpressionContainer = 112,
+    JSXEmptyExpression = 113,
+    JSXAttribute = 114,
+    JSXSpreadAttribute = 115,
+    JSXIdentifier = 116,
+    JSXSpreadChild = 117,
+    JSXText = 118,
+    TSThisParameter = 119,
+    TSEnumDeclaration = 120,
+    TSEnumBody = 121,
+    TSEnumMember = 122,
+    TSTypeAnnotation = 123,
+    TSLiteralType = 124,
+    TSConditionalType = 125,
+    TSUnionType = 126,
+    TSIntersectionType = 127,
+    TSParenthesizedType = 128,
+    TSTypeOperator = 129,
+    TSArrayType = 130,
+    TSIndexedAccessType = 131,
+    TSTupleType = 132,
+    TSNamedTupleMember = 133,
+    TSOptionalType = 134,
+    TSRestType = 135,
+    TSAnyKeyword = 136,
+    TSStringKeyword = 137,
+    TSBooleanKeyword = 138,
+    TSNumberKeyword = 139,
+    TSNeverKeyword = 140,
+    TSIntrinsicKeyword = 141,
+    TSUnknownKeyword = 142,
+    TSNullKeyword = 143,
+    TSUndefinedKeyword = 144,
+    TSVoidKeyword = 145,
+    TSSymbolKeyword = 146,
+    TSThisType = 147,
+    TSObjectKeyword = 148,
+    TSBigIntKeyword = 149,
+    TSTypeReference = 150,
+    TSQualifiedName = 151,
+    TSTypeParameterInstantiation = 152,
+    TSTypeParameter = 153,
+    TSTypeParameterDeclaration = 154,
+    TSTypeAliasDeclaration = 155,
+    TSClassImplements = 156,
+    TSInterfaceDeclaration = 157,
+    TSInterfaceBody = 158,
+    TSPropertySignature = 159,
+    TSIndexSignature = 160,
+    TSCallSignatureDeclaration = 161,
+    TSMethodSignature = 162,
+    TSConstructSignatureDeclaration = 163,
+    TSIndexSignatureName = 164,
+    TSInterfaceHeritage = 165,
+    TSTypePredicate = 166,
+    TSModuleDeclaration = 167,
+    TSGlobalDeclaration = 168,
+    TSModuleBlock = 169,
+    TSTypeLiteral = 170,
+    TSInferType = 171,
+    TSTypeQuery = 172,
+    TSImportType = 173,
+    TSImportTypeQualifiedName = 174,
+    TSFunctionType = 175,
+    TSConstructorType = 176,
+    TSMappedType = 177,
+    TSTemplateLiteralType = 178,
+    TSAsExpression = 179,
+    TSSatisfiesExpression = 180,
+    TSTypeAssertion = 181,
+    TSImportEqualsDeclaration = 182,
+    TSExternalModuleReference = 183,
+    TSNonNullExpression = 184,
+    Decorator = 185,
+    TSExportAssignment = 186,
+    TSNamespaceExportDeclaration = 187,
+    TSInstantiationExpression = 188,
+    JSDocNullableType = 189,
+    JSDocNonNullableType = 190,
+    JSDocUnknownType = 191,
+    StructStatement = 192,
+    StructBody = 193,
+    ArkUIComponentExpression = 194,
+    AnnotationDeclaration = 195,
+    AnnotationBody = 196,
+    ETSPackageDeclaration = 197,
+    ETSInstanceOfExpression = 198,
+    ETSNewClassInstanceExpression = 199,
+    ETSNewArrayInstanceExpression = 200,
+    ETSNewMultiDimArrayInstanceExpression = 201,
+    ETSTrailingBlockExpression = 202,
+    ETSOverloadDeclaration = 203,
 }
 
 /// Untyped AST Node Kind
@@ -325,6 +333,7 @@ pub enum AstKind<'a> {
     NullLiteral(&'a NullLiteral) = AstType::NullLiteral as u8,
     NumericLiteral(&'a NumericLiteral<'a>) = AstType::NumericLiteral as u8,
     StringLiteral(&'a StringLiteral<'a>) = AstType::StringLiteral as u8,
+    CharLiteral(&'a CharLiteral<'a>) = AstType::CharLiteral as u8,
     BigIntLiteral(&'a BigIntLiteral<'a>) = AstType::BigIntLiteral as u8,
     RegExpLiteral(&'a RegExpLiteral<'a>) = AstType::RegExpLiteral as u8,
     JSXElement(&'a JSXElement<'a>) = AstType::JSXElement as u8,
@@ -430,6 +439,18 @@ pub enum AstKind<'a> {
         AstType::ArkUIComponentExpression as u8,
     AnnotationDeclaration(&'a AnnotationDeclaration<'a>) = AstType::AnnotationDeclaration as u8,
     AnnotationBody(&'a AnnotationBody<'a>) = AstType::AnnotationBody as u8,
+    ETSPackageDeclaration(&'a ETSPackageDeclaration<'a>) = AstType::ETSPackageDeclaration as u8,
+    ETSInstanceOfExpression(&'a ETSInstanceOfExpression<'a>) =
+        AstType::ETSInstanceOfExpression as u8,
+    ETSNewClassInstanceExpression(&'a ETSNewClassInstanceExpression<'a>) =
+        AstType::ETSNewClassInstanceExpression as u8,
+    ETSNewArrayInstanceExpression(&'a ETSNewArrayInstanceExpression<'a>) =
+        AstType::ETSNewArrayInstanceExpression as u8,
+    ETSNewMultiDimArrayInstanceExpression(&'a ETSNewMultiDimArrayInstanceExpression<'a>) =
+        AstType::ETSNewMultiDimArrayInstanceExpression as u8,
+    ETSTrailingBlockExpression(&'a ETSTrailingBlockExpression<'a>) =
+        AstType::ETSTrailingBlockExpression as u8,
+    ETSOverloadDeclaration(&'a ETSOverloadDeclaration<'a>) = AstType::ETSOverloadDeclaration as u8,
 }
 
 impl AstKind<'_> {
@@ -539,6 +560,7 @@ impl AstKind<'_> {
             Self::NullLiteral(it) => it.node_id(),
             Self::NumericLiteral(it) => it.node_id(),
             Self::StringLiteral(it) => it.node_id(),
+            Self::CharLiteral(it) => it.node_id(),
             Self::BigIntLiteral(it) => it.node_id(),
             Self::RegExpLiteral(it) => it.node_id(),
             Self::JSXElement(it) => it.node_id(),
@@ -634,6 +656,13 @@ impl AstKind<'_> {
             Self::ArkUIComponentExpression(it) => it.node_id(),
             Self::AnnotationDeclaration(it) => it.node_id(),
             Self::AnnotationBody(it) => it.node_id(),
+            Self::ETSPackageDeclaration(it) => it.node_id(),
+            Self::ETSInstanceOfExpression(it) => it.node_id(),
+            Self::ETSNewClassInstanceExpression(it) => it.node_id(),
+            Self::ETSNewArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.node_id(),
+            Self::ETSTrailingBlockExpression(it) => it.node_id(),
+            Self::ETSOverloadDeclaration(it) => it.node_id(),
         }
     }
 
@@ -743,6 +772,7 @@ impl AstKind<'_> {
             Self::NullLiteral(it) => it.set_node_id(node_id),
             Self::NumericLiteral(it) => it.set_node_id(node_id),
             Self::StringLiteral(it) => it.set_node_id(node_id),
+            Self::CharLiteral(it) => it.set_node_id(node_id),
             Self::BigIntLiteral(it) => it.set_node_id(node_id),
             Self::RegExpLiteral(it) => it.set_node_id(node_id),
             Self::JSXElement(it) => it.set_node_id(node_id),
@@ -838,6 +868,13 @@ impl AstKind<'_> {
             Self::ArkUIComponentExpression(it) => it.set_node_id(node_id),
             Self::AnnotationDeclaration(it) => it.set_node_id(node_id),
             Self::AnnotationBody(it) => it.set_node_id(node_id),
+            Self::ETSPackageDeclaration(it) => it.set_node_id(node_id),
+            Self::ETSInstanceOfExpression(it) => it.set_node_id(node_id),
+            Self::ETSNewClassInstanceExpression(it) => it.set_node_id(node_id),
+            Self::ETSNewArrayInstanceExpression(it) => it.set_node_id(node_id),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.set_node_id(node_id),
+            Self::ETSTrailingBlockExpression(it) => it.set_node_id(node_id),
+            Self::ETSOverloadDeclaration(it) => it.set_node_id(node_id),
         }
     }
 }
@@ -949,6 +986,7 @@ impl GetSpan for AstKind<'_> {
             Self::NullLiteral(it) => it.span(),
             Self::NumericLiteral(it) => it.span(),
             Self::StringLiteral(it) => it.span(),
+            Self::CharLiteral(it) => it.span(),
             Self::BigIntLiteral(it) => it.span(),
             Self::RegExpLiteral(it) => it.span(),
             Self::JSXElement(it) => it.span(),
@@ -1044,6 +1082,13 @@ impl GetSpan for AstKind<'_> {
             Self::ArkUIComponentExpression(it) => it.span(),
             Self::AnnotationDeclaration(it) => it.span(),
             Self::AnnotationBody(it) => it.span(),
+            Self::ETSPackageDeclaration(it) => it.span(),
+            Self::ETSInstanceOfExpression(it) => it.span(),
+            Self::ETSNewClassInstanceExpression(it) => it.span(),
+            Self::ETSNewArrayInstanceExpression(it) => it.span(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.span(),
+            Self::ETSTrailingBlockExpression(it) => it.span(),
+            Self::ETSOverloadDeclaration(it) => it.span(),
         }
     }
 }
@@ -1156,6 +1201,7 @@ impl GetAddress for AstKind<'_> {
             Self::NullLiteral(it) => it.unstable_address(),
             Self::NumericLiteral(it) => it.unstable_address(),
             Self::StringLiteral(it) => it.unstable_address(),
+            Self::CharLiteral(it) => it.unstable_address(),
             Self::BigIntLiteral(it) => it.unstable_address(),
             Self::RegExpLiteral(it) => it.unstable_address(),
             Self::JSXElement(it) => it.unstable_address(),
@@ -1251,6 +1297,13 @@ impl GetAddress for AstKind<'_> {
             Self::ArkUIComponentExpression(it) => it.unstable_address(),
             Self::AnnotationDeclaration(it) => it.unstable_address(),
             Self::AnnotationBody(it) => it.unstable_address(),
+            Self::ETSPackageDeclaration(it) => it.unstable_address(),
+            Self::ETSInstanceOfExpression(it) => it.unstable_address(),
+            Self::ETSNewClassInstanceExpression(it) => it.unstable_address(),
+            Self::ETSNewArrayInstanceExpression(it) => it.unstable_address(),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => it.unstable_address(),
+            Self::ETSTrailingBlockExpression(it) => it.unstable_address(),
+            Self::ETSOverloadDeclaration(it) => it.unstable_address(),
         }
     }
 }
@@ -1766,6 +1819,11 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
+    pub fn as_char_literal(self) -> Option<&'a CharLiteral<'a>> {
+        if let Self::CharLiteral(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
     pub fn as_big_int_literal(self) -> Option<&'a BigIntLiteral<'a>> {
         if let Self::BigIntLiteral(v) = self { Some(v) } else { None }
     }
@@ -2244,5 +2302,46 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_annotation_body(self) -> Option<&'a AnnotationBody<'a>> {
         if let Self::AnnotationBody(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ets_package_declaration(self) -> Option<&'a ETSPackageDeclaration<'a>> {
+        if let Self::ETSPackageDeclaration(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ets_instance_of_expression(self) -> Option<&'a ETSInstanceOfExpression<'a>> {
+        if let Self::ETSInstanceOfExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ets_new_class_instance_expression(
+        self,
+    ) -> Option<&'a ETSNewClassInstanceExpression<'a>> {
+        if let Self::ETSNewClassInstanceExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ets_new_array_instance_expression(
+        self,
+    ) -> Option<&'a ETSNewArrayInstanceExpression<'a>> {
+        if let Self::ETSNewArrayInstanceExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ets_new_multi_dim_array_instance_expression(
+        self,
+    ) -> Option<&'a ETSNewMultiDimArrayInstanceExpression<'a>> {
+        if let Self::ETSNewMultiDimArrayInstanceExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ets_trailing_block_expression(self) -> Option<&'a ETSTrailingBlockExpression<'a>> {
+        if let Self::ETSTrailingBlockExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ets_overload_declaration(self) -> Option<&'a ETSOverloadDeclaration<'a>> {
+        if let Self::ETSOverloadDeclaration(v) = self { Some(v) } else { None }
     }
 }

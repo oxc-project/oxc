@@ -22,6 +22,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !self.cur_token().is_on_new_line()
             && self.eat(Kind::Extends)
         {
+            if self.source_type.is_ets_static() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Conditional types",
+                    self.cur_token().span(),
+                ));
+            }
             let extends_type =
                 self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
             let question_span = self.token.span();
@@ -47,13 +53,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         let r#abstract = self.eat(Kind::Abstract);
         let is_constructor_type = self.eat(Kind::New);
+        if self.source_type.is_ets_static() && is_constructor_type {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Constructor function types",
+                self.end_span(span),
+            ));
+        }
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.context_remove(Context::DisallowConditionalTypes, |p| {
             p.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature)
         });
+        if self.source_type.is_ets_static() && !self.at(Kind::Arrow) {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Function types without an explicit `=>` return type",
+                self.cur_token().span(),
+            ));
+        }
         let return_type = {
             let return_type_span = self.start_span();
-            let return_type = self.parse_return_type();
+            let return_type = if self.source_type.is_ets_static() && this_param.is_some() {
+                self.context_add(Context::EtsAllowThisType, Self::parse_return_type)
+            } else {
+                self.parse_return_type()
+            };
             TSTypeAnnotation::new(self.end_span(return_type_span), return_type, self)
         };
 
@@ -199,6 +221,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if params.is_empty() {
             self.error(diagnostics::ts_empty_type_parameter_list(span));
         }
+        if self.source_type.is_ets_static() {
+            let mut seen_default = false;
+            for param in &params {
+                if param.default.is_some() {
+                    seen_default = true;
+                } else if seen_default {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Required type parameters after optional type parameters",
+                        param.span,
+                    ));
+                }
+                if !allow_variance && (param.r#in || param.out) {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Variance modifiers in this type-parameter list",
+                        param.span,
+                    ));
+                }
+            }
+        }
         (Some(TSTypeParameterDeclaration::boxed(span, params, self)), trailing_comma.is_some())
     }
 
@@ -285,6 +326,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 );
             }
             let span = self.end_span(span);
+            if self.source_type.is_ets_static() && kind == Kind::Amp {
+                self.error(diagnostics::ets_unsupported_syntax("Intersection types", span));
+            }
             ty = match kind {
                 Kind::Pipe => TSType::new_ts_union_type(span, types, self),
                 Kind::Amp => TSType::new_ts_intersection_type(span, types, self),
@@ -312,9 +356,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump operator
         let operator_span = self.end_span(span);
         let ty = self.parse_type_operator_or_higher();
+        let is_ets_array_reference = self.source_type.is_ets_static()
+            && matches!(
+                &ty,
+                TSType::TSTypeReference(reference)
+                    if matches!(
+                        &reference.type_name,
+                        TSTypeName::IdentifierReference(identifier)
+                            if identifier.name == "Array"
+                    )
+            );
         if operator == TSTypeOperatorOperator::Readonly
             && !matches!(ty, TSType::TSArrayType(_))
             && !matches!(ty, TSType::TSTupleType(_))
+            && !is_ets_array_reference
         {
             self.error(diagnostics::readonly_in_array_or_tuple_type(operator_span));
         }
@@ -402,8 +457,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     );
                 }
                 Kind::LBrack => {
+                    let bracket_span = self.cur_token().span();
                     self.bump_any();
                     if self.is_start_of_type(/* in_start_of_parameter */ false) {
+                        if self.source_type.is_ets_static() {
+                            self.error(diagnostics::ets_unsupported_syntax(
+                                "Indexed access types",
+                                bracket_span,
+                            ));
+                        }
                         let index_type = self.parse_ts_type();
                         self.expect(Kind::RBrack);
                         ty = TSType::new_ts_indexed_access_type(
@@ -423,7 +485,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ty
     }
 
-    fn parse_non_array_type(&mut self) -> TSType<'a> {
+    pub(crate) fn parse_non_array_type(&mut self) -> TSType<'a> {
         match self.cur_kind() {
             Kind::Any
             | Kind::Unknown
@@ -483,6 +545,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Kind::This => {
                 let span = self.start_span();
+                if self.source_type.is_ets_static() && !self.ctx.ets_allows_this_type() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "`this` types outside a non-static method return type",
+                        self.cur_token().span(),
+                    ));
+                }
                 self.bump_any(); // bump `this`
                 let this_type = TSThisType::boxed(self.end_span(span), self);
                 if self.at(Kind::Is) && !self.cur_token().is_on_new_line() {
@@ -492,9 +560,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             Kind::Typeof => {
+                if self.source_type.is_ets_static() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "`typeof` type annotations",
+                        self.cur_token().span(),
+                    ));
+                }
                 self.parse_type_query()
             }
             Kind::LCurly => {
+                if self.source_type.is_ets_static() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Inline object-literal types",
+                        self.cur_token().span(),
+                    ));
+                }
                 if self.lookahead(Self::is_start_of_mapped_type) {
                     self.parse_mapped_type()
                 } else {
@@ -503,7 +583,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Kind::LBrack => self.parse_tuple_type(),
             Kind::LParen => self.parse_parenthesized_type(),
-            Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
+            Kind::Import => {
+                if self.source_type.is_ets_static() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Import types",
+                        self.cur_token().span(),
+                    ));
+                }
+                TSType::TSImportType(self.parse_ts_import_type())
+            }
             Kind::Asserts => {
                 // Peek the token after `asserts` to check if this is an asserts type predicate.
                 let next = self.lexer.peek_token();
@@ -887,7 +975,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
             self.expect(Kind::RAngle);
             let span = self.end_span(span);
-            if params.is_empty() {
+            if params.is_empty() && !self.source_type.is_ets_static() {
                 self.error(diagnostics::ts_empty_type_argument_list(span));
             }
             return Some(TSTypeParameterInstantiation::boxed(span, params, self));
@@ -898,7 +986,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_type_arguments_of_type_reference(
         &mut self,
     ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
-        if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
+        if self.cur_token().is_on_new_line()
+            || !matches!(
+                self.cur_kind(),
+                Kind::LAngle | Kind::ShiftLeft | Kind::LtEq | Kind::ShiftLeftEq
+            )
+        {
+            return None;
+        }
+        let ets_checkpoint = self.source_type.is_ets_static().then(|| self.checkpoint());
+        if self.re_lex_ts_l_angle() {
             let span = self.start_span();
             let opening_span = self.cur_token().span();
             self.expect(Kind::LAngle);
@@ -909,8 +1006,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Self::parse_ts_type,
             );
             self.expect(Kind::RAngle);
+            if self.fatal_error.is_some()
+                && let Some(checkpoint) = ets_checkpoint
+            {
+                self.rewind(checkpoint);
+                self.re_lex_ts_l_angle();
+                self.bump_any();
+                while !matches!(self.cur_kind(), Kind::Semicolon | Kind::Eof) {
+                    self.bump_any();
+                }
+                return None;
+            }
             let span = self.end_span(span);
-            if params.is_empty() {
+            if params.is_empty() && !self.source_type.is_ets_static() {
                 self.error(diagnostics::ts_empty_type_argument_list(span));
             }
             return Some(TSTypeParameterInstantiation::boxed(span, params, self));
@@ -957,13 +1065,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let span = self.end_span(span);
-        if params.is_empty() {
+        if params.is_empty() && !self.source_type.is_ets_static() {
             self.error(diagnostics::ts_empty_type_argument_list(span));
         }
         Some(TSTypeParameterInstantiation::boxed(span, params, self))
     }
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {
+        if self.source_type.is_ets_static() && self.at(Kind::Str) {
+            return true;
+        }
         match self.cur_kind() {
             Kind::LParen | Kind::NoSubstitutionTemplate | Kind::TemplateHead => true,
             Kind::LAngle | Kind::RAngle | Kind::Plus | Kind::Minus => false,
@@ -985,6 +1096,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let (elements, _) =
             self.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |me| {
                 let tuple = me.parse_tuple_element();
+                let is_rest = matches!(tuple, TSTupleElement::TSRestType(_));
+                if me.source_type.is_ets_static()
+                    && !is_rest
+                    && let Some(seen_rest_span) = seen_rest_span
+                {
+                    me.error(diagnostics::ets_unsupported_syntax(
+                        "Required tuple elements after a rest element",
+                        seen_rest_span.merge(tuple.span()),
+                    ));
+                }
                 // check for array type, because unknown types can be destructed, example of valid code:
                 // type C<T extends unknown[]> = [...string[], ...T];
                 // example of invalid code:
@@ -1377,7 +1498,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         Some(parameter_name)
     }
 
-    pub(super) fn parse_signature_member(
+    pub(crate) fn parse_signature_member(
         &mut self,
         kind: CallOrConstructorSignature,
     ) -> TSSignature<'a> {
@@ -1564,6 +1685,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self
                 .fatal_error(diagnostics::index_signature_type_annotation(self.end_span(span)));
         };
+        if self.source_type.is_ets_static()
+            && matches!(
+                type_annotation.type_annotation,
+                TSType::JSDocNullableType(_) | TSType::JSDocUnknownType(_)
+            )
+        {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Invalid index-signature return types",
+                type_annotation.span,
+            ));
+        }
         self.parse_type_member_semicolon();
         TSIndexSignature::boxed(
             self.end_span(span),

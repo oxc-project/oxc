@@ -89,6 +89,42 @@ fn arkui() {
 }
 
 #[test]
+fn ets_static_codegen_round_trip() {
+    let allocator = Allocator::default();
+    let source_type = SourceType::ets_static();
+    let source = r#"package example.codegen;
+@interface Mark { value: string = "ok" }
+@Mark("ok")
+enum Color: int { Red, Green }
+@Mark({ value = "ok" })
+class Value {
+  constructor named(value: int) {}
+  overload constructor { named }
+}
+let character: char = c'a'
+let instance: Value = new Value()
+let values: int[] = new int[2](0)
+let matches: boolean = instance instanceof Value
+function consume(): void {}
+consume() { let nested: int = 1 }
+"#;
+    let ret = Parser::new(&allocator, source, source_type).parse();
+    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
+
+    let code = Codegen::new().with_options(default_options()).build(&ret.program).code;
+    assert!(code.contains("package example.codegen;"), "package was lost:\n{code}");
+    assert!(code.contains("c'a'"), "char literal was lost:\n{code}");
+    assert!(code.contains("new int[2](0)"), "array construction was lost:\n{code}");
+    assert!(code.contains("instance instanceof Value"), "ETS instanceof was lost:\n{code}");
+    assert!(code.contains("value = \"ok\""), "annotation initializer was lost:\n{code}");
+    assert!(code.contains("consume() {"), "trailing block was lost:\n{code}");
+
+    let allocator = Allocator::default();
+    let reparsed = Parser::new(&allocator, &code, source_type).parse();
+    assert!(reparsed.diagnostics.is_empty(), "Reparse errors: {:?}\n{code}", reparsed.diagnostics);
+}
+
+#[test]
 fn minify_arkui_decorator_newlines() {
     test_options_with_source_type(
         "@Observed\nexport class Model { @Track value = 0 }",

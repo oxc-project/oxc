@@ -6,6 +6,7 @@
 use oxc_allocator::TakeIn;
 
 use crate::ast::arkui::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -261,6 +262,8 @@ impl<'a> TakeIn<'a> for NumericLiteral<'a> {}
 
 impl<'a> TakeIn<'a> for StringLiteral<'a> {}
 
+impl<'a> TakeIn<'a> for CharLiteral<'a> {}
+
 impl<'a> TakeIn<'a> for BigIntLiteral<'a> {}
 
 impl<'a> TakeIn<'a> for RegExpLiteral<'a> {}
@@ -498,3 +501,17 @@ impl<'a> TakeIn<'a> for AnnotationDeclaration<'a> {}
 impl<'a> TakeIn<'a> for AnnotationBody<'a> {}
 
 impl<'a> TakeIn<'a> for AnnotationElement<'a> {}
+
+impl<'a> TakeIn<'a> for ETSPackageDeclaration<'a> {}
+
+impl<'a> TakeIn<'a> for ETSInstanceOfExpression<'a> {}
+
+impl<'a> TakeIn<'a> for ETSNewClassInstanceExpression<'a> {}
+
+impl<'a> TakeIn<'a> for ETSNewArrayInstanceExpression<'a> {}
+
+impl<'a> TakeIn<'a> for ETSNewMultiDimArrayInstanceExpression<'a> {}
+
+impl<'a> TakeIn<'a> for ETSTrailingBlockExpression<'a> {}
+
+impl<'a> TakeIn<'a> for ETSOverloadDeclaration<'a> {}

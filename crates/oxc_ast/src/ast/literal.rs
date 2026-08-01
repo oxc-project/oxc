@@ -113,6 +113,29 @@ pub struct StringLiteral<'a> {
     pub lone_surrogates: bool,
 }
 
+/// Static ETS character literal.
+///
+/// Static ETS character literals use a `c` prefix and contain exactly one
+/// UTF-16 code unit, for example `c'a'` or `c'\u0041'`.
+#[ast(visit)]
+#[derive(Debug, Clone)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+pub struct CharLiteral<'a> {
+    /// Unique identifier for this AST node.
+    pub node_id: Cell<NodeId>,
+    /// Node location in source code.
+    pub span: Span,
+    /// The UTF-16 code unit represented by this literal.
+    pub value: u32,
+    /// The character literal as it appears in source code.
+    ///
+    /// `None` when this AST node is not constructed by the parser.
+    #[content_eq(skip)]
+    #[estree(from_span)]
+    pub raw: Option<Str<'a>>,
+}
+
 /// BigInt literal
 #[ast(visit)]
 #[derive(Debug, Clone)]

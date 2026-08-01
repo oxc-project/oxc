@@ -168,7 +168,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if decl.init.is_none() && !self.ctx.has_ambient() {
             if !matches!(decl.id, BindingPattern::BindingIdentifier(_)) {
                 self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
-            } else if decl.kind == VariableDeclarationKind::Const {
+            } else if decl.kind == VariableDeclarationKind::Const
+                && !self.source_type.is_ets_static()
+            {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
                 self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
             } else if decl.kind.is_using() {

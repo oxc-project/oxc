@@ -157,8 +157,12 @@ export declare const enum ImportNameKind {
 export declare function parse(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
 
 export interface ParserOptions {
-  /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */
-  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
+  /**
+   * Treat the source text as `js`, `jsx`, `ts`, `tsx`, `dts` or explicitly
+   * selected static ETS. A `.ets` filename without `ets-static` keeps using
+   * the ArkUI/ArkTS 1.1 grammar.
+   */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' | 'ets-static'
   /** Treat the source text as `script` or `module` code. */
   sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
   /**

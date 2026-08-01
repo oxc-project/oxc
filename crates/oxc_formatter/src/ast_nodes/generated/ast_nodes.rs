@@ -127,6 +127,7 @@ pub enum AstNodes<'a> {
     NullLiteral(&'a AstNode<'a, NullLiteral>),
     NumericLiteral(&'a AstNode<'a, NumericLiteral<'a>>),
     StringLiteral(&'a AstNode<'a, StringLiteral<'a>>),
+    CharLiteral(&'a AstNode<'a, CharLiteral<'a>>),
     BigIntLiteral(&'a AstNode<'a, BigIntLiteral<'a>>),
     RegExpLiteral(&'a AstNode<'a, RegExpLiteral<'a>>),
     JSXElement(&'a AstNode<'a, JSXElement<'a>>),
@@ -222,6 +223,15 @@ pub enum AstNodes<'a> {
     ArkUIComponentExpression(&'a AstNode<'a, ArkUIComponentExpression<'a>>),
     AnnotationDeclaration(&'a AstNode<'a, AnnotationDeclaration<'a>>),
     AnnotationBody(&'a AstNode<'a, AnnotationBody<'a>>),
+    ETSPackageDeclaration(&'a AstNode<'a, ETSPackageDeclaration<'a>>),
+    ETSInstanceOfExpression(&'a AstNode<'a, ETSInstanceOfExpression<'a>>),
+    ETSNewClassInstanceExpression(&'a AstNode<'a, ETSNewClassInstanceExpression<'a>>),
+    ETSNewArrayInstanceExpression(&'a AstNode<'a, ETSNewArrayInstanceExpression<'a>>),
+    ETSNewMultiDimArrayInstanceExpression(
+        &'a AstNode<'a, ETSNewMultiDimArrayInstanceExpression<'a>>,
+    ),
+    ETSTrailingBlockExpression(&'a AstNode<'a, ETSTrailingBlockExpression<'a>>),
+    ETSOverloadDeclaration(&'a AstNode<'a, ETSOverloadDeclaration<'a>>),
 }
 impl AstNodes<'_> {
     /// Returns the span of this AST node.
@@ -334,6 +344,7 @@ impl AstNodes<'_> {
             Self::NullLiteral(n) => n.span(),
             Self::NumericLiteral(n) => n.span(),
             Self::StringLiteral(n) => n.span(),
+            Self::CharLiteral(n) => n.span(),
             Self::BigIntLiteral(n) => n.span(),
             Self::RegExpLiteral(n) => n.span(),
             Self::JSXElement(n) => n.span(),
@@ -429,6 +440,13 @@ impl AstNodes<'_> {
             Self::ArkUIComponentExpression(n) => n.span(),
             Self::AnnotationDeclaration(n) => n.span(),
             Self::AnnotationBody(n) => n.span(),
+            Self::ETSPackageDeclaration(n) => n.span(),
+            Self::ETSInstanceOfExpression(n) => n.span(),
+            Self::ETSNewClassInstanceExpression(n) => n.span(),
+            Self::ETSNewArrayInstanceExpression(n) => n.span(),
+            Self::ETSNewMultiDimArrayInstanceExpression(n) => n.span(),
+            Self::ETSTrailingBlockExpression(n) => n.span(),
+            Self::ETSOverloadDeclaration(n) => n.span(),
         }
     }
     /// Returns the parent of this AST node.
@@ -541,6 +559,7 @@ impl AstNodes<'_> {
             Self::NullLiteral(n) => n.parent(),
             Self::NumericLiteral(n) => n.parent(),
             Self::StringLiteral(n) => n.parent(),
+            Self::CharLiteral(n) => n.parent(),
             Self::BigIntLiteral(n) => n.parent(),
             Self::RegExpLiteral(n) => n.parent(),
             Self::JSXElement(n) => n.parent(),
@@ -636,6 +655,13 @@ impl AstNodes<'_> {
             Self::ArkUIComponentExpression(n) => n.parent(),
             Self::AnnotationDeclaration(n) => n.parent(),
             Self::AnnotationBody(n) => n.parent(),
+            Self::ETSPackageDeclaration(n) => n.parent(),
+            Self::ETSInstanceOfExpression(n) => n.parent(),
+            Self::ETSNewClassInstanceExpression(n) => n.parent(),
+            Self::ETSNewArrayInstanceExpression(n) => n.parent(),
+            Self::ETSNewMultiDimArrayInstanceExpression(n) => n.parent(),
+            Self::ETSTrailingBlockExpression(n) => n.parent(),
+            Self::ETSOverloadDeclaration(n) => n.parent(),
         }
     }
     #[inline]
@@ -743,6 +769,7 @@ impl AstNodes<'_> {
             Self::NullLiteral(_) => "NullLiteral",
             Self::NumericLiteral(_) => "NumericLiteral",
             Self::StringLiteral(_) => "StringLiteral",
+            Self::CharLiteral(_) => "CharLiteral",
             Self::BigIntLiteral(_) => "BigIntLiteral",
             Self::RegExpLiteral(_) => "RegExpLiteral",
             Self::JSXElement(_) => "JSXElement",
@@ -838,6 +865,15 @@ impl AstNodes<'_> {
             Self::ArkUIComponentExpression(_) => "ArkUIComponentExpression",
             Self::AnnotationDeclaration(_) => "AnnotationDeclaration",
             Self::AnnotationBody(_) => "AnnotationBody",
+            Self::ETSPackageDeclaration(_) => "ETSPackageDeclaration",
+            Self::ETSInstanceOfExpression(_) => "ETSInstanceOfExpression",
+            Self::ETSNewClassInstanceExpression(_) => "ETSNewClassInstanceExpression",
+            Self::ETSNewArrayInstanceExpression(_) => "ETSNewArrayInstanceExpression",
+            Self::ETSNewMultiDimArrayInstanceExpression(_) => {
+                "ETSNewMultiDimArrayInstanceExpression"
+            }
+            Self::ETSTrailingBlockExpression(_) => "ETSTrailingBlockExpression",
+            Self::ETSOverloadDeclaration(_) => "ETSOverloadDeclaration",
         }
     }
 }
@@ -1250,6 +1286,52 @@ impl<'a> AstNode<'a, Expression<'a>> {
             }
             Expression::LeadingDotExpression(s) => {
                 AstNodes::LeadingDotExpression(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            Expression::CharLiteral(s) => AstNodes::CharLiteral(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+                following_span_start: self.following_span_start,
+            })),
+            Expression::ETSTrailingBlockExpression(s) => {
+                AstNodes::ETSTrailingBlockExpression(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            Expression::ETSInstanceOfExpression(s) => {
+                AstNodes::ETSInstanceOfExpression(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            Expression::ETSNewClassInstanceExpression(s) => {
+                AstNodes::ETSNewClassInstanceExpression(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            Expression::ETSNewArrayInstanceExpression(s) => {
+                AstNodes::ETSNewArrayInstanceExpression(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(s) => {
+                AstNodes::ETSNewMultiDimArrayInstanceExpression(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
@@ -3181,6 +3263,14 @@ impl<'a> AstNode<'a, Statement<'a>> {
                 allocator: self.allocator,
                 following_span_start: self.following_span_start,
             })),
+            Statement::ETSPackageDeclaration(s) => {
+                AstNodes::ETSPackageDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
             it @ match_declaration!(Statement) => {
                 return self
                     .allocator
@@ -3379,6 +3469,14 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
+            Declaration::ETSOverloadDeclaration(s) => {
+                AstNodes::ETSOverloadDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
         };
         self.allocator.alloc(node)
     }
@@ -3388,6 +3486,19 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> Option<&AstNode<'a, ArenaVec<'a, Decorator<'a>>>> {
+        let following_span_start = self.inner.declarations.first().map_or(0, |n| n.span().start);
+        self.allocator
+            .alloc(self.inner.decorators.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: AstNodes::VariableDeclaration(transmute_self(self)),
+                following_span_start,
+            }))
+            .as_ref()
     }
 
     #[inline]
@@ -4643,6 +4754,16 @@ impl<'a> AstNode<'a, Function<'a>> {
     }
 
     #[inline]
+    pub fn r#final(&self) -> bool {
+        self.inner.r#final
+    }
+
+    #[inline]
+    pub fn native(&self) -> bool {
+        self.inner.native
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
@@ -5257,6 +5378,21 @@ impl<'a> AstNode<'a, Class<'a>> {
         self.inner.declare
     }
 
+    #[inline]
+    pub fn r#final(&self) -> bool {
+        self.inner.r#final
+    }
+
+    #[inline]
+    pub fn native(&self) -> bool {
+        self.inner.native
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> bool {
+        self.inner.r#static
+    }
+
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
@@ -5331,6 +5467,22 @@ impl<'a> AstNode<'a, ClassElement<'a>> {
             }
             ClassElement::TSIndexSignature(s) => {
                 AstNodes::TSIndexSignature(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            ClassElement::ETSOverloadDeclaration(s) => {
+                AstNodes::ETSOverloadDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            ClassElement::TSCallSignatureDeclaration(s) => {
+                AstNodes::TSCallSignatureDeclaration(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
@@ -5414,6 +5566,16 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     #[inline]
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
+    }
+
+    #[inline]
+    pub fn r#final(&self) -> bool {
+        self.inner.r#final
+    }
+
+    #[inline]
+    pub fn native(&self) -> bool {
+        self.inner.native
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6256,6 +6418,16 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
             .as_ref()
     }
 
+    #[inline]
+    pub fn ets_single(&self) -> bool {
+        self.inner.ets_single
+    }
+
+    #[inline]
+    pub fn ets_default(&self) -> bool {
+        self.inner.ets_default
+    }
+
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
@@ -6612,6 +6784,32 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
         self.inner.lone_surrogates
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, CharLiteral<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn value(&self) -> u32 {
+        self.inner.value
+    }
+
+    #[inline]
+    pub fn raw(&self) -> Option<Str<'a>> {
+        self.inner.raw
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7477,14 +7675,46 @@ impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
     }
 
     #[inline]
+    pub fn decorators(&self) -> Option<&AstNode<'a, ArenaVec<'a, Decorator<'a>>>> {
+        let following_span_start = self.inner.id.span().start;
+        self.allocator
+            .alloc(self.inner.decorators.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: AstNodes::TSEnumDeclaration(transmute_self(self)),
+                following_span_start,
+            }))
+            .as_ref()
+    }
+
+    #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
-        let following_span_start = self.inner.body.span().start;
+        let following_span_start = self
+            .inner
+            .underlying_type
+            .as_deref()
+            .map(|n| n.span().start)
+            .or_else(|| Some(self.inner.body.span().start))
+            .unwrap_or(0);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: AstNodes::TSEnumDeclaration(transmute_self(self)),
             following_span_start,
         })
+    }
+
+    #[inline]
+    pub fn underlying_type(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+        let following_span_start = self.inner.body.span().start;
+        self.allocator
+            .alloc(self.inner.underlying_type.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: AstNodes::TSEnumDeclaration(transmute_self(self)),
+                following_span_start,
+            }))
+            .as_ref()
     }
 
     #[inline]
@@ -8896,6 +9126,19 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
     }
 
     #[inline]
+    pub fn decorators(&self) -> Option<&AstNode<'a, ArenaVec<'a, Decorator<'a>>>> {
+        let following_span_start = self.inner.id.span().start;
+        self.allocator
+            .alloc(self.inner.decorators.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: AstNodes::TSTypeAliasDeclaration(transmute_self(self)),
+                following_span_start,
+            }))
+            .as_ref()
+    }
+
+    #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
         let following_span_start = self
             .inner
@@ -9001,6 +9244,19 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> Option<&AstNode<'a, ArenaVec<'a, Decorator<'a>>>> {
+        let following_span_start = self.inner.id.span().start;
+        self.allocator
+            .alloc(self.inner.decorators.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: AstNodes::TSInterfaceDeclaration(transmute_self(self)),
+                following_span_start,
+            }))
+            .as_ref()
     }
 
     #[inline]
@@ -9204,6 +9460,30 @@ impl<'a> AstNode<'a, TSSignature<'a>> {
             }
             TSSignature::TSMethodSignature(s) => {
                 AstNodes::TSMethodSignature(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            TSSignature::MethodDefinition(s) => {
+                AstNodes::MethodDefinition(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            TSSignature::PropertyDefinition(s) => {
+                AstNodes::PropertyDefinition(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            TSSignature::ETSOverloadDeclaration(s) => {
+                AstNodes::ETSOverloadDeclaration(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
@@ -10957,6 +11237,21 @@ impl<'a> AstNode<'a, StructStatement<'a>> {
         self.inner.declare
     }
 
+    #[inline]
+    pub fn r#final(&self) -> bool {
+        self.inner.r#final
+    }
+
+    #[inline]
+    pub fn native(&self) -> bool {
+        self.inner.native
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> bool {
+        self.inner.r#static
+    }
+
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
         format_leading_comments(self.span()).fmt(f);
     }
@@ -11031,6 +11326,14 @@ impl<'a> AstNode<'a, StructElement<'a>> {
             }
             StructElement::AccessorProperty(s) => {
                 AstNodes::AccessorProperty(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            StructElement::ETSOverloadDeclaration(s) => {
+                AstNodes::ETSOverloadDeclaration(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
@@ -11274,5 +11577,357 @@ impl<'a> AstNode<'a, AnnotationElement<'a>> {
             }
         };
         self.allocator.alloc(node)
+    }
+}
+
+impl<'a> AstNode<'a, ETSPackageDeclaration<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn name(&self) -> &AstNode<'a, ArenaVec<'a, IdentifierName<'a>>> {
+        let following_span_start = 0;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.name,
+            allocator: self.allocator,
+            parent: AstNodes::ETSPackageDeclaration(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ETSInstanceOfExpression<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn left(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_span_start = self.inner.right.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.left,
+            allocator: self.allocator,
+            parent: AstNodes::ETSInstanceOfExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn right(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_span_start = self.following_span_start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.right,
+            allocator: self.allocator,
+            parent: AstNodes::ETSInstanceOfExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ETSNewClassInstanceExpression<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_span_start = self
+            .inner
+            .arguments
+            .first()
+            .map(|n| n.span().start)
+            .or(Some(self.following_span_start))
+            .unwrap_or(0);
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.type_annotation,
+            allocator: self.allocator,
+            parent: AstNodes::ETSNewClassInstanceExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+        let following_span_start = self.following_span_start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.arguments,
+            allocator: self.allocator,
+            parent: AstNodes::ETSNewClassInstanceExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn has_arguments(&self) -> bool {
+        self.inner.has_arguments
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ETSNewArrayInstanceExpression<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_span_start = self.inner.dimension.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.type_annotation,
+            allocator: self.allocator,
+            parent: AstNodes::ETSNewArrayInstanceExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn dimension(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_span_start = self
+            .inner
+            .initializer
+            .as_ref()
+            .map(|n| n.span().start)
+            .or(Some(self.following_span_start))
+            .unwrap_or(0);
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.dimension,
+            allocator: self.allocator,
+            parent: AstNodes::ETSNewArrayInstanceExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn initializer(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_span_start = self.following_span_start;
+        self.allocator
+            .alloc(self.inner.initializer.as_ref().map(|inner| AstNode {
+                inner,
+                allocator: self.allocator,
+                parent: AstNodes::ETSNewArrayInstanceExpression(transmute_self(self)),
+                following_span_start,
+            }))
+            .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ETSNewMultiDimArrayInstanceExpression<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_span_start = self
+            .inner
+            .dimensions
+            .first()
+            .map(|n| n.span().start)
+            .or(Some(self.following_span_start))
+            .unwrap_or(0);
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.type_annotation,
+            allocator: self.allocator,
+            parent: AstNodes::ETSNewMultiDimArrayInstanceExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn dimensions(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
+        let following_span_start = self.following_span_start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.dimensions,
+            allocator: self.allocator,
+            parent: AstNodes::ETSNewMultiDimArrayInstanceExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ETSTrailingBlockExpression<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn call(&self) -> &AstNode<'a, CallExpression<'a>> {
+        let following_span_start = self.inner.block.span().start;
+        self.allocator.alloc(AstNode {
+            inner: self.inner.call.as_ref(),
+            allocator: self.allocator,
+            parent: AstNodes::ETSTrailingBlockExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn block(&self) -> &AstNode<'a, BlockStatement<'a>> {
+        let following_span_start = self.following_span_start;
+        self.allocator.alloc(AstNode {
+            inner: self.inner.block.as_ref(),
+            allocator: self.allocator,
+            parent: AstNodes::ETSTrailingBlockExpression(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn is_trailing_call(&self) -> bool {
+        self.inner.is_trailing_call
+    }
+
+    #[inline]
+    pub fn is_block_on_new_line(&self) -> bool {
+        self.inner.is_block_on_new_line
+    }
+
+    #[inline]
+    pub fn has_trailing_comma(&self) -> bool {
+        self.inner.has_trailing_comma
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ETSOverloadDeclaration<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+        let following_span_start = self.inner.key.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.decorators,
+            allocator: self.allocator,
+            parent: AstNodes::ETSOverloadDeclaration(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_span_start = self.inner.overloads.first().map_or(0, |n| n.span().start);
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.key,
+            allocator: self.allocator,
+            parent: AstNodes::ETSOverloadDeclaration(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn overloads(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
+        let following_span_start = 0;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.overloads,
+            allocator: self.allocator,
+            parent: AstNodes::ETSOverloadDeclaration(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn kind(&self) -> ETSOverloadDeclarationKind {
+        self.inner.kind
+    }
+
+    #[inline]
+    pub fn accessibility(&self) -> Option<TSAccessibility> {
+        self.inner.accessibility
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> bool {
+        self.inner.r#static
+    }
+
+    #[inline]
+    pub fn r#abstract(&self) -> bool {
+        self.inner.r#abstract
+    }
+
+    #[inline]
+    pub fn r#final(&self) -> bool {
+        self.inner.r#final
+    }
+
+    #[inline]
+    pub fn native(&self) -> bool {
+        self.inner.native
+    }
+
+    #[inline]
+    pub fn declare(&self) -> bool {
+        self.inner.declare
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
     }
 }

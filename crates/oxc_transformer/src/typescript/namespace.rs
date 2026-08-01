@@ -275,7 +275,8 @@ impl<'a> TypeScriptNamespace {
                             }
                             Declaration::TSTypeAliasDeclaration(_)
                             | Declaration::TSInterfaceDeclaration(_)
-                            | Declaration::TSGlobalDeclaration(_) => {}
+                            | Declaration::TSGlobalDeclaration(_)
+                            | Declaration::ETSOverloadDeclaration(_) => {}
                         }
                     }
                 }

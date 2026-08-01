@@ -38,6 +38,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut statements = ArenaVec::new_in(self);
 
         let is_top_level = self.ctx.has_top_level();
+        let saved_ets_declaration_list_depth = self.state.ets_declaration_list_depth;
+        if self.source_type.is_ets_static() && (is_top_level || in_ts_namespace_body) {
+            self.state.ets_declaration_list_depth = Some(self.state.ets_statement_depth);
+        }
         let stmt_ctx = StatementContext::StatementList;
         let is_ambient_block = (is_top_level || in_ts_namespace_body) && self.ctx.has_ambient();
         let mut reported_ambient_statement = false;
@@ -47,6 +51,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
+        let mut ets_seen_non_import = false;
         while !self.has_fatal_error() {
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
@@ -67,6 +72,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 None
             };
+
+            let is_static_import_declaration = self.source_type.is_ets_static()
+                && is_top_level
+                && self.at(Kind::Import)
+                && !matches!(self.lexer.peek_token().kind(), Kind::Dot | Kind::LParen);
+            if self.source_type.is_ets_static() && is_top_level {
+                if is_static_import_declaration {
+                    if ets_seen_non_import {
+                        self.error(diagnostics::ets_unsupported_syntax(
+                            "Import declarations after another top-level item",
+                            self.cur_token().span(),
+                        ));
+                    }
+                } else {
+                    ets_seen_non_import = true;
+                }
+            }
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
@@ -119,9 +141,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.error(diagnostics::statement_in_ambient_context(stmt.span()));
                 reported_ambient_statement = true;
             }
+            if self.source_type.is_ets_static() && is_top_level {
+                self.module_record_builder.visit_ets_top_level_statement(&stmt);
+            }
             statements.push(stmt);
         }
 
+        self.state.ets_declaration_list_depth = saved_ets_declaration_list_depth;
         (directives, statements)
     }
 
@@ -132,6 +158,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        let saved_ets_in_declaration_scope = self.state.ets_in_declaration_scope;
+        self.state.ets_in_declaration_scope =
+            self.state.ets_declaration_list_depth == Some(self.state.ets_statement_depth);
+        self.state.ets_statement_depth += 1;
+
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
@@ -156,13 +187,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 &Modifiers::empty(),
                 ArenaVec::new_in(self),
             ),
-            Kind::Struct if self.source_type.is_arkui() => self.parse_struct_statement(
+            Kind::Struct if self.source_type.is_ets() => self.parse_struct_statement(
                 self.start_span(),
                 stmt_ctx,
                 &Modifiers::empty(),
                 ArenaVec::new_in(self),
             ),
+            Kind::Package if self.source_type.is_ets_static() => {
+                self.parse_ets_package_declaration()
+            }
+            Kind::Overload if self.source_type.is_ets_static() => {
+                let span = self.start_span();
+                let declaration = self.parse_ets_overload_declaration(
+                    span,
+                    ArenaVec::new_in(self),
+                    &Modifiers::empty(),
+                    ETSOverloadDeclarationKind::Function,
+                );
+                Statement::ETSOverloadDeclaration(declaration)
+            }
             Kind::Export => {
+                if self.source_type.is_ets_static() && !self.state.ets_in_declaration_scope {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Export declarations outside a declaration scope",
+                        self.cur_token().span(),
+                    ));
+                }
                 self.parse_export_declaration(self.start_span(), ArenaVec::new_in(self))
             }
             // [+Return] ReturnStatement[?Yield, ?Await]
@@ -198,6 +248,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Protected
             | Kind::Public
             | Kind::Abstract
+            | Kind::Final
+            | Kind::Native
             | Kind::Accessor
             | Kind::Static
             | Kind::Readonly
@@ -221,6 +273,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Self::set_pure_on_function_stmt(&mut stmt);
         }
 
+        self.state.ets_statement_depth -= 1;
+        self.state.ets_in_declaration_scope = saved_ets_in_declaration_scope;
         stmt
     }
 
@@ -270,6 +324,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.eat(Kind::Colon) {
                 let label = LabelIdentifier::new(ident.span, ident.name, self);
                 let body = self.parse_statement_list_item(StatementContext::Label);
+                if self.source_type.is_ets_static()
+                    && !matches!(
+                        body,
+                        Statement::DoWhileStatement(_)
+                            | Statement::WhileStatement(_)
+                            | Statement::ForStatement(_)
+                            | Statement::ForInStatement(_)
+                            | Statement::ForOfStatement(_)
+                            | Statement::SwitchStatement(_)
+                    )
+                {
+                    self.error(diagnostics::ets_label_requires_loop_or_switch(body.span()));
+                }
                 return Statement::new_labeled_statement(self.end_span(span), label, body, self);
             }
         }
@@ -343,7 +410,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_do_while_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `do`
+        self.state.ets_loop_depth += 1;
         let body = self.parse_statement_list_item(StatementContext::Do);
+        self.state.ets_loop_depth -= 1;
         self.expect(Kind::While);
         let test = self.parse_paren_expression();
         self.bump(Kind::Semicolon);
@@ -355,7 +424,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let span = self.start_span();
         self.bump_any(); // bump `while`
         let test = self.parse_paren_expression();
+        self.state.ets_loop_depth += 1;
         let body = self.parse_statement_list_item(StatementContext::While);
+        self.state.ets_loop_depth -= 1;
         Statement::new_while_statement(self.end_span(span), test, body, self)
     }
 
@@ -480,7 +551,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
         let expr_span = self.start_span();
 
-        let init_expression = self.context_remove(Context::In, ParserImpl::parse_expr);
+        let init_expression = self.context_remove(Context::In, |p| {
+            p.context_add(Context::EtsAllowSequence, ParserImpl::parse_expr)
+        });
 
         match self.cur_kind() {
             Kind::In => {
@@ -604,19 +677,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let test = if matches!(self.cur_kind(), Kind::Semicolon | Kind::RParen) {
             None
         } else {
-            Some(self.context_add(Context::In, ParserImpl::parse_expr))
+            Some(self.context_add(Context::In | Context::EtsAllowSequence, ParserImpl::parse_expr))
         };
         self.expect(Kind::Semicolon);
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.context_add(Context::In, ParserImpl::parse_expr))
+            Some(self.context_add(Context::In | Context::EtsAllowSequence, ParserImpl::parse_expr))
         };
         self.expect_closing(Kind::RParen, parenthesis_opening_span);
         if r#await {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
+        self.state.ets_loop_depth += 1;
         let body = self.parse_statement_list_item(StatementContext::For);
+        self.state.ets_loop_depth -= 1;
         Statement::new_for_statement(self.end_span(span), init, test, update, body, self)
     }
 
@@ -627,6 +702,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
+        if self.source_type.is_ets_static() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "`for ... in` loops",
+                self.cur_token().span(),
+            ));
+        }
         self.bump_any(); // bump `in`
         let right = self.parse_expr();
         self.expect_closing(Kind::RParen, parenthesis_opening_span);
@@ -635,7 +716,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
 
+        self.state.ets_loop_depth += 1;
         let body = self.parse_statement_list_item(StatementContext::For);
+        self.state.ets_loop_depth -= 1;
         let span = self.end_span(span);
         Statement::new_for_in_statement(span, left, right, body, self)
     }
@@ -647,11 +730,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
+        if self.source_type.is_ets_static()
+            && let ForStatementLeft::VariableDeclaration(declaration) = &left
+        {
+            for declarator in &declaration.declarations {
+                if let Some(initializer) = &declarator.init {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Initializers on for-of loop variables",
+                        initializer.span(),
+                    ));
+                }
+            }
+        }
         self.bump_any(); // bump `of`
         let right = self.parse_assignment_expression_or_higher();
         self.expect_closing(Kind::RParen, parenthesis_opening_span);
 
+        self.state.ets_loop_depth += 1;
         let body = self.parse_statement_list_item(StatementContext::For);
+        self.state.ets_loop_depth -= 1;
         let span = self.end_span(span);
         Statement::new_for_of_statement(span, r#await, left, right, body, self)
     }
@@ -663,6 +760,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
         self.asi();
+        if self.source_type.is_ets_static() && label.is_none() && self.state.ets_loop_depth == 0 {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Continue statements outside loops",
+                self.end_span(span),
+            ));
+        }
         Statement::new_continue_statement(self.end_span(span), label, self)
     }
 
@@ -673,6 +776,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
         self.asi();
+        if self.source_type.is_ets_static()
+            && label.is_none()
+            && self.state.ets_loop_depth == 0
+            && self.state.ets_switch_depth == 0
+        {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Break statements outside loops or switches",
+                self.end_span(span),
+            ));
+        }
         Statement::new_break_statement(self.end_span(span), label, self)
     }
 
@@ -715,6 +828,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // and report only the first duplicate, all in the single parsing pass.
         let mut first_default: Option<Span> = None;
         let mut reported_duplicate = false;
+        self.state.ets_switch_depth += 1;
         let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             let case = p.parse_switch_case();
             if case.test.is_none() {
@@ -729,6 +843,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             case
         });
+        self.state.ets_switch_depth -= 1;
         Statement::new_switch_statement(self.end_span(span), discriminant, cases, self)
     }
 
@@ -838,6 +953,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 14.16 Debugger Statement
     fn parse_debugger_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
+        if self.source_type.is_ets_static() {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Debugger statements",
+                self.cur_token().span(),
+            ));
+        }
         self.bump_any();
         self.asi();
         Statement::new_debugger_statement(self.end_span(span), self)
@@ -862,6 +983,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // Parse the whole expression `import.meta.url`.
             self.parse_expression_or_labeled_statement()
         } else {
+            if self.source_type.is_ets_static()
+                && (!self.ctx.has_top_level() || !self.state.ets_in_declaration_scope)
+            {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Import declarations outside the top level",
+                    self.cur_token().span(),
+                ));
+            }
             self.bump_any(); // bump `import`
             self.parse_import_declaration(span, self.ctx.has_top_level())
         }
@@ -905,6 +1034,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_export_declaration(self.start_span(), decorators);
         }
         let modifiers = self.parse_modifiers(false, false);
+        if self.at_arkts_annotation_declaration() {
+            return self.parse_annotation_statement(span, stmt_ctx, &modifiers, decorators);
+        }
         if self.at(Kind::Class) {
             // Class span.start starts before decorators.
             return self.parse_class_statement(span, stmt_ctx, &modifiers, decorators);
@@ -912,6 +1044,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(Kind::Struct) {
             // Struct span.start starts before decorators.
             return self.parse_struct_statement(span, stmt_ctx, &modifiers, decorators);
+        }
+        if self.source_type.is_ets_static() && self.at(Kind::Overload) {
+            let declaration = self.parse_ets_overload_declaration(
+                span,
+                decorators,
+                &modifiers,
+                ETSOverloadDeclarationKind::Function,
+            );
+            return Statement::ETSOverloadDeclaration(declaration);
+        }
+        if self.source_type.is_ets_static() && self.at_start_of_ts_declaration() {
+            let declaration = self.parse_declaration(span, &modifiers, decorators);
+            if stmt_ctx.is_single_statement() {
+                self.error(diagnostics::declaration_single_statement(declaration.span()));
+            }
+            return Statement::from(declaration);
         }
         // Check for async function: either async was parsed as a modifier, or we're at Async token
         let r#async = modifiers.contains(ModifierKind::Async)
@@ -926,9 +1074,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if self.at(Kind::Function) {
-            // Function declarations with decorators are only allowed in ArkUI mode
-            // (e.g., ArkUI @Builder)
-            if self.source_type.is_arkui() {
+            // Function declarations with decorators are supported by both ETS
+            // dialects (ArkUI render decorators and static ETS annotations).
+            if self.source_type.is_ets() {
                 return self.parse_function_declaration(span, r#async, stmt_ctx, decorators);
             } else {
                 // In non-ArkUI mode, decorators on functions are not allowed

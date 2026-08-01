@@ -157,12 +157,24 @@ function constructExpression(pos, ast) {
       return constructBoxArkUIComponentExpression(pos + 8, ast);
     case 42:
       return constructBoxLeadingDotExpression(pos + 8, ast);
+    case 43:
+      return constructBoxCharLiteral(pos + 8, ast);
+    case 44:
+      return constructBoxETSTrailingBlockExpression(pos + 8, ast);
+    case 45:
+      return constructBoxETSInstanceOfExpression(pos + 8, ast);
+    case 46:
+      return constructBoxETSNewClassInstanceExpression(pos + 8, ast);
+    case 47:
+      return constructBoxETSNewArrayInstanceExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
       return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 51:
+      return constructBoxETSNewMultiDimArrayInstanceExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Expression`);
   }
@@ -539,12 +551,24 @@ function constructArrayExpressionElement(pos, ast) {
       return constructBoxArkUIComponentExpression(pos + 8, ast);
     case 42:
       return constructBoxLeadingDotExpression(pos + 8, ast);
+    case 43:
+      return constructBoxCharLiteral(pos + 8, ast);
+    case 44:
+      return constructBoxETSTrailingBlockExpression(pos + 8, ast);
+    case 45:
+      return constructBoxETSInstanceOfExpression(pos + 8, ast);
+    case 46:
+      return constructBoxETSNewClassInstanceExpression(pos + 8, ast);
+    case 47:
+      return constructBoxETSNewArrayInstanceExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
       return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 51:
+      return constructBoxETSNewMultiDimArrayInstanceExpression(pos + 8, ast);
     case 64:
       return constructBoxSpreadElement(pos + 8, ast);
     case 65:
@@ -817,12 +841,24 @@ function constructPropertyKey(pos, ast) {
       return constructBoxArkUIComponentExpression(pos + 8, ast);
     case 42:
       return constructBoxLeadingDotExpression(pos + 8, ast);
+    case 43:
+      return constructBoxCharLiteral(pos + 8, ast);
+    case 44:
+      return constructBoxETSTrailingBlockExpression(pos + 8, ast);
+    case 45:
+      return constructBoxETSInstanceOfExpression(pos + 8, ast);
+    case 46:
+      return constructBoxETSNewClassInstanceExpression(pos + 8, ast);
+    case 47:
+      return constructBoxETSNewArrayInstanceExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
       return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 51:
+      return constructBoxETSNewMultiDimArrayInstanceExpression(pos + 8, ast);
     case 64:
       return constructBoxIdentifierName(pos + 8, ast);
     case 65:
@@ -840,6 +876,8 @@ function constructPropertyKind(pos, ast) {
       return "get";
     case 2:
       return "set";
+    case 3:
+      return "etsEquals";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKind`);
   }
@@ -1646,12 +1684,24 @@ function constructArgument(pos, ast) {
       return constructBoxArkUIComponentExpression(pos + 8, ast);
     case 42:
       return constructBoxLeadingDotExpression(pos + 8, ast);
+    case 43:
+      return constructBoxCharLiteral(pos + 8, ast);
+    case 44:
+      return constructBoxETSTrailingBlockExpression(pos + 8, ast);
+    case 45:
+      return constructBoxETSInstanceOfExpression(pos + 8, ast);
+    case 46:
+      return constructBoxETSNewClassInstanceExpression(pos + 8, ast);
+    case 47:
+      return constructBoxETSNewArrayInstanceExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
       return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 51:
+      return constructBoxETSNewMultiDimArrayInstanceExpression(pos + 8, ast);
     case 64:
       return constructBoxSpreadElement(pos + 8, ast);
     default:
@@ -2747,10 +2797,14 @@ function constructStatement(pos, ast) {
       return constructBoxWhileStatement(pos + 8, ast);
     case 17:
       return constructBoxWithStatement(pos + 8, ast);
+    case 18:
+      return constructBoxETSPackageDeclaration(pos + 8, ast);
     case 19:
       return constructBoxStructStatement(pos + 8, ast);
     case 20:
       return constructBoxAnnotationDeclaration(pos + 8, ast);
+    case 21:
+      return constructBoxETSOverloadDeclaration(pos + 8, ast);
     case 32:
       return constructBoxVariableDeclaration(pos + 8, ast);
     case 33:
@@ -2944,6 +2998,8 @@ function constructDeclaration(pos, ast) {
       return constructBoxStructStatement(pos + 8, ast);
     case 20:
       return constructBoxAnnotationDeclaration(pos + 8, ast);
+    case 21:
+      return constructBoxETSOverloadDeclaration(pos + 8, ast);
     case 32:
       return constructBoxVariableDeclaration(pos + 8, ast);
     case 33:
@@ -2978,7 +3034,7 @@ export class VariableDeclaration {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $declarations: void 0 };
+    this.#internal = { pos, ast, $decorators: void 0, $declarations: void 0 };
     nodes.set(pos, this);
   }
 
@@ -2992,6 +3048,13 @@ export class VariableDeclaration {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
+  get decorators() {
+    const internal = this.#internal,
+      cached = internal.$decorators;
+    if (cached !== void 0) return cached;
+    return (internal.$decorators = constructOptionBoxVecDecorator(internal.pos + 16, internal.ast));
+  }
+
   get kind() {
     const internal = this.#internal;
     return constructVariableDeclarationKind(internal.pos + 12, internal.ast);
@@ -3002,7 +3065,7 @@ export class VariableDeclaration {
       cached = internal.$declarations;
     if (cached !== void 0) return cached;
     return (internal.$declarations = constructVecVariableDeclarator(
-      internal.pos + 16,
+      internal.pos + 24,
       internal.ast,
     ));
   }
@@ -3017,6 +3080,7 @@ export class VariableDeclaration {
       type: "VariableDeclaration",
       start: this.start,
       end: this.end,
+      decorators: this.decorators,
       kind: this.kind,
       declarations: this.declarations,
       declare: this.declare,
@@ -3505,12 +3569,24 @@ function constructForStatementInit(pos, ast) {
       return constructBoxArkUIComponentExpression(pos + 8, ast);
     case 42:
       return constructBoxLeadingDotExpression(pos + 8, ast);
+    case 43:
+      return constructBoxCharLiteral(pos + 8, ast);
+    case 44:
+      return constructBoxETSTrailingBlockExpression(pos + 8, ast);
+    case 45:
+      return constructBoxETSInstanceOfExpression(pos + 8, ast);
+    case 46:
+      return constructBoxETSNewClassInstanceExpression(pos + 8, ast);
+    case 47:
+      return constructBoxETSNewArrayInstanceExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
       return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 51:
+      return constructBoxETSNewMultiDimArrayInstanceExpression(pos + 8, ast);
     case 64:
       return constructBoxVariableDeclaration(pos + 8, ast);
     default:
@@ -4588,6 +4664,16 @@ export class Function {
     return constructBool(internal.pos + 115, internal.ast);
   }
 
+  get final() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 116, internal.ast);
+  }
+
+  get native() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 117, internal.ast);
+  }
+
   get typeParameters() {
     const internal = this.#internal;
     return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 72, internal.ast);
@@ -4618,6 +4704,8 @@ export class Function {
       generator: this.generator,
       async: this.async,
       declare: this.declare,
+      final: this.final,
+      native: this.native,
       typeParameters: this.typeParameters,
       params: this.params,
       returnType: this.returnType,
@@ -5040,6 +5128,21 @@ export class Class {
     return constructBool(internal.pos + 138, internal.ast);
   }
 
+  get final() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 139, internal.ast);
+  }
+
+  get native() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 140, internal.ast);
+  }
+
+  get static() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 141, internal.ast);
+  }
+
   toJSON() {
     return {
       start: this.start,
@@ -5054,6 +5157,9 @@ export class Class {
       body: this.body,
       abstract: this.abstract,
       declare: this.declare,
+      final: this.final,
+      native: this.native,
+      static: this.static,
     };
   }
 
@@ -5135,6 +5241,10 @@ function constructClassElement(pos, ast) {
       return constructBoxAccessorProperty(pos + 8, ast);
     case 4:
       return constructBoxTSIndexSignature(pos + 8, ast);
+    case 5:
+      return constructBoxETSOverloadDeclaration(pos + 8, ast);
+    case 6:
+      return constructBoxTSCallSignatureDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ClassElement`);
   }
@@ -5216,6 +5326,16 @@ export class MethodDefinition {
     return constructOptionTSAccessibility(internal.pos + 66, internal.ast);
   }
 
+  get final() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 67, internal.ast);
+  }
+
+  get native() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 68, internal.ast);
+  }
+
   toJSON() {
     return {
       start: this.start,
@@ -5230,6 +5350,8 @@ export class MethodDefinition {
       override: this.override,
       optional: this.optional,
       accessibility: this.accessibility,
+      final: this.final,
+      native: this.native,
     };
   }
 
@@ -6149,6 +6271,16 @@ export class ExportNamedDeclaration {
     return constructOptionBoxWithClause(internal.pos + 128, internal.ast);
   }
 
+  get etsSingle() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 13, internal.ast);
+  }
+
+  get etsDefault() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 14, internal.ast);
+  }
+
   toJSON() {
     return {
       type: "ExportNamedDeclaration",
@@ -6160,6 +6292,8 @@ export class ExportNamedDeclaration {
       source: this.source,
       exportKind: this.exportKind,
       attributes: this.attributes,
+      etsSingle: this.etsSingle,
+      etsDefault: this.etsDefault,
     };
   }
 
@@ -6426,12 +6560,24 @@ function constructExportDefaultDeclarationKind(pos, ast) {
       return constructBoxArkUIComponentExpression(pos + 8, ast);
     case 42:
       return constructBoxLeadingDotExpression(pos + 8, ast);
+    case 43:
+      return constructBoxCharLiteral(pos + 8, ast);
+    case 44:
+      return constructBoxETSTrailingBlockExpression(pos + 8, ast);
+    case 45:
+      return constructBoxETSInstanceOfExpression(pos + 8, ast);
+    case 46:
+      return constructBoxETSNewClassInstanceExpression(pos + 8, ast);
+    case 47:
+      return constructBoxETSNewArrayInstanceExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
       return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 51:
+      return constructBoxETSNewMultiDimArrayInstanceExpression(pos + 8, ast);
     case 64:
       return constructBoxFunction(pos + 8, ast);
     case 65:
@@ -6709,6 +6855,60 @@ export class StringLiteral {
 }
 
 const DebugStringLiteral = class StringLiteral {};
+
+export class CharLiteral {
+  type = "CharLiteral";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $raw: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get value() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 12, internal.ast);
+  }
+
+  get raw() {
+    const internal = this.#internal,
+      cached = internal.$raw;
+    if (cached !== void 0) return cached;
+    return (internal.$raw = constructOptionStr(internal.pos + 16, internal.ast));
+  }
+
+  toJSON() {
+    return {
+      type: "CharLiteral",
+      start: this.start,
+      end: this.end,
+      value: this.value,
+      raw: this.raw,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugCharLiteral.prototype);
+  }
+}
+
+const DebugCharLiteral = class CharLiteral {};
 
 export class BigIntLiteral {
   type = "BigIntLiteral";
@@ -7492,12 +7692,24 @@ function constructJSXExpression(pos, ast) {
       return constructBoxArkUIComponentExpression(pos + 8, ast);
     case 42:
       return constructBoxLeadingDotExpression(pos + 8, ast);
+    case 43:
+      return constructBoxCharLiteral(pos + 8, ast);
+    case 44:
+      return constructBoxETSTrailingBlockExpression(pos + 8, ast);
+    case 45:
+      return constructBoxETSInstanceOfExpression(pos + 8, ast);
+    case 46:
+      return constructBoxETSNewClassInstanceExpression(pos + 8, ast);
+    case 47:
+      return constructBoxETSNewArrayInstanceExpression(pos + 8, ast);
     case 48:
       return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
       return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
       return constructBoxPrivateFieldExpression(pos + 8, ast);
+    case 51:
+      return constructBoxETSNewMultiDimArrayInstanceExpression(pos + 8, ast);
     case 64:
       return constructBoxJSXEmptyExpression(pos + 8, ast);
     default:
@@ -7904,7 +8116,7 @@ export class TSEnumDeclaration {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast };
+    this.#internal = { pos, ast, $decorators: void 0 };
     nodes.set(pos, this);
   }
 
@@ -7918,14 +8130,26 @@ export class TSEnumDeclaration {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
+  get decorators() {
+    const internal = this.#internal,
+      cached = internal.$decorators;
+    if (cached !== void 0) return cached;
+    return (internal.$decorators = constructOptionBoxVecDecorator(internal.pos + 16, internal.ast));
+  }
+
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 16, internal.ast);
+    return new BindingIdentifier(internal.pos + 24, internal.ast);
+  }
+
+  get underlyingType() {
+    const internal = this.#internal;
+    return constructOptionBoxTSType(internal.pos + 56, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return new TSEnumBody(internal.pos + 48, internal.ast);
+    return new TSEnumBody(internal.pos + 64, internal.ast);
   }
 
   get const() {
@@ -7943,7 +8167,9 @@ export class TSEnumDeclaration {
       type: "TSEnumDeclaration",
       start: this.start,
       end: this.end,
+      decorators: this.decorators,
       id: this.id,
+      underlyingType: this.underlyingType,
       body: this.body,
       const: this.const,
       declare: this.declare,
@@ -9776,7 +10002,7 @@ export class TSTypeAliasDeclaration {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast };
+    this.#internal = { pos, ast, $decorators: void 0 };
     nodes.set(pos, this);
   }
 
@@ -9790,24 +10016,31 @@ export class TSTypeAliasDeclaration {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
+  get decorators() {
+    const internal = this.#internal,
+      cached = internal.$decorators;
+    if (cached !== void 0) return cached;
+    return (internal.$decorators = constructOptionBoxVecDecorator(internal.pos + 16, internal.ast));
+  }
+
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 16, internal.ast);
+    return new BindingIdentifier(internal.pos + 24, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 56, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 56, internal.ast);
+    return constructTSType(internal.pos + 64, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   toJSON() {
@@ -9815,6 +10048,7 @@ export class TSTypeAliasDeclaration {
       type: "TSTypeAliasDeclaration",
       start: this.start,
       end: this.end,
+      decorators: this.decorators,
       id: this.id,
       typeParameters: this.typeParameters,
       typeAnnotation: this.typeAnnotation,
@@ -9905,7 +10139,7 @@ export class TSInterfaceDeclaration {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { pos, ast, $extends: void 0 };
+    this.#internal = { pos, ast, $decorators: void 0, $extends: void 0 };
     nodes.set(pos, this);
   }
 
@@ -9919,31 +10153,38 @@ export class TSInterfaceDeclaration {
     return constructI32(internal.pos + 4, internal.ast);
   }
 
+  get decorators() {
+    const internal = this.#internal,
+      cached = internal.$decorators;
+    if (cached !== void 0) return cached;
+    return (internal.$decorators = constructOptionBoxVecDecorator(internal.pos + 16, internal.ast));
+  }
+
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 16, internal.ast);
+    return new BindingIdentifier(internal.pos + 24, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 56, internal.ast);
   }
 
   get extends() {
     const internal = this.#internal,
       cached = internal.$extends;
     if (cached !== void 0) return cached;
-    return (internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 56, internal.ast));
+    return (internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 64, internal.ast));
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxTSInterfaceBody(internal.pos + 80, internal.ast);
+    return constructBoxTSInterfaceBody(internal.pos + 88, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 88, internal.ast);
+    return constructBool(internal.pos + 96, internal.ast);
   }
 
   toJSON() {
@@ -9951,6 +10192,7 @@ export class TSInterfaceDeclaration {
       type: "TSInterfaceDeclaration",
       start: this.start,
       end: this.end,
+      decorators: this.decorators,
       id: this.id,
       typeParameters: this.typeParameters,
       extends: this.extends,
@@ -10096,6 +10338,12 @@ function constructTSSignature(pos, ast) {
       return constructBoxTSConstructSignatureDeclaration(pos + 8, ast);
     case 4:
       return constructBoxTSMethodSignature(pos + 8, ast);
+    case 5:
+      return constructBoxMethodDefinition(pos + 8, ast);
+    case 6:
+      return constructBoxPropertyDefinition(pos + 8, ast);
+    case 7:
+      return constructBoxETSOverloadDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSSignature`);
   }
@@ -12105,6 +12353,21 @@ export class StructStatement {
     return constructBool(internal.pos + 137, internal.ast);
   }
 
+  get final() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 138, internal.ast);
+  }
+
+  get native() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 139, internal.ast);
+  }
+
+  get static() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 140, internal.ast);
+  }
+
   toJSON() {
     return {
       type: "StructStatement",
@@ -12119,6 +12382,9 @@ export class StructStatement {
       body: this.body,
       abstract: this.abstract,
       declare: this.declare,
+      final: this.final,
+      native: this.native,
+      static: this.static,
     };
   }
 
@@ -12189,6 +12455,8 @@ function constructStructElement(pos, ast) {
       return constructBoxTSIndexSignature(pos + 8, ast);
     case 4:
       return constructBoxAccessorProperty(pos + 8, ast);
+    case 5:
+      return constructBoxETSOverloadDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for StructElement`);
   }
@@ -12408,6 +12676,470 @@ function constructAnnotationElement(pos, ast) {
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AnnotationElement`);
   }
 }
+
+export class ETSPackageDeclaration {
+  type = "ETSPackageDeclaration";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $name: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get name() {
+    const internal = this.#internal,
+      cached = internal.$name;
+    if (cached !== void 0) return cached;
+    return (internal.$name = constructVecIdentifierName(internal.pos + 16, internal.ast));
+  }
+
+  toJSON() {
+    return {
+      type: "ETSPackageDeclaration",
+      start: this.start,
+      end: this.end,
+      name: this.name,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugETSPackageDeclaration.prototype);
+  }
+}
+
+const DebugETSPackageDeclaration = class ETSPackageDeclaration {};
+
+export class ETSInstanceOfExpression {
+  type = "ETSInstanceOfExpression";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get left() {
+    const internal = this.#internal;
+    return constructExpression(internal.pos + 16, internal.ast);
+  }
+
+  get right() {
+    const internal = this.#internal;
+    return constructTSType(internal.pos + 32, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ETSInstanceOfExpression",
+      start: this.start,
+      end: this.end,
+      left: this.left,
+      right: this.right,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugETSInstanceOfExpression.prototype);
+  }
+}
+
+const DebugETSInstanceOfExpression = class ETSInstanceOfExpression {};
+
+export class ETSNewClassInstanceExpression {
+  type = "ETSNewClassInstanceExpression";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $arguments: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get typeAnnotation() {
+    const internal = this.#internal;
+    return constructTSType(internal.pos + 16, internal.ast);
+  }
+
+  get arguments() {
+    const internal = this.#internal,
+      cached = internal.$arguments;
+    if (cached !== void 0) return cached;
+    return (internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast));
+  }
+
+  get hasArguments() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 12, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ETSNewClassInstanceExpression",
+      start: this.start,
+      end: this.end,
+      typeAnnotation: this.typeAnnotation,
+      arguments: this.arguments,
+      hasArguments: this.hasArguments,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugETSNewClassInstanceExpression.prototype);
+  }
+}
+
+const DebugETSNewClassInstanceExpression = class ETSNewClassInstanceExpression {};
+
+export class ETSNewArrayInstanceExpression {
+  type = "ETSNewArrayInstanceExpression";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get typeAnnotation() {
+    const internal = this.#internal;
+    return constructTSType(internal.pos + 16, internal.ast);
+  }
+
+  get dimension() {
+    const internal = this.#internal;
+    return constructExpression(internal.pos + 32, internal.ast);
+  }
+
+  get initializer() {
+    const internal = this.#internal;
+    return constructOptionExpression(internal.pos + 48, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ETSNewArrayInstanceExpression",
+      start: this.start,
+      end: this.end,
+      typeAnnotation: this.typeAnnotation,
+      dimension: this.dimension,
+      initializer: this.initializer,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugETSNewArrayInstanceExpression.prototype);
+  }
+}
+
+const DebugETSNewArrayInstanceExpression = class ETSNewArrayInstanceExpression {};
+
+export class ETSNewMultiDimArrayInstanceExpression {
+  type = "ETSNewMultiDimArrayInstanceExpression";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $dimensions: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get typeAnnotation() {
+    const internal = this.#internal;
+    return constructTSType(internal.pos + 16, internal.ast);
+  }
+
+  get dimensions() {
+    const internal = this.#internal,
+      cached = internal.$dimensions;
+    if (cached !== void 0) return cached;
+    return (internal.$dimensions = constructVecExpression(internal.pos + 32, internal.ast));
+  }
+
+  toJSON() {
+    return {
+      type: "ETSNewMultiDimArrayInstanceExpression",
+      start: this.start,
+      end: this.end,
+      typeAnnotation: this.typeAnnotation,
+      dimensions: this.dimensions,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(
+      this.toJSON(),
+      DebugETSNewMultiDimArrayInstanceExpression.prototype,
+    );
+  }
+}
+
+const DebugETSNewMultiDimArrayInstanceExpression = class ETSNewMultiDimArrayInstanceExpression {};
+
+export class ETSTrailingBlockExpression {
+  type = "ETSTrailingBlockExpression";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get call() {
+    const internal = this.#internal;
+    return constructBoxCallExpression(internal.pos + 16, internal.ast);
+  }
+
+  get block() {
+    const internal = this.#internal;
+    return constructBoxBlockStatement(internal.pos + 24, internal.ast);
+  }
+
+  get isTrailingCall() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 12, internal.ast);
+  }
+
+  get isBlockOnNewLine() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 13, internal.ast);
+  }
+
+  get hasTrailingComma() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 14, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ETSTrailingBlockExpression",
+      start: this.start,
+      end: this.end,
+      call: this.call,
+      block: this.block,
+      isTrailingCall: this.isTrailingCall,
+      isBlockOnNewLine: this.isBlockOnNewLine,
+      hasTrailingComma: this.hasTrailingComma,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugETSTrailingBlockExpression.prototype);
+  }
+}
+
+const DebugETSTrailingBlockExpression = class ETSTrailingBlockExpression {};
+
+function constructETSOverloadDeclarationKind(pos, ast) {
+  switch (ast.buffer[pos]) {
+    case 0:
+      return "function";
+    case 1:
+      return "classMethod";
+    case 2:
+      return "interfaceMethod";
+    case 3:
+      return "structMethod";
+    default:
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ETSOverloadDeclarationKind`);
+  }
+}
+
+export class ETSOverloadDeclaration {
+  type = "ETSOverloadDeclaration";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $decorators: void 0, $overloads: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get decorators() {
+    const internal = this.#internal,
+      cached = internal.$decorators;
+    if (cached !== void 0) return cached;
+    return (internal.$decorators = constructVecDecorator(internal.pos + 16, internal.ast));
+  }
+
+  get key() {
+    const internal = this.#internal;
+    return constructPropertyKey(internal.pos + 40, internal.ast);
+  }
+
+  get overloads() {
+    const internal = this.#internal,
+      cached = internal.$overloads;
+    if (cached !== void 0) return cached;
+    return (internal.$overloads = constructVecExpression(internal.pos + 56, internal.ast));
+  }
+
+  get kind() {
+    const internal = this.#internal;
+    return constructETSOverloadDeclarationKind(internal.pos + 12, internal.ast);
+  }
+
+  get accessibility() {
+    const internal = this.#internal;
+    return constructOptionTSAccessibility(internal.pos + 13, internal.ast);
+  }
+
+  get static() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 14, internal.ast);
+  }
+
+  get abstract() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 15, internal.ast);
+  }
+
+  get final() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 80, internal.ast);
+  }
+
+  get native() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 81, internal.ast);
+  }
+
+  get declare() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 82, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "ETSOverloadDeclaration",
+      start: this.start,
+      end: this.end,
+      decorators: this.decorators,
+      key: this.key,
+      overloads: this.overloads,
+      kind: this.kind,
+      accessibility: this.accessibility,
+      static: this.static,
+      abstract: this.abstract,
+      final: this.final,
+      native: this.native,
+      declare: this.declare,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugETSOverloadDeclaration.prototype);
+  }
+}
+
+const DebugETSOverloadDeclaration = class ETSOverloadDeclaration {};
 
 export class SourceType {
   #internal;
@@ -13474,6 +14206,30 @@ function constructBoxLeadingDotExpression(pos, ast) {
   return new LeadingDotExpression(ast.buffer.int32[pos >> 2], ast);
 }
 
+function constructBoxCharLiteral(pos, ast) {
+  return new CharLiteral(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxETSTrailingBlockExpression(pos, ast) {
+  return new ETSTrailingBlockExpression(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxETSInstanceOfExpression(pos, ast) {
+  return new ETSInstanceOfExpression(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxETSNewClassInstanceExpression(pos, ast) {
+  return new ETSNewClassInstanceExpression(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxETSNewArrayInstanceExpression(pos, ast) {
+  return new ETSNewArrayInstanceExpression(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxETSNewMultiDimArrayInstanceExpression(pos, ast) {
+  return new ETSNewMultiDimArrayInstanceExpression(ast.buffer.int32[pos >> 2], ast);
+}
+
 function constructVecArrayExpressionElement(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
@@ -13687,6 +14443,10 @@ function constructBoxWithStatement(pos, ast) {
   return new WithStatement(ast.buffer.int32[pos >> 2], ast);
 }
 
+function constructBoxETSPackageDeclaration(pos, ast) {
+  return new ETSPackageDeclaration(ast.buffer.int32[pos >> 2], ast);
+}
+
 function constructBoxVariableDeclaration(pos, ast) {
   return new VariableDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
@@ -13721,6 +14481,29 @@ function constructBoxStructStatement(pos, ast) {
 
 function constructBoxAnnotationDeclaration(pos, ast) {
   return new AnnotationDeclaration(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxETSOverloadDeclaration(pos, ast) {
+  return new ETSOverloadDeclaration(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructVecDecorator(pos, ast) {
+  const { int32 } = ast.buffer,
+    pos32 = pos >> 2;
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructDecorator, ast);
+}
+
+function constructDecorator(pos, ast) {
+  return new Decorator(pos, ast);
+}
+
+function constructBoxVecDecorator(pos, ast) {
+  return constructVecDecorator(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructOptionBoxVecDecorator(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructBoxVecDecorator(pos, ast);
 }
 
 function constructVecVariableDeclarator(pos, ast) {
@@ -13832,16 +14615,6 @@ function constructVecOptionBindingPattern(pos, ast) {
   return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructOptionBindingPattern, ast);
 }
 
-function constructVecDecorator(pos, ast) {
-  const { int32 } = ast.buffer,
-    pos32 = pos >> 2;
-  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructDecorator, ast);
-}
-
-function constructDecorator(pos, ast) {
-  return new Decorator(pos, ast);
-}
-
 function constructOptionBindingIdentifier(pos, ast) {
   if (ast.buffer.int32[(pos >> 2) + 4] === 0 && ast.buffer.int32[(pos >> 2) + 5] === 0) return null;
   return new BindingIdentifier(pos, ast);
@@ -13940,6 +14713,10 @@ function constructBoxAccessorProperty(pos, ast) {
 
 function constructBoxTSIndexSignature(pos, ast) {
   return new TSIndexSignature(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxTSCallSignatureDeclaration(pos, ast) {
+  return new TSCallSignatureDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxImportDeclaration(pos, ast) {
@@ -14052,6 +14829,10 @@ function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
 }
 
+function constructU32(pos, ast) {
+  return ast.buffer.int32[pos >> 2] >>> 0;
+}
+
 function constructU8(pos, ast) {
   return ast.buffer[pos];
 }
@@ -14120,6 +14901,15 @@ function constructBoxJSXText(pos, ast) {
 
 function constructBoxJSXSpreadChild(pos, ast) {
   return new JSXSpreadChild(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxTSType(pos, ast) {
+  return constructTSType(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructOptionBoxTSType(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructBoxTSType(pos, ast);
 }
 
 function constructVecTSEnumMember(pos, ast) {
@@ -14343,10 +15133,6 @@ function constructBoxTSPropertySignature(pos, ast) {
   return new TSPropertySignature(ast.buffer.int32[pos >> 2], ast);
 }
 
-function constructBoxTSCallSignatureDeclaration(pos, ast) {
-  return new TSCallSignatureDeclaration(ast.buffer.int32[pos >> 2], ast);
-}
-
 function constructBoxTSConstructSignatureDeclaration(pos, ast) {
   return new TSConstructSignatureDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
@@ -14401,10 +15187,6 @@ function constructBoxTSExternalModuleReference(pos, ast) {
   return new TSExternalModuleReference(ast.buffer.int32[pos >> 2], ast);
 }
 
-function constructU32(pos, ast) {
-  return ast.buffer.int32[pos >> 2] >>> 0;
-}
-
 function constructBoxStructBody(pos, ast) {
   return new StructBody(ast.buffer.int32[pos >> 2], ast);
 }
@@ -14443,6 +15225,16 @@ function constructVecAnnotationElement(pos, ast) {
   const { int32 } = ast.buffer,
     pos32 = pos >> 2;
   return new NodeArray(int32[pos32], int32[pos32 + 2], 16, constructAnnotationElement, ast);
+}
+
+function constructVecIdentifierName(pos, ast) {
+  const { int32 } = ast.buffer,
+    pos32 = pos >> 2;
+  return new NodeArray(int32[pos32], int32[pos32 + 2], 32, constructIdentifierName, ast);
+}
+
+function constructIdentifierName(pos, ast) {
+  return new IdentifierName(pos, ast);
 }
 
 function constructU64(pos, ast) {

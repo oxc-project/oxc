@@ -64,7 +64,10 @@
 //!
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
-use std::any::Any;
+use std::{
+    any::Any,
+    path::{Path, PathBuf},
+};
 
 pub mod config;
 mod context;
@@ -74,6 +77,7 @@ mod modifiers;
 mod module_record;
 mod state;
 
+mod ets;
 mod js;
 mod jsx;
 mod ts;
@@ -312,6 +316,7 @@ pub struct Parser<'a, C: ParserConfig = NoTokensParserConfig> {
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
+    source_path: Option<PathBuf>,
     options: ParseOptions,
     arkts_options: Option<ArkTsOptions>,
     config: C,
@@ -330,6 +335,7 @@ impl<'a> Parser<'a> {
             allocator,
             source_text,
             source_type,
+            source_path: None,
             options,
             arkts_options: None,
             config: NoTokensParserConfig,
@@ -342,6 +348,16 @@ impl<'a, C: ParserConfig> Parser<'a, C> {
     #[must_use]
     pub fn with_options(mut self, options: ParseOptions) -> Self {
         self.options = options;
+        self
+    }
+
+    /// Set the path of the source being parsed.
+    ///
+    /// Static ETS uses this optional information to reject a module that
+    /// re-exports bindings from itself. Other language modes ignore it.
+    #[must_use]
+    pub fn with_source_path(mut self, source_path: impl AsRef<Path>) -> Self {
+        self.source_path = Some(source_path.as_ref().to_path_buf());
         self
     }
 
@@ -361,6 +377,7 @@ impl<'a, C: ParserConfig> Parser<'a, C> {
             allocator: self.allocator,
             source_text: self.source_text,
             source_type: self.source_type,
+            source_path: self.source_path,
             options: self.options,
             arkts_options: self.arkts_options,
             config,
@@ -426,6 +443,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                 )
@@ -434,6 +452,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                 )
@@ -442,6 +461,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                     config,
@@ -453,6 +473,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                     self.config,
@@ -491,6 +512,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                 )
@@ -499,6 +521,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                 )
@@ -507,6 +530,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                     config,
@@ -516,6 +540,7 @@ mod parser_parse {
                     self.allocator,
                     self.source_text,
                     self.source_type,
+                    self.source_path,
                     self.options,
                     self.arkts_options,
                     self.config,
@@ -558,6 +583,7 @@ mod parser_parse {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        source_path: Option<PathBuf>,
         options: ParseOptions,
         arkts_options: Option<ArkTsOptions>,
     ) -> ParserReturn<'a> {
@@ -565,6 +591,7 @@ mod parser_parse {
             allocator,
             source_text,
             source_type,
+            source_path,
             options,
             arkts_options,
             NoTokensParserConfig,
@@ -578,6 +605,7 @@ mod parser_parse {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        source_path: Option<PathBuf>,
         options: ParseOptions,
         arkts_options: Option<ArkTsOptions>,
     ) -> ParserReturn<'a> {
@@ -585,6 +613,7 @@ mod parser_parse {
             allocator,
             source_text,
             source_type,
+            source_path,
             options,
             arkts_options,
             TokensParserConfig,
@@ -598,6 +627,7 @@ mod parser_parse {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        source_path: Option<PathBuf>,
         options: ParseOptions,
         arkts_options: Option<ArkTsOptions>,
         config: RuntimeParserConfig,
@@ -606,6 +636,7 @@ mod parser_parse {
             allocator,
             source_text,
             source_type,
+            source_path,
             options,
             arkts_options,
             config,
@@ -619,6 +650,7 @@ mod parser_parse {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        source_path: Option<PathBuf>,
         options: ParseOptions,
         arkts_options: Option<ArkTsOptions>,
     ) -> Result<Expression<'a>, Diagnostics> {
@@ -626,6 +658,7 @@ mod parser_parse {
             allocator,
             source_text,
             source_type,
+            source_path,
             options,
             arkts_options,
             NoTokensParserConfig,
@@ -639,6 +672,7 @@ mod parser_parse {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        source_path: Option<PathBuf>,
         options: ParseOptions,
         arkts_options: Option<ArkTsOptions>,
     ) -> Result<Expression<'a>, Diagnostics> {
@@ -646,6 +680,7 @@ mod parser_parse {
             allocator,
             source_text,
             source_type,
+            source_path,
             options,
             arkts_options,
             TokensParserConfig,
@@ -659,6 +694,7 @@ mod parser_parse {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        source_path: Option<PathBuf>,
         options: ParseOptions,
         arkts_options: Option<ArkTsOptions>,
         config: RuntimeParserConfig,
@@ -667,6 +703,7 @@ mod parser_parse {
             allocator,
             source_text,
             source_type,
+            source_path,
             options,
             arkts_options,
             config,
@@ -740,6 +777,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        source_path: Option<PathBuf>,
         options: ParseOptions,
         arkts_options: Option<ArkTsOptions>,
         config: C,
@@ -760,7 +798,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             state: ParserState::new(),
             ctx,
             ast: AstBuilder::new(allocator),
-            module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
+            module_record_builder: ModuleRecordBuilder::new(allocator, source_type, source_path),
             is_ts: source_type.is_typescript(),
         }
     }
@@ -1032,6 +1070,186 @@ mod test {
         let source = "a";
         let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
         assert!(matches!(expr, Expression::Identifier(_)));
+    }
+
+    #[test]
+    fn ets_static_must_be_selected_explicitly() {
+        let allocator = Allocator::default();
+        let source = "let character: char = c'a'; let value: float = 1.25f;";
+
+        let static_ret = Parser::new(&allocator, source, SourceType::ets_static()).parse();
+        assert!(static_ret.diagnostics.is_empty(), "Errors: {:?}", static_ret.diagnostics);
+
+        let inferred = SourceType::from_path(Path::new("example.ets")).unwrap();
+        assert!(inferred.is_arkui());
+        assert!(!inferred.is_ets_static());
+        let arkui_ret = Parser::new(&allocator, source, inferred).parse();
+        assert!(
+            !arkui_ret.diagnostics.is_empty(),
+            "A plain .ets path must not activate static ETS literals"
+        );
+    }
+
+    #[test]
+    fn ets_static_estree_metadata_is_conditional() {
+        let allocator = Allocator::default();
+        let legacy_source = r#"
+            const value: number = 1;
+            class A {}
+            function f(): void {}
+            enum E { A }
+            export { value };
+            ({ key: 1 });
+        "#;
+        let legacy = Parser::new(&allocator, legacy_source, SourceType::ts()).parse();
+        assert!(legacy.diagnostics.is_empty(), "Errors: {:?}", legacy.diagnostics);
+        let legacy_json = legacy.program.to_estree_json(true, false);
+        assert!(!legacy_json.contains("\"type\":\"VariableDeclaration\",\"decorators\""));
+        for field in ["final", "native", "underlyingType", "etsSingle", "etsEquals"] {
+            assert!(!legacy_json.contains(&format!("\"{field}\":")), "{legacy_json}");
+        }
+
+        let allocator = Allocator::default();
+        let static_source = r#"
+            @interface Mark {}
+            @Mark const value: int = 1;
+            final class A {}
+            native function f(): void;
+            enum E: int { A }
+        "#;
+        let static_ret = Parser::new(&allocator, static_source, SourceType::ets_static()).parse();
+        assert!(static_ret.diagnostics.is_empty(), "Errors: {:?}", static_ret.diagnostics);
+        let static_json = static_ret.program.to_estree_json(true, false);
+        assert!(static_json.contains("\"type\":\"VariableDeclaration\",\"decorators\""));
+        assert!(static_json.contains("\"final\":true"));
+        assert!(static_json.contains("\"native\":true"));
+        assert!(static_json.contains("\"underlyingType\":"));
+    }
+
+    #[test]
+    fn ets_static_parses_es2panda_declarations() {
+        let allocator = Allocator::default();
+        let source = r#"
+            package example.parser;
+
+            @interface Mark { value: string = "ok" }
+            @Mark("ok")
+            enum Color: int { Red, Green }
+
+            class A {}
+            class B {}
+
+            function fromA(value: A): A { return value }
+            function fromB(value: B): B { return value }
+            overload convert { fromA, fromB }
+
+            interface Converter {
+                fromA(value: A): A;
+                fromB(value: B): B;
+                overload convert { fromA, fromB };
+            }
+
+            class Factory {
+                constructor fromA(value: A) {}
+                constructor fromB(value: B) {}
+                overload constructor { fromA, fromB }
+            }
+
+            struct Point { x: int = 0 }
+        "#;
+        let ret = Parser::new(&allocator, source, SourceType::ets_static()).parse();
+        assert!(ret.diagnostics.is_empty(), "Errors: {:?}", ret.diagnostics);
+        assert!(
+            ret.program
+                .body
+                .iter()
+                .any(|statement| matches!(statement, Statement::ETSPackageDeclaration(_)))
+        );
+        assert!(
+            ret.program
+                .body
+                .iter()
+                .any(|statement| matches!(statement, Statement::AnnotationDeclaration(_)))
+        );
+        assert!(
+            ret.program
+                .body
+                .iter()
+                .any(|statement| matches!(statement, Statement::TSEnumDeclaration(_)))
+        );
+        assert!(
+            ret.program
+                .body
+                .iter()
+                .any(|statement| matches!(statement, Statement::ETSOverloadDeclaration(_)))
+        );
+        assert!(
+            ret.program
+                .body
+                .iter()
+                .any(|statement| matches!(statement, Statement::StructStatement(_)))
+        );
+    }
+
+    #[test]
+    fn ets_static_preserves_expression_nodes() {
+        let allocator = Allocator::default();
+        let source = r#"
+            class Value {}
+            let value: Value = new Value()
+            let values: int[] = new int[3](0)
+            let matches: boolean = value instanceof Value
+            function consume(): void {}
+            consume() { let nested: int = 1 }
+        "#;
+        let ret = Parser::new(&allocator, source, SourceType::ets_static()).parse();
+        assert!(ret.diagnostics.is_empty(), "Errors: {:?}", ret.diagnostics);
+
+        let initializers = ret.program.body.iter().filter_map(|statement| {
+            let Statement::VariableDeclaration(declaration) = statement else { return None };
+            declaration.declarations[0].init.as_ref()
+        });
+        let expression_kinds = initializers
+            .map(|expression| match expression {
+                Expression::ETSNewClassInstanceExpression(_) => "class",
+                Expression::ETSNewArrayInstanceExpression(_) => "array",
+                Expression::ETSInstanceOfExpression(_) => "instanceof",
+                _ => "other",
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(expression_kinds, ["class", "array", "instanceof"]);
+
+        let Statement::ExpressionStatement(trailing_block) = &ret.program.body[5] else {
+            panic!("Expected a trailing-block expression statement");
+        };
+        assert!(matches!(trailing_block.expression, Expression::ETSTrailingBlockExpression(_)));
+    }
+
+    #[test]
+    fn ets_static_validates_annotations_and_exports() {
+        let allocator = Allocator::default();
+        let invalid_annotation = r#"
+            class Value {}
+            @interface Mark { value: string }
+            @Mark({ value: new Value() })
+            class Decorated {}
+        "#;
+        let ret = Parser::new(&allocator, invalid_annotation, SourceType::ets_static()).parse();
+        assert!(!ret.diagnostics.is_empty());
+
+        let forward_export = "export { value }; const value: int = 1;";
+        let ret = Parser::new(&allocator, forward_export, SourceType::ets_static()).parse();
+        assert!(ret.diagnostics.is_empty(), "Errors: {:?}", ret.diagnostics);
+
+        let unknown_export = "export { missing }; const value: int = 1;";
+        let ret = Parser::new(&allocator, unknown_export, SourceType::ets_static()).parse();
+        assert!(!ret.diagnostics.is_empty());
+
+        let self_reexport = "export { value } from './self.ets';";
+        let ret = Parser::new(&allocator, self_reexport, SourceType::ets_static())
+            .with_source_path("/project/self.ets")
+            .parse();
+        assert!(!ret.diagnostics.is_empty());
     }
 
     #[test]

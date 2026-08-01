@@ -52,6 +52,7 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
                 e.expressions.iter().any(|e| e.may_have_side_effects(ctx))
             }
             Expression::BinaryExpression(e) => e.may_have_side_effects(ctx),
+            Expression::ETSInstanceOfExpression(e) => e.left.may_have_side_effects(ctx),
             Expression::ObjectExpression(object_expr) => {
                 object_expr.properties.iter().any(|property| property.may_have_side_effects(ctx))
             }
@@ -387,7 +388,12 @@ impl<'a> MayHaveSideEffects<'a> for ClassElement<'a> {
                     || e.key.may_have_side_effects(ctx)
                     || e.value.as_ref().is_some_and(|init| init.may_have_side_effects(ctx))
             }
-            ClassElement::TSIndexSignature(_) => false,
+            ClassElement::TSIndexSignature(_) | ClassElement::TSCallSignatureDeclaration(_) => {
+                false
+            }
+            ClassElement::ETSOverloadDeclaration(e) => {
+                !e.decorators.is_empty() || e.key.may_have_side_effects(ctx)
+            }
         }
     }
 }

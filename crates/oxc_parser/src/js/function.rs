@@ -20,6 +20,17 @@ impl FunctionKind {
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
+    pub(crate) fn with_ets_this_return_type<F, T>(&mut self, allow: bool, f: F) -> T
+    where
+        F: FnOnce(&mut Self) -> T,
+    {
+        let saved = self.state.ets_allow_this_return_type;
+        self.state.ets_allow_this_return_type = self.source_type.is_ets_static() && allow;
+        let result = f(self);
+        self.state.ets_allow_this_return_type = saved;
+        result
+    }
+
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async) && {
@@ -34,9 +45,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LCurly);
 
         // Add Return context, remove TopLevel context
+        let saved_ets_loop_depth = self.state.ets_loop_depth;
+        let saved_ets_switch_depth = self.state.ets_switch_depth;
+        self.state.ets_loop_depth = 0;
+        self.state.ets_switch_depth = 0;
         let (directives, statements) = self.context(Context::Return, Context::TopLevel, |p| {
             p.parse_directives_and_statements(/* in_ts_namespace_body */ false)
         });
+        self.state.ets_loop_depth = saved_ets_loop_depth;
+        self.state.ets_switch_depth = saved_ets_switch_depth;
 
         self.expect_closing(Kind::RCurly, opening_span);
         FunctionBody::boxed(self.end_span(span), directives, statements, self)
@@ -57,8 +74,66 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else {
             None
         };
+        if self.source_type.is_ets_static()
+            && this_param.is_some()
+            && matches!(func_kind, FunctionKind::ClassMethod | FunctionKind::Constructor)
+        {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Receiver parameters on class members",
+                this_param.as_ref().unwrap().span,
+            ));
+        }
         let (list, rest) = self.parse_formal_parameters_list(func_kind, opening_span);
         self.expect(Kind::RParen);
+
+        if self.source_type.is_ets_static() {
+            let is_arrow = params_kind == FormalParameterKind::ArrowFormalParameters;
+            let is_signature = params_kind == FormalParameterKind::Signature;
+            for param in &list {
+                if is_arrow && !param.pattern.is_binding_identifier() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Destructuring lambda parameters",
+                        param.pattern.span(),
+                    ));
+                }
+                if (!is_arrow || param.optional || param.initializer.is_some())
+                    && param.type_annotation.is_none()
+                {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Parameters without an explicit type annotation in this context",
+                        param.span,
+                    ));
+                }
+                if is_signature && param.initializer.is_some() {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Default values in function type parameters",
+                        param.span,
+                    ));
+                }
+            }
+            if let Some(rest) = &rest {
+                let valid_rest_type = rest.type_annotation.as_ref().is_some_and(|annotation| {
+                    matches!(
+                        annotation.type_annotation,
+                        TSType::TSArrayType(_) | TSType::TSTupleType(_)
+                    ) || matches!(
+                        &annotation.type_annotation,
+                        TSType::TSTypeReference(reference)
+                            if matches!(
+                                &reference.type_name,
+                                TSTypeName::IdentifierReference(identifier)
+                                    if matches!(identifier.name.as_str(), "Array" | "FixedArray")
+                            )
+                    )
+                });
+                if !valid_rest_type {
+                    self.error(diagnostics::ets_unsupported_syntax(
+                        "Rest parameters whose type is not an array or tuple",
+                        rest.span,
+                    ));
+                }
+            }
+        }
 
         let formal_parameters =
             FormalParameters::boxed(self.end_span(span), params_kind, list, rest, self);
@@ -146,7 +221,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 let param =
                     self.parse_formal_parameter_with_decorators(func_kind, span, decorators);
-                if param.optional {
+                if param.optional
+                    || (self.source_type.is_ets_static() && param.initializer.is_some())
+                {
                     has_optional = true;
                 } else if has_optional && param.initializer.is_none() {
                     self.error(diagnostics::required_parameter_after_optional_parameter(
@@ -167,6 +244,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
         let modifiers = self.parse_modifiers(false, false);
+        if self.source_type.is_ets_static() {
+            for modifier in modifiers.iter() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Parameter-property modifiers",
+                    modifier.span(),
+                ));
+            }
+        }
         if self.is_ts {
             let allowed_modifiers = if func_kind == FunctionKind::Constructor {
                 ModifierKinds::new([
@@ -263,6 +348,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ArenaBox<'a, Function<'a>> {
+        if self.source_type.is_ets_static() && generator {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Generator functions",
+                Span::empty(span),
+            ));
+        }
+        if self.source_type.is_ets_static() && r#async {
+            if let Some(native) = modifiers.get(ModifierKind::Native) {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Async native functions",
+                    native.span(),
+                ));
+            }
+            if let Some(declare) = modifiers.get(ModifierKind::Declare) {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Async ambient functions",
+                    declare.span(),
+                ));
+            }
+        }
         let ctx = self.ctx;
         // `new.target` is allowed in a function's parameters and body (but not arrow
         // functions, which are parsed via `parse_function_body` directly).
@@ -270,7 +375,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.ctx.and_in(true).and_await(r#async).and_yield(generator).and_new_target(true);
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
-        let return_type = if self.is_ts { self.parse_ts_return_type_annotation() } else { None };
+        let allow_this_return_type = self.state.ets_allow_this_return_type || this_param.is_some();
+        let return_type = if self.is_ts {
+            if self.source_type.is_ets_static() && allow_this_return_type {
+                self.context_add(Context::EtsAllowThisType, Self::parse_ts_return_type_annotation)
+            } else {
+                self.parse_ts_return_type_annotation()
+            }
+        } else {
+            None
+        };
         let body = if self.at(Kind::LCurly) || func_kind == FunctionKind::Expression {
             let is_arkui_dsl_function = self.take_next_arkui_dsl_function()
                 || self.source_type.is_arkui()
@@ -316,7 +430,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if FunctionType::TSDeclareFunction == function_type
             || FunctionType::TSEmptyBodyFunctionExpression == function_type
         {
-            self.asi();
+            // Static ETS permits comma-separated ambient/interface members.
+            // Keep TypeScript's ASI behavior unchanged in every other mode.
+            if !(self.source_type.is_ets_static() && self.eat(Kind::Comma)) {
+                self.asi();
+            }
         }
 
         // A function declaration's implementation (body) cannot be declared in an ambient context,
@@ -325,6 +443,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // (TS1183). Class methods are checked separately in `check_method_definition`, so they are
         // excluded here to avoid a duplicate diagnostic.
         if ctx.has_ambient()
+            && (!self.source_type.is_ets_static() || !modifiers.contains_declare())
             && matches!(
                 func_kind,
                 FunctionKind::Declaration
@@ -336,7 +455,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
 
-        if generator {
+        if generator && !self.source_type.is_ets_static() {
             if ctx.has_ambient() {
                 self.error(diagnostics::generator_in_ambient_context(self.end_span(span)));
             } else if body.is_none() {
@@ -350,7 +469,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        Function::boxed_with_decorators(
+        let mut function = Function::boxed_with_decorators(
             self.end_span(span),
             function_type,
             decorators,
@@ -364,7 +483,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return_type,
             body,
             self,
-        )
+        );
+        if self.source_type.is_ets_static() {
+            function.r#final = modifiers.contains(ModifierKind::Final);
+            function.native = modifiers.contains(ModifierKind::Native);
+        }
+        function
     }
 
     /// [Function Declaration](https://tc39.es/ecma262/#prod-FunctionDeclaration)
@@ -375,6 +499,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         stmt_ctx: StatementContext,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
+        if self.source_type.is_ets_static() && !self.state.ets_in_declaration_scope {
+            self.error(diagnostics::ets_nested_declaration("Function", Span::empty(span)));
+        }
         let func_kind = FunctionKind::Declaration;
         let decl = self.parse_function_impl(span, r#async, func_kind, decorators);
         if stmt_ctx.is_single_statement() {

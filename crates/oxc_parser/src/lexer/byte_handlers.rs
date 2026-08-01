@@ -514,15 +514,30 @@ ascii_identifier_handler!(L_B(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_C(id_without_first_char) match id_without_first_char {
-    "onst" => Kind::Const,
-    "lass" => Kind::Class,
-    "ontinue" => Kind::Continue,
-    "atch" => Kind::Catch,
-    "ase" => Kind::Case,
-    "onstructor" => Kind::Constructor,
-    _ => Kind::Ident,
-});
+#[expect(non_snake_case)]
+fn L_C<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+    // ETS static character literals are introduced by a lowercase `c`
+    // immediately followed by a single quote. Keep the regular identifier
+    // path untouched in every other source mode.
+    if lexer.source_type.is_ets_static() && lexer.peek_2_bytes() == Some([b'c', b'\'']) {
+        lexer.consume_char();
+        // SAFETY: The lookahead above proves that the next byte is `'`.
+        let kind = unsafe { lexer.read_string_literal_single_quote() };
+        return if kind == Kind::Str { Kind::CharLiteral } else { kind };
+    }
+
+    // SAFETY: This handler is only installed for the ASCII character `c`.
+    let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+    match id_without_first_char {
+        "onst" => Kind::Const,
+        "lass" => Kind::Class,
+        "ontinue" => Kind::Continue,
+        "atch" => Kind::Catch,
+        "ase" => Kind::Case,
+        "onstructor" => Kind::Constructor,
+        _ => Kind::Ident,
+    }
+}
 
 ascii_identifier_handler!(L_D(id_without_first_char) match id_without_first_char {
     "o" => Kind::Do,
@@ -542,14 +557,20 @@ ascii_identifier_handler!(L_E(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_F(id_without_first_char) match id_without_first_char {
-    "unction" => Kind::Function,
-    "alse" => Kind::False,
-    "or" => Kind::For,
-    "inally" => Kind::Finally,
-    "rom" => Kind::From,
-    _ => Kind::Ident,
-});
+#[expect(non_snake_case)]
+fn L_F<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+    // SAFETY: This handler is only installed for the ASCII character `f`.
+    let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+    match id_without_first_char {
+        "unction" => Kind::Function,
+        "alse" => Kind::False,
+        "or" => Kind::For,
+        "inally" => Kind::Finally,
+        "rom" => Kind::From,
+        "inal" if lexer.source_type.is_ets_static() => Kind::Final,
+        _ => Kind::Ident,
+    }
+}
 
 ascii_identifier_handler!(L_G(id_without_first_char) match id_without_first_char {
     "et" => Kind::Get,
@@ -586,22 +607,34 @@ ascii_identifier_handler!(L_M(id_without_first_char) match id_without_first_char
     _ => Kind::Ident,
 });
 
-ascii_identifier_handler!(L_N(id_without_first_char) match id_without_first_char {
-    "ull" => Kind::Null,
-    "ew" => Kind::New,
-    "umber" => Kind::Number,
-    "amespace" => Kind::Namespace,
-    "ever" => Kind::Never,
-    _ => Kind::Ident,
-});
+#[expect(non_snake_case)]
+fn L_N<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+    // SAFETY: This handler is only installed for the ASCII character `n`.
+    let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+    match id_without_first_char {
+        "ull" => Kind::Null,
+        "ew" => Kind::New,
+        "umber" => Kind::Number,
+        "amespace" => Kind::Namespace,
+        "ever" => Kind::Never,
+        "ative" if lexer.source_type.is_ets_static() => Kind::Native,
+        _ => Kind::Ident,
+    }
+}
 
-ascii_identifier_handler!(L_O(id_without_first_char) match id_without_first_char {
-    "f" => Kind::Of,
-    "bject" => Kind::Object,
-    "ut" => Kind::Out,
-    "verride" => Kind::Override,
-    _ => Kind::Ident,
-});
+#[expect(non_snake_case)]
+fn L_O<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
+    // SAFETY: This handler is only installed for the ASCII character `o`.
+    let id_without_first_char = unsafe { lexer.identifier_name_handler() };
+    match id_without_first_char {
+        "f" => Kind::Of,
+        "bject" => Kind::Object,
+        "ut" => Kind::Out,
+        "verride" => Kind::Override,
+        "verload" if lexer.source_type.is_ets_static() => Kind::Overload,
+        _ => Kind::Ident,
+    }
+}
 
 ascii_identifier_handler!(L_P(id_without_first_char) match id_without_first_char {
     "ackage" => Kind::Package,

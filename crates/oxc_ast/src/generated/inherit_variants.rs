@@ -188,6 +188,12 @@ impl<'a> ArrayExpressionElement<'a> {
                 | Self::V8IntrinsicExpression(_)
                 | Self::ArkUIComponentExpression(_)
                 | Self::LeadingDotExpression(_)
+                | Self::CharLiteral(_)
+                | Self::ETSTrailingBlockExpression(_)
+                | Self::ETSInstanceOfExpression(_)
+                | Self::ETSNewClassInstanceExpression(_)
+                | Self::ETSNewArrayInstanceExpression(_)
+                | Self::ETSNewMultiDimArrayInstanceExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -350,6 +356,22 @@ impl<'a> TryFrom<ArrayExpressionElement<'a>> for Expression<'a> {
             ArrayExpressionElement::LeadingDotExpression(o) => {
                 Ok(Expression::LeadingDotExpression(o))
             }
+            ArrayExpressionElement::CharLiteral(o) => Ok(Expression::CharLiteral(o)),
+            ArrayExpressionElement::ETSTrailingBlockExpression(o) => {
+                Ok(Expression::ETSTrailingBlockExpression(o))
+            }
+            ArrayExpressionElement::ETSInstanceOfExpression(o) => {
+                Ok(Expression::ETSInstanceOfExpression(o))
+            }
+            ArrayExpressionElement::ETSNewClassInstanceExpression(o) => {
+                Ok(Expression::ETSNewClassInstanceExpression(o))
+            }
+            ArrayExpressionElement::ETSNewArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewArrayInstanceExpression(o))
+            }
+            ArrayExpressionElement::ETSNewMultiDimArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewMultiDimArrayInstanceExpression(o))
+            }
             ArrayExpressionElement::ComputedMemberExpression(o) => {
                 Ok(Expression::ComputedMemberExpression(o))
             }
@@ -430,6 +452,22 @@ impl<'a> From<Expression<'a>> for ArrayExpressionElement<'a> {
                 ArrayExpressionElement::ArkUIComponentExpression(o)
             }
             Expression::LeadingDotExpression(o) => ArrayExpressionElement::LeadingDotExpression(o),
+            Expression::CharLiteral(o) => ArrayExpressionElement::CharLiteral(o),
+            Expression::ETSTrailingBlockExpression(o) => {
+                ArrayExpressionElement::ETSTrailingBlockExpression(o)
+            }
+            Expression::ETSInstanceOfExpression(o) => {
+                ArrayExpressionElement::ETSInstanceOfExpression(o)
+            }
+            Expression::ETSNewClassInstanceExpression(o) => {
+                ArrayExpressionElement::ETSNewClassInstanceExpression(o)
+            }
+            Expression::ETSNewArrayInstanceExpression(o) => {
+                ArrayExpressionElement::ETSNewArrayInstanceExpression(o)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(o) => {
+                ArrayExpressionElement::ETSNewMultiDimArrayInstanceExpression(o)
+            }
             Expression::ComputedMemberExpression(o) => {
                 ArrayExpressionElement::ComputedMemberExpression(o)
             }
@@ -627,6 +665,12 @@ impl<'a> PropertyKey<'a> {
                 | Self::V8IntrinsicExpression(_)
                 | Self::ArkUIComponentExpression(_)
                 | Self::LeadingDotExpression(_)
+                | Self::CharLiteral(_)
+                | Self::ETSTrailingBlockExpression(_)
+                | Self::ETSInstanceOfExpression(_)
+                | Self::ETSNewClassInstanceExpression(_)
+                | Self::ETSNewArrayInstanceExpression(_)
+                | Self::ETSNewMultiDimArrayInstanceExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -767,6 +811,20 @@ impl<'a> TryFrom<PropertyKey<'a>> for Expression<'a> {
             PropertyKey::V8IntrinsicExpression(o) => Ok(Expression::V8IntrinsicExpression(o)),
             PropertyKey::ArkUIComponentExpression(o) => Ok(Expression::ArkUIComponentExpression(o)),
             PropertyKey::LeadingDotExpression(o) => Ok(Expression::LeadingDotExpression(o)),
+            PropertyKey::CharLiteral(o) => Ok(Expression::CharLiteral(o)),
+            PropertyKey::ETSTrailingBlockExpression(o) => {
+                Ok(Expression::ETSTrailingBlockExpression(o))
+            }
+            PropertyKey::ETSInstanceOfExpression(o) => Ok(Expression::ETSInstanceOfExpression(o)),
+            PropertyKey::ETSNewClassInstanceExpression(o) => {
+                Ok(Expression::ETSNewClassInstanceExpression(o))
+            }
+            PropertyKey::ETSNewArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewArrayInstanceExpression(o))
+            }
+            PropertyKey::ETSNewMultiDimArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewMultiDimArrayInstanceExpression(o))
+            }
             PropertyKey::ComputedMemberExpression(o) => Ok(Expression::ComputedMemberExpression(o)),
             PropertyKey::StaticMemberExpression(o) => Ok(Expression::StaticMemberExpression(o)),
             PropertyKey::PrivateFieldExpression(o) => Ok(Expression::PrivateFieldExpression(o)),
@@ -825,6 +883,18 @@ impl<'a> From<Expression<'a>> for PropertyKey<'a> {
             Expression::V8IntrinsicExpression(o) => PropertyKey::V8IntrinsicExpression(o),
             Expression::ArkUIComponentExpression(o) => PropertyKey::ArkUIComponentExpression(o),
             Expression::LeadingDotExpression(o) => PropertyKey::LeadingDotExpression(o),
+            Expression::CharLiteral(o) => PropertyKey::CharLiteral(o),
+            Expression::ETSTrailingBlockExpression(o) => PropertyKey::ETSTrailingBlockExpression(o),
+            Expression::ETSInstanceOfExpression(o) => PropertyKey::ETSInstanceOfExpression(o),
+            Expression::ETSNewClassInstanceExpression(o) => {
+                PropertyKey::ETSNewClassInstanceExpression(o)
+            }
+            Expression::ETSNewArrayInstanceExpression(o) => {
+                PropertyKey::ETSNewArrayInstanceExpression(o)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(o) => {
+                PropertyKey::ETSNewMultiDimArrayInstanceExpression(o)
+            }
             Expression::ComputedMemberExpression(o) => PropertyKey::ComputedMemberExpression(o),
             Expression::StaticMemberExpression(o) => PropertyKey::StaticMemberExpression(o),
             Expression::PrivateFieldExpression(o) => PropertyKey::PrivateFieldExpression(o),
@@ -1012,6 +1082,12 @@ impl<'a> Argument<'a> {
                 | Self::V8IntrinsicExpression(_)
                 | Self::ArkUIComponentExpression(_)
                 | Self::LeadingDotExpression(_)
+                | Self::CharLiteral(_)
+                | Self::ETSTrailingBlockExpression(_)
+                | Self::ETSInstanceOfExpression(_)
+                | Self::ETSNewClassInstanceExpression(_)
+                | Self::ETSNewArrayInstanceExpression(_)
+                | Self::ETSNewMultiDimArrayInstanceExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -1150,6 +1226,20 @@ impl<'a> TryFrom<Argument<'a>> for Expression<'a> {
             Argument::V8IntrinsicExpression(o) => Ok(Expression::V8IntrinsicExpression(o)),
             Argument::ArkUIComponentExpression(o) => Ok(Expression::ArkUIComponentExpression(o)),
             Argument::LeadingDotExpression(o) => Ok(Expression::LeadingDotExpression(o)),
+            Argument::CharLiteral(o) => Ok(Expression::CharLiteral(o)),
+            Argument::ETSTrailingBlockExpression(o) => {
+                Ok(Expression::ETSTrailingBlockExpression(o))
+            }
+            Argument::ETSInstanceOfExpression(o) => Ok(Expression::ETSInstanceOfExpression(o)),
+            Argument::ETSNewClassInstanceExpression(o) => {
+                Ok(Expression::ETSNewClassInstanceExpression(o))
+            }
+            Argument::ETSNewArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewArrayInstanceExpression(o))
+            }
+            Argument::ETSNewMultiDimArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewMultiDimArrayInstanceExpression(o))
+            }
             Argument::ComputedMemberExpression(o) => Ok(Expression::ComputedMemberExpression(o)),
             Argument::StaticMemberExpression(o) => Ok(Expression::StaticMemberExpression(o)),
             Argument::PrivateFieldExpression(o) => Ok(Expression::PrivateFieldExpression(o)),
@@ -1208,6 +1298,18 @@ impl<'a> From<Expression<'a>> for Argument<'a> {
             Expression::V8IntrinsicExpression(o) => Argument::V8IntrinsicExpression(o),
             Expression::ArkUIComponentExpression(o) => Argument::ArkUIComponentExpression(o),
             Expression::LeadingDotExpression(o) => Argument::LeadingDotExpression(o),
+            Expression::CharLiteral(o) => Argument::CharLiteral(o),
+            Expression::ETSTrailingBlockExpression(o) => Argument::ETSTrailingBlockExpression(o),
+            Expression::ETSInstanceOfExpression(o) => Argument::ETSInstanceOfExpression(o),
+            Expression::ETSNewClassInstanceExpression(o) => {
+                Argument::ETSNewClassInstanceExpression(o)
+            }
+            Expression::ETSNewArrayInstanceExpression(o) => {
+                Argument::ETSNewArrayInstanceExpression(o)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(o) => {
+                Argument::ETSNewMultiDimArrayInstanceExpression(o)
+            }
             Expression::ComputedMemberExpression(o) => Argument::ComputedMemberExpression(o),
             Expression::StaticMemberExpression(o) => Argument::StaticMemberExpression(o),
             Expression::PrivateFieldExpression(o) => Argument::PrivateFieldExpression(o),
@@ -2655,6 +2757,7 @@ impl<'a> Statement<'a> {
                 | Self::TSImportEqualsDeclaration(_)
                 | Self::StructStatement(_)
                 | Self::AnnotationDeclaration(_)
+                | Self::ETSOverloadDeclaration(_)
         )
     }
 
@@ -2760,6 +2863,7 @@ impl<'a> TryFrom<Statement<'a>> for Declaration<'a> {
             }
             Statement::StructStatement(o) => Ok(Declaration::StructStatement(o)),
             Statement::AnnotationDeclaration(o) => Ok(Declaration::AnnotationDeclaration(o)),
+            Statement::ETSOverloadDeclaration(o) => Ok(Declaration::ETSOverloadDeclaration(o)),
             _ => Err(()),
         }
     }
@@ -2783,6 +2887,7 @@ impl<'a> From<Declaration<'a>> for Statement<'a> {
             Declaration::TSImportEqualsDeclaration(o) => Statement::TSImportEqualsDeclaration(o),
             Declaration::StructStatement(o) => Statement::StructStatement(o),
             Declaration::AnnotationDeclaration(o) => Statement::AnnotationDeclaration(o),
+            Declaration::ETSOverloadDeclaration(o) => Statement::ETSOverloadDeclaration(o),
         }
     }
 }
@@ -2981,6 +3086,12 @@ impl<'a> ForStatementInit<'a> {
                 | Self::V8IntrinsicExpression(_)
                 | Self::ArkUIComponentExpression(_)
                 | Self::LeadingDotExpression(_)
+                | Self::CharLiteral(_)
+                | Self::ETSTrailingBlockExpression(_)
+                | Self::ETSInstanceOfExpression(_)
+                | Self::ETSNewClassInstanceExpression(_)
+                | Self::ETSNewArrayInstanceExpression(_)
+                | Self::ETSNewMultiDimArrayInstanceExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -3129,6 +3240,22 @@ impl<'a> TryFrom<ForStatementInit<'a>> for Expression<'a> {
                 Ok(Expression::ArkUIComponentExpression(o))
             }
             ForStatementInit::LeadingDotExpression(o) => Ok(Expression::LeadingDotExpression(o)),
+            ForStatementInit::CharLiteral(o) => Ok(Expression::CharLiteral(o)),
+            ForStatementInit::ETSTrailingBlockExpression(o) => {
+                Ok(Expression::ETSTrailingBlockExpression(o))
+            }
+            ForStatementInit::ETSInstanceOfExpression(o) => {
+                Ok(Expression::ETSInstanceOfExpression(o))
+            }
+            ForStatementInit::ETSNewClassInstanceExpression(o) => {
+                Ok(Expression::ETSNewClassInstanceExpression(o))
+            }
+            ForStatementInit::ETSNewArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewArrayInstanceExpression(o))
+            }
+            ForStatementInit::ETSNewMultiDimArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewMultiDimArrayInstanceExpression(o))
+            }
             ForStatementInit::ComputedMemberExpression(o) => {
                 Ok(Expression::ComputedMemberExpression(o))
             }
@@ -3199,6 +3326,20 @@ impl<'a> From<Expression<'a>> for ForStatementInit<'a> {
                 ForStatementInit::ArkUIComponentExpression(o)
             }
             Expression::LeadingDotExpression(o) => ForStatementInit::LeadingDotExpression(o),
+            Expression::CharLiteral(o) => ForStatementInit::CharLiteral(o),
+            Expression::ETSTrailingBlockExpression(o) => {
+                ForStatementInit::ETSTrailingBlockExpression(o)
+            }
+            Expression::ETSInstanceOfExpression(o) => ForStatementInit::ETSInstanceOfExpression(o),
+            Expression::ETSNewClassInstanceExpression(o) => {
+                ForStatementInit::ETSNewClassInstanceExpression(o)
+            }
+            Expression::ETSNewArrayInstanceExpression(o) => {
+                ForStatementInit::ETSNewArrayInstanceExpression(o)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(o) => {
+                ForStatementInit::ETSNewMultiDimArrayInstanceExpression(o)
+            }
             Expression::ComputedMemberExpression(o) => {
                 ForStatementInit::ComputedMemberExpression(o)
             }
@@ -3987,6 +4128,12 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
                 | Self::V8IntrinsicExpression(_)
                 | Self::ArkUIComponentExpression(_)
                 | Self::LeadingDotExpression(_)
+                | Self::CharLiteral(_)
+                | Self::ETSTrailingBlockExpression(_)
+                | Self::ETSInstanceOfExpression(_)
+                | Self::ETSNewClassInstanceExpression(_)
+                | Self::ETSNewArrayInstanceExpression(_)
+                | Self::ETSNewMultiDimArrayInstanceExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -4163,6 +4310,22 @@ impl<'a> TryFrom<ExportDefaultDeclarationKind<'a>> for Expression<'a> {
             ExportDefaultDeclarationKind::LeadingDotExpression(o) => {
                 Ok(Expression::LeadingDotExpression(o))
             }
+            ExportDefaultDeclarationKind::CharLiteral(o) => Ok(Expression::CharLiteral(o)),
+            ExportDefaultDeclarationKind::ETSTrailingBlockExpression(o) => {
+                Ok(Expression::ETSTrailingBlockExpression(o))
+            }
+            ExportDefaultDeclarationKind::ETSInstanceOfExpression(o) => {
+                Ok(Expression::ETSInstanceOfExpression(o))
+            }
+            ExportDefaultDeclarationKind::ETSNewClassInstanceExpression(o) => {
+                Ok(Expression::ETSNewClassInstanceExpression(o))
+            }
+            ExportDefaultDeclarationKind::ETSNewArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewArrayInstanceExpression(o))
+            }
+            ExportDefaultDeclarationKind::ETSNewMultiDimArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewMultiDimArrayInstanceExpression(o))
+            }
             ExportDefaultDeclarationKind::ComputedMemberExpression(o) => {
                 Ok(Expression::ComputedMemberExpression(o))
             }
@@ -4254,6 +4417,22 @@ impl<'a> From<Expression<'a>> for ExportDefaultDeclarationKind<'a> {
             }
             Expression::LeadingDotExpression(o) => {
                 ExportDefaultDeclarationKind::LeadingDotExpression(o)
+            }
+            Expression::CharLiteral(o) => ExportDefaultDeclarationKind::CharLiteral(o),
+            Expression::ETSTrailingBlockExpression(o) => {
+                ExportDefaultDeclarationKind::ETSTrailingBlockExpression(o)
+            }
+            Expression::ETSInstanceOfExpression(o) => {
+                ExportDefaultDeclarationKind::ETSInstanceOfExpression(o)
+            }
+            Expression::ETSNewClassInstanceExpression(o) => {
+                ExportDefaultDeclarationKind::ETSNewClassInstanceExpression(o)
+            }
+            Expression::ETSNewArrayInstanceExpression(o) => {
+                ExportDefaultDeclarationKind::ETSNewArrayInstanceExpression(o)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(o) => {
+                ExportDefaultDeclarationKind::ETSNewMultiDimArrayInstanceExpression(o)
             }
             Expression::ComputedMemberExpression(o) => {
                 ExportDefaultDeclarationKind::ComputedMemberExpression(o)
@@ -4452,6 +4631,12 @@ impl<'a> JSXExpression<'a> {
                 | Self::V8IntrinsicExpression(_)
                 | Self::ArkUIComponentExpression(_)
                 | Self::LeadingDotExpression(_)
+                | Self::CharLiteral(_)
+                | Self::ETSTrailingBlockExpression(_)
+                | Self::ETSInstanceOfExpression(_)
+                | Self::ETSNewClassInstanceExpression(_)
+                | Self::ETSNewArrayInstanceExpression(_)
+                | Self::ETSNewMultiDimArrayInstanceExpression(_)
                 | Self::ComputedMemberExpression(_)
                 | Self::StaticMemberExpression(_)
                 | Self::PrivateFieldExpression(_)
@@ -4596,6 +4781,20 @@ impl<'a> TryFrom<JSXExpression<'a>> for Expression<'a> {
                 Ok(Expression::ArkUIComponentExpression(o))
             }
             JSXExpression::LeadingDotExpression(o) => Ok(Expression::LeadingDotExpression(o)),
+            JSXExpression::CharLiteral(o) => Ok(Expression::CharLiteral(o)),
+            JSXExpression::ETSTrailingBlockExpression(o) => {
+                Ok(Expression::ETSTrailingBlockExpression(o))
+            }
+            JSXExpression::ETSInstanceOfExpression(o) => Ok(Expression::ETSInstanceOfExpression(o)),
+            JSXExpression::ETSNewClassInstanceExpression(o) => {
+                Ok(Expression::ETSNewClassInstanceExpression(o))
+            }
+            JSXExpression::ETSNewArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewArrayInstanceExpression(o))
+            }
+            JSXExpression::ETSNewMultiDimArrayInstanceExpression(o) => {
+                Ok(Expression::ETSNewMultiDimArrayInstanceExpression(o))
+            }
             JSXExpression::ComputedMemberExpression(o) => {
                 Ok(Expression::ComputedMemberExpression(o))
             }
@@ -4656,6 +4855,20 @@ impl<'a> From<Expression<'a>> for JSXExpression<'a> {
             Expression::V8IntrinsicExpression(o) => JSXExpression::V8IntrinsicExpression(o),
             Expression::ArkUIComponentExpression(o) => JSXExpression::ArkUIComponentExpression(o),
             Expression::LeadingDotExpression(o) => JSXExpression::LeadingDotExpression(o),
+            Expression::CharLiteral(o) => JSXExpression::CharLiteral(o),
+            Expression::ETSTrailingBlockExpression(o) => {
+                JSXExpression::ETSTrailingBlockExpression(o)
+            }
+            Expression::ETSInstanceOfExpression(o) => JSXExpression::ETSInstanceOfExpression(o),
+            Expression::ETSNewClassInstanceExpression(o) => {
+                JSXExpression::ETSNewClassInstanceExpression(o)
+            }
+            Expression::ETSNewArrayInstanceExpression(o) => {
+                JSXExpression::ETSNewArrayInstanceExpression(o)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(o) => {
+                JSXExpression::ETSNewMultiDimArrayInstanceExpression(o)
+            }
             Expression::ComputedMemberExpression(o) => JSXExpression::ComputedMemberExpression(o),
             Expression::StaticMemberExpression(o) => JSXExpression::StaticMemberExpression(o),
             Expression::PrivateFieldExpression(o) => JSXExpression::PrivateFieldExpression(o),
@@ -5189,6 +5402,12 @@ macro_rules! match_expression {
             | $ty::V8IntrinsicExpression(_)
             | $ty::ArkUIComponentExpression(_)
             | $ty::LeadingDotExpression(_)
+            | $ty::CharLiteral(_)
+            | $ty::ETSTrailingBlockExpression(_)
+            | $ty::ETSInstanceOfExpression(_)
+            | $ty::ETSNewClassInstanceExpression(_)
+            | $ty::ETSNewArrayInstanceExpression(_)
+            | $ty::ETSNewMultiDimArrayInstanceExpression(_)
             | $ty::ComputedMemberExpression(_)
             | $ty::StaticMemberExpression(_)
             | $ty::PrivateFieldExpression(_)
@@ -5269,6 +5488,7 @@ macro_rules! match_declaration {
             | $ty::TSImportEqualsDeclaration(_)
             | $ty::StructStatement(_)
             | $ty::AnnotationDeclaration(_)
+            | $ty::ETSOverloadDeclaration(_)
     };
 }
 pub use match_declaration;

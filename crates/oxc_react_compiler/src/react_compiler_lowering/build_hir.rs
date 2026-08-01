@@ -5236,6 +5236,7 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
         oxc::Expression::BooleanLiteral(_) => "BooleanLiteral",
         oxc::Expression::NullLiteral(_) => "NullLiteral",
         oxc::Expression::BigIntLiteral(_) => "BigIntLiteral",
+        oxc::Expression::CharLiteral(_) => "CharLiteral",
         oxc::Expression::RegExpLiteral(_) => "RegExpLiteral",
         oxc::Expression::CallExpression(_) => "CallExpression",
         oxc::Expression::StaticMemberExpression(_)
@@ -5255,6 +5256,13 @@ fn expression_type_name(expr: &oxc::Expression) -> &'static str {
         oxc::Expression::ObjectExpression(_) => "ObjectExpression",
         oxc::Expression::ArrayExpression(_) => "ArrayExpression",
         oxc::Expression::NewExpression(_) => "NewExpression",
+        oxc::Expression::ETSNewClassInstanceExpression(_) => "ETSNewClassInstanceExpression",
+        oxc::Expression::ETSNewArrayInstanceExpression(_) => "ETSNewArrayInstanceExpression",
+        oxc::Expression::ETSNewMultiDimArrayInstanceExpression(_) => {
+            "ETSNewMultiDimArrayInstanceExpression"
+        }
+        oxc::Expression::ETSInstanceOfExpression(_) => "ETSInstanceOfExpression",
+        oxc::Expression::ETSTrailingBlockExpression(_) => "ETSTrailingBlockExpression",
         oxc::Expression::TemplateLiteral(_) => "TemplateLiteral",
         oxc::Expression::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
         oxc::Expression::AwaitExpression(_) => "AwaitExpression",
@@ -5294,7 +5302,7 @@ fn lower_object_method<'a>(
         let kind_str = match method.kind {
             oxc::PropertyKind::Get => "get",
             oxc::PropertyKind::Set => "set",
-            oxc::PropertyKind::Init => "method",
+            oxc::PropertyKind::Init | oxc::PropertyKind::EtsEquals => "method",
         };
         builder.record_error(
             ErrorCategory::Todo

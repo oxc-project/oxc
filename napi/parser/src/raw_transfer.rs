@@ -264,7 +264,7 @@ unsafe fn parse_raw_impl(
         };
 
         // Parse
-        let ret = parse_impl(allocator, source_type, source_text, &options);
+        let ret = parse_impl(allocator, source_type, source_text, filename, &options);
         let mut program = ret.program;
         let mut comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
         let mut module_record = ret.module_record;

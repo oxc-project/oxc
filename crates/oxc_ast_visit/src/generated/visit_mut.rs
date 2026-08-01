@@ -659,6 +659,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_char_literal(&mut self, it: &mut CharLiteral<'a>) {
+        walk_char_literal(self, it);
+    }
+
+    #[inline]
     fn visit_big_int_literal(&mut self, it: &mut BigIntLiteral<'a>) {
         walk_big_int_literal(self, it);
     }
@@ -1247,6 +1252,50 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ets_package_declaration(&mut self, it: &mut ETSPackageDeclaration<'a>) {
+        walk_ets_package_declaration(self, it);
+    }
+
+    #[inline]
+    fn visit_ets_instance_of_expression(&mut self, it: &mut ETSInstanceOfExpression<'a>) {
+        walk_ets_instance_of_expression(self, it);
+    }
+
+    #[inline]
+    fn visit_ets_new_class_instance_expression(
+        &mut self,
+        it: &mut ETSNewClassInstanceExpression<'a>,
+    ) {
+        walk_ets_new_class_instance_expression(self, it);
+    }
+
+    #[inline]
+    fn visit_ets_new_array_instance_expression(
+        &mut self,
+        it: &mut ETSNewArrayInstanceExpression<'a>,
+    ) {
+        walk_ets_new_array_instance_expression(self, it);
+    }
+
+    #[inline]
+    fn visit_ets_new_multi_dim_array_instance_expression(
+        &mut self,
+        it: &mut ETSNewMultiDimArrayInstanceExpression<'a>,
+    ) {
+        walk_ets_new_multi_dim_array_instance_expression(self, it);
+    }
+
+    #[inline]
+    fn visit_ets_trailing_block_expression(&mut self, it: &mut ETSTrailingBlockExpression<'a>) {
+        walk_ets_trailing_block_expression(self, it);
+    }
+
+    #[inline]
+    fn visit_ets_overload_declaration(&mut self, it: &mut ETSOverloadDeclaration<'a>) {
+        walk_ets_overload_declaration(self, it);
+    }
+
+    #[inline]
     fn visit_span(&mut self, it: &mut Span) {
         walk_span(self, it);
     }
@@ -1298,6 +1347,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_decorators(&mut self, it: &mut ArenaVec<'a, Decorator<'a>>) {
+        walk_decorators(self, it);
+    }
+
+    #[inline]
     fn visit_variable_declarators(&mut self, it: &mut ArenaVec<'a, VariableDeclarator<'a>>) {
         walk_variable_declarators(self, it);
     }
@@ -1310,11 +1364,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_binding_properties(&mut self, it: &mut ArenaVec<'a, BindingProperty<'a>>) {
         walk_binding_properties(self, it);
-    }
-
-    #[inline]
-    fn visit_decorators(&mut self, it: &mut ArenaVec<'a, Decorator<'a>>) {
-        walk_decorators(self, it);
     }
 
     #[inline]
@@ -1416,6 +1465,11 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_identifier_names(&mut self, it: &mut ArenaVec<'a, IdentifierName<'a>>) {
+        walk_identifier_names(self, it);
+    }
+
+    #[inline]
     fn visit_spans(&mut self, it: &mut ArenaVec<'a, Span>) {
         walk_spans(self, it);
     }
@@ -1503,6 +1557,20 @@ pub mod walk_mut {
                 visitor.visit_ark_ui_component_expression(it)
             }
             Expression::LeadingDotExpression(it) => visitor.visit_leading_dot_expression(it),
+            Expression::CharLiteral(it) => visitor.visit_char_literal(it),
+            Expression::ETSTrailingBlockExpression(it) => {
+                visitor.visit_ets_trailing_block_expression(it)
+            }
+            Expression::ETSInstanceOfExpression(it) => visitor.visit_ets_instance_of_expression(it),
+            Expression::ETSNewClassInstanceExpression(it) => {
+                visitor.visit_ets_new_class_instance_expression(it)
+            }
+            Expression::ETSNewArrayInstanceExpression(it) => {
+                visitor.visit_ets_new_array_instance_expression(it)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(it) => {
+                visitor.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             match_member_expression!(Expression) => {
                 visitor.visit_member_expression(it.to_member_expression_mut())
             }
@@ -2162,6 +2230,7 @@ pub mod walk_mut {
             Statement::TryStatement(it) => visitor.visit_try_statement(it),
             Statement::WhileStatement(it) => visitor.visit_while_statement(it),
             Statement::WithStatement(it) => visitor.visit_with_statement(it),
+            Statement::ETSPackageDeclaration(it) => visitor.visit_ets_package_declaration(it),
             match_declaration!(Statement) => visitor.visit_declaration(it.to_declaration_mut()),
             match_module_declaration!(Statement) => {
                 visitor.visit_module_declaration(it.to_module_declaration_mut())
@@ -2216,6 +2285,7 @@ pub mod walk_mut {
             }
             Declaration::StructStatement(it) => visitor.visit_struct_statement(it),
             Declaration::AnnotationDeclaration(it) => visitor.visit_annotation_declaration(it),
+            Declaration::ETSOverloadDeclaration(it) => visitor.visit_ets_overload_declaration(it),
         }
     }
 
@@ -2227,6 +2297,9 @@ pub mod walk_mut {
         let kind = AstType::VariableDeclaration;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        if let Some(decorators) = &mut it.decorators {
+            visitor.visit_decorators(decorators);
+        }
         visitor.visit_variable_declarators(&mut it.declarations);
         visitor.leave_node(kind);
     }
@@ -2786,7 +2859,6 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_class_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassElement<'a>) {
         // No `AstType` for this type
         match it {
@@ -2795,6 +2867,10 @@ pub mod walk_mut {
             ClassElement::PropertyDefinition(it) => visitor.visit_property_definition(it),
             ClassElement::AccessorProperty(it) => visitor.visit_accessor_property(it),
             ClassElement::TSIndexSignature(it) => visitor.visit_ts_index_signature(it),
+            ClassElement::ETSOverloadDeclaration(it) => visitor.visit_ets_overload_declaration(it),
+            ClassElement::TSCallSignatureDeclaration(it) => {
+                visitor.visit_ts_call_signature_declaration(it)
+            }
         }
     }
 
@@ -3188,6 +3264,14 @@ pub mod walk_mut {
     }
 
     #[inline]
+    pub fn walk_char_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CharLiteral<'a>) {
+        let kind = AstType::CharLiteral;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
     pub fn walk_big_int_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BigIntLiteral<'a>) {
         let kind = AstType::BigIntLiteral;
         visitor.enter_node(kind);
@@ -3494,7 +3578,13 @@ pub mod walk_mut {
         let kind = AstType::TSEnumDeclaration;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        if let Some(decorators) = &mut it.decorators {
+            visitor.visit_decorators(decorators);
+        }
         visitor.visit_binding_identifier(&mut it.id);
+        if let Some(underlying_type) = &mut it.underlying_type {
+            visitor.visit_ts_type(underlying_type);
+        }
         visitor.visit_ts_enum_body(&mut it.body);
         visitor.leave_node(kind);
     }
@@ -3964,6 +4054,9 @@ pub mod walk_mut {
         let kind = AstType::TSTypeAliasDeclaration;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        if let Some(decorators) = &mut it.decorators {
+            visitor.visit_decorators(decorators);
+        }
         visitor.visit_binding_identifier(&mut it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
@@ -3989,7 +4082,6 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_ts_interface_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSInterfaceDeclaration<'a>,
@@ -3997,6 +4089,9 @@ pub mod walk_mut {
         let kind = AstType::TSInterfaceDeclaration;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        if let Some(decorators) = &mut it.decorators {
+            visitor.visit_decorators(decorators);
+        }
         visitor.visit_binding_identifier(&mut it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
@@ -4035,7 +4130,6 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_ts_signature<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSSignature<'a>) {
         // No `AstType` for this type
         match it {
@@ -4048,6 +4142,9 @@ pub mod walk_mut {
                 visitor.visit_ts_construct_signature_declaration(it)
             }
             TSSignature::TSMethodSignature(it) => visitor.visit_ts_method_signature(it),
+            TSSignature::MethodDefinition(it) => visitor.visit_method_definition(it),
+            TSSignature::PropertyDefinition(it) => visitor.visit_property_definition(it),
+            TSSignature::ETSOverloadDeclaration(it) => visitor.visit_ets_overload_declaration(it),
         }
     }
 
@@ -4626,7 +4723,6 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
-    #[inline]
     pub fn walk_struct_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut StructElement<'a>) {
         // No `AstType` for this type
         match it {
@@ -4635,6 +4731,7 @@ pub mod walk_mut {
             StructElement::StaticBlock(it) => visitor.visit_static_block(it),
             StructElement::TSIndexSignature(it) => visitor.visit_ts_index_signature(it),
             StructElement::AccessorProperty(it) => visitor.visit_accessor_property(it),
+            StructElement::ETSOverloadDeclaration(it) => visitor.visit_ets_overload_declaration(it),
         }
     }
 
@@ -4699,6 +4796,100 @@ pub mod walk_mut {
         match it {
             AnnotationElement::PropertyDefinition(it) => visitor.visit_property_definition(it),
         }
+    }
+
+    #[inline]
+    pub fn walk_ets_package_declaration<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ETSPackageDeclaration<'a>,
+    ) {
+        let kind = AstType::ETSPackageDeclaration;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_identifier_names(&mut it.name);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ets_instance_of_expression<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ETSInstanceOfExpression<'a>,
+    ) {
+        let kind = AstType::ETSInstanceOfExpression;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_expression(&mut it.left);
+        visitor.visit_ts_type(&mut it.right);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ets_new_class_instance_expression<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ETSNewClassInstanceExpression<'a>,
+    ) {
+        let kind = AstType::ETSNewClassInstanceExpression;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.visit_arguments(&mut it.arguments);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ets_new_array_instance_expression<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ETSNewArrayInstanceExpression<'a>,
+    ) {
+        let kind = AstType::ETSNewArrayInstanceExpression;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.visit_expression(&mut it.dimension);
+        if let Some(initializer) = &mut it.initializer {
+            visitor.visit_expression(initializer);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ets_new_multi_dim_array_instance_expression<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ETSNewMultiDimArrayInstanceExpression<'a>,
+    ) {
+        let kind = AstType::ETSNewMultiDimArrayInstanceExpression;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.visit_expressions(&mut it.dimensions);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ets_trailing_block_expression<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ETSTrailingBlockExpression<'a>,
+    ) {
+        let kind = AstType::ETSTrailingBlockExpression;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_call_expression(&mut it.call);
+        visitor.visit_block_statement(&mut it.block);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ets_overload_declaration<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ETSOverloadDeclaration<'a>,
+    ) {
+        let kind = AstType::ETSOverloadDeclaration;
+        visitor.enter_node(kind);
+        visitor.visit_span(&mut it.span);
+        visitor.visit_decorators(&mut it.decorators);
+        visitor.visit_property_key(&mut it.key);
+        visitor.visit_expressions(&mut it.overloads);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4794,6 +4985,16 @@ pub mod walk_mut {
     }
 
     #[inline]
+    pub fn walk_decorators<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ArenaVec<'a, Decorator<'a>>,
+    ) {
+        for el in it {
+            visitor.visit_decorator(el);
+        }
+    }
+
+    #[inline]
     pub fn walk_variable_declarators<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ArenaVec<'a, VariableDeclarator<'a>>,
@@ -4820,16 +5021,6 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_binding_property(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_decorators<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut ArenaVec<'a, Decorator<'a>>,
-    ) {
-        for el in it {
-            visitor.visit_decorator(el);
         }
     }
 
@@ -5017,6 +5208,16 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_annotation_element(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_identifier_names<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ArenaVec<'a, IdentifierName<'a>>,
+    ) {
+        for el in it {
+            visitor.visit_identifier_name(el);
         }
     }
 

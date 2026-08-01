@@ -52,6 +52,12 @@ export type Expression =
   | V8IntrinsicExpression
   | ArkUIComponentExpression
   | LeadingDotExpression
+  | CharLiteral
+  | ETSTrailingBlockExpression
+  | ETSInstanceOfExpression
+  | ETSNewClassInstanceExpression
+  | ETSNewArrayInstanceExpression
+  | ETSNewMultiDimArrayInstanceExpression
   | MemberExpression;
 
 export interface IdentifierName extends Span {
@@ -125,7 +131,7 @@ export interface ObjectProperty extends Span {
 
 export type PropertyKey = IdentifierName | PrivateIdentifier | Expression;
 
-export type PropertyKind = "init" | "get" | "set";
+export type PropertyKind = "init" | "get" | "set" | "etsEquals";
 
 export interface TemplateLiteral extends Span {
   type: "TemplateLiteral";
@@ -413,6 +419,7 @@ export type Statement =
   | TryStatement
   | WhileStatement
   | WithStatement
+  | ETSPackageDeclaration
   | Declaration
   | ModuleDeclaration;
 
@@ -446,10 +453,12 @@ export type Declaration =
   | TSGlobalDeclaration
   | TSImportEqualsDeclaration
   | StructStatement
-  | AnnotationDeclaration;
+  | AnnotationDeclaration
+  | ETSOverloadDeclaration;
 
 export interface VariableDeclaration extends Span {
   type: "VariableDeclaration";
+  decorators?: Array<Decorator>;
   kind: VariableDeclarationKind;
   declarations: Array<VariableDeclarator>;
   declare?: boolean;
@@ -661,6 +670,8 @@ export interface Function extends Span {
   generator: boolean;
   async: boolean;
   declare?: boolean;
+  final?: boolean;
+  native?: boolean;
   typeParameters?: TSTypeParameterDeclaration | null;
   params: ParamPattern[];
   returnType?: TSTypeAnnotation | null;
@@ -739,6 +750,9 @@ export interface Class extends Span {
   body: ClassBody;
   abstract?: boolean;
   declare?: boolean;
+  final?: boolean;
+  native?: boolean;
+  static?: boolean;
   parent?: Node;
 }
 
@@ -755,7 +769,9 @@ export type ClassElement =
   | MethodDefinition
   | PropertyDefinition
   | AccessorProperty
-  | TSIndexSignature;
+  | TSIndexSignature
+  | ETSOverloadDeclaration
+  | TSCallSignatureDeclaration;
 
 export interface MethodDefinition extends Span {
   type: MethodDefinitionType;
@@ -768,6 +784,8 @@ export interface MethodDefinition extends Span {
   override?: boolean;
   optional?: boolean;
   accessibility?: TSAccessibility | null;
+  final?: boolean;
+  native?: boolean;
   parent?: Node;
 }
 
@@ -904,6 +922,8 @@ export interface ExportNamedDeclaration extends Span {
   source: StringLiteral | null;
   exportKind?: ImportOrExportKind;
   attributes: Array<ImportAttribute>;
+  etsSingle?: boolean;
+  etsDefault?: boolean;
   parent?: Node;
 }
 
@@ -971,6 +991,13 @@ export interface NumericLiteral extends Span {
 export interface StringLiteral extends Span {
   type: "Literal";
   value: string;
+  raw: string | null;
+  parent?: Node;
+}
+
+export interface CharLiteral extends Span {
+  type: "CharLiteral";
+  value: number;
   raw: string | null;
   parent?: Node;
 }
@@ -1116,7 +1143,9 @@ export interface TSThisParameter extends Span {
 
 export interface TSEnumDeclaration extends Span {
   type: "TSEnumDeclaration";
+  decorators?: Array<Decorator>;
   id: BindingIdentifier;
+  underlyingType?: TSType;
   body: TSEnumBody;
   const: boolean;
   declare: boolean;
@@ -1386,6 +1415,7 @@ export interface TSTypeParameterDeclaration extends Span {
 
 export interface TSTypeAliasDeclaration extends Span {
   type: "TSTypeAliasDeclaration";
+  decorators?: Array<Decorator>;
   id: BindingIdentifier;
   typeParameters: TSTypeParameterDeclaration | null;
   typeAnnotation: TSType;
@@ -1404,6 +1434,7 @@ export interface TSClassImplements extends Span {
 
 export interface TSInterfaceDeclaration extends Span {
   type: "TSInterfaceDeclaration";
+  decorators?: Array<Decorator>;
   id: BindingIdentifier;
   typeParameters: TSTypeParameterDeclaration | null;
   extends: Array<TSInterfaceHeritage>;
@@ -1435,7 +1466,10 @@ export type TSSignature =
   | TSPropertySignature
   | TSCallSignatureDeclaration
   | TSConstructSignatureDeclaration
-  | TSMethodSignature;
+  | TSMethodSignature
+  | MethodDefinition
+  | PropertyDefinition
+  | ETSOverloadDeclaration;
 
 export interface TSIndexSignature extends Span {
   type: "TSIndexSignature";
@@ -1710,6 +1744,9 @@ export interface StructStatement extends Span {
   body: StructBody;
   abstract?: boolean;
   declare?: boolean;
+  final?: boolean;
+  native?: boolean;
+  static?: boolean;
   parent?: Node;
 }
 
@@ -1724,7 +1761,8 @@ export type StructElement =
   | MethodDefinition
   | StaticBlock
   | TSIndexSignature
-  | AccessorProperty;
+  | AccessorProperty
+  | ETSOverloadDeclaration;
 
 export interface ArkUIComponentExpression extends Span {
   type: "ArkUIComponentExpression";
@@ -1754,6 +1792,73 @@ export interface AnnotationBody extends Span {
 }
 
 export type AnnotationElement = PropertyDefinition;
+
+export interface ETSPackageDeclaration extends Span {
+  type: "ETSPackageDeclaration";
+  name: Array<IdentifierName>;
+  parent?: Node;
+}
+
+export interface ETSInstanceOfExpression extends Span {
+  type: "ETSInstanceOfExpression";
+  left: Expression;
+  right: TSType;
+  parent?: Node;
+}
+
+export interface ETSNewClassInstanceExpression extends Span {
+  type: "ETSNewClassInstanceExpression";
+  typeAnnotation: TSType;
+  arguments: Array<Argument>;
+  hasArguments: boolean;
+  parent?: Node;
+}
+
+export interface ETSNewArrayInstanceExpression extends Span {
+  type: "ETSNewArrayInstanceExpression";
+  typeAnnotation: TSType;
+  dimension: Expression;
+  initializer: Expression | null;
+  parent?: Node;
+}
+
+export interface ETSNewMultiDimArrayInstanceExpression extends Span {
+  type: "ETSNewMultiDimArrayInstanceExpression";
+  typeAnnotation: TSType;
+  dimensions: Array<Expression>;
+  parent?: Node;
+}
+
+export interface ETSTrailingBlockExpression extends Span {
+  type: "ETSTrailingBlockExpression";
+  call: CallExpression;
+  block: BlockStatement;
+  isTrailingCall: boolean;
+  isBlockOnNewLine: boolean;
+  hasTrailingComma: boolean;
+  parent?: Node;
+}
+
+export type ETSOverloadDeclarationKind =
+  | "function"
+  | "classMethod"
+  | "interfaceMethod"
+  | "structMethod";
+
+export interface ETSOverloadDeclaration extends Span {
+  type: "ETSOverloadDeclaration";
+  decorators: Array<Decorator>;
+  key: PropertyKey;
+  overloads: Array<Expression>;
+  kind: ETSOverloadDeclarationKind;
+  accessibility: TSAccessibility | null;
+  static: boolean;
+  abstract: boolean;
+  final: boolean;
+  native: boolean;
+  declare: boolean;
+  parent?: Node;
+}
 
 export type ModuleKind = "script" | "module" | "commonjs";
 
@@ -1906,6 +2011,7 @@ export type Node =
   | NullLiteral
   | NumericLiteral
   | StringLiteral
+  | CharLiteral
   | BigIntLiteral
   | RegExpLiteral
   | JSXElement
@@ -2001,4 +2107,11 @@ export type Node =
   | ArkUIComponentExpression
   | AnnotationDeclaration
   | AnnotationBody
+  | ETSPackageDeclaration
+  | ETSInstanceOfExpression
+  | ETSNewClassInstanceExpression
+  | ETSNewArrayInstanceExpression
+  | ETSNewMultiDimArrayInstanceExpression
+  | ETSTrailingBlockExpression
+  | ETSOverloadDeclaration
   | ParamPattern;

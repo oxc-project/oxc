@@ -1135,7 +1135,9 @@ impl<'a> Declaration<'a> {
                     None
                 }
             }
-            Declaration::TSGlobalDeclaration(_) | Declaration::VariableDeclaration(_) => None,
+            Declaration::TSGlobalDeclaration(_)
+            | Declaration::VariableDeclaration(_)
+            | Declaration::ETSOverloadDeclaration(_) => None,
         }
     }
 
@@ -1152,13 +1154,19 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
             Declaration::StructStatement(decl) => decl.declare,
             Declaration::AnnotationDeclaration(decl) => decl.declare,
+            Declaration::ETSOverloadDeclaration(decl) => decl.declare,
             Declaration::TSImportEqualsDeclaration(_) => false,
         }
     }
 
     /// Returns `true` if this declaration is a TypeScript type or interface declaration.
     pub fn is_type(&self) -> bool {
-        matches!(self, Self::TSTypeAliasDeclaration(_) | Self::TSInterfaceDeclaration(_))
+        matches!(
+            self,
+            Self::TSTypeAliasDeclaration(_)
+                | Self::TSInterfaceDeclaration(_)
+                | Self::AnnotationDeclaration(_)
+        )
     }
 }
 
@@ -1667,10 +1675,13 @@ impl<'a> ClassElement<'a> {
     /// ```
     pub fn r#static(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::StaticBlock(_) => false,
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
+            Self::ETSOverloadDeclaration(def) => def.r#static,
         }
     }
 
@@ -1686,7 +1697,10 @@ impl<'a> ClassElement<'a> {
     /// ```
     pub fn computed(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::StaticBlock(_)
+            | Self::ETSOverloadDeclaration(_) => false,
             Self::MethodDefinition(def) => def.computed,
             Self::PropertyDefinition(def) => def.computed,
             Self::AccessorProperty(def) => def.computed,
@@ -1696,9 +1710,13 @@ impl<'a> ClassElement<'a> {
     /// Returns the [accessibility][`TSAccessibility`] of this [`ClassElement`], if any is indicated.
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         match self {
-            Self::StaticBlock(_) | Self::TSIndexSignature(_) | Self::AccessorProperty(_) => None,
+            Self::StaticBlock(_)
+            | Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => def.accessibility,
             Self::PropertyDefinition(def) => def.accessibility,
+            Self::ETSOverloadDeclaration(def) => def.accessibility,
         }
     }
 
@@ -1709,7 +1727,9 @@ impl<'a> ClassElement<'a> {
             Self::TSIndexSignature(_)
             | Self::StaticBlock(_)
             | Self::PropertyDefinition(_)
-            | Self::AccessorProperty(_) => None,
+            | Self::AccessorProperty(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::ETSOverloadDeclaration(_) => None,
             Self::MethodDefinition(def) => Some(def.kind),
         }
     }
@@ -1719,10 +1739,13 @@ impl<'a> ClassElement<'a> {
     /// This is either the name of the method, property name, or accessor name.
     pub fn property_key(&self) -> Option<&PropertyKey<'a>> {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
+            Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => Some(&def.key),
             Self::PropertyDefinition(def) => Some(&def.key),
             Self::AccessorProperty(def) => Some(&def.key),
+            Self::ETSOverloadDeclaration(def) => Some(&def.key),
         }
     }
 
@@ -1730,10 +1753,13 @@ impl<'a> ClassElement<'a> {
     /// computed members that use literals.
     pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
+            Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
             Self::PropertyDefinition(def) => def.key.static_name(),
             Self::AccessorProperty(def) => def.key.static_name(),
+            Self::ETSOverloadDeclaration(def) => def.key.static_name(),
         }
     }
 
@@ -1749,7 +1775,9 @@ impl<'a> ClassElement<'a> {
             Self::PropertyDefinition(_)
             | Self::StaticBlock(_)
             | Self::AccessorProperty(_)
-            | Self::TSIndexSignature(_) => false,
+            | Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::ETSOverloadDeclaration(_) => false,
             Self::MethodDefinition(method) => method.value.body.is_none(),
         }
     }
@@ -1758,7 +1786,9 @@ impl<'a> ClassElement<'a> {
     /// abstract properties, function overload signatures, or `declare`.
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) => true,
+            Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_)
+            | Self::ETSOverloadDeclaration(_) => true,
             Self::MethodDefinition(method) => method.value.is_typescript_syntax(),
             Self::PropertyDefinition(property) => {
                 property.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
@@ -1774,7 +1804,10 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => !method.decorators.is_empty(),
             Self::PropertyDefinition(property) => !property.decorators.is_empty(),
             Self::AccessorProperty(property) => !property.decorators.is_empty(),
-            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+            Self::StaticBlock(_)
+            | Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_) => false,
+            Self::ETSOverloadDeclaration(decl) => !decl.decorators.is_empty(),
         }
     }
 
@@ -1791,7 +1824,10 @@ impl<'a> ClassElement<'a> {
             Self::MethodDefinition(method) => method.r#type.is_abstract(),
             Self::AccessorProperty(accessor) => accessor.r#type.is_abstract(),
             Self::PropertyDefinition(property) => property.r#type.is_abstract(),
-            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+            Self::StaticBlock(_)
+            | Self::TSIndexSignature(_)
+            | Self::TSCallSignatureDeclaration(_) => false,
+            Self::ETSOverloadDeclaration(decl) => decl.r#abstract,
         }
     }
 }

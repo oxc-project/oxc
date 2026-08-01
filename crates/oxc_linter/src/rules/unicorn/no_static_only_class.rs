@@ -92,7 +92,8 @@ impl Rule for NoStaticOnlyClass {
                 ClassElement::AccessorProperty(_)
                 | ClassElement::StaticBlock(_)
                 | ClassElement::TSIndexSignature(_)
-                 => {
+                | ClassElement::ETSOverloadDeclaration(_)
+                | ClassElement::TSCallSignatureDeclaration(_) => {
                     return true;
                 }
             }

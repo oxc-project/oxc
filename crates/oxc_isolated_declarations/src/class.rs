@@ -643,6 +643,10 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     element.clone_in(self.allocator())
                 }),
+                ClassElement::ETSOverloadDeclaration(_)
+                | ClassElement::TSCallSignatureDeclaration(_) => {
+                    elements.push(element.clone_in(self.allocator()));
+                }
             }
         }
 

@@ -1,5 +1,6 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 use oxc_str::Ident;
 use oxc_syntax::operator::AssignmentOperator;
 
@@ -123,10 +124,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
 
         if self.parse_contextual_modifier(Kind::Get) {
+            if self.source_type.is_ets_static() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Methods in object literals",
+                    self.cur_token().span(),
+                ));
+            }
             return self.parse_method_getter_setter(span, PropertyKind::Get, &modifiers);
         }
 
         if self.parse_contextual_modifier(Kind::Set) {
+            if self.source_type.is_ets_static() {
+                self.error(diagnostics::ets_unsupported_syntax(
+                    "Methods in object literals",
+                    self.cur_token().span(),
+                ));
+            }
             return self.parse_method_getter_setter(span, PropertyKind::Set, &modifiers);
         }
 
@@ -165,6 +178,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
+
+        if self.source_type.is_ets_static() && computed {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Computed properties in object literals",
+                key.span(),
+            ));
+        }
+
+        if self.source_type.is_ets_static() && token_is_identifier && self.eat(Kind::Eq) {
+            let value = self.parse_assignment_expression_or_higher();
+            return ObjectProperty::boxed(
+                self.end_span(span),
+                PropertyKind::EtsEquals,
+                key,
+                value,
+                /* method */ false,
+                /* shorthand */ false,
+                computed,
+                self,
+            );
+        }
 
         let is_shorthand_property_assignment = token_is_identifier && !self.at(Kind::Colon);
 
@@ -349,7 +383,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match kind {
             PropertyKind::Get => self.check_getter(&function),
             PropertyKind::Set => self.check_setter(&function),
-            PropertyKind::Init => {}
+            PropertyKind::Init | PropertyKind::EtsEquals => {}
         }
         self.verify_modifiers(
             modifiers,

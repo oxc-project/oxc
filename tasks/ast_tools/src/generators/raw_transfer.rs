@@ -442,7 +442,30 @@ fn generate_struct(
             generator.fields.contains_key("type") && !struct_def.estree.no_parent;
 
         let mut all_fields_inline = true;
-        for (field_name, StructFieldValue { value, deser_type, inline }) in generator.fields {
+        for (field_name, StructFieldValue { value, deser_type, inline, omit_if_default }) in
+            generator.fields
+        {
+            if let Some(omit_kind) = omit_if_default {
+                all_fields_inline = false;
+
+                // Deserialize after `node` becomes the active parent, then add the
+                // property only when its syntax-specific value is present.
+                let value_name = format!("{field_name}Value");
+                write_it!(assignments_preamble_str, "const {value_name} = {value};\n");
+                let value_condition = match omit_kind {
+                    OmitIfDefaultKind::Bool => value_name.clone(),
+                    OmitIfDefaultKind::Option => format!("{value_name} !== null"),
+                    OmitIfDefaultKind::Vec => format!("{value_name}.length !== 0"),
+                };
+                let condition = match deser_type {
+                    DeserializerType::Both => value_condition,
+                    DeserializerType::JsOnly => format!("!IS_TS && ({value_condition})"),
+                    DeserializerType::TsOnly => format!("IS_TS && ({value_condition})"),
+                };
+                write_it!(assignments_str, "if ({condition}) node.{field_name} = {value_name};");
+                continue;
+            }
+
             if let Some(value) = value.strip_prefix("...") {
                 assert!(inline, "Spread fields must be inlined");
                 match deser_type {
@@ -568,6 +591,15 @@ struct StructFieldValue {
     deser_type: DeserializerType,
     /// `true` if value can be inlined in object definition
     inline: bool,
+    /// Empty-value rule used to omit inactive syntax-specific fields.
+    omit_if_default: Option<OmitIfDefaultKind>,
+}
+
+#[derive(Clone, Copy)]
+enum OmitIfDefaultKind {
+    Bool,
+    Option,
+    Vec,
 }
 
 impl<'s> StructDeserializerGenerator<'s> {
@@ -617,6 +649,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                     value: format!("'{struct_name}'"),
                     deser_type: DeserializerType::Both,
                     inline: true,
+                    omit_if_default: None,
                 },
             );
         }
@@ -662,6 +695,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                         value: "...(RANGE && { range: [start, end] })".to_string(),
                         deser_type,
                         inline: true,
+                        omit_if_default: None,
                     },
                 );
 
@@ -786,7 +820,25 @@ impl<'s> StructDeserializerGenerator<'s> {
             format!("{value_fn}({pos})")
         };
 
-        self.fields.insert(field_name, StructFieldValue { value, deser_type, inline });
+        let omit_if_default = if field.estree.omit_if_default {
+            Some(match field_type {
+                TypeDef::Primitive(primitive_def) if primitive_def.name() == "bool" => {
+                    OmitIfDefaultKind::Bool
+                }
+                TypeDef::Option(_) => OmitIfDefaultKind::Option,
+                TypeDef::Vec(_) => OmitIfDefaultKind::Vec,
+                _ => panic!(
+                    "`#[estree(omit_if_default)]` is only valid on `bool`, `Option<T>`, or `Vec<T>` fields: {}::{}",
+                    struct_def.name(),
+                    field.name(),
+                ),
+            })
+        } else {
+            None
+        };
+
+        self.fields
+            .insert(field_name, StructFieldValue { value, deser_type, inline, omit_if_default });
     }
 
     fn generate_struct_field_added(
@@ -806,7 +858,10 @@ impl<'s> StructDeserializerGenerator<'s> {
         }
 
         let (value, inline) = self.apply_converter(converter, struct_def, struct_offset).unwrap();
-        self.fields.insert(field_name.to_string(), StructFieldValue { value, deser_type, inline });
+        self.fields.insert(
+            field_name.to_string(),
+            StructFieldValue { value, deser_type, inline, omit_if_default: None },
+        );
     }
 
     fn apply_converter(

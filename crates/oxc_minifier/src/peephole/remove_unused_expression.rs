@@ -1038,12 +1038,13 @@ impl<'a> PeepholeOptimizations {
                     // Save computed key.
                     if e.computed()
                         && let Some(key) = match e {
-                            ClassElement::TSIndexSignature(_) | ClassElement::StaticBlock(_) => {
-                                None
-                            }
+                            ClassElement::TSIndexSignature(_)
+                            | ClassElement::TSCallSignatureDeclaration(_)
+                            | ClassElement::StaticBlock(_) => None,
                             ClassElement::MethodDefinition(def) => Some(&mut def.key),
                             ClassElement::PropertyDefinition(def) => Some(&mut def.key),
                             ClassElement::AccessorProperty(def) => Some(&mut def.key),
+                            ClassElement::ETSOverloadDeclaration(def) => Some(&mut def.key),
                         }
                         && let Some(expr) = key.as_expression_mut()
                         && expr.may_have_side_effects(ctx)
@@ -1054,8 +1055,10 @@ impl<'a> PeepholeOptimizations {
                     if e.r#static()
                         && let Some(init) = match e {
                             ClassElement::TSIndexSignature(_)
+                            | ClassElement::TSCallSignatureDeclaration(_)
                             | ClassElement::StaticBlock(_)
-                            | ClassElement::MethodDefinition(_) => None,
+                            | ClassElement::MethodDefinition(_)
+                            | ClassElement::ETSOverloadDeclaration(_) => None,
                             ClassElement::PropertyDefinition(def) => def.value.take(),
                             ClassElement::AccessorProperty(def) => def.value.take(),
                         }

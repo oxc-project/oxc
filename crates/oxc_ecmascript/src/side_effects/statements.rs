@@ -20,7 +20,8 @@ impl<'a> MayHaveSideEffects<'a> for Statement<'a> {
             Statement::WhileStatement(while_stmt) => while_stmt.may_have_side_effects(ctx),
             Statement::BreakStatement(_)
             | Statement::ContinueStatement(_)
-            | Statement::EmptyStatement(_) => false,
+            | Statement::EmptyStatement(_)
+            | Statement::ETSPackageDeclaration(_) => false,
             match_declaration!(Statement) => self.to_declaration().may_have_side_effects(ctx),
             Statement::ForInStatement(_)
             | Statement::ForOfStatement(_)
@@ -98,6 +99,7 @@ impl<'a> MayHaveSideEffects<'a> for Declaration<'a> {
             | Declaration::TSTypeAliasDeclaration(_) => unreachable!(),
             Declaration::StructStatement(_) => false, // Struct declarations don't have side effects
             Declaration::AnnotationDeclaration(_) => false, // Annotation declarations don't have side effects
+            Declaration::ETSOverloadDeclaration(_) => false,
         }
     }
 }

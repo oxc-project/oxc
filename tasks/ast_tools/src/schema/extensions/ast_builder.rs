@@ -12,4 +12,7 @@ pub struct AstBuilderType {
 pub struct AstBuilderStructField {
     /// `true` if should be replaced with default value in AST builder methods
     pub is_default: bool,
+    /// `true` if the field should always use its default and never be exposed as
+    /// a builder method parameter.
+    pub skip: bool,
 }

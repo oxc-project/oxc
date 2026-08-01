@@ -11,6 +11,33 @@ fn format_ets(source_text: &str) -> String {
         .into_code()
 }
 
+fn format_ets_static(source_text: &str) -> String {
+    let allocator = Allocator::default();
+    format(&allocator, source_text, SourceType::ets_static(), JsFormatOptions::default(), None)
+        .unwrap()
+        .print()
+        .unwrap()
+        .into_code()
+}
+
+#[test]
+fn ets_static_is_preserved_verbatim() {
+    let source = r#"package example.formatter;
+@interface Mark { value: string = "ok" }
+@Mark({ value = "ok" })
+final class Value {
+  constructor named(value: int) {}
+  overload constructor { named }
+}
+enum Color: int { Red, Green }
+native function consume(value: char): void;
+let character: char = c'a'
+consume(character) { let nested: int = 1 }
+"#;
+
+    assert_eq!(format_ets_static(source), source);
+}
+
 #[test]
 fn arkui_component_chain_comment_stays_in_place_after_reformat() {
     let source = r"struct S {

@@ -76,6 +76,19 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Expression::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             Expression::ArkUIComponentExpression(it) => self.visit_ark_ui_component_expression(it),
             Expression::LeadingDotExpression(it) => self.visit_leading_dot_expression(it),
+            Expression::ETSTrailingBlockExpression(it) => {
+                self.visit_ets_trailing_block_expression(it)
+            }
+            Expression::ETSInstanceOfExpression(it) => self.visit_ets_instance_of_expression(it),
+            Expression::ETSNewClassInstanceExpression(it) => {
+                self.visit_ets_new_class_instance_expression(it)
+            }
+            Expression::ETSNewArrayInstanceExpression(it) => {
+                self.visit_ets_new_array_instance_expression(it)
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(it) => {
+                self.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             Expression::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             Expression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             Expression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
@@ -92,6 +105,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ThisExpression`
                 // `ImportMeta`
                 // `NewTarget`
+                // `CharLiteral`
             }
         }
     }
@@ -186,6 +200,21 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ArrayExpressionElement::LeadingDotExpression(it) => {
                 self.visit_leading_dot_expression(it)
             }
+            ArrayExpressionElement::ETSTrailingBlockExpression(it) => {
+                self.visit_ets_trailing_block_expression(it)
+            }
+            ArrayExpressionElement::ETSInstanceOfExpression(it) => {
+                self.visit_ets_instance_of_expression(it)
+            }
+            ArrayExpressionElement::ETSNewClassInstanceExpression(it) => {
+                self.visit_ets_new_class_instance_expression(it)
+            }
+            ArrayExpressionElement::ETSNewArrayInstanceExpression(it) => {
+                self.visit_ets_new_array_instance_expression(it)
+            }
+            ArrayExpressionElement::ETSNewMultiDimArrayInstanceExpression(it) => {
+                self.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             ArrayExpressionElement::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -209,6 +238,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ThisExpression`
                 // `ImportMeta`
                 // `NewTarget`
+                // `CharLiteral`
             }
         }
     }
@@ -268,6 +298,19 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             PropertyKey::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             PropertyKey::ArkUIComponentExpression(it) => self.visit_ark_ui_component_expression(it),
             PropertyKey::LeadingDotExpression(it) => self.visit_leading_dot_expression(it),
+            PropertyKey::ETSTrailingBlockExpression(it) => {
+                self.visit_ets_trailing_block_expression(it)
+            }
+            PropertyKey::ETSInstanceOfExpression(it) => self.visit_ets_instance_of_expression(it),
+            PropertyKey::ETSNewClassInstanceExpression(it) => {
+                self.visit_ets_new_class_instance_expression(it)
+            }
+            PropertyKey::ETSNewArrayInstanceExpression(it) => {
+                self.visit_ets_new_array_instance_expression(it)
+            }
+            PropertyKey::ETSNewMultiDimArrayInstanceExpression(it) => {
+                self.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             PropertyKey::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             PropertyKey::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             PropertyKey::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
@@ -286,6 +329,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ThisExpression`
                 // `ImportMeta`
                 // `NewTarget`
+                // `CharLiteral`
             }
         }
     }
@@ -405,6 +449,19 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Argument::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             Argument::ArkUIComponentExpression(it) => self.visit_ark_ui_component_expression(it),
             Argument::LeadingDotExpression(it) => self.visit_leading_dot_expression(it),
+            Argument::ETSTrailingBlockExpression(it) => {
+                self.visit_ets_trailing_block_expression(it)
+            }
+            Argument::ETSInstanceOfExpression(it) => self.visit_ets_instance_of_expression(it),
+            Argument::ETSNewClassInstanceExpression(it) => {
+                self.visit_ets_new_class_instance_expression(it)
+            }
+            Argument::ETSNewArrayInstanceExpression(it) => {
+                self.visit_ets_new_array_instance_expression(it)
+            }
+            Argument::ETSNewMultiDimArrayInstanceExpression(it) => {
+                self.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             Argument::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             Argument::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             Argument::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
@@ -421,6 +478,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ThisExpression`
                 // `ImportMeta`
                 // `NewTarget`
+                // `CharLiteral`
             }
         }
     }
@@ -648,6 +706,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Statement::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             Statement::StructStatement(it) => self.visit_struct_statement(it),
             Statement::AnnotationDeclaration(it) => self.visit_annotation_declaration(it),
+            Statement::ETSOverloadDeclaration(it) => self.visit_ets_overload_declaration(it),
             Statement::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
             Statement::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
             Statement::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
@@ -657,6 +716,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ContinueStatement`
                 // `DebuggerStatement`
                 // `EmptyStatement`
+                // `ETSPackageDeclaration`
                 // `TSImportEqualsDeclaration`
                 // `ImportDeclaration`
                 // `LazyImportDeclaration`
@@ -696,6 +756,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Declaration::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             Declaration::StructStatement(it) => self.visit_struct_statement(it),
             Declaration::AnnotationDeclaration(it) => self.visit_annotation_declaration(it),
+            Declaration::ETSOverloadDeclaration(it) => self.visit_ets_overload_declaration(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `TSImportEqualsDeclaration`
@@ -705,6 +766,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_variable_declaration(&mut self, it: &VariableDeclaration<'a>) {
+        if let Some(decorators) = &it.decorators {
+            self.visit_decorators(decorators);
+        }
         self.visit_variable_declarators(&it.declarations);
     }
 
@@ -803,6 +867,21 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_ark_ui_component_expression(it)
             }
             ForStatementInit::LeadingDotExpression(it) => self.visit_leading_dot_expression(it),
+            ForStatementInit::ETSTrailingBlockExpression(it) => {
+                self.visit_ets_trailing_block_expression(it)
+            }
+            ForStatementInit::ETSInstanceOfExpression(it) => {
+                self.visit_ets_instance_of_expression(it)
+            }
+            ForStatementInit::ETSNewClassInstanceExpression(it) => {
+                self.visit_ets_new_class_instance_expression(it)
+            }
+            ForStatementInit::ETSNewArrayInstanceExpression(it) => {
+                self.visit_ets_new_array_instance_expression(it)
+            }
+            ForStatementInit::ETSNewMultiDimArrayInstanceExpression(it) => {
+                self.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             ForStatementInit::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -821,6 +900,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ThisExpression`
                 // `ImportMeta`
                 // `NewTarget`
+                // `CharLiteral`
             }
         }
     }
@@ -1261,6 +1341,21 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ExportDefaultDeclarationKind::LeadingDotExpression(it) => {
                 self.visit_leading_dot_expression(it)
             }
+            ExportDefaultDeclarationKind::ETSTrailingBlockExpression(it) => {
+                self.visit_ets_trailing_block_expression(it)
+            }
+            ExportDefaultDeclarationKind::ETSInstanceOfExpression(it) => {
+                self.visit_ets_instance_of_expression(it)
+            }
+            ExportDefaultDeclarationKind::ETSNewClassInstanceExpression(it) => {
+                self.visit_ets_new_class_instance_expression(it)
+            }
+            ExportDefaultDeclarationKind::ETSNewArrayInstanceExpression(it) => {
+                self.visit_ets_new_array_instance_expression(it)
+            }
+            ExportDefaultDeclarationKind::ETSNewMultiDimArrayInstanceExpression(it) => {
+                self.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             ExportDefaultDeclarationKind::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -1283,6 +1378,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ThisExpression`
                 // `ImportMeta`
                 // `NewTarget`
+                // `CharLiteral`
             }
         }
     }
@@ -1314,6 +1410,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline(always)]
     fn visit_string_literal(&mut self, it: &StringLiteral<'a>) {
+        // Struct does not contain a scope. Halt traversal.
+    }
+
+    #[inline(always)]
+    fn visit_char_literal(&mut self, it: &CharLiteral<'a>) {
         // Struct does not contain a scope. Halt traversal.
     }
 
@@ -1429,6 +1530,19 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_ark_ui_component_expression(it)
             }
             JSXExpression::LeadingDotExpression(it) => self.visit_leading_dot_expression(it),
+            JSXExpression::ETSTrailingBlockExpression(it) => {
+                self.visit_ets_trailing_block_expression(it)
+            }
+            JSXExpression::ETSInstanceOfExpression(it) => self.visit_ets_instance_of_expression(it),
+            JSXExpression::ETSNewClassInstanceExpression(it) => {
+                self.visit_ets_new_class_instance_expression(it)
+            }
+            JSXExpression::ETSNewArrayInstanceExpression(it) => {
+                self.visit_ets_new_array_instance_expression(it)
+            }
+            JSXExpression::ETSNewMultiDimArrayInstanceExpression(it) => {
+                self.visit_ets_new_multi_dim_array_instance_expression(it)
+            }
             JSXExpression::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -1448,6 +1562,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `ThisExpression`
                 // `ImportMeta`
                 // `NewTarget`
+                // `CharLiteral`
             }
         }
     }
@@ -1525,6 +1640,12 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_enum_declaration(&mut self, it: &TSEnumDeclaration<'a>) {
+        if let Some(decorators) = &it.decorators {
+            self.visit_decorators(decorators);
+        }
+        if let Some(underlying_type) = &it.underlying_type {
+            self.visit_ts_type(underlying_type);
+        }
         self.visit_ts_enum_body(&it.body);
     }
 
@@ -1838,6 +1959,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_type_alias_declaration(&mut self, it: &TSTypeAliasDeclaration<'a>) {
+        if let Some(decorators) = &it.decorators {
+            self.visit_decorators(decorators);
+        }
         self.add_scope(&it.scope_id);
     }
 
@@ -1850,6 +1974,9 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
+        if let Some(decorators) = &it.decorators {
+            self.visit_decorators(decorators);
+        }
         self.add_scope(&it.scope_id);
     }
 
@@ -2109,6 +2236,54 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_annotation_body(&mut self, it: &AnnotationBody<'a>) {
         self.visit_annotation_elements(&it.body);
+    }
+
+    #[inline(always)]
+    fn visit_ets_package_declaration(&mut self, it: &ETSPackageDeclaration<'a>) {
+        // Struct does not contain a scope. Halt traversal.
+    }
+
+    #[inline]
+    fn visit_ets_instance_of_expression(&mut self, it: &ETSInstanceOfExpression<'a>) {
+        self.visit_expression(&it.left);
+        self.visit_ts_type(&it.right);
+    }
+
+    #[inline]
+    fn visit_ets_new_class_instance_expression(&mut self, it: &ETSNewClassInstanceExpression<'a>) {
+        self.visit_ts_type(&it.type_annotation);
+        self.visit_arguments(&it.arguments);
+    }
+
+    #[inline]
+    fn visit_ets_new_array_instance_expression(&mut self, it: &ETSNewArrayInstanceExpression<'a>) {
+        self.visit_ts_type(&it.type_annotation);
+        self.visit_expression(&it.dimension);
+        if let Some(initializer) = &it.initializer {
+            self.visit_expression(initializer);
+        }
+    }
+
+    #[inline]
+    fn visit_ets_new_multi_dim_array_instance_expression(
+        &mut self,
+        it: &ETSNewMultiDimArrayInstanceExpression<'a>,
+    ) {
+        self.visit_ts_type(&it.type_annotation);
+        self.visit_expressions(&it.dimensions);
+    }
+
+    #[inline]
+    fn visit_ets_trailing_block_expression(&mut self, it: &ETSTrailingBlockExpression<'a>) {
+        self.visit_call_expression(&it.call);
+        self.visit_block_statement(&it.block);
+    }
+
+    #[inline]
+    fn visit_ets_overload_declaration(&mut self, it: &ETSOverloadDeclaration<'a>) {
+        self.visit_decorators(&it.decorators);
+        self.visit_property_key(&it.key);
+        self.visit_expressions(&it.overloads);
     }
 
     #[inline(always)]

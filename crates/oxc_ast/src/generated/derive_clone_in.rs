@@ -9,6 +9,7 @@ use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 
 use crate::ast::arkui::*;
 use crate::ast::comment::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -207,6 +208,28 @@ impl<'new_alloc> CloneIn<'new_alloc> for Expression<'_> {
             Self::LeadingDotExpression(it) => Expression::LeadingDotExpression(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
+            Self::CharLiteral(it) => {
+                Expression::CharLiteral(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
+            }
+            Self::ETSTrailingBlockExpression(it) => Expression::ETSTrailingBlockExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ETSInstanceOfExpression(it) => Expression::ETSInstanceOfExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ETSNewClassInstanceExpression(it) => Expression::ETSNewClassInstanceExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ETSNewArrayInstanceExpression(it) => Expression::ETSNewArrayInstanceExpression(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ETSNewMultiDimArrayInstanceExpression(it) => {
+                Expression::ETSNewMultiDimArrayInstanceExpression(CloneIn::clone_in_impl(
+                    it,
+                    with_semantic_ids,
+                    allocator,
+                ))
+            }
             Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => Expression::from(CloneIn::clone_in_impl(
@@ -381,6 +404,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => ArrayExpressionElement::from(
@@ -527,6 +556,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for PropertyKey<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => PropertyKey::from(CloneIn::clone_in_impl(
@@ -874,6 +909,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for Argument<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => Argument::from(CloneIn::clone_in_impl(
@@ -1434,6 +1475,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Statement<'_> {
             Self::WithStatement(it) => {
                 Statement::WithStatement(CloneIn::clone_in_impl(it, with_semantic_ids, allocator))
             }
+            Self::ETSPackageDeclaration(it) => Statement::ETSPackageDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
             Self::VariableDeclaration(_)
             | Self::FunctionDeclaration(_)
             | Self::ClassDeclaration(_)
@@ -1444,7 +1488,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Statement<'_> {
             | Self::TSGlobalDeclaration(_)
             | Self::TSImportEqualsDeclaration(_)
             | Self::StructStatement(_)
-            | Self::AnnotationDeclaration(_) => Statement::from(CloneIn::clone_in_impl(
+            | Self::AnnotationDeclaration(_)
+            | Self::ETSOverloadDeclaration(_) => Statement::from(CloneIn::clone_in_impl(
                 self.to_declaration(),
                 with_semantic_ids,
                 allocator,
@@ -1565,6 +1610,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Declaration<'_> {
             Self::AnnotationDeclaration(it) => Declaration::AnnotationDeclaration(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
+            Self::ETSOverloadDeclaration(it) => Declaration::ETSOverloadDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
         }
     }
 }
@@ -1580,6 +1628,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclaration<'_> {
         VariableDeclaration {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            decorators: CloneIn::clone_in_impl(&self.decorators, with_semantic_ids, allocator),
             kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             declarations: CloneIn::clone_in_impl(&self.declarations, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
@@ -1785,6 +1834,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => ForStatementInit::from(CloneIn::clone_in_impl(
@@ -2218,6 +2273,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for Function<'_> {
             generator: CloneIn::clone_in_impl(&self.generator, with_semantic_ids, allocator),
             r#async: CloneIn::clone_in_impl(&self.r#async, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
+            r#final: CloneIn::clone_in_impl(&self.r#final, with_semantic_ids, allocator),
+            native: CloneIn::clone_in_impl(&self.native, with_semantic_ids, allocator),
             type_parameters: CloneIn::clone_in_impl(
                 &self.type_parameters,
                 with_semantic_ids,
@@ -2428,6 +2485,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
             r#abstract: CloneIn::clone_in_impl(&self.r#abstract, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
+            r#final: CloneIn::clone_in_impl(&self.r#final, with_semantic_ids, allocator),
+            native: CloneIn::clone_in_impl(&self.native, with_semantic_ids, allocator),
+            r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             scope_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
                 &self.scope_id,
                 with_semantic_ids,
@@ -2495,6 +2555,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for ClassElement<'_> {
                 with_semantic_ids,
                 allocator,
             )),
+            Self::ETSOverloadDeclaration(it) => ClassElement::ETSOverloadDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::TSCallSignatureDeclaration(it) => ClassElement::TSCallSignatureDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
         }
     }
 }
@@ -2524,6 +2590,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for MethodDefinition<'_> {
                 with_semantic_ids,
                 allocator,
             ),
+            r#final: CloneIn::clone_in_impl(&self.r#final, with_semantic_ids, allocator),
+            native: CloneIn::clone_in_impl(&self.native, with_semantic_ids, allocator),
         }
     }
 }
@@ -2955,6 +3023,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportNamedDeclaration<'_> {
             source: CloneIn::clone_in_impl(&self.source, with_semantic_ids, allocator),
             export_kind: CloneIn::clone_in_impl(&self.export_kind, with_semantic_ids, allocator),
             with_clause: CloneIn::clone_in_impl(&self.with_clause, with_semantic_ids, allocator),
+            ets_single: CloneIn::clone_in_impl(&self.ets_single, with_semantic_ids, allocator),
+            ets_default: CloneIn::clone_in_impl(&self.ets_default, with_semantic_ids, allocator),
         }
     }
 }
@@ -3080,6 +3150,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKind<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => ExportDefaultDeclarationKind::from(
@@ -3199,6 +3275,23 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
                 with_semantic_ids,
                 allocator,
             ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for CharLiteral<'_> {
+    type Cloned = CharLiteral<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        CharLiteral {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
+            raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
         }
     }
 }
@@ -3551,6 +3644,12 @@ impl<'new_alloc> CloneIn<'new_alloc> for JSXExpression<'_> {
             | Self::V8IntrinsicExpression(_)
             | Self::ArkUIComponentExpression(_)
             | Self::LeadingDotExpression(_)
+            | Self::CharLiteral(_)
+            | Self::ETSTrailingBlockExpression(_)
+            | Self::ETSInstanceOfExpression(_)
+            | Self::ETSNewClassInstanceExpression(_)
+            | Self::ETSNewArrayInstanceExpression(_)
+            | Self::ETSNewMultiDimArrayInstanceExpression(_)
             | Self::ComputedMemberExpression(_)
             | Self::StaticMemberExpression(_)
             | Self::PrivateFieldExpression(_) => JSXExpression::from(CloneIn::clone_in_impl(
@@ -3796,7 +3895,13 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumDeclaration<'_> {
         TSEnumDeclaration {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            decorators: CloneIn::clone_in_impl(&self.decorators, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
+            underlying_type: CloneIn::clone_in_impl(
+                &self.underlying_type,
+                with_semantic_ids,
+                allocator,
+            ),
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
             r#const: CloneIn::clone_in_impl(&self.r#const, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
@@ -4683,6 +4788,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSTypeAliasDeclaration<'_> {
         TSTypeAliasDeclaration {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            decorators: CloneIn::clone_in_impl(&self.decorators, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
             type_parameters: CloneIn::clone_in_impl(
                 &self.type_parameters,
@@ -4748,6 +4854,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInterfaceDeclaration<'_> {
         TSInterfaceDeclaration {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            decorators: CloneIn::clone_in_impl(&self.decorators, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
             type_parameters: CloneIn::clone_in_impl(
                 &self.type_parameters,
@@ -4837,6 +4944,17 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSSignature<'_> {
                 with_semantic_ids,
                 allocator,
             )),
+            Self::MethodDefinition(it) => TSSignature::MethodDefinition(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+            Self::PropertyDefinition(it) => TSSignature::PropertyDefinition(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
+            Self::ETSOverloadDeclaration(it) => TSSignature::ETSOverloadDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
         }
     }
 }
@@ -5787,6 +5905,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for StructStatement<'_> {
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
             r#abstract: CloneIn::clone_in_impl(&self.r#abstract, with_semantic_ids, allocator),
             declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
+            r#final: CloneIn::clone_in_impl(&self.r#final, with_semantic_ids, allocator),
+            native: CloneIn::clone_in_impl(&self.native, with_semantic_ids, allocator),
+            r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
             scope_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
                 &self.scope_id,
                 with_semantic_ids,
@@ -5841,6 +5962,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for StructElement<'_> {
                 with_semantic_ids,
                 allocator,
             )),
+            Self::ETSOverloadDeclaration(it) => StructElement::ETSOverloadDeclaration(
+                CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
+            ),
         }
     }
 }
@@ -5947,6 +6071,182 @@ impl<'new_alloc> CloneIn<'new_alloc> for AnnotationElement<'_> {
             Self::PropertyDefinition(it) => AnnotationElement::PropertyDefinition(
                 CloneIn::clone_in_impl(it, with_semantic_ids, allocator),
             ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSPackageDeclaration<'_> {
+    type Cloned = ETSPackageDeclaration<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ETSPackageDeclaration {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            name: CloneIn::clone_in_impl(&self.name, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSInstanceOfExpression<'_> {
+    type Cloned = ETSInstanceOfExpression<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ETSInstanceOfExpression {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            left: CloneIn::clone_in_impl(&self.left, with_semantic_ids, allocator),
+            right: CloneIn::clone_in_impl(&self.right, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSNewClassInstanceExpression<'_> {
+    type Cloned = ETSNewClassInstanceExpression<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ETSNewClassInstanceExpression {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            type_annotation: CloneIn::clone_in_impl(
+                &self.type_annotation,
+                with_semantic_ids,
+                allocator,
+            ),
+            arguments: CloneIn::clone_in_impl(&self.arguments, with_semantic_ids, allocator),
+            has_arguments: CloneIn::clone_in_impl(
+                &self.has_arguments,
+                with_semantic_ids,
+                allocator,
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSNewArrayInstanceExpression<'_> {
+    type Cloned = ETSNewArrayInstanceExpression<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ETSNewArrayInstanceExpression {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            type_annotation: CloneIn::clone_in_impl(
+                &self.type_annotation,
+                with_semantic_ids,
+                allocator,
+            ),
+            dimension: CloneIn::clone_in_impl(&self.dimension, with_semantic_ids, allocator),
+            initializer: CloneIn::clone_in_impl(&self.initializer, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSNewMultiDimArrayInstanceExpression<'_> {
+    type Cloned = ETSNewMultiDimArrayInstanceExpression<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ETSNewMultiDimArrayInstanceExpression {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            type_annotation: CloneIn::clone_in_impl(
+                &self.type_annotation,
+                with_semantic_ids,
+                allocator,
+            ),
+            dimensions: CloneIn::clone_in_impl(&self.dimensions, with_semantic_ids, allocator),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSTrailingBlockExpression<'_> {
+    type Cloned = ETSTrailingBlockExpression<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ETSTrailingBlockExpression {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            call: CloneIn::clone_in_impl(&self.call, with_semantic_ids, allocator),
+            block: CloneIn::clone_in_impl(&self.block, with_semantic_ids, allocator),
+            is_trailing_call: CloneIn::clone_in_impl(
+                &self.is_trailing_call,
+                with_semantic_ids,
+                allocator,
+            ),
+            is_block_on_new_line: CloneIn::clone_in_impl(
+                &self.is_block_on_new_line,
+                with_semantic_ids,
+                allocator,
+            ),
+            has_trailing_comma: CloneIn::clone_in_impl(
+                &self.has_trailing_comma,
+                with_semantic_ids,
+                allocator,
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSOverloadDeclarationKind {
+    type Cloned = ETSOverloadDeclarationKind;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ETSOverloadDeclaration<'_> {
+    type Cloned = ETSOverloadDeclaration<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ETSOverloadDeclaration {
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            decorators: CloneIn::clone_in_impl(&self.decorators, with_semantic_ids, allocator),
+            key: CloneIn::clone_in_impl(&self.key, with_semantic_ids, allocator),
+            overloads: CloneIn::clone_in_impl(&self.overloads, with_semantic_ids, allocator),
+            kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
+            accessibility: CloneIn::clone_in_impl(
+                &self.accessibility,
+                with_semantic_ids,
+                allocator,
+            ),
+            r#static: CloneIn::clone_in_impl(&self.r#static, with_semantic_ids, allocator),
+            r#abstract: CloneIn::clone_in_impl(&self.r#abstract, with_semantic_ids, allocator),
+            r#final: CloneIn::clone_in_impl(&self.r#final, with_semantic_ids, allocator),
+            native: CloneIn::clone_in_impl(&self.native, with_semantic_ids, allocator),
+            declare: CloneIn::clone_in_impl(&self.declare, with_semantic_ids, allocator),
         }
     }
 }

@@ -264,6 +264,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let (type_parameters, has_trailing_comma) =
             self.parse_ts_type_parameters_with_trailing_comma();
 
+        if self.source_type.is_ets_static()
+            && let Some(type_parameters) = &type_parameters
+        {
+            self.error(diagnostics::ets_unsupported_syntax(
+                "Generic lambda expressions",
+                type_parameters.span,
+            ));
+        }
+
         if let Some(type_params) = &type_parameters
             && matches!(self.source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts))
             && type_params.params.len() == 1
@@ -344,7 +353,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Expression::new_arrow_function_expression(
+        let mut arrow = Expression::new_arrow_function_expression(
             self.end_span(span),
             expression,
             r#async,
@@ -353,7 +362,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return_type,
             body,
             self,
-        )
+        );
+
+        if self.source_type.is_ets_static() && self.at(Kind::LParen) {
+            if let Expression::ArrowFunctionExpression(function) = &mut arrow {
+                function.pife = true;
+            }
+            return self.parse_call_expression_rest(span, arrow, &mut false);
+        }
+
+        arrow
     }
 
     /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)

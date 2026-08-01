@@ -218,7 +218,7 @@ impl<'a> Binder<'a> for Function<'a> {
             match prop.kind {
                 PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
                 PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
-                PropertyKind::Init => {}
+                PropertyKind::Init | PropertyKind::EtsEquals => {}
             }
         }
     }

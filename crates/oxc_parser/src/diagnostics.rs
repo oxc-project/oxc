@@ -61,6 +61,12 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected token").with_label(span)
 }
 
+#[cold]
+pub fn ets_char_literal_length(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A static ETS character literal must contain exactly one UTF-16 code unit")
+        .with_label(span)
+}
+
 /// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
 #[cold]
 pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
@@ -1594,4 +1600,110 @@ pub fn jsx_type_parameter_in_mts_cts(span: Span) -> OxcDiagnostic {
         "This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.",
     )
     .with_label(span)
+}
+
+#[cold]
+pub fn ets_array_dimension_required(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expression to initialize array element is missing").with_label(span)
+}
+
+#[cold]
+pub fn ets_array_initializer_required(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Static ETS array construction requires an initializer").with_label(span)
+}
+
+#[cold]
+pub fn ets_array_initializer_count(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Static ETS array construction requires exactly one initializer")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ets_multidimensional_array(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Multi-dimensional array construction is not supported in static ETS")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ets_unsupported_syntax(feature: &str, span: Span) -> OxcDiagnostic {
+    // Error recovery can synthesize nodes whose start is after the current
+    // token. Keep diagnostics total even for severely malformed input.
+    let span = if span.start <= span.end { span } else { Span::empty(span.end) };
+    OxcDiagnostic::error(format!("{feature} is not supported in static ETS")).with_label(span)
+}
+
+#[cold]
+pub fn ets_modifier_not_allowed(modifier: &Modifier, target: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "The '{}' modifier is not allowed on {target} in static ETS",
+        modifier.kind
+    ))
+    .with_label(modifier.span())
+}
+
+#[cold]
+pub fn ets_reserved_identifier(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "'{name}' is a predefined or reserved name and cannot be used as an identifier in static ETS"
+    ))
+    .with_label(span)
+}
+
+#[cold]
+pub fn ets_nested_declaration(kind: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "{kind} declarations are only allowed at the top level or in a namespace in static ETS"
+    ))
+    .with_label(span)
+}
+
+#[cold]
+pub fn ets_label_requires_loop_or_switch(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A static ETS label must be followed by a loop or switch statement")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ets_invalid_annotation_value(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Invalid value for annotation field; expected a constant literal in static ETS",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn ets_annotation_argument_requires_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Static ETS annotation arguments must have initializers").with_label(span)
+}
+
+#[cold]
+pub fn ets_annotation_single_argument(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Static ETS annotation parentheses accept one value or one named-argument object",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn ets_annotation_access_modifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A static ETS annotation declaration cannot have an access modifier")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ets_annotation_export_rename(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Static ETS annotations cannot be renamed in export declarations")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ets_unknown_export(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Cannot find local static ETS binding '{name}' to export"))
+        .with_label(span)
+}
+
+#[cold]
+pub fn ets_self_reexport(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Re-exporting bindings from the current static ETS file is not allowed")
+        .with_label(span)
 }

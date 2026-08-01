@@ -2,6 +2,7 @@ use std::ptr;
 
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
+use oxc_syntax::precedence::GetPrecedence;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -19,6 +20,7 @@ impl NeedsParentheses<'_> for AstNode<'_, Expression<'_>> {
             AstNodes::NullLiteral(it) => it.needs_parentheses(f),
             AstNodes::NumericLiteral(it) => it.needs_parentheses(f),
             AstNodes::BigIntLiteral(it) => it.needs_parentheses(f),
+            AstNodes::CharLiteral(it) => it.needs_parentheses(f),
             AstNodes::RegExpLiteral(it) => it.needs_parentheses(f),
             AstNodes::StringLiteral(it) => it.needs_parentheses(f),
             AstNodes::TemplateLiteral(it) => it.needs_parentheses(f),
@@ -39,6 +41,11 @@ impl NeedsParentheses<'_> for AstNode<'_, Expression<'_>> {
             AstNodes::ImportExpression(it) => it.needs_parentheses(f),
             AstNodes::LogicalExpression(it) => it.needs_parentheses(f),
             AstNodes::NewExpression(it) => it.needs_parentheses(f),
+            AstNodes::ETSNewClassInstanceExpression(it) => it.needs_parentheses(f),
+            AstNodes::ETSNewArrayInstanceExpression(it) => it.needs_parentheses(f),
+            AstNodes::ETSNewMultiDimArrayInstanceExpression(it) => it.needs_parentheses(f),
+            AstNodes::ETSInstanceOfExpression(it) => it.needs_parentheses(f),
+            AstNodes::ETSTrailingBlockExpression(it) => it.needs_parentheses(f),
             AstNodes::ObjectExpression(it) => it.needs_parentheses(f),
             AstNodes::ParenthesizedExpression(it) => it.needs_parentheses(f),
             AstNodes::SequenceExpression(it) => it.needs_parentheses(f),
@@ -188,6 +195,13 @@ impl NeedsParentheses<'_> for AstNode<'_, NullLiteral> {
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, BigIntLiteral<'_>> {
+    #[inline]
+    fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
+        false
+    }
+}
+
+impl NeedsParentheses<'_> for AstNode<'_, CharLiteral<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
         false
@@ -407,6 +421,80 @@ impl NeedsParentheses<'_> for AstNode<'_, NewExpression<'_>> {
         }
 
         is_class_extends(self.span, self.parent())
+    }
+}
+
+macro_rules! impl_ets_new_needs_parentheses {
+    ($($ty:ty),+ $(,)?) => {
+        $(
+            impl NeedsParentheses<'_> for AstNode<'_, $ty> {
+                fn needs_parentheses(&self, f: &JsFormatter<'_, '_>) -> bool {
+                    if f.comments().is_marked_as_type_cast_node(self) {
+                        return false;
+                    }
+
+                    is_class_extends(self.span, self.parent())
+                }
+            }
+        )+
+    };
+}
+
+impl_ets_new_needs_parentheses!(
+    ETSNewClassInstanceExpression<'_>,
+    ETSNewArrayInstanceExpression<'_>,
+    ETSNewMultiDimArrayInstanceExpression<'_>,
+);
+
+impl NeedsParentheses<'_> for AstNode<'_, ETSTrailingBlockExpression<'_>> {
+    #[inline]
+    fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
+        false
+    }
+}
+
+impl NeedsParentheses<'_> for AstNode<'_, ETSInstanceOfExpression<'_>> {
+    fn needs_parentheses(&self, f: &JsFormatter<'_, '_>) -> bool {
+        if f.comments().is_marked_as_type_cast_node(self) {
+            return false;
+        }
+
+        let parent = self.parent();
+        if matches!(
+            parent,
+            AstNodes::TSAsExpression(_)
+                | AstNodes::TSSatisfiesExpression(_)
+                | AstNodes::TSTypeAssertion(_)
+                | AstNodes::UnaryExpression(_)
+                | AstNodes::AwaitExpression(_)
+                | AstNodes::TSNonNullExpression(_)
+                | AstNodes::SpreadElement(_)
+                | AstNodes::JSXSpreadAttribute(_)
+                | AstNodes::ChainExpression(_)
+                | AstNodes::StaticMemberExpression(_)
+                | AstNodes::PrivateFieldExpression(_)
+                | AstNodes::TaggedTemplateExpression(_)
+        ) || is_class_extends(self.span, parent)
+            || parent.is_call_like_callee_span(self.span)
+        {
+            return true;
+        }
+
+        if let AstNodes::ComputedMemberExpression(member) = parent {
+            return member.object.span() == self.span;
+        }
+
+        // `instanceof` has relational precedence. Preserve grouping when it is
+        // nested under a tighter binary operator, or on the right of another
+        // relational operator (binary operators associate to the left).
+        if let AstNodes::BinaryExpression(binary) = parent {
+            let parent_precedence = binary.operator().precedence();
+            let precedence = BinaryOperator::Instanceof.precedence();
+            return parent_precedence > precedence
+                || (parent_precedence == precedence && binary.right().span() == self.span);
+        }
+
+        false
     }
 }
 

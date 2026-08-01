@@ -80,272 +80,292 @@ pub(crate) enum AncestorType {
     ParenthesizedExpressionExpression = 56,
     DirectiveExpression = 57,
     BlockStatementBody = 58,
-    VariableDeclarationDeclarations = 59,
-    VariableDeclaratorId = 60,
-    VariableDeclaratorTypeAnnotation = 61,
-    VariableDeclaratorInit = 62,
-    ExpressionStatementExpression = 63,
-    IfStatementTest = 64,
-    IfStatementConsequent = 65,
-    IfStatementAlternate = 66,
-    DoWhileStatementBody = 67,
-    DoWhileStatementTest = 68,
-    WhileStatementTest = 69,
-    WhileStatementBody = 70,
-    ForStatementInit = 71,
-    ForStatementTest = 72,
-    ForStatementUpdate = 73,
-    ForStatementBody = 74,
-    ForInStatementLeft = 75,
-    ForInStatementRight = 76,
-    ForInStatementBody = 77,
-    ForOfStatementLeft = 78,
-    ForOfStatementRight = 79,
-    ForOfStatementBody = 80,
-    ContinueStatementLabel = 81,
-    BreakStatementLabel = 82,
-    ReturnStatementArgument = 83,
-    WithStatementObject = 84,
-    WithStatementBody = 85,
-    SwitchStatementDiscriminant = 86,
-    SwitchStatementCases = 87,
-    SwitchCaseTest = 88,
-    SwitchCaseConsequent = 89,
-    LabeledStatementLabel = 90,
-    LabeledStatementBody = 91,
-    ThrowStatementArgument = 92,
-    TryStatementBlock = 93,
-    TryStatementHandler = 94,
-    TryStatementFinalizer = 95,
-    CatchClauseParam = 96,
-    CatchClauseBody = 97,
-    CatchParameterPattern = 98,
-    CatchParameterTypeAnnotation = 99,
-    AssignmentPatternLeft = 100,
-    AssignmentPatternRight = 101,
-    ObjectPatternProperties = 102,
-    ObjectPatternRest = 103,
-    BindingPropertyKey = 104,
-    BindingPropertyValue = 105,
-    ArrayPatternElements = 106,
-    ArrayPatternRest = 107,
-    BindingRestElementArgument = 108,
-    FunctionDecorators = 109,
-    FunctionId = 110,
-    FunctionTypeParameters = 111,
-    FunctionThisParam = 112,
-    FunctionParams = 113,
-    FunctionReturnType = 114,
-    FunctionBody = 115,
-    FormalParametersItems = 116,
-    FormalParametersRest = 117,
-    FormalParameterDecorators = 118,
-    FormalParameterPattern = 119,
-    FormalParameterTypeAnnotation = 120,
-    FormalParameterInitializer = 121,
-    FormalParameterRestDecorators = 122,
-    FormalParameterRestRest = 123,
-    FormalParameterRestTypeAnnotation = 124,
-    FunctionBodyDirectives = 125,
-    FunctionBodyStatements = 126,
-    ArrowFunctionExpressionTypeParameters = 127,
-    ArrowFunctionExpressionParams = 128,
-    ArrowFunctionExpressionReturnType = 129,
-    ArrowFunctionExpressionBody = 130,
-    YieldExpressionArgument = 131,
-    ClassDecorators = 132,
-    ClassId = 133,
-    ClassTypeParameters = 134,
-    ClassSuperClass = 135,
-    ClassSuperTypeArguments = 136,
-    ClassImplements = 137,
-    ClassBody = 138,
-    ClassBodyBody = 139,
-    MethodDefinitionDecorators = 140,
-    MethodDefinitionKey = 141,
-    MethodDefinitionValue = 142,
-    PropertyDefinitionDecorators = 143,
-    PropertyDefinitionKey = 144,
-    PropertyDefinitionTypeAnnotation = 145,
-    PropertyDefinitionValue = 146,
-    StaticBlockBody = 147,
-    AccessorPropertyDecorators = 148,
-    AccessorPropertyKey = 149,
-    AccessorPropertyTypeAnnotation = 150,
-    AccessorPropertyValue = 151,
-    ImportExpressionSource = 152,
-    ImportExpressionOptions = 153,
-    ImportDeclarationSpecifiers = 154,
-    ImportDeclarationSource = 155,
-    ImportDeclarationWithClause = 156,
-    LazyImportDeclarationSpecifiers = 157,
-    LazyImportDeclarationSource = 158,
-    LazyImportDeclarationWithClause = 159,
-    ImportSpecifierImported = 160,
-    ImportSpecifierLocal = 161,
-    ImportDefaultSpecifierLocal = 162,
-    ImportNamespaceSpecifierLocal = 163,
-    WithClauseWithEntries = 164,
-    ImportAttributeKey = 165,
-    ImportAttributeValue = 166,
-    ExportNamedDeclarationDecorators = 167,
-    ExportNamedDeclarationDeclaration = 168,
-    ExportNamedDeclarationSpecifiers = 169,
-    ExportNamedDeclarationSource = 170,
-    ExportNamedDeclarationWithClause = 171,
-    ExportDefaultDeclarationDeclaration = 172,
-    ExportAllDeclarationExported = 173,
-    ExportAllDeclarationSource = 174,
-    ExportAllDeclarationWithClause = 175,
-    ExportSpecifierLocal = 176,
-    ExportSpecifierExported = 177,
-    V8IntrinsicExpressionName = 178,
-    V8IntrinsicExpressionArguments = 179,
-    JSXElementOpeningElement = 180,
-    JSXElementChildren = 181,
-    JSXElementClosingElement = 182,
-    JSXOpeningElementName = 183,
-    JSXOpeningElementTypeArguments = 184,
-    JSXOpeningElementAttributes = 185,
-    JSXClosingElementName = 186,
-    JSXFragmentOpeningFragment = 187,
-    JSXFragmentChildren = 188,
-    JSXFragmentClosingFragment = 189,
-    JSXNamespacedNameNamespace = 190,
-    JSXNamespacedNameName = 191,
-    JSXMemberExpressionObject = 192,
-    JSXMemberExpressionProperty = 193,
-    JSXExpressionContainerExpression = 194,
-    JSXAttributeName = 195,
-    JSXAttributeValue = 196,
-    JSXSpreadAttributeArgument = 197,
-    JSXSpreadChildExpression = 198,
-    TSThisParameterTypeAnnotation = 199,
-    TSEnumDeclarationId = 200,
-    TSEnumDeclarationBody = 201,
-    TSEnumBodyMembers = 202,
-    TSEnumMemberId = 203,
-    TSEnumMemberInitializer = 204,
-    TSTypeAnnotationTypeAnnotation = 205,
-    TSLiteralTypeLiteral = 206,
-    TSConditionalTypeCheckType = 207,
-    TSConditionalTypeExtendsType = 208,
-    TSConditionalTypeTrueType = 209,
-    TSConditionalTypeFalseType = 210,
-    TSUnionTypeTypes = 211,
-    TSIntersectionTypeTypes = 212,
-    TSParenthesizedTypeTypeAnnotation = 213,
-    TSTypeOperatorTypeAnnotation = 214,
-    TSArrayTypeElementType = 215,
-    TSIndexedAccessTypeObjectType = 216,
-    TSIndexedAccessTypeIndexType = 217,
-    TSTupleTypeElementTypes = 218,
-    TSNamedTupleMemberLabel = 219,
-    TSNamedTupleMemberElementType = 220,
-    TSOptionalTypeTypeAnnotation = 221,
-    TSRestTypeTypeAnnotation = 222,
-    TSTypeReferenceTypeName = 223,
-    TSTypeReferenceTypeArguments = 224,
-    TSQualifiedNameLeft = 225,
-    TSQualifiedNameRight = 226,
-    TSTypeParameterInstantiationParams = 227,
-    TSTypeParameterName = 228,
-    TSTypeParameterConstraint = 229,
-    TSTypeParameterDefault = 230,
-    TSTypeParameterDeclarationParams = 231,
-    TSTypeAliasDeclarationId = 232,
-    TSTypeAliasDeclarationTypeParameters = 233,
-    TSTypeAliasDeclarationTypeAnnotation = 234,
-    TSClassImplementsExpression = 235,
-    TSClassImplementsTypeArguments = 236,
-    TSInterfaceDeclarationId = 237,
-    TSInterfaceDeclarationTypeParameters = 238,
-    TSInterfaceDeclarationExtends = 239,
-    TSInterfaceDeclarationBody = 240,
-    TSInterfaceBodyBody = 241,
-    TSPropertySignatureKey = 242,
-    TSPropertySignatureTypeAnnotation = 243,
-    TSIndexSignatureParameters = 244,
-    TSIndexSignatureTypeAnnotation = 245,
-    TSCallSignatureDeclarationTypeParameters = 246,
-    TSCallSignatureDeclarationThisParam = 247,
-    TSCallSignatureDeclarationParams = 248,
-    TSCallSignatureDeclarationReturnType = 249,
-    TSMethodSignatureKey = 250,
-    TSMethodSignatureTypeParameters = 251,
-    TSMethodSignatureThisParam = 252,
-    TSMethodSignatureParams = 253,
-    TSMethodSignatureReturnType = 254,
-    TSConstructSignatureDeclarationTypeParameters = 255,
-    TSConstructSignatureDeclarationParams = 256,
-    TSConstructSignatureDeclarationReturnType = 257,
-    TSIndexSignatureNameTypeAnnotation = 258,
-    TSInterfaceHeritageExpression = 259,
-    TSInterfaceHeritageTypeArguments = 260,
-    TSTypePredicateParameterName = 261,
-    TSTypePredicateTypeAnnotation = 262,
-    TSModuleDeclarationId = 263,
-    TSModuleDeclarationBody = 264,
-    TSGlobalDeclarationBody = 265,
-    TSModuleBlockDirectives = 266,
-    TSModuleBlockBody = 267,
-    TSTypeLiteralMembers = 268,
-    TSInferTypeTypeParameter = 269,
-    TSTypeQueryExprName = 270,
-    TSTypeQueryTypeArguments = 271,
-    TSImportTypeSource = 272,
-    TSImportTypeOptions = 273,
-    TSImportTypeQualifier = 274,
-    TSImportTypeTypeArguments = 275,
-    TSImportTypeQualifiedNameLeft = 276,
-    TSImportTypeQualifiedNameRight = 277,
-    TSFunctionTypeTypeParameters = 278,
-    TSFunctionTypeThisParam = 279,
-    TSFunctionTypeParams = 280,
-    TSFunctionTypeReturnType = 281,
-    TSConstructorTypeTypeParameters = 282,
-    TSConstructorTypeParams = 283,
-    TSConstructorTypeReturnType = 284,
-    TSMappedTypeKey = 285,
-    TSMappedTypeConstraint = 286,
-    TSMappedTypeNameType = 287,
-    TSMappedTypeTypeAnnotation = 288,
-    TSTemplateLiteralTypeQuasis = 289,
-    TSTemplateLiteralTypeTypes = 290,
-    TSAsExpressionExpression = 291,
-    TSAsExpressionTypeAnnotation = 292,
-    TSSatisfiesExpressionExpression = 293,
-    TSSatisfiesExpressionTypeAnnotation = 294,
-    TSTypeAssertionTypeAnnotation = 295,
-    TSTypeAssertionExpression = 296,
-    TSImportEqualsDeclarationId = 297,
-    TSImportEqualsDeclarationModuleReference = 298,
-    TSExternalModuleReferenceExpression = 299,
-    TSNonNullExpressionExpression = 300,
-    DecoratorExpression = 301,
-    TSExportAssignmentExpression = 302,
-    TSNamespaceExportDeclarationId = 303,
-    TSInstantiationExpressionExpression = 304,
-    TSInstantiationExpressionTypeArguments = 305,
-    JSDocNullableTypeTypeAnnotation = 306,
-    JSDocNonNullableTypeTypeAnnotation = 307,
-    StructStatementDecorators = 308,
-    StructStatementId = 309,
-    StructStatementTypeParameters = 310,
-    StructStatementSuperClass = 311,
-    StructStatementSuperTypeArguments = 312,
-    StructStatementImplements = 313,
-    StructStatementBody = 314,
-    StructBodyBody = 315,
-    ArkUIComponentExpressionCallee = 316,
-    ArkUIComponentExpressionTypeArguments = 317,
-    ArkUIComponentExpressionArguments = 318,
-    ArkUIComponentExpressionChildren = 319,
-    ArkUIComponentExpressionChainExpressions = 320,
-    AnnotationDeclarationDecorators = 321,
-    AnnotationDeclarationId = 322,
-    AnnotationDeclarationBody = 323,
-    AnnotationBodyBody = 324,
+    VariableDeclarationDecorators = 59,
+    VariableDeclarationDeclarations = 60,
+    VariableDeclaratorId = 61,
+    VariableDeclaratorTypeAnnotation = 62,
+    VariableDeclaratorInit = 63,
+    ExpressionStatementExpression = 64,
+    IfStatementTest = 65,
+    IfStatementConsequent = 66,
+    IfStatementAlternate = 67,
+    DoWhileStatementBody = 68,
+    DoWhileStatementTest = 69,
+    WhileStatementTest = 70,
+    WhileStatementBody = 71,
+    ForStatementInit = 72,
+    ForStatementTest = 73,
+    ForStatementUpdate = 74,
+    ForStatementBody = 75,
+    ForInStatementLeft = 76,
+    ForInStatementRight = 77,
+    ForInStatementBody = 78,
+    ForOfStatementLeft = 79,
+    ForOfStatementRight = 80,
+    ForOfStatementBody = 81,
+    ContinueStatementLabel = 82,
+    BreakStatementLabel = 83,
+    ReturnStatementArgument = 84,
+    WithStatementObject = 85,
+    WithStatementBody = 86,
+    SwitchStatementDiscriminant = 87,
+    SwitchStatementCases = 88,
+    SwitchCaseTest = 89,
+    SwitchCaseConsequent = 90,
+    LabeledStatementLabel = 91,
+    LabeledStatementBody = 92,
+    ThrowStatementArgument = 93,
+    TryStatementBlock = 94,
+    TryStatementHandler = 95,
+    TryStatementFinalizer = 96,
+    CatchClauseParam = 97,
+    CatchClauseBody = 98,
+    CatchParameterPattern = 99,
+    CatchParameterTypeAnnotation = 100,
+    AssignmentPatternLeft = 101,
+    AssignmentPatternRight = 102,
+    ObjectPatternProperties = 103,
+    ObjectPatternRest = 104,
+    BindingPropertyKey = 105,
+    BindingPropertyValue = 106,
+    ArrayPatternElements = 107,
+    ArrayPatternRest = 108,
+    BindingRestElementArgument = 109,
+    FunctionDecorators = 110,
+    FunctionId = 111,
+    FunctionTypeParameters = 112,
+    FunctionThisParam = 113,
+    FunctionParams = 114,
+    FunctionReturnType = 115,
+    FunctionBody = 116,
+    FormalParametersItems = 117,
+    FormalParametersRest = 118,
+    FormalParameterDecorators = 119,
+    FormalParameterPattern = 120,
+    FormalParameterTypeAnnotation = 121,
+    FormalParameterInitializer = 122,
+    FormalParameterRestDecorators = 123,
+    FormalParameterRestRest = 124,
+    FormalParameterRestTypeAnnotation = 125,
+    FunctionBodyDirectives = 126,
+    FunctionBodyStatements = 127,
+    ArrowFunctionExpressionTypeParameters = 128,
+    ArrowFunctionExpressionParams = 129,
+    ArrowFunctionExpressionReturnType = 130,
+    ArrowFunctionExpressionBody = 131,
+    YieldExpressionArgument = 132,
+    ClassDecorators = 133,
+    ClassId = 134,
+    ClassTypeParameters = 135,
+    ClassSuperClass = 136,
+    ClassSuperTypeArguments = 137,
+    ClassImplements = 138,
+    ClassBody = 139,
+    ClassBodyBody = 140,
+    MethodDefinitionDecorators = 141,
+    MethodDefinitionKey = 142,
+    MethodDefinitionValue = 143,
+    PropertyDefinitionDecorators = 144,
+    PropertyDefinitionKey = 145,
+    PropertyDefinitionTypeAnnotation = 146,
+    PropertyDefinitionValue = 147,
+    StaticBlockBody = 148,
+    AccessorPropertyDecorators = 149,
+    AccessorPropertyKey = 150,
+    AccessorPropertyTypeAnnotation = 151,
+    AccessorPropertyValue = 152,
+    ImportExpressionSource = 153,
+    ImportExpressionOptions = 154,
+    ImportDeclarationSpecifiers = 155,
+    ImportDeclarationSource = 156,
+    ImportDeclarationWithClause = 157,
+    LazyImportDeclarationSpecifiers = 158,
+    LazyImportDeclarationSource = 159,
+    LazyImportDeclarationWithClause = 160,
+    ImportSpecifierImported = 161,
+    ImportSpecifierLocal = 162,
+    ImportDefaultSpecifierLocal = 163,
+    ImportNamespaceSpecifierLocal = 164,
+    WithClauseWithEntries = 165,
+    ImportAttributeKey = 166,
+    ImportAttributeValue = 167,
+    ExportNamedDeclarationDecorators = 168,
+    ExportNamedDeclarationDeclaration = 169,
+    ExportNamedDeclarationSpecifiers = 170,
+    ExportNamedDeclarationSource = 171,
+    ExportNamedDeclarationWithClause = 172,
+    ExportDefaultDeclarationDeclaration = 173,
+    ExportAllDeclarationExported = 174,
+    ExportAllDeclarationSource = 175,
+    ExportAllDeclarationWithClause = 176,
+    ExportSpecifierLocal = 177,
+    ExportSpecifierExported = 178,
+    V8IntrinsicExpressionName = 179,
+    V8IntrinsicExpressionArguments = 180,
+    JSXElementOpeningElement = 181,
+    JSXElementChildren = 182,
+    JSXElementClosingElement = 183,
+    JSXOpeningElementName = 184,
+    JSXOpeningElementTypeArguments = 185,
+    JSXOpeningElementAttributes = 186,
+    JSXClosingElementName = 187,
+    JSXFragmentOpeningFragment = 188,
+    JSXFragmentChildren = 189,
+    JSXFragmentClosingFragment = 190,
+    JSXNamespacedNameNamespace = 191,
+    JSXNamespacedNameName = 192,
+    JSXMemberExpressionObject = 193,
+    JSXMemberExpressionProperty = 194,
+    JSXExpressionContainerExpression = 195,
+    JSXAttributeName = 196,
+    JSXAttributeValue = 197,
+    JSXSpreadAttributeArgument = 198,
+    JSXSpreadChildExpression = 199,
+    TSThisParameterTypeAnnotation = 200,
+    TSEnumDeclarationDecorators = 201,
+    TSEnumDeclarationId = 202,
+    TSEnumDeclarationUnderlyingType = 203,
+    TSEnumDeclarationBody = 204,
+    TSEnumBodyMembers = 205,
+    TSEnumMemberId = 206,
+    TSEnumMemberInitializer = 207,
+    TSTypeAnnotationTypeAnnotation = 208,
+    TSLiteralTypeLiteral = 209,
+    TSConditionalTypeCheckType = 210,
+    TSConditionalTypeExtendsType = 211,
+    TSConditionalTypeTrueType = 212,
+    TSConditionalTypeFalseType = 213,
+    TSUnionTypeTypes = 214,
+    TSIntersectionTypeTypes = 215,
+    TSParenthesizedTypeTypeAnnotation = 216,
+    TSTypeOperatorTypeAnnotation = 217,
+    TSArrayTypeElementType = 218,
+    TSIndexedAccessTypeObjectType = 219,
+    TSIndexedAccessTypeIndexType = 220,
+    TSTupleTypeElementTypes = 221,
+    TSNamedTupleMemberLabel = 222,
+    TSNamedTupleMemberElementType = 223,
+    TSOptionalTypeTypeAnnotation = 224,
+    TSRestTypeTypeAnnotation = 225,
+    TSTypeReferenceTypeName = 226,
+    TSTypeReferenceTypeArguments = 227,
+    TSQualifiedNameLeft = 228,
+    TSQualifiedNameRight = 229,
+    TSTypeParameterInstantiationParams = 230,
+    TSTypeParameterName = 231,
+    TSTypeParameterConstraint = 232,
+    TSTypeParameterDefault = 233,
+    TSTypeParameterDeclarationParams = 234,
+    TSTypeAliasDeclarationDecorators = 235,
+    TSTypeAliasDeclarationId = 236,
+    TSTypeAliasDeclarationTypeParameters = 237,
+    TSTypeAliasDeclarationTypeAnnotation = 238,
+    TSClassImplementsExpression = 239,
+    TSClassImplementsTypeArguments = 240,
+    TSInterfaceDeclarationDecorators = 241,
+    TSInterfaceDeclarationId = 242,
+    TSInterfaceDeclarationTypeParameters = 243,
+    TSInterfaceDeclarationExtends = 244,
+    TSInterfaceDeclarationBody = 245,
+    TSInterfaceBodyBody = 246,
+    TSPropertySignatureKey = 247,
+    TSPropertySignatureTypeAnnotation = 248,
+    TSIndexSignatureParameters = 249,
+    TSIndexSignatureTypeAnnotation = 250,
+    TSCallSignatureDeclarationTypeParameters = 251,
+    TSCallSignatureDeclarationThisParam = 252,
+    TSCallSignatureDeclarationParams = 253,
+    TSCallSignatureDeclarationReturnType = 254,
+    TSMethodSignatureKey = 255,
+    TSMethodSignatureTypeParameters = 256,
+    TSMethodSignatureThisParam = 257,
+    TSMethodSignatureParams = 258,
+    TSMethodSignatureReturnType = 259,
+    TSConstructSignatureDeclarationTypeParameters = 260,
+    TSConstructSignatureDeclarationParams = 261,
+    TSConstructSignatureDeclarationReturnType = 262,
+    TSIndexSignatureNameTypeAnnotation = 263,
+    TSInterfaceHeritageExpression = 264,
+    TSInterfaceHeritageTypeArguments = 265,
+    TSTypePredicateParameterName = 266,
+    TSTypePredicateTypeAnnotation = 267,
+    TSModuleDeclarationId = 268,
+    TSModuleDeclarationBody = 269,
+    TSGlobalDeclarationBody = 270,
+    TSModuleBlockDirectives = 271,
+    TSModuleBlockBody = 272,
+    TSTypeLiteralMembers = 273,
+    TSInferTypeTypeParameter = 274,
+    TSTypeQueryExprName = 275,
+    TSTypeQueryTypeArguments = 276,
+    TSImportTypeSource = 277,
+    TSImportTypeOptions = 278,
+    TSImportTypeQualifier = 279,
+    TSImportTypeTypeArguments = 280,
+    TSImportTypeQualifiedNameLeft = 281,
+    TSImportTypeQualifiedNameRight = 282,
+    TSFunctionTypeTypeParameters = 283,
+    TSFunctionTypeThisParam = 284,
+    TSFunctionTypeParams = 285,
+    TSFunctionTypeReturnType = 286,
+    TSConstructorTypeTypeParameters = 287,
+    TSConstructorTypeParams = 288,
+    TSConstructorTypeReturnType = 289,
+    TSMappedTypeKey = 290,
+    TSMappedTypeConstraint = 291,
+    TSMappedTypeNameType = 292,
+    TSMappedTypeTypeAnnotation = 293,
+    TSTemplateLiteralTypeQuasis = 294,
+    TSTemplateLiteralTypeTypes = 295,
+    TSAsExpressionExpression = 296,
+    TSAsExpressionTypeAnnotation = 297,
+    TSSatisfiesExpressionExpression = 298,
+    TSSatisfiesExpressionTypeAnnotation = 299,
+    TSTypeAssertionTypeAnnotation = 300,
+    TSTypeAssertionExpression = 301,
+    TSImportEqualsDeclarationId = 302,
+    TSImportEqualsDeclarationModuleReference = 303,
+    TSExternalModuleReferenceExpression = 304,
+    TSNonNullExpressionExpression = 305,
+    DecoratorExpression = 306,
+    TSExportAssignmentExpression = 307,
+    TSNamespaceExportDeclarationId = 308,
+    TSInstantiationExpressionExpression = 309,
+    TSInstantiationExpressionTypeArguments = 310,
+    JSDocNullableTypeTypeAnnotation = 311,
+    JSDocNonNullableTypeTypeAnnotation = 312,
+    StructStatementDecorators = 313,
+    StructStatementId = 314,
+    StructStatementTypeParameters = 315,
+    StructStatementSuperClass = 316,
+    StructStatementSuperTypeArguments = 317,
+    StructStatementImplements = 318,
+    StructStatementBody = 319,
+    StructBodyBody = 320,
+    ArkUIComponentExpressionCallee = 321,
+    ArkUIComponentExpressionTypeArguments = 322,
+    ArkUIComponentExpressionArguments = 323,
+    ArkUIComponentExpressionChildren = 324,
+    ArkUIComponentExpressionChainExpressions = 325,
+    AnnotationDeclarationDecorators = 326,
+    AnnotationDeclarationId = 327,
+    AnnotationDeclarationBody = 328,
+    AnnotationBodyBody = 329,
+    ETSPackageDeclarationName = 330,
+    ETSInstanceOfExpressionLeft = 331,
+    ETSInstanceOfExpressionRight = 332,
+    ETSNewClassInstanceExpressionTypeAnnotation = 333,
+    ETSNewClassInstanceExpressionArguments = 334,
+    ETSNewArrayInstanceExpressionTypeAnnotation = 335,
+    ETSNewArrayInstanceExpressionDimension = 336,
+    ETSNewArrayInstanceExpressionInitializer = 337,
+    ETSNewMultiDimArrayInstanceExpressionTypeAnnotation = 338,
+    ETSNewMultiDimArrayInstanceExpressionDimensions = 339,
+    ETSTrailingBlockExpressionCall = 340,
+    ETSTrailingBlockExpressionBlock = 341,
+    ETSOverloadDeclarationDecorators = 342,
+    ETSOverloadDeclarationKey = 343,
+    ETSOverloadDeclarationOverloads = 344,
 }
 
 /// Ancestor type used in AST traversal.
@@ -482,6 +502,8 @@ pub enum Ancestor<'a, 't> {
     DirectiveExpression(DirectiveWithoutExpression<'a, 't>) =
         AncestorType::DirectiveExpression as u16,
     BlockStatementBody(BlockStatementWithoutBody<'a, 't>) = AncestorType::BlockStatementBody as u16,
+    VariableDeclarationDecorators(VariableDeclarationWithoutDecorators<'a, 't>) =
+        AncestorType::VariableDeclarationDecorators as u16,
     VariableDeclarationDeclarations(VariableDeclarationWithoutDeclarations<'a, 't>) =
         AncestorType::VariableDeclarationDeclarations as u16,
     VariableDeclaratorId(VariableDeclaratorWithoutId<'a, 't>) =
@@ -728,8 +750,12 @@ pub enum Ancestor<'a, 't> {
         AncestorType::JSXSpreadChildExpression as u16,
     TSThisParameterTypeAnnotation(TSThisParameterWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSThisParameterTypeAnnotation as u16,
+    TSEnumDeclarationDecorators(TSEnumDeclarationWithoutDecorators<'a, 't>) =
+        AncestorType::TSEnumDeclarationDecorators as u16,
     TSEnumDeclarationId(TSEnumDeclarationWithoutId<'a, 't>) =
         AncestorType::TSEnumDeclarationId as u16,
+    TSEnumDeclarationUnderlyingType(TSEnumDeclarationWithoutUnderlyingType<'a, 't>) =
+        AncestorType::TSEnumDeclarationUnderlyingType as u16,
     TSEnumDeclarationBody(TSEnumDeclarationWithoutBody<'a, 't>) =
         AncestorType::TSEnumDeclarationBody as u16,
     TSEnumBodyMembers(TSEnumBodyWithoutMembers<'a, 't>) = AncestorType::TSEnumBodyMembers as u16,
@@ -789,6 +815,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSTypeParameterDefault as u16,
     TSTypeParameterDeclarationParams(TSTypeParameterDeclarationWithoutParams<'a, 't>) =
         AncestorType::TSTypeParameterDeclarationParams as u16,
+    TSTypeAliasDeclarationDecorators(TSTypeAliasDeclarationWithoutDecorators<'a, 't>) =
+        AncestorType::TSTypeAliasDeclarationDecorators as u16,
     TSTypeAliasDeclarationId(TSTypeAliasDeclarationWithoutId<'a, 't>) =
         AncestorType::TSTypeAliasDeclarationId as u16,
     TSTypeAliasDeclarationTypeParameters(TSTypeAliasDeclarationWithoutTypeParameters<'a, 't>) =
@@ -799,6 +827,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSClassImplementsExpression as u16,
     TSClassImplementsTypeArguments(TSClassImplementsWithoutTypeArguments<'a, 't>) =
         AncestorType::TSClassImplementsTypeArguments as u16,
+    TSInterfaceDeclarationDecorators(TSInterfaceDeclarationWithoutDecorators<'a, 't>) =
+        AncestorType::TSInterfaceDeclarationDecorators as u16,
     TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a, 't>) =
         AncestorType::TSInterfaceDeclarationId as u16,
     TSInterfaceDeclarationTypeParameters(TSInterfaceDeclarationWithoutTypeParameters<'a, 't>) =
@@ -974,6 +1004,41 @@ pub enum Ancestor<'a, 't> {
     AnnotationDeclarationBody(AnnotationDeclarationWithoutBody<'a, 't>) =
         AncestorType::AnnotationDeclarationBody as u16,
     AnnotationBodyBody(AnnotationBodyWithoutBody<'a, 't>) = AncestorType::AnnotationBodyBody as u16,
+    ETSPackageDeclarationName(ETSPackageDeclarationWithoutName<'a, 't>) =
+        AncestorType::ETSPackageDeclarationName as u16,
+    ETSInstanceOfExpressionLeft(ETSInstanceOfExpressionWithoutLeft<'a, 't>) =
+        AncestorType::ETSInstanceOfExpressionLeft as u16,
+    ETSInstanceOfExpressionRight(ETSInstanceOfExpressionWithoutRight<'a, 't>) =
+        AncestorType::ETSInstanceOfExpressionRight as u16,
+    ETSNewClassInstanceExpressionTypeAnnotation(
+        ETSNewClassInstanceExpressionWithoutTypeAnnotation<'a, 't>,
+    ) = AncestorType::ETSNewClassInstanceExpressionTypeAnnotation as u16,
+    ETSNewClassInstanceExpressionArguments(ETSNewClassInstanceExpressionWithoutArguments<'a, 't>) =
+        AncestorType::ETSNewClassInstanceExpressionArguments as u16,
+    ETSNewArrayInstanceExpressionTypeAnnotation(
+        ETSNewArrayInstanceExpressionWithoutTypeAnnotation<'a, 't>,
+    ) = AncestorType::ETSNewArrayInstanceExpressionTypeAnnotation as u16,
+    ETSNewArrayInstanceExpressionDimension(ETSNewArrayInstanceExpressionWithoutDimension<'a, 't>) =
+        AncestorType::ETSNewArrayInstanceExpressionDimension as u16,
+    ETSNewArrayInstanceExpressionInitializer(
+        ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't>,
+    ) = AncestorType::ETSNewArrayInstanceExpressionInitializer as u16,
+    ETSNewMultiDimArrayInstanceExpressionTypeAnnotation(
+        ETSNewMultiDimArrayInstanceExpressionWithoutTypeAnnotation<'a, 't>,
+    ) = AncestorType::ETSNewMultiDimArrayInstanceExpressionTypeAnnotation as u16,
+    ETSNewMultiDimArrayInstanceExpressionDimensions(
+        ETSNewMultiDimArrayInstanceExpressionWithoutDimensions<'a, 't>,
+    ) = AncestorType::ETSNewMultiDimArrayInstanceExpressionDimensions as u16,
+    ETSTrailingBlockExpressionCall(ETSTrailingBlockExpressionWithoutCall<'a, 't>) =
+        AncestorType::ETSTrailingBlockExpressionCall as u16,
+    ETSTrailingBlockExpressionBlock(ETSTrailingBlockExpressionWithoutBlock<'a, 't>) =
+        AncestorType::ETSTrailingBlockExpressionBlock as u16,
+    ETSOverloadDeclarationDecorators(ETSOverloadDeclarationWithoutDecorators<'a, 't>) =
+        AncestorType::ETSOverloadDeclarationDecorators as u16,
+    ETSOverloadDeclarationKey(ETSOverloadDeclarationWithoutKey<'a, 't>) =
+        AncestorType::ETSOverloadDeclarationKey as u16,
+    ETSOverloadDeclarationOverloads(ETSOverloadDeclarationWithoutOverloads<'a, 't>) =
+        AncestorType::ETSOverloadDeclarationOverloads as u16,
 }
 
 impl<'a, 't> Ancestor<'a, 't> {
@@ -1184,7 +1249,10 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_variable_declaration(self) -> bool {
-        matches!(self, Self::VariableDeclarationDeclarations(_))
+        matches!(
+            self,
+            Self::VariableDeclarationDecorators(_) | Self::VariableDeclarationDeclarations(_)
+        )
     }
 
     #[inline]
@@ -1614,7 +1682,13 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_enum_declaration(self) -> bool {
-        matches!(self, Self::TSEnumDeclarationId(_) | Self::TSEnumDeclarationBody(_))
+        matches!(
+            self,
+            Self::TSEnumDeclarationDecorators(_)
+                | Self::TSEnumDeclarationId(_)
+                | Self::TSEnumDeclarationUnderlyingType(_)
+                | Self::TSEnumDeclarationBody(_)
+        )
     }
 
     #[inline]
@@ -1735,7 +1809,8 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_type_alias_declaration(self) -> bool {
         matches!(
             self,
-            Self::TSTypeAliasDeclarationId(_)
+            Self::TSTypeAliasDeclarationDecorators(_)
+                | Self::TSTypeAliasDeclarationId(_)
                 | Self::TSTypeAliasDeclarationTypeParameters(_)
                 | Self::TSTypeAliasDeclarationTypeAnnotation(_)
         )
@@ -1753,7 +1828,8 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_interface_declaration(self) -> bool {
         matches!(
             self,
-            Self::TSInterfaceDeclarationId(_)
+            Self::TSInterfaceDeclarationDecorators(_)
+                | Self::TSInterfaceDeclarationId(_)
                 | Self::TSInterfaceDeclarationTypeParameters(_)
                 | Self::TSInterfaceDeclarationExtends(_)
                 | Self::TSInterfaceDeclarationBody(_)
@@ -2036,6 +2112,62 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
+    pub fn is_ets_package_declaration(self) -> bool {
+        matches!(self, Self::ETSPackageDeclarationName(_))
+    }
+
+    #[inline]
+    pub fn is_ets_instance_of_expression(self) -> bool {
+        matches!(self, Self::ETSInstanceOfExpressionLeft(_) | Self::ETSInstanceOfExpressionRight(_))
+    }
+
+    #[inline]
+    pub fn is_ets_new_class_instance_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ETSNewClassInstanceExpressionTypeAnnotation(_)
+                | Self::ETSNewClassInstanceExpressionArguments(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ets_new_array_instance_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ETSNewArrayInstanceExpressionTypeAnnotation(_)
+                | Self::ETSNewArrayInstanceExpressionDimension(_)
+                | Self::ETSNewArrayInstanceExpressionInitializer(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ets_new_multi_dim_array_instance_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ETSNewMultiDimArrayInstanceExpressionTypeAnnotation(_)
+                | Self::ETSNewMultiDimArrayInstanceExpressionDimensions(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ets_trailing_block_expression(self) -> bool {
+        matches!(
+            self,
+            Self::ETSTrailingBlockExpressionCall(_) | Self::ETSTrailingBlockExpressionBlock(_)
+        )
+    }
+
+    #[inline]
+    pub fn is_ets_overload_declaration(self) -> bool {
+        matches!(
+            self,
+            Self::ETSOverloadDeclarationDecorators(_)
+                | Self::ETSOverloadDeclarationKey(_)
+                | Self::ETSOverloadDeclarationOverloads(_)
+        )
+    }
+
+    #[inline]
     pub fn is_parent_of_statement(self) -> bool {
         matches!(
             self,
@@ -2079,6 +2211,7 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::AccessorPropertyKey(_)
                 | Self::TSPropertySignatureKey(_)
                 | Self::TSMethodSignatureKey(_)
+                | Self::ETSOverloadDeclarationKey(_)
         )
     }
 
@@ -2147,6 +2280,11 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::TSInstantiationExpressionExpression(_)
                 | Self::StructStatementSuperClass(_)
                 | Self::ArkUIComponentExpressionCallee(_)
+                | Self::ETSInstanceOfExpressionLeft(_)
+                | Self::ETSNewArrayInstanceExpressionDimension(_)
+                | Self::ETSNewArrayInstanceExpressionInitializer(_)
+                | Self::ETSNewMultiDimArrayInstanceExpressionDimensions(_)
+                | Self::ETSOverloadDeclarationOverloads(_)
         )
     }
 
@@ -2159,6 +2297,7 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::NewExpressionArguments(_)
                 | Self::V8IntrinsicExpressionArguments(_)
                 | Self::ArkUIComponentExpressionArguments(_)
+                | Self::ETSNewClassInstanceExpressionArguments(_)
         )
     }
 
@@ -2295,15 +2434,11 @@ impl<'a, 't> Ancestor<'a, 't> {
     }
 
     #[inline]
-    pub fn is_parent_of_ts_enum_member_name(self) -> bool {
-        matches!(self, Self::TSEnumMemberId(_))
-    }
-
-    #[inline]
     pub fn is_parent_of_ts_type(self) -> bool {
         matches!(
             self,
-            Self::TSTypeAnnotationTypeAnnotation(_)
+            Self::TSEnumDeclarationUnderlyingType(_)
+                | Self::TSTypeAnnotationTypeAnnotation(_)
                 | Self::TSConditionalTypeCheckType(_)
                 | Self::TSConditionalTypeExtendsType(_)
                 | Self::TSConditionalTypeTrueType(_)
@@ -2330,7 +2465,16 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::TSTypeAssertionTypeAnnotation(_)
                 | Self::JSDocNullableTypeTypeAnnotation(_)
                 | Self::JSDocNonNullableTypeTypeAnnotation(_)
+                | Self::ETSInstanceOfExpressionRight(_)
+                | Self::ETSNewClassInstanceExpressionTypeAnnotation(_)
+                | Self::ETSNewArrayInstanceExpressionTypeAnnotation(_)
+                | Self::ETSNewMultiDimArrayInstanceExpressionTypeAnnotation(_)
         )
+    }
+
+    #[inline]
+    pub fn is_parent_of_ts_enum_member_name(self) -> bool {
+        matches!(self, Self::TSEnumMemberId(_))
     }
 
     #[inline]
@@ -2469,6 +2613,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::ParenthesizedExpressionExpression(a) => a.address(),
             Self::DirectiveExpression(a) => a.address(),
             Self::BlockStatementBody(a) => a.address(),
+            Self::VariableDeclarationDecorators(a) => a.address(),
             Self::VariableDeclarationDeclarations(a) => a.address(),
             Self::VariableDeclaratorId(a) => a.address(),
             Self::VariableDeclaratorTypeAnnotation(a) => a.address(),
@@ -2610,7 +2755,9 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::JSXSpreadAttributeArgument(a) => a.address(),
             Self::JSXSpreadChildExpression(a) => a.address(),
             Self::TSThisParameterTypeAnnotation(a) => a.address(),
+            Self::TSEnumDeclarationDecorators(a) => a.address(),
             Self::TSEnumDeclarationId(a) => a.address(),
+            Self::TSEnumDeclarationUnderlyingType(a) => a.address(),
             Self::TSEnumDeclarationBody(a) => a.address(),
             Self::TSEnumBodyMembers(a) => a.address(),
             Self::TSEnumMemberId(a) => a.address(),
@@ -2642,11 +2789,13 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSTypeParameterConstraint(a) => a.address(),
             Self::TSTypeParameterDefault(a) => a.address(),
             Self::TSTypeParameterDeclarationParams(a) => a.address(),
+            Self::TSTypeAliasDeclarationDecorators(a) => a.address(),
             Self::TSTypeAliasDeclarationId(a) => a.address(),
             Self::TSTypeAliasDeclarationTypeParameters(a) => a.address(),
             Self::TSTypeAliasDeclarationTypeAnnotation(a) => a.address(),
             Self::TSClassImplementsExpression(a) => a.address(),
             Self::TSClassImplementsTypeArguments(a) => a.address(),
+            Self::TSInterfaceDeclarationDecorators(a) => a.address(),
             Self::TSInterfaceDeclarationId(a) => a.address(),
             Self::TSInterfaceDeclarationTypeParameters(a) => a.address(),
             Self::TSInterfaceDeclarationExtends(a) => a.address(),
@@ -2735,6 +2884,21 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::AnnotationDeclarationId(a) => a.address(),
             Self::AnnotationDeclarationBody(a) => a.address(),
             Self::AnnotationBodyBody(a) => a.address(),
+            Self::ETSPackageDeclarationName(a) => a.address(),
+            Self::ETSInstanceOfExpressionLeft(a) => a.address(),
+            Self::ETSInstanceOfExpressionRight(a) => a.address(),
+            Self::ETSNewClassInstanceExpressionTypeAnnotation(a) => a.address(),
+            Self::ETSNewClassInstanceExpressionArguments(a) => a.address(),
+            Self::ETSNewArrayInstanceExpressionTypeAnnotation(a) => a.address(),
+            Self::ETSNewArrayInstanceExpressionDimension(a) => a.address(),
+            Self::ETSNewArrayInstanceExpressionInitializer(a) => a.address(),
+            Self::ETSNewMultiDimArrayInstanceExpressionTypeAnnotation(a) => a.address(),
+            Self::ETSNewMultiDimArrayInstanceExpressionDimensions(a) => a.address(),
+            Self::ETSTrailingBlockExpressionCall(a) => a.address(),
+            Self::ETSTrailingBlockExpressionBlock(a) => a.address(),
+            Self::ETSOverloadDeclarationDecorators(a) => a.address(),
+            Self::ETSOverloadDeclarationKey(a) => a.address(),
+            Self::ETSOverloadDeclarationOverloads(a) => a.address(),
         }
     }
 }
@@ -5490,11 +5654,63 @@ impl<'a, 't> GetAddress for BlockStatementWithoutBody<'a, 't> {
 pub(crate) const OFFSET_VARIABLE_DECLARATION_NODE_ID: usize =
     offset_of!(VariableDeclaration, node_id);
 pub(crate) const OFFSET_VARIABLE_DECLARATION_SPAN: usize = offset_of!(VariableDeclaration, span);
+pub(crate) const OFFSET_VARIABLE_DECLARATION_DECORATORS: usize =
+    offset_of!(VariableDeclaration, decorators);
 pub(crate) const OFFSET_VARIABLE_DECLARATION_KIND: usize = offset_of!(VariableDeclaration, kind);
 pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARATIONS: usize =
     offset_of!(VariableDeclaration, declarations);
 pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARE: usize =
     offset_of!(VariableDeclaration, declare);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct VariableDeclarationWithoutDecorators<'a, 't>(
+    pub(crate) *const VariableDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> VariableDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t VariableDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_KIND)
+                as *const VariableDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn declarations(self) -> &'t ArenaVec<'a, VariableDeclarator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_DECLARATIONS)
+                as *const ArenaVec<'a, VariableDeclarator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_DECLARE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for VariableDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -5515,6 +5731,14 @@ impl<'a, 't> VariableDeclarationWithoutDeclarations<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
+        }
     }
 
     #[inline]
@@ -7740,6 +7964,8 @@ pub(crate) const OFFSET_FUNCTION_ID: usize = offset_of!(Function, id);
 pub(crate) const OFFSET_FUNCTION_GENERATOR: usize = offset_of!(Function, generator);
 pub(crate) const OFFSET_FUNCTION_ASYNC: usize = offset_of!(Function, r#async);
 pub(crate) const OFFSET_FUNCTION_DECLARE: usize = offset_of!(Function, declare);
+pub(crate) const OFFSET_FUNCTION_FINAL: usize = offset_of!(Function, r#final);
+pub(crate) const OFFSET_FUNCTION_NATIVE: usize = offset_of!(Function, native);
 pub(crate) const OFFSET_FUNCTION_TYPE_PARAMETERS: usize = offset_of!(Function, type_parameters);
 pub(crate) const OFFSET_FUNCTION_THIS_PARAM: usize = offset_of!(Function, this_param);
 pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
@@ -7793,6 +8019,16 @@ impl<'a, 't> FunctionWithoutDecorators<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NATIVE) as *const bool) }
     }
 
     #[inline]
@@ -7904,6 +8140,16 @@ impl<'a, 't> FunctionWithoutId<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NATIVE) as *const bool) }
     }
 
     #[inline]
@@ -8026,6 +8272,16 @@ impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NATIVE) as *const bool) }
+    }
+
+    #[inline]
     pub fn this_param(self) -> &'t Option<ArenaBox<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
@@ -8134,6 +8390,16 @@ impl<'a, 't> FunctionWithoutThisParam<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NATIVE) as *const bool) }
     }
 
     #[inline]
@@ -8248,6 +8514,16 @@ impl<'a, 't> FunctionWithoutParams<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NATIVE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(self) -> &'t Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -8359,6 +8635,16 @@ impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NATIVE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(self) -> &'t Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -8467,6 +8753,16 @@ impl<'a, 't> FunctionWithoutBody<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_NATIVE) as *const bool) }
     }
 
     #[inline]
@@ -9597,6 +9893,9 @@ pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
 pub(crate) const OFFSET_CLASS_BODY: usize = offset_of!(Class, body);
 pub(crate) const OFFSET_CLASS_ABSTRACT: usize = offset_of!(Class, r#abstract);
 pub(crate) const OFFSET_CLASS_DECLARE: usize = offset_of!(Class, declare);
+pub(crate) const OFFSET_CLASS_FINAL: usize = offset_of!(Class, r#final);
+pub(crate) const OFFSET_CLASS_NATIVE: usize = offset_of!(Class, native);
+pub(crate) const OFFSET_CLASS_STATIC: usize = offset_of!(Class, r#static);
 pub(crate) const OFFSET_CLASS_SCOPE_ID: usize = offset_of!(Class, scope_id);
 
 #[repr(transparent)]
@@ -9677,6 +9976,21 @@ impl<'a, 't> ClassWithoutDecorators<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_STATIC) as *const bool) }
     }
 
     #[inline]
@@ -9773,6 +10087,21 @@ impl<'a, 't> ClassWithoutId<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_STATIC) as *const bool) }
+    }
+
+    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
@@ -9865,6 +10194,21 @@ impl<'a, 't> ClassWithoutTypeParameters<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_STATIC) as *const bool) }
     }
 
     #[inline]
@@ -9964,6 +10308,21 @@ impl<'a, 't> ClassWithoutSuperClass<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_STATIC) as *const bool) }
+    }
+
+    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
@@ -10054,6 +10413,21 @@ impl<'a, 't> ClassWithoutSuperTypeArguments<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_STATIC) as *const bool) }
     }
 
     #[inline]
@@ -10152,6 +10526,21 @@ impl<'a, 't> ClassWithoutImplements<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_STATIC) as *const bool) }
+    }
+
+    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
@@ -10245,6 +10634,21 @@ impl<'a, 't> ClassWithoutBody<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_STATIC) as *const bool) }
+    }
+
+    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
@@ -10304,6 +10708,8 @@ pub(crate) const OFFSET_METHOD_DEFINITION_OVERRIDE: usize =
 pub(crate) const OFFSET_METHOD_DEFINITION_OPTIONAL: usize = offset_of!(MethodDefinition, optional);
 pub(crate) const OFFSET_METHOD_DEFINITION_ACCESSIBILITY: usize =
     offset_of!(MethodDefinition, accessibility);
+pub(crate) const OFFSET_METHOD_DEFINITION_FINAL: usize = offset_of!(MethodDefinition, r#final);
+pub(crate) const OFFSET_METHOD_DEFINITION_NATIVE: usize = offset_of!(MethodDefinition, native);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -10382,6 +10788,16 @@ impl<'a, 't> MethodDefinitionWithoutDecorators<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
                 as *const Option<TSAccessibility>)
         }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_NATIVE) as *const bool) }
     }
 }
 
@@ -10471,6 +10887,16 @@ impl<'a, 't> MethodDefinitionWithoutKey<'a, 't> {
                 as *const Option<TSAccessibility>)
         }
     }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_NATIVE) as *const bool) }
+    }
 }
 
 impl<'a, 't> GetAddress for MethodDefinitionWithoutKey<'a, 't> {
@@ -10557,6 +10983,16 @@ impl<'a, 't> MethodDefinitionWithoutValue<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_ACCESSIBILITY)
                 as *const Option<TSAccessibility>)
         }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_METHOD_DEFINITION_NATIVE) as *const bool) }
     }
 }
 
@@ -12139,6 +12575,10 @@ pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_EXPORT_KIND: usize =
     offset_of!(ExportNamedDeclaration, export_kind);
 pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE: usize =
     offset_of!(ExportNamedDeclaration, with_clause);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_ETS_SINGLE: usize =
+    offset_of!(ExportNamedDeclaration, ets_single);
+pub(crate) const OFFSET_EXPORT_NAMED_DECLARATION_ETS_DEFAULT: usize =
+    offset_of!(ExportNamedDeclaration, ets_default);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -12200,6 +12640,21 @@ impl<'a, 't> ExportNamedDeclarationWithoutDecorators<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
                 as *const Option<ArenaBox<'a, WithClause<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn ets_single(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_SINGLE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn ets_default(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_DEFAULT)
+                as *const bool)
         }
     }
 }
@@ -12273,6 +12728,21 @@ impl<'a, 't> ExportNamedDeclarationWithoutDeclaration<'a, 't> {
                 as *const Option<ArenaBox<'a, WithClause<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn ets_single(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_SINGLE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn ets_default(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_DEFAULT)
+                as *const bool)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutDeclaration<'a, 't> {
@@ -12342,6 +12812,21 @@ impl<'a, 't> ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
                 as *const Option<ArenaBox<'a, WithClause<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn ets_single(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_SINGLE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn ets_default(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_DEFAULT)
+                as *const bool)
         }
     }
 }
@@ -12415,6 +12900,21 @@ impl<'a, 't> ExportNamedDeclarationWithoutSource<'a, 't> {
                 as *const Option<ArenaBox<'a, WithClause<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn ets_single(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_SINGLE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn ets_default(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_DEFAULT)
+                as *const bool)
+        }
+    }
 }
 
 impl<'a, 't> GetAddress for ExportNamedDeclarationWithoutSource<'a, 't> {
@@ -12484,6 +12984,21 @@ impl<'a, 't> ExportNamedDeclarationWithoutWithClause<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_EXPORT_KIND)
                 as *const ImportOrExportKind)
+        }
+    }
+
+    #[inline]
+    pub fn ets_single(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_SINGLE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn ets_default(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_ETS_DEFAULT)
+                as *const bool)
         }
     }
 }
@@ -13704,10 +14219,75 @@ impl<'a, 't> GetAddress for TSThisParameterWithoutTypeAnnotation<'a, 't> {
 
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_NODE_ID: usize = offset_of!(TSEnumDeclaration, node_id);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_SPAN: usize = offset_of!(TSEnumDeclaration, span);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_DECORATORS: usize =
+    offset_of!(TSEnumDeclaration, decorators);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_ID: usize = offset_of!(TSEnumDeclaration, id);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_UNDERLYING_TYPE: usize =
+    offset_of!(TSEnumDeclaration, underlying_type);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_BODY: usize = offset_of!(TSEnumDeclaration, body);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_CONST: usize = offset_of!(TSEnumDeclaration, r#const);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_DECLARE: usize = offset_of!(TSEnumDeclaration, declare);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSEnumDeclarationWithoutDecorators<'a, 't>(
+    pub(crate) *const TSEnumDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSEnumDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn underlying_type(self) -> &'t Option<ArenaBox<'a, TSType<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_UNDERLYING_TYPE)
+                as *const Option<ArenaBox<'a, TSType<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t TSEnumBody<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_BODY) as *const TSEnumBody<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn r#const(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSEnumDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -13727,6 +14307,22 @@ impl<'a, 't> TSEnumDeclarationWithoutId<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
+        }
+    }
+
+    #[inline]
+    pub fn underlying_type(self) -> &'t Option<ArenaBox<'a, TSType<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_UNDERLYING_TYPE)
+                as *const Option<ArenaBox<'a, TSType<'a>>>)
+        }
     }
 
     #[inline]
@@ -13756,6 +14352,67 @@ impl<'a, 't> GetAddress for TSEnumDeclarationWithoutId<'a, 't> {
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
+pub struct TSEnumDeclarationWithoutUnderlyingType<'a, 't>(
+    pub(crate) *const TSEnumDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSEnumDeclarationWithoutUnderlyingType<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_NODE_ID) as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t TSEnumBody<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_BODY) as *const TSEnumBody<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn r#const(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
+    }
+}
+
+impl<'a, 't> GetAddress for TSEnumDeclarationWithoutUnderlyingType<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
 pub struct TSEnumDeclarationWithoutBody<'a, 't>(
     pub(crate) *const TSEnumDeclaration<'a>,
     pub(crate) PhantomData<&'t ()>,
@@ -13775,10 +14432,26 @@ impl<'a, 't> TSEnumDeclarationWithoutBody<'a, 't> {
     }
 
     #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
+        }
+    }
+
+    #[inline]
     pub fn id(self) -> &'t BindingIdentifier<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_ID)
                 as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn underlying_type(self) -> &'t Option<ArenaBox<'a, TSType<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_UNDERLYING_TYPE)
+                as *const Option<ArenaBox<'a, TSType<'a>>>)
         }
     }
 
@@ -15102,6 +15775,8 @@ pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_NODE_ID: usize =
     offset_of!(TSTypeAliasDeclaration, node_id);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN: usize =
     offset_of!(TSTypeAliasDeclaration, span);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_DECORATORS: usize =
+    offset_of!(TSTypeAliasDeclaration, decorators);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_ID: usize =
     offset_of!(TSTypeAliasDeclaration, id);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS: usize =
@@ -15112,6 +15787,76 @@ pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE: usize =
     offset_of!(TSTypeAliasDeclaration, declare);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID: usize =
     offset_of!(TSTypeAliasDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSTypeAliasDeclarationWithoutDecorators<'a, 't>(
+    pub(crate) *const TSTypeAliasDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSTypeAliasDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSTypeAliasDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -15133,6 +15878,14 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutId<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
         }
     }
 
@@ -15199,6 +15952,14 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
+        }
+    }
+
+    #[inline]
     pub fn id(self) -> &'t BindingIdentifier<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
@@ -15257,6 +16018,14 @@ impl<'a, 't> TSTypeAliasDeclarationWithoutTypeAnnotation<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
         }
     }
 
@@ -15382,6 +16151,8 @@ pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_NODE_ID: usize =
     offset_of!(TSInterfaceDeclaration, node_id);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SPAN: usize =
     offset_of!(TSInterfaceDeclaration, span);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_DECORATORS: usize =
+    offset_of!(TSInterfaceDeclaration, decorators);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_ID: usize = offset_of!(TSInterfaceDeclaration, id);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS: usize =
     offset_of!(TSInterfaceDeclaration, type_parameters);
@@ -15393,6 +16164,84 @@ pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_DECLARE: usize =
     offset_of!(TSInterfaceDeclaration, declare);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID: usize =
     offset_of!(TSInterfaceDeclaration, scope_id);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSInterfaceDeclarationWithoutDecorators<'a, 't>(
+    pub(crate) *const TSInterfaceDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSInterfaceDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(self) -> &'t Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn extends(self) -> &'t ArenaVec<'a, TSInterfaceHeritage<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const ArenaVec<'a, TSInterfaceHeritage<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(self) -> &'t ArenaBox<'a, TSInterfaceBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const ArenaBox<'a, TSInterfaceBody<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSInterfaceDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -15414,6 +16263,14 @@ impl<'a, 't> TSInterfaceDeclarationWithoutId<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
         }
     }
 
@@ -15488,6 +16345,14 @@ impl<'a, 't> TSInterfaceDeclarationWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
+        }
+    }
+
+    #[inline]
     pub fn id(self) -> &'t BindingIdentifier<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
@@ -15558,6 +16423,14 @@ impl<'a, 't> TSInterfaceDeclarationWithoutExtends<'a, 't> {
     }
 
     #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
+        }
+    }
+
+    #[inline]
     pub fn id(self) -> &'t BindingIdentifier<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_ID)
@@ -15624,6 +16497,14 @@ impl<'a, 't> TSInterfaceDeclarationWithoutBody<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECORATORS)
+                as *const Option<ArenaBox<'a, ArenaVec<'a, Decorator<'a>>>>)
         }
     }
 
@@ -19301,6 +20182,9 @@ pub(crate) const OFFSET_STRUCT_STATEMENT_IMPLEMENTS: usize =
 pub(crate) const OFFSET_STRUCT_STATEMENT_BODY: usize = offset_of!(StructStatement, body);
 pub(crate) const OFFSET_STRUCT_STATEMENT_ABSTRACT: usize = offset_of!(StructStatement, r#abstract);
 pub(crate) const OFFSET_STRUCT_STATEMENT_DECLARE: usize = offset_of!(StructStatement, declare);
+pub(crate) const OFFSET_STRUCT_STATEMENT_FINAL: usize = offset_of!(StructStatement, r#final);
+pub(crate) const OFFSET_STRUCT_STATEMENT_NATIVE: usize = offset_of!(StructStatement, native);
+pub(crate) const OFFSET_STRUCT_STATEMENT_STATIC: usize = offset_of!(StructStatement, r#static);
 pub(crate) const OFFSET_STRUCT_STATEMENT_SCOPE_ID: usize = offset_of!(StructStatement, scope_id);
 
 #[repr(transparent)]
@@ -19381,6 +20265,21 @@ impl<'a, 't> StructStatementWithoutDecorators<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_STATIC) as *const bool) }
     }
 
     #[inline]
@@ -19480,6 +20379,21 @@ impl<'a, 't> StructStatementWithoutId<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_STATIC) as *const bool) }
+    }
+
+    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_SCOPE_ID)
@@ -19573,6 +20487,21 @@ impl<'a, 't> StructStatementWithoutTypeParameters<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_STATIC) as *const bool) }
     }
 
     #[inline]
@@ -19672,6 +20601,21 @@ impl<'a, 't> StructStatementWithoutSuperClass<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_STATIC) as *const bool) }
+    }
+
+    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_SCOPE_ID)
@@ -19763,6 +20707,21 @@ impl<'a, 't> StructStatementWithoutSuperTypeArguments<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_STATIC) as *const bool) }
     }
 
     #[inline]
@@ -19862,6 +20821,21 @@ impl<'a, 't> StructStatementWithoutImplements<'a, 't> {
     }
 
     #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_STATIC) as *const bool) }
+    }
+
+    #[inline]
     pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_SCOPE_ID)
@@ -19955,6 +20929,21 @@ impl<'a, 't> StructStatementWithoutBody<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_FINAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_NATIVE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_STRUCT_STATEMENT_STATIC) as *const bool) }
     }
 
     #[inline]
@@ -20595,6 +21584,942 @@ impl<'a, 't> AnnotationBodyWithoutBody<'a, 't> {
 }
 
 impl<'a, 't> GetAddress for AnnotationBodyWithoutBody<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ETS_PACKAGE_DECLARATION_NODE_ID: usize =
+    offset_of!(ETSPackageDeclaration, node_id);
+pub(crate) const OFFSET_ETS_PACKAGE_DECLARATION_SPAN: usize =
+    offset_of!(ETSPackageDeclaration, span);
+pub(crate) const OFFSET_ETS_PACKAGE_DECLARATION_NAME: usize =
+    offset_of!(ETSPackageDeclaration, name);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSPackageDeclarationWithoutName<'a, 't>(
+    pub(crate) *const ETSPackageDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSPackageDeclarationWithoutName<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_PACKAGE_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ETS_PACKAGE_DECLARATION_SPAN) as *const Span) }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSPackageDeclarationWithoutName<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ETS_INSTANCE_OF_EXPRESSION_NODE_ID: usize =
+    offset_of!(ETSInstanceOfExpression, node_id);
+pub(crate) const OFFSET_ETS_INSTANCE_OF_EXPRESSION_SPAN: usize =
+    offset_of!(ETSInstanceOfExpression, span);
+pub(crate) const OFFSET_ETS_INSTANCE_OF_EXPRESSION_LEFT: usize =
+    offset_of!(ETSInstanceOfExpression, left);
+pub(crate) const OFFSET_ETS_INSTANCE_OF_EXPRESSION_RIGHT: usize =
+    offset_of!(ETSInstanceOfExpression, right);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSInstanceOfExpressionWithoutLeft<'a, 't>(
+    pub(crate) *const ETSInstanceOfExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSInstanceOfExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_INSTANCE_OF_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_INSTANCE_OF_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn right(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_INSTANCE_OF_EXPRESSION_RIGHT)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSInstanceOfExpressionWithoutLeft<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSInstanceOfExpressionWithoutRight<'a, 't>(
+    pub(crate) *const ETSInstanceOfExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSInstanceOfExpressionWithoutRight<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_INSTANCE_OF_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_INSTANCE_OF_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn left(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_INSTANCE_OF_EXPRESSION_LEFT)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSInstanceOfExpressionWithoutRight<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_NODE_ID: usize =
+    offset_of!(ETSNewClassInstanceExpression, node_id);
+pub(crate) const OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_SPAN: usize =
+    offset_of!(ETSNewClassInstanceExpression, span);
+pub(crate) const OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_TYPE_ANNOTATION: usize =
+    offset_of!(ETSNewClassInstanceExpression, type_annotation);
+pub(crate) const OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_ARGUMENTS: usize =
+    offset_of!(ETSNewClassInstanceExpression, arguments);
+pub(crate) const OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_HAS_ARGUMENTS: usize =
+    offset_of!(ETSNewClassInstanceExpression, has_arguments);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSNewClassInstanceExpressionWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const ETSNewClassInstanceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSNewClassInstanceExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(self) -> &'t ArenaVec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_ARGUMENTS)
+                as *const ArenaVec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn has_arguments(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_HAS_ARGUMENTS)
+                as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSNewClassInstanceExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSNewClassInstanceExpressionWithoutArguments<'a, 't>(
+    pub(crate) *const ETSNewClassInstanceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSNewClassInstanceExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn has_arguments(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_CLASS_INSTANCE_EXPRESSION_HAS_ARGUMENTS)
+                as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSNewClassInstanceExpressionWithoutArguments<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_NODE_ID: usize =
+    offset_of!(ETSNewArrayInstanceExpression, node_id);
+pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_SPAN: usize =
+    offset_of!(ETSNewArrayInstanceExpression, span);
+pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION: usize =
+    offset_of!(ETSNewArrayInstanceExpression, type_annotation);
+pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_DIMENSION: usize =
+    offset_of!(ETSNewArrayInstanceExpression, dimension);
+pub(crate) const OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER: usize =
+    offset_of!(ETSNewArrayInstanceExpression, initializer);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSNewArrayInstanceExpressionWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const ETSNewArrayInstanceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSNewArrayInstanceExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn dimension(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_DIMENSION)
+                as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER)
+                as *const Option<Expression<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSNewArrayInstanceExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSNewArrayInstanceExpressionWithoutDimension<'a, 't>(
+    pub(crate) *const ETSNewArrayInstanceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSNewArrayInstanceExpressionWithoutDimension<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn initializer(self) -> &'t Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_INITIALIZER)
+                as *const Option<Expression<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSNewArrayInstanceExpressionWithoutDimension<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't>(
+    pub(crate) *const ETSNewArrayInstanceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn dimension(self) -> &'t Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_ARRAY_INSTANCE_EXPRESSION_DIMENSION)
+                as *const Expression<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSNewArrayInstanceExpressionWithoutInitializer<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_NODE_ID: usize =
+    offset_of!(ETSNewMultiDimArrayInstanceExpression, node_id);
+pub(crate) const OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_SPAN: usize =
+    offset_of!(ETSNewMultiDimArrayInstanceExpression, span);
+pub(crate) const OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION: usize =
+    offset_of!(ETSNewMultiDimArrayInstanceExpression, type_annotation);
+pub(crate) const OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_DIMENSIONS: usize =
+    offset_of!(ETSNewMultiDimArrayInstanceExpression, dimensions);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSNewMultiDimArrayInstanceExpressionWithoutTypeAnnotation<'a, 't>(
+    pub(crate) *const ETSNewMultiDimArrayInstanceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSNewMultiDimArrayInstanceExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn dimensions(self) -> &'t ArenaVec<'a, Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8)
+                .add(OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_DIMENSIONS)
+                as *const ArenaVec<'a, Expression<'a>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSNewMultiDimArrayInstanceExpressionWithoutTypeAnnotation<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSNewMultiDimArrayInstanceExpressionWithoutDimensions<'a, 't>(
+    pub(crate) *const ETSNewMultiDimArrayInstanceExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSNewMultiDimArrayInstanceExpressionWithoutDimensions<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_SPAN)
+                as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8)
+                .add(OFFSET_ETS_NEW_MULTI_DIM_ARRAY_INSTANCE_EXPRESSION_TYPE_ANNOTATION)
+                as *const TSType<'a>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSNewMultiDimArrayInstanceExpressionWithoutDimensions<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_NODE_ID: usize =
+    offset_of!(ETSTrailingBlockExpression, node_id);
+pub(crate) const OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_SPAN: usize =
+    offset_of!(ETSTrailingBlockExpression, span);
+pub(crate) const OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_CALL: usize =
+    offset_of!(ETSTrailingBlockExpression, call);
+pub(crate) const OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_BLOCK: usize =
+    offset_of!(ETSTrailingBlockExpression, block);
+pub(crate) const OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_IS_TRAILING_CALL: usize =
+    offset_of!(ETSTrailingBlockExpression, is_trailing_call);
+pub(crate) const OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_IS_BLOCK_ON_NEW_LINE: usize =
+    offset_of!(ETSTrailingBlockExpression, is_block_on_new_line);
+pub(crate) const OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_HAS_TRAILING_COMMA: usize =
+    offset_of!(ETSTrailingBlockExpression, has_trailing_comma);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSTrailingBlockExpressionWithoutCall<'a, 't>(
+    pub(crate) *const ETSTrailingBlockExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSTrailingBlockExpressionWithoutCall<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn block(self) -> &'t ArenaBox<'a, BlockStatement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_BLOCK)
+                as *const ArenaBox<'a, BlockStatement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn is_trailing_call(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_IS_TRAILING_CALL)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn is_block_on_new_line(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_IS_BLOCK_ON_NEW_LINE)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn has_trailing_comma(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_HAS_TRAILING_COMMA)
+                as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSTrailingBlockExpressionWithoutCall<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSTrailingBlockExpressionWithoutBlock<'a, 't>(
+    pub(crate) *const ETSTrailingBlockExpression<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSTrailingBlockExpressionWithoutBlock<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn call(self) -> &'t ArenaBox<'a, CallExpression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_CALL)
+                as *const ArenaBox<'a, CallExpression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn is_trailing_call(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_IS_TRAILING_CALL)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn is_block_on_new_line(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_IS_BLOCK_ON_NEW_LINE)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn has_trailing_comma(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_TRAILING_BLOCK_EXPRESSION_HAS_TRAILING_COMMA)
+                as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSTrailingBlockExpressionWithoutBlock<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_NODE_ID: usize =
+    offset_of!(ETSOverloadDeclaration, node_id);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_SPAN: usize =
+    offset_of!(ETSOverloadDeclaration, span);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_DECORATORS: usize =
+    offset_of!(ETSOverloadDeclaration, decorators);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_KEY: usize =
+    offset_of!(ETSOverloadDeclaration, key);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_OVERLOADS: usize =
+    offset_of!(ETSOverloadDeclaration, overloads);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_KIND: usize =
+    offset_of!(ETSOverloadDeclaration, kind);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_ACCESSIBILITY: usize =
+    offset_of!(ETSOverloadDeclaration, accessibility);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_STATIC: usize =
+    offset_of!(ETSOverloadDeclaration, r#static);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_ABSTRACT: usize =
+    offset_of!(ETSOverloadDeclaration, r#abstract);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_FINAL: usize =
+    offset_of!(ETSOverloadDeclaration, r#final);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_NATIVE: usize =
+    offset_of!(ETSOverloadDeclaration, native);
+pub(crate) const OFFSET_ETS_OVERLOAD_DECLARATION_DECLARE: usize =
+    offset_of!(ETSOverloadDeclaration, declare);
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSOverloadDeclarationWithoutDecorators<'a, 't>(
+    pub(crate) *const ETSOverloadDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSOverloadDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_KEY)
+                as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn overloads(self) -> &'t ArenaVec<'a, Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_OVERLOADS)
+                as *const ArenaVec<'a, Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t ETSOverloadDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_KIND)
+                as *const ETSOverloadDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_STATIC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_ABSTRACT) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_FINAL) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_NATIVE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSOverloadDeclarationWithoutDecorators<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSOverloadDeclarationWithoutKey<'a, 't>(
+    pub(crate) *const ETSOverloadDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSOverloadDeclarationWithoutKey<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t ArenaVec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_DECORATORS)
+                as *const ArenaVec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn overloads(self) -> &'t ArenaVec<'a, Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_OVERLOADS)
+                as *const ArenaVec<'a, Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t ETSOverloadDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_KIND)
+                as *const ETSOverloadDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_STATIC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_ABSTRACT) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_FINAL) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_NATIVE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSOverloadDeclarationWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct ETSOverloadDeclarationWithoutOverloads<'a, 't>(
+    pub(crate) *const ETSOverloadDeclaration<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> ETSOverloadDeclarationWithoutOverloads<'a, 't> {
+    #[inline]
+    pub fn node_id(self) -> &'t Cell<NodeId> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_NODE_ID)
+                as *const Cell<NodeId>)
+        }
+    }
+
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn decorators(self) -> &'t ArenaVec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_DECORATORS)
+                as *const ArenaVec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_KEY)
+                as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn kind(self) -> &'t ETSOverloadDeclarationKind {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_KIND)
+                as *const ETSOverloadDeclarationKind)
+        }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+
+    #[inline]
+    pub fn r#static(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_STATIC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#abstract(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_ABSTRACT) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#final(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_FINAL) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn native(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_NATIVE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn declare(self) -> &'t bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ETS_OVERLOAD_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for ETSOverloadDeclarationWithoutOverloads<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }

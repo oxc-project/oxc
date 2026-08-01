@@ -605,6 +605,12 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
         self.convert_offset(&mut it.span.end);
     }
 
+    fn visit_char_literal(&mut self, it: &mut CharLiteral<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_char_literal(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
     fn visit_big_int_literal(&mut self, it: &mut BigIntLiteral<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_big_int_literal(self, it);
@@ -1173,6 +1179,57 @@ impl<'a> VisitMut<'a> for Utf8ToUtf16Converter<'_> {
     fn visit_annotation_body(&mut self, it: &mut AnnotationBody<'a>) {
         self.convert_offset(&mut it.span.start);
         walk_mut::walk_annotation_body(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ets_package_declaration(&mut self, it: &mut ETSPackageDeclaration<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ets_package_declaration(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ets_instance_of_expression(&mut self, it: &mut ETSInstanceOfExpression<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ets_instance_of_expression(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ets_new_class_instance_expression(
+        &mut self,
+        it: &mut ETSNewClassInstanceExpression<'a>,
+    ) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ets_new_class_instance_expression(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ets_new_array_instance_expression(
+        &mut self,
+        it: &mut ETSNewArrayInstanceExpression<'a>,
+    ) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ets_new_array_instance_expression(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ets_new_multi_dim_array_instance_expression(
+        &mut self,
+        it: &mut ETSNewMultiDimArrayInstanceExpression<'a>,
+    ) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ets_new_multi_dim_array_instance_expression(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ets_trailing_block_expression(&mut self, it: &mut ETSTrailingBlockExpression<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ets_trailing_block_expression(self, it);
+        self.convert_offset(&mut it.span.end);
+    }
+
+    fn visit_ets_overload_declaration(&mut self, it: &mut ETSOverloadDeclaration<'a>) {
+        self.convert_offset(&mut it.span.start);
+        walk_mut::walk_ets_overload_declaration(self, it);
         self.convert_offset(&mut it.span.end);
     }
 }

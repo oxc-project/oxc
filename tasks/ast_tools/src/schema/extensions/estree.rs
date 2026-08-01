@@ -75,6 +75,12 @@ pub struct ESTreeStructField {
     /// Skip this struct field.
     /// Field will also be skipped if the type of the field is marked `#[estree(skip)]`.
     pub skip: bool,
+    /// Omit this field when it contains its type's default empty value.
+    ///
+    /// Supported field types are `bool` (`false`), `Option<T>` (`None`), and
+    /// `Vec<T>` (empty). This is used for syntax-specific extensions which must
+    /// not change the serialized shape of pre-existing AST nodes when inactive.
+    pub omit_if_default: bool,
     /// Flatten field.
     pub flatten: bool,
     /// No not flatten field. Overrides `#[estree(flatten)]` on the type of the field.

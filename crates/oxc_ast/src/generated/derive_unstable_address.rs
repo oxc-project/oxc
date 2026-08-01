@@ -4,6 +4,7 @@
 use oxc_allocator::UnstableAddress;
 
 use crate::ast::arkui::*;
+use crate::ast::ets::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -211,6 +212,8 @@ impl UnstableAddress for NumericLiteral<'_> {}
 
 impl UnstableAddress for StringLiteral<'_> {}
 
+impl UnstableAddress for CharLiteral<'_> {}
+
 impl UnstableAddress for BigIntLiteral<'_> {}
 
 impl UnstableAddress for RegExpLiteral<'_> {}
@@ -400,3 +403,17 @@ impl UnstableAddress for ArkUIComponentExpression<'_> {}
 impl UnstableAddress for AnnotationDeclaration<'_> {}
 
 impl UnstableAddress for AnnotationBody<'_> {}
+
+impl UnstableAddress for ETSPackageDeclaration<'_> {}
+
+impl UnstableAddress for ETSInstanceOfExpression<'_> {}
+
+impl UnstableAddress for ETSNewClassInstanceExpression<'_> {}
+
+impl UnstableAddress for ETSNewArrayInstanceExpression<'_> {}
+
+impl UnstableAddress for ETSNewMultiDimArrayInstanceExpression<'_> {}
+
+impl UnstableAddress for ETSTrailingBlockExpression<'_> {}
+
+impl UnstableAddress for ETSOverloadDeclaration<'_> {}

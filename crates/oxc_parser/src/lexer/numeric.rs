@@ -206,6 +206,33 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     fn check_after_numeric_literal(&mut self, kind: Kind) -> Kind {
+        // Static ETS accepts an `f` suffix on numeric literals. The suffix is
+        // part of the token span so the parser/code generator can preserve it.
+        if self.source_type.is_ets_static() && self.peek_byte() == Some(b'f') {
+            self.consume_char();
+            let literal_span = Span::new(self.token.start(), self.offset());
+            let invalid_float = {
+                let source = &self.source.whole()
+                    [literal_span.start as usize..(literal_span.end - 1) as usize];
+                if source.contains('_') {
+                    source.replace('_', "").parse::<f32>().map_or(true, |value| !value.is_finite())
+                } else {
+                    source.parse::<f32>().map_or(true, |value| !value.is_finite())
+                }
+            };
+            if invalid_float {
+                self.error(diagnostics::invalid_number(
+                    &self.source.whole()[literal_span.start as usize..literal_span.end as usize],
+                    literal_span,
+                ));
+            }
+            match self.peek_byte() {
+                Some(b) if b.is_ascii() && is_identifier_part_ascii(b as char) => {}
+                Some(_) if self.peek_char().is_some_and(is_identifier_start) => {}
+                _ => return Kind::Float,
+            }
+        }
+
         // The SourceCharacter immediately following a NumericLiteral must not be
         // an IdentifierStart or DecimalDigit.
         // Use a fast path for common case where next char is ASCII.

@@ -260,6 +260,14 @@ impl<'a> AstKind<'a> {
             Expression::BigIntLiteral(e) => Self::BigIntLiteral(e),
             Expression::RegExpLiteral(e) => Self::RegExpLiteral(e),
             Expression::StringLiteral(e) => Self::StringLiteral(e),
+            Expression::CharLiteral(e) => Self::CharLiteral(e),
+            Expression::ETSTrailingBlockExpression(e) => Self::ETSTrailingBlockExpression(e),
+            Expression::ETSInstanceOfExpression(e) => Self::ETSInstanceOfExpression(e),
+            Expression::ETSNewClassInstanceExpression(e) => Self::ETSNewClassInstanceExpression(e),
+            Expression::ETSNewArrayInstanceExpression(e) => Self::ETSNewArrayInstanceExpression(e),
+            Expression::ETSNewMultiDimArrayInstanceExpression(e) => {
+                Self::ETSNewMultiDimArrayInstanceExpression(e)
+            }
             Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
             Expression::Identifier(e) => Self::IdentifierReference(e),
             Expression::ImportMeta(e) => Self::ImportMeta(e),
@@ -421,6 +429,8 @@ impl AstKind<'_> {
 
             Self::NumericLiteral(n) => format!("NumericLiteral({})", n.value).into(),
             Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
+            Self::CharLiteral(c) => format!("CharLiteral({})", c.value).into(),
+            Self::ETSTrailingBlockExpression(_) => "ETSTrailingBlockExpression".into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
             Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
@@ -629,6 +639,14 @@ impl AstKind<'_> {
             Self::ArkUIComponentExpression(_) => "ArkUIComponentExpression".into(),
             Self::AnnotationDeclaration(_) => "AnnotationDeclaration".into(),
             Self::AnnotationBody(_) => "AnnotationBody".into(),
+            Self::ETSOverloadDeclaration(_) => "ETSOverloadDeclaration".into(),
+            Self::ETSInstanceOfExpression(_) => "ETSInstanceOfExpression".into(),
+            Self::ETSPackageDeclaration(_) => "ETSPackageDeclaration".into(),
+            Self::ETSNewClassInstanceExpression(_) => "ETSNewClassInstanceExpression".into(),
+            Self::ETSNewArrayInstanceExpression(_) => "ETSNewArrayInstanceExpression".into(),
+            Self::ETSNewMultiDimArrayInstanceExpression(_) => {
+                "ETSNewMultiDimArrayInstanceExpression".into()
+            }
         }
     }
 }

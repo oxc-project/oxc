@@ -199,7 +199,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             accessor_inferred.push(key);
                             annotation
                         }
-                        PropertyKind::Init => {
+                        PropertyKind::Init | PropertyKind::EtsEquals => {
                             let type_annotation = if is_const {
                                 self.transform_const_expression_to_ts_type(&object.value)
                             } else {

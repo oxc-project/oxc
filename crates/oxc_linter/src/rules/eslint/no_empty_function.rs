@@ -506,6 +506,7 @@ impl NoEmptyFunction {
                     self.is_allowed_function_expression(function)
                 }
             }
+            PropertyKind::EtsEquals => false,
         }
     }
 

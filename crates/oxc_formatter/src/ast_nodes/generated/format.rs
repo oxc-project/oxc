@@ -472,6 +472,66 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
+            Expression::CharLiteral(inner) => {
+                allocator
+                    .alloc(AstNode::<CharLiteral> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::ETSTrailingBlockExpression(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSTrailingBlockExpression> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::ETSInstanceOfExpression(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSInstanceOfExpression> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::ETSNewClassInstanceExpression(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSNewClassInstanceExpression> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::ETSNewArrayInstanceExpression(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSNewArrayInstanceExpression> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::ETSNewMultiDimArrayInstanceExpression(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSNewMultiDimArrayInstanceExpression> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
             it @ match_member_expression!(Expression) => {
                 let inner = it.to_member_expression();
                 allocator
@@ -1793,6 +1853,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Statement<'a>> {
                     })
                     .fmt(f);
             }
+            Statement::ETSPackageDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSPackageDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
             it @ match_declaration!(Statement) => {
                 let inner = it.to_declaration();
                 allocator
@@ -1967,6 +2037,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Declaration<'a>> {
             Declaration::AnnotationDeclaration(inner) => {
                 allocator
                     .alloc(AstNode::<AnnotationDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Declaration::ETSOverloadDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSOverloadDeclaration> {
                         inner,
                         parent,
                         allocator,
@@ -2686,6 +2766,26 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassElement<'a>> {
                     })
                     .fmt(f);
             }
+            ClassElement::ETSOverloadDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSOverloadDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            ClassElement::TSCallSignatureDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<TSCallSignatureDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
         }
     }
 }
@@ -3250,6 +3350,26 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NumericLiteral<'a>> {
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StringLiteral<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CharLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
@@ -5012,6 +5132,36 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSignature<'a>> {
                     })
                     .fmt(f);
             }
+            TSSignature::MethodDefinition(inner) => {
+                allocator
+                    .alloc(AstNode::<MethodDefinition> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            TSSignature::PropertyDefinition(inner) => {
+                allocator
+                    .alloc(AstNode::<PropertyDefinition> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            TSSignature::ETSOverloadDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSOverloadDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
         }
     }
 }
@@ -5768,6 +5918,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StructElement<'a>> {
                     })
                     .fmt(f);
             }
+            StructElement::ETSOverloadDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ETSOverloadDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
         }
     }
 }
@@ -5875,5 +6035,133 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AnnotationElement<'a>> 
                     .fmt(f);
             }
         }
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ETSPackageDeclaration<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ETSInstanceOfExpression<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ETSNewClassInstanceExpression<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ETSNewArrayInstanceExpression<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'a, ETSNewMultiDimArrayInstanceExpression<'a>>
+{
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ETSTrailingBlockExpression<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ETSOverloadDeclaration<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
     }
 }

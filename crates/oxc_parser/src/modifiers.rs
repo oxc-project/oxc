@@ -2,7 +2,7 @@ use std::{
     fmt::{self, Debug, Display},
     iter,
     mem::{self, MaybeUninit},
-    num::NonZeroU16,
+    num::NonZeroU32,
 };
 
 use oxc_ast::ast::TSAccessibility;
@@ -199,6 +199,8 @@ fieldless_enum! {
         Default = 12,
         Accessor = 13,
         Export = 14,
+        Final = 15,
+        Native = 16,
     }
 }
 
@@ -251,6 +253,8 @@ impl ModifierKind {
             Self::Override => "override",
             Self::Default => "default",
             Self::Export => "export",
+            Self::Final => "final",
+            Self::Native => "native",
         }
     }
 
@@ -281,6 +285,8 @@ impl TryFrom<Kind> for ModifierKind {
             Kind::Accessor => Ok(Self::Accessor),
             Kind::Default => Ok(Self::Default),
             Kind::Export => Ok(Self::Export),
+            Kind::Final => Ok(Self::Final),
+            Kind::Native => Ok(Self::Native),
             _ => Err(()),
         }
     }
@@ -292,14 +298,14 @@ impl Display for ModifierKind {
     }
 }
 
-// Wrapped in a module to avoid exposing `u16` contained in the wrapper type.
+// Wrapped in a module to avoid exposing the integer contained in the wrapper type.
 // Its value must not be altered from outside, to satisfy safety invariants.
 mod modifier_kinds {
     use super::*;
 
     /// A set of modifier kinds, stored as a bitfield.
     #[derive(Clone, Copy, PartialEq, Eq)]
-    pub struct ModifierKinds(u16);
+    pub struct ModifierKinds(u32);
 
     impl ModifierKinds {
         /// Create a set from an array of modifier kinds.
@@ -381,7 +387,7 @@ mod modifier_kinds {
             let mut remaining = self.0;
             iter::from_fn(move || {
                 // Exit if there are no more bits set
-                let bits = NonZeroU16::new(remaining)?;
+                let bits = NonZeroU32::new(remaining)?;
                 // Get the index of the next set bit
                 let bit = bits.trailing_zeros();
                 // Unset the bit
@@ -517,7 +523,7 @@ impl<C: Config> ParserImpl<'_, C> {
             // Rest modifiers cannot cross line
             _ => {
                 (Self::can_follow_modifier(next_kind)
-                    || self.source_type.is_arkui() && next_kind == Kind::At)
+                    || self.source_type.is_ets() && next_kind == Kind::At)
                     && !next.is_on_new_line()
             }
         };
@@ -581,7 +587,8 @@ impl<C: Config> ParserImpl<'_, C> {
             // from the peek inside `next_token_can_follow_modifier` re-lexed this token twice.
             let next_kind = self.lexer.peek_token().kind();
             if (stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
-                || seen_modifier_kinds.contains(ModifierKind::Static)
+                || (!self.source_type.is_ets_static()
+                    && seen_modifier_kinds.contains(ModifierKind::Static))
                 || !Self::can_follow_modifier(next_kind)
             {
                 return None;
@@ -652,7 +659,7 @@ impl<C: Config> ParserImpl<'_, C> {
 
 /// Static lookup table for which modifiers are illegal preceding another modifier.
 /// Table is indexed by [`ModifierKind`] discriminant of the later modifier.
-/// This is all calculated at compile time, and produces a 30-byte lookup table.
+/// This is all calculated at compile time.
 static ILLEGAL_PRECEDING_MODIFIERS: [ModifierKinds; ModifierKind::VARIANTS.len()] = {
     let mut illegal = [ModifierKinds::none(); ModifierKind::VARIANTS.len()];
 
@@ -724,6 +731,30 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
 impl<C: Config> ParserImpl<'_, C> {
     #[inline]
     fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+        // ETS static separates parsing from modifier legality checks. The
+        // `ets2panda` parser records modifiers first and its AST checker emits
+        // ordering/combination diagnostics later. Do not leak TypeScript's
+        // parser-time modifier rules into this mode.
+        if self.source_type.is_ets_static() {
+            const ACCESSIBILITY_KINDS: ModifierKinds = ModifierKinds::new([
+                ModifierKind::Public,
+                ModifierKind::Private,
+                ModifierKind::Protected,
+            ]);
+            let modifier_kinds = ModifierKinds::new([modifier.kind]);
+            if existing_kinds.intersects(modifier_kinds) {
+                self.error(diagnostics::modifier_already_seen(modifier));
+            } else if modifier_kinds.intersects(ACCESSIBILITY_KINDS) {
+                if existing_kinds.intersects(ACCESSIBILITY_KINDS) {
+                    self.error(diagnostics::accessibility_modifier_already_seen(modifier));
+                } else if let Some(previous) = existing_kinds.iter().next() {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier, previous,
+                    ));
+                }
+            }
+            return;
+        }
         // Do a quick check that this modifier is not illegal in this position.
         //
         // This is just 2 instructions:
@@ -813,6 +844,9 @@ impl<C: Config> ParserImpl<'_, C> {
     ) where
         F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
     {
+        if self.source_type.is_ets_static() {
+            return;
+        }
         if modifiers.kinds().has_any_not_in(allowed) {
             // Invalid modifiers are rare, so handle this case in `#[cold]` function.
             // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.

@@ -14,7 +14,7 @@ use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
 use oxc_syntax::{node::NodeId, scope::ScopeId};
 use std::cell::Cell;
 
-use super::{js::*, ts::*};
+use super::{ets::*, js::*, ts::*};
 
 /// Struct Declaration Statement
 ///
@@ -72,6 +72,21 @@ pub struct StructStatement<'a> {
     /// Whether this struct is marked with `declare`.
     #[ts]
     pub declare: bool,
+    /// Static ETS `final` modifier.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub r#final: bool,
+    /// Static ETS `native` modifier. Preserved for diagnostics/round-tripping.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub native: bool,
+    /// Static ETS `static` modifier on nested structs.
+    #[builder(default, skip)]
+    #[estree(omit_if_default)]
+    #[ts]
+    pub r#static: bool,
     /// Id of the scope created by the [`StructStatement`], including type parameters and
     /// statements within the [`StructBody`].
     pub scope_id: Cell<Option<ScopeId>>,
@@ -124,6 +139,8 @@ pub enum StructElement<'a> {
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 3,
     /// Auto-accessor property.
     AccessorProperty(Box<'a, AccessorProperty<'a>>) = 4,
+    /// Static ETS managed overload declaration.
+    ETSOverloadDeclaration(Box<'a, ETSOverloadDeclaration<'a>>) = 5,
 }
 
 /// ArkUI Component Expression
