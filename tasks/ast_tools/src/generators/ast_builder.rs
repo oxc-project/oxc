@@ -76,13 +76,13 @@ impl Generator for AstBuilderGenerator {
         let output = quote! {
             //! AST node builder methods.
             //!
-            //! Each method is generic over `B: GetAstBuilder`, so it can be called with a builder
+            //! Each method is generic over [`GetAstBuilder`], so it can be called with a builder
             //! directly, or with a type which holds one (e.g. parser or traverse context).
             //!
             //! Before forwarding the builder to another build method, methods first call `builder.builder()`
             //! to obtain the concrete [`AstBuild`]er. This way, everything below the outermost call is
             //! monomorphized over the [`AstBuild`] type (of which there are few), rather than over every
-            //! `B: GetAstBuilder` the method is called with (of which there may be many).
+            //! [`GetAstBuilder`] type the method is called with (of which there may be many).
 
             //!@@line_break
             #![expect(clippy::default_trait_access)]
@@ -172,9 +172,8 @@ fn generate_builder_methods_for_struct(
     node_id_cell_type_id: TypeId,
     schema: &Schema,
 ) -> TokenStream {
-    let has_lifetime = struct_def.has_lifetime(schema);
-    let (mut params, generic_params, has_default_fields) =
-        get_struct_params(struct_def, node_id_cell_type_id, has_lifetime, schema);
+    let (mut params, has_default_fields) =
+        get_struct_params(struct_def, node_id_cell_type_id, schema);
     let (fn_params, fields) = get_struct_fn_params_and_fields(&params, true, schema);
 
     let (fn_name_postfix, doc_postfix) = if has_default_fields {
@@ -197,7 +196,6 @@ fn generate_builder_methods_for_struct(
         &params,
         &fn_params,
         &fields,
-        &generic_params,
         &fn_name_postfix,
         &doc_postfix,
     );
@@ -209,15 +207,8 @@ fn generate_builder_methods_for_struct(
     // Generate builder methods excluding default fields
     let (fn_params, fields) = get_struct_fn_params_and_fields(&params, false, schema);
     params.retain(|param| !param.is_default);
-    let mut output2 = generate_builder_methods_for_struct_impl(
-        struct_def,
-        &params,
-        &fn_params,
-        &fields,
-        &generic_params,
-        "",
-        "",
-    );
+    let mut output2 =
+        generate_builder_methods_for_struct_impl(struct_def, &params, &fn_params, &fields, "", "");
 
     output2.extend(output);
 
@@ -232,7 +223,6 @@ fn generate_builder_methods_for_struct_impl(
     params: &[Param],
     fn_params: &TokenStream,
     fields: &TokenStream,
-    generic_params: &TokenStream,
     fn_name_postfix: &str,
     doc_postfix: &str,
 ) -> TokenStream {
@@ -241,6 +231,8 @@ fn generate_builder_methods_for_struct_impl(
     let args = params.iter().filter(|param| !param.is_node_id).map(|param| &param.ident);
 
     let new_fn_name = format_ident!("new{fn_name_postfix}");
+    // Function only needs lifetime param for `impl GetAstBuilder<'a>` if the struct doesn't have a lifetime itself
+    let lifetime_param = if struct_def.has_lifetime { quote!() } else { quote!( <'a> ) };
 
     // Only generate a `boxed` method if `Box<T>` exists in AST
     let boxed_fn_name =
@@ -267,7 +259,7 @@ fn generate_builder_methods_for_struct_impl(
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #new_fn_name #generic_params (#fn_params, builder: &B) -> Self {
+        pub fn #new_fn_name #lifetime_param (#fn_params, builder: &impl GetAstBuilder<'a>) -> Self {
             let builder = builder.builder();
             #struct_ident { #fields }
         }
@@ -293,7 +285,9 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = #boxed_doc2]
         #params_docs
         #[inline]
-        pub fn #boxed_fn_name #generic_params (#fn_params, builder: &B) -> ArenaBox<'a, Self> {
+        pub fn #boxed_fn_name #lifetime_param (
+            #fn_params, builder: &impl GetAstBuilder<'a>
+        ) -> ArenaBox<'a, Self> {
             let builder = builder.builder();
             // Allocate via `&Allocator` (not `builder`), so `ArenaBox::new_in` shares a
             // monomorphization with every other `&Allocator`-based allocation
@@ -303,27 +297,12 @@ fn generate_builder_methods_for_struct_impl(
 }
 
 /// Get params for builder methods for a struct.
-///
-/// Also generates the generic params for the methods. These contain the builder generic `B`
-/// (and `'a` when `has_lifetime` is `false`). `Into` / `IntoIn` generics derived from the struct's
-/// fields are expressed as `impl Trait` params instead.
-///
-/// ```
-/// //        ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ generic params
-/// pub fn new<B: GetAstBuilder<'a>>(
-///     span: Span,
-///     params: impl IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>,
-///     builder: &B,
-/// ) -> Self
-/// ```
 fn get_struct_params<'s>(
     struct_def: &'s StructDef,
     node_id_cell_type_id: TypeId,
-    has_lifetime: bool,
     schema: &'s Schema,
 ) -> (
     Vec<Param<'s>>, // Params
-    TokenStream,    // Generic params
     bool,           // Has default fields
 ) {
     let mut has_default_fields = false;
@@ -383,10 +362,7 @@ fn get_struct_params<'s>(
         })
         .collect();
 
-    let lifetime = if has_lifetime { quote!() } else { quote!( 'a, ) };
-    let generic_params = quote!( <#lifetime B: GetAstBuilder<'a>> );
-
-    (params, generic_params, has_default_fields)
+    (params, has_default_fields)
 }
 
 /// Get function params and fields for a struct builder method.
@@ -397,8 +373,8 @@ fn get_struct_params<'s>(
 /// for the allocator and node ID.
 ///
 /// ```
-/// //                               ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
-/// pub fn new<B: GetAstBuilder<'a>>(span: Span, bar: Bar<'a>, builder: &B) -> Self {
+/// //          ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ function params
+/// pub fn new(span: Span, bar: Bar<'a>, builder: &impl GetAstBuilder<'a>) -> Self {
 ///     let builder = builder.builder();
 ///     Foo { node_id: Cell::new(builder.node_id()), span, bar }
 /// //        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ fields
@@ -490,9 +466,8 @@ fn generate_builder_method_for_enum_variant(
     }
     let TypeDef::Struct(struct_def) = variant_type else { panic!("Unsupported!") };
 
-    let has_lifetime = enum_def.has_lifetime(schema);
-    let (mut params, generic_params, has_default_fields) =
-        get_struct_params(struct_def, node_id_cell_type_id, has_lifetime, schema);
+    let (mut params, has_default_fields) =
+        get_struct_params(struct_def, node_id_cell_type_id, schema);
 
     let method_name = format!("new_{}", variant.snake_name());
     let variant_ident = variant.ident();
@@ -512,7 +487,6 @@ fn generate_builder_method_for_enum_variant(
             &variant_ident,
             &params,
             &method_name,
-            &generic_params,
             &fn_name_postfix,
             &doc_postfix,
             is_boxed,
@@ -526,7 +500,6 @@ fn generate_builder_method_for_enum_variant(
         &variant_ident,
         &params,
         &method_name,
-        &generic_params,
         "",
         "",
         is_boxed,
@@ -545,7 +518,6 @@ fn generate_builder_method_for_enum_variant_impl(
     variant_ident: &Ident,
     params: &[Param],
     method_name: &str,
-    generic_params: &TokenStream,
     fn_name_postfix: &str,
     doc_postfix: &str,
     is_boxed: bool,
@@ -557,6 +529,8 @@ fn generate_builder_method_for_enum_variant_impl(
     let struct_ident = struct_def.ident();
     let inner_fn_name =
         format_ident!("{}{fn_name_postfix}", if is_boxed { "boxed" } else { "new" });
+    // Function only needs lifetime param for `impl GetAstBuilder<'a>` if the enum doesn't have a lifetime itself
+    let lifetime_param = if enum_def.has_lifetime { quote!() } else { quote!( <'a> ) };
 
     // Generate doc comments
     let enum_name = enum_def.name();
@@ -578,7 +552,9 @@ fn generate_builder_method_for_enum_variant_impl(
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params (#(#fn_params),*, builder: &B) -> Self {
+        pub fn #fn_name #lifetime_param (
+            #(#fn_params),*, builder: &impl GetAstBuilder<'a>
+        ) -> Self {
             Self::#variant_ident(#struct_ident::#inner_fn_name(#(#args),*, builder.builder()))
         }
     }
