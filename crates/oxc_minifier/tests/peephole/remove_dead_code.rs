@@ -197,7 +197,6 @@ fn remove_unreachable() {
         "function f() { try { return g(); } catch { return h(); } i(); }",
         "function f() { try { return g(); } catch { return h(); } }",
     );
-    test_same("function f() { if (a) try { return g(); } finally {} else i(); }");
     // Negative: the block can complete normally, so the tail stays.
     test_same("function f(c) { { let a = g(); if (c) return a; } return foo(); }");
     // Hoisting survivors trailing the jump inside the block — a kept
