@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.validate-blocklisted-imports.ts
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Bailing out due to blocklisted import", labels: None, help: Some("Import from module DangerousImport"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

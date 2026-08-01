@@ -4,6 +4,167 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- 4d6f623 parser: Emit error for type args in JS files (#24896) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- 9fbbaf8 parser: Clarify return in class static blocks (#24899) (camc314)
+- 5b4ae54 parser: Use specific for-await diagnostic (#24856) (camc314)
+- ffcc33a parser: Report for-await in non-async functions (#24855) (camc314)
+- 582805d parser: Parse unary conditional after satisfies (#24807) (Boshen)
+- 3048594 parser: Use correct diagnostic for `await using` in bare switch case (#24798) (camc314)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 4c71560 parser: More friendly error for spread element in dynamic imports (#24705) (sapphi-red)
+- 129b759 parser: Improve diagnostics for unparenthesized LHS on exponential expr (#24569) (camc314)
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 48b59f4 parser: Span ambient generator diagnostics (#24711) (camc314)
+- 7b4baff parser: Reject new import member access (#23459) (camc314)
+- 8421feb parser: Use first `as` span for imported name (#24537) (leaysgur)
+- c517aa0 parser: Reject invalid accessor assertions (#24504) (camc314)
+
+### ⚡ Performance
+
+- 884d9eb parser: Pre-size cover-grammar assignment target buffers (#24683) (Boshen)
+- bcc9de0 parser: Defer diagnostic creation until parse exit (#24663) (Boshen)
+- 747feec parser: Build AST nodes with the AST builder instead of cloning (#24540) (Boshen)
+
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- b47585c parser: Use `ReplaceWith` instead of `TakeIn` (#24018) (overlookmotel)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7537c58 ast: Fix name of `AstBuilder` method for `Expression::V8IntrinsicExpression` (#23766) (overlookmotel)
+- 585760f parser: String in AST reference arena (#23721) (overlookmotel)
+
+### ⚡ Performance
+
+- a6d8e45 parser: Avoid span lookup for arrow expression body (#23788) (camc314)
+- 1c63c66 parser: Allocate AST nodes in arena directly (#23712) (overlookmotel)
+- 10b96c6 parser: Remove string search from parsing JSX element name (#23713) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+
+### 🚀 Features
+
+- 38c4b06 parser: Add friendly error for adjacent JSX elements (#23378) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 837a395 parser: Treat a line comment after ':' as leading, not trailing (#23515) (Dunqing)
+
+### ⚡ Performance
+
+- 4058a6a parser: Reduce code bloat from verify_modifiers monomorphization (#23576) (Boshen)
+
+## [0.136.0] - 2026-06-15
+
+### 🚀 Features
+
+- 1d3af58 parser: Add TS2398 parameter property diagnostic (#23216) (camc314)
+- e5050c0 parser: Improve diagnostic for rest initializer (#23205) (camc314)
+- e7374fe parser: Report error for `const` modifier on interface type parameter (#23173) (camc314)
+- a7c1c9b parser: Report ambient definite variable assertions (#23165) (camc314)
+- d169fcd parser: Report invalid class definite assertions (#23164) (camc314)
+- 00244d8 parser: Report definite property initializer errors (#23160) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8edd234 parser: Report accessor definite assertion on token (#23203) (camc314)
+- e89f81d parser: Don't emit TS1477 for parenthesized instantiation expression (#23147) (Boshen)
+- 8a04149 parser: Reject module-referencing imports/exports in a namespace body (#22829) (Boshen)
+
+### ⚡ Performance
+
+- 2783295 parser: Table-driven operator precedence lookup (#23346) (Boshen)
+- 231d5de parser: Single-match member expression dispatch (#23347) (Boshen)
+- a6c11fa parser: Force-inline read_non_decimal to fold per-digit number dispatch (#23157) (Boshen)
+- d74964c parser: Store class definite assertion offset (#23170) (camc314)
+- f0fda4d parser: Shrink-wrap cold diagnostic tails out of hot frames (#23159) (Boshen)
+- a082180 parser: Store definite assertion offset (#23167) (camc314)
+- b435c6a parser: Skip checkpoint for `infer T extends U` constraint in disallow context (#23128) (Boshen)
+- 7464dce parser: Peek instead of checkpoint/rewind for `export default` modifier (#23124) (Boshen)
+- 80a9a32 parser: Fast-path single-keyword TS declarations (#23083) (Boshen)
+- b7b08ce parser: Peek once for the static modifier disambiguation (#23079) (Boshen)
+- e7e07a3 parser: Fold unary dispatch into a single match (#23076) (Boshen)
+
+### 📚 Documentation
+
+- 026f1ae parser: Add `AGENTS.md` test guidance for agents (#23440) (camc314)
+- e6bdfd4 lexer: Correct reference link for `byte_handlers!` (#23313) (Dunqing)
+
+## [0.135.0] - 2026-06-08
+
+### 💥 BREAKING CHANGES
+
+- 4c35362 ast: [**BREAKING**] Add `AstBuilder::template_element_escape_raw` and `template_element_escape_raw_with_lone_surrogates` methods (#23047) (overlookmotel)
+
+### 🚀 Features
+
+- 5b8dd68 parser: Report TS1255 for invalid class definite assertions (#22917) (camc314)
+
+### 🐛 Bug Fixes
+
+- cf53285 parser: Report reserved type-declaration names in the parser (#23035) (Boshen)
+- c543154 parser: Report comma operator in JSX expression in the parser (#23030) (Boshen)
+- 95dd3a2 parser: Report `import type` alias to a non-external reference in the parser (#23032) (Boshen)
+- 6da876e parser: Report `abstract` private class field in the parser (#23029) (Boshen)
+- 989230a parser: Report compound assignment to non-simple target in the parser (#23022) (Boshen)
+- 06f367c parser: Report `super.#field` private access in the parser (#23014) (Boshen)
+- 4d722e0 parser: Report duplicate switch `default` clause in the parser (#23012) (Boshen)
+- 1295882 parser: Report `new.target` and `import.meta` syntax errors in the parser (#23003) (Boshen)
+- 17e7cf3 parser: Disallow unerasable `as`/`satisfies` assertions (#22986) (Boshen)
+- beb46d3 parser: Commit to module goal on decorated exports (#22941) (Boshen)
+
+### ⚡ Performance
+
+- 7d89909 parser: Peek instead of lookahead for yield disambiguation (#23071) (Boshen)
+- bf872f0 parser: Skip arrow lookahead for a parenthesized literal (#23070) (Boshen)
+- d19fc54 parser: Guard type-argument speculation behind an angle-token check (#23069) (Boshen)
+- 8eb5507 parser: Skip redundant member-rest re-scan on call entry (#23068) (Boshen)
+- 883dfc1 parser: Skip parse_call_expression_rest when no call follows (#23063) (Boshen)
+- b171153 parser: Peek before the await-using lookahead (#23059) (Boshen)
+- 56f21bd parser: Use peek_token for the TS `asserts` type predicate (#23058) (Boshen)
+- 68805ac parser: Use peek_token instead of checkpoint/rewind for single-token decisions (#23056) (Boshen)
+
 ## [0.134.0] - 2026-06-01
 
 ### 🐛 Bug Fixes

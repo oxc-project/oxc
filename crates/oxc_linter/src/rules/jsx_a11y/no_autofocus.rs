@@ -74,6 +74,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoAutofocus,
     version = "0.0.19",
+    short_description = "Enforce that `autoFocus` prop is not used on elements.",
 );
 
 impl Rule for NoAutofocus {

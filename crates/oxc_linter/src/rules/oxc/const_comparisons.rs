@@ -134,6 +134,7 @@ declare_oxc_lint!(
     oxc,
     correctness,
     version = "0.0.22",
+    short_description = "Checks for redundant or logically impossible comparisons.",
 );
 
 impl Rule for ConstComparisons {

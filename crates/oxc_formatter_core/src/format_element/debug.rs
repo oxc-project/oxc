@@ -92,9 +92,9 @@ where
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
         };
 
         w!(f, [ContentArrayStart]);
@@ -169,6 +169,18 @@ where
                     }
                     LineMode::Empty => {
                         w!(f, [token("empty_line")]);
+                    }
+                    LineMode::ExactLineBreaks(count) => {
+                        w!(
+                            f,
+                            [text(
+                                f.allocator()
+                                    .alloc_str(&std::format!("exact_line_breaks({count})"))
+                            )]
+                        );
+                    }
+                    LineMode::Literal => {
+                        w!(f, [token("literal_line_break")]);
                     }
                 },
                 FormatElement::ExpandParent => {
@@ -395,6 +407,10 @@ where
                             w!(f, [token("fill(")]);
                         }
 
+                        StartMarkAsRoot => {
+                            w!(f, [token("mark_as_root(")]);
+                        }
+
                         StartEntry => {
                             // handled after the match for all start tags
                         }
@@ -408,6 +424,7 @@ where
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix
+                        | EndMarkAsRoot
                         | EndDedent(_) => {
                             w!(f, [ContentArrayEnd, token(")")]);
                         }
@@ -431,6 +448,16 @@ where
                             ]
                         );
                     }
+                }
+                FormatElement::EmbedPlaceholder(index) => {
+                    w!(
+                        f,
+                        [
+                            token("<embed-placeholder<"),
+                            text(f.allocator().alloc_str(&std::format!("{index}"))),
+                            token(">>"),
+                        ]
+                    );
                 }
             }
         }

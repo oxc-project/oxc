@@ -46,6 +46,7 @@ declare_oxc_lint!(
     import,
     style,
     version = "1.19.0",
+    short_description = "Prohibit named exports.",
 );
 
 impl Rule for NoNamedExport {
@@ -53,6 +54,9 @@ impl Rule for NoNamedExport {
         match node.kind() {
             AstKind::ExportAllDeclaration(all_decl) => {
                 ctx.diagnostic(no_named_export_diagnostic(all_decl.span));
+            }
+            AstKind::ExportDeclaration(export_decl) => {
+                ctx.diagnostic(no_named_export_diagnostic(export_decl.span));
             }
             AstKind::ExportNamedDeclaration(named_decl) => {
                 let specifiers = &named_decl.specifiers;
@@ -62,6 +66,15 @@ impl Rule for NoNamedExport {
                 if specifiers.iter().any(|specifier| specifier.exported.name() != "default") {
                     ctx.diagnostic(no_named_export_diagnostic(named_decl.span));
                 }
+            }
+            AstKind::ExportFromDeclaration(from_decl)
+                if from_decl.specifiers.is_empty()
+                    || from_decl
+                        .specifiers
+                        .iter()
+                        .any(|specifier| specifier.exported.name() != "default") =>
+            {
+                ctx.diagnostic(no_named_export_diagnostic(from_decl.span));
             }
             _ => {}
         }

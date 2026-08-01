@@ -1,4 +1,4 @@
-use oxc_allocator::Vec as OxcVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, Statement, VariableDeclarationKind},
@@ -172,9 +172,12 @@ impl RequireHookConfig {
                         }
                     }
                     Argument::ArrowFunctionExpression(arrow_func_expr)
-                        if !arrow_func_expr.expression =>
+                        if !arrow_func_expr.is_expression() =>
                     {
-                        self.check_block_body(&arrow_func_expr.body.statements, ctx);
+                        self.check_block_body(
+                            &arrow_func_expr.get_function_body().unwrap().statements,
+                            ctx,
+                        );
                     }
                     _ => (),
                 }
@@ -185,7 +188,7 @@ impl RequireHookConfig {
 
     fn check_block_body<'a>(
         &self,
-        statements: &'a OxcVec<'a, Statement<'_>>,
+        statements: &'a ArenaVec<'a, Statement<'_>>,
         ctx: &LintContext<'a>,
     ) {
         for stmt in statements {

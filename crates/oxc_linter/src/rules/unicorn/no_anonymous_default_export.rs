@@ -63,6 +63,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     version = "0.3.3",
+    short_description = "Disallows anonymous functions and classes as default exports.",
 );
 
 impl Rule for NoAnonymousDefaultExport {

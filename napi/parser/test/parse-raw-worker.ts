@@ -337,8 +337,8 @@ function testRangeParent(
     experimentalParent: true,
   });
 
-  let parent: any = null;
-  function walk(node: null | Node[] | Node): void {
+  let parent: Node | null = null;
+  function walk(node: null | Node | Node[]): void {
     if (node === null || typeof node !== "object") return;
 
     if (Array.isArray(node)) {
@@ -377,7 +377,7 @@ function testRangeParent(
       ) {
         continue;
       }
-      walk(node[key]);
+      walk(node[key as keyof Node] as Node | Node[]);
     }
 
     if (isNode) parent = previousParent;

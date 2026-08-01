@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{Expression, ObjectExpression, ObjectPropertyKind, PropertyKind};
 use oxc_diagnostics::OxcDiagnostic;
@@ -72,6 +72,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.15.9",
+    short_description = "Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead.",
 );
 
 impl Rule for PreferObjectSpread {
@@ -324,7 +325,10 @@ fn get_char_span_after(expr: &Expression, ctx: &LintContext) -> Option<Span> {
     None
 }
 
-fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintContext) -> Span {
+fn get_delete_span_of_left(
+    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
+    ctx: &LintContext,
+) -> Span {
     let mut span_end = obj_expr.span.start;
     for (i, c) in ctx.source_range(obj_expr.span).char_indices() {
         if i != 0 && !c.is_whitespace() {
@@ -339,7 +343,7 @@ fn get_delete_span_of_left(obj_expr: &Box<'_, ObjectExpression<'_>>, ctx: &LintC
 }
 
 fn get_delete_span_start_of_right(
-    obj_expr: &Box<'_, ObjectExpression<'_>>,
+    obj_expr: &ArenaBox<'_, ObjectExpression<'_>>,
     ctx: &LintContext,
 ) -> u32 {
     let obj_expr_last_char_span = Span::new(obj_expr.span.end - 1, obj_expr.span.end);

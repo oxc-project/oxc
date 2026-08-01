@@ -12,13 +12,13 @@ pub struct ES2020Options {
     #[serde(skip)]
     pub nullish_coalescing_operator: bool,
 
-    /// Enable bigint syntax transform.
-    #[serde(skip)]
-    pub big_int: bool,
-
     /// Enable optional chaining transform.
     #[serde(skip)]
     pub optional_chaining: bool,
+
+    /// Enable bigint syntax transform.
+    #[serde(skip)]
+    pub big_int: bool,
 
     /// Enable arbitrary module namespace name transform.
     #[serde(skip)]

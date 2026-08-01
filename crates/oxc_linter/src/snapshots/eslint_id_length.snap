@@ -441,6 +441,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:10]
+ 1 │ type Foo<T> = { [K in keyof T]: unknown };
+   ·          ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:18]
+ 1 │ type Foo<T> = { [K in keyof T]: unknown };
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var 𠮟 = 2
    ·     ──

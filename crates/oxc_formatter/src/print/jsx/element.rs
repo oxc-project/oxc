@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::{JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, JSXFragment};
 use oxc_span::{GetSpan, Span};
 
@@ -40,9 +40,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
     }
 
     fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) =
-            self.parent().parent().parent()
-            && arrow.expression
+        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent()
+            && arrow.is_expression()
         {
             f.context().comments().comments_before(arrow.span.end)
         } else if let AstNodes::ConditionalExpression(conditional) = self.parent() {
@@ -94,7 +93,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             AstNodes::ArrayExpression(_)
             | AstNodes::JSXAttribute(_)
             | AstNodes::JSXExpressionContainer(_)
-            | AstNodes::ConditionalExpression(_) => WrapState::NoWrap,
+            | AstNodes::ConditionalExpression(_)
+            | AstNodes::ExpressionStatement(_) => WrapState::NoWrap,
             AstNodes::StaticMemberExpression(member) => {
                 if member.optional {
                     WrapState::NoWrap
@@ -107,15 +107,6 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                 WrapState::NoWrap
             }
             AstNodes::NewExpression(new) if new.is_argument_span(self.span()) => WrapState::NoWrap,
-            AstNodes::ExpressionStatement(stmt) => {
-                // `() => <div></div>`
-                //        ^^^^^^^^^^^
-                if stmt.is_arrow_function_body() {
-                    WrapState::WrapOnBreak
-                } else {
-                    WrapState::NoWrap
-                }
-            }
             AstNodes::ComputedMemberExpression(member) => {
                 if member.optional {
                     WrapState::NoWrap
@@ -123,6 +114,9 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                     WrapState::WrapOnBreak
                 }
             }
+            // Concise arrow body: `() => <div></div>`
+            #[expect(clippy::match_same_arms)]
+            AstNodes::ArrowFunctionExpression(_) => WrapState::WrapOnBreak,
             _ => WrapState::WrapOnBreak,
         }
     }
@@ -252,14 +246,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
 /// // As JSX attribute:
 /// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
-pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
-    if let AstNodes::ExpressionStatement(stmt) = parent {
-        // If the parent is a JSXExpressionContainer, we need to check its parent
-        // to determine if it should expand.
-        parent = stmt.grand_parent();
-    }
+pub fn should_expand(parent: &AstNodes<'_>) -> bool {
     let maybe_jsx_expression_container = match parent {
-        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent() {
+        AstNodes::ArrowFunctionExpression(arrow) if arrow.is_expression() => match arrow.parent() {
             AstNodes::CallExpression(call) => call.parent(),
             _ => return false,
         },
@@ -297,7 +286,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    fn children(&self) -> &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
         match self {
             Self::Element(element) => element.children(),
             Self::Fragment(fragment) => fragment.children(),

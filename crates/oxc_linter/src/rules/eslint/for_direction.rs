@@ -86,6 +86,7 @@ declare_oxc_lint!(
     correctness,
     fix_dangerous,
     version = "0.0.3",
+    short_description = "Disallow `for` loops where the update clause moves the counter in the wrong direction, preventing the loop from reaching its stop condition.",
 );
 
 #[derive(Debug, Eq, PartialEq)]

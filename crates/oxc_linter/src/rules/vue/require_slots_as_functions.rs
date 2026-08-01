@@ -24,7 +24,7 @@ pub struct RequireSlotsAsFunctions;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce properties of `$slots` to be used as a function.
+    /// Enforce properties of `$slots` to be used as functions.
     ///
     /// ### Why is this bad?
     ///
@@ -61,6 +61,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.67.0",
+    short_description = "Enforce properties of `$slots` to be used as functions.",
 );
 
 impl Rule for RequireSlotsAsFunctions {
@@ -119,9 +120,8 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
         AstKind::VariableDeclarator(var)
             if var.init.as_ref().is_some_and(|init| init.span() == node.kind().span()) =>
         {
-            if let Some(binding_ident) = var.id.get_binding_identifier()
-                && let Some(symbol_id) = binding_ident.symbol_id.get()
-            {
+            if let Some(binding_ident) = var.id.get_binding_identifier() {
+                let symbol_id = binding_ident.symbol_id();
                 follow_references(symbol_id, report_span, ctx);
             }
         }

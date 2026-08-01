@@ -1,0 +1,43 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  unquoted: 'single quoted value',
+  "normal": "double"
+}
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "jsonc" }
+------------------------------------
+{
+  "unquoted": "single quoted value",
+  "normal": "double",
+}
+
+-------------------------------------
+{ printWidth: 100, variant: "jsonc" }
+-------------------------------------
+{
+  "unquoted": "single quoted value",
+  "normal": "double",
+}
+
+-----------------------------------------------------------
+{ printWidth: 80, trailingComma: "none", variant: "jsonc" }
+-----------------------------------------------------------
+{
+  "unquoted": "single quoted value",
+  "normal": "double"
+}
+
+------------------------------------------------------------
+{ printWidth: 100, trailingComma: "none", variant: "jsonc" }
+------------------------------------------------------------
+{
+  "unquoted": "single quoted value",
+  "normal": "double"
+}
+
+===================== End =====================

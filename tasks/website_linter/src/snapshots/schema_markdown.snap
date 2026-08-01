@@ -239,9 +239,23 @@ Available environments:
 type: `string[]`
 
 
-Paths of configuration files that this configuration file extends (inherits from). The files
-are resolved relative to the location of the configuration file that contains the `extends`
-property. The configuration files are merged from the first to the last, with the last file
+Configurations that this configuration file extends (inherits from).
+
+In `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration
+file, resolved relative to the location of the configuration file that contains the
+`extends` property.
+
+In `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and
+pass the configuration object directly:
+
+```ts
+import { defineConfig } from "oxlint";
+import baseConfig from "./base-config.ts";
+
+export default defineConfig({ extends: [baseConfig] });
+```
+
+Configurations are merged from the first to the last, with the last configuration
 overriding the previous ones.
 
 
@@ -283,7 +297,10 @@ type: `string[]`
 
 default: `[]`
 
-Globs to ignore during linting. These are resolved from the configuration file path.
+Globs to ignore during linting. Patterns use gitignore-style matching,
+rooted at the directory containing the configuration file.
+Files outside that directory cannot be matched; patterns containing `..`
+are rejected as a configuration error.
 
 
 ## jsPlugins

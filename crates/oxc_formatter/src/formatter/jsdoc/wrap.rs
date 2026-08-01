@@ -1,6 +1,8 @@
 /// Compute the width of a string matching JavaScript's `.length` (UTF-16 code units).
-/// This intentionally does NOT use `unicode_width::UnicodeWidthStr` because Prettier
-/// measures `printWidth` in JS string length (UTF-16 code units), not terminal columns.
+///
+/// `prettier-plugin-jsdoc` wraps by plain JS string length, so a CJK character counts as 1 here.
+/// Prettier CORE's `printWidth` is measured east-asian-width-aware (CJK = 2),
+/// which is what our core printer's `TextWidth` (via `unicode_width`) mirrors.
 ///
 /// Fast path: for ASCII-only strings (99%+ of JSDoc content), `len()` equals UTF-16 count.
 #[inline]
@@ -81,7 +83,7 @@ pub fn format_table_block(table_lines: &[&str]) -> Vec<String> {
     }
 
     // Determine number of columns
-    let num_cols = all_cells.iter().map(std::vec::Vec::len).max().unwrap_or(0);
+    let num_cols = all_cells.iter().map(Vec::len).max().unwrap_or(0);
     if num_cols == 0 {
         return to_owned();
     }
@@ -482,6 +484,18 @@ pub fn wrap_text(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Pins the JS-`.length` semantics (see `str_width` doc):
+    // the jsdoc conformance still passes even with `unicode_width`-based width.
+    #[test]
+    fn test_str_width_is_utf16_code_units() {
+        assert_eq!(str_width("abc"), 3);
+        // CJK: 1 UTF-16 unit each (unicode_width would count 2)
+        assert_eq!(str_width("あ"), 1);
+        assert_eq!(str_width("漢字"), 2);
+        // Astral plane (surrogate pair): 2 UTF-16 units
+        assert_eq!(str_width("😀"), 2);
+    }
 
     #[test]
     fn test_wrap_simple_text() {

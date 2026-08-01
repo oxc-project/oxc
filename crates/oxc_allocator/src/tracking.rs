@@ -9,9 +9,33 @@
 //! feature is *not* enabled. The reason for the 2nd feature is to ensure that compiling with `--all-features`
 //! will not load this module.
 
-use std::cell::Cell;
+use std::{
+    cell::Cell,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use crate::{Allocator, arena::Arena};
+
+/// Whether the next call to the system allocator is an [`Arena`] chunk being allocated
+/// or deallocated.
+///
+/// Chunk operations are marked so that `tasks/track_memory_allocations`'s global allocator
+/// wrapper can exclude them from its heap metrics: chunk sizes are quantized and
+/// platform-dependent (whether an arena needs one more chunk depends on byte totals, which
+/// vary across architectures with type layout — see #22621), so counting them would make
+/// the snapshots platform-dependent.
+///
+/// This is a marker, not a counter: [`start_chunk_operation`] is called immediately before
+/// the chunk's `alloc`/`dealloc` call, and the global allocator wrapper consumes the marker
+/// while that call is on the stack. There are no allocations in between, but another
+/// *thread* allocating at that exact moment could steal the marker; the tracking task's
+/// measured workload is single-threaded, so this cannot happen in practice.
+static CHUNK_OPERATION_PENDING: AtomicBool = AtomicBool::new(false);
+
+/// Mark that the next system allocator call is an [`Arena`] chunk operation.
+pub fn start_chunk_operation() {
+    CHUNK_OPERATION_PENDING.store(true, Ordering::Relaxed);
+}
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
 #[derive(Default, Debug)]
@@ -72,5 +96,14 @@ impl Allocator {
     #[doc(hidden)]
     pub fn get_allocation_stats(&self) -> (usize, usize) {
         self.arena().get_allocation_stats()
+    }
+
+    /// Consume the pending chunk-operation marker (see [`CHUNK_OPERATION_PENDING`]).
+    ///
+    /// Returns `true` if the system allocator call currently on the stack is an [`Arena`]
+    /// chunk being allocated or deallocated.
+    #[doc(hidden)]
+    pub fn take_pending_chunk_operation() -> bool {
+        CHUNK_OPERATION_PENDING.swap(false, Ordering::Relaxed)
     }
 }

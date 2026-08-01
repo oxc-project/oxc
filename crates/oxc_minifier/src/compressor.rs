@@ -3,9 +3,9 @@ use oxc_ast::ast::*;
 use oxc_semantic::{Scoping, SemanticBuilder};
 
 use crate::{
-    CompressOptions, ReusableTraverseCtx,
-    peephole::{Normalize, NormalizeOptions, PeepholeOptimizations},
-    state::MinifierState,
+    CompressOptions, ReusableTraverseCtx, compression_pass,
+    peephole::{Normalize, NormalizeOptions},
+    state::{CompressionMode, MinifierState},
 };
 
 pub struct Compressor<'a> {
@@ -17,12 +17,30 @@ impl<'a> Compressor<'a> {
         Self { allocator }
     }
 
+    /// Full minify: removes dead code and applies size-reducing transforms.
+    /// For tree-shaking only, see [`Self::dead_code_elimination`].
     pub fn build(self, program: &mut Program<'a>, options: CompressOptions) {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
         self.build_with_scoping(program, scoping, options);
     }
 
     /// Returns total number of iterations ran.
+    ///
+    /// # Precondition
+    ///
+    /// `scoping` must be consistent with `program` in the resolved-reference
+    /// domain: every resolved `IdentifierReference` in `program` must be present
+    /// in its symbol's resolved-references list, and no list may contain a
+    /// `ReferenceId` whose node is absent from `program`. The compressor refreshes
+    /// scoping *incrementally* — it only prunes references for nodes it drops, and
+    /// no longer rebuilds liveness from scratch each pass — so a caller that
+    /// mutated `program` after building `scoping` must reflect those edits in
+    /// `scoping`. Stale *extra* references cause missed optimizations (output stays
+    /// correct); an *added* reference that was never recorded can cause incorrect
+    /// output. In-repo callers satisfy this by rebuilding a fresh `Scoping`
+    /// immediately before calling this — e.g. `crates/oxc/src/compiler.rs`
+    /// rebuilds scoping before compress/DCE whenever `ReplaceGlobalDefines`
+    /// reports a change.
     pub fn build_with_scoping(
         self,
         program: &mut Program<'a>,
@@ -30,8 +48,13 @@ impl<'a> Compressor<'a> {
         options: CompressOptions,
     ) -> u8 {
         let max_iterations = options.max_iterations;
-        let state =
-            MinifierState::new(program.source_type, options, /* dce */ false, &scoping);
+        let state = MinifierState::new(
+            program.source_type,
+            options,
+            CompressionMode::Full,
+            &scoping,
+            self.allocator,
+        );
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options = NormalizeOptions {
             convert_while_to_fors: true,
@@ -42,12 +65,19 @@ impl<'a> Compressor<'a> {
         Self::run_in_loop(max_iterations, program, &mut ctx)
     }
 
+    /// Tree-shaking only: removes dead and unused code, but does not otherwise
+    /// shrink the output like [`Self::build`]. Rolldown runs this on its own.
     pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
         let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
         self.dead_code_elimination_with_scoping(program, scoping, options)
     }
 
     /// Returns total number of iterations ran.
+    ///
+    /// # Precondition
+    ///
+    /// Same incoming-`scoping` consistency requirement as
+    /// [`Self::build_with_scoping`] — see its docs.
     pub fn dead_code_elimination_with_scoping(
         self,
         program: &mut Program<'a>,
@@ -55,7 +85,13 @@ impl<'a> Compressor<'a> {
         options: CompressOptions,
     ) -> u8 {
         let max_iterations = options.max_iterations;
-        let state = MinifierState::new(program.source_type, options, /* dce */ true, &scoping);
+        let state = MinifierState::new(
+            program.source_type,
+            options,
+            CompressionMode::TreeShakeOnly,
+            &scoping,
+            self.allocator,
+        );
         let mut ctx = ReusableTraverseCtx::new(state, scoping, self.allocator);
         let normalize_options = NormalizeOptions {
             convert_while_to_fors: false,
@@ -73,9 +109,21 @@ impl<'a> Compressor<'a> {
         ctx: &mut ReusableTraverseCtx<'a>,
     ) -> u8 {
         let mut iteration = 0u8;
+        // Boundary for the under-prune debug guard: references with indices
+        // beyond this are minted during the loop and legally exempt.
+        #[cfg(debug_assertions)]
+        let initial_references_len = ctx.get_mut().scoping().references_len();
+        // Consume the drops Normalize recorded (`void x` -> `void 0`,
+        // drop_console), so pass 1 already observes the pruned reference
+        // counts and Normalize's drops cost no extra peephole pass. Normalize
+        // also registered function declarations and exports, so post-flush
+        // analysis makes source-level dead cycles (`function f() { f() }`)
+        // visible to pass 1. Ignore the result because pass 1 runs
+        // unconditionally and consumes any newly dead functions.
+        compression_pass::finish_normalize_pass(program, ctx.get_mut());
         loop {
-            PeepholeOptimizations.run_once(program, ctx);
-            if !ctx.state().changed {
+            let outcome = compression_pass::run_peephole_pass(program, ctx);
+            if !outcome.needs_another_pass {
                 break;
             }
             if let Some(max) = max_iterations {
@@ -88,6 +136,12 @@ impl<'a> Compressor<'a> {
             }
             iteration += 1;
         }
+        #[cfg(debug_assertions)]
+        compression_pass::debug_assert_no_under_prune(
+            program,
+            ctx.get_mut(),
+            initial_references_len,
+        );
         iteration
     }
 }

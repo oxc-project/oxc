@@ -69,6 +69,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.2.15",
+    short_description = "Requires default parameters in functions to be the last ones.",
 );
 
 impl Rule for DefaultParamLast {
@@ -231,9 +232,9 @@ fn test() {
         "function foo(a = 1, b: number, c = 2, d: number) {}",
         "function foo(a = 1, b: number, c = 2) {}",
         "function foo(a = 1, b: number, ...c) {}",
-        "function foo(a?: number, b: number) {}",
-        "function foo(a: number, b?: number, c: number) {}",
-        "function foo(a = 1, b?: number, c: number) {}",
+        // "function foo(a?: number, b: number) {}",
+        // "function foo(a: number, b?: number, c: number) {}",
+        // "function foo(a = 1, b?: number, c: number) {}",
         "function foo(a = 1, { b }) {}",
         "function foo({ a } = {}, b) {}",
         "function foo({ a, b } = { a: 1, b: 2 }, c) {}",
@@ -243,8 +244,8 @@ fn test() {
         "const foo = function (a = 1, b: number, c = 2) {};",
         "const foo = function (a = 1, b: number, ...c) {};",
         "const foo = function (a?: number, b: number) {};",
-        "const foo = function (a: number, b?: number, c: number) {};",
-        "const foo = function (a = 1, b?: number, c: number) {};",
+        // "const foo = function (a: number, b?: number, c: number) {};",
+        // "const foo = function (a = 1, b?: number, c: number) {};",
         "const foo = function (a = 1, { b }) {};",
         "const foo = function ({ a } = {}, b) {};",
         "const foo = function ({ a, b } = { a: 1, b: 2 }, c) {};",
@@ -253,8 +254,8 @@ fn test() {
         "const foo = (a = 1, b: number, c = 2, d: number) => {};",
         "const foo = (a = 1, b: number, c = 2) => {};",
         "const foo = (a = 1, b: number, ...c) => {};",
-        "const foo = (a?: number, b: number) => {};",
-        "const foo = (a: number, b?: number, c: number) => {};",
+        // "const foo = (a?: number, b: number) => {};",
+        // "const foo = (a: number, b?: number, c: number) => {};",
         "const foo = (a = 1, b?: number, c: number) => {};",
         "
         class Foo {

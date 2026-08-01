@@ -303,6 +303,7 @@ declare_oxc_lint!(
     suggestion,
     config = NoEmptyFunctionConfig,
     version = "0.3.3",
+    short_description = "Disallows the usage of empty functions.",
 );
 
 impl Rule for NoEmptyFunction {

@@ -1,5 +1,7 @@
 {
   "plugins": [
-    ["styled-components"]
+    ["styled-components", {
+      "transpileTemplateLiterals": true
+    }]
   ]
 }

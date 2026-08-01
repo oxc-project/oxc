@@ -1,9 +1,9 @@
 use std::{fmt, num::ParseIntError, str::FromStr};
 
-// ---
 // Language-agnostic format options shared by all formatter implementations.
+//
 // Part of [`crate::FormatOptions`] because the printing phase consumes these options.
-// ---
+// NOTE: Do NOT define language-specific options here, even if they look like they could be shared.
 
 #[derive(Debug, Default, Clone, Copy, Eq, Hash, PartialEq)]
 pub enum IndentStyle {
@@ -296,85 +296,39 @@ impl From<LineWidth> for u16 {
     }
 }
 
-// ---
-// Shared formatting options across languages.
-// Not part of [`crate::FormatOptions`] because the printing phase does not consume it;
-// each language reads it from its own options struct when building the object IR.
-// ---
+/// The language-neutral core of every language's format options:
+/// the four fields shared by all formatters, i.e. exactly the getters of [`crate::FormatOptions`].
+///
+/// Lets a host hand the shared options across an options boundary in one piece
+/// (see [`crate::FormatOptions::apply_core`]) instead of fanning the four fields out by hand.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
+pub struct CoreFormatOptions {
+    pub indent_style: IndentStyle,
+    pub indent_width: IndentWidth,
+    pub line_width: LineWidth,
+    pub line_ending: LineEnding,
+}
 
-/// Whether to insert spaces around brackets in object.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub struct BracketSpacing(bool);
-
-impl BracketSpacing {
-    pub fn value(self) -> bool {
-        self.0
+/// The bundle is also the minimal `FormatOptions` on its own
+/// (used by `SimpleFormatContext` for tests and debug rendering).
+impl crate::FormatOptions for CoreFormatOptions {
+    fn indent_style(&self) -> IndentStyle {
+        self.indent_style
     }
-}
 
-impl Default for BracketSpacing {
-    fn default() -> Self {
-        Self(true)
+    fn indent_width(&self) -> IndentWidth {
+        self.indent_width
     }
-}
 
-impl From<bool> for BracketSpacing {
-    fn from(value: bool) -> Self {
-        Self(value)
+    fn line_width(&self) -> LineWidth {
+        self.line_width
     }
-}
 
-impl fmt::Display for BracketSpacing {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        fmt::Display::fmt(&self.value(), f)
+    fn line_ending(&self) -> LineEnding {
+        self.line_ending
     }
-}
 
-impl FromStr for BracketSpacing {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match bool::from_str(s) {
-            Ok(value) => Ok(Self(value)),
-            Err(_) => Err(
-                "Value not supported for BracketSpacing. Supported values are 'true' and 'false'.",
-            ),
-        }
-    }
-}
-
-/// Whether objects keep their authored multi-line shape or collapse to one line when they fit.
-/// Mirrors Prettier's `objectWrap` option.
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum Expand {
-    /// `objectWrap: "preserve"`.
-    /// An object stays multi-line when there is a newline right after `{` in the source;
-    /// otherwise it collapses when it fits.
-    #[default]
-    Auto,
-    /// `objectWrap: "collapse"`.
-    /// Objects collapse when they fit regardless of the authored shape.
-    Never,
-}
-
-impl FromStr for Expand {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "auto" => Ok(Self::Auto),
-            "never" => Ok(Self::Never),
-            _ => Err(std::format!("unknown expand literal: {s}")),
-        }
-    }
-}
-
-impl fmt::Display for Expand {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            Expand::Auto => "Auto",
-            Expand::Never => "Never",
-        };
-        f.write_str(s)
+    fn apply_core(&mut self, core: CoreFormatOptions) {
+        *self = core;
     }
 }

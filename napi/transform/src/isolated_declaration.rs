@@ -72,7 +72,8 @@ fn isolated_declaration_impl(
         })
         .build(&transformed_ret.program);
 
-    let diagnostics = ret.errors.into_iter().chain(transformed_ret.errors).collect::<Vec<_>>();
+    let diagnostics =
+        ret.diagnostics.into_iter().chain(transformed_ret.diagnostics).collect::<Vec<_>>();
     let errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
     IsolatedDeclarationsResult {

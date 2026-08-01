@@ -17,6 +17,7 @@ mod arguments;
 pub mod buffer;
 pub mod builders;
 mod diagnostics;
+mod embedded;
 pub mod format;
 pub mod format_element;
 mod format_extensions;
@@ -28,20 +29,22 @@ mod options;
 pub mod printer;
 mod simple_context;
 mod source_text;
+pub mod spec;
 mod state;
-mod text_range;
 mod traits;
-pub mod util;
 
 #[cfg(feature = "test_harness")]
 pub mod test_support;
 
 pub use arguments::{Argument, Arguments};
 pub use buffer::{
-    Buffer, BufferExtensions, Inspect, PreambleBuffer, Recorded, Recording, RemoveSoftLinesBuffer,
-    VecBuffer,
+    AccumulatorBuffer, Buffer, BufferExtensions, HeapVecBuffer, Inspect, PreambleBuffer, Recorded,
+    Recording, RemoveSoftLinesBuffer, ScratchBuffer, VecBuffer,
 };
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
+pub use embedded::{
+    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, TailwindCollector,
+};
 pub use format::{Format, write};
 pub use format_element::debug::DisplayDocument;
 pub use format_element::document::Document;
@@ -54,17 +57,16 @@ pub use format_element::{
 };
 pub use format_extensions::{MemoizeFormat, Memoized};
 pub use formatted::Formatted;
-pub use formatter::Formatter;
+pub use formatter::{Formatter, arena_cow_str};
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
-    BracketSpacing, Expand, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding,
-    LineWidth, LineWidthFromIntError, ParseFormatNumberError,
+    CoreFormatOptions, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
+    LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source_text::SourceText;
 pub use state::FormatState;
-pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};
 
 /// Public return type of the formatter

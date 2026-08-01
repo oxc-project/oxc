@@ -73,6 +73,7 @@ declare_oxc_lint!(
     pedantic,
     conditional_suggestion,
     version = "0.9.10",
+    short_description = "Disallow throwing literals or non-Error objects as exceptions.",
 );
 
 const SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];
@@ -138,6 +139,7 @@ fn test() {
         "throw obj?.foo() satisfies Direction",
         // local reference resolution
         "const err = new Error(); throw err;",
+        "let err: Error | null = null; err = new Error('My error'); throw err;",
         "function main(x) { throw x; }", // cannot determine type of x
         "function main(x: any) { throw x; }",
         "function main(x: TypeError) { throw x; }",
@@ -168,6 +170,7 @@ fn test() {
         "throw 'error' satisfies Error",
         // local reference resolution
         "let foo = 'foo'; throw foo;",
+        "let err: Error | null = null; throw err; err = new Error('My error');",
         "let foo = 'foo' as unknown as Error; throw foo;",
         "function foo() {}; throw foo;",
         "const foo = () => {}; throw foo;",

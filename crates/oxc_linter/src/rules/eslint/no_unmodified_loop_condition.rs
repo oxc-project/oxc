@@ -51,6 +51,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     version = "1.48.0",
+    short_description = "Disallow references in loop conditions that are never modified within the loop.",
 );
 
 impl Rule for NoUnmodifiedLoopCondition {

@@ -49,7 +49,7 @@ pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
 #[cfg(feature = "jsdoc")]
 pub use jsdoc::JSDocFinder;
-pub use node::{AstNode, AstNodes};
+pub use node::{Ancestry, AncestryStack, AstNode, AstNodes};
 #[cfg(feature = "jsdoc")]
 pub use oxc_jsdoc::{JSDoc, JSDocTag};
 pub use scoping::Scoping;
@@ -77,6 +77,12 @@ pub struct Semantic<'a> {
 
     /// The Abstract Syntax Tree (AST) nodes.
     nodes: AstNodes<'a>,
+
+    /// Number of AST nodes in the program.
+    ///
+    /// Tracked separately from `nodes`, which is empty unless the builder ran
+    /// with [`SemanticBuilder::with_build_nodes`] enabled.
+    node_count: u32,
 
     scoping: Scoping,
 
@@ -220,7 +226,7 @@ impl<'a> Semantic<'a> {
     pub fn stats(&self) -> Stats {
         #[expect(clippy::cast_possible_truncation)]
         Stats::new(
-            self.nodes.len() as u32,
+            self.node_count,
             self.scoping.scopes_len() as u32,
             self.scoping.symbols_len() as u32,
             self.scoping.references.len() as u32,
@@ -291,9 +297,10 @@ mod tests {
         source_type: SourceType,
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
-        assert!(parse.errors.is_empty());
-        let semantic = SemanticBuilder::new().build(allocator.alloc(parse.program));
-        assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
+        assert!(parse.diagnostics.is_empty());
+        let semantic =
+            SemanticBuilder::new().with_build_nodes(true).build(allocator.alloc(parse.program));
+        assert!(semantic.diagnostics.is_empty(), "Parse error: {}", semantic.diagnostics[0]);
         semantic.semantic
     }
 
@@ -342,13 +349,13 @@ mod tests {
         let source_type = SourceType::ts();
         let parse = oxc_parser::Parser::new(&allocator, source, source_type).parse();
 
-        assert!(parse.errors.is_empty());
+        assert!(parse.diagnostics.is_empty());
 
-        let first = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
-        assert!(first.errors.is_empty());
+        let first = SemanticBuilder::new_compiler().build(&parse.program);
+        assert!(first.diagnostics.is_empty());
 
-        let second = SemanticBuilder::new().with_check_syntax_error(true).build(&parse.program);
-        assert!(second.errors.is_empty());
+        let second = SemanticBuilder::new_compiler().build(&parse.program);
+        assert!(second.diagnostics.is_empty());
     }
 
     #[test]

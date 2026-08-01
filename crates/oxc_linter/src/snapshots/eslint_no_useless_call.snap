@@ -25,6 +25,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
    ╭─[no_useless_call.tsx:1:1]
+ 1 │ (foo.call)(undefined, 1);
+   · ────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
+   ╭─[no_useless_call.tsx:1:1]
  1 │ obj.foo.call(obj, 1, 2);
    · ───────────────────────
    ╰────
@@ -69,6 +76,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_call.tsx:1:1]
  1 │ obj.foo.apply(obj, [1, 2]);
    · ──────────────────────────
+   ╰────
+  help: Replace with a normal function invocation
+
+  ⚠ eslint(no-useless-call): Avoid unnecessary use of .apply()
+   ╭─[no_useless_call.tsx:1:1]
+ 1 │ (obj.foo.apply)(obj, []);
+   · ────────────────────────
    ╰────
   help: Replace with a normal function invocation
 

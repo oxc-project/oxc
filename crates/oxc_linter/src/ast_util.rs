@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
 use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
-use oxc_allocator::GetAddress;
+use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, *},
@@ -16,7 +17,10 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
-use crate::{LintContext, utils::get_function_nearest_jsdoc_node};
+use crate::{
+    LintContext,
+    utils::{get_function_nearest_jsdoc_node, is_regexp_callee},
+};
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
@@ -296,9 +300,7 @@ pub fn get_symbol_id_of_variable(
     semantic.scoping().get_reference(ident.reference_id()).symbol_id()
 }
 
-pub fn extract_regex_flags<'a>(
-    args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
-) -> Option<RegExpFlags> {
+pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<RegExpFlags> {
     if args.len() <= 1 {
         return Some(RegExpFlags::empty());
     }
@@ -313,6 +315,57 @@ pub fn extract_regex_flags<'a>(
         flags |= flag;
     }
     Some(flags)
+}
+
+pub fn resolve_regex_flags<'a>(
+    expr: &'a Expression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(RegExpFlags, Span)> {
+    resolve_regex_flags_impl(expr, ctx, &mut SmallVec::new())
+}
+
+fn resolve_regex_flags_impl<'a>(
+    expr: &'a Expression<'a>,
+    ctx: &LintContext<'a>,
+    resolved_symbols: &mut SmallVec<[SymbolId; 4]>,
+) -> Option<(RegExpFlags, Span)> {
+    match expr.without_parentheses() {
+        Expression::RegExpLiteral(regexp_literal) => {
+            Some((regexp_literal.regex.flags, regexp_literal.span))
+        }
+        Expression::NewExpression(new_expr) => {
+            if is_regexp_callee(&new_expr.callee, ctx) {
+                extract_regex_flags(&new_expr.arguments).map(|flags| (flags, new_expr.span))
+            } else {
+                None
+            }
+        }
+        Expression::CallExpression(call_expr) => {
+            if is_regexp_callee(&call_expr.callee, ctx) {
+                extract_regex_flags(&call_expr.arguments).map(|flags| (flags, call_expr.span))
+            } else {
+                None
+            }
+        }
+        Expression::Identifier(ident) => {
+            let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
+            if resolved_symbols.contains(&symbol_id) {
+                return None;
+            }
+
+            resolved_symbols.push(symbol_id);
+            let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+            let decl = ctx.nodes().get_node(declaration_id);
+            let result = decl
+                .kind()
+                .as_variable_declarator()
+                .and_then(|var_decl| var_decl.init.as_ref())
+                .and_then(|init| resolve_regex_flags_impl(init, ctx, resolved_symbols));
+            resolved_symbols.pop();
+            result
+        }
+        _ => None,
+    }
 }
 
 pub fn is_method_call<'a>(
@@ -577,12 +630,38 @@ fn could_be_error_impl(
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
-                    if let Some(init) = &decl.init {
-                        could_be_error_impl(ctx, init, visited)
-                    } else {
-                        // TODO: warn about throwing undefined
-                        false
+                    if decl
+                        .init
+                        .as_ref()
+                        .is_some_and(|init| could_be_error_impl(ctx, init, visited))
+                    {
+                        return true;
                     }
+
+                    ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
+                        if !reference.is_write() {
+                            return false;
+                        }
+
+                        let reference_node = ctx.nodes().get_node(reference.node_id());
+                        if reference_node.span().end > ident.span.start {
+                            return false;
+                        }
+
+                        let AstKind::AssignmentExpression(assignment) =
+                            ctx.nodes().parent_kind(reference.node_id())
+                        else {
+                            return false;
+                        };
+
+                        assignment.operator == AssignmentOperator::Assign
+                            && matches!(
+                                &assignment.left,
+                                AssignmentTarget::AssignmentTargetIdentifier(target)
+                                    if target.span == reference_node.span()
+                            )
+                            && could_be_error_impl(ctx, &assignment.right, visited)
+                    })
                 }
                 AstKind::Function(_)
                 | AstKind::Class(_)
@@ -601,8 +680,10 @@ fn could_be_error_impl(
 }
 
 pub fn is_callee<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
-    let parent = outermost_paren_parent(node, semantic);
-    parent.is_some_and(|node | matches!(node.kind(), AstKind::CallExpression(call_expr) if call_expr.callee.span().contains_inclusive(node.kind().span())))
+    let node_span = node.kind().span();
+    outermost_paren_parent(node, semantic).is_some_and(|parent| {
+        matches!(parent.kind(), AstKind::CallExpression(call_expr) if call_expr.callee.span().contains_inclusive(node_span))
+    })
 }
 
 fn has_jsdoc_this_tag<'a>(semantic: &Semantic<'a>, node: &AstNode<'a>) -> bool {
@@ -635,6 +716,23 @@ const METHOD_WHICH_HAS_THIS_ARG: [&str; 10] = [
     "map",
     "some",
 ];
+
+fn is_array_from_family_method(callee: &Expression) -> bool {
+    let Some(member_expr) = callee.get_member_expr() else {
+        return false;
+    };
+
+    let object = member_expr.object();
+
+    match member_expr.static_property_name() {
+        Some("from") => matches!(
+            object.get_inner_expression(),
+            Expression::Identifier(ident) if ident.name.ends_with("Array")
+        ),
+        Some("fromAsync") => object.is_specific_id("Array"),
+        _ => false,
+    }
+}
 
 pub fn is_default_this_binding<'a>(
     semantic: &Semantic<'a>,
@@ -679,16 +777,21 @@ pub fn is_default_this_binding<'a>(
                         AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
                     )
                 });
-                if upper_func.is_none_or(|node| !is_callee(node, semantic)) {
-                    return true;
+                match upper_func {
+                    Some(func) if is_callee(func, semantic) => {
+                        current_node = outermost_paren_parent(func, semantic).unwrap();
+                    }
+                    _ => return true,
                 }
-                current_node = parent;
             }
             AstKind::ArrowFunctionExpression(expr) => {
-                if current_node.span() != expr.body.span || !is_callee(parent, semantic) {
+                if !expr.is_expression()
+                    || current_node.span() != expr.body.span()
+                    || !is_callee(parent, semantic)
+                {
                     return true;
                 }
-                current_node = parent;
+                current_node = outermost_paren_parent(parent, semantic).unwrap();
             }
             AstKind::ObjectProperty(obj) => {
                 return obj.value.span() != current_node.span();
@@ -756,7 +859,7 @@ pub fn is_default_this_binding<'a>(
                             .as_expression()
                             .is_some_and(Expression::is_null_or_undefined);
                 }
-                if call_expr.callee.is_specific_member_access("Array", "from") {
+                if is_array_from_family_method(&call_expr.callee) {
                     return call_expr.arguments.len() != 3
                         || call_expr.arguments[1].span() != current_node.span()
                         || call_expr.arguments[2]
@@ -818,10 +921,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
 
 /// Gets the name and kind of the given function node.
 /// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
-pub fn get_function_name_with_kind<'a>(
-    node: &AstNode<'a>,
-    parent_node: &AstNode<'a>,
-) -> Cow<'a, str> {
+pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode<'a>) -> String {
     let (name, is_async, is_generator) = match node.kind() {
         AstKind::Function(func) => (func.name(), func.r#async, func.generator),
         AstKind::ArrowFunctionExpression(arrow_func) => (None, arrow_func.r#async, false),
@@ -907,7 +1007,7 @@ pub fn get_function_name_with_kind<'a>(
         tokens.push(Cow::Owned(format!("`{method_name}`")));
     }
 
-    Cow::Owned(tokens.join(" "))
+    tokens.join(" ")
 }
 
 // get the top iterator

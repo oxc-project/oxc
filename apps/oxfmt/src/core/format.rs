@@ -1,23 +1,29 @@
 use std::{path::Path, sync::Arc};
 
-#[cfg(feature = "napi")]
-use serde_json::Value;
 use tracing::instrument;
 
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::JsFormatOptions;
-use oxc_formatter_json::JsonFormatOptions;
+use oxc_formatter_css::CssFormatOptions;
+#[cfg(feature = "napi")]
+use oxc_formatter_css::CssVariant;
+use oxc_formatter_graphql::GraphqlFormatOptions;
+use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
+use oxc_formatter_yaml::YamlFormatOptions;
 use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
 
 #[cfg(feature = "napi")]
 use super::options::{
     inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
-    inject_tailwind_plugin_payload, to_package_json, to_prettier,
+    inject_tailwind_plugin_payload, to_prettier,
 };
 use super::{
-    options::{to_oxc_formatter, to_oxc_formatter_json, to_oxc_toml},
+    options::{
+        to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql, to_oxc_formatter_json,
+        to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
+    },
     oxfmtrc::FormatConfig,
     support::FileKind,
 };
@@ -32,7 +38,7 @@ use super::{
 #[derive(Debug)]
 pub enum FormatStrategy {
     /// For JS/TS files formatted by oxc_formatter.
-    /// `config` is retained so embedded callbacks (e.g., CSS-in-JS) can lazily
+    /// `config` is retained so embedded callbacks (e.g., xxx-in-js) can lazily
     /// derive Prettier options at callback time.
     OxcFormatter {
         path: Arc<Path>,
@@ -46,6 +52,44 @@ pub enum FormatStrategy {
     OxcFormatterJson {
         path: Arc<Path>,
         format_options: Box<JsonFormatOptions>,
+        insert_final_newline: bool,
+    },
+    /// For `package.json` files: optionally sorted, then formatted by
+    /// `oxc_formatter_json` with the `json-stringify` variant.
+    OxcFormatterJsonPackageJson {
+        path: Arc<Path>,
+        format_options: Box<JsonFormatOptions>,
+        sort_package_json: Option<sort_package_json::SortOptions>,
+        insert_final_newline: bool,
+    },
+    /// For GraphQL files formatted by `oxc_formatter_graphql`.
+    OxcFormatterGraphql {
+        path: Arc<Path>,
+        format_options: Box<GraphqlFormatOptions>,
+        insert_final_newline: bool,
+    },
+    /// For CSS/SCSS/Less files formatted by `oxc_formatter_css`.
+    /// `config` is retained (napi only) to build the Tailwind class sorter options.
+    OxcFormatterCss {
+        path: Arc<Path>,
+        format_options: Box<CssFormatOptions>,
+        #[cfg(feature = "napi")]
+        config: Box<FormatConfig>,
+        insert_final_newline: bool,
+    },
+    /// For YAML files formatted by `oxc_formatter_yaml`.
+    OxcFormatterYaml {
+        path: Arc<Path>,
+        format_options: Box<YamlFormatOptions>,
+        insert_final_newline: bool,
+    },
+    /// For `.prettierrc` and friends: mirroring Prettier's yaml embed,
+    /// formatted by `oxc_formatter_json` when the whole text parses as JSON,
+    /// and by `oxc_formatter_yaml` otherwise.
+    OxcFormatterYamlRc {
+        path: Arc<Path>,
+        yaml_format_options: Box<YamlFormatOptions>,
+        json_format_options: Box<JsonFormatOptions>,
         insert_final_newline: bool,
     },
     /// For TOML files.
@@ -68,15 +112,6 @@ pub enum FormatStrategy {
         supports_svelte: bool,
         insert_final_newline: bool,
     },
-    /// For `package.json` files: optionally sorted then formatted.
-    #[cfg(feature = "napi")]
-    ExternalFormatterPackageJson {
-        path: Arc<Path>,
-        parser_name: &'static str,
-        config: Box<FormatConfig>,
-        sort_package_json: Option<sort_package_json::SortOptions>,
-        insert_final_newline: bool,
-    },
 }
 
 impl FormatStrategy {
@@ -84,10 +119,14 @@ impl FormatStrategy {
         match self {
             Self::OxcFormatter { path, .. }
             | Self::OxcFormatterJson { path, .. }
+            | Self::OxcFormatterJsonPackageJson { path, .. }
+            | Self::OxcFormatterGraphql { path, .. }
+            | Self::OxcFormatterCss { path, .. }
+            | Self::OxcFormatterYaml { path, .. }
+            | Self::OxcFormatterYamlRc { path, .. }
             | Self::OxfmtToml { path, .. } => path,
             #[cfg(feature = "napi")]
-            Self::ExternalFormatter { path, .. }
-            | Self::ExternalFormatterPackageJson { path, .. } => path,
+            Self::ExternalFormatter { path, .. } => path,
         }
     }
 
@@ -123,6 +162,38 @@ impl FormatStrategy {
                 format_options: Box::new(to_oxc_formatter_json(&config, variant)?),
                 insert_final_newline,
             },
+            FileKind::OxcFormatterJsonPackageJson { path } => Self::OxcFormatterJsonPackageJson {
+                path,
+                format_options: Box::new(to_oxc_formatter_json(
+                    &config,
+                    JsonVariant::JsonStringify,
+                )?),
+                sort_package_json: to_sort_package_json(&config),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterGraphql { path } => Self::OxcFormatterGraphql {
+                path,
+                format_options: Box::new(to_oxc_formatter_graphql(&config)?),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterCss { path, variant } => Self::OxcFormatterCss {
+                path,
+                format_options: Box::new(to_oxc_formatter_css(&config, variant)?),
+                #[cfg(feature = "napi")]
+                config: Box::new(config),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterYaml { path } => Self::OxcFormatterYaml {
+                path,
+                format_options: Box::new(to_oxc_formatter_yaml(&config)?),
+                insert_final_newline,
+            },
+            FileKind::OxcFormatterYamlRc { path } => Self::OxcFormatterYamlRc {
+                path,
+                yaml_format_options: Box::new(to_oxc_formatter_yaml(&config)?),
+                json_format_options: Box::new(to_oxc_formatter_json(&config, JsonVariant::Json)?),
+                insert_final_newline,
+            },
             FileKind::OxfmtToml { path } => {
                 Self::OxfmtToml { path, toml_options: to_oxc_toml(&config)?, insert_final_newline }
             }
@@ -142,16 +213,6 @@ impl FormatStrategy {
                 supports_svelte,
                 insert_final_newline,
             },
-            #[cfg(feature = "napi")]
-            FileKind::ExternalFormatterPackageJson { path, parser_name } => {
-                Self::ExternalFormatterPackageJson {
-                    path,
-                    parser_name,
-                    sort_package_json: to_package_json(&config),
-                    config: Box::new(config),
-                    insert_final_newline,
-                }
-            }
         })
     }
 }
@@ -215,6 +276,58 @@ impl SourceFormatter {
                 self.format_by_oxc_formatter_json(source_text, &path, *format_options),
                 insert_final_newline,
             ),
+            FormatStrategy::OxcFormatterJsonPackageJson {
+                path,
+                format_options,
+                sort_package_json,
+                insert_final_newline,
+            } => (
+                self.format_by_oxc_formatter_json_package_json(
+                    source_text,
+                    &path,
+                    *format_options,
+                    sort_package_json.as_ref(),
+                ),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterGraphql { path, format_options, insert_final_newline } => (
+                self.format_by_oxc_formatter_graphql(source_text, &path, *format_options),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterCss {
+                path,
+                format_options,
+                #[cfg(feature = "napi")]
+                config,
+                insert_final_newline,
+            } => (
+                self.format_by_oxc_formatter_css(
+                    source_text,
+                    &path,
+                    *format_options,
+                    #[cfg(feature = "napi")]
+                    &config,
+                ),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterYaml { path, format_options, insert_final_newline } => (
+                self.format_by_oxc_formatter_yaml(source_text, &path, *format_options),
+                insert_final_newline,
+            ),
+            FormatStrategy::OxcFormatterYamlRc {
+                path,
+                yaml_format_options,
+                json_format_options,
+                insert_final_newline,
+            } => (
+                self.format_by_oxc_formatter_yaml_rc(
+                    source_text,
+                    &path,
+                    *yaml_format_options,
+                    *json_format_options,
+                ),
+                insert_final_newline,
+            ),
             FormatStrategy::OxfmtToml { toml_options, insert_final_newline, .. } => {
                 (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline)
             }
@@ -239,23 +352,6 @@ impl SourceFormatter {
                 ),
                 insert_final_newline,
             ),
-            #[cfg(feature = "napi")]
-            FormatStrategy::ExternalFormatterPackageJson {
-                path,
-                parser_name,
-                config,
-                sort_package_json,
-                insert_final_newline,
-            } => (
-                self.format_by_external_formatter_package_json(
-                    source_text,
-                    &path,
-                    parser_name,
-                    &config,
-                    sort_package_json.as_ref(),
-                ),
-                insert_final_newline,
-            ),
         };
 
         match result {
@@ -276,7 +372,7 @@ impl SourceFormatter {
     }
 
     /// Format JS/TS source code using `oxc_formatter`.
-    /// `config` is needed to derive Prettier options for embedded callbacks (CSS-in-JS, Tailwind).
+    /// `config` is needed to derive Prettier options for embedded callbacks (xxx-in-js, Tailwind).
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter", skip_all)]
     fn format_by_oxc_formatter(
         &self,
@@ -324,8 +420,6 @@ impl SourceFormatter {
     }
 
     /// Format JSON (and JSON-like) source using `oxc_formatter_json`.
-    ///
-    /// Parse errors are surfaced as `OxcDiagnostic` — there is no Prettier fallback.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_json", skip_all)]
     fn format_by_oxc_formatter_json(
         &self,
@@ -342,6 +436,126 @@ impl SourceFormatter {
             ))
         })?;
         Ok(printed.into_code())
+    }
+
+    /// Format `package.json`: optionally sort, then format using `oxc_formatter_json`.
+    #[instrument(
+        level = "debug",
+        name = "oxfmt::format::oxc_formatter_json_package_json",
+        skip_all
+    )]
+    fn format_by_oxc_formatter_json_package_json(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: JsonFormatOptions,
+        sort_options: Option<&sort_package_json::SortOptions>,
+    ) -> Result<String, OxcDiagnostic> {
+        use std::borrow::Cow;
+        let source_text: Cow<'_, str> = if let Some(options) = sort_options {
+            match sort_package_json::sort_package_json_with_options(source_text, options) {
+                Ok(sorted) => Cow::Owned(sorted),
+                // `sort_package_json` can only handle strictly valid JSON.
+                // On the other hand, the `json-stringify` variant parser is very permissive.
+                // It can format JSON like input even with unquoted keys or trailing commas.
+                // Therefore, rather than bailing out due to a sorting failure, we opt to format without sorting.
+                Err(_) => Cow::Borrowed(source_text),
+            }
+        } else {
+            Cow::Borrowed(source_text)
+        };
+
+        self.format_by_oxc_formatter_json(&source_text, path, format_options)
+    }
+
+    /// Format GraphQL source using `oxc_formatter_graphql`.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_graphql", skip_all)]
+    fn format_by_oxc_formatter_graphql(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: GraphqlFormatOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        let allocator = self.allocator_pool.get();
+        let formatted = oxc_formatter_graphql::format(&allocator, source_text, format_options)?;
+        let printed = formatted.print().map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to print formatted GraphQL: {}\n{err}",
+                path.display()
+            ))
+        })?;
+        Ok(printed.into_code())
+    }
+
+    /// Format CSS/SCSS/Less source using `oxc_formatter_css`.
+    ///
+    /// When the config enables Tailwind class sorting,
+    /// the napi build passes a JS-side sorter for the `@apply` classes the formatter collects
+    /// (the order itself comes from the Tailwind config, which only the JS side can resolve).
+    /// The pure build never collects classes.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_css", skip_all)]
+    fn format_by_oxc_formatter_css(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: CssFormatOptions,
+        #[cfg(feature = "napi")] config: &FormatConfig,
+    ) -> Result<String, OxcDiagnostic> {
+        #[cfg(feature = "napi")]
+        let sorter = self.tailwind_sorter(config, path);
+        #[cfg(not(feature = "napi"))]
+        let sorter: Option<fn(Vec<String>) -> Vec<String>> = None;
+
+        let allocator = self.allocator_pool.get();
+        let formatted = oxc_formatter_css::format(
+            &allocator,
+            source_text,
+            format_options,
+            sorter.as_ref().map(|s| s as &dyn Fn(Vec<String>) -> Vec<String>),
+        )?;
+        let printed = formatted.print().map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to print formatted CSS: {}\n{err}",
+                path.display()
+            ))
+        })?;
+        Ok(printed.into_code())
+    }
+
+    /// Format YAML source using `oxc_formatter_yaml`.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_yaml", skip_all)]
+    fn format_by_oxc_formatter_yaml(
+        &self,
+        source_text: &str,
+        path: &Path,
+        format_options: YamlFormatOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        let allocator = self.allocator_pool.get();
+        let formatted = oxc_formatter_yaml::format(&allocator, source_text, format_options)?;
+        let printed = formatted.print().map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to print formatted YAML: {}\n{err}",
+                path.display()
+            ))
+        })?;
+        Ok(printed.into_code())
+    }
+
+    /// Format `.prettierrc` and friends the way Prettier's yaml embed does.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_yaml_rc", skip_all)]
+    fn format_by_oxc_formatter_yaml_rc(
+        &self,
+        source_text: &str,
+        path: &Path,
+        yaml_format_options: YamlFormatOptions,
+        json_format_options: JsonFormatOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        if let Ok(printed) =
+            self.format_by_oxc_formatter_json(source_text, path, json_format_options)
+        {
+            return Ok(printed);
+        }
+        self.format_by_oxc_formatter_yaml(source_text, path, yaml_format_options)
     }
 
     /// Format TOML file using `oxc_toml`.
@@ -368,11 +582,38 @@ impl SourceFormatter {
         self
     }
 
+    /// Build the Prettier options JSON shared by the embedded callbacks and the Tailwind sorter:
+    /// resolved config + `filepath` + the Tailwind plugin payload
+    /// (which the JS-side sorter resolves the class order from).
+    fn build_external_options(config: &FormatConfig, path: &Path) -> serde_json::Value {
+        let mut external_options = to_prettier(config);
+        inject_filepath(&mut external_options, path);
+        inject_tailwind_plugin_payload(&mut external_options, config);
+        external_options
+    }
+
+    /// Build the JS-side Tailwind class sorter for `oxc_formatter_css`'s `@apply` collection,
+    /// or `None` when the config does not enable it.
+    fn tailwind_sorter(
+        &self,
+        config: &FormatConfig,
+        path: &Path,
+    ) -> Option<impl Fn(Vec<String>) -> Vec<String>> {
+        config.is_tailwind_enabled().then(|| {
+            let external_formatter = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled");
+            let sort = std::sync::Arc::clone(&external_formatter.sort_tailwindcss_classes);
+            let external_options = Self::build_external_options(config, path);
+            move |classes: Vec<String>| sort(&external_options, classes)
+        })
+    }
+
     /// Build external callbacks for `oxc_formatter` from the NAPI external formatter.
     ///
-    /// Tailwind is always considered "capable" here because `oxc_formatter`
-    /// embeds the sorter internally; the inject helper itself decides whether
-    /// to fire based on user config.
+    /// Tailwind is always considered "capable" here because `oxc_formatter` embeds the sorter internally;
+    /// the inject helper itself decides whether to fire based on user config.
     fn build_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
@@ -384,11 +625,24 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        let mut external_options = to_prettier(config);
-        inject_filepath(&mut external_options, path);
-        inject_tailwind_plugin_payload(&mut external_options, config);
+        let external_options = Self::build_external_options(config, path);
 
-        external_formatter.to_external_callbacks(format_options, external_options)
+        // Dual mapping of the same resolved config for the dispatcher's Rust branches.
+        // Cannot fail here: building `JsFormatOptions` from this config already succeeded,
+        // and both share the same `to_core_options()` validation.
+        let graphql_options = to_oxc_formatter_graphql(config)
+            .expect("config was already validated when building `JsFormatOptions`");
+        // CSS-in-JS is always parsed as SCSS (Prettier's embed uses the
+        // `scss` parser for all of css/scss/less template tags).
+        let css_options = to_oxc_formatter_css(config, CssVariant::Scss)
+            .expect("config was already validated when building `JsFormatOptions`");
+
+        external_formatter.to_external_callbacks(
+            format_options,
+            external_options,
+            graphql_options,
+            css_options,
+        )
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).
@@ -419,59 +673,14 @@ impl SourceFormatter {
             inject_svelte_plugin_payload(&mut external_options, config);
         }
 
-        self.invoke_external_formatter(external_options, source_text, path)
-    }
-
-    /// Format `package.json`: optionally sort then format by external formatter.
-    #[instrument(
-        level = "debug",
-        name = "oxfmt::format::external_formatter_package_json",
-        skip_all
-    )]
-    fn format_by_external_formatter_package_json(
-        &self,
-        source_text: &str,
-        path: &Path,
-        parser_name: &str,
-        config: &FormatConfig,
-        sort_options: Option<&sort_package_json::SortOptions>,
-    ) -> Result<String, OxcDiagnostic> {
-        use std::borrow::Cow;
-        let source_text: Cow<'_, str> = if let Some(options) = sort_options {
-            match sort_package_json::sort_package_json_with_options(source_text, options) {
-                Ok(sorted) => Cow::Owned(sorted),
-                // `sort_package_json` can only handle strictly valid JSON.
-                // On the other hand, Prettier's `json-stringify` parser is very permissive.
-                // It can format JSON like input even with unquoted keys or trailing commas.
-                // Therefore, rather than bailing out due to a sorting failure, we opt to format without sorting.
-                Err(_) => Cow::Borrowed(source_text),
-            }
-        } else {
-            Cow::Borrowed(source_text)
-        };
-
-        let mut external_options = to_prettier(config);
-        inject_parser(&mut external_options, parser_name);
-        inject_filepath(&mut external_options, path);
-        self.invoke_external_formatter(external_options, &source_text, path)
-    }
-
-    /// Invoke Prettier via NAPI and adapt error messages to look like `OxcDiagnostic`.
-    fn invoke_external_formatter(
-        &self,
-        external_options: Value,
-        source_text: &str,
-        path: &Path,
-    ) -> Result<String, OxcDiagnostic> {
         let external_formatter = self
             .external_formatter
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
         external_formatter.format_file(external_options, source_text).map_err(|err| {
-            // NOTE: We are trying to make the error from oxc_formatter and external_formatter (Prettier) look similar.
-            // Ideally, we would unify them into `OxcDiagnostic`,
-            // which would eliminate the need for relative path conversion.
+            // NOTE: We are trying to make the error from oxc_formatter(_xxx) and external_formatter (Prettier) look similar.
+            // Ideally, we would unify them into `OxcDiagnostic`, which would eliminate the need for relative path conversion.
             // However, doing so would require:
             // - Parsing Prettier's error messages
             // - Converting span information from UTF-16 to UTF-8

@@ -56,6 +56,7 @@ declare_oxc_lint!(
     react,
     correctness,
     version = "0.0.14",
+    short_description = "Checks that children are not passed using a prop.",
 );
 
 impl Rule for NoChildrenProp {

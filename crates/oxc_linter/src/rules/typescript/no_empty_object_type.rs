@@ -12,7 +12,12 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
+};
 
 fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
     span: Span,
@@ -27,8 +32,8 @@ fn no_empty_object_type_diagnostic<S: Into<Cow<'static, str>>>(
 pub struct NoEmptyObjectType(Box<NoEmptyObjectTypeConfig>);
 
 #[expect(clippy::struct_field_names)]
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoEmptyObjectTypeConfig {
     /// Whether to allow empty interfaces.
     allow_interfaces: AllowInterfaces,
@@ -49,6 +54,7 @@ pub struct NoEmptyObjectTypeConfig {
     /// interface InterfaceProps {}
     /// type TypeProps = {};
     /// ```
+    #[serde(default, deserialize_with = "deserialize_regex_option")]
     allow_with_name: Option<Regex>,
 }
 
@@ -158,36 +164,14 @@ declare_oxc_lint!(
     pending,
     config = NoEmptyObjectTypeConfig,
     version = "0.12.0",
+    short_description = "Disallow accidentally using the \"empty object\" type.",
 );
 
 impl Rule for NoEmptyObjectType {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let (allow_interfaces, allow_object_types, allow_with_name) = value.get(0).map_or(
-            (AllowInterfaces::Never, AllowObjectTypes::Never, None),
-            |config| {
-                (
-                    config
-                        .get("allowInterfaces")
-                        .and_then(serde_json::Value::as_str)
-                        .map(AllowInterfaces::from)
-                        .unwrap_or_default(),
-                    config
-                        .get("allowObjectTypes")
-                        .and_then(serde_json::Value::as_str)
-                        .map(AllowObjectTypes::from)
-                        .unwrap_or_default(),
-                    config
-                        .get("allowWithName")
-                        .and_then(serde_json::Value::as_str)
-                        .and_then(|pattern| Regex::new(pattern).ok()),
-                )
-            },
-        );
-        Ok(Self(Box::new(NoEmptyObjectTypeConfig {
-            allow_interfaces,
-            allow_object_types,
-            allow_with_name,
-        })))
+        serde_json::from_value::<DefaultRuleConfig<NoEmptyObjectTypeConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)
+            .map(|config| Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

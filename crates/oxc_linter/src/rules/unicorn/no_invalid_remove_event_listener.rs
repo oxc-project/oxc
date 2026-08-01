@@ -46,6 +46,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     version = "0.0.16",
+    short_description = "It warns when you use a non-function value as the second argument of `removeEventListener`.",
 );
 
 impl Rule for NoInvalidRemoveEventListener {
@@ -107,7 +108,7 @@ impl Rule for NoInvalidRemoveEventListener {
                     Span::new(func_expr.span.start, func_expr.params.span.end)
                 }
                 Argument::ArrowFunctionExpression(arrow_expr) => {
-                    Span::new(arrow_expr.span.start, arrow_expr.body.span.start)
+                    Span::new(arrow_expr.span.start, arrow_expr.body.span().start)
                 }
                 Argument::CallExpression(_) => listener_span,
                 _ => unreachable!(),

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     correctness,
     pending,
     version = "0.0.19",
+    short_description = "Disallow useless array length check.",
 );
 
 struct ConditionDTO<T: ToString> {

@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
+    utils::AlwaysNever,
 };
 
 fn triple_slash_reference_diagnostic(ref_kind: &str, span: Span) -> OxcDiagnostic {
@@ -24,21 +25,11 @@ pub struct TripleSlashReference(Box<TripleSlashReferenceConfig>);
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct TripleSlashReferenceConfig {
     /// What to enforce for `/// <reference lib="..." />` references.
-    lib: LibOption,
+    lib: AlwaysNever,
     /// What to enforce for `/// <reference path="..." />` references.
     path: PathOption,
     /// What to enforce for `/// <reference types="..." />` references.
     types: TypesOption,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-enum LibOption {
-    /// Allow triple-slash `lib` references.
-    #[default]
-    Always,
-    /// Disallow triple-slash `lib` references.
-    Never,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
@@ -99,6 +90,7 @@ declare_oxc_lint!(
     correctness,
     config = TripleSlashReferenceConfig,
     version = "0.2.0",
+    short_description = "Disallow certain triple slash directives in favor of ES module import declarations.",
 );
 
 impl Rule for TripleSlashReference {
@@ -119,7 +111,7 @@ impl Rule for TripleSlashReference {
             if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)
                     || (group1 == "path" && self.path == PathOption::Never)
-                    || (group1 == "lib" && self.lib == LibOption::Never)
+                    || (group1 == "lib" && self.lib == AlwaysNever::Never)
                 {
                     ctx.diagnostic(triple_slash_reference_diagnostic(&group2, comment.span));
                 }

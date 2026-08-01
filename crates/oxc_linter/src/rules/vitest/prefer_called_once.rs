@@ -58,6 +58,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.39.0",
+    short_description = "Substitute `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` with `toBeCalledOnce()` and `toHaveBeenCalledOnce()` respectively.",
 );
 
 impl Rule for PreferCalledOnce {

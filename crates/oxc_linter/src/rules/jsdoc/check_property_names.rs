@@ -61,6 +61,7 @@ declare_oxc_lint!(
     correctness,
     pending,
     version = "0.2.18",
+    short_description = "Ensures that property names in JSDoc are not duplicated on the same block and that nested properties have defined roots.",
 );
 
 impl Rule for CheckPropertyNames {
@@ -102,12 +103,7 @@ impl Rule for CheckPropertyNames {
             for (type_name, spans) in seen.iter().filter(|(_, spans)| 1 < spans.len()) {
                 let labels = spans
                     .iter()
-                    .map(|span| {
-                        LabeledSpan::at(
-                            (span.start as usize)..(span.end as usize),
-                            "Duplicated property",
-                        )
-                    })
+                    .map(|span| LabeledSpan::at(span.start..span.end, "Duplicated property"))
                     .collect::<Vec<_>>();
                 ctx.diagnostic(
                     OxcDiagnostic::warn("Duplicate @property found.")

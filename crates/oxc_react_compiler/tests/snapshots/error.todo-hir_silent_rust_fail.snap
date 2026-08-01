@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-hir_silent_rust_fail.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: One([LabeledSpan { label: Some("value cannot be modified"), span: SourceSpan { offset: SourceOffset(10345), length: 4 }, primary: false }]), help: Some("Modifying component props or hook arguments is not allowed. Consider using a local variable instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

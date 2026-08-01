@@ -10,12 +10,14 @@ mod ir_transform;
 mod options;
 mod parentheses;
 mod print;
+mod source_text;
 mod utils;
 
 use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_formatter_core::Formatted;
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
@@ -24,8 +26,7 @@ use oxc_span::SourceType;
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::external_formatter::{
-    EmbeddedDocFormatterCallback, EmbeddedDocResult, EmbeddedFormatterCallback, ExternalCallbacks,
-    TailwindCallback,
+    EmbeddedFormatterCallback, ExternalCallbacks, HtmlEmbedMeta, TailwindCallback,
 };
 // `JsFormatContext` is public solely as the type parameter of the `Formatted`
 // returned by `format` / `format_fragment`.
@@ -41,9 +42,8 @@ pub use detect_code_removal::detect_code_removal;
 pub(crate) use oxc_formatter_core::{best_fitting, format_args, write};
 // Internal-only re-exports so crate-local `use crate::{Buffer, Format};` continues to work
 // without leaking these IR primitives in the public API.
-pub(crate) use crate::formatter::{Buffer, Format};
+pub(crate) use oxc_formatter_core::{Buffer, Format};
 
-use self::formatter::Formatted;
 use self::formatter::prelude::tag::Label;
 use crate::print::{FormatFunctionParams, FormatTypeParameters};
 
@@ -76,6 +76,7 @@ pub enum FragmentContext {
 ///
 /// # Errors
 /// Returns the first parse error as an [`OxcDiagnostic`].
+/// For now, any parse diagnostic is an error, even when the parser could recover.
 pub fn format<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -210,18 +211,27 @@ pub fn parse_for_format<'a>(
         allow_return_outside_function: true, // accept all syntax the formatter may be handed
         allow_v8_intrinsics: true,
         preserve_parens: false, // MUST be false: the formatter panics otherwise
+        // The formatter does not use `Ident` hashes, but `detect_code_removal` runs semantic
+        // analysis on this AST, and semantic requires hashed `Ident`s.
+        enable_ident_hashes: cfg!(feature = "detect_code_removal"),
     };
     Parser::new(allocator, source_text, source_type).with_options(options).parse()
 }
 
 /// Parse `source_text` and promote the `Program` to the arena lifetime.
+///
+/// NOTE: Reject ANY parse diagnostic, not only `panicked`: we format valid code only, by design.
+/// A recovered AST may be an unfaithful "fix" of the source
+/// (e.g. invalid modifiers are reported but not all of them are representable),
+/// so formatting it can silently rewrite what the user wrote.
+/// Prettier instead formats invalid inputs through parser recovery, which also hides the error from the user;
 fn parse<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
 ) -> Result<&'a Program<'a>, OxcDiagnostic> {
     let ret = parse_for_format(allocator, source_text, source_type);
-    if let Some(err) = ret.errors.into_iter().next() {
+    if let Some(err) = ret.diagnostics.into_iter().next() {
         return Err(err);
     }
     Ok(allocator.alloc(ret.program))
@@ -246,7 +256,7 @@ fn format_node<'a, F: Format<'a, JsFormatContext<'a>>>(
     formatter::format(
         context,
         allocator,
-        formatter::Arguments::new(&[formatter::Argument::new(node)]),
+        oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(node)]),
     )
 }
 

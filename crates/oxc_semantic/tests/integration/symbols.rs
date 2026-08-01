@@ -440,7 +440,7 @@ fn test_class_merging() {
 fn test_redeclaration() {
     SemanticTester::js("(function n(n) { console.log (n) }) ()")
         .has_symbol("n") // the first `n` is the function expression
-        .equal_flags(SymbolFlags::Function) // param `n` is a SymbolFlags::FunctionScopedVariable
+        .equal_flags(SymbolFlags::Function | SymbolFlags::FunctionExpression) // param `n` is a SymbolFlags::FunctionScopedVariable
         .has_number_of_references(0) // no references to the function
         .test();
 }

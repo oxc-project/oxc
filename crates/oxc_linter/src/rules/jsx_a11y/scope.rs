@@ -48,6 +48,7 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.0.19",
+    short_description = "The scope prop should be used only on `<th>` elements.",
 );
 
 impl Rule for Scope {
@@ -80,7 +81,7 @@ impl Rule for Scope {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
@@ -107,11 +108,10 @@ fn test() {
     let fail =
         vec![(r"<div scope />", None, None), (r"<Foo scope='bar' />;", None, Some(settings()))];
 
-    let fix = vec![
-        (r"<div scope />", r"<div  />", None),
-        // TODO: This test is invalid and just results in default config options because you cannot pass a settings value to the fixer.
-        // (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
-        (r"<h1 scope='bar' />;", r"<h1  />;", None),
+    let fix: Vec<ExpectFixTestCase> = vec![
+        (r"<div scope />", r"<div  />", None).into(),
+        (r"<Foo scope='bar' />;", r"<Foo  />;", None, Some(settings())).into(),
+        (r"<h1 scope='bar' />;", r"<h1  />;", None).into(),
     ];
 
     Tester::new(Scope::NAME, Scope::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

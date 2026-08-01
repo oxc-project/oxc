@@ -933,8 +933,8 @@ fn constant_evaluation_test() {
     test("x = 3 - 6", "x = -3;");
     test("x = 3 * 6", "x = 18;");
     test("x = 3 / 6", "x = 3 / 6;");
-    test("x = 3 % 6", "x = 3 % 6;");
-    test("x = 3 ** 6", "x = 3 ** 6;");
+    test("x = 3 % 6", "x = 3;");
+    test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
     test("x = 123 / 0", "x = Infinity;");
     test("x = 123 / -0", "x = -Infinity;");
@@ -1386,8 +1386,8 @@ fn test_flatten_values() {
     test("return !a === !b", "return !a == !b;");
     test("return !a !== !b", "return !a != !b;");
     test("return !a !== !b", "return !a != !b;");
-    // test("return (a, -1n) !== -1", "return a, -1n !== -1;");
-    // test("return (a, ~1n) !== -1", "return a, ~1n !== -1;");
+    test("return (a, -1n) !== -1", "return a, !0;");
+    test("return (a, ~1n) !== -1", "return a, !0;");
     test("return (a -= 1n) !== -1", "return (a -= 1n) !== -1;");
     test("return (a *= 1n) !== -1", "return (a *= 1n) !== -1;");
     test("return (a **= 1n) !== -1", "return (a **= 1n) !== -1;");
@@ -1396,16 +1396,16 @@ fn test_flatten_values() {
     test("return (a &= 1n) !== -1", "return (a &= 1n) !== -1;");
     test("return (a |= 1n) !== -1", "return (a |= 1n) !== -1;");
     test("return (a ^= 1n) !== -1", "return (a ^= 1n) !== -1;");
-    // test("return -(a, b)", "return a, -b;");
-    // test("return +(a, b)", "return a, +b;");
-    // test("return ~(a, b)", "return a, ~b;");
+    test("return -(a, b)", "return a, -b;");
+    test("return +(a, b)", "return a, +b;");
+    test("return ~(a, b)", "return a, ~b;");
     test("return !(a, b)", "return a, !b;");
-    // test("return void (a, b)", "return a, void b;");
+    test("return void (a, b)", "a, b; return;");
     test("return typeof (a, b)", "return typeof (a, b);");
     test("return delete (a, b)", "return delete (a, b);");
-    // test("return (a, b) && c", "return a, b && c;");
-    // test("return (a, b) == c", "return a, b == c;");
-    // test("return (a, b) + c", "return a, b + c;");
+    test("return (a, b) && c", "return a, b && c;");
+    test("return (a, b) == c", "return a, b == c;");
+    test("return (a, b) + c", "return a, b + c;");
     test("return a && (b, c)", "return a && (b, c);");
     test("return a == (b, c)", "return a == (b, c);");
     test("return a + (b, c)", "return a + (b, c);");
@@ -2021,7 +2021,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
-        "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
+        "function wrapper(arg0, arg1) { if (arg0 === 0) return 1; }",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",
@@ -2407,13 +2407,13 @@ fn prune_empty_case_before_default() {
     test("switch (x) { default: case 1: bar() }", "switch (x) { default: case 1: bar();}");
 
     // String literals should also be removed
-    test("switch (x) { case 'a': case 'b': default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 'a': case 'b': default: bar() }", "x, bar();");
 
     // null literal (booleans get transformed to !0/!1 before this optimization runs)
-    test("switch (x) { case null: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case null: default: bar() }", "x, bar();");
 
     // BigInt literals
-    test("switch (x) { case 1n: case 2n: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 1n: case 2n: default: bar() }", "x, bar();");
 
     // Non-empty case should stop the pruning
     test(
@@ -2422,8 +2422,8 @@ fn prune_empty_case_before_default() {
     );
 
     // Only default - nothing to prune
-    test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { default: bar() }", "x, bar();");
 
     // No default - nothing to prune
-    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); case 1:}");
+    test("switch (x) { case 0: foo(); case 1: }", "x === 0 && foo();");
 }

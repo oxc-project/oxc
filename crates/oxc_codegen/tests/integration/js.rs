@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
 use oxc_span::SPAN;
 
@@ -45,6 +45,19 @@ fn module_decl() {
         "export { default } from './foo.js' with { type: 'json' }",
         "export{default}from\"./foo.js\"with{type:\"json\"};",
     );
+
+    test_minify("export default {a:1}", "export default{a:1};");
+    test_minify("export default [1]", "export default[1];");
+    test_minify("export default (a,b)", "export default(a,b);");
+    test_minify("export default 5", "export default 5;");
+    test_minify("export default foo", "export default foo;");
+    test_minify("export default function(){}", "export default function(){}");
+
+    // `as` next to a string export/import name needs no space.
+    test_minify("export { foo as \"name\" }", "export{foo as\"name\"};");
+    test_minify("import { \"y\" as z } from \"m\"", "import{\"y\"as z}from\"m\";");
+    test_minify("export * as \"ns\" from \"m\"", "export*as\"ns\" from\"m\";");
+    test_minify("export { foo as bar }", "export{foo as bar};");
 }
 
 #[test]
@@ -87,6 +100,31 @@ fn expr() {
 
     test_minify_same(r#"({"http://a\r\" \n<'b:b@c\r\nd/e?f":{}});"#);
     test_minify_same("new(import(``),function(){});");
+
+    // A `new` callee containing a call must keep parentheses.
+    test_same("new (f())();\n");
+    test_same("new (g?.())();\n");
+    test_same("new (f.g?.h)();\n");
+    test_same("new (f?.g.h)();\n");
+    test("new (f().g)();", "new (f()).g();\n");
+    test_same("new (f?.().g)();\n");
+    test_same("new (f()?.g)();\n");
+    test_same("new (f?.()?.g)();\n");
+    test("new (f()`g`)();", "new (f())`g`();\n"); // #22961
+    test_same("new (import(\"foo\"))();\n");
+    test("new (import(\"foo\").bar)();", "new (import(\"foo\")).bar();\n");
+    test("new (import(\"foo\")`bar`)();", "new (import(\"foo\"))`bar`();\n");
+    test("new (a`b`)();", "new a`b`();\n");
+    test("new (f().g.h)();", "new (f()).g.h();\n");
+    test("new (f[g()])();", "new f[g()]();\n");
+    test("new (new f())();", "new new f()();\n");
+
+    // The base of `**` must be an UpdateExpression, so a unary/await base keeps parens.
+    test_same("(-a) ** b;\n");
+    test_same("(typeof a) ** b;\n");
+    test_same("(await a) ** b;\n");
+    // Only the base needs wrapping; the `**` right operand may be a UnaryExpression.
+    test("(await a) ** (await b);", "(await a) ** await b;\n");
 }
 
 #[test]
@@ -138,6 +176,26 @@ fn for_stmt() {
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
         "for (var a = 1 || (2 in {}) in { x: 1 }) count++;\n",
     );
+
+    // A `for...of` head may not start with `let` or `async`; `for...in` may.
+    test("for ((let) of x);", "for ((let) of x);\n");
+    test("for ((async) of x);", "for ((async) of x);\n");
+    test("for (let in x);", "for (let in x);\n");
+    test("for (async in x);", "for (async in x);\n");
+    // A for-of head whose leading token is `let` is wrapped wherever it appears,
+    // not only as a bare identifier; a bare `async` is wrapped but `async.x` is fine.
+    test("for ((let.x) of x);", "for ((let.x) of x);\n");
+    test("for ((let.x[0]) of x);", "for ((let.x[0]) of x);\n");
+    test("for ((let[0]) of x);", "for ((let)[0] of x);\n");
+    test("for ((async.x) of x);", "for (async.x of x);\n");
+    test("for (((let).x) of x);", "for ((let.x) of x);\n");
+    // A leading `let` outside a for-of head is untouched.
+    test("let.x;", "let.x;\n");
+    // A nested for-of inside a `for` init is still wrapped correctly.
+    test(
+        "for (function f(){ for ((async) of xs); };;);",
+        "for (function f() {\n\tfor ((async) of xs);\n};;);\n",
+    );
 }
 
 #[test]
@@ -174,6 +232,12 @@ fn if_stmt() {
         "function f() { if (foo) return foo; else if (bar) return foo; }",
         "function f(){if(foo)return foo;else if(bar)return foo}",
     );
+    // `else` only needs a space before an identifier-like body.
+    test_minify("if(x)a();else b()", "if(x)a();else b();");
+    test_minify("if(x)a();else++b", "if(x)a();else++b;");
+    test_minify("if(x)a();else[b]", "if(x)a();else[b];");
+    test_minify("if(x)a();else`b`", "if(x)a();else`b`;");
+    test_minify("if(x)a();else debugger", "if(x)a();else debugger;");
 }
 
 #[test]
@@ -504,6 +568,11 @@ fn in_expr_in_arrow_function_expression() {
     test("() => ('foo' in bar)", "() => \"foo\" in bar;\n");
     test("() => 'foo' in bar", "() => \"foo\" in bar;\n");
     test("() => { ('foo' in bar) }", "() => {\n\t\"foo\" in bar;\n};\n");
+
+    // A parenthesized arrow resets FORBID_IN, so its concise body / param default
+    // does not need extra parentheses around `in` (was `(() => (a in b))`).
+    test("for (x = (() => a in b);;);", "for (x = (() => a in b);;);\n");
+    test("for (x = ((a = b in c) => 1);;);", "for (x = ((a = b in c) => 1);;);\n");
 }
 
 #[test]
@@ -696,6 +765,24 @@ fn string() {
 }
 
 #[test]
+fn print_string() {
+    fn print(value: &str, options: CodegenOptions) -> String {
+        let mut codegen = Codegen::new().with_options(options);
+        codegen.print_string(value);
+        codegen.into_source_text()
+    }
+
+    assert_eq!(print("hello \"world\"", CodegenOptions::default()), r#""hello \"world\"""#);
+    assert_eq!(
+        print("hello 'world'", CodegenOptions { single_quote: true, ..Default::default() }),
+        r"'hello \'world\''"
+    );
+    assert_eq!(print("line\n\u{00a0}🦄", CodegenOptions::default()), "\"line\\n\\xA0🦄\"");
+    assert_eq!(print("\"\"''", CodegenOptions::minify()), r#""\"\"''""#);
+    assert_eq!(print("\"\"''${", CodegenOptions::minify()), r#""\"\"''${""#);
+}
+
+#[test]
 fn v8_intrinsics() {
     let parse_opts = oxc_parser::ParseOptions {
         allow_v8_intrinsics: true,
@@ -761,35 +848,28 @@ fn indentation() {
 
 #[test]
 fn template_literal_escape_when_building_ast() {
-    use oxc_ast::ast::TemplateElementValue;
-
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
     // Create a template literal with special characters that need escaping:
     // backtick, ${, and backslash
-    // Pass escape_raw: true to automatically escape the raw field
+    // Use `template_element_escape_raw` to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
-    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
-    let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
-    let quasis = ast.vec1(element);
-    let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
+    let value = TemplateElementValue {
+        raw: Str::from_str_in(cooked, &ast),
+        cooked: Some(Str::from_str_in(cooked, &ast)),
+    };
+    let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
+    let template_literal = TemplateLiteral::new(SPAN, [element], [], &ast);
 
-    let expr = ast.expression_template_literal(
+    let expr = Expression::new_template_literal(
         SPAN,
         template_literal.quasis,
         template_literal.expressions,
+        &ast,
     );
-    let stmt = ast.statement_expression(SPAN, expr);
-    let program = ast.program(
-        SPAN,
-        oxc_span::SourceType::mjs(),
-        "",
-        ast.vec(),
-        None,
-        ast.vec(),
-        ast.vec1(stmt),
-    );
+    let stmt = Statement::new_expression_statement(SPAN, expr, &ast);
+    let program = Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
 
     let result = Codegen::new().build(&program).code;
     // The raw value should have been escaped by template_element with escape_raw: true

@@ -23,19 +23,19 @@ pub fn detect_code_removal(
 fn collect(code: &str, source_type: SourceType) -> StatsCollector {
     // Parse the way the formatter does (so the before/after comparison matches the formatter's view).
     let allocator = Allocator::default();
-    let ParserReturn { program, errors, .. } = parse_for_format(&allocator, code, source_type);
+    let ParserReturn { program, diagnostics, .. } = parse_for_format(&allocator, code, source_type);
 
     let mut collector = StatsCollector::default();
 
     // If there are parse errors, skip further analysis.
     // This will be reported in `diff()` later.
-    if !errors.is_empty() {
+    if !diagnostics.is_empty() {
         collector.has_parse_error = true;
         return collector;
     }
 
     // Using semantic analysis here only to get parent node
-    let semantic_ret = SemanticBuilder::new().build(&program);
+    let semantic_ret = SemanticBuilder::new().with_build_nodes(true).build(&program);
     collector.collect(&program, &semantic_ret.semantic)
 }
 
@@ -213,6 +213,8 @@ impl StatsCollector {
                 | AstKind::PropertyDefinition(_)
                 | AstKind::ImportAttribute(_)
                 | AstKind::TSPropertySignature(_)
+                | AstKind::TSMethodSignature(_)
+                | AstKind::TSEnumMember(_)
                 | AstKind::TSLiteralType(_),
         ) && matches!(
             kind,
@@ -338,6 +340,14 @@ mod tests {
             ("for ((let.a) in foo);", "for (let.a in foo);"),
             (r#"const { index, "0": code } = match;"#, r"const { index, 0: code } = match;"),
             (r#"({ "0": code } = match);"#, r"({ 0: code } = match);"),
+            (
+                r#"interface C { "assert"(condition?: boolean): void; }"#,
+                r"interface C { assert(condition?: boolean): void; }",
+            ),
+            (
+                r#"enum E { "_5" = 5, FULL_AUTO = "full_auto" }"#,
+                r#"enum E { _5 = 5, FULL_AUTO = "full_auto" }"#,
+            ),
             ("<div>{' '}</div>", "<div> </div>"),
             ("type T = | A;", "type T = A;"),
             ("type T = & A;", "type T = A;"),

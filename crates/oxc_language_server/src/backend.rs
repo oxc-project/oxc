@@ -766,13 +766,21 @@ impl LanguageServer for Backend {
     ///
     /// See: <https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_codeAction>
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
-        let uri = &params.text_document.uri;
-        let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
+        let uri = params.text_document.uri;
+        let Some(worker) = self.worker_manager.get_worker_for_uri(&uri).await else {
             return Ok(None);
         };
 
-        let code_actions =
-            worker.get_code_actions_or_commands(uri, &params.range, &params.context).await;
+        let is_open_document = self.file_system.is_open(&uri);
+
+        let params = crate::CodeActionParams {
+            uri,
+            range: params.range,
+            context: params.context,
+            is_open_document,
+        };
+
+        let code_actions = worker.get_code_actions_or_commands(&params).await;
 
         if code_actions.is_empty() {
             return Ok(None);

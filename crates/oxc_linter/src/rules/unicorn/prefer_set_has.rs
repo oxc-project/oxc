@@ -68,6 +68,7 @@ declare_oxc_lint!(
     perf,
     dangerous_fix,
     version = "0.13.2",
+    short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
 );
 
 fn is_array_of_or_from(callee: &MemberExpression) -> bool {
@@ -150,9 +151,7 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        let Some(symbol_id) = ident.symbol_id.get() else {
-            return;
-        };
+        let symbol_id = ident.symbol_id();
 
         let module_record = ctx.module_record();
         if module_record.exported_bindings.contains_key(ident.name.as_str())

@@ -54,12 +54,13 @@ declare_oxc_lint!(
     correctness,
     fix,
     version = "0.4.4",
+    short_description = "Disallow empty exports that don't change anything in a module file.",
 );
 
 impl Rule for NoUselessEmptyExport {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportNamedDeclaration(decl) = node.kind() else { return };
-        if decl.declaration.is_some() || !decl.specifiers.is_empty() {
+        if !decl.specifiers.is_empty() {
             return;
         }
         let module_record = ctx.module_record();

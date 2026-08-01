@@ -48,6 +48,7 @@ declare_oxc_lint!(
     suspicious,
     suggestion,
     version = "0.1.1",
+    short_description = "Disallows the use of approximate constants, instead preferring the use of the constants in the `Math` object.",
 );
 
 impl Rule for ApproxConstant {

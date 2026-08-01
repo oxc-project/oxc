@@ -54,6 +54,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.0.12",
+    short_description = "Enforces Vitest's canonical matcher names instead of aliases.",
 );
 
 impl Rule for NoAliasMethods {

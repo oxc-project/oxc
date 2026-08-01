@@ -230,9 +230,21 @@ impl Tester<'_> {
                     oxc_language_server::LanguageId::default(),
                     None,
                 )),
-                actions: linter.get_code_actions_or_commands(&uri, &range, &context),
+                actions: linter.get_code_actions_or_commands(
+                    &oxc_language_server::CodeActionParams {
+                        uri: uri.clone(),
+                        range,
+                        context: context.clone(),
+                        is_open_document: false,
+                    },
+                ),
                 fix_all_action: linter
-                    .get_code_actions_or_commands(&uri, &range, &fix_all_context)
+                    .get_code_actions_or_commands(&oxc_language_server::CodeActionParams {
+                        uri: uri.clone(),
+                        range,
+                        context: fix_all_context.clone(),
+                        is_open_document: false,
+                    })
                     .into_iter()
                     .next(),
             };

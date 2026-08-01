@@ -71,6 +71,7 @@ declare_oxc_lint!(
     nextjs,
     correctness,
     version = "0.3.3",
+    short_description = "Prevent duplicate usage of `<Head>` in `pages/_document.js`.",
 );
 
 impl Rule for NoDuplicateHead {

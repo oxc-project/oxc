@@ -90,6 +90,7 @@ declare_oxc_lint!(
     dangerous_suggestion,
     config = NoExtraneousClass,
     version = "0.7.0",
+    short_description = "Disallow classes used as namespaces.",
 );
 
 fn empty_class_diagnostic(span: Span, has_decorators: bool) -> OxcDiagnostic {
@@ -133,16 +134,11 @@ impl Rule for NoExtraneousClass {
             [] => {
                 if !self.allow_empty {
                     let mut span = class.span;
-                    #[expect(clippy::checked_conversions, clippy::cast_possible_truncation)]
                     if let Some(decorator) = class.decorators.last() {
                         span = Span::new(decorator.span.end, span.end);
                         // NOTE: there will always be a 'c' because of 'class' keyword.
                         let start = ctx.source_range(span).find('c').unwrap();
-                        // SAFETY: source files are guaranteed to be less than
-                        // 2^32 characters, so conversion will never fail. Using
-                        // unchecked assert here removes a useless bounds check.
-                        unsafe { std::hint::assert_unchecked(start <= u32::MAX as usize) };
-                        span = span.shrink_left(start as u32);
+                        span = span.shrink_left(u32::try_from(start).unwrap());
                     }
                     let has_decorators = !class.decorators.is_empty();
                     ctx.diagnostic_with_suggestion(
@@ -151,7 +147,7 @@ impl Rule for NoExtraneousClass {
                             if has_decorators {
                                 return fixer.noop();
                             }
-                            if let AstKind::ExportNamedDeclaration(decl) =
+                            if let AstKind::ExportDeclaration(decl) =
                                 ctx.nodes().parent_kind(node.id())
                             {
                                 fixer.delete(decl)

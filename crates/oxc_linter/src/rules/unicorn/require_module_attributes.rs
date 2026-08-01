@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Expression, ObjectProperty, PropertyKind, WithClause},
@@ -26,7 +27,7 @@ pub struct RequireModuleAttributes;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces non-empty attribute list in `import`/`export` statements and `import()` expressions.
+    /// This rule enforces a non-empty attribute list in `import`/`export` statements and `import()` expressions.
     ///
     /// ### Why is this bad?
     ///
@@ -62,6 +63,7 @@ declare_oxc_lint!(
     style,
     suggestion,
     version = "1.35.0",
+    short_description = "This rule enforces a non-empty attribute list in `import`/`export` statements and `import()` expressions.",
 );
 
 impl Rule for RequireModuleAttributes {
@@ -133,15 +135,13 @@ impl Rule for RequireModuleAttributes {
                     "import statement",
                 );
             }
-            AstKind::ExportNamedDeclaration(decl) => {
-                if let Some(source) = &decl.source {
-                    check_with_clause(
-                        ctx,
-                        decl.with_clause.as_deref(),
-                        source.span,
-                        "export statement",
-                    );
-                }
+            AstKind::ExportFromDeclaration(decl) => {
+                check_with_clause(
+                    ctx,
+                    decl.with_clause.as_deref(),
+                    decl.source.span,
+                    "export statement",
+                );
             }
             AstKind::ExportAllDeclaration(decl) => {
                 check_with_clause(
@@ -176,7 +176,7 @@ fn check_with_clause(
 fn fix_empty_with_property(
     fixer: RuleFixer<'_, '_>,
     empty_with_prop: &ObjectProperty<'_>,
-    properties: &oxc_allocator::Vec<'_, oxc_ast::ast::ObjectPropertyKind<'_>>,
+    properties: &ArenaVec<'_, oxc_ast::ast::ObjectPropertyKind<'_>>,
 ) -> RuleFix {
     // Find the position of the empty_with_prop in properties
     let prop_index = properties

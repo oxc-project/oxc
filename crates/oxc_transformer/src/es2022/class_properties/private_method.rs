@@ -3,14 +3,17 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_traverse::Ancestor;
 
-use crate::{Helper, common::helper_loader::helper_call_expr, context::TraverseCtx};
+use crate::{
+    Helper, common::helper_loader::helper_call_expr, context::TraverseCtx,
+    utils::sync_function_symbol_flags,
+};
 
 use super::{
     ClassProperties,
@@ -49,7 +52,7 @@ impl<'a> ClassProperties<'a> {
             return None;
         };
 
-        let mut function = value.take_in_box(ctx.ast);
+        let mut function = value.take_in_box(ctx);
 
         let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
             self.classes_stack.find_writable_private_prop(ident)
@@ -61,6 +64,7 @@ impl<'a> ClassProperties<'a> {
         function.span = *span;
         function.id = Some(temp_binding.create_binding_identifier(ctx));
         function.r#type = FunctionType::FunctionDeclaration;
+        sync_function_symbol_flags(&function, ctx);
 
         // Change parent scope of function to current scope id and remove
         // strict mode flag if parent scope is not strict mode.
@@ -93,10 +97,13 @@ impl<'a> ClassProperties<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let brand = self.classes_stack.last().bindings.brand.as_ref().unwrap();
-        let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_this(SPAN)),
-            Argument::from(brand.create_read_expression(ctx)),
-        ]);
+        let arguments = ArenaVec::from_array_in(
+            [
+                Argument::new_this_expression(SPAN, ctx),
+                Argument::from(brand.create_read_expression(ctx)),
+            ],
+            ctx,
+        );
         helper_call_expr(Helper::ClassPrivateMethodInitSpec, arguments, ctx)
     }
 }

@@ -7,26 +7,41 @@ use oxc_syntax::{
 
 use crate::lexer::Kind;
 
+static PRECEDENCE_TABLE: [Option<Precedence>; 256] = {
+    let mut table = [None; 256];
+    table[Kind::Question2 as usize] = Some(Precedence::NullishCoalescing);
+    table[Kind::Pipe2 as usize] = Some(Precedence::LogicalOr);
+    table[Kind::Amp2 as usize] = Some(Precedence::LogicalAnd);
+    table[Kind::Pipe as usize] = Some(Precedence::BitwiseOr);
+    table[Kind::Caret as usize] = Some(Precedence::BitwiseXor);
+    table[Kind::Amp as usize] = Some(Precedence::BitwiseAnd);
+    table[Kind::Eq2 as usize] = Some(Precedence::Equals);
+    table[Kind::Eq3 as usize] = Some(Precedence::Equals);
+    table[Kind::Neq as usize] = Some(Precedence::Equals);
+    table[Kind::Neq2 as usize] = Some(Precedence::Equals);
+    table[Kind::LAngle as usize] = Some(Precedence::Compare);
+    table[Kind::RAngle as usize] = Some(Precedence::Compare);
+    table[Kind::LtEq as usize] = Some(Precedence::Compare);
+    table[Kind::GtEq as usize] = Some(Precedence::Compare);
+    table[Kind::Instanceof as usize] = Some(Precedence::Compare);
+    table[Kind::In as usize] = Some(Precedence::Compare);
+    table[Kind::ShiftLeft as usize] = Some(Precedence::Shift);
+    table[Kind::ShiftRight as usize] = Some(Precedence::Shift);
+    table[Kind::ShiftRight3 as usize] = Some(Precedence::Shift);
+    table[Kind::Plus as usize] = Some(Precedence::Add);
+    table[Kind::Minus as usize] = Some(Precedence::Add);
+    table[Kind::Star as usize] = Some(Precedence::Multiply);
+    table[Kind::Slash as usize] = Some(Precedence::Multiply);
+    table[Kind::Percent as usize] = Some(Precedence::Multiply);
+    table[Kind::Star2 as usize] = Some(Precedence::Exponentiation);
+    table[Kind::As as usize] = Some(Precedence::Compare);
+    table[Kind::Satisfies as usize] = Some(Precedence::Compare);
+    table
+};
+
 #[inline]
 pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
-    match kind {
-        Kind::Question2 => Some(Precedence::NullishCoalescing),
-        Kind::Pipe2 => Some(Precedence::LogicalOr),
-        Kind::Amp2 => Some(Precedence::LogicalAnd),
-        Kind::Pipe => Some(Precedence::BitwiseOr),
-        Kind::Caret => Some(Precedence::BitwiseXor),
-        Kind::Amp => Some(Precedence::BitwiseAnd),
-        Kind::Eq2 | Kind::Eq3 | Kind::Neq | Kind::Neq2 => Some(Precedence::Equals),
-        Kind::LAngle | Kind::RAngle | Kind::LtEq | Kind::GtEq | Kind::Instanceof | Kind::In => {
-            Some(Precedence::Compare)
-        }
-        Kind::ShiftLeft | Kind::ShiftRight | Kind::ShiftRight3 => Some(Precedence::Shift),
-        Kind::Plus | Kind::Minus => Some(Precedence::Add),
-        Kind::Star | Kind::Slash | Kind::Percent => Some(Precedence::Multiply),
-        Kind::Star2 => Some(Precedence::Exponentiation),
-        Kind::As | Kind::Satisfies => Some(Precedence::Compare),
-        _ => None,
-    }
+    PRECEDENCE_TABLE[kind as usize]
 }
 
 #[inline]

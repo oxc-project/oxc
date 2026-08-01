@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, Expression, Function, YieldExpression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -67,6 +67,13 @@ impl<'de> Deserialize<'de> for CheckLoops {
     }
 }
 
+#[derive(Deserialize, JsonSchema, Serialize)]
+#[serde(untagged)]
+enum CheckLoopsConfig {
+    Bool(bool),
+    String(CheckLoops),
+}
+
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoConstantCondition {
@@ -75,6 +82,7 @@ pub struct NoConstantCondition {
     /// - `"all"` or `true` disallows constant expressions in loops
     /// - `"allExceptWhileTrue"` disallows constant expressions in loops except while loops with expression `true`
     /// - `"none"` or `false` allows constant expressions in loops
+    #[schemars(with = "CheckLoopsConfig")]
     check_loops: CheckLoops,
 }
 
@@ -128,6 +136,7 @@ declare_oxc_lint!(
     correctness,
     config = NoConstantCondition,
     version = "0.0.3",
+    short_description = "Disallow constant expressions in conditions.",
 );
 
 impl Rule for NoConstantCondition {
@@ -237,7 +246,7 @@ struct YieldBeforeLoopExitFinder {
     after_span: Option<Span>,
 }
 
-impl<'a> Visit<'a> for YieldBeforeLoopExitFinder {
+impl<'a> VisitJs<'a> for YieldBeforeLoopExitFinder {
     fn visit_yield_expression(&mut self, expr: &YieldExpression<'a>) {
         if self.after_span.is_none_or(|after_span| expr.span.start > after_span.start) {
             self.found = true;

@@ -20,3 +20,6 @@ project-root = { workspace = true }
 similar = { workspace = true, features = ["inline"] }
 
 ureq = { workspace = true, features = ["json", "rustls"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+ureq = { workspace = true, features = ["native-tls"] }

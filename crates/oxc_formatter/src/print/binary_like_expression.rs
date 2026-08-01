@@ -146,11 +146,11 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
             | AstNodes::ForStatement(_)
-            | AstNodes::TemplateLiteral(_) => true,
+            | AstNodes::TemplateLiteral(_)
+            | AstNodes::ArrowFunctionExpression(_) => true,
             AstNodes::JSXExpressionContainer(container) => {
                 matches!(container.parent(), AstNodes::JSXAttribute(_))
             }
-            AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
             AstNodes::ConditionalExpression(conditional) => !matches!(
                 conditional.parent(),
                 AstNodes::ReturnStatement(_)
@@ -158,7 +158,8 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     | AstNodes::CallExpression(_)
                     | AstNodes::NewExpression(_)
                     | AstNodes::ImportExpression(_)
-                    | AstNodes::MetaProperty(_)
+                    | AstNodes::ImportMeta(_)
+                    | AstNodes::NewTarget(_)
             ),
             // For argument of `Boolean()` calls.
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {

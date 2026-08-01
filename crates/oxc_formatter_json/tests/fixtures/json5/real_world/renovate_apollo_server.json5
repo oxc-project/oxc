@@ -1,0 +1,84 @@
+{
+  extends: [
+    "github>apollographql/renovate-config-apollo-open-source:default.json5",
+    "group:monorepos",
+    "group:jestPlusTSJest",
+    "group:jestPlusTypes",
+    "helpers:pinGitHubActionDigests"
+  ],
+  // Override this value set in apollo-open-source back to the default.
+  // It's nice to be able to see PRs for everything in the Dependency Dashboard.
+  prCreation: "immediate",
+  // Disable circleci manager; see apollographql/federation's renovate file for details.
+  enabledManagers: ["npm", "mise", "custom.regex", "github-actions"],
+  dependencyDashboard: true,
+  // It seems like a nice idea to let Renovate use GitHub's native "automerge" since PRs
+  // can get merged between Renovate runs. The downsides are:
+  // - Renovate doesn't seem to set up the automerges to use squash-and-merge (this is
+  //   likely going to be fixed, see eg https://github.com/renovatebot/renovate/issues/12290)
+  // - When Renovate does the merge itself, it does its best to ensure that the PR is fully
+  //   rebased on main so that the CI that ran is based on main rather than a possibly slightly
+  //   old branch point. GH auto-merge doesn't have that property so it's a bit more likely that
+  //   a deps update could break the build if there are recent related changes.
+  platformAutomerge: false,
+  // Update the version of Mise used in CircleCI.
+  customManagers: [{
+    customType: "regex",
+    managerFilePatterns: ["/^\\.circleci\/config\\.yml$/"],
+    matchStrings: ["MISE_VERSION=(?<currentValue>\\S+) "],
+    datasourceTemplate: "github-releases",
+    packageNameTemplate: "jdx/mise",
+    // mise doesn't use strict semver: the "major" number is the year, so
+    // bumping it isn't scarier than bumping the "minor" number.
+    versioningTemplate: "loose",
+  }],
+  packageRules: [
+    // Bunch up all non-major dependencies into a single PR.  In the common case
+    // where the upgrades apply cleanly, this causes less noise and is resolved faster
+    // than starting a bunch of upgrades in parallel for what may turn out to be
+    // a suite of related packages all released at once.
+    {
+      groupName: "all non-major dependencies",
+      matchUpdateTypes: ["patch", "minor"],
+      groupSlug: "all-minor-patch",
+    },
+    // TypeScript minor versions don't follow semver, and typically require a
+    // few changes on our end to take the upgrade. Break them out from the
+    // all-minor-patch group so they don't block other upgrades.
+    {
+      groupName: "typescript",
+      matchPackageNames: ["typescript"],
+      matchUpdateTypes: ["minor"],
+    },
+    // The testsuite depends directly on the tests in `graphql-http`.
+    // Because of this, updates to `graphql-http` affect the contents of
+    // published packages, require a changeset, and cannot be auto-merged.
+    // So we split it into its own Renovate PRs so that it doesn't block
+    // other upgrades.
+    {
+      groupName: "graphql-http",
+      matchPackageNames: ["graphql-http"],
+      matchFileNames: ["packages/integration-testsuite/package.json"],
+      rangeStrategy: "pin",
+    },
+    // We want the testsuite to explicitly pin the version of @apollo/server
+    // since they are supposed to be in lockstep.
+    {
+      matchPackageNames: ["@apollo/server"],
+      matchFileNames: ["packages/integration-testsuite/package.json"],
+      rangeStrategy: "pin",
+    },
+    // We need to support Node v20, so we don't allow ourselves to use type definitions
+    // that would let us write >v20-specific code.
+    {
+      matchPackageNames: ["@types/node"],
+      allowedVersions: "20.x"
+    },
+    {
+      // Major upgrade rollup plugins along with rollup itself.
+      matchSourceUrls: ["https://github.com/rollup/{/,}**"],
+      matchUpdateTypes: ["major"],
+      groupName: "rollup",
+    },
+  ]
+}

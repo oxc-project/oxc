@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 🐛 Bug Fixes
+
+- a2ef382 isolated-declarations: Reject `window.Symbol`  as global symbol reference (#24689) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- f17514b isolated-declarations: Emit const readonly fields as types (#24288) (camc314)
+
+## [0.139.0] - 2026-07-06
+
+### ⚡ Performance
+
+- a4db731 isolated_declarations: Use `ReplaceWith` instead of `TakeIn` (#24016) (overlookmotel)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### ⚡ Performance
+
+- 9f6ee3b isolated-declarations: Pool scope maps to avoid per-scope alloc/rehash (#23761) (Boshen)
+- b4f5b4b isolated_declarations: Remove redundant clone of formal parameter pattern (#23912) (Lawrence Lin)
+- 53d083f isolated_declarations: Use `TakeIn` not `CloneIn` (#23847) (overlookmotel)
+- d025887 isolated_declarations: Allocate AST nodes in arena directly (#23709) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [0.135.0] - 2026-06-08
+
+### 🐛 Bug Fixes
+
+- 8b631bf codegen: Remove stray space before mapped type value colon (#23010) (Boshen)
+- 49e63f7 isolated-declarations: Require annotations for satisfies initializers (#22898) (camc314)
+- 8c93601 isolated-declarations: Allow unknown enum initializer in non-const enum (#22900) (camc314)
+
 ## [0.127.0] - 2026-04-20
 
 ### 🐛 Bug Fixes

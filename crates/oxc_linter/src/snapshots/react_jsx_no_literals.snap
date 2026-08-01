@@ -1,0 +1,758 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:38]
+ 3 │                       render() {
+ 4 │                         return (<div>test</div>);
+   ·                                      ────
+ 5 │                       }
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:35]
+ 3 │                       render() {
+ 4 │                         return (<>test</>);
+   ·                                   ────
+ 5 │                       }
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:43]
+ 3 │                       render() {
+ 4 │                         const foo = (<div>test</div>);
+   ·                                           ────
+ 5 │                         return foo;
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:65]
+ 3 │                       render() {
+ 4 │                         const varObjectTest = { testKey : (<div>test</div>) };
+   ·                                                                 ────
+ 5 │                         return varObjectTest.testKey;
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:34]
+ 2 │                     var Hello = createReactClass({
+ 3 │                       foo: (<div>hello</div>),
+   ·                                  ─────
+ 4 │                       render() {
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:5:32]
+ 4 │                             return (
+ 5 │ ╭─▶                           <div>
+ 6 │ │                               asdjfl
+ 7 │ ╰─▶                           </div>
+ 8 │                             );
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+    ╭─[jsx_no_literals.tsx:5:32]
+  4 │                             return (
+  5 │ ╭─▶                           <div>
+  6 │ │                               asdjfl
+  7 │ │                               test
+  8 │ │                               foo
+  9 │ ╰─▶                           </div>
+ 10 │                             );
+    ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:6:39]
+ 5 │                               <div>
+ 6 │ ╭─▶                             {'asdjfl'}
+ 7 │ │                               test
+ 8 │ ╰─▶                             {'foo'}
+ 9 │                               </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:24]
+ 2 │                     <Foo bar="test">
+ 3 │                       {'Test'}
+   ·                        ──────
+ 4 │                     </Foo>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <Foo bar="test">
+   ·                          ──────────
+ 3 │                       {'Test'}
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <Foo bar="test">
+   ·                          ──────────
+ 3 │                       {'Test' + name}
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:37]
+ 1 │     
+ 2 │ ╭─▶                     <Foo bar="test">
+ 3 │ │                         Test
+ 4 │ ╰─▶                     </Foo>
+ 5 │                       
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <Foo bar="test">
+   ·                          ──────────
+ 3 │                       Test
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:24]
+ 2 │                     <Foo>
+ 3 │                       {`Test`}
+   ·                        ──────
+ 4 │                     </Foo>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={`Test`} />
+   ·      ────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={`${baz}`} />
+   ·      ──────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={`Test ${baz}`} />
+   ·      ───────────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={`foo` + 'bar'} />
+   ·      ───────────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={`foo` + 'bar'} />
+   ·      ───────────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={`foo` + `bar`} />
+   ·      ───────────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={`foo` + `bar`} />
+   ·      ───────────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={'foo' + `bar`} />
+   ·      ───────────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={'foo' + `bar`} />
+   ·      ───────────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:49]
+ 3 │                       render() {
+ 4 │                         return <div bar={'foo'}>asdf</div>
+   ·                                                 ────
+ 5 │                       }
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:4:37]
+ 3 │                       render() {
+ 4 │                         return <div bar={'foo'}>asdf</div>
+   ·                                     ───────────
+ 5 │                       }
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:6]
+ 1 │ <Foo bar={'bar'} />
+   ·      ───────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <img alt='blank image'></img>
+   ·                          ─────────────────
+ 3 │                   
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:1:42]
+ 1 │ export const WithChildren = ({}) => <div>baz bob</div>;
+   ·                                          ───────
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:1:44]
+ 1 │ export const WithAttributes = ({}) => <div title="foo bar" />;
+   ·                                            ───────────────
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:44]
+ 2 │                     export const WithAttributesAndChildren = ({}) => (
+ 3 │                       <div title="foo bar">baz bob</div>
+   ·                                            ───────
+ 4 │                     );
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     export const WithAttributesAndChildren = ({}) => (
+ 3 │                       <div title="foo bar">baz bob</div>
+   ·                            ───────────────
+ 4 │                     );
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <div className="test" />
+   ·                          ────────────────
+ 3 │                   
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <div className="test" id="foo" title="bar" />
+   ·                          ────────────────
+ 3 │                   
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:2:43]
+ 1 │ 
+ 2 │                     <div className="test" id="foo" title="bar" />
+   ·                                           ────────
+ 3 │                   
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <div src="image.jpg" />
+   ·                          ───────────────
+ 3 │                   
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:39]
+ 1 │ 
+ 2 │                     <div title="text">test</div>
+   ·                                       ────
+ 3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <div title="text">test</div>
+   ·                          ────────────
+ 3 │                   
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <div className="test" title="hello" />
+   ·                          ────────────────
+ 3 │                   
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:2:43]
+ 1 │ 
+ 2 │                     <div className="test" title="hello" />
+   ·                                           ─────────────
+ 3 │                   
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <div className="test" title="hello" />
+   ·                          ────────────────
+ 3 │                   
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div>foo</div>
+   ·                            ───
+ 4 │                       <T>bar</T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div>foo</div>
+ 4 │                       <T>bar</T>
+   ·                          ───
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div>foo</div>
+   ·                            ───
+ 4 │                       <T>bar</T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:33]
+ 1 │ 
+ 2 │                     <T>foo <div>bar</div></T>
+   ·                                 ───
+ 3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div>foo</div>
+   ·                            ───
+ 4 │                       <T>{'bar'}</T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:27]
+ 3 │                       <div>foo</div>
+ 4 │                       <T>{'bar'}</T>
+   ·                           ─────
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div>foo</div>
+   ·                            ───
+ 4 │                       <T>{'bar'}<div>{'baz'}</div></T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:27]
+ 3 │                       <div>foo</div>
+ 4 │                       <T>{'bar'}<div>{'baz'}</div></T>
+   ·                           ─────
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:39]
+ 3 │                       <div>foo</div>
+ 4 │                       <T>{'bar'}<div>{'baz'}</div></T>
+   ·                                       ─────
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div>foo</div>
+   ·                            ───
+ 4 │                       <T>{'bar'}<div>{'baz'}</div></T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:27]
+ 3 │                       <div>foo</div>
+ 4 │                       <T>{'bar'}<div>{'baz'}</div></T>
+   ·                           ─────
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:29]
+ 2 │                     <div>
+ 3 │                       <div>{'foo'}</div>
+   ·                             ─────
+ 4 │                       <T>{'foo'}</T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:29]
+ 2 │                     <div>
+ 3 │                       <div>{'foo'}</div>
+   ·                             ─────
+ 4 │                       <T>{'foo'}<div>{'foo'}</div></T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:29]
+ 2 │                     <div>
+ 3 │                       <div>{'foo'}</div>
+   ·                             ─────
+ 4 │                       <T>{'foo'}<div>{'foo'}</div></T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:39]
+ 3 │                       <div>{'foo'}</div>
+ 4 │                       <T>{'foo'}<div>{'foo'}</div></T>
+   ·                                       ─────
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div foo1="bar" />
+   ·                            ──────────
+ 4 │                       <T foo2="bar" />
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div foo1="bar" />
+   ·                            ──────────
+ 4 │                       <T foo2="bar"><div foo3="bar" /></T>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div foo1="bar" />
+   ·                            ──────────
+ 4 │                       <T foo2="bar"><div foo3="bar" /></T>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:4:42]
+ 3 │                       <div foo1="bar" />
+ 4 │                       <T foo2="bar"><div foo3="bar" /></T>
+   ·                                          ──────────
+ 5 │                     </div>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div foo1="bar1" />
+ 4 │                       <T foo2="bar2" />
+   ·                          ───────────
+ 5 │                     </div>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div foo1="bar1" />
+ 4 │                       <T foo2="bar2"><div foo3="bar3" /></T>
+   ·                          ───────────
+ 5 │                     </div>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:4:43]
+ 3 │                       <div foo1="bar1" />
+ 4 │                       <T foo2="bar2"><div foo3="bar3" /></T>
+   ·                                           ───────────
+ 5 │                     </div>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div foo1="bar1" />
+ 4 │                       <T foo2="bar2"><div foo3="bar3" /></T>
+   ·                          ───────────
+ 5 │                     </div>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:29]
+ 2 │                     <div>
+ 3 │                       <div>{'foo'}</div>
+   ·                             ─────
+ 4 │                       <T>{'bar'}</T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div>foo</div>
+ 4 │                       <T>foo</T>
+   ·                          ───
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div>foo</div>
+ 4 │                       <T>foo</T>
+   ·                          ───
+ 5 │                       <T>bar</T>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:6:26]
+ 5 │                       <T>bar</T>
+ 6 │                       <T>baz</T>
+   ·                          ───
+ 7 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div foo1="bar1" />
+ 4 │                       <T foo2="bar2" />
+   ·                          ───────────
+ 5 │                     </div>
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div foo1="bar1" />
+   ·                            ───────────
+ 4 │                       <T foo2="bar2" />
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:26]
+ 2 │                     <div>
+ 3 │                       <T>foo</T>
+   ·                          ───
+ 4 │                       <U>bar</U>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <T>foo</T>
+ 4 │                       <U>bar</U>
+   ·                          ───
+ 5 │                     </div>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:26]
+ 2 │                     <div>
+ 3 │                       <T>foo</T>
+   ·                          ───
+ 4 │                       <U>bar</U>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:24]
+ 1 │ 
+ 2 │                     <T>foo <U>bar</U></T>
+   ·                        ────
+ 3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:25]
+ 1 │ 
+ 2 │                     <T>{'foo'}<U>{'bar'}</U></T>
+   ·                         ─────
+ 3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:30]
+ 1 │ 
+ 2 │                     <T>foo<U>foo</U></T>
+   ·                              ───
+ 3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:24]
+ 1 │ 
+ 2 │                     <T>foo<U>foo</U></T>
+   ·                        ───
+ 3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:4]
+ 2 │ const { T: U } = props;
+ 3 │ <U>foo</U>
+   ·    ───
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:3:33]
+ 2 │                     <div>
+ 3 │                       <Fragment>foo</Fragment>
+   ·                                 ───
+ 4 │                       <React.Fragment>foo</React.Fragment>
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow literal text as JSX children
+   ╭─[jsx_no_literals.tsx:2:26]
+ 1 │ 
+ 2 │                     <div>foo</div>
+   ·                          ───
+ 3 │                   
+   ╰────
+  help: Wrap this text in a JSX expression container, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:4:31]
+ 3 │                       <div type="text" />
+ 4 │                       <Button type="submit" />
+   ·                               ─────────────
+ 5 │                     </div>
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:3:30]
+ 2 │                     <div>
+ 3 │                       <Input placeholder="Enter text" type="password" />
+   ·                              ────────────────────────
+ 4 │                       <Button type="submit" disabled="true" />
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:4:45]
+ 3 │                       <Input placeholder="Enter text" type="password" />
+ 4 │                       <Button type="submit" disabled="true" />
+   ·                                             ───────────────
+ 5 │                     </div>
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div className="wrapper" id="main" />
+   ·                            ───────────────────
+ 4 │                       <Button className="btn" id="submit-btn" />
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:4:47]
+ 3 │                       <div className="wrapper" id="main" />
+ 4 │                       <Button className="btn" id="submit-btn" />
+   ·                                               ───────────────
+ 5 │                     </div>
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.
+
+  ⚠ react(jsx-no-literals): Disallow string literals in JSX attributes
+   ╭─[jsx_no_literals.tsx:3:28]
+ 2 │                     <div>
+ 3 │                       <div foo1="bar1" />
+   ·                            ───────────
+ 4 │                       <T foo2="bar2" />
+   ╰────
+  help: Replace this string literal with a non-literal expression, such as a call to a translation function.
+
+  ⚠ react(jsx-no-literals): Disallow string literals on restricted JSX attributes
+   ╭─[jsx_no_literals.tsx:4:26]
+ 3 │                       <div foo1="bar1" />
+ 4 │                       <T foo2="bar2" />
+   ·                          ───────────
+ 5 │                     </div>
+   ╰────
+  help: This attribute is listed in `restrictedAttributes`; replace its string literal value with a non-literal expression.

@@ -434,7 +434,7 @@ fn write_char_escape(escape: Escape, byte: u8, buffer: &mut CodeBuffer) {
 
 #[cfg(test)]
 mod tests {
-    use super::super::CompactTSSerializer;
+    use super::super::CompactSerializer;
     use super::*;
 
     #[test]
@@ -462,7 +462,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::default();
+            let mut serializer = CompactSerializer::default();
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -474,7 +474,7 @@ mod tests {
         let cases = [(String::new(), r#""""#), ("foobar".to_string(), r#""foobar""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::default();
+            let mut serializer = CompactSerializer::default();
             input.clone().serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -486,7 +486,7 @@ mod tests {
         let cases = [("", r#""""#), ("a", r#""a""#), ("abc", r#""abc""#)];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::default();
+            let mut serializer = CompactSerializer::default();
             JsonSafeString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);
@@ -509,7 +509,7 @@ mod tests {
         ];
 
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::default();
+            let mut serializer = CompactSerializer::default();
             LoneSurrogatesString(input).serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

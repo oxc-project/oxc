@@ -66,6 +66,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "0.0.18",
+    short_description = "Prefer using `Array#some()` over various alternatives.",
 );
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v56.0.1/docs/rules/prefer-array-some.md>

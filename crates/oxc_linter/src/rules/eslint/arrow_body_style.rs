@@ -44,19 +44,29 @@ fn unexpected_block_with_unknown_help_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum Mode {
+    /// Enforces no braces where they can be omitted (default).
     #[default]
     AsNeeded,
+    /// Enforces braces around the function body.
     Always,
+    /// Enforces no braces around the function body (constrains arrow functions to the role of returning an expression).
     Never,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
-pub struct ArrowBodyStyle(Mode, ArrowBodyStyleConfig);
+pub struct ArrowBodyStyle(
+    /// Controls when braces are required around arrow function bodies.
+    Mode,
+    /// Additional options for the `as-needed` mode.
+    ArrowBodyStyleConfig,
+);
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ArrowBodyStyleConfig {
+    /// Requires braces and an explicit return for object literals. This option only applies when
+    /// the first option is `"as-needed"`.
     require_return_for_object_literal: bool,
 }
 
@@ -72,32 +82,6 @@ declare_oxc_lint!(
     ///
     /// Inconsistent use of block vs. concise bodies makes code harder to read.
     /// Concise bodies are limited to a single expression, whose value is implicitly returned.
-    ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Enum: `"always"`, `"as-needed"`, `"never"`
-    /// - Default: `"as-needed"`
-    ///
-    /// Possible values:
-    /// * `never` enforces no braces around the function body (constrains arrow functions to the role of returning an expression)
-    /// * `always` enforces braces around the function body
-    /// * `as-needed` enforces no braces where they can be omitted (default)
-    ///
-    /// Second option:
-    /// - Type: `object`
-    /// - Properties:
-    ///     - `requireReturnForObjectLiteral`: `boolean` (default: `false`) - requires braces and an explicit return for object literals.
-    ///
-    /// Note: This option only applies when the first option is `"as-needed"`.
-    ///
-    /// Example configuration:
-    /// ```json
-    /// {
-    ///     "arrow-body-style": ["error", "as-needed", { "requireReturnForObjectLiteral": true }]
-    /// }
-    /// ```
     ///
     /// ### Examples
     ///
@@ -196,6 +180,7 @@ declare_oxc_lint!(
     fix,
     config = ArrowBodyStyle,
     version = "1.4.0",
+    short_description = "Enforce consistent use of braces in arrow functions.",
 );
 
 impl Rule for ArrowBodyStyle {
@@ -208,7 +193,7 @@ impl Rule for ArrowBodyStyle {
             return;
         };
 
-        if arrow_func_expr.expression {
+        if arrow_func_expr.is_expression() {
             self.run_for_arrow_expression(arrow_func_expr, ctx);
         } else {
             self.run_for_arrow_block(arrow_func_expr, node, ctx);
@@ -237,7 +222,7 @@ impl ArrowBodyStyle {
             return;
         }
 
-        ctx.diagnostic_with_fix(expected_block_diagnostic(arrow_func_expr.body.span), |fixer| {
+        ctx.diagnostic_with_fix(expected_block_diagnostic(arrow_func_expr.body.span()), |fixer| {
             Self::fix_concise_to_block(arrow_func_expr, fixer, ctx)
         });
     }
@@ -253,7 +238,7 @@ impl ArrowBodyStyle {
         ctx: &LintContext<'a>,
     ) {
         let ArrowBodyStyle(mode, _config) = &self;
-        let body = &arrow_func_expr.body;
+        let body = arrow_func_expr.get_function_body().unwrap();
 
         match mode {
             Mode::Never => {
@@ -343,11 +328,11 @@ impl ArrowBodyStyle {
         let inner_expr = expr.get_inner_expression();
         if matches!(inner_expr, Expression::ObjectExpression(_)) {
             let inner_text = ctx.source_range(inner_expr.span());
-            return fixer.replace(body.span, format!("{{return {inner_text}}}"));
+            return fixer.replace(body.span(), format!("{{return {inner_text}}}"));
         }
 
         // For all other expressions, just wrap in `{ return ... }`
-        fixer.replace(body.span, format!("{{return {expr_text}}}"))
+        fixer.replace(body.span(), format!("{{return {expr_text}}}"))
     }
 
     /// Fix: Convert block body to concise body
@@ -391,11 +376,11 @@ impl ArrowBodyStyle {
             fix.push(fixer.delete_range(Span::sized(return_statement.span.end - 1, 1)));
         }
         fix.push(fixer.replace(
-            Span::sized(arrow_func_expr.body.span.start, 1),
+            Span::sized(arrow_func_expr.body.span().start, 1),
             if needs_parens { "(" } else { "" },
         ));
         fix.push(fixer.replace(
-            Span::sized(arrow_func_expr.body.span.end - 1, 1),
+            Span::sized(arrow_func_expr.body.span().end - 1, 1),
             if needs_parens { ")" } else { "" },
         ));
 

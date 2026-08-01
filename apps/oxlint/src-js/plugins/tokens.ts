@@ -157,6 +157,18 @@ let deserializedTokensLen = 0;
 // not *total* number of tokens.
 const DESERIALIZED_TOKEN_INDEXES_MIN_CAPACITY = 16;
 
+// `defineGetter(obj, prop, getter)` is equivalent to `obj.__defineGetter__(prop, getter)`,
+// but without `Object.prototype` lookup at each call site
+const defineGetter = Function.prototype.call.bind(
+  // @ts-expect-error - `__defineGetter__` is not in `Object.prototype`'s type definition,
+  // but it does exist at runtime and is widely supported in JS engines, including V8
+  Object.prototype.__defineGetter__,
+) as (obj: object, prop: string, getter: () => unknown) => void;
+
+// Getter for the `loc` property on a `Token` class instance.
+// Copied into a `const` below after being defined in class static block.
+let getTokenLocTemp: (this: Token) => Location;
+
 // Reset `#loc` field on a `Token` class instance.
 // Copied into a `const` below after being defined in class static block.
 let resetLocTemp: (token: Token) => void;
@@ -168,9 +180,13 @@ let getTokenPrivateLoc: (token: Token) => Location | null;
 /**
  * Token implementation with lazy `loc` caching via private field.
  *
- * Using a class with a private `#loc` field avoids hidden class transitions that would occur
- * with `Object.defineProperty` / `delete` on plain objects.
- * All `Token` instances always have the same V8 hidden class, keeping property access monomorphic.
+ * `loc` is defined as an own accessor property via `__defineGetter__` in the constructor,
+ * using a shared getter function (`getTokenLoc`). This makes `loc` an own enumerable property,
+ * so `{...token}` spreads it and `JSON.stringify(token)` serializes it.
+ *
+ * The computed `Location` value is cached in the private `#loc` field on first access.
+ * All instances share the same getter function, keeping the V8 hidden class transition
+ * identical across instances. Reset only clears the `#loc` field.
  */
 class Token {
   type: TokenType["type"] = null!; // Overwritten later
@@ -180,36 +196,38 @@ class Token {
   end: number = 0;
   range: [number, number] = [0, 0];
 
+  declare loc: Location; // Defined with `__defineGetter__` in constructor
+
   #loc: Location | null = null;
 
-  get loc(): Location {
-    const loc = this.#loc;
-    if (loc !== null) return loc;
-
-    // Store token in `tokensWithLoc` array. `resetTokens` will clear the `#loc` property.
-    // Note: The comparison `activeTokensWithLocCount < tokensWithLoc.length` must be this way around
-    // so that V8 can remove the bounds check on `tokensWithLoc[activeTokensWithLocCount]`.
-    // `tokensWithLoc.length > activeTokensWithLocCount` would *not* remove the bounds check in Maglev compiler.
-    if (activeTokensWithLocCount < tokensWithLoc.length) {
-      tokensWithLoc[activeTokensWithLocCount] = this;
-    } else {
-      tokensWithLoc.push(this);
-    }
-    activeTokensWithLocCount++;
-
-    return (this.#loc = computeLoc(this.start, this.end));
+  constructor() {
+    // Define `loc` as an own getter property (enumerable + configurable by default).
+    // This makes `{...token}` spread `loc` and `JSON.stringify(token)` serialize it.
+    // Note: `new Token()` is 25% faster with `__defineGetter__` vs `Object.defineProperty`.
+    // See https://github.com/oxc-project/oxc/pull/22238.
+    defineGetter(this, "loc", getTokenLoc);
   }
 
-  // Include `loc` in `JSON.stringify` output.
-  // `loc` is a prototype getter, and `JSON.stringify` only serializes own properties,
-  // so without this method, `loc` would be excluded.
-  toJSON() {
-    // oxlint-disable-next-line typescript/no-misused-spread
-    return { ...this, loc: this.loc };
-  }
-
+  // Functions requiring access to `#loc` defined in static block to avoid exposing them as public methods
   static {
-    // Defined in static block to avoid exposing this as a public method
+    getTokenLocTemp = function (this: Token): Location {
+      const loc = this.#loc;
+      if (loc !== null) return loc;
+
+      // Store token in `tokensWithLoc` array. `resetTokens` will clear the `#loc` property.
+      // Note: The comparison `activeTokensWithLocCount < tokensWithLoc.length` must be this way around
+      // so that V8 can remove the bounds check on `tokensWithLoc[activeTokensWithLocCount]`.
+      // `tokensWithLoc.length > activeTokensWithLocCount` would *not* remove the bounds check in Maglev compiler.
+      if (activeTokensWithLocCount < tokensWithLoc.length) {
+        tokensWithLoc[activeTokensWithLocCount] = this;
+      } else {
+        tokensWithLoc.push(this);
+      }
+      activeTokensWithLocCount++;
+
+      return (this.#loc = computeLoc(this.start, this.end));
+    };
+
     resetLocTemp = (token: Token) => {
       token.#loc = null;
     };
@@ -218,12 +236,9 @@ class Token {
   }
 }
 
-// Reset `#loc` field on a `Token` class instance.
-// Copied into a const here to avoid checks at call site (`let` binding could be re-assigned).
+// Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
+const getTokenLoc = getTokenLocTemp;
 const resetLoc = resetLocTemp;
-
-// Make `loc` property enumerable so that `for (const key in token) ...` includes `loc` in the keys it iterates over
-Object.defineProperty(Token.prototype, "loc", { enumerable: true });
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
@@ -269,7 +284,7 @@ export const FLAG_DESERIALIZED = 1;
 export function initTokens(): void {
   debugAssert(tokens === null, "Tokens already initialized");
 
-  if (!allTokensDeserialized) deserializeTokens();
+  if (allTokensDeserialized === false) deserializeTokens();
 
   // Create `tokens` array as a slice of `cachedTokens` array.
   //
@@ -293,7 +308,7 @@ export function initTokens(): void {
  * Does NOT build the `tokens` array - use `initTokens` for that.
  */
 export function deserializeTokens(): void {
-  debugAssert(!allTokensDeserialized, "Tokens already deserialized");
+  debugAssert(allTokensDeserialized === false, "Tokens already deserialized");
 
   if (tokensInt32 === null) initTokensBuffer();
 
@@ -371,7 +386,7 @@ export function initTokensBuffer(): void {
  */
 export function getToken(index: number): TokenType {
   // Skip all other checks if all tokens have been deserialized
-  if (!allTokensDeserialized) {
+  if (allTokensDeserialized === false) {
     const token = deserializeTokenIfNeeded(index);
 
     if (token !== null) {
@@ -398,31 +413,35 @@ export function getToken(index: number): TokenType {
  * @returns `Token` object if newly deserialized, or `null` if already deserialized
  */
 function deserializeTokenIfNeeded(index: number): Token | null {
+  debugAssertIsNonNull(tokensUint8, "Token buffers should be initialized");
+  debugAssertIsNonNull(tokensInt32, "Token buffers should be initialized");
+  debugAssertIsNonNull(sourceText, "Source text should be initialized");
+
   const pos = index << TOKEN_SIZE_SHIFT;
 
   // Fast path: If already deserialized, exit
   const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
-  if (tokensUint8![flagPos] !== FLAG_NOT_DESERIALIZED) return null;
+  if (tokensUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
 
   // Mark token as deserialized, so it won't be deserialized again
-  tokensUint8![flagPos] = FLAG_DESERIALIZED;
+  tokensUint8[flagPos] = FLAG_DESERIALIZED;
 
   // Deserialize token into a cached `Token` object
   const token = cachedTokens[index];
 
-  const kind = tokensUint8![pos + KIND_FIELD_OFFSET];
+  const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
 
   const pos32 = pos >> 2,
-    start = tokensInt32![pos32],
-    end = tokensInt32![pos32 + 1];
+    start = tokensInt32[pos32],
+    end = tokensInt32[pos32 + 1];
 
   // Get `value` as slice of source text `start..end`.
   // Slice `start + 1..end` for private identifiers, to strip leading `#`.
-  let value = sourceText!.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
+  let value = sourceText.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
 
   if (kind <= PRIVATE_IDENTIFIER_KIND) {
     // Unescape if `escaped` flag is set
-    if (tokensUint8![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+    if (tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
       value = unescapeIdentifier(value);
     }
   } else if (kind === REGEXP_KIND) {
@@ -483,12 +502,14 @@ function unescapeIdentifier(name: string): string {
 }
 
 /**
- * Check tokens buffer has valid ranges and ascending order.
+ * Check all tokens in buffer have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckValidRanges(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
@@ -501,15 +522,21 @@ function debugCheckValidRanges(): void {
     }
     lastEnd = end;
   }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Tokens end beyond source text length: ${lastEnd} > ${sourceText.length}`);
+  }
 }
 
 /**
- * Check all deserialized tokens are in ascending order.
+ * Check all deserialized tokens have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckDeserializedTokens(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
@@ -526,6 +553,10 @@ function debugCheckDeserializedTokens(): void {
       );
     }
     lastEnd = end;
+  }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Tokens end beyond source text length: ${lastEnd} > ${sourceText.length}`);
   }
 }
 

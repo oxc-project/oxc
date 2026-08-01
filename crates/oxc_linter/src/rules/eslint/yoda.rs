@@ -65,8 +65,7 @@ impl Default for Yoda {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require or disallow "Yoda" conditions.
-    /// This rule aims to enforce consistent style of conditions which compare a variable to a literal value.
+    /// Require or disallow "Yoda" conditions. This rule aims to enforce consistent style of conditions which compare a variable to a literal value.
     ///
     /// ### Why is this bad?
     ///
@@ -218,6 +217,7 @@ declare_oxc_lint!(
     fix,
     config = Yoda,
     version = "0.14.1",
+    short_description = "Require or disallow \"Yoda\" conditions.",
 );
 
 impl Rule for Yoda {

@@ -51,7 +51,7 @@ fn format_agent(diagnostic: &Error) -> String {
     let message = compact_message(&diagnostic.to_string());
     let help = diagnostic
         .help()
-        .map(|help| format!(" help: {}", compact_message(&help.to_string())))
+        .map(|help| format!(" help: {}", compact_message(&help)))
         .unwrap_or_default();
     let location =
         if start.line == 0 { String::new() } else { format!(":{}:{}", start.line, start.column) };

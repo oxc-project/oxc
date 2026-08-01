@@ -5,7 +5,7 @@ use oxc_ast::{
         FormalParameter, Function, MethodDefinitionKind, Statement,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -57,6 +57,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.15.13",
+    short_description = "Prevents unnecessary assignment of parameter properties.",
 );
 
 impl Rule for NoUnnecessaryParameterPropertyAssignment {
@@ -68,10 +69,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
             return;
         }
 
-        let parameter_properties: Vec<_> =
-            method.value.params.items.iter().filter(|param| param.has_modifier()).collect();
-
-        if parameter_properties.is_empty() {
+        if !method.value.params.items.iter().any(FormalParameter::has_modifier) {
             return;
         }
 
@@ -101,7 +99,7 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
 
         let mut visitor = AssignmentVisitor {
             ctx,
-            parameter_properties,
+            parameters: &method.value.params.items,
             assigned_before_unnecessary: FxHashSet::default(),
             assigned_before_constructor,
         };
@@ -111,12 +109,12 @@ impl Rule for NoUnnecessaryParameterPropertyAssignment {
 
 struct AssignmentVisitor<'a, 'b> {
     ctx: &'b LintContext<'a>,
-    parameter_properties: Vec<&'b FormalParameter<'a>>,
+    parameters: &'b [FormalParameter<'a>],
     assigned_before_unnecessary: FxHashSet<Str<'a>>,
     assigned_before_constructor: FxHashSet<Str<'a>>,
 }
 
-impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
     fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
         // don't continue walking into functions as they have a different scoped "this"
     }
@@ -144,7 +142,7 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
         }
         // the property of this matches the identifier name on the right
 
-        for param in &self.parameter_properties {
+        for param in self.parameters.iter().filter(|param| param.has_modifier()) {
             let Some(binding_identifier) = param.pattern.get_binding_identifier() else {
                 continue;
             };
@@ -193,9 +191,15 @@ fn get_assignments_inside_expression<'a>(
         Expression::CallExpression(call) => {
             // Immediately Invoked Function Expression (IIFE)
 
+            if let Expression::ArrowFunctionExpression(expr) = call.callee.without_parentheses()
+                && let Some(Expression::AssignmentExpression(assignment)) = expr.get_expression()
+            {
+                assignments.push(assignment);
+            }
+
             let function_body = match call.callee.without_parentheses() {
-                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
-                Expression::FunctionExpression(expr) => expr.body.as_ref(),
+                Expression::ArrowFunctionExpression(expr) => expr.get_function_body(),
+                Expression::FunctionExpression(expr) => expr.body.as_deref(),
                 _ => None,
             };
 

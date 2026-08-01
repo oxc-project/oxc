@@ -125,6 +125,7 @@ declare_oxc_lint!(
     style,
     config = ParameterPropertiesConfig,
     version = "1.48.0",
+    short_description = "Requires or disallows parameter properties in class constructors.",
 );
 
 impl Rule for ParameterProperties {

@@ -55,6 +55,7 @@ declare_oxc_lint!(
     pedantic,
     suggestion,
     version = "0.10.1",
+    short_description = "When spreading a ternary in an array, we can use both `[]` and `''` as fallbacks, but it's better to have consistent types in both branches.",
 );
 
 impl Rule for ConsistentEmptyArraySpread {

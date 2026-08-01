@@ -61,6 +61,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     version = "0.7.0",
+    short_description = "Disallow `parseInt()` and `Number.parseInt()` in favor of binary, octal, and hexadecimal literals.",
 );
 
 impl Rule for PreferNumericLiterals {
@@ -134,7 +135,7 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
     }
 
     let radix_arg = &call_expr.arguments[1];
-    let Expression::NumericLiteral(numeric_lit) = &radix_arg.to_expression() else {
+    let Some(Expression::NumericLiteral(numeric_lit)) = radix_arg.as_expression() else {
         return;
     };
 
@@ -221,6 +222,8 @@ fn test() {
         "parseInt(`11`, 16n);",       // { "ecmaVersion": 2020 },
         "parseInt(1n, 2);",           // { "ecmaVersion": 2020 },
         r#"class C { #parseInt; foo() { Number.#parseInt("111110111", 2); } }"#, // { "ecmaVersion": 2022 }
+        "parseInt('ff', ...x);",
+        "Number.parseInt('ff', ...x);",
     ];
 
     let fail = vec![

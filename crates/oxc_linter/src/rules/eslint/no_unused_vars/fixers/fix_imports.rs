@@ -2,13 +2,16 @@ use oxc_ast::ast::{ImportDeclaration, ImportDeclarationSpecifier};
 use oxc_span::{GetSpan, Span};
 
 use super::{NoUnusedVars, Symbol, count_whitespace_or_commas};
-use crate::fixer::{RuleFix, RuleFixer};
+use crate::{
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+};
 
 impl NoUnusedVars {
-    #[expect(clippy::unused_self)]
     pub(in super::super) fn remove_unused_import_declaration<'a>(
         &self,
         fixer: RuleFixer<'_, 'a>,
+        ctx: &LintContext<'a>,
         symbol: &Symbol<'_, 'a>,
         import: &ImportDeclaration<'a>,
     ) -> RuleFix {
@@ -32,7 +35,7 @@ impl NoUnusedVars {
         };
 
         // `import foo, { bar, baz } from 'module';` where all specifiers are unused
-        if Self::all_specifiers_unused(symbol, specifiers) {
+        if self.all_specifiers_unused(ctx, specifiers) {
             return Self::delete_import_declaration(fixer, import);
         }
 
@@ -61,11 +64,18 @@ impl NoUnusedVars {
 
     /// Check if all specifiers in the import are unused (have no references)
     fn all_specifiers_unused(
-        symbol: &Symbol<'_, '_>,
+        &self,
+        ctx: &LintContext<'_>,
         specifiers: &[ImportDeclarationSpecifier<'_>],
     ) -> bool {
-        let scoping = symbol.scoping();
-        specifiers.iter().all(|specifier| scoping.symbol_is_unused(specifier.local().symbol_id()))
+        specifiers.iter().all(|specifier| {
+            let specifier_symbol =
+                Symbol::new(ctx, ctx.module_record(), specifier.local().symbol_id());
+            !Self::should_skip_symbol(&specifier_symbol)
+                && self.is_ignored(&specifier_symbol).is_none()
+                && !specifier_symbol.is_exported_binding()
+                && !specifier_symbol.has_usages(self)
+        })
     }
 
     /// Delete the entire import declaration, preserving blank lines appropriately

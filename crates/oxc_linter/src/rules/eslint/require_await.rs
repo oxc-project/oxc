@@ -1,11 +1,11 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, FunctionType,
-        MethodDefinition, ObjectProperty, PropertyKey,
+        ArrowFunctionExpression, AwaitExpression, ForOfStatement, Function, FunctionBody,
+        FunctionType, MethodDefinition, ObjectProperty, PropertyKey,
     },
 };
-use oxc_ast_visit::{Visit, walk::walk_for_of_statement};
+use oxc_ast_visit::{VisitJs, walk_js::walk_for_of_statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -82,13 +82,36 @@ declare_oxc_lint!(
     pedantic,
     fix_dangerous,
     version = "0.4.2",
+    short_description = "Disallow async functions which have no `await` expression.",
 );
 
 impl Rule for RequireAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::FunctionBody(body) = node.kind() else {
+        match node.kind() {
+            AstKind::ArrowFunctionExpression(func) => Self::check_arrow_expression(func, ctx),
+            AstKind::FunctionBody(body) => Self::check_function_body(body, node, ctx),
+            _ => {}
+        }
+    }
+}
+
+impl RequireAwait {
+    fn check_arrow_expression(func: &ArrowFunctionExpression, ctx: &LintContext) {
+        if !func.r#async {
             return;
-        };
+        }
+        let Some(expression) = func.get_expression() else { return };
+        let mut finder = AwaitFinder { found: false };
+        finder.visit_expression(expression);
+        if !finder.found {
+            let need_delete_span = get_delete_span(ctx, func.span.start);
+            ctx.diagnostic_with_dangerous_fix(require_await_diagnostic(func.span), |fixer| {
+                fixer.delete_range(need_delete_span)
+            });
+        }
+    }
+
+    fn check_function_body<'a>(body: &FunctionBody<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if body.is_empty() {
             return;
         }
@@ -190,7 +213,7 @@ struct AwaitFinder {
     found: bool,
 }
 
-impl<'a> Visit<'a> for AwaitFinder {
+impl<'a> VisitJs<'a> for AwaitFinder {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         if self.found {
             return;

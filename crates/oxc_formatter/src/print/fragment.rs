@@ -1,9 +1,10 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{Format, JsFormatter, prelude::*, trivia::format_dangling_comments},
+    formatter::{JsFormatter, prelude::*, trivia::format_dangling_comments},
     options::TrailingSeparator,
     write,
 };

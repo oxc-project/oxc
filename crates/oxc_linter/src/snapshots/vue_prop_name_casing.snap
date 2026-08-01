@@ -177,3 +177,27 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                  ─────────────────
  5 │                     }
    ╰────
+
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
+   ╭─[prop_name_casing.tsx:4:21]
+ 3 │                   type Props = {
+ 4 │                     greeting_text: number
+   ·                     ─────────────
+ 5 │                   }
+   ╰────
+
+  ⚠ vue(prop-name-casing): Prop 'greeting_text' is not in camelCase.
+   ╭─[prop_name_casing.tsx:3:33]
+ 2 │                   <script setup lang="ts">
+ 3 │                   defineProps<{ greeting_text: number } | { another_text: string }>()
+   ·                                 ─────────────
+ 4 │                   </script>
+   ╰────
+
+  ⚠ vue(prop-name-casing): Prop 'another_text' is not in camelCase.
+   ╭─[prop_name_casing.tsx:3:61]
+ 2 │                   <script setup lang="ts">
+ 3 │                   defineProps<{ greeting_text: number } | { another_text: string }>()
+   ·                                                             ────────────
+ 4 │                   </script>
+   ╰────

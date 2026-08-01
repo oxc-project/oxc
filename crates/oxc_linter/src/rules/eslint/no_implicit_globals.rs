@@ -83,6 +83,7 @@ declare_oxc_lint!(
     restriction,
     config = NoImplicitGlobals,
     version = "1.65.0",
+    short_description = "Disallows declarations in the global scope, global variable leaks, and writes or redeclarations of read-only globals.",
 );
 
 impl Rule for NoImplicitGlobals {

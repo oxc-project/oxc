@@ -1,18 +1,18 @@
 use cow_utils::CowUtils;
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_formatter_core::FormatElement;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::EmbeddedDocResult,
+    external_formatter::HtmlEmbedMeta,
     format_args,
-    formatter::{
-        FormatElement, buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatTrailingComments,
+    formatter::prelude::*,
+    print::template::{
+        FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
     },
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
 
@@ -55,19 +55,33 @@ pub(super) fn format_html_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
-            ir,
-            html_has_multiple_root_elements,
-            ..
-        })) = f.context().external_callbacks().format_embedded_doc(
+        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
             allocator,
             group_id_builder,
             embedded_language,
             &[cooked],
-        )
+        ) else {
+            return false;
+        };
+        let Some(html_has_multiple_root_elements) = result
+            .meta
+            .as_ref()
+            .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+            .map(|meta| meta.has_multiple_root_elements)
         else {
             return false;
         };
+        // Remap is a no-op today (the Prettier Doc path never carries classes),
+        // but the boundary contract is "merge at every embed site".
+        // A Rust HTML formatter collecting `class` attributes will rely on this.
+        result.remap_tailwind_into(f.context_mut());
+        let Some(mut ir) = result.docs.into_iter().next() else {
+            return false;
+        };
+
+        // Re-escape template chars in `Text` runs:
+        // the IR is reinserted into a JS template literal built from `.cooked` values.
+        super::escape_template_chars_in_ir(&mut ir, allocator, f.options().indent_width);
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
@@ -86,7 +100,7 @@ pub(super) fn format_html_doc<'a>(
     // quasis[0].cooked + "PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS" + quasis[1].cooked + ...
     let allocator = f.allocator();
     let joined = {
-        let mut sb = StringBuilder::new_in(allocator);
+        let mut sb = ArenaStringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {
             if idx > 0 {
                 sb.push_str(PLACEHOLDER_PREFIX);
@@ -106,24 +120,19 @@ pub(super) fn format_html_doc<'a>(
     let has_leading_ws = joined.starts_with(|c: char| c.is_ascii_whitespace());
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
 
-    // Phase 2: Format via the Doc->IR path
+    // Phase 2: Format via the dispatcher (IR path)
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
-        ir,
-        placeholder_count,
-        html_has_multiple_root_elements,
-    })) = f.context().external_callbacks().format_embedded_doc(
+    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
         allocator,
         group_id_builder,
         embedded_language,
         &[joined],
-    )
-    else {
+    ) else {
         // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
         // returned Prettier's `Doc` output may contain `conditionalGroup`.
         // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
-        // So `format_embedded_doc()` will return `Err`.
+        // So `dispatch_embedded()` will return `Err`.
         //
         // In Prettier, `conditionalGroup` is only used by JS and YAML formatting.
         // And we want to format JS by `oxc_formatter` via oxfmt-plugin,
@@ -134,13 +143,40 @@ pub(super) fn format_html_doc<'a>(
         return format_js_in_html_as_fallback(joined, &expressions, f);
     };
 
-    // Verify all placeholders survived HTML formatting.
+    let Some(html_has_multiple_root_elements) = result
+        .meta
+        .as_ref()
+        .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+        .map(|meta| meta.has_multiple_root_elements)
+    else {
+        return false;
+    };
+    // See the Phase 0 note: remap is no-op today, load-bearing once `oxc_formatter_html` lands
+    result.remap_tailwind_into(f.context_mut());
+    let Some(mut ir) = result.docs.into_iter().next() else {
+        return false;
+    };
+
+    // Re-escape template chars in `Text` runs before counting / substituting:
+    // the IR is reinserted into a JS template literal built from `.cooked` values.
+    let indent_width = f.options().indent_width;
+    super::escape_template_chars_in_ir(&mut ir, allocator, indent_width);
+
+    // Verify all placeholders survived HTML formatting
+    let placeholder_count: usize = ir
+        .iter()
+        .map(|el| match el {
+            FormatElement::Text { text, .. } => {
+                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
+            }
+            _ => 0,
+        })
+        .sum();
     if placeholder_count != expressions.len() {
         return false;
     }
 
     // Phase 3: Replace placeholders in IR with expressions
-    let indent_width = f.options().indent_width;
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
         for element in ir {
             match &element {
@@ -160,91 +196,15 @@ pub(super) fn format_html_doc<'a>(
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(expr) = expressions.get(idx)
                         {
-                            // Format `${expr}` directly (like css-in-js, see `css.rs`)
-                            // instead of using `FormatTemplateExpression` which adds
-                            // `soft_block_indent` that causes double-indentation
-                            // for e.g. `ConditionalExpression`.
-                            //
-                            // Detect comments between expr and `}` for wrapping.
-                            // Use `expr.span().end` (not `.start`) to only find
-                            // comments BETWEEN the expr and `}`, not INSIDE the expression.
-                            let has_comment = {
-                                let comments = f.context().comments();
-                                !comments.comments_before(expr.span().start).is_empty()
-                                    || !comments
-                                        .comments_before_character(expr.span().end, b'}')
-                                        .is_empty()
-                            };
-
-                            if has_comment {
-                                // Intern with explicit comment handling
-                                // (same pattern as `FormatTemplateExpression`):
-                                // 1. `FormatNodeWithoutTrailingComments` sets
-                                //    `view_limit` to hide trailing comments
-                                // 2. After `view_limit` is restored,
-                                //    format trailing comments explicitly via `FormatTrailingComments`
-                                //
-                                // This ensures trailing comments between expr and `}`
-                                // stay with this expression and don't shift to the next.
-                                let trailing_comments = f
-                                    .context()
-                                    .comments()
-                                    .comments_before_character(expr.span().end, b'}');
-                                let has_trailing = !trailing_comments.is_empty();
-
-                                let interned = f.intern(&format_once(|f| {
-                                    FormatNodeWithoutTrailingComments(expr).fmt(f);
-                                    // After `view_limit` is restored by `FormatNodeWithoutTrailingComments`,
-                                    // trailing comments are visible again for `FormatTrailingComments` to consume.
-                                    let trailing = f
-                                        .context()
-                                        .comments()
-                                        .comments_before_character(expr.span().end, b'}');
-                                    FormatTrailingComments::Comments(trailing).fmt(f);
-                                }));
-
-                                // When source has newlines around the expression,
-                                // use `RemoveSoftLinesBuffer` to keep it flat while
-                                // preserving hard line breaks (from comments).
-                                // Otherwise let it break naturally based on line width.
-                                let has_newline = has_trailing
-                                    && (f.source_text().has_newline_before(expr.span().start)
-                                        || f.source_text().has_newline_after(expr.span().end));
-
-                                let format_expr = format_with(|f| {
-                                    let Some(element) = &interned else { return };
-                                    write!(
-                                        f,
-                                        [
-                                            indent(&format_args!(
-                                                soft_line_break(),
-                                                format_with(|f| {
-                                                    if has_newline {
-                                                        let mut buffer =
-                                                            RemoveSoftLinesBuffer::new(f);
-                                                        buffer.write_element(element.clone());
-                                                    } else {
-                                                        f.write_element(element.clone());
-                                                    }
-                                                }),
-                                                line_suffix_boundary()
-                                            )),
-                                            soft_line_break()
-                                        ]
-                                    );
-                                });
-                                write!(f, [group(&format_args!("${", format_expr, "}"))]);
-                            } else {
-                                write!(
-                                    f,
-                                    [group(&format_args!(
-                                        "${",
-                                        *expr,
-                                        line_suffix_boundary(),
-                                        "}"
-                                    ))]
-                                );
-                            }
+                            // Prettier prints embedded `${expr}` with `printEmbeddedTemplateExpressions()`:
+                            // the plain-template expression logic minus source-indentation preservation.
+                            // Default options (zero indention) are exactly that (same as graphql.rs).
+                            let te = TemplateExpression::Expression(expr);
+                            FormatTemplateExpression::new(
+                                &te,
+                                FormatTemplateExpressionOptions::default(),
+                            )
+                            .fmt(f);
                         }
                     }
                 }

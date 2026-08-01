@@ -1,0 +1,11 @@
+[
+  "plain double",
+  'plain single',
+  "has 'single' inside",
+  'has "double" inside',
+  "both \" and ' here",
+  'both " and \' here',
+  "many \"\"\" doubles",
+  'many \'\'\' singles',
+  "line\nbreak"
+]

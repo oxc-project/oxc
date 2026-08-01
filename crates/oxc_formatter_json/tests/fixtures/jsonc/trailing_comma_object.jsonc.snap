@@ -1,0 +1,63 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// jsonc allows comments and (per option) trailing commas
+{
+  "a": 1,
+  "b": [1, 2, 3],
+  "nested": {
+    "x": true
+  }
+}
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "jsonc" }
+------------------------------------
+// jsonc allows comments and (per option) trailing commas
+{
+  "a": 1,
+  "b": [1, 2, 3],
+  "nested": {
+    "x": true,
+  },
+}
+
+-------------------------------------
+{ printWidth: 100, variant: "jsonc" }
+-------------------------------------
+// jsonc allows comments and (per option) trailing commas
+{
+  "a": 1,
+  "b": [1, 2, 3],
+  "nested": {
+    "x": true,
+  },
+}
+
+-----------------------------------------------------------
+{ printWidth: 80, trailingComma: "none", variant: "jsonc" }
+-----------------------------------------------------------
+// jsonc allows comments and (per option) trailing commas
+{
+  "a": 1,
+  "b": [1, 2, 3],
+  "nested": {
+    "x": true
+  }
+}
+
+------------------------------------------------------------
+{ printWidth: 100, trailingComma: "none", variant: "jsonc" }
+------------------------------------------------------------
+// jsonc allows comments and (per option) trailing commas
+{
+  "a": 1,
+  "b": [1, 2, 3],
+  "nested": {
+    "x": true
+  }
+}
+
+===================== End =====================

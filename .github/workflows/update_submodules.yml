@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@ab97f03642370d79a7e96dd286bd02a1be40e0ba # v1.3.0
+      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           cache-key: conformance
@@ -280,6 +280,16 @@ jobs:
         env:
           UPDATE_SNAPSHOT: 1
         run: just coverage
+
+      # `just coverage` runs the default task, which skips the runtime suite
+      # (it needs Node). Run it explicitly so `runtime.snap` is regenerated
+      # against the new test262 pin; a stale sha header aborts monitor-oxc's
+      # Test262 job on every run.
+      - name: Update runtime snapshot
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        env:
+          UPDATE_SNAPSHOT: 1
+        run: cargo coverage runtime
 
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: app-token

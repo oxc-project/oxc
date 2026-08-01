@@ -1,0 +1,22 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/tagged-template-in-hook.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useFragment } from "shared-runtime";
+function Component(props) {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = graphql`
+      fragment F on User {
+        name
+      }
+    `;
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	const user = useFragment(t0, props.user);
+	return user.name;
+}

@@ -1,0 +1,17 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/gating/dynamic-gating-invalid-identifier-nopanic.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Gating: Dynamic gating directive is not a valid JavaScript identifier", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(70), length: 74 }, primary: false }]), help: Some("Found 'use memo if(true)'"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+// @dynamicGating:{"source":"shared-runtime"} @panicThreshold:"none"
+function Foo() {
+	"use memo if(true)";
+	return <div>hello world</div>;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Foo,
+	params: [{}]
+};

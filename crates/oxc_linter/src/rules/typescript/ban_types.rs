@@ -80,6 +80,7 @@ declare_oxc_lint!(
     pedantic,
     none,
     version = "0.0.14",
+    short_description = "Disallow certain types.",
 );
 
 impl Rule for BanTypes {

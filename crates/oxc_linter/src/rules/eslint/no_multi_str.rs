@@ -35,6 +35,7 @@ declare_oxc_lint!(
     eslint,
     style,
     version = "0.5.3",
+    short_description = "Disallow multiline strings.",
 );
 
 impl Rule for NoMultiStr {

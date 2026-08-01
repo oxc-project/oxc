@@ -1,10 +1,11 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _},
+    formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
@@ -49,13 +50,13 @@ impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
 }
 
 pub struct AssignmentTargetPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
+    properties: &'b AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
     rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
+        properties: &'b AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
         rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
     ) -> Self {
         Self { properties, rest }

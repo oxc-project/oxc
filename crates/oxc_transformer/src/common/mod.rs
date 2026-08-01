@@ -1,8 +1,10 @@
 //! Utility transforms which are in common between other transforms.
 
 use arrow_function_converter::ArrowFunctionConverter;
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::{ArenaVec, ReplaceWith};
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
+use oxc_str::static_ident;
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{EnvOptions, context::TraverseCtx, state::TransformState};
@@ -42,7 +44,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
                     .collect();
                 ctx.state.top_level_statements.insert_statements(stmts);
             } else {
-                let require_symbol_id = ctx.scoping().get_root_binding(ctx.ast.ident("require"));
+                let require_symbol_id = ctx.scoping().get_root_binding(static_ident!("require"));
                 let stmts: Vec<_> = imports
                     .into_iter()
                     .map(|(source, names)| {
@@ -56,7 +58,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         // Var declarations: insert var/let statements at program level.
         // Pop from the stack into a local, then build statements.
         {
-            let var_stmt = ctx.state.var_declarations.get_var_statement(ctx.ast);
+            let var_stmt = ctx.state.var_declarations.get_var_statement(&ctx.ast);
             if let Some((var_statement, let_statement)) = var_stmt {
                 let stmts: Vec<Statement<'a>> =
                     var_statement.into_iter().chain(let_statement).collect();
@@ -87,8 +89,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let is_program_body = matches!(ctx.parent(), Ancestor::ProgramBody(_));
-        ctx.state.var_declarations.insert_into_statements(stmts, is_program_body, ctx.ast);
-        ctx.state.statement_injector.insert_into_statements(stmts, ctx.ast);
+        ctx.state.var_declarations.insert_into_statements(stmts, is_program_body, &ctx.ast);
+        ctx.state.statement_injector.insert_into_statements(stmts, &ctx.ast);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -113,6 +115,41 @@ impl<'a> Traverse<'a, TransformState<'a>> for Common<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.arrow_function_converter.exit_arrow_function_expression(arrow, ctx);
+    }
+
+    fn enter_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if body.is_expression() {
+            ctx.state.var_declarations.record_entering_statements();
+        }
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if body.is_expression()
+            && let Some((var_statement, let_statement)) =
+                ctx.state.var_declarations.get_var_statement(&ctx.ast)
+        {
+            body.replace_with(|body| {
+                let expression = body.into_expression();
+                let span = expression.span();
+                let mut statements = ArenaVec::with_capacity_in(
+                    usize::from(var_statement.is_some()) + usize::from(let_statement.is_some()) + 1,
+                    ctx,
+                );
+                statements.extend(var_statement);
+                statements.extend(let_statement);
+                statements.push(Statement::new_return_statement(span, Some(expression), ctx));
+                ArrowFunctionBody::FunctionBody(FunctionBody::boxed(span, [], statements, ctx))
+            });
+        }
+        self.arrow_function_converter.exit_arrow_function_body(body, ctx);
     }
 
     fn enter_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {

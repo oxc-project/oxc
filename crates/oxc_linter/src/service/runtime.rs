@@ -19,7 +19,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Box as ArenaBox};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
@@ -119,7 +119,14 @@ struct ModuleContentDependent<'a> {
     section_contents: SectionContents<'a>,
 }
 
-// Safety: dependent borrows from owner. They're safe to be sent together.
+// SAFETY: `dependent` borrows from `owner` (the `Allocator`). They're safe to send together.
+//
+// One case doesn't fit that "sent together" picture: `ReplaceWith`'s panic path (in `oxc_allocator`)
+// writes a dummy backed by its own dedicated, global `'static` allocator, which does not travel with
+// this bundle. Sending is still sound, because each such dummy allocator is exclusively owned -
+// reachable only through the single value that holds it, and mutated only via `&mut` to that value -
+// so no two threads can touch one. The invariant this really rests on is single-ownership of each
+// referenced allocator, not co-location.
 unsafe impl Send for ModuleContent<'_> {}
 
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
@@ -1098,12 +1105,8 @@ impl Runtime {
                     let err: Vec<OxcDiagnostic> = err
                         .into_iter()
                         .map(|mut diagnostic| {
-                            if let Some(labels) = &mut diagnostic.labels {
-                                for label in labels.iter_mut() {
-                                    label.set_span_offset(
-                                        label.offset() + section_source.start as usize,
-                                    );
-                                }
+                            for label in &mut diagnostic.labels {
+                                label.set_span_offset(label.offset() + section_source.start);
                             }
                             diagnostic
                         })
@@ -1143,18 +1146,16 @@ impl Runtime {
             .with_config(RuntimeParserConfig::new(collect_tokens))
             .parse();
 
-        if !ret.errors.is_empty() {
-            return Err(if ret.is_flow_language { vec![] } else { ret.errors });
+        if !ret.diagnostics.is_empty() {
+            return Err(if ret.is_flow_language { vec![] } else { ret.diagnostics.into() });
         }
 
-        let semantic_ret = SemanticBuilder::new()
-            .with_cfg(true)
-            .with_class_table(true)
+        let semantic_ret = SemanticBuilder::new_linter()
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 
-        if !semantic_ret.errors.is_empty() {
-            return Err(semantic_ret.errors);
+        if !semantic_ret.diagnostics.is_empty() {
+            return Err(semantic_ret.diagnostics.into());
         }
 
         let mut semantic = semantic_ret.semantic;

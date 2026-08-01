@@ -7,12 +7,15 @@ use std::{
 
 use oxc_ast::ast::TSAccessibility;
 use oxc_data_structures::fieldless_enum;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    ParserConfig as Config, ParserImpl,
+    diagnostics::{self, ParserDiagnostic},
+    lexer::Kind,
+};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Modifier {
     pub span_start: u32,
     pub kind: ModifierKind,
@@ -25,7 +28,7 @@ impl Modifier {
     }
 
     #[inline]
-    pub const fn span(&self) -> Span {
+    pub const fn span(self) -> Span {
         Span::sized(self.span_start, self.kind.len())
     }
 }
@@ -493,7 +496,7 @@ impl<C: Config> ParserImpl<'_, C> {
         while let Some(modifier_kind) = self.get_modifier() {
             let modifier = Modifier::new(self.start_span(), modifier_kind);
             self.bump_any();
-            self.check_modifier(modifiers.kinds(), &modifier);
+            self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.span_start);
         }
         modifiers
@@ -540,7 +543,7 @@ impl<C: Config> ParserImpl<'_, C> {
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            self.check_modifier(modifiers.kinds(), &modifier);
+            self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.span_start);
         }
 
@@ -568,16 +571,23 @@ impl<C: Config> ParserImpl<'_, C> {
                 return None;
             }
             self.bump_any();
-        } else if
-        // we're at the start of a static block
-        (stop_on_start_of_class_static_block
-            && kind == Kind::Static
-            && self.lexer.peek_token().kind() == Kind::LCurly)
-            // we may be at the start of a static block
-            || (kind == Kind::Static && seen_modifier_kinds.contains(ModifierKind::Static))
+        } else if kind == Kind::Static {
+            // ClassStaticBlock : `static { ClassStaticBlockBody }`   e.g. `static { x = 1; }`
+            // member named `static`                                  e.g. `static() {}`, `static = 1`, `static;`
+            // repeated `static`                                      e.g. `static static x`
+            //
+            // Peek once and reuse it — `peek_token` is not cached, so checking `== LCurly` separately
+            // from the peek inside `next_token_can_follow_modifier` re-lexed this token twice.
+            let next_kind = self.lexer.peek_token().kind();
+            if (stop_on_start_of_class_static_block && next_kind == Kind::LCurly)
+                || seen_modifier_kinds.contains(ModifierKind::Static)
+                || !Self::can_follow_modifier(next_kind)
+            {
+                return None;
+            }
+            self.bump_any();
+        } else if !self.parse_any_contextual_modifier() {
             // next token is not a modifier
-            || (!self.parse_any_contextual_modifier())
-        {
             return None;
         }
         Some(self.modifier(kind, span_start))
@@ -710,9 +720,9 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
     }
 }
 
-impl<C: Config> ParserImpl<'_, C> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
-    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         // Do a quick check that this modifier is not illegal in this position.
         //
         // This is just 2 instructions:
@@ -732,7 +742,7 @@ impl<C: Config> ParserImpl<'_, C> {
     /// Create an error for an illegal modifier.
     #[cold]
     #[inline(never)]
-    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         const ACCESSIBILITY_KINDS: ModifierKinds = ModifierKinds::new([
             ModifierKind::Public,
             ModifierKind::Private,
@@ -800,33 +810,43 @@ impl<C: Config> ParserImpl<'_, C> {
         strict: bool,
         create_diagnostic: F,
     ) where
-        F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
+        F: Fn(Modifier, Option<ModifierKinds>) -> ParserDiagnostic<'a>,
     {
         if modifiers.kinds().has_any_not_in(allowed) {
             // Invalid modifiers are rare, so handle this case in `#[cold]` function.
             // Also `#[inline(never)]` to help `verify_modifiers` to get inlined.
+            // Non-generic, so the heavy collect + sort code (including the sort implementation)
+            // is compiled only once, rather than once per `report` instantiation
+            // (caller closure `F` × parser `Config` = ~39 copies).
             #[cold]
             #[inline(never)]
-            fn report<C: Config, F>(
-                parser: &mut ParserImpl<'_, C>,
-                modifiers: &Modifiers,
-                allowed: ModifierKinds,
-                strict: bool,
-                create_diagnostic: F,
-            ) where
-                F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
-            {
+            fn collect_disallowed(modifiers: &Modifiers, allowed: ModifierKinds) -> Vec<Modifier> {
                 // Sort modifiers to produce errors in source code order
                 let mut disallowed_modifiers = modifiers
                     .iter()
                     .filter(|modifier| !allowed.contains(modifier.kind))
                     .collect::<Vec<_>>();
                 disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span_start);
+                disallowed_modifiers
+            }
+
+            #[cold]
+            #[inline(never)]
+            fn report<'a, C: Config, F>(
+                parser: &mut ParserImpl<'a, C>,
+                modifiers: &Modifiers,
+                allowed: ModifierKinds,
+                strict: bool,
+                create_diagnostic: F,
+            ) where
+                F: Fn(Modifier, Option<ModifierKinds>) -> ParserDiagnostic<'a>,
+            {
+                let disallowed_modifiers = collect_disallowed(modifiers, allowed);
 
                 debug_assert!(!disallowed_modifiers.is_empty());
 
                 for modifier in &disallowed_modifiers {
-                    parser.error(create_diagnostic(modifier, strict.then_some(allowed)));
+                    parser.error(create_diagnostic(*modifier, strict.then_some(allowed)));
                 }
             }
             report(self, modifiers, allowed, strict, create_diagnostic);

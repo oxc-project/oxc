@@ -102,6 +102,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoShadowConfig,
     version = "1.48.0",
+    short_description = "Disallows variable declarations from shadowing variables declared in the outer scope.",
 );
 
 impl Rule for NoShadow {
@@ -748,7 +749,7 @@ fn is_initializer_sentinel(kind: AstKind) -> bool {
             | AstKind::ArrowFunctionExpression(_)
             | AstKind::CatchClause(_)
             | AstKind::ImportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDeclaration(_)
     )
 }
 

@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.useCallback-accesses-ref-mutated-later-via-function-preserve-memoization.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Refs: Cannot access refs during render", labels: One([LabeledSpan { label: Some("This function accesses a ref value"), span: SourceSpan { offset: SourceOffset(575), length: 5 }, primary: false }]), help: Some("React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef)"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

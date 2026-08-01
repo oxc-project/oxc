@@ -186,13 +186,10 @@ var global_var = 42;
 
 ## Configuration
 
-This rule accepts a configuration object with the following properties:
-
 ### args
 
 type: `"after-used" | "all" | "none"`
 
-default: `"after-used"`
 
 Controls how unused arguments are checked.
 
@@ -222,6 +219,7 @@ Do not check arguments
 
 ### argsIgnorePattern
 
+type: `string`
 
 
 Specifies exceptions to this rule for unused arguments. Arguments whose
@@ -268,6 +266,7 @@ Do not check error objects.
 
 ### caughtErrorsIgnorePattern
 
+type: `string`
 
 
 Specifies exceptions to this rule for errors caught within a `catch` block.
@@ -289,6 +288,7 @@ console.error("Error caught in catch block");
 
 ### destructuredArrayIgnorePattern
 
+type: `string`
 
 
 This option specifies exceptions within destructuring patterns that will
@@ -319,7 +319,13 @@ console.log(n);
 
 type: `object`
 
-default: `{"imports":"suggestion", "variables":"suggestion"}`
+
+Controls which `no-unused-vars` auto-fixes are emitted.
+
+When omitted, both `imports` and `variables` default to `"suggestion"`,
+preserving the current behavior.
+
+NOTE: This option is experimental and may change based on feedback.
 
 Fine-grained auto-fix controls for `no-unused-vars`.
 
@@ -567,7 +573,6 @@ function foo(): typeof foo {}
 
 type: `"all" | "local"`
 
-default: `"all"`
 
 Controls how usage of a variable in the global scope is checked.
 
@@ -589,6 +594,7 @@ global variables to be unused.
 
 ### varsIgnorePattern
 
+type: `string`
 
 
 Specifies exceptions to this rule for unused variables. Variables whose
@@ -607,7 +613,6 @@ var _a = 10;
 var b = 10;
 console.log(b);
 ```
-
 
 
 
@@ -942,15 +947,6 @@ Promise.resolve()
 
 This rule accepts a configuration object with the following properties:
 
-### callbacks
-
-type: `string[]`
-
-default: `["callback", "cb", "done", "next"]`
-
-List of callback function names to check for within Promise `then` and `catch` methods.
-
-
 ### exceptions
 
 type: `string[]`
@@ -1045,20 +1041,7 @@ var Hello = createReactClass({
 
 This rule accepts one of the following string values:
 
-### `"allowed"`
-
-
-
-Forbids any call to `this.setState` in `componentWillUpdate` outside of functions.
-
-
-### `"disallow-in-func"`
-
-
-
-Makes this rule more strict by disallowing calls to `this.setState`` even within functions.
-
-
+type: `"allowed" | "disallow-in-func"`
 
 
 
@@ -1453,14 +1436,14 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 
 ### What it does
 
-Encourages using `Array.prototype.find` instead of `filter(...)[0]` or
-similar patterns when only the first matching element is needed.
+Encourages using `Array.prototype.find` and `Array.prototype.findLast` instead of
+taking the first or last matching element from `filter(...)`.
 
 ### Why is this bad?
 
-Using `filter(...)[0]` to get the first match is less efficient and more verbose
-than using `find(...)`. `find` short-circuits when a match is found,
-whereas `filter` evaluates the entire array.
+Using `filter(...)[0]` or array destructuring to get the first match is less
+efficient and more verbose than using `find(...)`. `find` and `findLast`
+short-circuit when a match is found, whereas `filter` evaluates the entire array.
 
 ### Examples
 
@@ -1468,12 +1451,18 @@ Examples of **incorrect** code for this rule:
 ```js
 const match = users.filter(u => u.id === id)[0];
 const match = users.filter(fn).shift();
+const [match] = users.filter(fn);
+
+const match = users.filter(fn).at(-1);
+const match = users.filter(fn).pop();
 ```
 
 Examples of **correct** code for this rule:
 ```js
 const match = users.find(u => u.id === id);
 const match = users.find(fn);
+
+const match = users.findLast(fn);
 ```
 
 
@@ -1510,7 +1499,7 @@ const source = `https://github.com/oxc-project/oxc/blob/${ data }/crates/oxc_lin
 ### What it does
 
 Disallow the use of barrel files where the file contains `export *` statements,
-and the total number of modules exceed a threshold.
+and the total number of modules exceeds a threshold.
 
 The default threshold is 100.
 
@@ -1634,7 +1623,7 @@ type: `array`
 An array of prop names or objects that are forbidden on DOM elements.
 
 Each array element can be a string with the property name, or an object
-with `propName`, an optional `disallowedFor` array of DOM node names,
+with `propName`, optional `disallowedFor` and `disallowedValues` arrays,
 and an optional custom `message`.
 
 Examples:
@@ -1642,6 +1631,7 @@ Examples:
 - `["error", { "forbid": ["id", "style"] }]`
 - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
 - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+- `["error", { "forbid": [{ "propName": "type", "disallowedValues": ["button"] }] }]`
 
 
 #### forbid[n]
@@ -1660,6 +1650,15 @@ type: `string[]`
 A list of DOM element names (e.g. `["div", "span"]`) on which this
 prop is forbidden. If empty or omitted, the prop is forbidden on all
 DOM elements.
+
+
+##### forbid[n].disallowedValues
+
+type: `string[]`
+
+
+A list of string literal values for which this prop is forbidden. If
+omitted, the prop is forbidden for all values.
 
 
 ##### forbid[n].message
@@ -2100,7 +2099,7 @@ category: "Style"
 version: "1.47.0"
 default: false
 type_aware: false
-fix: "pending"
+fix: "conditional_suggestion"
 upstream: "https://typescript-eslint.io/rules/class-literal-property-style/"
 ---
 

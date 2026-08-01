@@ -10,9 +10,9 @@ use crate::{
 };
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, FunctionBody, Statement},
+    ast::{Argument, ArrowFunctionBody, CallExpression, Expression, FunctionBody, Statement},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
@@ -21,11 +21,38 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferExpectAssertionsConfig {
     pub only_functions_with_async_keyword: bool,
     pub only_functions_with_expect_in_callback: bool,
     pub only_functions_with_expect_in_loop: bool,
+}
+
+#[derive(Clone, Copy)]
+pub enum CallbackBody<'a> {
+    Function(&'a FunctionBody<'a>),
+    Expression(&'a Expression<'a>),
+}
+
+impl<'a> CallbackBody<'a> {
+    fn visit<V: VisitJs<'a>>(self, visitor: &mut V) {
+        match self {
+            Self::Function(body) => visitor.visit_function_body(body),
+            Self::Expression(expression) => visitor.visit_expression(expression),
+        }
+    }
+
+    fn first_expression(self) -> Option<&'a Expression<'a>> {
+        match self {
+            Self::Function(body) => {
+                let Statement::ExpressionStatement(statement) = body.statements.first()? else {
+                    return None;
+                };
+                Some(&statement.expression)
+            }
+            Self::Expression(expression) => Some(expression),
+        }
+    }
 }
 
 impl PreferExpectAssertionsConfig {
@@ -232,7 +259,7 @@ pub trait PreferExpectAssertionsRuleImpl {
         };
 
         let mut scanner = HookScanner::new(file_expect_prefix);
-        scanner.visit_function_body(body);
+        body.visit(&mut scanner);
 
         if !scanner.has_expect_has_assertions {
             return;
@@ -301,26 +328,43 @@ pub trait PreferExpectAssertionsRuleImpl {
         if Self::check_first_statement(body, prefix, ctx) {
             return;
         }
-        let insert_pos = Span::new(body.span.start + 1, body.span.start + 1);
         let fixer = RuleFixer::new(FixKind::Suggestion, ctx);
-        let suggestions = [
-            fixer
-                .insert_text_before_range(insert_pos, format!("{prefix}.hasAssertions();"))
-                .with_message(format!("Add `{prefix}.hasAssertions()`")),
-            fixer
-                .insert_text_before_range(insert_pos, format!("{prefix}.assertions();"))
-                .with_message(format!("Add `{prefix}.assertions(<number of assertions>)`")),
-        ];
+        let suggestions = match body {
+            CallbackBody::Function(body) => {
+                let insert_pos = Span::new(body.span.start + 1, body.span.start + 1);
+                [
+                    fixer
+                        .insert_text_before_range(insert_pos, format!("{prefix}.hasAssertions();"))
+                        .with_message(format!("Add `{prefix}.hasAssertions()`")),
+                    fixer
+                        .insert_text_before_range(insert_pos, format!("{prefix}.assertions();"))
+                        .with_message(format!("Add `{prefix}.assertions(<number of assertions>)")),
+                ]
+            }
+            CallbackBody::Expression(expression) => {
+                let source = fixer.source_range(expression.span());
+                [
+                    fixer
+                        .replace(
+                            expression.span(),
+                            format!("{{{prefix}.hasAssertions();return {source};}}"),
+                        )
+                        .with_message(format!("Add `{prefix}.hasAssertions()`")),
+                    fixer
+                        .replace(
+                            expression.span(),
+                            format!("{{{prefix}.assertions();return {source};}}"),
+                        )
+                        .with_message(format!("Add `{prefix}.assertions(<number of assertions>)")),
+                ]
+            }
+        };
 
         self.report_have_expect_assertions(call_expr.span, prefix, suggestions, ctx);
     }
 
-    fn check_first_statement(body: &FunctionBody<'_>, prefix: &str, ctx: &LintContext<'_>) -> bool {
-        let Some(Statement::ExpressionStatement(first_expr_stmt)) = body.statements.first() else {
-            return false;
-        };
-
-        let Expression::CallExpression(first_call) = &first_expr_stmt.expression else {
+    fn check_first_statement(body: CallbackBody<'_>, prefix: &str, ctx: &LintContext<'_>) -> bool {
+        let Some(Expression::CallExpression(first_call)) = body.first_expression() else {
             return false;
         };
 
@@ -352,7 +396,7 @@ pub trait PreferExpectAssertionsRuleImpl {
         ctx: &LintContext<'_>,
     );
 
-    fn should_check_node(&self, body: &FunctionBody<'_>, is_async: bool, prefix: &str) -> bool;
+    fn should_check_node(&self, body: CallbackBody<'_>, is_async: bool, prefix: &str) -> bool;
 }
 
 fn is_covered_by_hook(
@@ -374,7 +418,7 @@ fn is_covered_by_hook(
 
 pub fn should_check(
     config: &PreferExpectAssertionsConfig,
-    body: &FunctionBody<'_>,
+    body: CallbackBody<'_>,
     is_async: bool,
     prefix: &str,
 ) -> bool {
@@ -388,7 +432,7 @@ pub fn should_check(
     }
 
     let mut scanner = BodyScanner::new(prefix);
-    scanner.visit_function_body(body);
+    scanner.visit_callback_body(body);
 
     let has_callback =
         config.only_functions_with_expect_in_callback && scanner.has_expect_in_callback;
@@ -416,7 +460,7 @@ impl HookScanner {
     }
 }
 
-impl<'a> Visit<'a> for HookScanner {
+impl<'a> VisitJs<'a> for HookScanner {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if get_node_name(&call_expr.callee) == self.expected_name.as_str() {
             self.has_expect_has_assertions = true;
@@ -425,7 +469,7 @@ impl<'a> Visit<'a> for HookScanner {
                 self.has_assertions_call_span = Some(call_expr.span);
             }
         }
-        oxc_ast_visit::walk::walk_call_expression(self, call_expr);
+        oxc_ast_visit::walk_js::walk_call_expression(self, call_expr);
     }
 }
 
@@ -459,13 +503,24 @@ impl BodyScanner {
         self.in_loop = was;
     }
 
+    fn visit_callback_body(&mut self, body: CallbackBody<'_>) {
+        match body {
+            CallbackBody::Function(body) => self.visit_function_body(body),
+            CallbackBody::Expression(expression) => {
+                self.expression_depth += 1;
+                self.visit_expression(expression);
+                self.expression_depth -= 1;
+            }
+        }
+    }
+
     fn is_expect_call(&self, call_expr: &CallExpression<'_>) -> bool {
         let name = get_node_name(&call_expr.callee);
         name == self.prefix.as_str() || name.starts_with(self.prefix_dot.as_str())
     }
 }
 
-impl<'a> Visit<'a> for BodyScanner {
+impl<'a> VisitJs<'a> for BodyScanner {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if self.is_expect_call(call_expr) {
             if self.expression_depth > 0 {
@@ -475,29 +530,39 @@ impl<'a> Visit<'a> for BodyScanner {
                 self.has_expect_in_loop = true;
             }
         }
-        oxc_ast_visit::walk::walk_call_expression(self, call_expr);
+        oxc_ast_visit::walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function_body(&mut self, body: &FunctionBody<'a>) {
         self.expression_depth += 1;
-        oxc_ast_visit::walk::walk_function_body(self, body);
+        oxc_ast_visit::walk_js::walk_function_body(self, body);
         self.expression_depth -= 1;
     }
 
+    fn visit_arrow_function_body(&mut self, body: &ArrowFunctionBody<'a>) {
+        if body.is_expression() {
+            self.expression_depth += 1;
+            oxc_ast_visit::walk_js::walk_arrow_function_body(self, body);
+            self.expression_depth -= 1;
+        } else {
+            oxc_ast_visit::walk_js::walk_arrow_function_body(self, body);
+        }
+    }
+
     fn visit_for_statement(&mut self, it: &oxc_ast::ast::ForStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_for_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_statement(s, it));
     }
     fn visit_for_in_statement(&mut self, it: &oxc_ast::ast::ForInStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_for_in_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_in_statement(s, it));
     }
     fn visit_for_of_statement(&mut self, it: &oxc_ast::ast::ForOfStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_for_of_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_for_of_statement(s, it));
     }
     fn visit_while_statement(&mut self, it: &oxc_ast::ast::WhileStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_while_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_while_statement(s, it));
     }
     fn visit_do_while_statement(&mut self, it: &oxc_ast::ast::DoWhileStatement<'a>) {
-        self.visit_loop(|s| oxc_ast_visit::walk::walk_do_while_statement(s, it));
+        self.visit_loop(|s| oxc_ast_visit::walk_js::walk_do_while_statement(s, it));
     }
 }
 
@@ -567,10 +632,13 @@ fn find_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expre
     })
 }
 
-fn callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
+fn callback_body<'a>(callback: &'a Expression<'a>) -> Option<CallbackBody<'a>> {
     match callback {
-        Expression::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
-        Expression::ArrowFunctionExpression(func) => Some(&func.body),
+        Expression::FunctionExpression(func) => func.body.as_deref().map(CallbackBody::Function),
+        Expression::ArrowFunctionExpression(func) => func
+            .get_expression()
+            .map(CallbackBody::Expression)
+            .or_else(|| func.get_function_body().map(CallbackBody::Function)),
         _ => None,
     }
 }

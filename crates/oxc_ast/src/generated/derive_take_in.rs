@@ -58,7 +58,9 @@ impl<'a> TakeIn<'a> for CallExpression<'a> {}
 
 impl<'a> TakeIn<'a> for NewExpression<'a> {}
 
-impl<'a> TakeIn<'a> for MetaProperty<'a> {}
+impl<'a> TakeIn<'a> for ImportMeta {}
+
+impl<'a> TakeIn<'a> for NewTarget {}
 
 impl<'a> TakeIn<'a> for SpreadElement<'a> {}
 
@@ -192,6 +194,8 @@ impl<'a> TakeIn<'a> for FormalParameterRest<'a> {}
 
 impl<'a> TakeIn<'a> for FunctionBody<'a> {}
 
+impl<'a> TakeIn<'a> for ArrowFunctionBody<'a> {}
+
 impl<'a> TakeIn<'a> for ArrowFunctionExpression<'a> {}
 
 impl<'a> TakeIn<'a> for YieldExpression<'a> {}
@@ -232,7 +236,11 @@ impl<'a> TakeIn<'a> for ImportAttribute<'a> {}
 
 impl<'a> TakeIn<'a> for ImportAttributeKey<'a> {}
 
+impl<'a> TakeIn<'a> for ExportDeclaration<'a> {}
+
 impl<'a> TakeIn<'a> for ExportNamedDeclaration<'a> {}
+
+impl<'a> TakeIn<'a> for ExportFromDeclaration<'a> {}
 
 impl<'a> TakeIn<'a> for ExportDefaultDeclaration<'a> {}
 

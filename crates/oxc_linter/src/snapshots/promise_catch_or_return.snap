@@ -156,6 +156,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Return the promise or chain a `done()`.
 
+  ⚠ promise(catch-or-return): Expected `catch`, `done`, or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go)
+   · ────────────────
+   ╰────
+  help: Return the promise or chain `catch()` or `done()`.
+
+  ⚠ promise(catch-or-return): Expected `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go)
+   · ────────────────
+   ╰────
+  help: Return the promise.
+
   ⚠ promise(catch-or-return): Expected `catch` or `return`.
    ╭─[catch_or_return.mjs:1:1]
  1 │ frank().catch(go).someOtherMethod()
@@ -167,6 +181,111 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[catch_or_return.mjs:1:1]
  1 │ frank()['catch'](go).someOtherMethod()
    · ──────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(a).then(b).then(null, c)
+   · ─────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(a).then(b).then().then().then(null, doIt)
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(a).then(b).then(null, function() { /* why bother */ })
+   · ───────────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(a, b)
+   · ──────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go).then(zam, doIt)
+   · ────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(a).then(b).then(c, d)
+   · ──────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go).then().then().then().then(wham, doIt)
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go).then().then(function() {}, function() { /* why bother */ })
+   · ────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank.then(go).then(to).then(pewPew, jail)
+   · ──────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(a, b)
+   · ──────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go).then(zam, doIt)
+   · ────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(a).then(b).then(c, d)
+   · ──────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go).then().then().then().then(wham, doIt)
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank().then(go).then().then(function() {}, function() { /* why bother */ })
+   · ────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Return the promise or chain a `catch()`.
+
+  ⚠ promise(catch-or-return): Expected `catch` or `return`.
+   ╭─[catch_or_return.mjs:1:1]
+ 1 │ frank.then(go).then(to).then(pewPew, jail)
+   · ──────────────────────────────────────────
    ╰────
   help: Return the promise or chain a `catch()`.
 

@@ -68,3 +68,28 @@ class GlobalSymbol4 {
     return GlobalSymbol4;
   }
 }
+
+// Accessor pairs use equivalent JavaScript property keys.
+class ComputedStringGetter {
+  get value() {
+    return "value";
+  }
+  set ["value"](v) {
+  }
+}
+
+class ComputedStringSetter {
+  get ["count"]() {
+    return "not-the-declaration-type";
+  }
+  set count(v: number) {
+  }
+}
+
+class ComputedNumericGetter {
+  get [1]() {
+    return true;
+  }
+  set [`1`](v) {
+  }
+}

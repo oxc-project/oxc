@@ -231,6 +231,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
 
   ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:2:13]
+ 1 │ import { expect as e } from '@effect/vitest';
+ 2 │             test("re-exported effect missing", () => { e(true).toBe(true); });
+   ·             ─────────────────────────────────────────────────────────────────
+   ╰────
+  help: Add `e.hasAssertions()` or `e.assertions(<number>)` as the first statement in this test.
+
+  ⚠ vitest(prefer-expect-assertions): This test should have either `e.assertions(<number of assertions>)` or `e.hasAssertions()` as its first expression.
    ╭─[prefer_expect_assertions.tsx:4:17]
  3 │                     beforeEach(() => { expect.hasAssertions(); });
  4 │ ╭─▶                 it('test', () => {

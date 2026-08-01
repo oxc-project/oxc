@@ -49,6 +49,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.0.18",
+    short_description = "Enforce no spaces between braces.",
 );
 
 impl Rule for EmptyBraceSpaces {

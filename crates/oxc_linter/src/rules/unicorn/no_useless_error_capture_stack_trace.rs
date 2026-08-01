@@ -61,6 +61,7 @@ declare_oxc_lint!(
     restriction,
     suggestion,
     version = "1.20.0",
+    short_description = "Disallows unnecessary `Error.captureStackTrace(…)` in error constructors.",
 );
 
 impl Rule for NoUselessErrorCaptureStackTrace {
@@ -137,10 +138,8 @@ fn get_error_subclass_if_in_constructor<'a>(
             }
             AstKind::Class(class) => {
                 if found_constructor && is_error_class(class, ctx) {
-                    if let Some(id) = class.id.as_ref()
-                        && let Some(symbol_id) = id.symbol_id.get()
-                    {
-                        return ClassInfo::Named(symbol_id);
+                    if let Some(id) = class.id.as_ref() {
+                        return ClassInfo::Named(id.symbol_id());
                     }
                     return ClassInfo::Anonymous;
                 }
@@ -201,11 +200,7 @@ fn is_referencing_class(
 
             false
         }
-        Expression::MetaProperty(meta)
-            if meta.meta.name == "new" && meta.property.name == "target" =>
-        {
-            true
-        }
+        Expression::NewTarget(_) => true,
         _ => {
             if let Some(member) = expr.as_member_expression()
                 && let Expression::ThisExpression(_) = member.object().get_inner_expression()

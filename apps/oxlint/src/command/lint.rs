@@ -147,7 +147,7 @@ pub struct BasicOptions {
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
+    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`, or `oxlint.config.mts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
@@ -195,7 +195,7 @@ pub enum LintFilter {
         String,
     ),
     Warn(
-        /// Deny the rule or category (emit a warning)
+        /// Warn on the rule or category (emit a warning)
         #[bpaf(short('W'), long("warn"), argument("NAME"))]
         String,
     ),

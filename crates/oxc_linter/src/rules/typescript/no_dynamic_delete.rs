@@ -37,6 +37,7 @@ declare_oxc_lint!(
     typescript,
     restriction,
     version = "0.5.2",
+    short_description = "Disallow using the delete operator on computed key expressions.",
 );
 
 fn no_dynamic_delete_diagnostic(span: Span) -> OxcDiagnostic {

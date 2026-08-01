@@ -1,0 +1,143 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
+ 2 │             export {defaultExport as default};
+   ·                     ──────┬──────
+   ·                           ╰── Re-exported here.
+ 3 │             export {defaultExport as named};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
+ 2 │             export {defaultExport as default};
+ 3 │             export {defaultExport as named};
+   ·                     ──────┬──────
+   ·                           ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
+ 2 │             export {named as default};
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
+ 3 │             export {named as named};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
+ 2 │             export {named as default};
+ 3 │             export {named as named};
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
+ 2 │             export default named;
+   ·                            ──┬──
+   ·                              ╰── Re-exported here.
+ 3 │             export {named as named};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {named} from 'foo';
+   · ─────────────┬────────────
+   ·              ╰── Imported here.
+ 2 │             export default named;
+ 3 │             export {named as named};
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport, {named} from 'foo';
+   · ────────────────────┬────────────────────
+   ·                     ╰── Imported here.
+ 2 │             export default defaultExport;
+   ·                            ──────┬──────
+   ·                                  ╰── Re-exported here.
+ 3 │             export {named};
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport, {named} from 'foo';
+   · ────────────────────┬────────────────────
+   ·                     ╰── Imported here.
+ 2 │             export default defaultExport;
+ 3 │             export {named};
+   ·                     ──┬──
+   ·                       ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport, {named} from 'foo';
+   · ────────────────────┬────────────────────
+   ·                     ╰── Imported here.
+ 2 │             export {defaultExport as default, named};
+   ·                     ──────┬──────
+   ·                           ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport, {named} from 'foo';
+   · ────────────────────┬────────────────────
+   ·                     ╰── Imported here.
+ 2 │             export {defaultExport as default, named};
+   ·                                               ──┬──
+   ·                                                 ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import defaultExport from 'foo';
+   · ────────────────┬───────────────
+   ·                 ╰── Imported here.
+ 2 │             export const variable = defaultExport;
+   ·                                     ──────┬──────
+   ·                                           ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import {notUsedNotExported, exported} from 'foo';
+   · ────────────────────────┬────────────────────────
+   ·                         ╰── Imported here.
+ 2 │             export {exported};
+   ·                     ────┬───
+   ·                         ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`

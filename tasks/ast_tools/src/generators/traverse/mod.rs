@@ -118,17 +118,17 @@ pub(super) fn generate_traverse_trait(
         });
     }
 
-    // Special "Statements" type: Vec<'a, Statement<'a>>
+    // Special "Statements" type: ArenaVec<'a, Statement<'a>>
     methods.extend(quote! {
         ///@@line_break
         #[inline]
-        fn enter_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut #ctx_ty) {}
+        fn enter_statements(&mut self, node: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut #ctx_ty) {}
         #[inline]
-        fn exit_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut #ctx_ty) {}
+        fn exit_statements(&mut self, node: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut #ctx_ty) {}
     });
 
     quote! {
-        use oxc_allocator::Vec;
+        use oxc_allocator::ArenaVec;
         use oxc_ast::ast::*;
 
         ///@@line_break

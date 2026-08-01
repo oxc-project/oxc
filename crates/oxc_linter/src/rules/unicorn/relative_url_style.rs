@@ -73,6 +73,7 @@ declare_oxc_lint!(
     fix_suggestion,
     config = RelativeUrlStyleConfig,
     version = "1.44.0",
+    short_description = "Enforce consistent relative URL style.",
 );
 
 const DOT_SLASH: &str = "./";

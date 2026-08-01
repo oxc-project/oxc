@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 
 use super::{
     embedded::{
-        format_embedded_js, format_type_via_formatter, is_js_ts_lang, update_template_depth,
+        format_jsdoc_js_snippet, format_type_via_formatter, is_js_ts_lang, update_template_depth,
     },
     normalize::{
         capitalize_first, normalize_markdown_emphasis, normalize_type,
@@ -137,11 +137,11 @@ impl JsdocFormatter<'_, '_> {
             return;
         }
 
-        // Check for fenced code blocks (```lang ... ```). Triple backticks are
-        // actually valid JavaScript (template literal expressions), so
-        // `format_embedded_js` would parse them as JS and produce wrong output.
-        // Handle fenced blocks by stripping the markers, formatting just the
-        // inner code, and re-adding the fences with proper indentation.
+        // Check for fenced code blocks (```lang ... ```).
+        // Triple backticks are actually valid JavaScript (template literal expressions),
+        // so `format_jsdoc_js_snippet` would parse them as JS and produce wrong output.
+        // Handle fenced blocks by stripping the markers, formatting just the inner code,
+        // and re-adding the fences with proper indentation.
         if let Some((first_line, rest)) = code.split_once('\n')
             && first_line.starts_with("```")
         {
@@ -163,8 +163,8 @@ impl JsdocFormatter<'_, '_> {
         // wrap_width minus the code indent width.
         let effective_width = self.wrap_width.saturating_sub(self.code_indent_width());
         if let Some(formatted) =
-            format_embedded_js(code, effective_width, self.format_options, self.allocator).filter(
-                |f| {
+            format_jsdoc_js_snippet(code, effective_width, self.format_options, self.allocator)
+                .filter(|f| {
                     // Reject pseudo-code that parses as valid JS but produces
                     // structurally different output (e.g., `{undefined}('popup', 'options')`
                     // parsed as block statement + expression). If the line count
@@ -172,8 +172,7 @@ impl JsdocFormatter<'_, '_> {
                     let input_lines = code.lines().count();
                     let output_lines = f.lines().count();
                     output_lines <= input_lines * 2 + 1
-                },
-            )
+                })
         {
             self.push_formatted_code_lines(&formatted, indent);
             return;
@@ -205,7 +204,7 @@ impl JsdocFormatter<'_, '_> {
         if !inner_code.is_empty() {
             let lang = lang_line[3..].trim();
             if is_js_ts_lang(lang) {
-                if let Some(formatted) = format_embedded_js(
+                if let Some(formatted) = format_jsdoc_js_snippet(
                     inner_code,
                     effective_width,
                     self.format_options,
@@ -217,7 +216,8 @@ impl JsdocFormatter<'_, '_> {
                     self.push_raw_code_lines(inner_code, indent);
                 }
             } else {
-                // Non-JS/TS fenced code: preserve with continuation indent
+                // NOTE: Non-JS fences in `@example` stay verbatim (no external callback) for now.
+                // Diverges from description fences; see `mdast_serialize::nodes::format_code_value`.
                 self.push_raw_code_lines(inner_code, indent);
             }
         }

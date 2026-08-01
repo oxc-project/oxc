@@ -52,6 +52,7 @@ declare_oxc_lint!(
     style,
     config = PreferStringStartsEndsWithConfig,
     version = "0.0.8",
+    short_description = "Prefer `startsWith` and `endsWith` over manual string boundary checks.",
 );
 
 impl Rule for PreferStringStartsEndsWith {

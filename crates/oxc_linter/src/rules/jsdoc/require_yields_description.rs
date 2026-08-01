@@ -51,6 +51,7 @@ declare_oxc_lint!(
     jsdoc,
     style,
     version = "1.68.0",
+    short_description = "Requires a description for `@yields` tags.",
 );
 
 impl Rule for RequireYieldsDescription {

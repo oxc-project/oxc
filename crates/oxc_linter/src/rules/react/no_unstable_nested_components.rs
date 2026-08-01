@@ -18,7 +18,7 @@ use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        expression_contains_jsx, function_body_contains_jsx, function_contains_jsx,
+        arrow_function_body_contains_jsx, expression_contains_jsx, function_contains_jsx,
         is_create_element_call, is_es6_component, is_hoc_call, is_react_component_name,
         is_react_hook,
     },
@@ -113,6 +113,7 @@ declare_oxc_lint!(
     none,
     config = NoUnstableNestedComponentsConfig,
     version = "1.66.0",
+    short_description = "Disallows defining React components inside other components.",
 );
 
 impl Rule for NoUnstableNestedComponents {
@@ -215,7 +216,7 @@ impl NoUnstableNestedComponents {
             return None;
         }
 
-        let contains_jsx = function_body_contains_jsx(&arrow.body);
+        let contains_jsx = arrow_function_body_contains_jsx(&arrow.body);
         if !contains_jsx {
             return None;
         }
@@ -325,7 +326,7 @@ fn find_parent_component_name(
             }
             AstKind::ArrowFunctionExpression(arrow) => {
                 if is_first_argument_of_hoc_call(ancestor, ctx)
-                    || !function_body_contains_jsx(&arrow.body)
+                    || !arrow_function_body_contains_jsx(&arrow.body)
                 {
                     continue;
                 }
@@ -582,7 +583,7 @@ fn is_hoc_component_call(call: &CallExpression<'_>, ctx: &LintContext<'_>) -> bo
 fn argument_contains_jsx(arg: &Argument<'_>, ctx: &LintContext<'_>) -> bool {
     match arg {
         Argument::FunctionExpression(func) => function_contains_jsx(func),
-        Argument::ArrowFunctionExpression(arrow) => function_body_contains_jsx(&arrow.body),
+        Argument::ArrowFunctionExpression(arrow) => arrow_function_body_contains_jsx(&arrow.body),
         Argument::CallExpression(call) => is_hoc_component_call(call, ctx),
         _ => arg.as_expression().is_some_and(expression_contains_jsx),
     }

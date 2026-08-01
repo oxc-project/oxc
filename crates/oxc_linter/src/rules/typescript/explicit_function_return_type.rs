@@ -5,7 +5,7 @@ use oxc_ast::{
         ReturnStatement, TSType, TSTypeName,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -136,6 +136,7 @@ declare_oxc_lint!(
     restriction,
     config = ExplicitFunctionReturnTypeConfig,
     version = "0.4.4",
+    short_description = "This rule enforces that functions have an explicit return type annotation.",
 );
 
 fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
@@ -299,7 +300,7 @@ impl ExplicitFunctionReturnType {
         if !self.allow_concise_arrow_function_expressions_starting_with_void {
             return false;
         }
-        if !func.expression {
+        if !func.is_expression() {
             return false;
         }
         let Some(expr) = func.get_expression() else { return false };
@@ -596,7 +597,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 
     if let AstKind::ObjectProperty(prop) = parent.kind()
         && let Expression::ArrowFunctionExpression(func) = &prop.value
-        && !func.body.statements.is_empty()
+        && func.get_function_body().is_some_and(|body| !body.statements.is_empty())
         && func.return_type.is_some()
     {
         return true;
@@ -630,7 +631,10 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 
 fn all_return_statements_are_functions(node: &AstNode) -> bool {
     let function_body = match node.kind() {
-        AstKind::ArrowFunctionExpression(arrow_func_expr) => &arrow_func_expr.body,
+        AstKind::ArrowFunctionExpression(arrow_func_expr) => {
+            let Some(body) = arrow_func_expr.get_function_body() else { return false };
+            body
+        }
         AstKind::Function(func) => {
             if let Some(func_body) = &func.body {
                 func_body
@@ -653,7 +657,7 @@ struct ReturnStatementChecker {
     all_returns_are_functions: bool,
 }
 
-impl<'a> Visit<'a> for ReturnStatementChecker {
+impl<'a> VisitJs<'a> for ReturnStatementChecker {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement<'a>) {
         self.has_return = true;
         self.all_returns_are_functions &=

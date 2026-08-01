@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId};
 use oxc_span::Span;
@@ -24,7 +25,7 @@ fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnos
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoParamReassignConfig {
     /// When true, also check for modifications to properties of parameters.
     props: bool,
@@ -77,6 +78,7 @@ declare_oxc_lint!(
     restriction,
     config = NoParamReassignConfig,
     version = "1.20.0",
+    short_description = "Disallow reassigning function parameters or, optionally, their properties.",
 );
 
 impl Rule for NoParamReassign {
@@ -121,10 +123,8 @@ impl Rule for NoParamReassign {
         };
 
         let symbol_table = ctx.scoping();
-        for ident in param.pattern.get_binding_identifiers() {
-            let Some(symbol_id) = ident.symbol_id.get() else {
-                continue;
-            };
+        param.pattern.bound_names(&mut |ident| {
+            let symbol_id = ident.symbol_id();
 
             let declaration_id = symbol_table.symbol_declaration(symbol_id);
             let name = symbol_table.symbol_name(symbol_id);
@@ -155,7 +155,7 @@ impl Rule for NoParamReassign {
                     ctx.diagnostic(assignment_to_param_property_diagnostic(name, span));
                 }
             }
-        }
+        });
     }
 }
 

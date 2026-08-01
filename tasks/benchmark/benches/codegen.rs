@@ -16,7 +16,7 @@ fn bench_codegen(criterion: &mut Criterion) {
         let allocator = Allocator::default();
 
         let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(parser_ret.errors.is_empty());
+        assert!(parser_ret.diagnostics.is_empty());
         let mut program = parser_ret.program;
 
         let scoping =
@@ -26,7 +26,7 @@ fn bench_codegen(criterion: &mut Criterion) {
         let transformer_ret =
             Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
                 .build_with_scoping(scoping, &mut program);
-        assert!(transformer_ret.errors.is_empty());
+        assert!(transformer_ret.diagnostics.is_empty());
 
         let mut group = criterion.benchmark_group("codegen");
         group.bench_function(id, |b| {

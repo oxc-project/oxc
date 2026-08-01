@@ -49,7 +49,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0 # v1.4.3
+      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
         with:
           path: /home/runner/.rustup
           cache: rust
@@ -60,10 +60,11 @@ jobs:
           rustup toolchain install "${MIRI_TOOLCHAIN}" --component miri
           cargo +"${MIRI_TOOLCHAIN}" miri setup
 
-      # `--lib --bins --tests` omits doctests, which Miri can't run
-      # https://github.com/oxc-project/oxc/pull/11092
       - name: Test with Miri
         if: steps.filter.outputs.changed == 'true'
+        # Enable strict provenance checks
+        env:
+          MIRIFLAGS: -Zmiri-strict-provenance
         run: |
-          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
-          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests -p oxc_parser -p oxc_transformer
+          cargo +"${MIRI_TOOLCHAIN}" miri test --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
+          cargo +"${MIRI_TOOLCHAIN}" miri test -p oxc_parser -p oxc_transformer

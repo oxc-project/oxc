@@ -131,6 +131,7 @@ declare_oxc_lint!(
     none,
     config = NoInvalidVoidTypeConfig,
     version = "1.47.0",
+    short_description = "Disallow `void` type usage outside return types and configured generic contexts.",
 );
 
 impl Rule for NoInvalidVoidType {
@@ -407,7 +408,7 @@ fn has_function_overload_signatures(
     ctx: &LintContext<'_>,
 ) -> bool {
     let wrapper = match ctx.nodes().parent_kind(function_node.id()) {
-        AstKind::ExportNamedDeclaration(_) => FunctionStatementWrapper::ExportNamed,
+        AstKind::ExportDeclaration(_) => FunctionStatementWrapper::ExportNamed,
         AstKind::ExportDefaultDeclaration(_) => FunctionStatementWrapper::ExportDefault,
         _ => FunctionStatementWrapper::Plain,
     };
@@ -473,8 +474,8 @@ fn statement_function_candidate<'a>(
 
     if let Some(module_decl) = statement.as_module_declaration() {
         match module_decl {
-            ModuleDeclaration::ExportNamedDeclaration(named_decl) => {
-                if let Some(Declaration::FunctionDeclaration(function)) = &named_decl.declaration {
+            ModuleDeclaration::ExportDeclaration(export_decl) => {
+                if let Declaration::FunctionDeclaration(function) = &export_decl.declaration {
                     return Some((function, FunctionStatementWrapper::ExportNamed));
                 }
             }

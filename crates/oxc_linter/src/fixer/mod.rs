@@ -1,34 +1,29 @@
-use std::borrow::Cow;
-
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::OxcCode;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SourceType, Span};
-
-/// Identifies the lint rule that produced a [`Message`].
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MessageRule {
-    /// Canonical plugin name, like `react`, `jsx-a11y`, `typescript`, etc.
-    pub plugin_name: Cow<'static, str>,
-    /// Canonical rule name: like `no-unused-vars` or `no-floating-promises`
-    pub rule_name: Cow<'static, str>,
-}
-
-impl MessageRule {
-    /// Returns the canonical name of the rule in the format `{plugin}/{rule}`. Omits
-    /// the plugin name for core rules (like `no-undef` instead of `eslint/no-undef`).
-    pub fn short_canonical_name(&self) -> String {
-        if self.plugin_name == "eslint" {
-            return self.rule_name.to_string();
-        }
-
-        format!("{}/{}", self.plugin_name, self.rule_name)
-    }
-}
+use std::borrow::Cow;
 
 use crate::LintContext;
 
+mod disable_fix;
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
+
+pub fn oxc_code_short_canonical_name(code: &OxcCode) -> Option<String> {
+    let Some(scope) = &code.scope else {
+        return None;
+    };
+    let Some(number) = &code.number else {
+        return None;
+    };
+
+    if scope == "eslint" {
+        return Some(number.to_string());
+    }
+
+    Some(format!("{scope}/{number}"))
+}
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -266,35 +261,19 @@ pub struct Message {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
     pub span: Span,
-    fixed: bool,
-    pub section_offset: u32,
-    /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
-    pub rule: Option<MessageRule>,
 }
 
 impl Message {
-    #[expect(clippy::cast_possible_truncation)] // for `as u32`
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
         let span = error
             .labels
-            .as_ref()
-            .and_then(|labels| labels.iter().find(|span| span.primary()).or_else(|| labels.first()))
-            .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
+            .iter()
+            .find(|span| span.primary())
+            .or_else(|| error.labels.first())
+            .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
-    }
-
-    #[must_use]
-    pub fn with_rule(mut self, rule: MessageRule) -> Self {
-        self.rule = Some(rule);
-        self
-    }
-
-    #[must_use]
-    pub fn with_section_offset(mut self, section_offset: u32) -> Self {
-        self.section_offset = section_offset;
-        self
+        Self { error, fixes, span }
     }
 
     /// move the offset of all spans to the right
@@ -303,10 +282,8 @@ impl Message {
 
         self.span = self.span.move_right(offset);
 
-        if let Some(labels) = &mut self.error.labels {
-            for label in labels {
-                label.set_span_offset(label.offset().saturating_add(offset as usize));
-            }
+        for label in &mut self.error.labels {
+            label.set_span_offset(label.offset().saturating_add(offset));
         }
 
         match &mut self.fixes {
@@ -396,7 +373,7 @@ impl<'a> Fixer<'a> {
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
 
-        for mut m in self.messages {
+        for m in self.messages {
             let fix = match &m.fixes {
                 PossibleFixes::None => None,
                 PossibleFixes::Single(fix) => Some(fix),
@@ -427,7 +404,6 @@ impl<'a> Fixer<'a> {
                 continue;
             }
 
-            m.fixed = true;
             fixed = true;
             let offset = last_pos as usize;
             output.push_str(&source_text[offset..start as usize]);
@@ -453,9 +429,9 @@ impl<'a> Fixer<'a> {
                 })
                 .parse();
             debug_assert!(
-                parse_result.errors.is_empty() && !parse_result.panicked,
+                parse_result.diagnostics.is_empty() && !parse_result.panicked,
                 "Linter fixer produced invalid syntax.\n\nInput code: \n```\n{source_text}\n```\n\nFixed code: \n```\n{output}\n```\n\nParse errors: {:?}",
-                parse_result.errors
+                parse_result.diagnostics
             );
         }
 

@@ -1,0 +1,813 @@
+# externals/gitlab/stylesheets/components/content_editor.scss
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -323,10 +323,10 @@
+ 
+ .table-creator-grid-item {
+   box-shadow:
+     inset 0 0 0 $gl-spacing-scale-2 $white,
+-    inset $gl-spacing-scale-1 $gl-spacing-scale-1 0 #{$gl-spacing-scale-2 * 3 /
+-      4} $gray-100,
++    inset $gl-spacing-scale-1 $gl-spacing-scale-1 0
++      #{$gl-spacing-scale-2 * 3 / 4} $gray-100,
+     inset #{-$gl-spacing-scale-1} #{-$gl-spacing-scale-1} 0
+       #{$gl-spacing-scale-2 * 3 / 4} $gray-100 !important;
+ 
+   &.active {
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+.ProseMirror {
+  width: calc(100% - 4px);
+  padding-top: $gl-spacing-scale-4;
+  padding-left: calc(#{$gl-spacing-scale-5} - 2px);
+  padding-right: $gl-spacing-scale-5;
+  margin: 2px;
+  min-height: 140px;
+  max-height: 55vh;
+  position: static;
+  overflow-y: auto;
+  transition: box-shadow ease-in-out 0.15s;
+
+  .gl-dark & {
+    width: calc(100% - 6px);
+    margin: 2px 3px;
+    padding-left: calc(#{$gl-spacing-scale-5} - 3px);
+  }
+
+  ::selection {
+    background-color: transparent;
+  }
+
+  &:focus {
+    @include gl-focus;
+  }
+
+  &:not(.ProseMirror-hideselection) .content-editor-selection,
+  a.ProseMirror-selectednode,
+  span.ProseMirror-selectednode {
+    background-color: $blue-100;
+    box-shadow:
+      0 2px 0 $blue-100,
+      0 -2px 0 $blue-100;
+  }
+
+  pre > code {
+    background-color: transparent;
+  }
+
+  th[align] *,
+  td[align] * {
+    text-align: inherit;
+  }
+
+  td,
+  th,
+  li,
+  dd,
+  dt,
+  summary {
+    :first-child {
+      margin-bottom: 0 !important;
+    }
+  }
+
+  img.ProseMirror-selectednode,
+  .ProseMirror-selectednode audio,
+  .ProseMirror-selectednode video {
+    outline: 3px solid $blue-200;
+    outline-offset: -3px;
+  }
+
+  .selectedCell::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba($blue-200, 0.25);
+    pointer-events: none;
+  }
+
+  .image-resize-container {
+    position: relative;
+  }
+
+  .image-resize {
+    display: inline-block;
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: $blue-200;
+    outline: 1px solid $white;
+  }
+
+  .image-resize-nw {
+    top: -4px;
+    left: -4px;
+    cursor: nw-resize;
+  }
+
+  .image-resize-ne {
+    top: -4px;
+    right: -4px;
+    cursor: ne-resize;
+  }
+
+  .image-resize-sw {
+    bottom: 4px;
+    left: -4px;
+    cursor: sw-resize;
+  }
+
+  .image-resize-se {
+    bottom: 4px;
+    right: -4px;
+    cursor: se-resize;
+  }
+
+  img.ProseMirror-selectednode {
+    outline: 2px solid $blue-200;
+    outline-offset: -2px;
+  }
+
+  video {
+    max-width: 400px;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  > ul {
+    list-style-type: disc;
+
+    ul {
+      list-style-type: circle;
+
+      ul {
+        list-style-type: square;
+      }
+    }
+  }
+
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+
+    ul,
+    p {
+      margin-bottom: 0;
+    }
+
+    > li {
+      display: flex;
+      margin: 0;
+
+      > label,
+      > div {
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      > label {
+        padding: $gl-spacing-scale-1 $gl-spacing-scale-3 0 0;
+        margin: 0;
+      }
+
+      &[data-inapplicable] * {
+        text-decoration: line-through;
+        color: $gl-text-color-disabled;
+      }
+    }
+  }
+
+  .suggestion-added,
+  .suggestion-deleted,
+  .suggestion-added-input {
+    white-space: pre-wrap;
+
+    > code {
+      white-space: pre-wrap;
+      padding: 0;
+      display: flex;
+    }
+  }
+
+  .suggestion-added-input {
+    > code {
+      display: block;
+      margin-left: 120px;
+      background-color: transparent !important;
+    }
+  }
+
+  .suggestion-added,
+  .suggestion-deleted {
+    background-color: $line-added;
+    width: 100%;
+
+    > code {
+      border-left: 100px solid $line-number-new;
+      padding-left: 20px;
+      border-radius: 0;
+      background-color: inherit !important;
+    }
+
+    > code::before {
+      content: attr(data-line-number);
+      position: absolute;
+      width: 100px;
+      margin-left: -120px;
+      text-align: right;
+      padding-right: 10px;
+      padding-left: 10px;
+
+      color: $gl-text-color-secondary;
+    }
+
+    > code::after {
+      content: "+";
+      position: absolute;
+      margin-left: -20px;
+      width: 20px;
+      text-align: center;
+
+      color: $gl-text-color-secondary;
+    }
+  }
+
+  .suggestion-added > code {
+    color: rgba($white, 0);
+  }
+
+  .suggestion-deleted {
+    background-color: $line-removed;
+    cursor: not-allowed;
+
+    > code {
+      border-color: $line-number-old;
+    }
+
+    > code::before {
+      padding-right: 60px;
+    }
+
+    > code::after {
+      content: "-";
+    }
+  }
+
+  .dl-content {
+    width: 100%;
+
+    > li {
+      list-style-type: none;
+      margin-left: $gl-spacing-scale-5;
+
+      &.dl-term {
+        margin: 0;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .details-toggle-icon {
+    cursor: pointer;
+    z-index: 1;
+
+    &::before {
+      content: "▶";
+      display: inline-block;
+      width: $gl-spacing-scale-4;
+    }
+
+    &.is-open::before {
+      content: "▼";
+    }
+  }
+
+  .details-content {
+    width: calc(100% - #{$gl-spacing-scale-4});
+
+    > li {
+      list-style-type: none;
+      margin-left: $gl-spacing-scale-2;
+    }
+
+    > :not(:first-child) {
+      display: none;
+    }
+
+    &.is-open > :not(:first-child) {
+      display: inherit;
+    }
+  }
+
+  .gl-new-dropdown-inner li {
+    margin-left: 0 !important;
+
+    &.gl-new-dropdown-item {
+      padding-left: $gl-spacing-scale-2;
+      padding-right: $gl-spacing-scale-2;
+    }
+  }
+}
+
+.gl-dark .ProseMirror {
+  .suggestion-added-input,
+  .suggestion-deleted {
+    > code {
+      color: $gray-50;
+    }
+  }
+
+  .suggestion-deleted,
+  .suggestion-added {
+    > code::before,
+    > code::after {
+      color: $gray-400;
+    }
+  }
+}
+
+// Fixes a problem with the layout shifting
+// when switching between Markdown and the
+// Richtext editor due to a loosly defined
+// style in typography.scss
+.md > .ProseMirror {
+  margin: 2px;
+}
+
+.table-creator-grid-item {
+  box-shadow:
+    inset 0 0 0 $gl-spacing-scale-2 $white,
+    inset $gl-spacing-scale-1 $gl-spacing-scale-1 0
+      #{$gl-spacing-scale-2 * 3 / 4} $gray-100,
+    inset #{-$gl-spacing-scale-1} #{-$gl-spacing-scale-1} 0
+      #{$gl-spacing-scale-2 * 3 / 4} $gray-100 !important;
+
+  &.active {
+    box-shadow:
+      inset 0 0 0 $gl-spacing-scale-2 $white,
+      inset $gl-spacing-scale-1 $gl-spacing-scale-1 0 $gl-spacing-scale-2
+        $blue-500,
+      inset #{-$gl-spacing-scale-1} #{-$gl-spacing-scale-1} 0
+        $gl-spacing-scale-2 $blue-500 !important;
+  }
+}
+
+.content-editor-switcher {
+  min-height: 32px;
+}
+
+.content-editor-color-chip::after {
+  content: " ";
+  display: inline-block;
+  align-items: center;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  margin-left: 4px;
+  margin-top: -2px;
+  border: 1px solid $t-gray-a-24;
+  background-color: var(--gl-color-chip-color);
+}
+
+.content-editor-comment {
+  &::before {
+    content: "<!--";
+  }
+
+  &::after {
+    content: "-->";
+  }
+}
+
+.content-editor-table-dropdown .gl-new-dropdown-panel {
+  min-width: auto;
+}
+
+.content-editor-suggestions-dropdown {
+  .gl-new-dropdown-panel {
+    width: max-content;
+  }
+
+  li.focused div.gl-new-dropdown-item-content {
+    @include gl-focus($inset: true);
+    background-color: $gray-50;
+  }
+}
+
+.bubble-menu-form {
+  min-width: 320px;
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+.ProseMirror {
+  width: calc(100% - 4px);
+  padding-top: $gl-spacing-scale-4;
+  padding-left: calc(#{$gl-spacing-scale-5} - 2px);
+  padding-right: $gl-spacing-scale-5;
+  margin: 2px;
+  min-height: 140px;
+  max-height: 55vh;
+  position: static;
+  overflow-y: auto;
+  transition: box-shadow ease-in-out 0.15s;
+
+  .gl-dark & {
+    width: calc(100% - 6px);
+    margin: 2px 3px;
+    padding-left: calc(#{$gl-spacing-scale-5} - 3px);
+  }
+
+  ::selection {
+    background-color: transparent;
+  }
+
+  &:focus {
+    @include gl-focus;
+  }
+
+  &:not(.ProseMirror-hideselection) .content-editor-selection,
+  a.ProseMirror-selectednode,
+  span.ProseMirror-selectednode {
+    background-color: $blue-100;
+    box-shadow:
+      0 2px 0 $blue-100,
+      0 -2px 0 $blue-100;
+  }
+
+  pre > code {
+    background-color: transparent;
+  }
+
+  th[align] *,
+  td[align] * {
+    text-align: inherit;
+  }
+
+  td,
+  th,
+  li,
+  dd,
+  dt,
+  summary {
+    :first-child {
+      margin-bottom: 0 !important;
+    }
+  }
+
+  img.ProseMirror-selectednode,
+  .ProseMirror-selectednode audio,
+  .ProseMirror-selectednode video {
+    outline: 3px solid $blue-200;
+    outline-offset: -3px;
+  }
+
+  .selectedCell::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba($blue-200, 0.25);
+    pointer-events: none;
+  }
+
+  .image-resize-container {
+    position: relative;
+  }
+
+  .image-resize {
+    display: inline-block;
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: $blue-200;
+    outline: 1px solid $white;
+  }
+
+  .image-resize-nw {
+    top: -4px;
+    left: -4px;
+    cursor: nw-resize;
+  }
+
+  .image-resize-ne {
+    top: -4px;
+    right: -4px;
+    cursor: ne-resize;
+  }
+
+  .image-resize-sw {
+    bottom: 4px;
+    left: -4px;
+    cursor: sw-resize;
+  }
+
+  .image-resize-se {
+    bottom: 4px;
+    right: -4px;
+    cursor: se-resize;
+  }
+
+  img.ProseMirror-selectednode {
+    outline: 2px solid $blue-200;
+    outline-offset: -2px;
+  }
+
+  video {
+    max-width: 400px;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  > ul {
+    list-style-type: disc;
+
+    ul {
+      list-style-type: circle;
+
+      ul {
+        list-style-type: square;
+      }
+    }
+  }
+
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+
+    ul,
+    p {
+      margin-bottom: 0;
+    }
+
+    > li {
+      display: flex;
+      margin: 0;
+
+      > label,
+      > div {
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      > label {
+        padding: $gl-spacing-scale-1 $gl-spacing-scale-3 0 0;
+        margin: 0;
+      }
+
+      &[data-inapplicable] * {
+        text-decoration: line-through;
+        color: $gl-text-color-disabled;
+      }
+    }
+  }
+
+  .suggestion-added,
+  .suggestion-deleted,
+  .suggestion-added-input {
+    white-space: pre-wrap;
+
+    > code {
+      white-space: pre-wrap;
+      padding: 0;
+      display: flex;
+    }
+  }
+
+  .suggestion-added-input {
+    > code {
+      display: block;
+      margin-left: 120px;
+      background-color: transparent !important;
+    }
+  }
+
+  .suggestion-added,
+  .suggestion-deleted {
+    background-color: $line-added;
+    width: 100%;
+
+    > code {
+      border-left: 100px solid $line-number-new;
+      padding-left: 20px;
+      border-radius: 0;
+      background-color: inherit !important;
+    }
+
+    > code::before {
+      content: attr(data-line-number);
+      position: absolute;
+      width: 100px;
+      margin-left: -120px;
+      text-align: right;
+      padding-right: 10px;
+      padding-left: 10px;
+
+      color: $gl-text-color-secondary;
+    }
+
+    > code::after {
+      content: "+";
+      position: absolute;
+      margin-left: -20px;
+      width: 20px;
+      text-align: center;
+
+      color: $gl-text-color-secondary;
+    }
+  }
+
+  .suggestion-added > code {
+    color: rgba($white, 0);
+  }
+
+  .suggestion-deleted {
+    background-color: $line-removed;
+    cursor: not-allowed;
+
+    > code {
+      border-color: $line-number-old;
+    }
+
+    > code::before {
+      padding-right: 60px;
+    }
+
+    > code::after {
+      content: "-";
+    }
+  }
+
+  .dl-content {
+    width: 100%;
+
+    > li {
+      list-style-type: none;
+      margin-left: $gl-spacing-scale-5;
+
+      &.dl-term {
+        margin: 0;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .details-toggle-icon {
+    cursor: pointer;
+    z-index: 1;
+
+    &::before {
+      content: "▶";
+      display: inline-block;
+      width: $gl-spacing-scale-4;
+    }
+
+    &.is-open::before {
+      content: "▼";
+    }
+  }
+
+  .details-content {
+    width: calc(100% - #{$gl-spacing-scale-4});
+
+    > li {
+      list-style-type: none;
+      margin-left: $gl-spacing-scale-2;
+    }
+
+    > :not(:first-child) {
+      display: none;
+    }
+
+    &.is-open > :not(:first-child) {
+      display: inherit;
+    }
+  }
+
+  .gl-new-dropdown-inner li {
+    margin-left: 0 !important;
+
+    &.gl-new-dropdown-item {
+      padding-left: $gl-spacing-scale-2;
+      padding-right: $gl-spacing-scale-2;
+    }
+  }
+}
+
+.gl-dark .ProseMirror {
+  .suggestion-added-input,
+  .suggestion-deleted {
+    > code {
+      color: $gray-50;
+    }
+  }
+
+  .suggestion-deleted,
+  .suggestion-added {
+    > code::before,
+    > code::after {
+      color: $gray-400;
+    }
+  }
+}
+
+// Fixes a problem with the layout shifting
+// when switching between Markdown and the
+// Richtext editor due to a loosly defined
+// style in typography.scss
+.md > .ProseMirror {
+  margin: 2px;
+}
+
+.table-creator-grid-item {
+  box-shadow:
+    inset 0 0 0 $gl-spacing-scale-2 $white,
+    inset $gl-spacing-scale-1 $gl-spacing-scale-1 0 #{$gl-spacing-scale-2 * 3 /
+      4} $gray-100,
+    inset #{-$gl-spacing-scale-1} #{-$gl-spacing-scale-1} 0
+      #{$gl-spacing-scale-2 * 3 / 4} $gray-100 !important;
+
+  &.active {
+    box-shadow:
+      inset 0 0 0 $gl-spacing-scale-2 $white,
+      inset $gl-spacing-scale-1 $gl-spacing-scale-1 0 $gl-spacing-scale-2
+        $blue-500,
+      inset #{-$gl-spacing-scale-1} #{-$gl-spacing-scale-1} 0
+        $gl-spacing-scale-2 $blue-500 !important;
+  }
+}
+
+.content-editor-switcher {
+  min-height: 32px;
+}
+
+.content-editor-color-chip::after {
+  content: " ";
+  display: inline-block;
+  align-items: center;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  margin-left: 4px;
+  margin-top: -2px;
+  border: 1px solid $t-gray-a-24;
+  background-color: var(--gl-color-chip-color);
+}
+
+.content-editor-comment {
+  &::before {
+    content: "<!--";
+  }
+
+  &::after {
+    content: "-->";
+  }
+}
+
+.content-editor-table-dropdown .gl-new-dropdown-panel {
+  min-width: auto;
+}
+
+.content-editor-suggestions-dropdown {
+  .gl-new-dropdown-panel {
+    width: max-content;
+  }
+
+  li.focused div.gl-new-dropdown-item-content {
+    @include gl-focus($inset: true);
+    background-color: $gray-50;
+  }
+}
+
+.bubble-menu-form {
+  min-width: 320px;
+}
+
+`````

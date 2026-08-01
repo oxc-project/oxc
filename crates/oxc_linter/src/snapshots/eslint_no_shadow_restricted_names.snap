@@ -290,20 +290,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Rename 'undefined' to avoid shadowing the global property.
 
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as `undefined` is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:7]
- 1 │ class undefined {}
-   ·       ─────────
-   ╰────
-  help: Rename 'undefined' to avoid shadowing the global property.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as `undefined` is not allowed.
-   ╭─[no_shadow_restricted_names.tsx:1:8]
- 1 │ (class undefined {})
-   ·        ─────────
-   ╰────
-  help: Rename 'undefined' to avoid shadowing the global property.
-
-  ⚠ eslint(no-shadow-restricted-names): Shadowing of global properties such as `undefined` is not allowed.
    ╭─[no_shadow_restricted_names.tsx:1:8]
  1 │ import undefined from 'foo';
    ·        ─────────

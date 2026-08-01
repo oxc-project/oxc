@@ -94,6 +94,7 @@ declare_oxc_lint!(
     fix,
     config = NoUselessEscapeConfig,
     version = "0.0.5",
+    short_description = "Disallow unnecessary escape characters.",
 );
 
 impl Rule for NoUselessEscape {

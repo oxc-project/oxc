@@ -8,9 +8,9 @@ fn get_enum_member_value(source: &str, member_name: &str) -> Option<ConstantValu
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
     let parser_ret = Parser::new(&allocator, source, source_type).parse();
-    assert!(parser_ret.errors.is_empty(), "Parse errors: {:?}", parser_ret.errors);
+    assert!(parser_ret.diagnostics.is_empty(), "Parse errors: {:?}", parser_ret.diagnostics);
     let semantic_ret = SemanticBuilder::new().with_enum_eval(true).build(&parser_ret.program);
-    assert!(semantic_ret.errors.is_empty(), "Semantic errors: {:?}", semantic_ret.errors);
+    assert!(semantic_ret.diagnostics.is_empty(), "Semantic errors: {:?}", semantic_ret.diagnostics);
     let scoping = semantic_ret.semantic.into_scoping();
 
     for symbol_id in scoping.symbol_ids() {

@@ -66,6 +66,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.2.10",
+    short_description = "Disallow `new` operators with the `String`, `Number`, and `Boolean` objects.",
 );
 
 impl Rule for NoNewWrappers {

@@ -260,10 +260,10 @@ mod test {
     fn is_first_call_or_new_regexp(source: &str) -> Option<bool> {
         let allocator = Allocator::default();
         let parser_ret = Parser::new(&allocator, source, SourceType::default()).parse();
-        assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+        assert!(parser_ret.diagnostics.is_empty(), "Parse error in: {source}");
 
         let program = allocator.alloc(parser_ret.program);
-        let semantic = SemanticBuilder::new().with_cfg(true).build(program).semantic;
+        let semantic = SemanticBuilder::new_linter().build(program).semantic;
         let ctx = Rc::new(ContextHost::new(
             "test.js",
             vec![ContextSubHost::new(
@@ -272,6 +272,7 @@ mod test {
                 0,
                 ContextSubHostOptions::default(),
             )],
+            &allocator,
             LintOptions::default(),
             Arc::default(),
         ))

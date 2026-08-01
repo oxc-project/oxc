@@ -1,0 +1,11 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.exhaustive-deps-effect-events.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectExhaustiveDependencies: Found extra effect dependencies", labels: One([LabeledSpan { label: Some("Functions returned from `useEffectEvent` must not be included in the dependency array. Remove `effectEvent` from the dependencies."), span: SourceSpan { offset: SourceOffset(354), length: 11 }, primary: false }]), help: Some("Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectExhaustiveDependencies: Found extra effect dependencies", labels: One([LabeledSpan { label: Some("Functions returned from `useEffectEvent` must not be included in the dependency array. Remove `effectEvent2` from the dependencies."), span: SourceSpan { offset: SourceOffset(466), length: 12 }, primary: false }]), help: Some("Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectExhaustiveDependencies: Found extra effect dependencies", labels: One([LabeledSpan { label: Some("Unnecessary dependency `y`"), span: SourceSpan { offset: SourceOffset(598), length: 1 }, primary: false }]), help: Some("Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

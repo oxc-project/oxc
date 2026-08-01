@@ -13,10 +13,10 @@ fn transform(path: &Path, source_text: &str) -> String {
     let source_type = SourceType::from_path(path).unwrap();
     let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(
-        parser_ret.errors.is_empty(),
+        parser_ret.diagnostics.is_empty(),
         "Parser errors for {}: {:?}",
         path.display(),
-        parser_ret.errors
+        parser_ret.diagnostics
     );
 
     let id_ret =
@@ -26,10 +26,10 @@ fn transform(path: &Path, source_text: &str) -> String {
 
     let mut snapshot =
         format!("```\n==================== .D.TS ====================\n\n{code}\n\n");
-    if !id_ret.errors.is_empty() {
+    if !id_ret.diagnostics.is_empty() {
         let source = Arc::new(source_text.to_string());
         let error_messages = id_ret
-            .errors
+            .diagnostics
             .iter()
             .map(|d| d.clone().with_source_code(Arc::clone(&source)))
             .fold(String::new(), |s, error| s + &format!("{error:?}"));

@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, CallExpression, Expression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
     graph::{
@@ -39,7 +39,7 @@ pub struct NoMultipleResolved;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule warns of paths that resolve multiple times in executor functions that Promise constructors.
+    /// This rule warns of paths that resolve multiple times in executor functions of Promise constructors.
     ///
     /// ### Why is this bad?
     ///
@@ -80,6 +80,7 @@ declare_oxc_lint!(
     promise,
     suspicious,
     version = "1.19.0",
+    short_description = "This rule warns of paths that resolve multiple times in executor functions of Promise constructors.",
 );
 
 impl Rule for NoMultipleResolved {
@@ -706,7 +707,7 @@ impl<'a> ResolveFinder<'a> {
     }
 }
 
-impl<'a> Visit<'a> for ResolveFinder<'a> {
+impl<'a> VisitJs<'a> for ResolveFinder<'a> {
     fn leave_node(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::NewExpression(new_expr) => {

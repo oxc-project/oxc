@@ -54,6 +54,7 @@ declare_oxc_lint!(
     style,
     pending,
     version = "0.15.14",
+    short_description = "Prefer `catch` to `then(a, b)` and `then(null, b)`.",
 );
 
 impl Rule for PreferCatch {

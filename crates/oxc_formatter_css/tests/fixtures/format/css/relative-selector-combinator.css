@@ -1,0 +1,6 @@
+[part~="control"]:has(> input:focus-visible:not(:disabled)) {
+  outline: red;
+}
+.a:has(+ .b, ~ .c) {
+  color: red;
+}

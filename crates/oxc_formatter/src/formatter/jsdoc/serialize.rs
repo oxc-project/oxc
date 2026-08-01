@@ -196,7 +196,8 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         reorder_param_tags(&mut effective_tags, comment, source_text);
 
         // Pre-process @import tags: merge by module, sort, format
-        let (mut import_lines, parsed_import_indices) = process_import_tags(&effective_tags);
+        let (mut import_lines, parsed_import_indices) =
+            process_import_tags(&effective_tags, self.quote_style());
         let has_imports = !import_lines.is_empty();
         let mut imports_emitted = false;
 

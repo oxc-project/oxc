@@ -54,13 +54,59 @@ pub fn class_static_block_await_using(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn reserved_keyword(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1)
+pub fn reserved_keyword(x0: &str, span1: Span, context: ReservedKeywordContext) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("The keyword '{x0}' is reserved")).with_label(span1);
+    match context {
+        ReservedKeywordContext::StrictMode => {
+            diagnostic.with_note("This identifier is reserved in strict mode code")
+        }
+        ReservedKeywordContext::Class => {
+            diagnostic.with_note("Classes are always strict mode code")
+        }
+        ReservedKeywordContext::Module => {
+            diagnostic.with_note("Modules are always strict mode code")
+        }
+        ReservedKeywordContext::ModuleAwait => {
+            diagnostic.with_note("The identifier `await` is reserved in module code")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ReservedKeywordContext {
+    StrictMode,
+    Class,
+    Module,
+    ModuleAwait,
 }
 
 #[cold]
-pub fn unexpected_identifier_assign(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot assign to '{x0}' in strict mode")).with_label(span1)
+pub fn unexpected_identifier_assign(
+    x0: &str,
+    span1: Span,
+    context: UnexpectedIdentifierAssignContext,
+) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::error(format!("Cannot assign to '{x0}' in strict mode")).with_label(span1);
+    match context {
+        UnexpectedIdentifierAssignContext::StrictMode => {
+            diagnostic.with_note("This is strict mode code")
+        }
+        UnexpectedIdentifierAssignContext::Class => {
+            diagnostic.with_note("Classes are always strict mode code")
+        }
+        UnexpectedIdentifierAssignContext::Module => {
+            diagnostic.with_note("Modules are always strict mode code")
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnexpectedIdentifierAssignContext {
+    StrictMode,
+    Class,
+    Module,
 }
 
 #[cold]
@@ -139,22 +185,6 @@ pub fn top_level(x0: &str, span1: Span) -> OxcDiagnostic {
 #[cold]
 pub fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use {x0} outside a module")).with_label(span1)
-}
-
-#[cold]
-pub fn new_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected new.target expression")
-        .with_help(
-            "new.target is only allowed in constructors, functions, and class field initializers",
-        )
-        .with_label(span)
-}
-
-#[cold]
-pub fn import_meta(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected import.meta expression")
-        .with_help("import.meta is only allowed in module code")
-        .with_label(span)
 }
 
 #[cold]
@@ -258,6 +288,15 @@ pub fn require_class_name(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn type_predicate_only_in_return_type(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1228",
+        "A type predicate is only allowed in return type position for functions and methods.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn super_without_derived_class(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be referenced in a derived class.")
         .with_help("either remove this super, or extend the class")
@@ -274,16 +313,6 @@ pub fn unexpected_super_call(span: Span) -> OxcDiagnostic {
 pub fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be referenced in members of derived classes or object literal expressions.")
         .with_label(span)
-}
-
-#[cold]
-pub fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
-}
-
-#[cold]
-pub fn super_private(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
 }
 
 #[cold]
@@ -305,15 +334,6 @@ pub fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
 
 // TypeScript diagnostics
 
-#[cold]
-pub fn can_only_appear_on_a_type_parameter_of_a_class_interface_or_type_alias(
-    modifier: &str,
-    span: Span,
-) -> OxcDiagnostic {
-    ts_error("1274", format!("'{modifier}' modifier can only appear on a type parameter of a class, interface or type alias."))
-        .with_label(span)
-}
-
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
 #[cold]
 pub fn jsdoc_type_in_annotation(
@@ -330,11 +350,6 @@ pub fn jsdoc_type_in_annotation(
     )
     .with_label(span)
     .with_help(format!("Did you mean to write '{suggested_type}'?"))
-}
-
-#[cold]
-pub fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1016", "A required parameter cannot follow an optional parameter.").with_label(span)
 }
 
 #[cold]
@@ -358,12 +373,6 @@ pub fn global_scope_augmentation_should_have_declare_modifier(span: Span) -> Oxc
 #[cold]
 pub fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
-}
-
-/// TS(1392)
-#[cold]
-pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
-    ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
 
 /// 'infer' declarations are only permitted in the 'extends' clause of a conditional type. (1338)
@@ -399,39 +408,6 @@ pub fn function_implementation_missing(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[cold]
-pub fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
-    let code = match syntax_name {
-        "Type parameter" => "2368",
-        "Class" => "2414",
-        "Interface" => "2427",
-        "Enum" => "2431",
-        "Type alias" => "2457",
-        _ => {
-            debug_assert!(false, "all syntax_name should have a corresponding match arm");
-            "2414"
-        }
-    };
-    ts_error(code, format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
-}
-
-/// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
-#[cold]
-pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
-    ts_error(
-        "1242",
-        "'abstract' modifier can only appear on a class, method, or property declaration.",
-    )
-    .with_label(span)
-}
-
-/// 'abstract' modifier cannot be used with a private identifier. (18019)
-#[cold]
-pub fn abstract_cannot_be_used_with_private_identifier(span: Span) -> OxcDiagnostic {
-    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
-        .with_label(span)
-}
-
 /// A parameter property is only allowed in a constructor implementation.ts(2369)
 #[cold]
 pub fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {
@@ -460,27 +436,8 @@ pub fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic
 }
 
 #[cold]
-pub fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
-    ts_error("18007", "JSX expressions may not use the comma operator")
-        .with_help("Did you mean to write an array?")
-        .with_label(span)
-}
-
-#[cold]
 pub fn ts_export_assignment_cannot_be_used_with_other_exports(span: Span) -> OxcDiagnostic {
     ts_error("2309", "An export assignment cannot be used in a module with other exported elements")
         .with_label(span)
         .with_help("If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.")
-}
-
-#[cold]
-pub fn switch_stmt_cannot_have_multiple_default_case(
-    first_default: Span,
-    other_default: Span,
-) -> OxcDiagnostic {
-    ts_error("1113", "A 'default' clause cannot appear more than once in a 'switch' statement.")
-        .with_labels(vec![
-            first_default.label("First 'default' clause is here."),
-            other_default.label("Another 'default' clause cannot appear here."),
-        ])
 }

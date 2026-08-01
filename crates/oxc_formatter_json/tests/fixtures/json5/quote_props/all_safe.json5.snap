@@ -1,0 +1,73 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  ident: 1,
+  "alsoIdent": 2,
+  "1.5": 3,
+  nested: { inner: 4, "needs-quote": 5 }
+}
+
+==================== Output ====================
+------------------------------------
+{ printWidth: 80, variant: "json5" }
+------------------------------------
+{
+  ident: 1,
+  alsoIdent: 2,
+  "1.5": 3,
+  nested: { inner: 4, "needs-quote": 5 },
+}
+
+-------------------------------------
+{ printWidth: 100, variant: "json5" }
+-------------------------------------
+{
+  ident: 1,
+  alsoIdent: 2,
+  "1.5": 3,
+  nested: { inner: 4, "needs-quote": 5 },
+}
+
+------------------------------------------------------------
+{ printWidth: 80, quoteProps: "preserve", variant: "json5" }
+------------------------------------------------------------
+{
+  ident: 1,
+  "alsoIdent": 2,
+  "1.5": 3,
+  nested: { inner: 4, "needs-quote": 5 },
+}
+
+-------------------------------------------------------------
+{ printWidth: 100, quoteProps: "preserve", variant: "json5" }
+-------------------------------------------------------------
+{
+  ident: 1,
+  "alsoIdent": 2,
+  "1.5": 3,
+  nested: { inner: 4, "needs-quote": 5 },
+}
+
+--------------------------------------------------------------
+{ printWidth: 80, quoteProps: "consistent", variant: "json5" }
+--------------------------------------------------------------
+{
+  "ident": 1,
+  "alsoIdent": 2,
+  "1.5": 3,
+  "nested": { "inner": 4, "needs-quote": 5 },
+}
+
+---------------------------------------------------------------
+{ printWidth: 100, quoteProps: "consistent", variant: "json5" }
+---------------------------------------------------------------
+{
+  "ident": 1,
+  "alsoIdent": 2,
+  "1.5": 3,
+  "nested": { "inner": 4, "needs-quote": 5 },
+}
+
+===================== End =====================

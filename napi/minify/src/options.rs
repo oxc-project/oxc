@@ -2,6 +2,7 @@ use napi::Either;
 use napi_derive::napi;
 
 use oxc_compat::EngineTargets;
+use oxc_str::CompactStr;
 
 #[napi(object)]
 pub struct TreeShakeOptions {
@@ -98,7 +99,7 @@ pub struct CompressOptions {
     ///
     /// @default 'esnext'
     ///
-    /// @see [esbuild#target](https://esbuild.github.io/api/#target)
+    /// @see [oxc#target](https://oxc.rs/docs/guide/usage/transformer/lowering#target)
     pub target: Option<Either<String, Vec<String>>>,
 
     /// Pass true to discard calls to `console.*`.
@@ -221,6 +222,16 @@ pub struct MangleOptions {
     /// @default false
     pub keep_names: Option<Either<bool, MangleOptionsKeepNames>>,
 
+    /// Names that bindings must not be renamed to, and that bindings already
+    /// carrying them keep. Equivalent to terser's `mangle.reserved`.
+    ///
+    /// Pass `['exports', 'module']` when minifying prebuilt CommonJS / UMD files
+    /// that Node consumers `import` directly, so Node's cjs-module-lexer can still
+    /// detect the mangled module's named exports.
+    ///
+    /// @default []
+    pub reserved: Option<Vec<String>>,
+
     /// Debug mangled names.
     pub debug: Option<bool>,
 }
@@ -236,6 +247,9 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
                 Some(Either::B(o)) => oxc_minifier::MangleOptionsKeepNames::from(o),
                 None => default.keep_names,
             },
+            reserved: o.reserved.as_ref().map_or(default.reserved, |names| {
+                names.iter().map(|name| CompactStr::from(name.as_str())).collect()
+            }),
             debug: o.debug.unwrap_or(default.debug),
         }
     }

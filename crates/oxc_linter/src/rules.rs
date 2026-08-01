@@ -62,6 +62,7 @@ pub(crate) mod eslint {
     pub mod getter_return;
     pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
+    pub mod id_denylist;
     pub mod id_length;
     pub mod id_match;
     pub mod init_declarations;
@@ -175,6 +176,7 @@ pub(crate) mod eslint {
     pub mod no_unmodified_loop_condition;
     pub mod no_unneeded_ternary;
     pub mod no_unreachable;
+    pub mod no_unreachable_loop;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
     pub mod no_unsafe_optional_chaining;
@@ -416,6 +418,7 @@ pub(crate) mod react {
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
+    pub mod function_component_definition;
     pub mod hook_use_state;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
@@ -428,6 +431,7 @@ pub(crate) mod react {
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_constructed_context_values;
     pub mod jsx_no_duplicate_props;
+    pub mod jsx_no_literals;
     pub mod jsx_no_script_url;
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
@@ -462,6 +466,7 @@ pub(crate) mod react {
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod prefer_function_component;
+    pub mod react_compiler;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -493,13 +498,16 @@ pub(crate) mod unicorn {
     pub mod error_message;
     pub mod escape_case;
     pub mod explicit_length_check;
+    pub mod explicit_timer_delay;
     pub mod filename_case;
     pub mod import_style;
+    pub mod max_nested_calls;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
     pub mod no_array_callback_reference;
+    pub mod no_array_fill_with_reference_type;
     pub mod no_array_for_each;
     pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
@@ -507,6 +515,7 @@ pub(crate) mod unicorn {
     pub mod no_array_sort;
     pub mod no_await_expression_member;
     pub mod no_await_in_promise_methods;
+    pub mod no_confusing_array_with;
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
@@ -569,6 +578,7 @@ pub(crate) mod unicorn {
     pub mod prefer_dom_node_remove;
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
+    pub mod prefer_export_from;
     pub mod prefer_global_this;
     pub mod prefer_import_meta_properties;
     pub mod prefer_includes;
@@ -582,6 +592,7 @@ pub(crate) mod unicorn {
     pub mod prefer_native_coercion_functions;
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
+    pub mod prefer_number_coercion;
     pub mod prefer_number_properties;
     pub mod prefer_object_from_entries;
     pub mod prefer_optional_catch_binding;
@@ -592,6 +603,7 @@ pub(crate) mod unicorn {
     pub mod prefer_response_static_json;
     pub mod prefer_set_has;
     pub mod prefer_set_size;
+    pub mod prefer_single_call;
     pub mod prefer_spread;
     pub mod prefer_string_raw;
     pub mod prefer_string_replace_all;
@@ -660,6 +672,7 @@ pub(crate) mod oxc {
     pub mod bad_bitwise_operator;
     pub mod bad_char_at_comparison;
     pub mod bad_comparison_sequence;
+    pub mod bad_match_all_arg;
     pub mod bad_min_max_func;
     pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;
@@ -786,6 +799,7 @@ pub(crate) mod vitest {
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
     pub mod padding_around_after_all_blocks;
+    pub mod padding_around_test_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;
@@ -833,12 +847,16 @@ pub(crate) mod vitest {
 /// <https://github.com/eslint-community/eslint-plugin-n>
 pub(crate) mod node {
     pub mod callback_return;
+    pub mod exports_style;
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
+    pub mod no_mixed_requires;
     pub mod no_new_require;
     pub mod no_path_concat;
     pub mod no_process_env;
+    pub mod no_sync;
+    pub mod no_top_level_await;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>
@@ -848,7 +866,9 @@ pub(crate) mod vue {
     pub mod define_props_declaration;
     pub mod define_props_destructuring;
     pub mod max_props;
+    pub mod next_tick_style;
     pub mod no_arrow_functions_in_watch;
+    pub mod no_async_in_computed_properties;
     pub mod no_computed_properties_in_data;
     pub mod no_deprecated_data_object_declaration;
     pub mod no_deprecated_delete_set;
@@ -857,6 +877,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_model_definition;
     pub mod no_deprecated_props_default_this;
     pub mod no_deprecated_vue_config_keycodes;
+    pub mod no_dupe_keys;
     pub mod no_export_in_script_setup;
     pub mod no_expose_after_await;
     pub mod no_import_compiler_macros;
@@ -867,11 +888,13 @@ pub(crate) mod vue {
     pub mod no_reserved_keys;
     pub mod no_reserved_props;
     pub mod no_shared_component_data;
+    pub mod no_side_effects_in_computed_properties;
     pub mod no_this_in_before_route_enter;
     pub mod no_watch_after_await;
     pub mod prefer_import_from_vue;
     pub mod prop_name_casing;
     pub mod require_default_export;
+    pub mod require_default_prop;
     pub mod require_direct_export;
     pub mod require_prop_type_constructor;
     pub mod require_prop_types;

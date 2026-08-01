@@ -250,6 +250,7 @@ declare_oxc_lint!(
     pending, // TODO: add a dangerous suggestion for this rule.
     config = NoFallthroughConfig,
     version = "0.0.14",
+    short_description = "Disallow fallthrough of `case` statements.",
 );
 
 impl Rule for NoFallthrough {

@@ -44,6 +44,7 @@ declare_oxc_lint!(
     vitest,
     correctness,
     version = "0.0.8",
+    short_description = "Enforce that the second argument to `describe()` is a valid callback function.",
 );
 
 impl Rule for ValidDescribeCallback {

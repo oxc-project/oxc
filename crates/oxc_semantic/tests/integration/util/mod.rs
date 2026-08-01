@@ -141,13 +141,13 @@ impl<'a> SemanticTester<'a> {
     #[expect(unstable_name_collisions)]
     pub fn build(&self) -> Semantic<'_> {
         let semantic_ret = self.build_with_errors();
-        match (self.expect_errors, semantic_ret.errors.is_empty()) {
+        match (self.expect_errors, semantic_ret.diagnostics.is_empty()) {
             (true, true) => panic!("Expected errors, but none were produced"),
             (false, false) => panic!(
                 "Semantic analysis failed:\n\n{}\n\n{}",
                 self.source_text,
                 semantic_ret
-                    .errors
+                    .diagnostics
                     .iter()
                     .map(ToString::to_string)
                     .intersperse("\n\n".to_owned())
@@ -167,19 +167,19 @@ impl<'a> SemanticTester<'a> {
             oxc_parser::Parser::new(&self.allocator, self.source_text, self.source_type).parse();
 
         assert!(
-            parse.errors.is_empty(),
+            parse.diagnostics.is_empty(),
             "\n Failed to parse source:\n{}\n\n{}",
             self.source_text,
             parse
-                .errors
+                .diagnostics
                 .iter()
                 .map(|e| format!("{e}"))
                 .intersperse("\n\n".to_owned())
                 .collect::<String>()
         );
 
-        SemanticBuilder::new()
-            .with_check_syntax_error(true)
+        SemanticBuilder::new_compiler()
+            .with_build_nodes(true)
             .with_cfg(self.cfg)
             .build(self.allocator.alloc(parse.program))
     }
@@ -268,18 +268,21 @@ impl<'a> SemanticTester<'a> {
     ///
     /// [`parsing`]: oxc_parser::Parser::parse
     pub fn has_error(&self, message: &str) {
-        let SemanticBuilderReturn { errors, .. } = self.build_with_errors();
+        let SemanticBuilderReturn { diagnostics, .. } = self.build_with_errors();
         assert!(
-            !errors.is_empty(),
+            !diagnostics.is_empty(),
             "Expected an error matching '{message}', but no errors were produced"
         );
-        if errors.iter().any(|e| e.message.contains(message)) {
+        if diagnostics.iter().any(|e| e.message.contains(message)) {
             return;
         }
 
-        let num_errors = errors.len();
-        let rendered_errors =
-            self.wrap_diagnostics(errors).into_iter().map(|e| e.to_string()).join("\n\n");
+        let num_errors = diagnostics.len();
+        let rendered_errors = self
+            .wrap_diagnostics(diagnostics.into())
+            .into_iter()
+            .map(|e| e.to_string())
+            .join("\n\n");
 
         panic!(
             "Expected an error containing '{message}', but none of the {num_errors} matched:\n\n{rendered_errors}",

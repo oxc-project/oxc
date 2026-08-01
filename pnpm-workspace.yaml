@@ -8,33 +8,36 @@ packages:
   - tasks/compat_data
 
 catalog:
-  "@emnapi/core": 1.10.0
-  "@emnapi/runtime": 1.10.0
-  "@arethetypeswrong/core": 0.18.2
-  "@napi-rs/cli": 3.7.0
-  "@napi-rs/wasm-runtime": 1.1.4
+  "@emnapi/core": 1.11.2
+  "@emnapi/runtime": 1.11.2
+  emnapi: 1.11.2
+  "@arethetypeswrong/core": 0.18.5
+  "@napi-rs/cli": 3.7.4
+  "@napi-rs/wasm-runtime": 1.1.6
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  degit: 3.3.2
-  eslint: 10.4.0
+  degit: 3.6.2
+  eslint: 10.7.0
   json-schema-to-typescript: ^15.0.4
-  publint: 0.3.21
-  rolldown: 1.0.3
-  tsdown: 0.22.1
-  vite-plus: 0.1.24
-  vitest: 4.1.7
+  publint: 0.3.22
+  rolldown: 1.2.1
+  tsdown: 0.22.14
+  vite-plus: 0.2.7
+  vitest: 4.1.10
 
 overrides:
   rolldown: "catalog:"
+  emnapi: "catalog:"
 
 allowBuilds:
   "@vscode/vsce-sign@2.0.8": true
   esbuild@0.27.7: true
-  esbuild@0.28.0: true
+  esbuild@0.28.1: true
   "@nestjs/core@11.1.9": false
 
 verifyDepsBeforeRun: install
 minimumReleaseAgeExclude:
+  - "@napi-rs/*"
   - "@oxc-parser/*"
   - "@oxc-project/*"
   - "@oxfmt/*"

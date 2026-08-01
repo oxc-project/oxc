@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_span::{GetSpan, SPAN};
@@ -21,7 +21,7 @@ enum ConstantValue {
 impl<'a> IsolatedDeclarations<'a> {
     /// Transform a TypeScript enum declaration into its declaration output form.
     pub fn transform_ts_enum_declaration(&self, decl: &TSEnumDeclaration<'a>) -> Declaration<'a> {
-        let mut members = self.ast.vec();
+        let mut members = ArenaVec::new_in(self);
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
         for member in &decl.body.members {
@@ -47,47 +47,55 @@ impl<'a> IsolatedDeclarations<'a> {
                 prev_members.insert(member_name, value.clone());
             }
 
-            let member = self.ast.ts_enum_member(
+            let member = TSEnumMember::new(
                 member.span,
-                member.id.clone_in(self.ast.allocator),
+                member.id.clone_in(self.allocator()),
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
 
                         // Infinity
                         let expr = if v.is_infinite() {
-                            self.ast.expression_identifier(SPAN, "Infinity")
+                            Expression::new_identifier(SPAN, "Infinity", self)
                         } else {
                             let value = if is_negative { -v } else { v };
-                            self.ast.expression_numeric_literal(
+                            Expression::new_numeric_literal(
                                 SPAN,
                                 value,
                                 None,
                                 NumberBase::Decimal,
+                                self,
                             )
                         };
 
                         if is_negative {
-                            self.ast.expression_unary(SPAN, UnaryOperator::UnaryNegation, expr)
+                            Expression::new_unary_expression(
+                                SPAN,
+                                UnaryOperator::UnaryNegation,
+                                expr,
+                                self,
+                            )
                         } else {
                             expr
                         }
                     }
                     ConstantValue::String(v) => {
-                        self.ast.expression_string_literal(SPAN, self.ast.str(&v), None)
+                        Expression::new_string_literal(SPAN, Str::from_str_in(&v, self), None, self)
                     }
                 }),
+                self,
             );
 
             members.push(member);
         }
 
-        self.ast.declaration_ts_enum(
+        Declaration::new_ts_enum_declaration(
             decl.span,
-            decl.id.clone_in(self.ast.allocator),
-            self.ast.ts_enum_body(decl.body.span, members),
+            decl.id.clone_in(self.allocator()),
+            TSEnumBody::new(decl.body.span, members, self),
             decl.r#const,
             self.is_declare(),
+            self,
         )
     }
 

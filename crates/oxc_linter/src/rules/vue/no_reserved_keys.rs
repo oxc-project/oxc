@@ -5,7 +5,6 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, Expression, ObjectExpression, ObjectPropertyKind, Statement, TSSignature,
-        TSType, TSTypeName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -15,11 +14,10 @@ use oxc_str::CompactStr;
 
 use crate::{
     AstNode,
-    ast_util::get_declaration_from_reference_id,
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_vue_component_options_object,
+    utils::{for_each_define_props_type_signature, is_vue_component_options_object},
 };
 
 /// Reserved instance properties of the Vue instance (Vue 2/3 common).
@@ -117,7 +115,8 @@ declare_oxc_lint!(
     vue,
     correctness,
     config = NoReservedKeys,
-    version = "next",
+    version = "1.69.0",
+    short_description = "Disallow overwriting reserved Vue instance keys (e.g. `$data`, `$emit`) or using `_`-prefixed keys inside `data` / `asyncData`.",
 );
 
 impl Rule for NoReservedKeys {
@@ -170,18 +169,17 @@ impl Rule for NoReservedKeys {
                         }
                     }
                     Expression::ArrowFunctionExpression(arrow) => {
-                        if arrow.expression {
+                        if arrow.is_expression() {
                             // `() => ({foo})` expression body
-                            if let Some(Statement::ExpressionStatement(es)) =
-                                arrow.body.statements.first()
+                            if let Some(expression) = arrow.get_expression()
                                 && let Expression::ObjectExpression(obj) =
-                                    es.expression.get_inner_expression()
+                                    expression.get_inner_expression()
                             {
                                 self.check_keys(group, obj, ctx);
                             }
                         } else {
                             // `() => { return {foo} }` block body
-                            for stmt in &arrow.body.statements {
+                            for stmt in &arrow.get_function_body().unwrap().statements {
                                 if let Statement::ReturnStatement(ret) = stmt
                                     && let Some(arg) = &ret.argument
                                     && let Expression::ObjectExpression(obj) =
@@ -269,47 +267,9 @@ impl NoReservedKeys {
         if let Some(type_args) = call.type_arguments.as_ref()
             && let Some(first) = type_args.params.first()
         {
-            self.check_type_keys(first, ctx);
-        }
-    }
-
-    fn check_type_keys<'a>(&self, ty: &TSType<'a>, ctx: &LintContext<'a>) {
-        match ty {
-            TSType::TSTypeLiteral(literal) => {
-                for sig in &literal.members {
-                    self.check_signature(sig, ctx);
-                }
-            }
-            TSType::TSUnionType(union) => {
-                for member in &union.types {
-                    self.check_type_keys(member, ctx);
-                }
-            }
-            TSType::TSIntersectionType(intersection) => {
-                for member in &intersection.types {
-                    self.check_type_keys(member, ctx);
-                }
-            }
-            TSType::TSTypeReference(type_ref) => {
-                let TSTypeName::IdentifierReference(ident) = &type_ref.type_name else { return };
-                let Some(decl) =
-                    get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-                else {
-                    return;
-                };
-                match decl.kind() {
-                    AstKind::TSInterfaceDeclaration(interface) => {
-                        for sig in &interface.body.body {
-                            self.check_signature(sig, ctx);
-                        }
-                    }
-                    AstKind::TSTypeAliasDeclaration(alias) => {
-                        self.check_type_keys(&alias.type_annotation, ctx);
-                    }
-                    _ => {}
-                }
-            }
-            _ => {}
+            for_each_define_props_type_signature(first, ctx, &mut |sig| {
+                self.check_signature(sig, ctx);
+            });
         }
     }
 

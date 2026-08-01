@@ -49,7 +49,7 @@ describe("visit", () => {
     const code = "const x = { y: 123 }";
     const { program } = parseSync("test.js", code);
 
-    const visited = [];
+    const visited: string[] = [];
     const visitor = new Visitor({
       Program(node) {
         visited.push(`enter: ${node.type}`);
@@ -133,7 +133,7 @@ describe("visit", () => {
     const code = "type T = string | Q;";
     const { program } = parseSync("test.ts", code);
 
-    const visited = [];
+    const visited: string[] = [];
     const visitor = new Visitor({
       Program(node) {
         visited.push(`enter: ${node.type}`);
@@ -206,7 +206,7 @@ describe("visit", () => {
   });
 
   it("reuse visitor", () => {
-    const visited = [];
+    const visited: string[] = [];
     const visitor = new Visitor({
       Program(node) {
         visited.push(`enter: ${node.type}`);

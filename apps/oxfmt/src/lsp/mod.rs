@@ -95,12 +95,12 @@ mod test {
 
         let uri = Uri::from_str("vscode-userdata:/c%3A/Users/User/settings.json").unwrap();
         let result = create_fake_file_path_from_language_id(&language_id, &root, &uri).unwrap();
-        assert!(result.extension().unwrap() == "jsonc");
+        assert_eq!(result.extension().unwrap(), "jsonc");
         assert!(result.starts_with(&root));
 
         let uri = Uri::from_str("Untitled://Untitled-1").unwrap();
         let result = create_fake_file_path_from_language_id(&language_id, &root, &uri).unwrap();
-        assert!(result.extension().unwrap() == "jsonc");
+        assert_eq!(result.extension().unwrap(), "jsonc");
         assert!(result.starts_with(&root));
     }
 }

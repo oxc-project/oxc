@@ -44,7 +44,9 @@ impl UnstableAddress for CallExpression<'_> {}
 
 impl UnstableAddress for NewExpression<'_> {}
 
-impl UnstableAddress for MetaProperty<'_> {}
+impl UnstableAddress for ImportMeta {}
+
+impl UnstableAddress for NewTarget {}
 
 impl UnstableAddress for SpreadElement<'_> {}
 
@@ -186,7 +188,11 @@ impl UnstableAddress for WithClause<'_> {}
 
 impl UnstableAddress for ImportAttribute<'_> {}
 
+impl UnstableAddress for ExportDeclaration<'_> {}
+
 impl UnstableAddress for ExportNamedDeclaration<'_> {}
+
+impl UnstableAddress for ExportFromDeclaration<'_> {}
 
 impl UnstableAddress for ExportDefaultDeclaration<'_> {}
 

@@ -1,12 +1,13 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format, GroupId};
 use oxc_span::FileExtension;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, GroupId, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
@@ -66,13 +67,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Type parameter lists of arrow function expressions have to include at least one comma
-        // to avoid any ambiguity with JSX elements, and in `.mts`/`.cts` sources.
-        // Thus, we have to add a trailing comma when there is a single type parameter.
-        // The comma can be omitted in the case where the single parameter has a constraint,
-        // i.i. an `extends` clause.
+        // A lone type parameter on an arrow function may need a mandatory trailing comma;
         let trailing_separator = if should_force_trailing_comma_for_arrow_function(self, f) {
             TrailingSeparator::Mandatory
         } else {
@@ -87,11 +84,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, TSTypeParameter
     }
 }
 
-/// Matches Prettier's `shouldForceTrailingComma` behavior for arrow functions.
+/// The trailing comma of a lone, constraint-less type parameter
+/// on an arrow function is load-bearing in exactly two grammars,
+/// so it is forced there and removable everywhere else:
+/// - JSX sources parse a bare `<T>` as a JSX element opener
+/// - `.mts`/`.cts` reserve the constraint-less form at the grammar level (TS7060)
 ///
-/// <https://github.com/prettier/prettier/blob/070c89bba46235f4948560ed612a11e89ccd2da9/src/language-js/print/type-parameters.js#L33-L42>
+/// Prettier's `shouldForceTrailingComma` instead sniffs the file path
+/// and keeps the comma in every non-`.ts` host, including plain-TS embedded scripts (e.g. ts-in-vue).
+/// This is a deliberate divergence: removal is keyed on the grammar the source is consumed as,
+/// not on the host file's path, so plain-TS sources behave identically wherever they live.
 fn should_force_trailing_comma_for_arrow_function(
-    params: &AstNode<'_, Vec<'_, TSTypeParameter<'_>>>,
+    params: &AstNode<'_, ArenaVec<'_, TSTypeParameter<'_>>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     if params.len() != 1 {
@@ -103,16 +107,15 @@ fn should_force_trailing_comma_for_arrow_function(
     }
 
     // Ignore type parameters with a constraint (extends clause).
-    // A default type alone does not disambiguate from JSX, so the comma is still required.
+    // A default type alone does not disambiguate (neither from JSX nor for TS7060),
+    // so the comma is still required.
     if params.first().is_some_and(|t| t.constraint().is_some()) {
         return false;
     }
 
     let source_type = f.context().source_type();
-    let is_ts_extension = matches!(source_type.extension(), Some(FileExtension::Ts));
-
-    // Force trailing comma for non-.ts sources (e.g. .tsx, .mts, .cts) or when extension is unknown.
-    !is_ts_extension
+    source_type.is_jsx()
+        || matches!(source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts))
 }
 
 #[derive(Default)]

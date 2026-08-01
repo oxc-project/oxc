@@ -47,6 +47,7 @@ declare_oxc_lint!(
     import,
     restriction,
     version = "0.0.16",
+    short_description = "Forbids the use of AMD `require` and `define` calls.",
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-amd.md>

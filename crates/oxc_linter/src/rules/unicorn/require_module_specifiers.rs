@@ -25,7 +25,7 @@ pub struct RequireModuleSpecifiers;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce non-empty specifier list in `import` and `export` statements.
+    /// Enforce a non-empty specifier list in `import` and `export` statements.
     ///
     /// ### Why is this bad?
     ///
@@ -52,6 +52,7 @@ declare_oxc_lint!(
     suspicious,
     fix,
     version = "1.20.0",
+    short_description = "Enforce a non-empty specifier list in `import` and `export` statements.",
 );
 
 impl Rule for RequireModuleSpecifiers {
@@ -66,15 +67,19 @@ impl Rule for RequireModuleSpecifiers {
                     |fixer| fix_import(fixer, import_decl),
                 );
             }
-            AstKind::ExportNamedDeclaration(export_decl)
-                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() =>
-            {
+            AstKind::ExportNamedDeclaration(export_decl) if export_decl.specifiers.is_empty() => {
                 let span =
                     find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
                 ctx.diagnostic_with_fix(
                     require_module_specifiers_diagnostic(span, "export"),
                     |fixer| fix_export(fixer, export_decl),
                 );
+            }
+            AstKind::ExportFromDeclaration(export_decl) if export_decl.specifiers.is_empty() => {
+                let span =
+                    find_empty_braces_in_text(ctx.source_range(export_decl.span), export_decl.span)
+                        .unwrap_or(export_decl.span);
+                ctx.diagnostic(require_module_specifiers_diagnostic(span, "export"));
             }
             _ => {}
         }
@@ -143,10 +148,6 @@ fn fix_import<'a>(fixer: RuleFixer<'_, 'a>, import_decl: &ImportDeclaration<'a>)
 }
 
 fn fix_export<'a>(fixer: RuleFixer<'_, 'a>, export_decl: &ExportNamedDeclaration<'a>) -> RuleFix {
-    if export_decl.source.is_some() {
-        return fixer.noop();
-    }
-
     // Remove the entire `export {}` statement
     fixer.delete(&export_decl.span)
 }

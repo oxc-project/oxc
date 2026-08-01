@@ -59,6 +59,7 @@ declare_oxc_lint!(
     restriction,
     pending,
     version = "1.50.0",
+    short_description = "Prefer JavaScript modules (ESM) over CommonJS.",
 );
 
 impl Rule for PreferModule {

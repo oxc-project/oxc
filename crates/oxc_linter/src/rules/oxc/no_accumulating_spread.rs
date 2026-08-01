@@ -127,6 +127,7 @@ declare_oxc_lint!(
     oxc,
     perf,
     version = "0.0.19",
+    short_description = "Prevents using object or array spreads on accumulators in `Array.prototype.reduce()` and in loops.",
 );
 
 impl Rule for NoAccumulatingSpread {

@@ -56,6 +56,7 @@ declare_oxc_lint!(
     correctness,
     config = NoGlobalAssignConfig,
     version = "0.0.7",
+    short_description = "Disallow modifications to read-only global variables.",
 );
 
 impl Rule for NoGlobalAssign {

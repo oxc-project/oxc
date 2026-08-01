@@ -44,8 +44,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /* eslint no-useless-assignment: "error" */
-    ///
     /// function fn1() {
     ///   let v = 'used';
     ///   doSomething(v);
@@ -73,7 +71,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    ///
     /// function fn1() {
     ///   let v = 'used';
     ///   doSomething(v);
@@ -103,6 +100,7 @@ declare_oxc_lint!(
     eslint,
     nursery,
     version = "1.59.0",
+    short_description = "Disallow variable assignments when the value is not used.",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -312,10 +310,7 @@ impl Rule for NoUselessAssignment {
 
                         match edge.weight() {
                             // Normal Flow: We will process these through the block's Ops
-                            EdgeType::Normal
-                            | EdgeType::NewFunction
-                            | EdgeType::Finalize
-                            | EdgeType::Join => {
+                            EdgeType::Normal | EdgeType::NewFunction | EdgeType::Join => {
                                 scratch_live.union(&cfg_traverse_state[succ_id]);
                             }
                             EdgeType::Jump => {
@@ -342,8 +337,8 @@ impl Rule for NoUselessAssignment {
                                     );
                                 }
                             }
-                            // Error Flow: This is the "Branch" that bypasses this block's Ops
-                            EdgeType::Error(_) => {
+                            // Error/finalizer flow can bypass this block's remaining Ops.
+                            EdgeType::Error(_) | EdgeType::Finalize => {
                                 scratch_catch.union(&cfg_traverse_state[succ_id]);
                             }
                             EdgeType::Backedge => {
@@ -615,7 +610,11 @@ impl NoUselessAssignment {
 
         for edge in graph.edges_directed(node, Direction::Outgoing) {
             match edge.weight() {
-                EdgeType::Normal | EdgeType::Jump | EdgeType::NewFunction | EdgeType::Backedge => {
+                EdgeType::Normal
+                | EdgeType::Jump
+                | EdgeType::NewFunction
+                | EdgeType::Backedge
+                | EdgeType::Error(_) => {
                     let target = edge.target();
                     if target == loop_header_id {
                         continue;
@@ -631,7 +630,7 @@ impl NoUselessAssignment {
                         visited,
                     );
                 }
-                _ => {}
+                EdgeType::Finalize | EdgeType::Join | EdgeType::Unreachable => {}
             }
         }
 
@@ -1181,6 +1180,74 @@ fn test() {
 
     return [(1 * y) - 16, 1 * (x - y), 1 * (y - z)];
 };",
+        "const maxRetries = 3;
+
+async function retryUntilSuccess(run: () => Promise<void>): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt >= maxRetries) {
+        throw error;
+      }
+    }
+  }
+}",
+        r#"async function waitWithBackoff(run: () => Promise<void>): Promise<void> {
+  let backoffMillis = 20;
+  let releaseRequested = false;
+
+  while (Date.now() < Date.now() + 2000) {
+    try {
+      return await run();
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.startsWith("LeaseHeldError")) {
+        throw error;
+      }
+    }
+
+    if (!releaseRequested) {
+      releaseRequested = true;
+    }
+
+    const waitUntil = Math.min(Date.now() + backoffMillis, Date.now() + 2000);
+    backoffMillis *= 2;
+    await new Promise((resolve) => setTimeout(resolve, waitUntil - Date.now()));
+  }
+}"#,
+        "function makeResource(): { readonly release: () => void } {
+  return { release() {} };
+}
+
+function useResource(unsafe: (resource: { readonly release: () => void }) => void): { readonly release: () => void } {
+  const resource = makeResource();
+  let owned = true;
+
+  try {
+    unsafe(resource);
+    owned = false;
+  } finally {
+    if (owned) {
+      resource.release();
+    }
+  }
+
+  return resource;
+}",
+        "function collectIds(ids: readonly string[], forward: boolean): string[] {
+  const collected: string[] = [];
+  const startIndex = forward ? 0 : ids.length - 1;
+
+  for (
+    let index = startIndex;
+    forward ? index < ids.length : index >= 0;
+    forward ? index++ : index--
+  ) {
+    collected.push(ids[index]!);
+  }
+
+  return collected;
+}",
     ];
 
     let fail = vec![

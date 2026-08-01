@@ -78,6 +78,7 @@ declare_oxc_lint!(
     style,
     pending,
     version = "0.0.13",
+    short_description = "This rule checks the function parameter of hooks & tests for use of the done argument, suggesting you return a promise instead.",
 );
 
 impl Rule for NoDoneCallback {

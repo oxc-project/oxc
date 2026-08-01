@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use oxc_allocator::Box as ArenaBox;
+use oxc_allocator::{Allocator, ArenaBox};
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
@@ -159,6 +159,8 @@ pub struct ContextHost<'a> {
     /// A file can have multiple script entries.
     /// Some rules (like vue) need the information of the other entries.
     pub(super) sub_hosts: Vec<ContextSubHost<'a>>,
+    /// Allocator that owns the parsed AST and related semantic data.
+    pub(super) allocator: &'a Allocator,
     /// The current index which will be linted.
     current_sub_host_index: Cell<usize>,
     /// Diagnostics reported by the linter.
@@ -180,6 +182,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     /// Front-end frameworks that might be in use in the target file.
     pub(super) frameworks: FrameworkFlags,
+    /// If true, the linter will create "ignore this section / line" fixes for all diagnostics
+    with_ignore_fixes: bool,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -194,10 +198,11 @@ impl<'a> ContextHost<'a> {
     pub fn new<P: AsRef<Path>>(
         file_path: P,
         sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
         options: LintOptions,
         config: Arc<LintConfig>,
     ) -> Self {
-        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
+        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 16;
 
         assert!(
             !sub_hosts.is_empty(),
@@ -209,6 +214,7 @@ impl<'a> ContextHost<'a> {
 
         Self {
             sub_hosts,
+            allocator,
             current_sub_host_index: Cell::new(0),
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
@@ -216,6 +222,7 @@ impl<'a> ContextHost<'a> {
             file_extension,
             config,
             frameworks: options.framework_hints,
+            with_ignore_fixes: options.with_ignore_fixes,
         }
         .sniff_for_frameworks()
     }
@@ -223,6 +230,12 @@ impl<'a> ContextHost<'a> {
     /// The current [`ContextSubHost`]
     pub fn current_sub_host(&self) -> &ContextSubHost<'a> {
         &self.sub_hosts[self.current_sub_host_index.get()]
+    }
+
+    /// Allocator that owns the parsed AST and semantic data.
+    #[inline]
+    pub fn allocator(&self) -> &'a Allocator {
+        self.allocator
     }
 
     /// Get mutable reference to the current [`ContextSubHost`]
@@ -324,6 +337,10 @@ impl<'a> ContextHost<'a> {
     /// by any rule to report issues.
     #[inline]
     pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
+        if self.with_ignore_fixes {
+            let source_text = self.semantic().source_text();
+            diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
+        }
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
         }
@@ -338,6 +355,12 @@ impl<'a> ContextHost<'a> {
 
     // Append a list of diagnostics. Only used in report_unused_directives.
     fn append_diagnostics(&self, mut diagnostics: Vec<Message>) {
+        if self.with_ignore_fixes {
+            let source_text = self.semantic().source_text();
+            for diagnostic in &mut diagnostics {
+                diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
+            }
+        }
         if self.current_sub_host().source_text_offset != 0 {
             let offset = self.current_sub_host().source_text_offset;
             for diagnostic in &mut diagnostics {

@@ -70,6 +70,7 @@ declare_oxc_lint!(
     correctness,
     config = NoInvalidRegexpConfig,
     version = "0.9.4",
+    short_description = "Disallow invalid regular expression strings in RegExp constructors.",
 );
 
 #[derive(Debug, Clone, Deserialize, Default, JsonSchema)]

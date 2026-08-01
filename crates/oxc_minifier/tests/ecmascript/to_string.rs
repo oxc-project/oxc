@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::{ToJsString, WithoutGlobalReferenceInformation};
 use oxc_span::SPAN;
 
@@ -9,32 +9,40 @@ use super::GlobalReferenceInformation;
 fn test() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
+    let ast = &ast;
 
-    let undefined = ast.expression_identifier(SPAN, "undefined");
+    let undefined = Expression::new_identifier(SPAN, "undefined", ast);
     let shadowed_undefined_string =
         undefined.to_js_string(&GlobalReferenceInformation { is_undefined_shadowed: true });
     let global_undefined_string =
         undefined.to_js_string(&GlobalReferenceInformation { is_undefined_shadowed: false });
 
-    let empty_object = ast.expression_object(SPAN, ast.vec());
-    let object_with_to_string = ast.expression_object(
+    let empty_object = Expression::new_object_expression(SPAN, [], ast);
+    let object_with_to_string = Expression::new_object_expression(
         SPAN,
-        ast.vec1(ast.object_property_kind_object_property(
+        [ObjectPropertyKind::new_object_property(
             SPAN,
             PropertyKind::Init,
-            ast.property_key_static_identifier(SPAN, "toString"),
-            ast.expression_string_literal(SPAN, "foo", None),
+            PropertyKey::new_static_identifier(SPAN, "toString", ast),
+            Expression::new_string_literal(SPAN, "foo", None, ast),
             false,
             false,
             false,
-        )),
+            ast,
+        )],
+        ast,
     );
     let empty_object_string = empty_object.to_js_string(&WithoutGlobalReferenceInformation {});
     let object_with_to_string_string =
         object_with_to_string.to_js_string(&WithoutGlobalReferenceInformation {});
 
-    let bigint_with_separators =
-        ast.expression_big_int_literal(SPAN, "10", Some(Str::from("1_0n")), BigintBase::Decimal);
+    let bigint_with_separators = Expression::new_big_int_literal(
+        SPAN,
+        "10",
+        Some(Str::from("1_0n")),
+        BigintBase::Decimal,
+        ast,
+    );
     let bigint_with_separators_string =
         bigint_with_separators.to_js_string(&WithoutGlobalReferenceInformation {});
 
@@ -55,7 +63,7 @@ fn test() {
         (f64::NEG_INFINITY, "-Infinity"),
     ];
     for (num, expected) in num_cases {
-        let num_lit = ast.expression_numeric_literal(SPAN, num, None, NumberBase::Decimal);
+        let num_lit = Expression::new_numeric_literal(SPAN, num, None, NumberBase::Decimal, ast);
         assert_eq!(
             num_lit.to_js_string(&WithoutGlobalReferenceInformation {}),
             Some(expected.into())

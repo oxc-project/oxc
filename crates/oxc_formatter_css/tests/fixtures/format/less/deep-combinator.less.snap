@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.parent /deep/ .child {
+  color: red;
+}
+.a ^ .b,
+.c ^^ .d {
+  color: blue;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.parent /deep/ .child {
+  color: red;
+}
+.a ^ .b,
+.c ^^ .d {
+  color: blue;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.parent /deep/ .child {
+  color: red;
+}
+.a ^ .b,
+.c ^^ .d {
+  color: blue;
+}
+
+===================== End =====================

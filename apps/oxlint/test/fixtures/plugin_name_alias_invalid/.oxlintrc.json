@@ -1,5 +1,5 @@
 {
-  "jsPlugins": [{ "name": "eslint-plugin-invalid", "specifier": "./plugin.ts" }],
+  "jsPlugins": [{ "name": "oxlint-plugin-invalid", "specifier": "./plugin.ts" }],
   "rules": {
     "hahaha/no-debugger": "error"
   }

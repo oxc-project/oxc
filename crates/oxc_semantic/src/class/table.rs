@@ -65,14 +65,14 @@ impl<'a> ClassTable<'a> {
         self.declarations.raw.len()
     }
 
-    pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &NodeId)> + '_ {
+    pub fn iter_enumerated(&self) -> impl ExactSizeIterator<Item = (ClassId, &NodeId)> + '_ {
         self.declarations.iter_enumerated()
     }
 
     pub fn iter_private_identifiers(
         &self,
         class_id: ClassId,
-    ) -> impl Iterator<Item = &PrivateIdentifierReference<'_>> + '_ {
+    ) -> impl ExactSizeIterator<Item = &PrivateIdentifierReference<'_>> + '_ {
         self.private_identifier_references[class_id].iter()
     }
 

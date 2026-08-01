@@ -68,6 +68,7 @@ declare_oxc_lint!(
     style,
     pending,
     version = "0.15.13",
+    short_description = "Disallow nested `then()` or `catch()` statements.",
 );
 
 fn is_inside_promise(node: &AstNode, ctx: &LintContext) -> bool {

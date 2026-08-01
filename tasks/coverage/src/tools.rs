@@ -18,10 +18,10 @@ use oxc::{
 };
 use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, JsFormatOptions, QuoteProperties,
-    QuoteStyle, Semicolons, TrailingCommas,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
-use oxc_formatter_core::{BracketSpacing, Expand, IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use rayon::prelude::*;
 
 use crate::{
@@ -144,13 +144,10 @@ fn is_error_suppressed_by_ts_ignore(
     }
 
     // Get the error's byte offset from the first label
-    let Some(labels) = &error.labels else {
+    let Some(first_label) = error.labels.first() else {
         return false;
     };
-    let Some(first_label) = labels.first() else {
-        return false;
-    };
-    let error_offset = first_label.offset();
+    let error_offset = first_label.offset() as usize;
 
     // Check if any ts-ignore span covers the line before this error
     for ts_ignore_span in ts_ignore_spans {
@@ -715,7 +712,7 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            program.to_pretty_estree_js_json(false)
+            program.to_pretty_estree_json(false, false)
         },
     )
 }
@@ -775,9 +772,11 @@ fn run_estree_test262_impl(
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.errors.is_empty() {
-                let error =
-                    ret.errors.first().map_or_else(|| "Panicked".to_string(), ToString::to_string);
+            if ret.panicked || !ret.diagnostics.is_empty() {
+                let error = ret
+                    .diagnostics
+                    .first()
+                    .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                 return CoverageResult {
                     path: test_file.path.clone(),
                     should_fail: false,
@@ -805,7 +804,7 @@ pub fn run_estree_acorn_jsx(files: &[AcornJsxFile]) -> Vec<CoverageResult> {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            program.to_pretty_estree_js_json(false)
+            program.to_pretty_estree_json(false, false)
         },
     )
 }
@@ -847,9 +846,11 @@ fn run_estree_acorn_jsx_impl(
                 .with_config(parser_config)
                 .parse();
 
-            if ret.panicked || !ret.errors.is_empty() {
-                let error =
-                    ret.errors.first().map_or_else(|| "Panicked".to_string(), ToString::to_string);
+            if ret.panicked || !ret.diagnostics.is_empty() {
+                let error = ret
+                    .diagnostics
+                    .first()
+                    .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                 let result = if test_file.should_fail {
                     TestResult::CorrectError(error, ret.panicked)
                 } else {
@@ -913,7 +914,7 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
         let mut program = ret.program;
         let source_text = program.source_text;
         Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-        program.to_pretty_estree_ts_json(false)
+        program.to_pretty_estree_json(true, false)
     })
 }
 
@@ -985,9 +986,9 @@ fn run_estree_typescript_impl(
                     .with_config(parser_config)
                     .parse();
 
-                if ret.panicked || !ret.errors.is_empty() {
+                if ret.panicked || !ret.diagnostics.is_empty() {
                     let error = ret
-                        .errors
+                        .diagnostics
                         .first()
                         .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                     return CoverageResult {

@@ -148,6 +148,7 @@ declare_oxc_lint!(
     style,
     pending,
     version = "1.68.0",
+    short_description = "Enforce using a particular method signature syntax.",
     config = MethodSignatureStyleConfig
 );
 

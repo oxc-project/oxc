@@ -213,7 +213,7 @@ pub fn generate_ancestor(schema: &Schema) -> TokenStream {
         use std::{cell::Cell, marker::PhantomData, mem::offset_of};
 
         ///@@line_break
-        use oxc_allocator::{Address, Box, GetAddress, Vec};
+        use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress};
         use oxc_ast::ast::*;
         use oxc_syntax::{node::NodeId, scope::ScopeId};
 

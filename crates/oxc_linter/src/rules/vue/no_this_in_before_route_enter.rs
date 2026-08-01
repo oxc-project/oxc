@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{ExportDefaultDeclarationKind, Expression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -62,6 +62,7 @@ declare_oxc_lint!(
     vue,
     correctness,
     version = "1.37.0",
+    short_description = "Disallow `this` usage in a `beforeRouteEnter` method.",
 );
 
 impl Rule for NoThisInBeforeRouteEnter {

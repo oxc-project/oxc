@@ -69,6 +69,7 @@ declare_oxc_lint!(
     style,
     config = PreferAwaitToThenConfig,
     version = "0.7.1",
+    short_description = "Prefer `await` to `then()`/`catch()`/`finally()` for reading Promise values.",
 );
 
 fn is_inside_yield_or_await(node: &AstNode) -> bool {

@@ -1,26 +1,29 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format, GroupId};
 use oxc_span::GetSpan;
 
 use crate::{
     FormatTrailingCommas,
     ast_nodes::AstNode,
     formatter::{
-        Buffer, Format, GroupId, JsFormatContext, JsFormatter, prelude::*,
+        JsFormatContext, JsFormatter,
+        prelude::*,
         separated::FormatSeparatedIter,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     utils::array::write_array_node,
     write,
 };
 
 pub struct ArrayElementList<'a, 'b> {
-    elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+    elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
 impl<'a, 'b> ArrayElementList<'a, 'b> {
     pub fn new(
-        elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+        elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {
         Self { elements, group_id: Some(group_id) }
@@ -72,6 +75,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 f,
             ),
         }
+
+        // Comments that no element consumed as a trailing comment
+        // (e.g. after a trailing hole: `[,, /* comment */]`)
+        // would otherwise escape the brackets; print them right before the `]` like Prettier
+        let dangling_comments =
+            f.context().comments().comments_before(self.elements.parent().span().end);
+        write!(
+            f,
+            FormatDanglingComments::Comments {
+                comments: dangling_comments,
+                indent: DanglingIndentMode::None
+            }
+        );
     }
 }
 

@@ -17,9 +17,10 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let is_declare = matches!(builder
-            .nodes
-            .parent_kind(builder.current_node_id), AstKind::VariableDeclaration(decl) if decl.declare);
+        let is_declare = matches!(
+            builder.ancestry().parent_kind(),
+            AstKind::VariableDeclaration(decl) if decl.declare
+        );
 
         let (mut includes, excludes) = match self.kind {
             VariableDeclarationKind::Const
@@ -99,7 +100,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
                 for &scope_id in &var_scope_ids {
-                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+                    builder.hoisting_variables.insert((scope_id, name), symbol_id);
                 }
             });
         }
@@ -138,11 +139,20 @@ impl<'a> Binder<'a> for Function<'a> {
         let is_declaration = self.is_declaration();
 
         if let Some(ident) = &self.id {
-            let includes = if self.declare {
-                SymbolFlags::Function | SymbolFlags::Ambient
-            } else {
-                SymbolFlags::Function
-            };
+            let mut includes = SymbolFlags::Function;
+            if self.declare {
+                includes |= SymbolFlags::Ambient;
+            }
+            // A named function expression, so `check_redeclaration` can recognise its name binding
+            // (e.g. `(function n(n) {})` - the parameter `n` is not a redeclaration of the name).
+            if self.is_expression() {
+                includes |= SymbolFlags::FunctionExpression;
+            }
+            // An `async`/generator function, so the Annex B.3.3 redeclaration check can tell plain
+            // (relaxable) function declarations apart from these.
+            if self.r#async || self.generator {
+                includes |= SymbolFlags::AsyncOrGeneratorFunction;
+            }
 
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
@@ -158,10 +168,11 @@ impl<'a> Binder<'a> for Function<'a> {
             let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
             ident.symbol_id.set(Some(symbol_id));
 
+            let scope_flags = builder.current_scope_flags();
+
             // Annex B.3.2.1: In sloppy mode, plain function declarations inside block
             // scopes also create an implicit var-like binding in the enclosing function
             // scope. Hoist to the var scope — same pattern as var hoisting (line 46).
-            let scope_flags = builder.current_scope_flags();
             if is_declaration // function expressions are bound in their own (var) scope
                 && !self.r#async // Annex B only applies to plain functions
                 && !self.generator // not generators or async generators
@@ -184,11 +195,7 @@ impl<'a> Binder<'a> for Function<'a> {
                         var_scope_id,
                         symbol_id,
                     );
-                    builder
-                        .hoisting_variables
-                        .entry(block_scope_id)
-                        .or_default()
-                        .insert(ident.name, symbol_id);
+                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
                 }
             }
 
@@ -199,10 +206,7 @@ impl<'a> Binder<'a> for Function<'a> {
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
-        if !is_declaration
-            && let AstKind::ObjectProperty(prop) =
-                builder.nodes.parent_kind(builder.current_node_id)
-        {
+        if !is_declaration && let AstKind::ObjectProperty(prop) = builder.ancestry().parent_kind() {
             // Do not bind scope flags when function is inside of the object property key:
             //
             // { set [function() {}](val) {} }
@@ -223,7 +227,7 @@ impl<'a> Binder<'a> for Function<'a> {
 impl<'a> Binder<'a> for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
+        let parent_kind = builder.ancestry().parent_kind();
         let AstKind::FormalParameters(_) = parent_kind else {
             return;
         };
@@ -241,7 +245,7 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
 impl<'a> Binder<'a> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
+        let parent_kind = builder.ancestry().parent_kind();
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
         let includes = SymbolFlags::FunctionScopedVariable;
@@ -276,7 +280,7 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
 impl<'a> Binder<'a> for FormalParameterRest<'a> {
     // Binds the FormalParameter of a function or method.
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let parent_kind = builder.nodes.parent_kind(builder.current_node_id);
+        let parent_kind = builder.ancestry().parent_kind();
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
         let includes = SymbolFlags::FunctionScopedVariable;
@@ -339,7 +343,7 @@ fn declare_symbol_for_import_specifier<'a>(
     builder: &mut SemanticBuilder<'a>,
 ) {
     let includes = if is_type
-        || matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::ImportDeclaration(decl) if decl.import_kind.is_type(),
+        || matches!(builder.ancestry().parent_kind(), AstKind::ImportDeclaration(decl) if decl.import_kind.is_type(),
         ) {
         SymbolFlags::TypeImport
     } else {
@@ -447,7 +451,8 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
         let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
         let instantiated =
-            get_module_instance_state(builder, self, builder.current_node_id).is_instantiated();
+            get_module_instance_state(builder, self, builder.node_store.current_node_id)
+                .is_instantiated();
         let (mut includes, excludes) = if instantiated {
             (SymbolFlags::ValueModule, SymbolFlags::ValueModuleExcludes)
         } else {
@@ -567,8 +572,8 @@ fn get_module_instance_state_for_statement<'a, 'b>(
                     ModuleInstanceState::Instantiated
                 }
             }
-            Statement::ExportNamedDeclaration(export_decl) if export_decl.declaration.is_some() => {
-                match export_decl.declaration.as_ref().unwrap() {
+            Statement::ExportDeclaration(export_decl) => {
+                match &export_decl.declaration {
                     Declaration::TSModuleDeclaration(module_decl) => {
                         get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
                     }
@@ -581,18 +586,14 @@ fn get_module_instance_state_for_statement<'a, 'b>(
             }
             // 4. Export alias declarations pointing at uninstantiated modules
             Statement::ExportNamedDeclaration(export_decl) => {
-                if export_decl.source.is_none() {
-                    let mut export_state = ModuleInstanceState::NonInstantiated;
-                    for specifier in &export_decl.specifiers {
-                        export_state = get_module_instance_state_for_alias_target(builder, specifier, current_node_id, module_declaration_stmts.as_slice());
-                        if export_state.is_instantiated() {
-                            break;
-                        }
+                let mut export_state = ModuleInstanceState::NonInstantiated;
+                for specifier in &export_decl.specifiers {
+                    export_state = get_module_instance_state_for_alias_target(builder, specifier, current_node_id, module_declaration_stmts.as_slice());
+                    if export_state.is_instantiated() {
+                        break;
                     }
-                    export_state
-                } else {
-                    ModuleInstanceState::Instantiated
                 }
+                export_state
             }
             // 5. other module declarations
             Statement::TSModuleDeclaration(module_decl) => {
@@ -639,21 +640,18 @@ fn get_module_instance_state_for_alias_target<'a>(
                         found = true;
                     }
                 }
-                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
-                    Some(Declaration::VariableDeclaration(decl)) => {
+                Statement::ExportDeclaration(decl) => match &decl.declaration {
+                    Declaration::VariableDeclaration(decl) => {
                         decl.bound_names(&mut |id| {
                             if id.name == name {
                                 found = true;
                             }
                         });
                     }
-                    Some(decl) => {
+                    decl => {
                         if decl.id().is_some_and(|id| id.name == name) {
                             found = true;
                         }
-                    }
-                    None => {
-                        continue;
                     }
                 },
                 Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
@@ -695,10 +693,12 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
         }
 
-        let Some((node_id, node)) =
-            builder.nodes.ancestors_enumerated(current_node_id).find(|(_, node)| {
+        // Walk up the ancestry stack (excluding `current_node_id` itself) to the
+        // nearest enclosing block-like node.
+        let Some(kind) =
+            builder.ancestry().ancestor_kinds_from(Some(current_node_id)).skip(1).find(|kind| {
                 matches!(
-                    node.kind(),
+                    kind,
                     AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
                 )
             })
@@ -706,11 +706,11 @@ fn get_module_instance_state_for_alias_target<'a>(
             break;
         };
 
-        current_node_id = node_id;
+        current_node_id = kind.node_id();
         current_block_stmts.clear();
         // Didn't find the declaration whose name matches export specifier
         // in the current block, so we need to check the parent block.
-        current_block_stmts.extend(match node.kind() {
+        current_block_stmts.extend(match kind {
             AstKind::Program(program) => program.body.iter(),
             AstKind::TSModuleBlock(block) => block.body.iter(),
             AstKind::BlockStatement(block) => block.body.iter(),
@@ -724,10 +724,7 @@ fn get_module_instance_state_for_alias_target<'a>(
 
 impl<'a> Binder<'a> for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let scope_id = if matches!(
-            builder.nodes.parent_kind(builder.current_node_id),
-            AstKind::TSInferType(_)
-        ) {
+        let scope_id = if matches!(builder.ancestry().parent_kind(), AstKind::TSInferType(_)) {
             builder
                 .scoping
                 .scope_ancestors(builder.current_scope_id)

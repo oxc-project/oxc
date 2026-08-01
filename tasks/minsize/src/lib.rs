@@ -131,7 +131,7 @@ pub fn run() -> Result<(), io::Error> {
             format_size(gzip_size(&minified), DECIMAL),
             gzip_targets[file.file_name.as_str()],
             iterations,
-            &file.file_name,
+            file.file_name,
             width = width
         );
         out.push_str(&s);
@@ -158,7 +158,7 @@ fn minify_twice(file: &TestFile, options: Options) -> (String, u8) {
 fn minify(source_text: &str, source_type: SourceType, options: Options) -> (String, u8) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
     let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(

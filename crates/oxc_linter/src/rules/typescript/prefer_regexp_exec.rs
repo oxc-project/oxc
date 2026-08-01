@@ -32,6 +32,7 @@ declare_oxc_lint!(
     typescript,
     style,
     version = "1.49.0",
+    short_description = "Prefer `RegExp#exec()` over `String#match()` when extracting a regex match.",
 );
 
 impl Rule for PreferRegexpExec {}

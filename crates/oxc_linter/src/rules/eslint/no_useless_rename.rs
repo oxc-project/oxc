@@ -78,6 +78,7 @@ declare_oxc_lint!(
     fix,
     config = NoUselessRenameConfig,
     version = "0.2.14",
+    short_description = "Disallow renaming import, export, and destructured assignments to the same name.",
 );
 
 impl Rule for NoUselessRename {
@@ -177,6 +178,28 @@ impl Rule for NoUselessRename {
                             |fixer| {
                                 // Always replace the entire specifier with just the local part
                                 // The local is what the variable is named inside the module
+                                let local_text = specifier
+                                    .local
+                                    .span()
+                                    .source_text(ctx.source_text())
+                                    .to_string();
+                                fixer.replace(specifier.span, local_text)
+                            },
+                        );
+                    }
+                }
+            }
+            AstKind::ExportFromDeclaration(export_from_decl) => {
+                if self.ignore_export {
+                    return;
+                }
+                for specifier in &export_from_decl.specifiers {
+                    if specifier.local.span() != specifier.exported.span()
+                        && specifier.local.name() == specifier.exported.name()
+                    {
+                        ctx.diagnostic_with_fix(
+                            no_useless_rename_diagnostic(specifier.local.span()),
+                            |fixer| {
                                 let local_text = specifier
                                     .local
                                     .span()

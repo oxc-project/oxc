@@ -67,6 +67,20 @@ impl Default for NoUseBeforeDefineConfig {
     }
 }
 
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+enum Nofunc {
+    Nofunc,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // This is used in the rule configuration schema
+enum NoUseBeforeDefineConfigJson {
+    String(Nofunc),
+    Object(NoUseBeforeDefineConfig),
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NoUseBeforeDefine(NoUseBeforeDefineConfig);
 
@@ -96,12 +110,21 @@ declare_oxc_lint!(
     NoUseBeforeDefine,
     eslint,
     restriction,
-    config = NoUseBeforeDefineConfig,
+    config = NoUseBeforeDefineConfigJson,
     version = "1.49.0",
+    short_description = "Disallows using variables before they are defined.",
 );
 
 impl Rule for NoUseBeforeDefine {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
+        if let Some(serde_json::Value::String(s)) = value.as_array().and_then(|a| a.first())
+            && s == "nofunc"
+        {
+            return Ok(Self(NoUseBeforeDefineConfig {
+                functions: false,
+                ..NoUseBeforeDefineConfig::default()
+            }));
+        }
         serde_json::from_value::<DefaultRuleConfig<NoUseBeforeDefineConfig>>(value)
             .map(DefaultRuleConfig::into_inner)
             .map(Self)
@@ -416,7 +439,9 @@ where
             | AstKind::ArrowFunctionExpression(_)
             | AstKind::CatchClause(_)
             | AstKind::ImportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_) => break,
+            | AstKind::ExportDeclaration(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportFromDeclaration(_) => break,
             _ => {}
         }
     }
@@ -2534,6 +2559,17 @@ fn test_typescript_eslint() {
                 ",
             None,
         ),
+        ("a(); function a() { alert(arguments); }", Some(serde_json::json!(["nofunc"]))),
+        (
+            "
+            a();
+            function a() {
+              alert(arguments);
+            }
+                  ",
+            Some(serde_json::json!(["nofunc"])),
+        ),
+        (r#""use strict"; { a(); function a() {} }"#, Some(serde_json::json!(["nofunc"]))),
     ];
 
     let fail = vec![
@@ -3000,6 +3036,15 @@ fn test_typescript_eslint() {
                   ",
             None,
         ),
+        ("a(); var a=function() {};", Some(serde_json::json!(["nofunc"]))),
+        (
+            "
+            a();
+            var a = function () {};
+                  ",
+            Some(serde_json::json!(["nofunc"])),
+        ),
+        ("export { a }; const a = 1;", Some(serde_json::json!(["nofunc"]))),
     ];
 
     Tester::new(NoUseBeforeDefine::NAME, NoUseBeforeDefine::PLUGIN, pass, fail)

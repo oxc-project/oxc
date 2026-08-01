@@ -6,13 +6,17 @@ use tracing::{debug, instrument};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::FragmentContext;
+use oxc_formatter_css::CssVariant;
 use oxc_span::SourceType;
 
 use crate::{
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
         JsSortTailwindClassesCb,
-        options::{inject_filepath, inject_tailwind_plugin_payload, to_prettier},
+        options::{
+            inject_filepath, inject_tailwind_plugin_payload, to_oxc_formatter_css,
+            to_oxc_formatter_graphql, to_prettier,
+        },
         oxfmtrc::FormatConfig,
         resolve_for_embedded_js,
     },
@@ -53,19 +57,37 @@ pub fn run(
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<String> {
+    // Embedded text belongs to the host file (`.vue`, `.md`, ...),
+    // so the `SourceType` carries no file extension of its own.
+    // `source_ext` selects the parse grammar only,
+    // and extension-keyed formatter rules (e.g. the `.mts`/`.cts` trailing comma reservation) must not fire from it.
+    //
+    // The JS side owns the grammar resolution (including the `lang="tsx"` scan for Vue, see `hasTsxScriptBlock` in `apis.ts`),
+    // so there is no parse retry here: a block
+    // that fails to parse under its declared grammar is left unformatted
+    // (`textToDoc()` error → Prettier keeps the original text).
+    let source_type = match source_ext {
+        "jsx" => SourceType::unambiguous().with_jsx(true),
+        "ts" => SourceType::ts(),
+        "tsx" => SourceType::tsx(),
+        _ => {
+            unreachable!("text-to-doc.ts should pass `source_ext` as one of 'jsx', 'ts', or 'tsx'")
+        }
+    };
+
     let fragment_kind = match parent_context {
         "vue-for-binding-left" => Some(FragmentKind::VueForBindingLeft),
         "vue-bindings" => Some(FragmentKind::VueBindings),
         "vue-script-generic" => Some(FragmentKind::VueScriptGeneric),
-        // "vue-script", "svelte-script"
+        // "vue-script" | "svelte-script"
         _ => None,
     };
 
     let doc_json = if let Some(kind) = fragment_kind {
-        run_fragment(source_ext, source_text, oxfmt_plugin_options_json, kind)?
+        run_fragment(source_type, source_text, oxfmt_plugin_options_json, kind)?
     } else {
         run_full(
-            source_ext,
+            source_type,
             source_text,
             oxfmt_plugin_options_json,
             format_file_cb,
@@ -91,9 +113,9 @@ pub fn run(
 /// This is critical for `vueIndentScriptAndStyle: true`, (Prettier wraps the `<script>` content with `indent()`)
 /// `literalline` (used for template literal content) is not affected by `indent()`,
 /// while `hardline` (used for normal code) is.
-#[instrument(level = "debug", name = "oxfmt::text_to_doc::full", skip_all, fields(%source_ext))]
+#[instrument(level = "debug", name = "oxfmt::text_to_doc::full", skip_all, fields(?source_type))]
 fn run_full(
-    source_ext: &str,
+    source_type: SourceType,
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     format_file_cb: JsFormatFileCb,
@@ -112,9 +134,6 @@ fn run_full(
         sort_tailwind_classes_cb,
     );
 
-    let source_type = SourceType::from_extension(source_ext)
-        .expect("source_ext should be a valid JS/TS extension");
-
     let resolved = resolve_for_embedded_js(config, parent_filepath)
         .expect("`_oxfmtPluginOptionsJson` should contain valid config");
 
@@ -125,9 +144,21 @@ fn run_full(
     inject_filepath(&mut external_options, &resolved.parent_filepath);
     inject_tailwind_plugin_payload(&mut external_options, &resolved.config);
 
-    let external_callbacks =
-        external_formatter.to_external_callbacks(&resolved.format_options, external_options);
-    let format_options = resolved.format_options;
+    // Dual mapping of the same resolved config for the dispatcher's Rust branches.
+    // Cannot fail here: `resolve_for_embedded_js()` already built `JsFormatOptions`
+    // from this config, and both share the same `to_core_options()` validation.
+    let graphql_options = to_oxc_formatter_graphql(&resolved.config)
+        .expect("config was already validated by `resolve_for_embedded_js()`");
+    // CSS-in-JS is always parsed as SCSS, mirroring Prettier's embed.
+    let css_options = to_oxc_formatter_css(&resolved.config, CssVariant::Scss)
+        .expect("config was already validated by `resolve_for_embedded_js()`");
+
+    let external_callbacks = external_formatter.to_external_callbacks(
+        &resolved.format_options,
+        external_options,
+        graphql_options,
+        css_options,
+    );
 
     let allocator = Allocator::default();
     let formatted = match tokio::task::block_in_place(|| {
@@ -135,13 +166,13 @@ fn run_full(
             &allocator,
             source_text,
             source_type,
-            *format_options,
+            *resolved.format_options,
             Some(external_callbacks),
         )
     }) {
         Ok(formatted) => formatted,
         Err(err) => {
-            debug!("`oxc_formatter::format()` failed: {err:?}");
+            debug!("`oxc_formatter::format()` failed for {source_type:?}: {err:?}");
             external_formatter.cleanup();
             return None;
         }
@@ -167,16 +198,13 @@ fn run_full(
 /// - Extract target node
 /// - Format as IR
 /// - Convert to Prettier Doc JSON
-#[instrument(level = "debug", name = "oxfmt::text_to_doc::fragment", skip_all, fields(%source_ext, ?kind))]
+#[instrument(level = "debug", name = "oxfmt::text_to_doc::fragment", skip_all, fields(?source_type, ?kind))]
 fn run_fragment(
-    source_ext: &str,
+    source_type: SourceType,
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     kind: FragmentKind,
 ) -> Option<Value> {
-    let source_type = SourceType::from_extension(source_ext)
-        .expect("source_ext should be a valid JS/TS extension");
-
     let (config, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
     // Reuses the same config resolver as `run_full()`, but only `format_options` is needed here,
     // since `run_fragment()` does not dispatch external formatter callbacks.

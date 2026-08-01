@@ -1,18 +1,8 @@
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{CoreFormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth};
 
 use super::super::oxfmtrc::{EndOfLineConfig, FormatConfig};
 
-/// Language-neutral core formatting options shared by every formatter.
-#[derive(Debug, Clone, Copy, Default)]
-pub struct CoreOptions {
-    pub indent_style: IndentStyle,
-    pub indent_width: IndentWidth,
-    pub line_width: LineWidth,
-    pub line_ending: LineEnding,
-}
-
-/// Convert the language-neutral core options shared by every formatter into a
-/// validated [`CoreOptions`].
+/// Convert the language-neutral core options shared by every formatter into a validated [`CoreFormatOptions`].
 ///
 /// This is the single source of truth for core-option parsing, validation, and default fallbacks.
 /// Each downstream converter ([`super::to_oxc_formatter()`], [`super::to_oxc_toml()`], etc) layers
@@ -21,8 +11,8 @@ pub struct CoreOptions {
 ///
 /// # Errors
 /// Returns an error if `tabWidth` or `printWidth` is out of range.
-pub fn to_core_options(config: &FormatConfig) -> Result<CoreOptions, String> {
-    let mut options = CoreOptions::default();
+pub fn to_core_options(config: &FormatConfig) -> Result<CoreFormatOptions, String> {
+    let mut options = CoreFormatOptions::default();
 
     // [Prettier] useTabs: boolean
     if let Some(use_tabs) = config.use_tabs {

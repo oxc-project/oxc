@@ -1,7 +1,7 @@
-use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator};
 use oxc_ast::{
-    AstBuilder,
     ast::{Expression, IdentifierReference, Statement},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_semantic::Scoping;
 use oxc_span::Span;
@@ -129,7 +129,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// Shortcut for `ctx.ast.alloc`.
     #[inline]
     pub fn alloc<T>(&self, node: T) -> ArenaBox<'a, T> {
-        self.ast.alloc(node)
+        ArenaBox::new_in(node, self)
     }
 
     /// Get parent of current node.
@@ -159,7 +159,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// Shortcut for `ctx.ancestry.ancestors`.
     #[inline]
-    pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
+    pub fn ancestors<'t>(&'t self) -> impl ExactSizeIterator<Item = Ancestor<'a, 't>> {
         self.ancestry.ancestors()
     }
 
@@ -311,7 +311,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// This is a shortcut for `ctx.scoping.insert_scope_below_statements`.
     pub fn insert_scope_below_statements(
         &mut self,
-        stmts: &ArenaVec<Statement>,
+        stmts: &ArenaVec<'a, Statement<'a>>,
         flags: ScopeFlags,
     ) -> ScopeId {
         self.scoping.insert_scope_below_statements(stmts, flags)
@@ -377,6 +377,21 @@ impl<'a, State> TraverseCtx<'a, State> {
         self.scoping.generate_binding(name, scope_id, flags)
     }
 
+    /// Generate binding with a source span.
+    ///
+    /// Creates a symbol with the provided name, span, and flags and adds it to the specified scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_spanned_binding`.
+    pub fn generate_spanned_binding(
+        &mut self,
+        name: Ident<'a>,
+        span: Span,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> BoundIdentifier<'a> {
+        self.scoping.generate_spanned_binding(name, span, scope_id, flags)
+    }
+
     /// Generate binding in current scope.
     ///
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
@@ -399,7 +414,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_name`.
     pub fn generate_uid_name(&mut self, name: &str) -> Ident<'a> {
-        self.scoping.generate_uid_name(name, self.ast.allocator)
+        self.scoping.generate_uid_name(name, self.allocator())
     }
 
     /// Generate UID.
@@ -518,7 +533,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_bound_reference(symbol_id, flags);
-        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+        IdentifierReference::new_with_reference_id(span, name, reference_id, self)
     }
 
     /// Create an `Expression::Identifier` bound to a `SymbolId`.
@@ -530,7 +545,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> Expression<'a> {
         let ident = self.create_bound_ident_reference(span, name, symbol_id, flags);
-        Expression::Identifier(self.ast.alloc(ident))
+        Expression::Identifier(ArenaBox::new_in(ident, self))
     }
 
     /// Create an unbound reference.
@@ -553,7 +568,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_unbound_reference(name, flags);
-        self.ast.identifier_reference_with_reference_id(span, name, reference_id)
+        IdentifierReference::new_with_reference_id(span, name, reference_id, self)
     }
 
     /// Create an unbound `Expression::Identifier`.
@@ -564,7 +579,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         flags: ReferenceFlags,
     ) -> Expression<'a> {
         let ident = self.create_unbound_ident_reference(span, name, flags);
-        Expression::Identifier(self.ast.alloc(ident))
+        Expression::Identifier(ArenaBox::new_in(ident, self))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -707,5 +722,21 @@ impl<'a, State> TraverseCtx<'a, State> {
     #[inline]
     pub(crate) fn set_current_block_scope_id(&mut self, scope_id: ScopeId) {
         self.scoping.set_current_block_scope_id(scope_id);
+    }
+}
+
+impl<'a, State> GetAllocator<'a> for TraverseCtx<'a, State> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
+    }
+}
+
+impl<'a, State> GetAstBuilder<'a> for TraverseCtx<'a, State> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }

@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize, de};
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
@@ -19,7 +18,7 @@ use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 use crate::{
     AstNode,
     context::LintContext,
-    rule::{Rule, TupleRuleConfig},
+    rule::{MixedTupleRuleConfig, Rule},
 };
 
 fn func_name_matching_diagnostic(
@@ -68,41 +67,9 @@ struct FuncNameMatchingConfig {
     include_common_js_module_exports: bool,
 }
 
-#[derive(Debug, Default, Clone, Serialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 /// This rule takes an optional string of `"always"` or `"never"` (when omitted, it defaults to `"always"`), and an optional options object with two properties `considerPropertyDescriptor` and `includeCommonJSModuleExports`.
-pub struct FuncNameMatching(FuncNameMatchingMode, FuncNameMatchingConfig);
-
-impl<'de> Deserialize<'de> for FuncNameMatching {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let values = Vec::<Value>::deserialize(deserializer)?;
-        let mut mode = FuncNameMatchingMode::Always;
-        let mut options = FuncNameMatchingConfig::default();
-
-        match values.as_slice() {
-            [] => {}
-            [first] if first.is_string() => {
-                mode = serde_json::from_value(first.clone()).map_err(de::Error::custom)?;
-            }
-            [first] if first.is_object() => {
-                options = serde_json::from_value(first.clone()).map_err(de::Error::custom)?;
-            }
-            [first, second] if first.is_string() && second.is_object() => {
-                mode = serde_json::from_value(first.clone()).map_err(de::Error::custom)?;
-                options = serde_json::from_value(second.clone()).map_err(de::Error::custom)?;
-            }
-            _ => {
-                return Err(de::Error::custom(
-                    r#"expected [], ["always"|"never"], [options], or ["always"|"never", options]"#,
-                ));
-            }
-        }
-
-        Ok(Self(mode, options))
-    }
-}
+pub struct FuncNameMatching(MixedTupleRuleConfig<FuncNameMatchingMode, FuncNameMatchingConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -221,13 +188,16 @@ declare_oxc_lint!(
     eslint,
     style,
     none,
-    config = FuncNameMatching,
+    config = MixedTupleRuleConfig<FuncNameMatchingMode, FuncNameMatchingConfig>,
     version = "1.62.0",
+    short_description = "Requires function expression names to match the variable or property names they are assigned to, or disallows such matches with `\"never\"`.",
 );
 
 impl Rule for FuncNameMatching {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
+        serde_json::from_value::<MixedTupleRuleConfig<FuncNameMatchingMode, FuncNameMatchingConfig>>(
+            value,
+        ).map(Self)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -249,7 +219,8 @@ impl Rule for FuncNameMatching {
                     return;
                 };
 
-                if !self.1.include_common_js_module_exports && is_module_exports(&assign_expr.left)
+                if !self.0.1.include_common_js_module_exports
+                    && is_module_exports(&assign_expr.left)
                 {
                     return;
                 }
@@ -273,7 +244,7 @@ impl Rule for FuncNameMatching {
 
 impl FuncNameMatching {
     fn should_warn(&self, name: &str, func_name: &str) -> bool {
-        match self.0 {
+        match self.0.0 {
             FuncNameMatchingMode::Always => name != func_name,
             FuncNameMatchingMode::Never => name == func_name,
         }
@@ -291,7 +262,7 @@ impl FuncNameMatching {
                 name,
                 func_name.name,
                 is_property,
-                self.0,
+                self.0.0,
                 func_name.span,
             ));
         }
@@ -309,7 +280,7 @@ impl FuncNameMatching {
         if property_key_is_identifier(&property.key) && !property.computed {
             let Some(property_name) = property.key.static_name() else { return };
 
-            if self.1.consider_property_descriptor && property_name == "value" {
+            if self.0.1.consider_property_descriptor && property_name == "value" {
                 match property_descriptor_name(node, ctx) {
                     DescriptorName::Name(descriptor_name) => {
                         self.report_if_should_warn(

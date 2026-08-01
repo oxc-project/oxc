@@ -54,6 +54,7 @@ declare_oxc_lint!(
     import,
     nursery,
     version = "0.0.21",
+    short_description = "Reports funny business with exports, like repeated exports of names or defaults.",
 );
 
 impl Rule for Export {

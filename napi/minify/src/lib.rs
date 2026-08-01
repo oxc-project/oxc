@@ -104,7 +104,7 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
     MinifyResult {
         code: ret.code,
         map: ret.map.map(oxc_sourcemap::napi::SourceMap::from),
-        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.errors),
+        errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
         legal_comments,
     }
 }

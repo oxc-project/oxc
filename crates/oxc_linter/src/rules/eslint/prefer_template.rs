@@ -45,6 +45,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "1.12.0",
+    short_description = "Require template literals instead of string concatenation.",
 );
 
 impl Rule for PreferTemplate {

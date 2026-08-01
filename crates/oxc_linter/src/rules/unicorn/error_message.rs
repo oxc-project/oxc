@@ -62,6 +62,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     version = "0.0.14",
+    short_description = "Enforces providing a `message` when creating built-in `Error` objects to improve readability and debugging.",
 );
 
 impl Rule for ErrorMessage {

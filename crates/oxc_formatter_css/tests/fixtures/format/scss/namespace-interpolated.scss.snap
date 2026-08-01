@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// `@namespace` URI with SCSS interpolation: the outer quote re-quotes per
+// `singleQuote` (Prettier `printString` / `adjustStrings`) but the content
+// stays verbatim (postcss-values `value-unknown`, same path as a value-position
+// `InterpolableStr`). Without this, `@namespace foo '#{$url}'` would print
+// the single quote unchanged — verified against Prettier 3.8.4.
+
+@namespace foo '#{$url}';
+@namespace bar "#{$url}";
+@namespace baz "plain";
+@namespace qux 'plain';
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// `@namespace` URI with SCSS interpolation: the outer quote re-quotes per
+// `singleQuote` (Prettier `printString` / `adjustStrings`) but the content
+// stays verbatim (postcss-values `value-unknown`, same path as a value-position
+// `InterpolableStr`). Without this, `@namespace foo '#{$url}'` would print
+// the single quote unchanged — verified against Prettier 3.8.4.
+
+@namespace foo "#{$url}";
+@namespace bar "#{$url}";
+@namespace baz "plain";
+@namespace qux "plain";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// `@namespace` URI with SCSS interpolation: the outer quote re-quotes per
+// `singleQuote` (Prettier `printString` / `adjustStrings`) but the content
+// stays verbatim (postcss-values `value-unknown`, same path as a value-position
+// `InterpolableStr`). Without this, `@namespace foo '#{$url}'` would print
+// the single quote unchanged — verified against Prettier 3.8.4.
+
+@namespace foo "#{$url}";
+@namespace bar "#{$url}";
+@namespace baz "plain";
+@namespace qux "plain";
+
+===================== End =====================

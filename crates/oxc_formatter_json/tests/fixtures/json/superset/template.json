@@ -1,0 +1,9 @@
+[
+  ``,
+  `foo`,
+  `
+  multiple-line
+`,
+  `\u{1F409}\`'"\${}`,
+  { "as-object-value": `foo` }
+]

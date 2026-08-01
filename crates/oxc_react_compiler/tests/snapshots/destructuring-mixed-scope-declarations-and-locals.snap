@@ -1,0 +1,47 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/destructuring-mixed-scope-declarations-and-locals.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useFragment } from "shared-runtime";
+function Component(props) {
+	const $ = _c(5);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = graphql`
+      fragment F on T {
+        id
+      }
+    `;
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	const post = useFragment(t0, props.post);
+	let t1;
+	if ($[1] !== post) {
+		const allUrls = [];
+		const { media, comments, urls } = post;
+		let t2;
+		if ($[3] !== comments.length) {
+			t2 = (e) => {
+				if (!comments.length) {
+					return;
+				}
+				console.log(comments.length);
+			};
+			$[3] = comments.length;
+			$[4] = t2;
+		} else {
+			t2 = $[4];
+		}
+		const onClick = t2;
+		allUrls.push(...urls);
+		t1 = <Media media={media} onClick={onClick} />;
+		$[1] = post;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	return t1;
+}

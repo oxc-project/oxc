@@ -1,0 +1,28 @@
+"""
+Line one
+
+
+Two blank lines above stay intact
+
+
+
+Three blank lines above stay intact
+"""
+type A {
+  """   single line gets trimmed   """
+  a: String
+  """
+  Escaped \""" quotes
+  """
+  b: String
+  """
+
+  """
+  c: String
+  """
+      deeply
+        indented
+      dedents
+  """
+  d: String
+}

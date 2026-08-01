@@ -56,13 +56,15 @@ impl std::ops::Deref for CompiledTestPatternName {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentTestFilenameConfig {
     /// Regex pattern to ensure we are linting only test filenames.
     /// Decides whether a file is a testing file.
+    #[schemars(with = "Option<String>")]
     all_test_pattern: CompiledAllTestPattern,
     /// Required regex to check if a test filename have a valid formart.
     /// Pattern doesn't have a default value, you must provide one.
+    #[schemars(with = "Option<String>")]
     pattern: CompiledTestPatternName,
 }
 
@@ -100,6 +102,7 @@ declare_oxc_lint!(
     style,
     config = ConsistentTestFilenameConfig,
     version = "1.36.0",
+    short_description = "This rule triggers an error when a file is considered a test file, but its name does not match an expected filename format.",
 );
 
 fn compile_matcher_pattern(matcher_pattern: &serde_json::Value) -> Option<lazy_regex::Regex> {

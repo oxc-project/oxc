@@ -4,7 +4,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vue(no-watch-after-await): `watch` is forbidden after an `await` expression.
    ╭─[no_watch_after_await.tsx:8:23]
- 7 │             
+ 7 │ 
  8 │                       watch(foo, () => { /* ... */ }) // error
    ·                       ───────────────────────────────
  9 │                     }
@@ -13,7 +13,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vue(no-watch-after-await): `watchEffect` is forbidden after an `await` expression.
    ╭─[no_watch_after_await.tsx:8:23]
- 7 │             
+ 7 │ 
  8 │                       watchEffect(() => { /* ... */ })
    ·                       ────────────────────────────────
  9 │                       watch(foo, () => { /* ... */ })

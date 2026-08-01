@@ -4,21 +4,23 @@ use itertools::Itertools;
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use oxc_ast::{
     AstKind, AstType,
     ast::{
-        Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern, CallExpression,
-        ChainElement, Expression, FormalParameters, Function, FunctionBody, IdentifierReference,
-        StaticMemberExpression, TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeQuery,
-        TSTypeReference, VariableDeclarationKind, VariableDeclarator,
+        Argument, ArrayExpressionElement, ArrowFunctionBody, ArrowFunctionExpression,
+        BindingPattern, CallExpression, ChainElement, Expression, FormalParameters, Function,
+        FunctionBody, IdentifierReference, StaticMemberExpression, VariableDeclarationKind,
+        VariableDeclarator,
     },
     match_expression,
 };
 use oxc_ast_visit::{
-    Visit,
-    walk::{walk_arrow_function_expression, walk_function, walk_function_body},
+    VisitJs,
+    walk_js::{
+        walk_arrow_function_body, walk_arrow_function_expression, walk_function, walk_function_body,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -33,7 +35,8 @@ use crate::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
     },
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_option,
 };
 
 const SCOPE: &str = "react-hooks";
@@ -219,19 +222,23 @@ fn functions_returned_from_use_effect_event_must_not_be_included_in_dependency_a
     .with_error_code_scope(SCOPE)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct ExhaustiveDeps(Box<ExhaustiveDepsConfig>);
 
-#[derive(Debug, Clone, Default)]
-pub struct ExhaustiveDepsConfig {
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct ExhaustiveDepsConfig {
+    /// Optionally provide a regex of additional hooks to check.
+    #[serde(default, deserialize_with = "deserialize_additional_hooks")]
     additional_hooks: Option<Regex>,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-struct ExhaustiveDepsConfigJson {
-    /// Optionally provide a regex of additional hooks to check.
-    additional_hooks: Option<String>,
+fn deserialize_additional_hooks<'de, D>(deserializer: D) -> Result<Option<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_regex_option(deserializer)
+        .map(|regex| regex.filter(|regex| !regex.as_str().is_empty()))
 }
 
 declare_oxc_lint!(
@@ -269,35 +276,26 @@ declare_oxc_lint!(
     react,
     correctness,
     safe_fixes_and_dangerous_suggestions,
-    config = ExhaustiveDepsConfigJson,
+    config = ExhaustiveDepsConfig,
     version = "0.12.0",
+    short_description = "Verifies the list of dependencies for Hooks like `useEffect` and similar.",
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
 
 impl Rule for ExhaustiveDeps {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value
-            .as_array()
-            .and_then(|arr| arr.first())
-            .and_then(|first| {
-                serde_json::from_value::<ExhaustiveDepsConfigJson>(first.clone()).ok()
-            })
-            .map(|config_json| ExhaustiveDepsConfig {
-                additional_hooks: config_json
-                    .additional_hooks
-                    .filter(|pattern| !pattern.is_empty())
-                    .and_then(|pattern| Regex::new(&pattern).ok()),
-            })
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         let Some(hook_name) = get_node_name_without_react_namespace(&call_expr.callee) else {
+            return;
+        };
+
+        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
             return;
         };
 
@@ -311,9 +309,6 @@ impl Rule for ExhaustiveDeps {
             }
         };
 
-        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
-            return;
-        };
         let callback_node = call_expr.arguments.get(callback_index);
         let dependencies_node = call_expr.arguments.get(callback_index + 1);
 
@@ -378,9 +373,7 @@ impl Rule for ExhaustiveDeps {
                                 if ctx
                                     .semantic()
                                     .scoping()
-                                    .scope_ancestors(component_scope_id)
-                                    .skip(1)
-                                    .contains(&decl.scope_id())
+                                    .scope_is_descendant_of(component_scope_id, decl.scope_id())
                                 {
                                     return;
                                 }
@@ -485,7 +478,7 @@ impl Rule for ExhaustiveDeps {
             found_dependencies.visit_formal_parameters(callback_node.parameters());
 
             if let Some(function_body) = callback_node.body() {
-                found_dependencies.visit_function_body(function_body);
+                function_body.visit(&mut found_dependencies);
             }
 
             (found_dependencies.found_dependencies, found_dependencies.refs_inside_cleanups)
@@ -525,7 +518,7 @@ impl Rule for ExhaustiveDeps {
                 let contains_set_state_call = {
                     let mut finder = ExhaustiveDepsVisitor::new(ctx.semantic());
                     if let Some(function_body) = callback_node.body() {
-                        finder.visit_function_body_root(function_body);
+                        function_body.visit_root(&mut finder);
                     }
                     finder.set_state_call
                 };
@@ -596,9 +589,7 @@ impl Rule for ExhaustiveDeps {
                 if !(ctx
                     .semantic()
                     .scoping()
-                    .scope_ancestors(component_scope_id)
-                    .skip(1)
-                    .contains(&dependency_scope_id)
+                    .scope_is_descendant_of(component_scope_id, dependency_scope_id)
                     || is_ref_current_non_dependency)
                 {
                     continue;
@@ -702,7 +693,7 @@ impl Rule for ExhaustiveDeps {
             // lastly, we need co compare for any unnecessary deps
             // for example if `props.foo`, AND `props.foo.bar.baz` was declared in the deps array
             // `props.foo.bar.baz` is unnecessary (already covered by `props.foo`)
-            declared_dependencies.iter().tuple_combinations().for_each(|(a, b)| {
+            declared_dependencies.iter().array_combinations().for_each(|[a, b]| {
                 if a.contains(b) {
                     ctx.diagnostic(unnecessary_dependency_diagnostic(
                         hook_name,
@@ -805,6 +796,28 @@ enum CallbackNode<'a> {
     ArrowFunction(&'a ArrowFunctionExpression<'a>),
 }
 
+#[derive(Clone, Copy)]
+enum CallbackBody<'a, 'b> {
+    Function(&'b FunctionBody<'a>),
+    Arrow(&'b ArrowFunctionBody<'a>),
+}
+
+impl<'a> CallbackBody<'a, '_> {
+    fn visit(self, visitor: &mut ExhaustiveDepsVisitor<'a, '_>) {
+        match self {
+            Self::Function(body) => visitor.visit_function_body(body),
+            Self::Arrow(body) => visitor.visit_arrow_function_body(body),
+        }
+    }
+
+    fn visit_root(self, visitor: &mut ExhaustiveDepsVisitor<'a, '_>) {
+        match self {
+            Self::Function(body) => walk_function_body(visitor, body),
+            Self::Arrow(body) => walk_arrow_function_body(visitor, body),
+        }
+    }
+}
+
 impl<'a> CallbackNode<'a> {
     fn is_async(&self) -> bool {
         match self {
@@ -820,10 +833,10 @@ impl<'a> CallbackNode<'a> {
         }
     }
 
-    fn body(&self) -> Option<&FunctionBody<'a>> {
+    fn body(&self) -> Option<CallbackBody<'a, '_>> {
         match self {
-            CallbackNode::Function(func) => func.body.as_deref(),
-            CallbackNode::ArrowFunction(func) => Some(&func.body),
+            CallbackNode::Function(func) => func.body.as_deref().map(CallbackBody::Function),
+            CallbackNode::ArrowFunction(func) => Some(CallbackBody::Arrow(&func.body)),
         }
     }
 }
@@ -856,7 +869,11 @@ impl ExhaustiveDeps {
 fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
     match expr {
         Expression::StaticMemberExpression(member) => {
-            if let Expression::Identifier(_ident) = &member.object {
+            if member
+                .object
+                .get_identifier_reference()
+                .is_some_and(|reference| reference.name == "React")
+            {
                 return Some(member.property.name.as_str());
             }
             None
@@ -1090,8 +1107,12 @@ fn is_stable_value<'a, 'b>(
             {
                 // if the variables is a function, check whether the function is stable
                 let function_body = match init.get_inner_expression() {
-                    Expression::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
-                    Expression::FunctionExpression(func) => func.body.as_ref(),
+                    Expression::ArrowFunctionExpression(arrow_func) => {
+                        Some(CallbackBody::Arrow(&arrow_func.body))
+                    }
+                    Expression::FunctionExpression(func) => {
+                        func.body.as_deref().map(CallbackBody::Function)
+                    }
                     _ => None,
                 };
                 if let Some(function_body) = function_body {
@@ -1111,7 +1132,7 @@ fn is_stable_value<'a, 'b>(
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
             if declaration.kind == VariableDeclarationKind::Const
                 && (matches!(
-                    init,
+                    init.get_inner_expression(),
                     Expression::BooleanLiteral(_)
                         | Expression::NullLiteral(_)
                         | Expression::NumericLiteral(_)
@@ -1122,7 +1143,7 @@ fn is_stable_value<'a, 'b>(
                 return true;
             }
 
-            let Expression::CallExpression(init_expr) = &init else {
+            let Expression::CallExpression(init_expr) = init.get_inner_expression() else {
                 return false;
             };
 
@@ -1175,8 +1196,10 @@ fn is_stable_value<'a, 'b>(
         }
         AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {
             let function_body = match node.kind() {
-                AstKind::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
-                AstKind::Function(func) => func.body.as_ref(),
+                AstKind::ArrowFunctionExpression(arrow_func) => {
+                    Some(CallbackBody::Arrow(&arrow_func.body))
+                }
+                AstKind::Function(func) => func.body.as_deref().map(CallbackBody::Function),
                 _ => unreachable!(),
             };
 
@@ -1189,7 +1212,7 @@ fn is_stable_value<'a, 'b>(
 }
 
 fn is_function_stable<'a, 'b>(
-    function_body: &'b FunctionBody<'a>,
+    function_body: CallbackBody<'a, 'b>,
     function_symbol_id: Option<SymbolId>,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
@@ -1197,7 +1220,7 @@ fn is_function_stable<'a, 'b>(
 ) -> bool {
     let deps = {
         let mut collector = ExhaustiveDepsVisitor::new(ctx.semantic());
-        collector.visit_function_body(function_body);
+        function_body.visit(&mut collector);
         collector.found_dependencies
     };
 
@@ -1265,10 +1288,6 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
         }
     }
 
-    fn visit_function_body_root(&mut self, function_body: &FunctionBody<'a>) {
-        walk_function_body(self, function_body);
-    }
-
     fn iter_destructure_bindings<F>(&self, mut cb: F) -> Option<bool>
     where
         F: FnMut(std::borrow::Cow<'a, str>),
@@ -1332,29 +1351,13 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
     }
 }
 
-impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
+impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.stack.push(kind.ty());
     }
 
     fn leave_node(&mut self, _kind: AstKind<'a>) {
         self.stack.pop();
-    }
-
-    fn visit_ts_type_annotation(&mut self, _it: &TSTypeAnnotation<'a>) {
-        // noop
-    }
-
-    fn visit_ts_type_reference(&mut self, _it: &TSTypeReference<'a>) {
-        // noop
-    }
-
-    fn visit_ts_type_query(&mut self, _it: &TSTypeQuery<'a>) {
-        // noop
-    }
-
-    fn visit_ts_type_parameter_instantiation(&mut self, _it: &TSTypeParameterInstantiation<'a>) {
-        // noop
     }
 
     fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
@@ -1611,10 +1614,10 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
 
 mod fix {
     use super::Name;
-    use oxc_allocator::{Allocator, CloneIn};
+    use oxc_allocator::{Allocator, ArenaVec, CloneIn};
     use oxc_ast::{
-        AstBuilder,
         ast::{ArrayExpression, Expression},
+        builder::AstBuilder,
     };
     use oxc_span::{GetSpan, SPAN};
     use oxc_str::Str;
@@ -1632,19 +1635,23 @@ mod fix {
         let mut codegen = fixer.codegen();
 
         let alloc = Allocator::default();
-        let ast_builder = AstBuilder::new(&alloc);
+        let alloc = &alloc;
+        let ast_builder = AstBuilder::new(alloc);
 
-        let mut vec = deps.elements.clone_in(&alloc);
+        let mut vec = deps.elements.clone_in(alloc);
 
         for name in names {
             vec.push(
-                ast_builder
-                    .expression_identifier(SPAN, Str::from_cow_in(&name.name, &alloc))
-                    .into(),
+                Expression::new_identifier(
+                    SPAN,
+                    Str::from_cow_in(&name.name, &alloc),
+                    &ast_builder,
+                )
+                .into(),
             );
         }
 
-        codegen.print_expression(&ast_builder.expression_array(SPAN, vec));
+        codegen.print_expression(&Expression::new_array_expression(SPAN, vec, &ast_builder));
         fixer.replace(deps.span, codegen.into_source_text())
     }
 
@@ -1664,12 +1671,31 @@ mod fix {
             .filter(|el| (*el).span() != dependency.span)
             .map(|el| el.clone_in(&alloc));
 
-        codegen.print_expression(&Expression::ArrayExpression(ast_builder.alloc_array_expression(
+        codegen.print_expression(&Expression::new_array_expression(
             deps.span,
-            oxc_allocator::Vec::from_iter_in(new_deps, &alloc),
-        )));
+            ArenaVec::from_iter_in(new_deps, &ast_builder),
+            &ast_builder,
+        ));
         fixer.replace(deps.span, codegen.into_source_text())
     }
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    let invalid_regex = serde_json::json!([{ "additionalHooks": "[" }]);
+    assert!(ExhaustiveDeps::from_configuration(invalid_regex).is_err());
+
+    let unknown_field = serde_json::json!([{ "unknown": true }]);
+    assert!(ExhaustiveDeps::from_configuration(unknown_field).is_err());
+
+    let wrong_type = serde_json::json!([{ "additionalHooks": 1 }]);
+    assert!(ExhaustiveDeps::from_configuration(wrong_type).is_err());
+
+    let empty_regex = serde_json::json!([{ "additionalHooks": "" }]);
+    assert!(ExhaustiveDeps::from_configuration(empty_regex).is_ok());
+
+    let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
+    assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
 }
 
 #[test]
@@ -2840,6 +2866,33 @@ export const useTest = () => {
 
     console.log(state);
 }"#,
+        r"const Component = () => {
+  const DATA = 'test' as const;
+  const data = useMemo(() => DATA, []);
+  return <div>{data}</div>;
+};",
+        "const ReactActual = jest.requireActual('react');
+const Component = ({ filter }) => {
+    const [data, setData] = ReactActual.useState(filter);
+    ReactActual.useEffect(() => {
+        setData(filter);
+    }, [filter]);
+
+    return <div>test</div>;
+};",
+        r"const Component = () => {
+          const setRef = React.useRef<(value: string) => void | null>(
+            null,
+          ) as React.MutableRefObject<(value: string) => void | null>;
+
+          React.useEffect(() => {
+            if (setRef.current) {
+              console.log(setRef.current);
+            }
+          }, []);
+
+          return <div>test</div>;
+        };",
     ];
 
     let fail = vec![

@@ -1,0 +1,800 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:5:30]
+ 4 │                           computed: {
+ 5 │ ╭─▶                         foo: async function () {
+ 6 │ │                             return await someFunc()
+ 7 │ ╰─▶                         }
+ 8 │                           }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: async function () {
+ 6 │                           return await someFunc()
+   ·                                  ────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:5:30]
+ 4 │                           computed: {
+ 5 │ ╭─▶                         foo: async function () {
+ 6 │ │                             return new Promise((resolve, reject) => {})
+ 7 │ ╰─▶                         }
+ 8 │                           }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected Promise object in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: async function () {
+ 6 │                           return new Promise((resolve, reject) => {})
+   ·                                  ────────────────────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return bar.then(response => {})
+   ·                                  ────────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return bar?.then?.(response => {})
+   ·                                  ───────────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return (bar?.then)?.(response => {})
+   ·                                  ─────────────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return bar.catch(e => {})
+   ·                                  ──────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.all([])
+   ·                                  ───────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return bar.finally(res => {})
+   ·                                  ──────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:32]
+ 5 │                       foo: function () {
+ 6 │                         return Promise.race([])
+   ·                                ────────────────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:32]
+ 5 │                       foo: function () {
+ 6 │                         return Promise.reject([])
+   ·                                ──────────────────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:32]
+ 5 │                       foo: function () {
+ 6 │                         return Promise.resolve([])
+   ·                                ───────────────────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:32]
+ 5 │                       foo () {
+ 6 │                         return Promise.resolve([])
+   ·                                ───────────────────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:34]
+ 6 │                         get () {
+ 7 │                           return Promise.resolve([])
+   ·                                  ───────────────────
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:34]
+ 6 │                         get () {
+ 7 │                           return Promise.resolve([])
+   ·                                  ───────────────────
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:34]
+ 6 │                         get () {
+ 7 │                           return test.blabla.then([])
+   ·                                  ────────────────────
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:25]
+ 5 │                       foo () {
+ 6 │                         this.$nextTick(() => {})
+   ·                         ────────────────────────
+ 7 │                         Vue.nextTick(() => {})
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:25]
+ 6 │                         this.$nextTick(() => {})
+ 7 │                         Vue.nextTick(() => {})
+   ·                         ──────────────────────
+ 8 │                         return 'foo'
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:5:33]
+  4 │                         computed: {
+  5 │ ╭─▶                       async foo () {
+  6 │ │                           await this.$nextTick()
+  7 │ │                           await Vue.nextTick()
+  8 │ │                           return 'foo'
+  9 │ ╰─▶                       }
+ 10 │                         }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:25]
+ 5 │                       async foo () {
+ 6 │                         await this.$nextTick()
+   ·                         ──────────────────────
+ 7 │                         await Vue.nextTick()
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:31]
+ 5 │                       async foo () {
+ 6 │                         await this.$nextTick()
+   ·                               ────────────────
+ 7 │                         await Vue.nextTick()
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:25]
+ 6 │                         await this.$nextTick()
+ 7 │                         await Vue.nextTick()
+   ·                         ────────────────────
+ 8 │                         return 'foo'
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:31]
+ 6 │                         await this.$nextTick()
+ 7 │                         await Vue.nextTick()
+   ·                               ──────────────
+ 8 │                         return 'foo'
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:25]
+ 5 │                       foo: function () {
+ 6 │                         setTimeout(() => { }, 0)
+   ·                         ────────────────────────
+ 7 │                         window.setTimeout(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:25]
+ 6 │                         setTimeout(() => { }, 0)
+ 7 │                         window.setTimeout(() => { }, 0)
+   ·                         ───────────────────────────────
+ 8 │                         setInterval(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:8:25]
+ 7 │                         window.setTimeout(() => { }, 0)
+ 8 │                         setInterval(() => { }, 0)
+   ·                         ─────────────────────────
+ 9 │                         window.setInterval(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:9:25]
+  8 │                         setInterval(() => { }, 0)
+  9 │                         window.setInterval(() => { }, 0)
+    ·                         ────────────────────────────────
+ 10 │                         setImmediate(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:10:25]
+  9 │                         window.setInterval(() => { }, 0)
+ 10 │                         setImmediate(() => { })
+    ·                         ───────────────────────
+ 11 │                         window.setImmediate(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:11:25]
+ 10 │                         setImmediate(() => { })
+ 11 │                         window.setImmediate(() => { })
+    ·                         ──────────────────────────────
+ 12 │                         requestAnimationFrame(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:12:25]
+ 11 │                         window.setImmediate(() => { })
+ 12 │                         requestAnimationFrame(() => {})
+    ·                         ───────────────────────────────
+ 13 │                         window.requestAnimationFrame(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:13:25]
+ 12 │                         requestAnimationFrame(() => {})
+ 13 │                         window.requestAnimationFrame(() => {})
+    ·                         ──────────────────────────────────────
+ 14 │                       }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:25]
+ 5 │                       foo: function () {
+ 6 │                         setTimeout?.(() => { }, 0)
+   ·                         ──────────────────────────
+ 7 │                         window?.setTimeout?.(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:25]
+ 6 │                         setTimeout?.(() => { }, 0)
+ 7 │                         window?.setTimeout?.(() => { }, 0)
+   ·                         ──────────────────────────────────
+ 8 │                         setInterval(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:8:25]
+ 7 │                         window?.setTimeout?.(() => { }, 0)
+ 8 │                         setInterval(() => { }, 0)
+   ·                         ─────────────────────────
+ 9 │                         window?.setInterval?.(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:9:25]
+  8 │                         setInterval(() => { }, 0)
+  9 │                         window?.setInterval?.(() => { }, 0)
+    ·                         ───────────────────────────────────
+ 10 │                         setImmediate?.(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:10:25]
+  9 │                         window?.setInterval?.(() => { }, 0)
+ 10 │                         setImmediate?.(() => { })
+    ·                         ─────────────────────────
+ 11 │                         window?.setImmediate?.(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:11:25]
+ 10 │                         setImmediate?.(() => { })
+ 11 │                         window?.setImmediate?.(() => { })
+    ·                         ─────────────────────────────────
+ 12 │                         requestAnimationFrame?.(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:12:25]
+ 11 │                         window?.setImmediate?.(() => { })
+ 12 │                         requestAnimationFrame?.(() => {})
+    ·                         ─────────────────────────────────
+ 13 │                         window?.requestAnimationFrame?.(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:13:25]
+ 12 │                         requestAnimationFrame?.(() => {})
+ 13 │                         window?.requestAnimationFrame?.(() => {})
+    ·                         ─────────────────────────────────────────
+ 14 │                       }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:25]
+ 5 │                       foo: function () {
+ 6 │                         setTimeout?.(() => { }, 0)
+   ·                         ──────────────────────────
+ 7 │                         ;(window?.setTimeout)?.(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:7:26]
+ 6 │                         setTimeout?.(() => { }, 0)
+ 7 │                         ;(window?.setTimeout)?.(() => { }, 0)
+   ·                          ────────────────────────────────────
+ 8 │                         setInterval(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:8:25]
+ 7 │                         ;(window?.setTimeout)?.(() => { }, 0)
+ 8 │                         setInterval(() => { }, 0)
+   ·                         ─────────────────────────
+ 9 │                         ;(window?.setInterval)?.(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:9:26]
+  8 │                         setInterval(() => { }, 0)
+  9 │                         ;(window?.setInterval)?.(() => { }, 0)
+    ·                          ─────────────────────────────────────
+ 10 │                         setImmediate?.(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:10:25]
+  9 │                         ;(window?.setInterval)?.(() => { }, 0)
+ 10 │                         setImmediate?.(() => { })
+    ·                         ─────────────────────────
+ 11 │                         ;(window?.setImmediate)?.(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:11:26]
+ 10 │                         setImmediate?.(() => { })
+ 11 │                         ;(window?.setImmediate)?.(() => { })
+    ·                          ───────────────────────────────────
+ 12 │                         requestAnimationFrame?.(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:12:25]
+ 11 │                         ;(window?.setImmediate)?.(() => { })
+ 12 │                         requestAnimationFrame?.(() => {})
+    ·                         ─────────────────────────────────
+ 13 │                         ;(window?.requestAnimationFrame)?.(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in "foo" computed property.
+    ╭─[no_async_in_computed_properties.tsx:13:26]
+ 12 │                         requestAnimationFrame?.(() => {})
+ 13 │                         ;(window?.requestAnimationFrame)?.(() => {})
+    ·                          ───────────────────────────────────────────
+ 14 │                       }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:6:46]
+ 5 │                         setup() {
+ 6 │ ╭─▶                       const test1 = computed(async () => {
+ 7 │ │                           return await someFunc()
+ 8 │ ╰─▶                       })
+ 9 │                           const test2 = computed(async () => await someFunc())
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:32]
+ 6 │                       const test1 = computed(async () => {
+ 7 │                         return await someFunc()
+   ·                                ────────────────
+ 8 │                       })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+    ╭─[no_async_in_computed_properties.tsx:9:46]
+  8 │                       })
+  9 │                       const test2 = computed(async () => await someFunc())
+    ·                                              ────────────────────────────
+ 10 │                       const test3 = computed(async function () {
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
+    ╭─[no_async_in_computed_properties.tsx:9:58]
+  8 │                       })
+  9 │                       const test2 = computed(async () => await someFunc())
+    ·                                                          ────────────────
+ 10 │                       const test3 = computed(async function () {
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+    ╭─[no_async_in_computed_properties.tsx:10:46]
+  9 │                           const test2 = computed(async () => await someFunc())
+ 10 │ ╭─▶                       const test3 = computed(async function () {
+ 11 │ │                           return await someFunc()
+ 12 │ ╰─▶                       })
+ 13 │                         }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
+    ╭─[no_async_in_computed_properties.tsx:11:32]
+ 10 │                       const test3 = computed(async function () {
+ 11 │                         return await someFunc()
+    ·                                ────────────────
+ 12 │                       })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:6:45]
+ 5 │                         setup() {
+ 6 │ ╭─▶                       const test = computed(async () => {
+ 7 │ │                           return new Promise((resolve, reject) => {})
+ 8 │ ╰─▶                       })
+ 9 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected Promise object in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:32]
+ 6 │                       const test = computed(async () => {
+ 7 │                         return new Promise((resolve, reject) => {})
+   ·                                ────────────────────────────────────
+ 8 │                       })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:32]
+ 6 │                       const test1 = computed(() => {
+ 7 │                         return bar.then(response => {})
+   ·                                ────────────────────────
+ 8 │                       })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+    ╭─[no_async_in_computed_properties.tsx:10:32]
+  9 │                       const test2 = computed(() => {
+ 10 │                         return Promise.all([])
+    ·                                ───────────────
+ 11 │                       })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+   ╭─[no_async_in_computed_properties.tsx:8:34]
+ 7 │                         get: () => {
+ 8 │                           return Promise.resolve([])
+   ·                                  ───────────────────
+ 9 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+    ╭─[no_async_in_computed_properties.tsx:13:34]
+ 12 │                         get() {
+ 13 │                           return Promise.resolve([])
+    ·                                  ───────────────────
+ 14 │                         }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:25]
+ 6 │                       const test = computed(() => {
+ 7 │                         setTimeout(() => { }, 0)
+   ·                         ────────────────────────
+ 8 │                         window.setTimeout(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+   ╭─[no_async_in_computed_properties.tsx:8:25]
+ 7 │                         setTimeout(() => { }, 0)
+ 8 │                         window.setTimeout(() => { }, 0)
+   ·                         ───────────────────────────────
+ 9 │                         setInterval(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:9:25]
+  8 │                         window.setTimeout(() => { }, 0)
+  9 │                         setInterval(() => { }, 0)
+    ·                         ─────────────────────────
+ 10 │                         window.setInterval(() => { }, 0)
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:10:25]
+  9 │                         setInterval(() => { }, 0)
+ 10 │                         window.setInterval(() => { }, 0)
+    ·                         ────────────────────────────────
+ 11 │                         setImmediate(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:11:25]
+ 10 │                         window.setInterval(() => { }, 0)
+ 11 │                         setImmediate(() => { })
+    ·                         ───────────────────────
+ 12 │                         window.setImmediate(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:12:25]
+ 11 │                         setImmediate(() => { })
+ 12 │                         window.setImmediate(() => { })
+    ·                         ──────────────────────────────
+ 13 │                         requestAnimationFrame(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:13:25]
+ 12 │                         window.setImmediate(() => { })
+ 13 │                         requestAnimationFrame(() => {})
+    ·                         ───────────────────────────────
+ 14 │                         window.requestAnimationFrame(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:14:25]
+ 13 │                         requestAnimationFrame(() => {})
+ 14 │                         window.requestAnimationFrame(() => {})
+    ·                         ──────────────────────────────────────
+ 15 │                       })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:6:45]
+ 5 │                         setup() {
+ 6 │ ╭─▶                       const test = computed(async () => {
+ 7 │ │                           bar()
+ 8 │ ╰─▶                       })
+ 9 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:4:42]
+ 3 │                       import {computed} from 'vue'
+ 4 │ ╭─▶                   const test1 = computed(async () => {
+ 5 │ │                       return await someFunc()
+ 6 │ ╰─▶                   })
+ 7 │                       const test2 = computed(async () => await someFunc())
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
+   ╭─[no_async_in_computed_properties.tsx:5:28]
+ 4 │                   const test1 = computed(async () => {
+ 5 │                     return await someFunc()
+   ·                            ────────────────
+ 6 │                   })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:42]
+ 6 │                   })
+ 7 │                   const test2 = computed(async () => await someFunc())
+   ·                                          ────────────────────────────
+ 8 │                   const test3 = computed(async function () {
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:54]
+ 6 │                   })
+ 7 │                   const test2 = computed(async () => await someFunc())
+   ·                                                      ────────────────
+ 8 │                   const test3 = computed(async function () {
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+    ╭─[no_async_in_computed_properties.tsx:8:42]
+  7 │                       const test2 = computed(async () => await someFunc())
+  8 │ ╭─▶                   const test3 = computed(async function () {
+  9 │ │                       return await someFunc()
+ 10 │ ╰─▶                   })
+ 11 │                       </script>
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected await operator in computed function.
+    ╭─[no_async_in_computed_properties.tsx:9:28]
+  8 │                   const test3 = computed(async function () {
+  9 │                     return await someFunc()
+    ·                            ────────────────
+ 10 │                   })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:4:41]
+ 3 │                       import {computed} from 'vue'
+ 4 │ ╭─▶                   const test = computed(async () => {
+ 5 │ │                       return new Promise((resolve, reject) => {})
+ 6 │ ╰─▶                   })
+ 7 │                       </script>
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected Promise object in computed function.
+   ╭─[no_async_in_computed_properties.tsx:5:28]
+ 4 │                   const test = computed(async () => {
+ 5 │                     return new Promise((resolve, reject) => {})
+   ·                            ────────────────────────────────────
+ 6 │                   })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+   ╭─[no_async_in_computed_properties.tsx:5:28]
+ 4 │                   const test1 = computed(() => {
+ 5 │                     return bar.then(response => {})
+   ·                            ────────────────────────
+ 6 │                   })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+   ╭─[no_async_in_computed_properties.tsx:8:28]
+ 7 │                   const test2 = computed(() => {
+ 8 │                     return Promise.all([])
+   ·                            ───────────────
+ 9 │                   })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+   ╭─[no_async_in_computed_properties.tsx:6:30]
+ 5 │                     get: () => {
+ 6 │                       return Promise.resolve([])
+   ·                              ───────────────────
+ 7 │                     }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+    ╭─[no_async_in_computed_properties.tsx:11:30]
+ 10 │                     get() {
+ 11 │                       return Promise.resolve([])
+    ·                              ───────────────────
+ 12 │                     }
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+   ╭─[no_async_in_computed_properties.tsx:5:21]
+ 4 │                   const test = computed(() => {
+ 5 │                     setTimeout(() => { }, 0)
+   ·                     ────────────────────────
+ 6 │                     window.setTimeout(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+   ╭─[no_async_in_computed_properties.tsx:6:21]
+ 5 │                     setTimeout(() => { }, 0)
+ 6 │                     window.setTimeout(() => { }, 0)
+   ·                     ───────────────────────────────
+ 7 │                     setInterval(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+   ╭─[no_async_in_computed_properties.tsx:7:21]
+ 6 │                     window.setTimeout(() => { }, 0)
+ 7 │                     setInterval(() => { }, 0)
+   ·                     ─────────────────────────
+ 8 │                     window.setInterval(() => { }, 0)
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+   ╭─[no_async_in_computed_properties.tsx:8:21]
+ 7 │                     setInterval(() => { }, 0)
+ 8 │                     window.setInterval(() => { }, 0)
+   ·                     ────────────────────────────────
+ 9 │                     setImmediate(() => { })
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:9:21]
+  8 │                     window.setInterval(() => { }, 0)
+  9 │                     setImmediate(() => { })
+    ·                     ───────────────────────
+ 10 │                     window.setImmediate(() => { })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:10:21]
+  9 │                     setImmediate(() => { })
+ 10 │                     window.setImmediate(() => { })
+    ·                     ──────────────────────────────
+ 11 │                     requestAnimationFrame(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:11:21]
+ 10 │                     window.setImmediate(() => { })
+ 11 │                     requestAnimationFrame(() => {})
+    ·                     ───────────────────────────────
+ 12 │                     window.requestAnimationFrame(() => {})
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected timed function in computed function.
+    ╭─[no_async_in_computed_properties.tsx:12:21]
+ 11 │                     requestAnimationFrame(() => {})
+ 12 │                     window.requestAnimationFrame(() => {})
+    ·                     ──────────────────────────────────────
+ 13 │                   })
+    ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected async function declaration in computed function.
+   ╭─[no_async_in_computed_properties.tsx:4:41]
+ 3 │                       import {computed} from 'vue'
+ 4 │ ╭─▶                   const test = computed(async () => {
+ 5 │ │                       bar()
+ 6 │ ╰─▶                   })
+ 7 │                       </script>
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return myFunc().catch('default')
+   ·                                  ─────────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return z.number().catch(42)
+   ·                                  ────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return someLib.string().catch(42)
+   ·                                  ──────────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in computed function.
+   ╭─[no_async_in_computed_properties.tsx:4:53]
+ 3 │                     import {computed} from 'vue'
+ 4 │                     const deepCall = computed(() => z.a.b.c.d().e().f().catch())
+   ·                                                     ───────────────────────────
+ 5 │                     </script>
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.allSettled([])
+   ·                                  ──────────────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.any([])
+   ·                                  ───────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.try([])
+   ·                                  ───────────────
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(no-async-in-computed-properties): Unexpected asynchronous action in "foo" computed property.
+   ╭─[no_async_in_computed_properties.tsx:6:34]
+ 5 │                         foo: function () {
+ 6 │                           return Promise.withResolvers([])
+   ·                                  ─────────────────────────
+ 7 │                         }
+   ╰────

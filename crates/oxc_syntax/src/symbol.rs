@@ -1,15 +1,17 @@
 use bitflags::bitflags;
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 use oxc_index::define_nonmax_u32_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
 use oxc_ast_macros::ast;
 
+use crate::semantic_id::SemanticId;
+
 define_nonmax_u32_index_type! {
     #[ast]
     #[builder(default)]
-    #[clone_in(default)]
+    #[clone_in(semantic_id)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct SymbolId;
@@ -18,17 +20,14 @@ define_nonmax_u32_index_type! {
 impl<'alloc> CloneIn<'alloc> for SymbolId {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self {
-        // `clone_in` should never reach this, because `CloneIn` skips symbol_id field
-        unreachable!();
-    }
-
     #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
-        *self
+    #[inline(always)] // Because this method only delegates
+    fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
+        self.clone_id(with_semantic_ids)
     }
 }
+
+impl SemanticId for SymbolId {}
 
 define_nonmax_u32_index_type! {
     pub struct RedeclarationId;
@@ -72,6 +71,16 @@ bitflags! {
         // access it in the Transformer.
         // https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/types.ts#L819-L820
         const Ambient                 = 1 << 16;
+
+        // The following are not part of TypeScript's `SymbolFlags`. They record the syntactic kind
+        // of a function binding so the semantic builder's redeclaration checks can consult them
+        // (on `symbol_flags`, and per-declaration via `Redeclaration::flags`) instead of reading the
+        // declaration's AST node. The transformer keeps them in sync when it rewrites functions.
+
+        /// A named function expression, e.g. `n` in `(function n() {})`.
+        const FunctionExpression       = 1 << 17;
+        /// An `async` and/or generator function.
+        const AsyncOrGeneratorFunction = 1 << 18;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
@@ -145,6 +154,14 @@ impl SymbolFlags {
     #[inline]
     pub fn is_class(self) -> bool {
         self.contains(Self::Class)
+    }
+
+    /// Returns `true` if this symbol is a block-scoped lexical declaration
+    /// (`let`/`const`, `class`, or `enum`), i.e. a binding that has a Temporal
+    /// Dead Zone.
+    #[inline]
+    pub fn is_block_scoped(self) -> bool {
+        self.intersects(Self::BlockScoped)
     }
 
     #[inline]

@@ -37,7 +37,7 @@ const DEFAULT_CONTROL_COMPONENTS: [&str; 6] =
     ["input", "meter", "output", "progress", "select", "textarea"];
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct LabelHasAssociatedControlConfig {
     /// Maximum depth to search for a nested control.
     depth: u8,
@@ -127,6 +127,7 @@ declare_oxc_lint!(
     correctness,
     config = LabelHasAssociatedControlConfig,
     version = "0.9.1",
+    short_description = "Enforce that a label tag has a text label and an associated control.",
 );
 
 impl Rule for LabelHasAssociatedControl {

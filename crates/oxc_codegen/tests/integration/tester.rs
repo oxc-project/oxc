@@ -1,5 +1,6 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
+use oxc_ast::ast::Comment;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -13,7 +14,7 @@ pub fn test_with_parse_options(source_text: &str, expected: &str, parse_options:
     let allocator = Allocator::default();
     let ret =
         Parser::new(&allocator, source_text, SourceType::tsx()).with_options(parse_options).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
     let result = Codegen::new().with_options(default_options()).build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text}");
 }
@@ -47,7 +48,7 @@ pub fn test_options_with_source_type(
 ) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
     let result = Codegen::new().with_options(options).build(&ret.program).code;
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
@@ -76,7 +77,7 @@ pub fn test_minify(source_text: &str, expected: &str) {
     let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
     let result = Codegen::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .build(&ret.program)
@@ -95,14 +96,20 @@ pub fn codegen(source_text: &str) -> String {
 }
 
 #[track_caller]
-pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenReturn {
+pub fn codegen_options(source_text: &str, options: &CodegenOptions) -> CodegenTestReturn {
     let allocator = Allocator::default();
     let source_type = SourceType::ts();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
     let mut options = options.clone();
     options.single_quote = true;
-    Codegen::new().with_options(options).build(&ret.program)
+    let ret = Codegen::new().with_options(options).build(&ret.program);
+    CodegenTestReturn { code: ret.code, legal_comments: ret.legal_comments }
+}
+
+pub struct CodegenTestReturn {
+    pub code: String,
+    pub legal_comments: Vec<Comment>,
 }
 
 #[track_caller]
@@ -115,12 +122,12 @@ pub fn test_idempotency_options(source_text: &str, options: &CodegenOptions) {
     let allocator = Allocator::default();
     let source_type = SourceType::tsx();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
     let first = Codegen::new().with_options(options.clone()).build(&ret.program).code;
 
     let allocator2 = Allocator::default();
     let ret2 = Parser::new(&allocator2, &first, source_type).parse();
-    assert!(ret2.errors.is_empty(), "Parse errors on second pass: {:?}", ret2.errors);
+    assert!(ret2.diagnostics.is_empty(), "Parse errors on second pass: {:?}", ret2.diagnostics);
     let second = Codegen::new().with_options(options.clone()).build(&ret2.program).code;
 
     assert_eq!(

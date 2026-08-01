@@ -160,3 +160,18 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a
    ·                                                     ─
    ╰────
+
+  ⚠ import(namespace): Unable to validate computed reference to imported namespace "lib".
+   ╭─[index.js:1:57]
+ 1 │ import { lib } from "./issue-24073/module"; console.log(lib["~unstable"]);
+   ·                                                         ────────────────
+   ╰────
+  help: Use a static property access (e.g. `namespace.name`) instead of a computed one.
+
+  ⚠ import(namespace): Unable to validate computed reference to imported namespace "lib".
+   ╭─[index.js:2:57]
+ 1 │ import { otherExport } from "./issue-24073/module"; console.log(otherExport);
+ 2 │ import { lib } from "./issue-24073/module"; console.log(lib["~unstable"]);
+   ·                                                         ────────────────
+   ╰────
+  help: Use a static property access (e.g. `namespace.name`) instead of a computed one.

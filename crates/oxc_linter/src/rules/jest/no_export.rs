@@ -43,6 +43,7 @@ declare_oxc_lint!(
     jest,
     correctness,
     version = "0.0.13",
+    short_description = "Prevents using exports if a file has one or more tests in it.",
 );
 
 // Emits a diagnostic if the file matches all of these criteria:

@@ -63,6 +63,7 @@ declare_oxc_lint!(
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
     config = MyRule,
     version = "next",
+    short_description = "FIXME: One-sentence description of the rule.",
 );
 
 impl Rule for MyRule {

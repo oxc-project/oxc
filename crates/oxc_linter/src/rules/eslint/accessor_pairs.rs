@@ -119,6 +119,7 @@ declare_oxc_lint!(
     pedantic,
     config = AccessorPairsConfig,
     version = "1.33.0",
+    short_description = "Enforces getter/setter pairs in objects and classes.",
 );
 
 impl Rule for AccessorPairs {

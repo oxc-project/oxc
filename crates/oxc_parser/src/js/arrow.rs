@@ -1,15 +1,15 @@
-use oxc_allocator::Box;
-use oxc_ast::{NONE, ast::*};
-use oxc_span::{FileExtension, GetSpan};
+use oxc_allocator::ArenaBox;
+use oxc_ast::ast::*;
+use oxc_span::FileExtension;
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate};
 use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
-    type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    params: Box<'a, FormalParameters<'a>>,
-    return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
+    params: ArenaBox<'a, FormalParameters<'a>>,
+    return_type: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
     r#async: bool,
     span: u32,
 }
@@ -57,7 +57,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
         match self.cur_kind() {
-            Kind::LParen | Kind::LAngle | Kind::Async => {
+            Kind::LParen => {
+                // `(1 + a)` can never be arrow parameters: the leading literal is not the start of
+                // a `BindingElement`, so the worker would bump past it and return `Tristate::False`
+                // (`!second.is_binding_identifier() && second != This`). Skip the lookahead.
+                if self.lexer.peek_token().kind().is_literal() {
+                    Tristate::False
+                } else {
+                    self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
+                }
+            }
+            Kind::LAngle | Kind::Async => {
                 self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
             }
             _ => Tristate::False,
@@ -222,15 +232,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let pattern = BindingPattern::BindingIdentifier(
-            self.ast.alloc_binding_identifier(ident.span, ident.name),
-        );
-        let formal_parameter = self.ast.plain_formal_parameter(ident.span, pattern);
-        let params = self.ast.alloc_formal_parameters(
+        let pattern = BindingPattern::new_binding_identifier(ident.span, ident.name, self);
+        let formal_parameter = FormalParameter::new_plain(ident.span, pattern, self);
+        let params = FormalParameters::boxed(
             ident.span,
             FormalParameterKind::ArrowFormalParameters,
-            self.ast.vec1(formal_parameter),
-            NONE,
+            [formal_parameter],
+            None,
+            self,
         );
 
         if self.cur_token().is_on_new_line() {
@@ -303,29 +312,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
 
-        let expression = !self.at(Kind::LCurly);
-        let body = if expression {
+        let body = if self.at(Kind::LCurly) {
+            ArrowFunctionBody::FunctionBody(self.parse_function_body())
+        } else {
             // Remove TopLevel context for arrow function expression body
             let expr = self.context_remove(Context::TopLevel, |p| {
                 p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
             });
-            let span = expr.span();
-            let expr_stmt = self.ast.statement_expression(span, expr);
-            self.ast.alloc_function_body(span, self.ast.vec(), self.ast.vec1(expr_stmt))
-        } else {
-            self.parse_function_body()
+            ArrowFunctionBody::from(expr)
         };
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        self.ast.expression_arrow_function(
+        Expression::new_arrow_function_expression(
             self.end_span(span),
-            expression,
             r#async,
             type_parameters,
             params,
             return_type,
             body,
+            self,
         )
     }
 

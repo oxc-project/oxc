@@ -149,7 +149,7 @@ impl std::ops::Deref for NoImplicitCoercion {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows shorthand type conversions using operators like `!!`, `+`, `""+ `, etc.
+    /// Disallow shorthand type conversions using operators like `!!`, unary `+`, and `"" +`.
     ///
     /// ### Why is this bad?
     ///
@@ -178,6 +178,7 @@ declare_oxc_lint!(
     fix,
     config = NoImplicitCoercionConfig,
     version = "1.33.0",
+    short_description = "Disallow shorthand type conversions using operators like `!!`, unary `+`, and `\"\" +`.",
 );
 
 impl Rule for NoImplicitCoercion {
@@ -357,10 +358,7 @@ fn get_operand_text<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> &'a str
 }
 
 fn is_numeric_literal(expr: &Expression) -> bool {
-    matches!(
-        expr.without_parentheses(),
-        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
-    )
+    expr.without_parentheses().is_number_literal()
 }
 
 fn is_empty_string(expr: &Expression) -> bool {

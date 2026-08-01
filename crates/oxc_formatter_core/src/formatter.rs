@@ -1,13 +1,42 @@
 #![allow(clippy::module_inception)]
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use std::borrow::Cow;
+
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
-    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, VecBuffer,
+    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, ScratchBuffer,
+    buffer::HeapVecBuffer,
     builders::{FillBuilder, JoinBuilder},
     format::{Format, write},
     format_element::Interned,
 };
+
+/// Interns an exactly-sized element sequence, the single place encoding the interning policy:
+/// the 0/1-element cases return without ever allocating an `ArenaVec`.
+fn intern_exact<'ast>(
+    allocator: &'ast Allocator,
+    mut elements: impl ExactSizeIterator<Item = FormatElement<'ast>>,
+) -> Option<FormatElement<'ast>> {
+    match elements.len() {
+        0 => None,
+        // Doesn't get cheaper than calling clone, use the element directly
+        1 => elements.next(),
+        // The exact size hint makes `from_iter_in` allocate exactly-sized
+        _ => Some(FormatElement::Interned(Interned::new(ArenaVec::from_iter_in(
+            elements, &allocator,
+        )))),
+    }
+}
+
+/// Lifts a `Cow<'ast, str>` to `&'ast str`, allocating in the arena only for the owned case.
+/// Borrowed Cows already point into arena-resident source, so they pass through unchanged.
+pub fn arena_cow_str<'ast, C>(cow: &Cow<'ast, str>, f: &Formatter<'_, 'ast, C>) -> &'ast str {
+    match cow {
+        Cow::Borrowed(s) => s,
+        Cow::Owned(s) => f.allocator().alloc_str(s),
+    }
+}
 
 /// Handles the formatting of a CST and stores the context how the CST should be formatted (user preferences).
 ///
@@ -49,25 +78,21 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
+    /// The content is staged in a [`HeapVecBuffer`] and lands in the arena exactly-sized,
+    /// so the arena only ever holds the final interned slice, not the staging growth.
     pub fn intern(&mut self, content: &dyn Format<'ast, C>) -> Option<FormatElement<'ast>> {
-        let mut buffer = VecBuffer::new(self.state_mut());
+        let mut buffer = HeapVecBuffer::new(self.state_mut());
         write(&mut buffer, Arguments::new(&[Argument::new(&content)]));
-        let elements = buffer.into_vec();
-
-        self.intern_vec(elements)
+        intern_exact(buffer.state().allocator(), buffer.drain())
     }
 
-    #[expect(clippy::unused_self)] // Keep `self` the same as the original source
-    pub fn intern_vec(
+    /// Interns a builder's heap accumulator, moving it into the arena exactly-sized.
+    /// The source is emptied.
+    pub fn intern_elements(
         &self,
-        mut elements: ArenaVec<'ast, FormatElement<'ast>>,
+        elements: &mut ScratchBuffer<'ast>,
     ) -> Option<FormatElement<'ast>> {
-        match elements.len() {
-            0 => None,
-            // Doesn't get cheaper than calling clone, use the element directly
-            1 => elements.pop(),
-            _ => Some(FormatElement::Interned(Interned::new(elements))),
-        }
+        intern_exact(self.allocator(), elements.drain())
     }
 
     /// Creates a [`JoinBuilder`] that joins entries together without a separator.
@@ -119,5 +144,12 @@ impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
 
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
         self.buffer.replace_end(start, replacement);
+    }
+}
+
+impl<'ast, C> GetAllocator<'ast> for Formatter<'_, 'ast, C> {
+    #[inline]
+    fn allocator(&self) -> &'ast Allocator {
+        self.state().allocator()
     }
 }

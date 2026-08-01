@@ -1,5 +1,3 @@
-use rustc_hash::FxHashSet;
-
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -158,6 +156,7 @@ declare_oxc_lint!(
     pending,
     config = ConsistentFunctionScoping,
     version = "0.8.0",
+    short_description = "Disallow functions that are declared in a scope which does not capture any variables from the outer scope.",
 );
 
 impl Rule for ConsistentFunctionScoping {
@@ -166,6 +165,11 @@ impl Rule for ConsistentFunctionScoping {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        enum FunctionLikeBody<'a, 'b> {
+            Function(&'b FunctionBody<'a>),
+            Arrow(&'b ArrowFunctionBody<'a>),
+        }
+
         let (
             function_declaration_symbol_id,
             function_name,
@@ -201,7 +205,7 @@ impl Rule for ConsistentFunctionScoping {
                         (
                             binding_ident.symbol_id(),
                             Some(binding_ident.name.as_str()),
-                            function_body,
+                            FunctionLikeBody::Function(function_body),
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
                                 |func_binding_ident| func_binding_ident.span,
@@ -212,7 +216,7 @@ impl Rule for ConsistentFunctionScoping {
                         (
                             function_id.symbol_id(),
                             Some(function_id.name.as_str()),
-                            function_body,
+                            FunctionLikeBody::Function(function_body),
                             function_id.span(),
                             func_scope_id,
                         )
@@ -228,7 +232,7 @@ impl Rule for ConsistentFunctionScoping {
                     (
                         binding_ident.symbol_id(),
                         Some(binding_ident.name.as_str()),
-                        &arrow_function.body,
+                        FunctionLikeBody::Arrow(&arrow_function.body),
                         binding_ident.span(),
                         arrow_function.scope_id(),
                     )
@@ -259,23 +263,16 @@ impl Rule for ConsistentFunctionScoping {
         // get all references in the function body
         let (function_body_var_references, is_parent_this_referenced) = {
             let mut rf = ReferencesFinder::default();
-            rf.visit_function_body(function_body);
+            match function_body {
+                FunctionLikeBody::Function(body) => rf.visit_function_body(body),
+                FunctionLikeBody::Arrow(body) => rf.visit_arrow_function_body(body),
+            }
             (rf.references, rf.is_parent_this_referenced)
         };
 
         if is_parent_this_referenced && matches!(node.kind(), AstKind::ArrowFunctionExpression(_)) {
             return;
         }
-
-        let parent_scope_ids = {
-            let mut current_scope_id = function_scope_id;
-            let mut parent_scope_ids = FxHashSet::default();
-            while let Some(parent_scope_id) = ctx.scoping().scope_parent_id(current_scope_id) {
-                parent_scope_ids.insert(parent_scope_id);
-                current_scope_id = parent_scope_id;
-            }
-            parent_scope_ids
-        };
 
         for reference_id in function_body_var_references {
             let reference = ctx.scoping().get_reference(reference_id);
@@ -284,7 +281,9 @@ impl Rule for ConsistentFunctionScoping {
                 continue;
             }
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-            if parent_scope_ids.contains(&scope_id) && symbol_id != function_declaration_symbol_id {
+            if ctx.scoping().scope_is_descendant_of(function_scope_id, scope_id)
+                && symbol_id != function_declaration_symbol_id
+            {
                 return;
             }
         }

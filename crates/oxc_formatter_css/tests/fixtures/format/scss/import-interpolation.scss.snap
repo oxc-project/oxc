@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@import 'foo/#{$theme}.scss';
+@import "bar/#{$x}";
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@import "foo/#{$theme}.scss";
+@import "bar/#{$x}";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@import "foo/#{$theme}.scss";
+@import "bar/#{$x}";
+
+===================== End =====================

@@ -4,12 +4,12 @@ use std::{
 };
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
+use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, Uri};
 use tracing::{debug, error, warn};
 
-use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
     Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
+    offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
@@ -61,7 +61,8 @@ impl ServerFormatterBuilder {
         };
 
         // If `configPath` is explicitly set, load it eagerly as the single config for all files.
-        let explicit_config_path = options.config_path.filter(|s| !s.is_empty()).map(PathBuf::from);
+        let use_nested_config = options.use_nested_configs();
+        let explicit_config_path = options.explicit_config_path().map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
@@ -79,6 +80,7 @@ impl ServerFormatterBuilder {
             JsConfigLoaderCb::clone(&self.js_config_loader),
             prettierignore_glob,
             explicit_config_path,
+            use_nested_config,
         )
     }
 }
@@ -134,9 +136,12 @@ pub struct ServerFormatter {
     js_config_loader: JsConfigLoaderCb,
     /// `.prettierignore` glob (workspace-level, shared across all scopes).
     prettierignore_glob: Option<Gitignore>,
-    /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
-    /// config discovery; all files use this single config.
+    /// Explicit `fmt.configPath` from LSP settings.
+    /// When set, all files use this single config.
     explicit_config_path: Option<PathBuf>,
+    /// Whether nested config discovery is active.
+    /// Disabled by an explicit `fmt.configPath` or `fmt.disableNestedConfig` in LSP settings.
+    use_nested_config: bool,
     /// Current config snapshot. Swapped wholesale on watched-file changes.
     state: RwLock<Arc<FormatterState>>,
 }
@@ -167,17 +172,18 @@ impl Tool for ServerFormatter {
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
         let options = deserialize_lsp_options(options);
 
-        let mut patterns: Vec<Pattern> =
-            if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-                vec![config_path.clone()]
-            } else {
-                // Watch for config files in all subdirectories (nested config support)
-                config_discovery()
-                    .config_file_names()
-                    .into_iter()
-                    .map(|name| format!("**/{name}"))
-                    .collect()
-            };
+        let mut patterns: Vec<Pattern> = if let Some(config_path) = options.explicit_config_path() {
+            vec![normalize_user_config_path_to_watch_pattern(config_path)]
+        } else {
+            // Watch subdirectories too for nested config support;
+            // with `disableNestedConfig`, only the workspace-root config is used
+            let prefix = if options.use_nested_configs() { "**/" } else { "" };
+            config_discovery()
+                .config_file_names()
+                .into_iter()
+                .map(|name| format!("{prefix}{name}"))
+                .collect()
+        };
 
         patterns.push(".editorconfig".to_string());
         patterns
@@ -249,15 +255,11 @@ impl Tool for ServerFormatter {
                 }
 
                 let (start, end, replacement) = compute_minimal_text_edit(source_text, &code);
-                let rope = Rope::from(source_text);
-                let (start_line, start_character) = get_line_column(&rope, start, source_text);
-                let (end_line, end_character) = get_line_column(&rope, end, source_text);
+                let start_position = offset_to_position(source_text, start);
+                let end_position = offset_to_position(source_text, end);
 
                 Ok(vec![TextEdit::new(
-                    Range::new(
-                        Position::new(start_line, start_character),
-                        Position::new(end_line, end_character),
-                    ),
+                    Range::new(start_position, end_position),
                     replacement.to_string(),
                 )])
             }
@@ -277,6 +279,7 @@ impl ServerFormatter {
         js_config_loader: JsConfigLoaderCb,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
+        use_nested_config: bool,
     ) -> Self {
         let state =
             Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
@@ -286,6 +289,7 @@ impl ServerFormatter {
             js_config_loader,
             prettierignore_glob,
             explicit_config_path,
+            use_nested_config,
             state: RwLock::new(Arc::new(state)),
         }
     }
@@ -357,9 +361,8 @@ impl ServerFormatter {
         // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
         let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
 
-        // Explicit config path applies uniformly to every file;
-        // passing `None` tells `resolve_file_scope_config` to bypass nested probing.
-        let nested_ctx = self.explicit_config_path.is_none().then_some(&state.nested_ctx);
+        // Passing `None` tells `resolve_file_scope_config` to bypass nested probing
+        let nested_ctx = self.use_nested_config.then_some(&state.nested_ctx);
         let resolver = match resolve_file_scope_config(path, &state.root_resolver, nested_ctx) {
             Ok(r) => r,
             Err(err) => {
@@ -441,12 +444,17 @@ fn deserialize_lsp_options(value: serde_json::Value) -> LSPFormatOptions {
 }
 
 /// Returns the minimal text edit (start, end, replacement) to transform `source_text` into `formatted_text`
+///
+/// Respects EOL characters as a whole edit. Appending `\r` before `\n` is invalid and should be treated as a single edit replacing `\n` with `\r\n`.
 #[expect(clippy::cast_possible_truncation)]
 fn compute_minimal_text_edit<'a>(
     source_text: &str,
     formatted_text: &'a str,
 ) -> (u32, u32, &'a str) {
-    debug_assert!(source_text != formatted_text);
+    debug_assert_ne!(
+        source_text, formatted_text,
+        "compute_minimal_text_edit: source_text and formatted_text must be different"
+    );
 
     // Find common prefix (byte offset)
     let mut prefix_byte = 0;
@@ -465,10 +473,25 @@ fn compute_minimal_text_edit<'a>(
     let src_len = src_bytes.len();
     let fmt_len = fmt_bytes.len();
 
-    while suffix_byte < src_len - prefix_byte
-        && suffix_byte < fmt_len - prefix_byte
-        && src_bytes[src_len - 1 - suffix_byte] == fmt_bytes[fmt_len - 1 - suffix_byte]
-    {
+    while suffix_byte < src_len - prefix_byte && suffix_byte < fmt_len - prefix_byte {
+        let src_idx = src_len - 1 - suffix_byte;
+        let fmt_idx = fmt_len - 1 - suffix_byte;
+
+        // Prevents appending `\r` to a line ending in `\n`, instead we want to replace `\n` with `\r\n` in this case,
+        // aligning how LSP text documents are represented (line / column editing, instead of bytes).
+        if src_bytes[src_idx] == b'\n' && fmt_bytes[fmt_idx] == b'\n' {
+            let src_has_cr = src_idx > 0 && src_bytes[src_idx - 1] == b'\r';
+            let fmt_has_cr = fmt_idx > 0 && fmt_bytes[fmt_idx - 1] == b'\r';
+
+            if src_has_cr != fmt_has_cr {
+                break;
+            }
+        }
+
+        if src_bytes[src_idx] != fmt_bytes[fmt_idx] {
+            break;
+        }
+
         suffix_byte += 1;
     }
 
@@ -515,9 +538,12 @@ mod tests_builder {
 #[cfg(test)]
 mod tests {
     use super::compute_minimal_text_edit;
+    use oxc_language_server::offset_to_position;
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
+    #[should_panic(
+        expected = "compute_minimal_text_edit: source_text and formatted_text must be different"
+    )]
     fn test_no_change() {
         let src = "abc";
         let formatted = "abc";
@@ -578,6 +604,20 @@ mod tests {
     }
 
     #[test]
+    fn test_lsp_edit_range_ignores_unicode_line_separators() {
+        let src = "a\u{2028}b\u{2029}c \nnext";
+        let formatted = "a\u{2028}b\u{2029}c\nnext";
+        let (start, end, replacement) = compute_minimal_text_edit(src, formatted);
+
+        let start_position = offset_to_position(src, start);
+        let end_position = offset_to_position(src, end);
+
+        assert_eq!((start_position.line, start_position.character), (0, 5));
+        assert_eq!((end_position.line, end_position.character), (0, 6));
+        assert_eq!(replacement, "");
+    }
+
+    #[test]
     fn test_append() {
         let src = "a".repeat(100);
         let mut formatted = src.clone();
@@ -595,5 +635,24 @@ mod tests {
 
         let (start, end, replacement) = compute_minimal_text_edit(&src, &formatted);
         assert_eq!((start, end, replacement), (0, 0, "b"));
+    }
+
+    #[test]
+    #[expect(clippy::cast_possible_truncation)]
+    fn test_replacing_line_breaks() {
+        let src_lf = "line1\nline2\nline3";
+        let src_crlf = "line1\r\nline2\r\nline3";
+
+        // from LF to CRLF
+        {
+            let (start, end, replacement) = compute_minimal_text_edit(src_lf, src_crlf);
+            assert_eq!((start, end, replacement), (5, src_lf.len() as u32 - 5, "\r\nline2\r\n"));
+        }
+
+        // from CRLF to LF
+        {
+            let (start, end, replacement) = compute_minimal_text_edit(src_crlf, src_lf);
+            assert_eq!((start, end, replacement), (5, src_crlf.len() as u32 - 5, "\nline2\n"));
+        }
     }
 }

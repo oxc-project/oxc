@@ -59,6 +59,15 @@
       }
     },
     {
+      "files": ["tasks/e2e/nestjs/test/*.ts"],
+      "rules": {
+        "vitest/expect-expect": [
+          "error",
+          { "assertFunctionNames": ["expect", "request.**.expect"] }
+        ]
+      }
+    },
+    {
       "files": ["apps/oxlint/test/fixtures/**"],
       "rules": {
         "no-restricted-imports": [

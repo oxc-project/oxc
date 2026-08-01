@@ -105,6 +105,19 @@ impl Utf8ToUtf16 {
         converter.convert_program(program);
     }
 
+    /// Convert all spans in AST and comments to UTF-16.
+    pub fn convert_program_and_comments(&self, program: &mut Program<'_>) {
+        if let Some(mut converter) = self.converter() {
+            converter.convert_program(program);
+
+            converter.reset();
+
+            for comment in &mut program.comments {
+                converter.convert_span(&mut comment.span);
+            }
+        }
+    }
+
     /// Convert all spans in comments to UTF-16.
     pub fn convert_comments(&self, comments: &mut [Comment]) {
         if let Some(mut converter) = self.converter() {
@@ -139,10 +152,7 @@ impl Utf8ToUtf16 {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_ast::{
-        AstBuilder, Comment, CommentKind,
-        ast::{Expression, Statement},
-    };
+    use oxc_ast::{ast::*, builder::AstBuilder};
     use oxc_span::{GetSpan, SourceType, Span};
 
     use super::Utf8ToUtf16;
@@ -152,20 +162,22 @@ mod test {
         let allocator = Allocator::new();
         let ast = AstBuilder::new(&allocator);
 
-        let mut program = ast.program(
+        let mut program = Program::new(
             Span::new(0, 15),
             SourceType::default(),
             ";'🤨' // 🤨",
-            ast.vec1(Comment::new(8, 15, CommentKind::Line)),
+            [Comment::new(8, 15, CommentKind::Line)],
             None,
-            ast.vec(),
-            ast.vec_from_array([
-                ast.statement_empty(Span::new(0, 1)),
-                ast.statement_expression(
+            [],
+            [
+                Statement::new_empty_statement(Span::new(0, 1), &ast),
+                Statement::new_expression_statement(
                     Span::new(1, 7),
-                    ast.expression_string_literal(Span::new(1, 7), "🤨", None),
+                    Expression::new_string_literal(Span::new(1, 7), "🤨", None, &ast),
+                    &ast,
                 ),
-            ]),
+            ],
+            &ast,
         );
 
         let span_converter = Utf8ToUtf16::new(program.source_text);

@@ -107,6 +107,7 @@ declare_oxc_lint!(
     eslint,
     correctness,
     version = "0.0.5",
+    short_description = "Disallow duplicate conditions in if-else-if chains.",
 );
 
 impl Rule for NoDupeElseIf {

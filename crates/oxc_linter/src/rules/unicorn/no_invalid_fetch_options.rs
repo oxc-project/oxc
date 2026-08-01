@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
-use oxc_allocator::Box;
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -56,6 +56,7 @@ declare_oxc_lint!(
     unicorn,
     correctness,
     version = "0.15.12",
+    short_description = "Disallow invalid options in `fetch()` and `new Request()`.",
 );
 
 impl Rule for NoInvalidFetchOptions {
@@ -92,7 +93,7 @@ impl Rule for NoInvalidFetchOptions {
 const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
 
 fn is_invalid_fetch_options<'a>(
-    obj_expr: &'a Box<'_, ObjectExpression<'_>>,
+    obj_expr: &'a ArenaBox<'_, ObjectExpression<'_>>,
     ctx: &'a LintContext<'_>,
 ) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"

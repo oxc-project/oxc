@@ -41,15 +41,15 @@
 //! [`Visit`]: <http://docs.rs/oxc_ast_visit>
 //! [`VisitMut`]: <http://docs.rs/oxc_ast_visit>
 
-#[cfg(feature = "serialize")]
-mod serialize;
-
 pub mod ast;
-mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
+pub mod builder;
 pub mod precedence;
 mod trivia;
+
+#[cfg(feature = "serialize")]
+mod serialize;
 
 mod generated {
     pub mod ast_kind;
@@ -65,21 +65,19 @@ mod generated {
     mod derive_get_address;
     mod derive_get_span;
     mod derive_get_span_mut;
+    mod derive_replace_with;
     mod derive_take_in;
     mod derive_unstable_address;
     mod get_id;
+    pub mod inherit_variants;
 }
-
 pub use generated::ast_kind;
 
-pub use crate::{
-    ast::comment::{Comment, CommentContent, CommentKind, CommentPosition},
-    ast_builder_impl::{AstBuilder, NONE},
-    ast_kind::{AstKind, AstType},
-    ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind},
-    trivia::{
-        CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
-    },
+pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPosition};
+pub use ast_kind::{AstKind, AstType};
+pub use ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind};
+pub use trivia::{
+    CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
 };
 
 // After experimenting with two types of boxed enum variants:

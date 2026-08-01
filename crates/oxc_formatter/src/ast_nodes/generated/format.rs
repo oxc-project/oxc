@@ -3,17 +3,21 @@
 
 #![expect(clippy::match_same_arms)]
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::AstNode,
     formatter::{
-        Format, JsFormatContext, JsFormatter, JsFormatterExt as _,
+        JsFormatContext, JsFormatter, JsFormatterExt as _,
         trivia::{format_leading_comments, format_trailing_comments},
     },
     parentheses::NeedsParentheses,
     print::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
-    utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
+    utils::{
+        suppressed::FormatSuppressedNode,
+        typecast::{format_leading_comments_and_open_paren, format_type_cast_comment_node},
+    },
 };
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Program<'a>> {
@@ -112,16 +116,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
             Expression::Identifier(inner) => {
                 allocator
                     .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
-            }
-            Expression::MetaProperty(inner) => {
-                allocator
-                    .alloc(AstNode::<MetaProperty> {
                         inner,
                         parent,
                         allocator,
@@ -359,6 +353,26 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
                     })
                     .fmt(f);
             }
+            Expression::ImportMeta(inner) => {
+                allocator
+                    .alloc(AstNode::<ImportMeta> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Expression::NewTarget(inner) => {
+                allocator
+                    .alloc(AstNode::<NewTarget> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
             Expression::JSXElement(inner) => {
                 allocator
                     .alloc(AstNode::<JSXElement> {
@@ -473,11 +487,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierReference<'a>
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -522,11 +533,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThisExpression> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -545,11 +553,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, true, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -622,11 +627,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, true, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -729,11 +731,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateLiteral<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -752,11 +751,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TaggedTemplateExpressio
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -828,11 +824,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ComputedMemberExpressio
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -851,11 +844,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticMemberExpression<
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -874,11 +864,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateFieldExpression<
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -897,11 +884,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CallExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -920,11 +904,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -937,17 +918,34 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MetaProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportMeta> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
         }
+        if needs_parentheses {
+            ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewTarget> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+            return;
+        }
+        let needs_parentheses = self.needs_parentheses(f);
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1010,11 +1008,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UpdateExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1033,11 +1028,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UnaryExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1056,11 +1048,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BinaryExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1079,11 +1068,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateInExpression<'a>
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1102,11 +1088,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LogicalExpression<'a>> 
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1125,11 +1108,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ConditionalExpression<'
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1148,11 +1128,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentExpression<'a
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1443,11 +1420,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SequenceExpression<'a>>
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1466,11 +1440,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Super> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1489,11 +1460,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AwaitExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1512,11 +1480,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ChainExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1576,11 +1541,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ParenthesizedExpression
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -1999,8 +1961,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, EmptyStatement> {
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
-        self.format_leading_comments(f);
         if is_suppressed {
+            self.format_leading_comments(f);
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
@@ -2014,7 +1976,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IfStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2027,7 +1989,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DoWhileStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2040,7 +2002,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WhileStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2053,7 +2015,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2097,7 +2059,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForInStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2141,7 +2103,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForOfStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2154,7 +2116,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ContinueStatement<'a>> 
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2167,7 +2129,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BreakStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2180,7 +2142,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ReturnStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2193,7 +2155,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2232,7 +2194,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabeledStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2245,7 +2207,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThrowStatement<'a>> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2297,7 +2259,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DebuggerStatement> {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
         if is_suppressed {
-            FormatSuppressedNode(self.span()).fmt(f);
+            self.write_suppressed(f);
         } else {
             self.write(f);
         }
@@ -2426,11 +2388,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Function<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -2449,11 +2408,8 @@ impl<'a> AstNode<'a, Function<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -2518,17 +2474,45 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FunctionBody<'a>> {
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionBody<'a>> {
+    #[inline]
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let allocator = self.allocator;
+        let parent = self.parent;
+        match self.inner {
+            ArrowFunctionBody::FunctionBody(inner) => {
+                allocator
+                    .alloc(AstNode::<FunctionBody> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            it @ match_expression!(ArrowFunctionBody) => {
+                let inner = it.to_expression();
+                allocator
+                    .alloc(AstNode::<'a, Expression> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+        }
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -2551,11 +2535,8 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -2574,11 +2555,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, YieldExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -2597,11 +2575,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Class<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -2775,9 +2750,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ModuleDeclaration<'a>> 
                     })
                     .fmt(f);
             }
+            ModuleDeclaration::ExportDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ExportDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
             ModuleDeclaration::ExportNamedDeclaration(inner) => {
                 allocator
                     .alloc(AstNode::<ExportNamedDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            ModuleDeclaration::ExportFromDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<ExportFromDeclaration> {
                         inner,
                         parent,
                         allocator,
@@ -2828,11 +2823,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -2993,7 +2985,33 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttributeKey<'a>>
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDeclaration<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if is_suppressed {
+            self.format_leading_comments(f);
+            FormatSuppressedNode(self.span()).fmt(f);
+            self.format_trailing_comments(f);
+        } else {
+            self.write(f);
+        }
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportNamedDeclaration<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        if is_suppressed {
+            self.format_leading_comments(f);
+            FormatSuppressedNode(self.span()).fmt(f);
+            self.format_trailing_comments(f);
+        } else {
+            self.write(f);
+        }
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportFromDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         if is_suppressed {
@@ -3142,11 +3160,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, V8IntrinsicExpression<'
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -3165,11 +3180,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BooleanLiteral> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -3188,11 +3200,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NullLiteral> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -3211,11 +3220,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NumericLiteral<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -3234,11 +3240,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StringLiteral<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -3257,11 +3260,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BigIntLiteral<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -3280,11 +3280,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, RegExpLiteral<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -4383,11 +4380,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConditionalType<'a>> 
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -4411,6 +4405,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
             "(".fmt(f);
         }
         if is_suppressed {
+            self.format_leading_comments(f);
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
@@ -4428,11 +4423,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntersectionType<'a>>
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -4464,11 +4456,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeOperator<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5251,11 +5240,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInferType<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5274,11 +5260,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeQuery<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5384,11 +5367,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSFunctionType<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5407,11 +5387,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructorType<'a>> 
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5456,11 +5433,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAsExpression<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5479,11 +5453,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSatisfiesExpression<'
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5502,11 +5473,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAssertion<'a>> {
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5591,11 +5559,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNonNullExpression<'a>
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {
@@ -5653,11 +5618,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInstantiationExpressi
         if !is_suppressed && format_type_cast_comment_node(self, false, f) {
             return;
         }
-        self.format_leading_comments(f);
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             FormatSuppressedNode(self.span()).fmt(f);
         } else {

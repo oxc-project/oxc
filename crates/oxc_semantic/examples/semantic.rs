@@ -44,9 +44,9 @@ fn main() -> std::io::Result<()> {
 
     // Parse the source text into an AST
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
-    if !parser_ret.errors.is_empty() {
+    if !parser_ret.diagnostics.is_empty() {
         let error_message: String = parser_ret
-            .errors
+            .diagnostics
             .into_iter()
             .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text))))
             .join("\n");
@@ -56,16 +56,14 @@ fn main() -> std::io::Result<()> {
 
     let program = parser_ret.program;
 
-    // Build semantic model with syntax error checking
-    let semantic = SemanticBuilder::new()
-        // Enable additional syntax checks not performed by the parser
-        .with_check_syntax_error(true)
-        .build(&program);
+    // Compiler-pipeline defaults, plus the full `AstNodes` store since this
+    // example reads `semantic.nodes()`.
+    let semantic = SemanticBuilder::new_compiler().with_build_nodes(true).build(&program);
 
     // Report semantic analysis errors
-    if !semantic.errors.is_empty() {
+    if !semantic.diagnostics.is_empty() {
         let error_message: String = semantic
-            .errors
+            .diagnostics
             .into_iter()
             .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text))))
             .join("\n");
@@ -112,6 +110,28 @@ fn main() -> std::io::Result<()> {
             if has_zero_references {
                 info = info.with_note("This symbol has no references.");
             }
+
+            let info = info.with_source_code(Arc::clone(&source_text));
+
+            let mut s = String::new();
+            reporter.render_report(&mut s, info.as_ref()).unwrap();
+            println!("{s}");
+        }
+
+        for (ident, references) in semantic.semantic.scoping().root_unresolved_references() {
+            let info = OxcDiagnostic::warn(format!("Unresolved ident `{ident}`")).and_labels(
+                references
+                    .iter()
+                    .map(|reference_id| semantic.semantic.scoping().get_reference(*reference_id))
+                    .map(|reference| {
+                        semantic
+                            .semantic
+                            .nodes()
+                            .get_node(reference.node_id())
+                            .span()
+                            .label(format!("referenced here: ({:?})", reference.flags()))
+                    }),
+            );
 
             let info = info.with_source_code(Arc::clone(&source_text));
 

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
-use oxc_ast::ast::{BindingPattern, Expression, FunctionBody};
+use oxc_ast::ast::{BindingPattern, Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -14,7 +14,7 @@ use crate::{
     fixer::RuleFix,
     rule::{DefaultRuleConfig, Rule},
     rules::shared::prefer_expect_assertions::{
-        DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
+        CallbackBody, DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
         resolve_expect_local_name, should_check,
     },
     utils::collect_possible_jest_call_node,
@@ -62,7 +62,8 @@ impl Rule for PreferExpectAssertions {
         // Resolve the file-level expect local name once (e.g. `"expect"` or `"e"`
         // for `import { expect as e }`). Per-callback vitest fixture overrides
         // are handled in `resolve_expect_source`.
-        let file_expect_prefix = resolve_expect_local_name(ctx, &["vitest", "vite-plus/test"]);
+        let file_expect_prefix =
+            resolve_expect_local_name(ctx, &["vitest", "vite-plus/test", "@effect/vitest"]);
 
         let mut covered_describe_ids: Vec<NodeId> = Vec::new();
 
@@ -100,7 +101,7 @@ impl PreferExpectAssertionsRuleImpl for PreferExpectAssertions {
         ctx.diagnostic_with_suggestions(have_expect_assertions(span, prefix), suggestions);
     }
 
-    fn should_check_node(&self, body: &FunctionBody<'_>, is_async: bool, prefix: &str) -> bool {
+    fn should_check_node(&self, body: CallbackBody<'_>, is_async: bool, prefix: &str) -> bool {
         should_check(self.0.as_ref(), body, is_async, prefix)
     }
 }
@@ -221,6 +222,14 @@ fn test() {
         (
             r#"import { expect } from 'vite-plus/test';
             test("re-exported vitest global", () => {
+                expect.assertions(1);
+                expect(true).toBe(true);
+              });"#,
+            None,
+        ),
+        (
+            r#"import { expect } from '@effect/vitest';
+            test("re-exported effect vitest global", () => {
                 expect.assertions(1);
                 expect(true).toBe(true);
               });"#,
@@ -399,6 +408,11 @@ fn test() {
         (
             r#"import { expect as e } from 'vite-plus/test';
             test("re-exported missing", () => { e(true).toBe(true); });"#,
+            None,
+        ),
+        (
+            r#"import { expect as e } from '@effect/vitest';
+            test("re-exported effect missing", () => { e(true).toBe(true); });"#,
             None,
         ),
         (

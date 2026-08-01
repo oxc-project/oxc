@@ -1,10 +1,11 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, BufferExtensions, Format, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, BufferExtensions, Format, JsFormatter, VecBuffer,
+        JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
@@ -13,6 +14,7 @@ use crate::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
+        typecast::classify_type_cast,
     },
     write,
 };
@@ -155,6 +157,23 @@ fn format_left_trailing_comments(
     FormatTrailingComments::Comments(comments).fmt(f);
 }
 
+fn is_simple_single_member_union_or_intersection_type(type_to_check: &TSType) -> bool {
+    // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
+    // Prettier relocates the single leading comment to after the identifier,
+    // producing `type A /*1*/ = C;`. Skip complex nested cases.
+    match type_to_check {
+        TSType::TSUnionType(u) if u.types.len() == 1 => !matches!(
+            u.types.first().unwrap(),
+            TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
+        ),
+        TSType::TSIntersectionType(i) if i.types.len() == 1 => !matches!(
+            i.types.first().unwrap(),
+            TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
+        ),
+        _ => false,
+    }
+}
+
 fn should_print_as_leading(expr: &Expression) -> bool {
     matches!(
         expr,
@@ -271,15 +290,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 if property.readonly {
                     write!(f, ["readonly", space()]);
                 }
-
-                // Write the property key
-                if property.computed {
-                    write!(f, ["[", property.key(), "]"]);
-                } else {
-                    format_property_key(property.key(), f);
-                }
-
-                // Write optional, definite, and type annotation
+                format_property_key(property.key(), property.computed, f);
                 if property.optional {
                     write!(f, "?");
                 }
@@ -308,15 +319,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     write!(f, ["override", space()]);
                 }
                 write!(f, ["accessor", space()]);
-
-                // Write the property key
-                if property.computed {
-                    write!(f, ["[", property.key(), "]"]);
-                } else {
-                    format_property_key(property.key(), f);
-                }
-
-                // Write definite and type annotation
+                format_property_key(property.key(), property.computed, f);
                 if property.definite {
                     write!(f, "!");
                 }
@@ -340,36 +343,35 @@ impl<'a> AssignmentLike<'a, '_> {
                     declaration.id.span.end
                 };
 
-                format_left_trailing_comments(
-                    start,
-                    matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
-                    f,
-                );
-
-                // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
-                // Prettier relocates the single leading comment to after the identifier,
-                // producing `type A /*1*/ = C;`. Skip complex nested cases.
-                let type_span = match &declaration.type_annotation {
-                    TSType::TSUnionType(u) if u.types.len() == 1 => (!matches!(
-                        u.types.first().unwrap(),
-                        TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
-                    ))
-                    .then_some(u.span),
-                    TSType::TSIntersectionType(i) if i.types.len() == 1 => (!matches!(
-                        i.types.first().unwrap(),
-                        TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
-                    ))
-                    .then_some(i.span),
-                    _ => None,
-                };
-                if let Some(span) = type_span {
-                    let comments = f.context().comments().comments_before(span.start);
-                    // Only relocate inline comments (not own-line comments).
-                    // Own-line comments (e.g. JSDoc on its own line before the union)
-                    // must stay as leading comments of the union type so they get proper indentation.
-                    if comments.len() == 1 && !comments[0].preceded_by_newline() {
-                        write!(f, [FormatTrailingComments::Comments(comments)]);
-                    }
+                if is_simple_single_member_union_or_intersection_type(&declaration.type_annotation)
+                {
+                    let comments_in_span =
+                        f.context().comments().comments_in_range(start, declaration.span.end);
+                    let end_index = comments_in_span
+                        .iter()
+                        .take_while(|comment| {
+                            // Case 1: Own-line comments shouldn't be trailing
+                            !comment.preceded_by_newline()
+                                // Case 2: End-of-line comments are trailing unless
+                                // they're block comments.
+                                && (comment.followed_by_newline() && !comment.is_block()
+                                    // Case 3: Inline comments are leading when they're
+                                    // only separated by whitespace or other comments
+                                    // from the following node. Consider them trailing
+                                    // if they come before the `&` or `|` symbol, as
+                                    // they can't be leading in that case.
+                                    || (!comment.followed_by_newline()
+                                        && comment.span.end
+                                            <= declaration.type_annotation.span().start))
+                        })
+                        .count();
+                    write!(f, [FormatTrailingComments::Comments(&comments_in_span[..end_index])]);
+                } else {
+                    format_left_trailing_comments(
+                        start,
+                        matches!(&declaration.type_annotation, TSType::TSTypeLiteral(_)),
+                        f,
+                    );
                 }
 
                 false
@@ -551,9 +553,13 @@ impl<'a> AssignmentLike<'a, '_> {
                 // Determine if the chain is eligible based on the following checks:
                 // 1. For variable declarators: only continue if this isn't the final assignment in the chain
                 (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
-                // 2. For assignment expressions: continue unless this is the final assignment in an expression statement
+                // 2. For assignment expressions: continue unless this is the final assignment
+                // in an expression statement or concise arrow body.
                 matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
-                    if !right_is_tail || !matches!(parent_assignment.parent(), AstNodes::ExpressionStatement(_))
+                    if !right_is_tail || !matches!(
+                        parent_assignment.parent(),
+                        AstNodes::ArrowFunctionExpression(_) | AstNodes::ExpressionStatement(_)
+                    )
                 )
             } else {
                 false
@@ -563,14 +569,11 @@ impl<'a> AssignmentLike<'a, '_> {
             if right_is_tail {
                 match right_expression {
                     Expression::ArrowFunctionExpression(arrow) => {
-                        if arrow.expression {
-                            let Statement::ExpressionStatement(stmt) = &arrow.body.statements[0]
-                            else {
-                                unreachable!()
-                            };
-                            if matches!(&stmt.expression, Expression::ArrowFunctionExpression(_)) {
-                                return Some(AssignmentLikeLayout::ChainTailArrowFunction);
-                            }
+                        if matches!(
+                            arrow.get_expression(),
+                            Some(Expression::ArrowFunctionExpression(_))
+                        ) {
+                            return Some(AssignmentLikeLayout::ChainTailArrowFunction);
                         }
                         Some(AssignmentLikeLayout::ChainTail)
                     }
@@ -619,6 +622,7 @@ impl<'a> AssignmentLike<'a, '_> {
         if let Some(right_expression) = right_expression {
             should_break_after_operator(right_expression, is_left_short, f)
         } else if let AssignmentLike::TSTypeAliasDeclaration(decl) = self {
+            let annotation_start = decl.type_annotation.span().start;
             // For TSTypeAliasDeclaration, check if the type annotation is a union type with comments
             match &decl.type_annotation {
                 TSType::TSConditionalType(conditional_type) => {
@@ -633,13 +637,25 @@ impl<'a> AssignmentLike<'a, '_> {
                     };
                     is_generic(&conditional_type.check_type)
                         || is_generic(&conditional_type.extends_type)
-                        || comments.has_comment_before(decl.type_annotation.span().start)
+                        || comments.has_leading_own_line_comment(annotation_start)
                 }
                 // `TSUnionType` has its own indentation logic
                 TSType::TSUnionType(_) => false,
+                // For a single-member `TSIntersectionType`, we need to check for
+                // leading own-line comments before the type inside the
+                // `TSIntersectionType`. This is because Prettier treats a single-member
+                // `TSIntersectionType` as the literal type inside of it, so it checks
+                // whether there's a leading own-line comment before the start of the literal type.
+                TSType::TSIntersectionType(intersection_type)
+                    if intersection_type.types.len() == 1 =>
+                {
+                    comments.has_leading_own_line_comment(
+                        intersection_type.types.first().unwrap().span().start,
+                    )
+                }
                 _ => {
-                    // Check for leading comments on any other type
-                    comments.has_comment_before(decl.type_annotation.span().start)
+                    // Only comments on their own line force the break
+                    comments.has_leading_own_line_comment(annotation_start)
                 }
             }
         } else {
@@ -718,14 +734,26 @@ fn should_break_after_operator<'a>(
 
     let comments = f.context().comments();
     for comment in comments.comments_before_iter(right.span().start) {
-        if comment.has_newlines_around() {
+        // Like Prettier's `hasLeadingOwnLineComment` (the same rule as the type-alias arms):
+        // only a comment on its own line (followed by a newline) forces the break.
+        if comment.followed_by_newline() {
             return true;
         }
 
-        // Needs to wrap a parenthesis for the node, so it won't break.
+        // A tight type-cast comment hugs its parenthesized node,
+        // so it doesn't force the break itself,
+        // and the comments after it sit inside the cast's parentheses and belong to the inner node, stop scanning;
+        // the shape-based rules below still apply.
         if comments.is_type_cast_comment(comment) {
-            return false;
+            break;
         }
+    }
+
+    // Prettier keeps the `ParenthesizedExpression` node when it is a closure type cast target,
+    // which makes a fully cast RHS opaque to the shape checks below (`x = /** @type {T} */ (a || b);` stays inline).
+    // We have no paren nodes, so reproduce that with the cast classification.
+    if classify_type_cast(right.span(), f).is_target() {
+        return false;
     }
 
     match right.as_ref() {
@@ -738,6 +766,8 @@ fn should_break_after_operator<'a>(
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
         Expression::ConditionalExpression(conditional) => match &conditional.test {
+            // A cast-parenthesized test is opaque, same as the whole-RHS case above
+            test if classify_type_cast(test.span(), f).is_target() => false,
             Expression::BinaryExpression(_) => true,
             Expression::LogicalExpression(logical) => {
                 !BinaryLikeExpression::can_inline_logical_expr(logical)
@@ -803,17 +833,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             // can can be known only when it's formatted (it can incur in some transformation,
             // like removing some escapes, etc.).
             //
-            // 1. we crate a temporary buffer
+            // 1. we create a scratch accumulator as a temporary heap buffer
+            //    (see `AccumulatorBuffer` for why neither the arena nor the shared scratch fits)
             // 2. we write the left hand side into the buffer and retrieve the `is_left_short` info
-            // which is computed only when we format it
+            //    which is computed only when we format it
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
-            let mut buffer = VecBuffer::new(f.state_mut());
-            let is_left_short = self.write_left(&mut Formatter::new(&mut buffer));
-            let formatted_left = buffer.into_vec();
+            let mut formatted_left = ScratchBuffer::new();
+            let is_left_short =
+                self.write_left(&mut Formatter::new(&mut formatted_left.writer(f.state_mut())));
             let left_may_break = formatted_left.may_directly_break();
 
-            let left = format_once(|f| f.write_elements(formatted_left));
+            let left = format_once(move |f| f.write_elements(formatted_left.drain()));
 
             // Compare name only if we are in a position of computing it.
             // If not (for example, left is not an identifier), then let's fallback to false,
@@ -852,14 +883,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
                         // Otherwise the line comment gets pushed past the right-hand side,
                         // changing which token the comment semantically attaches to.
                         //
-                        // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`.
+                        // NOTE: Currently scoped to non-conditional `TSTypeAliasDeclaration`
+                        // and non-simple single member union/intersection types (which have
+                        // their own comment formatting logic for this case).
                         // Expanding the condition would preserve the order in other nodes too.
                         // (e.g. `VariableDeclarator`) But for those we follow Prettier's current behavior.
                         // See also https://github.com/prettier/prettier/issues/14617
                         if matches!(
                             self,
                             AssignmentLike::TSTypeAliasDeclaration(decl)
-                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_))
+                                if !matches!(decl.type_annotation, TSType::TSConditionalType(_)) && !is_simple_single_member_union_or_intersection_type(&decl.type_annotation)
                         ) {
                             write!(f, [line_suffix_boundary(), soft_line_indent_or_space(&right)]);
                         } else {

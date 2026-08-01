@@ -28,16 +28,32 @@ where
             return;
         }
 
-        // Save the current comment view limit and temporarily restrict it
-        // to hide comments that start at or after the node's end position
-        let previous_limit = f.context_mut().comments_mut().limit_comments_up_to(node_end);
-
-        // Format the node with the restricted comment view
-        // This allows all comments within the node's span to be formatted normally,
-        // but hides any trailing comments that come after it
-        self.0.fmt(f);
-
-        // Restore the previous comment view limit
-        f.context_mut().comments_mut().restore_view_limit(previous_limit);
+        format_content_without_comments_after(self.0, node_end, f);
     }
+}
+
+/// Formats `content` while hiding comments that start at or after `end`,
+/// for content that has no usable span (e.g. `format_with` closures) or
+/// when the limit position differs from the content's span end.
+///
+/// Prefer [`FormatNodeWithoutTrailingComments`] when the content implements [`GetSpan`];
+/// it also handles trailing suppression comments.
+pub fn format_content_without_comments_after<'a, T>(
+    content: &T,
+    end: u32,
+    f: &mut JsFormatter<'_, 'a>,
+) where
+    T: Format<'a, JsFormatContext<'a>>,
+{
+    // Save the current comment view limit and temporarily restrict it
+    // to hide comments that start at or after the end position.
+    let previous_limit = f.context_mut().comments_mut().limit_comments_up_to(end);
+
+    // Format the content with the restricted comment view.
+    // This allows all comments within the content's span to be formatted normally,
+    // but hides any trailing comments that come after it.
+    content.fmt(f);
+
+    // Restore the previous comment view limit
+    f.context_mut().comments_mut().restore_view_limit(previous_limit);
 }

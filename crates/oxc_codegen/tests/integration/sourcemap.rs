@@ -28,7 +28,7 @@ fn pos(line: u32, col: u32) -> Position {
 fn sourcemap_tokens(source_text: &str, source_type: SourceType) -> Vec<Mapping> {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty(), "parse errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
 
     Codegen::new()
         .with_options(default_options())
@@ -92,7 +92,7 @@ fn incorrect_ast() {
     let source_type = SourceType::ts();
     let source_text = "foo\nvar bar = '测试'";
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
 
     let mut program = ret.program;
     program.span = Span::new(0, 0);
@@ -128,7 +128,7 @@ fn no_invalid_tokens_beyond_source() {
         let allocator = Allocator::default();
         let source_type = SourceType::mjs();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
 
         let result = Codegen::new()
             .with_options(CodegenOptions {
@@ -237,7 +237,7 @@ fn synthesized_block_closing_braces_are_mapped() {
     let source_text = "if (foo) {\n  if (bar)\n    baz();\n} else\n  qux();";
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-    assert!(ret.errors.is_empty(), "parse errors: {:?}", ret.errors);
+    assert!(ret.diagnostics.is_empty(), "parse errors: {:?}", ret.diagnostics);
 
     let mut program = ret.program;
     let Statement::IfStatement(outer_if) = &mut program.body[0] else {
@@ -460,7 +460,7 @@ make().prop",
 fn codegen(code: &str) -> (String, String) {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, code, SourceType::mjs()).parse();
-    assert!(ret.errors.is_empty());
+    assert!(ret.diagnostics.is_empty());
     let ret = Codegen::new()
         .with_options(CodegenOptions {
             source_map_path: Some(PathBuf::from("input.js")),

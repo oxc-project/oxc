@@ -34,6 +34,17 @@ fn test_void_ident() {
     test("void x", "x"); // reference error
 }
 
+// Leak regression: Normalize runs before the peephole fixed-point loop, but
+// `PassChanges` is live from `MinifierState::new`, so Normalize's typed-helper
+// drops are recorded like any pass's and consumed by
+// `finish_normalize_pass`. A leaked read makes `x` look referenced, blocking
+// unused-declaration removal.
+#[test]
+fn test_void_ident_does_not_leak_reference() {
+    let options = CompressOptions::smallest();
+    test_options("let x = 1; void x; console.log(2);", "console.log(2);", &options);
+}
+
 #[test]
 fn parens() {
     test("(((x)))", "x");
@@ -45,11 +56,23 @@ fn drop_console() {
     let options = CompressOptions { drop_console: true, ..default_options() };
     test_options("console.log()", "", &options);
     test_options("(() => console.log())()", "", &options);
-    test_options(
-        "(() => { try { return console.log() } catch {} })()",
-        "(() => { try { return } catch {} })()",
-        &options,
-    );
+    // After `console.log()` is dropped the IIFE body is side-effect-free, so
+    // the whole dead call is removed. An empty result still proves the
+    // return-position `console.*` call was dropped (otherwise the call would
+    // keep the IIFE alive).
+    test_options("(() => { try { return console.log() } catch {} })()", "", &options);
+}
+
+// Same leak class as `test_void_ident_does_not_leak_reference`: dropped
+// `console.*` calls (statement position and expression position) contain
+// argument subtrees whose resolved references must be deleted from scoping.
+#[test]
+fn drop_console_does_not_leak_references() {
+    let options = CompressOptions { drop_console: true, ..CompressOptions::smallest() };
+    // Statement position.
+    test_options("let x = 1; console.log(x); foo(2);", "foo(2);", &options);
+    // Expression position: the call is replaced with `void 0`.
+    test_options("let x = 1; foo(console.log(x));", "foo(void 0);", &options);
 }
 
 #[test]
@@ -287,11 +310,11 @@ fn remove_unused_use_strict_directive() {
 }
 
 // Legal comments anchored to a removed `"use strict"` directive are rescued
-// by the same `print_legal_orphans_before` flush used for #19750: the
+// by the same preserved-comment orphan flush used for #19750: the
 // directive's `span.start` is gone, but the orphan re-anchors at the next
 // surviving statement. Pin that for the legal-comment subset of #19748.
-// Non-legal comments above a removed directive are not covered:
-// `print_legal_orphans_before` is gated on `Comment::is_legal()` by design.
+// Normal comments above a removed directive are not covered; only comments
+// with file-level meaning are preserved when their anchor is removed.
 
 #[test]
 fn preserve_legal_comment_above_removed_use_strict() {

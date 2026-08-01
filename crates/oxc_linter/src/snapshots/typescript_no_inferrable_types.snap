@@ -289,10 +289,10 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript(no-inferrable-types): Type can be trivially inferred from the initializer
-   ╭─[no_inferrable_types.tsx:3:17]
+   ╭─[no_inferrable_types.tsx:3:16]
  2 │             class A {
- 3 │               a!: number = 1;
-   ·                 ────────
+ 3 │               a: number = 1;
+   ·                ────────
  4 │             }
    ╰────
   help: Remove the type annotation

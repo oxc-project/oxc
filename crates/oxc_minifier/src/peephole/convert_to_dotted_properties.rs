@@ -14,18 +14,24 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn convert_to_dotted_properties(
+        expr: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if is_identifier_name_patched(&s.value) {
-            let property = ctx.ast.identifier_name(s.span, s.value);
-            *expr =
-                MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
-                    e.span,
-                    e.object.take_in(ctx.ast),
-                    property,
-                    e.optional,
-                ));
+            let property = IdentifierName::new(s.span, s.value, ctx);
+            let new_member = StaticMemberExpression::boxed(
+                e.span,
+                e.object.take_in(ctx),
+                property,
+                e.optional,
+                ctx,
+            );
+            // Direct slot write: no typed helper for the `MemberExpression` enum slot; the sibling `notice_change()` preserves the mutation signal.
+            *expr = MemberExpression::StaticMemberExpression(new_member);
+            ctx.notice_change();
             return;
         }
         let v = s.value.as_str();
@@ -33,7 +39,9 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(n) = TraverseCtx::string_to_equivalent_number_value(v) {
-            e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
+            let new_expr =
+                Expression::new_numeric_literal(s.span, n, None, NumberBase::Decimal, ctx);
+            ctx.replace_expression(&mut e.expression, new_expr);
         }
     }
 }

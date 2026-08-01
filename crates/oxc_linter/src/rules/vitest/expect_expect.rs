@@ -29,7 +29,7 @@ impl Rule for ExpectExpect {
         jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        self.0.run_on_jest_node(jest_node, ctx);
+        self.0.run_on_vitest_node(jest_node, ctx);
     }
 }
 
@@ -347,4 +347,20 @@ fn test() {
     Tester::new(ExpectExpect::NAME, ExpectExpect::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
         .test_and_snapshot();
+
+    Tester::new(
+        ExpectExpect::NAME,
+        ExpectExpect::PLUGIN,
+        vec![(
+            "
+                it(\"should work\", () => {
+                    expectTypeOf({ a: 1 }).toEqualTypeOf<{ a: number }>();
+                });
+            ",
+            None,
+        )],
+        Vec::new(),
+    )
+    .with_jest_plugin(true)
+    .test();
 }

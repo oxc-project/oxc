@@ -50,7 +50,7 @@ impl TestCaseName {
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, JsonSchema, Serialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentTestItConfig {
     /// Decides whether to use `test` or `it` within a `describe` scope.
     /// If only `fn` is provided, this will default to the value of `fn`.

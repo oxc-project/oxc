@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/error.invalid.invalid-rules-of-hooks-0a1dbff27ba0.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Hooks: Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(186), length: 18 }, primary: false }]), help: Some("Cannot call hook within a function expression"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

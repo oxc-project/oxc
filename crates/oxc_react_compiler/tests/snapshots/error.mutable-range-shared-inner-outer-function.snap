@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.mutable-range-shared-inner-outer-function.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot reassign variable after render completes", labels: One([LabeledSpan { label: Some("Cannot reassign `a` after render completes"), span: SourceSpan { offset: SourceOffset(190), length: 1 }, primary: false }]), help: Some("Reassigning `a` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot modify local variables after render completes", labels: Two([LabeledSpan { label: Some("This function may (indirectly) reassign or modify `a` after render"), span: SourceSpan { offset: SourceOffset(329), length: 1 }, primary: false }, LabeledSpan { label: Some("This modifies `a`"), span: SourceSpan { offset: SourceOffset(190), length: 1 }, primary: false }]), help: Some("This argument is a function which may reassign or mutate `a` after render, which can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+
+No changes.

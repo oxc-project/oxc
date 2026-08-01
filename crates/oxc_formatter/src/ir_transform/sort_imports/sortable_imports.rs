@@ -151,13 +151,17 @@ fn sort_indices_by_source(
     imports: &[SortableImport],
     options: &SortImportsOptions,
 ) {
+    // NOTE: Apply `desc` by reversing the per-comparison `Ordering`,
+    // NOT by reversing the sorted slice afterwards.
+    // `reverse()` on the slice would also flip imports that compare `Equal` (e.g. same source),
+    // breaking stability and making sorting non-idempotent.
+    // `Ordering::reverse()` keeps `Equal` as `Equal`,
+    // so the stable `sort_by` preserves the original order of equal imports.
     indices.sort_by(|&a, &b| {
-        natord::compare(&imports[a].normalized_source, &imports[b].normalized_source)
+        let ordering =
+            natord::compare(&imports[a].normalized_source, &imports[b].normalized_source);
+        if options.order.is_desc() { ordering.reverse() } else { ordering }
     });
-
-    if options.order.is_desc() {
-        indices.reverse();
-    }
 }
 
 // ---

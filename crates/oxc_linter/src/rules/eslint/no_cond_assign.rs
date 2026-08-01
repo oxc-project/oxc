@@ -70,6 +70,7 @@ declare_oxc_lint!(
     correctness,
     config = NoCondAssignConfig,
     version = "0.0.5",
+    short_description = "Disallow assignment operators in conditional expressions.",
 );
 
 impl Rule for NoCondAssign {

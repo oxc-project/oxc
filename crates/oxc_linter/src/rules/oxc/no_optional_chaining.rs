@@ -70,6 +70,7 @@ declare_oxc_lint!(
     restriction,
     config = NoOptionalChainingConfig,
     version = "0.5.0",
+    short_description = "Disallow optional chaining.",
 );
 
 impl Rule for NoOptionalChaining {

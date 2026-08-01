@@ -7,11 +7,11 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, TakeIn, Vec as ArenaVec};
-use oxc_ast::{AstBuilder, ast::*};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_allocator::{Allocator, ArenaVec};
+use oxc_ast::{ast::*, builder::AstBuilder};
+use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::GetSpan;
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 // Core
@@ -87,7 +87,7 @@ pub use crate::{
 #[non_exhaustive]
 pub struct TransformerReturn {
     /// Diagnostics produced during transformation.
-    pub errors: std::vec::Vec<OxcDiagnostic>,
+    pub diagnostics: Diagnostics,
     /// Updated semantic scoping after all transforms have run.
     pub scoping: Scoping,
     /// Helpers used by this transform.
@@ -102,6 +102,7 @@ pub struct Transformer<'a> {
     state: TransformState<'a>,
     allocator: &'a Allocator,
 
+    // Options, in evaluation order.
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
     plugins: PluginsOptions,
@@ -134,6 +135,7 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
+
         let ast_builder = AstBuilder::new(allocator);
 
         self.state.source_type = program.source_type;
@@ -165,7 +167,7 @@ impl<'a> Transformer<'a> {
             x1_jsx: Jsx::new(
                 self.jsx,
                 self.env.es2018.object_rest_spread,
-                ast_builder,
+                &ast_builder,
                 program.source_type,
             ),
             x2_es2026: ES2026::new(self.env.es2026),
@@ -188,13 +190,15 @@ impl<'a> Transformer<'a> {
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
         let helpers_used = state.helper_loader.used_helpers.drain().collect();
+        let diagnostics = state.take_errors().into();
         #[expect(deprecated)]
-        TransformerReturn { errors: state.take_errors(), scoping, helpers_used }
+        TransformerReturn { diagnostics, scoping, helpers_used }
     }
 }
 
 struct TransformerImpl<'a> {
     // NOTE: all callbacks must run in order.
+    // Keep `TransformOptions` field order and docs in sync with this order.
     x0_typescript: Option<TypeScript<'a>>,
     decorator: Decorator<'a>,
     plugins: Plugins<'a>,
@@ -457,6 +461,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.common.exit_function_body(body, ctx);
     }
 
+    fn enter_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.enter_arrow_function_body(body, ctx);
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.exit_arrow_function_body(body, ctx);
+    }
+
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_jsx_element(node, ctx);
@@ -574,36 +594,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.common.exit_arrow_function_expression(arrow, ctx);
-
-        // Some plugins may add new statements to the ArrowFunctionExpression's body,
-        // which can cause issues with the `() => x;` case, as it only allows a single statement.
-        // To address this, we wrap the last statement in a return statement and set the expression to false.
-        // This transforms the arrow function into the form `() => { return x; };`.
-        let statements = &mut arrow.body.statements;
-        if arrow.expression && statements.len() > 1 {
-            arrow.expression = false;
-
-            // Reverse looping to find the expression statement, because other plugins could
-            // insert new statements after the expression statement.
-            // `() => x;`
-            // ->
-            // ```
-            // () => {
-            //    var new_insert_variable;
-            //    return x;
-            //    function new_insert_function() {}
-            // };
-            // ```
-            for stmt in statements.iter_mut().rev() {
-                let Statement::ExpressionStatement(expr_stmt) = stmt else {
-                    continue;
-                };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
-                *stmt = ctx.ast.statement_return(SPAN, expression);
-                return;
-            }
-            unreachable!("At least one statement should be expression statement")
-        }
     }
 
     fn exit_statements(
@@ -732,6 +722,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             typescript.enter_export_all_declaration(node, ctx);
         }
         self.x2_es2020.enter_export_all_declaration(node, ctx);
+    }
+
+    fn enter_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
+        ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_export_from_declaration(node, ctx);
+        }
     }
 
     fn enter_export_named_declaration(

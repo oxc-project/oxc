@@ -44,13 +44,18 @@
 //!
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
+mod compression_pass;
 mod compressor;
 pub(crate) mod generated;
+mod is_terminated;
 mod keep_var;
 mod minifier_traverse;
 mod options;
 mod peephole;
 mod state;
+mod symbol_liveness;
+mod symbol_metadata;
+mod symbol_state;
 mod symbol_value;
 mod traverse_context;
 
@@ -62,6 +67,8 @@ use oxc_semantic::{Scoping, SemanticBuilder};
 use oxc_str::CompactStr;
 use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
+
+use crate::state::CompressionMode;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
@@ -104,16 +111,16 @@ impl<'a> Minifier {
     }
 
     pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(false, allocator, program)
+        self.build(CompressionMode::Full, allocator, program)
     }
 
     pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(true, allocator, program)
+        self.build(CompressionMode::TreeShakeOnly, allocator, program)
     }
 
     fn build(
         self,
-        dce: bool,
+        mode: CompressionMode,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
     ) -> MinifierReturn {
@@ -125,7 +132,7 @@ impl<'a> Minifier {
                 let stats = semantic.stats();
                 let scoping = semantic.into_scoping();
                 let compressor = Compressor::new(allocator);
-                let iterations = if dce {
+                let iterations = if matches!(mode, CompressionMode::TreeShakeOnly) {
                     let options = CompressOptions {
                         target: options.target,
                         treeshake: options.treeshake,
@@ -135,18 +142,19 @@ impl<'a> Minifier {
                 } else {
                     compressor.build_with_scoping(program, scoping, options)
                 };
-                (stats, iterations)
+                (Some(stats), iterations)
             })
             .unwrap_or_default();
         let (scoping, class_private_mappings) = self
             .options
             .mangle
             .map(|options| {
-                let mut semantic = SemanticBuilder::new()
-                    .with_stats(stats)
-                    .with_class_table(true)
-                    .build(program)
-                    .semantic;
+                let mut builder =
+                    SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
+                if let Some(stats) = stats {
+                    builder = builder.with_stats(stats);
+                }
+                let mut semantic = builder.build(program).semantic;
                 let class_private_mappings = Mangler::default()
                     .with_options(options)
                     .build_with_semantic(&mut semantic, program);

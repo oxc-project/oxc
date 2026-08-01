@@ -5,11 +5,11 @@
 
 use std::num::NonZeroU8;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 
 use crate::{
-    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
-    GroupId, VecBuffer,
+    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, FormatState,
+    Formatter, GroupId, HeapVecBuffer,
     format::write,
     format_element::{
         self, LineMode, PrintMode, TextWidth,
@@ -50,6 +50,56 @@ pub const fn empty_line() -> Line {
 #[inline]
 pub const fn soft_line_break_or_space() -> Line {
     Line::new(LineMode::SoftOrSpace)
+}
+
+/// Exactly `count` line breaks (`count >= 1`), exempt from the printer's newline collapsing.
+///
+/// For blank runs inside verbatim values (block scalars, block strings),
+/// where the number of line breaks IS the value and must not be normalized.
+/// From a mid-line position the first break ends the current line, leaving `count - 1` blank lines;
+/// from the start of a line all `count` breaks become blank lines.
+///
+/// Unlike [hard_line_break]:
+/// - the breaks always print, regardless of the current line or a preceding blank line
+/// - consecutive calls accumulate, nothing is collapsed or capped
+///
+/// The blank lines themselves carry no indention;
+/// the NEXT line starts at the current indention (same re-arming as [hard_line_break]).
+///
+/// # Panics
+/// When `count == 0` or `count > u32::MAX`.
+/// Both are unreachable from source-derived callers: a source of N bytes cannot hold more than N line breaks,
+/// and sources are capped at `u32::MAX` by `oxc_span::Span`.
+#[inline]
+pub fn exact_line_breaks(count: usize) -> Line {
+    let count = u32::try_from(count).expect("line break count must fit in u32");
+    let count = std::num::NonZeroU32::new(count).expect("line break count must be >= 1");
+    Line::new(LineMode::ExactLineBreaks(count))
+}
+
+/// A forced line break that starts the next line at the marked root indention (Prettier's `literalline`).
+///
+/// Unlike [hard_line_break]:
+/// - pending whitespace on the current line materializes as-is (never dropped)
+/// - the newline always prints, even on an empty line
+/// - the next line starts at the [mark_as_root] indention (column 0 when unmarked)
+///   instead of the current indention
+///
+/// Used for verbatim multi-line content whose line structure is built element by element (e.g. YAML block scalars).
+/// For verbatim content held as ONE string,
+/// a multiline [text] already prints its embedded newlines with these semantics.
+///
+/// Known divergence from Prettier:
+/// a [hard_line_break] directly after a literal line is absorbed by
+/// the printer's "only print a newline if the line isn't already empty" rule
+/// (the root indention stays pending until content claims it, so the line counts as empty;
+/// Prettier writes the indention eagerly and prints both newlines, relying on its end-of-line trimming,
+/// which this printer does not have — to drop the indention again).
+/// Use [empty_line] when the extra structural newline is required (it prints exactly one newline in this state),
+/// or [exact_line_breaks] for a precise verbatim run.
+#[inline]
+pub const fn literal_line_break() -> Line {
+    Line::new(LineMode::Literal)
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -199,7 +249,7 @@ impl std::fmt::Debug for Token {
 /// Creates a text from a dynamic string and a range of the input source
 pub fn text(text: &str) -> Text<'_> {
     debug_assert_no_cr_line_break(text);
-    Text { text, width: None }
+    Text { text, width: None, expand_parent: true }
 }
 
 /// Creates a text from a dynamic string that contains no whitespace characters
@@ -208,13 +258,27 @@ pub fn text_without_whitespace(text: &str) -> Text<'_> {
         text.as_bytes().iter().all(|&b| !b.is_ascii_whitespace()),
         "The content '{text}' contains whitespace characters but text must not contain any whitespace characters."
     );
-    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)) }
+    Text { text, width: Some(TextWidth::from_non_whitespace_str(text)), expand_parent: true }
 }
 
 #[derive(Eq, PartialEq)]
 pub struct Text<'a> {
+    #[expect(clippy::struct_field_names)] // Keep the name the same as it is in the original source
     text: &'a str,
     width: Option<TextWidth>,
+    expand_parent: bool,
+}
+
+impl Text<'_> {
+    /// Prints embedded newlines literally but does NOT force enclosing groups to expand
+    /// (Prettier's `replaceEndOfLine(..., literallineWithoutBreakParent)`).
+    ///
+    /// Fits measurement still only counts the first line, and each newline resets the line width.
+    #[must_use]
+    pub fn without_expand_parent(mut self) -> Self {
+        self.expand_parent = false;
+        self
+    }
 }
 
 impl<'a, C> Format<'a, C> for Text<'a>
@@ -222,12 +286,11 @@ where
     C: FormatContext,
 {
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
-        f.write_element(FormatElement::Text {
-            text: self.text,
-            width: self
-                .width
-                .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width())),
-        });
+        let width = self
+            .width
+            .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width()));
+        let width = if self.expand_parent { width } else { width.without_expand_parent() };
+        f.write_element(FormatElement::Text { text: self.text, width });
     }
 }
 
@@ -280,6 +343,12 @@ impl<C> Format<'_, C> for Space {
 // ---------------------------------------------------------------------------
 
 /// Pushes some content to the end of the current line.
+///
+/// The content is skipped by the printer's fits measurement (zero width),
+/// so the printed line may exceed the print width.
+/// Consumer crates rely on this for same-line trailing line comments,
+/// which must never cause the preceding group to break;
+/// pair with [`expand_parent`] when the suffix must force a structural break instead.
 #[inline]
 pub fn line_suffix<'a, 'ast, C, Content>(inner: &'a Content) -> LineSuffix<'a, 'ast, C>
 where
@@ -312,6 +381,11 @@ impl<C> std::fmt::Debug for LineSuffix<'_, '_, C> {
 // ---------------------------------------------------------------------------
 
 /// Inserts a boundary for line suffixes.
+///
+/// Prevents pending [`line_suffix`]es from moving past this point:
+/// the printer flushes them here, inserting a hard line break if needed.
+/// In the fits measurement, reaching a boundary while a suffix is pending counts
+/// as "does not fit" (the flush would break the line).
 pub const fn line_suffix_boundary() -> LineSuffixBoundary {
     LineSuffixBoundary
 }
@@ -416,13 +490,47 @@ where
     Dedent { content: Argument::new(content), mode: DedentMode::Level }
 }
 
-/// Resets the indent document so that the content will be printed at the start of the line.
+/// Resets the indention so that the content prints at the [mark_as_root] indention,
+/// or at the start of the line when no `mark_as_root` is active (Prettier's `dedentToRoot`).
 #[inline]
 pub fn dedent_to_root<'ast, C, Content>(content: &Content) -> Dedent<'_, 'ast, C>
 where
     Content: Format<'ast, C>,
 {
     Dedent { content: Argument::new(content), mode: DedentMode::Root }
+}
+
+/// Marks the current indention as the root that [literal_line_break] and [dedent_to_root]
+/// inside `content` return to (Prettier's `markAsRoot`).
+///
+/// Without an enclosing `mark_as_root`, the root is column 0.
+/// e.g. YAML block scalars wrap each line boundary in `mark_as_root(&literal_line_break())`
+/// so continuation lines keep the block's base indention.
+#[inline]
+pub fn mark_as_root<'ast, C, Content>(content: &Content) -> MarkAsRoot<'_, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    MarkAsRoot { content: Argument::new(content) }
+}
+
+#[derive(Copy, Clone)]
+pub struct MarkAsRoot<'a, 'ast, C> {
+    content: Argument<'a, 'ast, C>,
+}
+
+impl<'ast, C> Format<'ast, C> for MarkAsRoot<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
+        f.write_element(FormatElement::Tag(Tag::StartMarkAsRoot));
+        Arguments::from(&self.content).fmt(f);
+        f.write_element(FormatElement::Tag(Tag::EndMarkAsRoot));
+    }
+}
+
+impl<C> std::fmt::Debug for MarkAsRoot<'_, '_, C> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("MarkAsRoot").field(&"{{content}}").finish()
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -813,22 +921,35 @@ impl<'fmt, 'ast, C> BestFitting<'fmt, 'ast, C> {
     }
 }
 
+/// Stages one [`BestFitting`] variant and moves it into the arena exactly-sized.
+///
+/// This is the single place encoding the variant shape the printer's [`format_element::BestFittingElement`] relies on:
+/// an entry-tag-wrapped, exactly-sized arena slice.
+/// The content is staged on the heap so only that final slice lands in the arena (see [`HeapVecBuffer`]).
+pub fn best_fitting_variant<'ast, C>(
+    state: &mut FormatState<'ast, C>,
+    content: impl FnOnce(&mut HeapVecBuffer<'_, 'ast, C>),
+) -> &'ast [FormatElement<'ast>] {
+    let mut buffer = HeapVecBuffer::new(state);
+    buffer.write_element(FormatElement::Tag(StartEntry));
+    content(&mut buffer);
+    buffer.write_element(FormatElement::Tag(EndEntry));
+    buffer.take_into_arena_slice()
+}
+
 impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        let mut buffer = VecBuffer::new(f.state_mut());
         let variants = self.variants.items();
 
         let mut formatted_variants = Vec::with_capacity(variants.len());
 
         for variant in variants {
-            buffer.write_element(FormatElement::Tag(StartEntry));
-            buffer.write_fmt(Arguments::from(variant));
-            buffer.write_element(FormatElement::Tag(EndEntry));
-
-            formatted_variants.push(buffer.take_vec().into_arena_slice());
+            formatted_variants.push(best_fitting_variant(f.state_mut(), |buffer| {
+                buffer.write_fmt(Arguments::from(variant));
+            }));
         }
 
-        let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f.allocator());
+        let formatted_variants = ArenaVec::from_iter_in(formatted_variants, f);
 
         // SAFETY: The constructor guarantees that there are always at least two variants. It's, therefore,
         // safe to call into the unsafe `from_vec_unchecked` function

@@ -19,7 +19,6 @@
 [![Build Status][ci-badge]][ci-url]
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
 [![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/oxc-project/oxc)
-[![Sponsors][sponsors-badge]][sponsors-url]
 
 [![Discord chat][discord-badge]][discord-url]
 [![Playground][playground-badge]][playground-url]
@@ -78,11 +77,11 @@ If you are unable to contribute by code, you can still participate by:
 - [Endorsements](https://oxc.rs/endorsements)
 - [Releases](https://github.com/oxc-project/oxc/releases)
 
-## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
+# [Sponsored By](https://oxc.rs/sponsor)
 
 <p align="center">
-  <a href="https://github.com/sponsors/Boshen">
-    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="My sponsors" />
+  <a href="https://oxc.rs/sponsor">
+    <img src="https://raw.githubusercontent.com/oxc-project/sponsors/main/sponsors.svg" alt="Our sponsors" />
   </a>
 </p>
 
@@ -102,8 +101,6 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [ci-url]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [code-coverage-badge]: https://codecov.io/gh/oxc-project/oxc/graph/badge.svg?token=FVHEH0BQLJ
 [code-coverage-url]: https://codecov.io/gh/oxc-project/oxc
-[sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
-[sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
 [playground-url]: https://playground.oxc.rs/
 [website-badge]: https://img.shields.io/badge/Website-blue

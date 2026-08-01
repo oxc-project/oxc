@@ -552,6 +552,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// # Examples
     ///
     /// ```ignore
+    /// use std::ptr::NonNull;
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// use std::ptr;
@@ -562,7 +563,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
     ///
     /// // Pull out the various important pieces of information about `v`
-    /// let p = v.as_mut_ptr();
+    /// let p = NonNull::new(v.as_mut_ptr()).unwrap();
     /// let len = v.len();
     /// let cap = v.capacity();
     ///
@@ -572,8 +573,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     mem::forget(v);
     ///
     ///     // Overwrite memory with 4, 5, 6
-    ///     for i in 0..len as isize {
-    ///         ptr::write(p.offset(i), 4 + i);
+    ///     for i in 0..len {
+    ///         p.add(i).write(4 + i);
     ///     }
     ///
     ///     // Put everything back together into a Vec
@@ -582,12 +583,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// }
     /// ```
     pub unsafe fn from_raw_parts_in(
-        ptr: *mut T,
+        ptr: NonNull<T>,
         length: usize,
         capacity: usize,
         alloc: &'a A,
     ) -> Vec<'a, T, A> {
-        Vec { buf: RawVec::from_raw_parts_in(ptr, length, capacity, alloc) }
+        // SAFETY: Caller guarantees `from_raw_parts_in`'s requirements
+        let buf = unsafe { RawVec::from_raw_parts_in(ptr, length, capacity, alloc) };
+        Vec { buf }
     }
 
     /// Returns the number of elements in the vector, also referred to as its 'length'.
@@ -2339,6 +2342,7 @@ macro_rules! __impl_slice_eq1 {
 }
 
 __impl_slice_eq1! { Vec<'_, U, A2>, A2: Alloc }
+__impl_slice_eq1! { [U] }
 __impl_slice_eq1! { &[U] }
 __impl_slice_eq1! { &mut [U] }
 
@@ -2360,6 +2364,27 @@ macro_rules! __impl_slice_eq1_array {
 __impl_slice_eq1_array! { [U; N] }
 __impl_slice_eq1_array! { &[U; N] }
 __impl_slice_eq1_array! { &mut [U; N] }
+
+// Reverse direction: slice/`Vec` on the left-hand side, `Vec` on the right (e.g. `&[T] == vec`).
+// `std::vec::Vec` provides these, so mirror them here.
+macro_rules! __impl_slice_eq1_reverse {
+    ($Lhs: ty) => {
+        impl<T, U, A> PartialEq<Vec<'_, U, A>> for $Lhs
+        where
+            T: PartialEq<U>,
+            A: Alloc,
+        {
+            #[inline]
+            fn eq(&self, other: &Vec<'_, U, A>) -> bool {
+                self[..] == other[..]
+            }
+        }
+    };
+}
+
+__impl_slice_eq1_reverse! { [T] }
+__impl_slice_eq1_reverse! { &[T] }
+__impl_slice_eq1_reverse! { &mut [T] }
 
 /// Implements comparison of vectors, lexicographically.
 impl<'a, T: 'a + PartialOrd, A: Alloc, A2: Alloc> PartialOrd<Vec<'a, T, A2>> for Vec<'a, T, A> {

@@ -56,6 +56,7 @@ declare_oxc_lint!(
     eslint,
     suspicious,
     version = "1.66.0",
+    short_description = "Disallows passing strings to `setTimeout()`, `setInterval()`, and `execScript()`.",
 );
 
 impl Rule for NoImpliedEval {

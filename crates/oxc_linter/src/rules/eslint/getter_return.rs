@@ -87,6 +87,7 @@ declare_oxc_lint!(
     correctness,
     config = GetterReturn,
     version = "0.0.3",
+    short_description = "Requires all getters to have a `return` statement.",
 );
 
 impl Rule for GetterReturn {
@@ -220,7 +221,7 @@ impl GetterReturn {
             // const fn = () => 1;
             // ```
             if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
-                if arrow_expr.expression {
+                if arrow_expr.is_expression() {
                     break 'returns true;
                 }
                 // If the signature of function supports the return of the `undefined` value,

@@ -1,3 +1,12 @@
+## Goals
+
+In no specific order:
+
+- Better performance
+- Lower memory usage
+- More test coverage
+- Better conformance with existing tools and specifications
+
 ## Oxlint & Oxfmt
 
 ### Release Oxlint & Oxfmt

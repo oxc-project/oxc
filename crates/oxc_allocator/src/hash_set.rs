@@ -1,12 +1,11 @@
 //! A hash set without `Drop` that stores data in arena allocator.
 //!
-//! By default uses [`FxHasher`] to hash keys. The hasher can be customized via the `S` type
-//! parameter (e.g. [`IdentBuildHasher`] for `Ident` keys).
+//! By default uses [`FxHasher`] to hash keys. The hasher can be customized via the `S` type parameter
+//! (e.g. `IdentBuildHasher` for `Ident` keys).
 //!
 //! See [`HashSet`] for more details.
 //!
 //! [`FxHasher`]: rustc_hash::FxHasher
-//! [`IdentBuildHasher`]: crate::IdentBuildHasher
 
 // All methods which just delegate to `hashbrown::HashSet` methods marked `#[inline(always)]`
 #![expect(clippy::inline_always)]

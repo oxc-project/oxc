@@ -6,7 +6,7 @@ use std::{
     slice,
 };
 
-use crate::{Allocator, Box, CloneIn};
+use crate::{Allocator, Box, CloneIn, CloneInSemanticIds};
 
 const USIZE_BITS: usize = usize::BITS as usize;
 
@@ -37,6 +37,29 @@ impl<'alloc> BitSet<'alloc> {
         let entries = unsafe { Box::from_non_null(NonNull::from(slice)) };
 
         Self { entries, max_bit_count }
+    }
+
+    /// Returns the maximum number of bits this set can hold.
+    #[inline]
+    pub fn capacity(&self) -> usize {
+        self.max_bit_count
+    }
+
+    /// Returns `true` if no bits are set.
+    ///
+    /// Scans the underlying word array; short-circuits at the first non-zero word.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.entries.iter().all(|word| *word == 0)
+    }
+
+    /// Bounds-safe membership test: returns `true` if `bit` is within
+    /// capacity AND set. Positions at or beyond [`Self::capacity`] return
+    /// `false`, whereas [`Self::has_bit`] may panic or read unspecified
+    /// trailing-bit state for such positions.
+    #[inline]
+    pub fn contains(&self, bit: usize) -> bool {
+        bit < self.max_bit_count && self.has_bit(bit)
     }
 
     /// Returns `true` if the bit at the given position is set.
@@ -152,7 +175,11 @@ impl Debug for BitSet<'_> {
 impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
     type Cloned = BitSet<'new_alloc>;
 
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> BitSet<'new_alloc> {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> BitSet<'new_alloc> {
         let slice = self.entries.as_ref();
 
         // SAFETY: `slice` already exists, so its layout must be valid
@@ -333,5 +360,30 @@ mod tests {
         bs.set_bit(0);
         bs.set_bit(2);
         assert_eq!(bs.ones().collect::<Vec<_>>(), [0, 2]);
+    }
+
+    #[test]
+    fn capacity_and_is_empty() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(128, &allocator);
+        assert_eq!(bs.capacity(), 128);
+        assert!(bs.is_empty());
+        bs.set_bit(100);
+        assert!(!bs.is_empty());
+        bs.unset_bit(100);
+        assert!(bs.is_empty());
+
+        // Zero-capacity bitset is always empty.
+        let bs0 = BitSet::new_in(0, &allocator);
+        assert_eq!(bs0.capacity(), 0);
+        assert!(bs0.is_empty());
+        assert!(!bs0.contains(0));
+
+        // `contains` is bounds-safe: out-of-range is `false`, not a panic.
+        bs.set_bit(100);
+        assert!(bs.contains(100));
+        assert!(!bs.contains(99));
+        assert!(!bs.contains(128));
+        assert!(!bs.contains(usize::MAX));
     }
 }

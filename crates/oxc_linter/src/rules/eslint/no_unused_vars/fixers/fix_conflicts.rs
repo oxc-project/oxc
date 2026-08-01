@@ -95,12 +95,12 @@ impl NoUnusedVars {
             }
 
             let existing_scope_id = scoping.symbol_scope_id(symbol_id);
-            if Self::is_scope_descendant_of(scoping, existing_scope_id, renamed_scope_id) {
+            if Self::is_scope_descendant_or_same(scoping, existing_scope_id, renamed_scope_id) {
                 continue;
             }
 
             if scoping.get_resolved_references(symbol_id).any(|reference| {
-                Self::is_scope_descendant_of(scoping, reference.scope_id(), renamed_scope_id)
+                Self::is_scope_descendant_or_same(scoping, reference.scope_id(), renamed_scope_id)
                     && Self::reference_can_be_captured(symbol, reference)
             }) {
                 return true;
@@ -110,7 +110,7 @@ impl NoUnusedVars {
         scoping.root_unresolved_references().get(new_name).is_some_and(|reference_ids| {
             reference_ids.iter().any(|&reference_id| {
                 let reference = scoping.get_reference(reference_id);
-                Self::is_scope_descendant_of(scoping, reference.scope_id(), renamed_scope_id)
+                Self::is_scope_descendant_or_same(scoping, reference.scope_id(), renamed_scope_id)
                     && Self::reference_can_be_captured(symbol, reference)
             })
         })
@@ -149,7 +149,11 @@ impl NoUnusedVars {
         })
     }
 
-    fn is_scope_descendant_of(scoping: &Scoping, scope_id: ScopeId, ancestor_id: ScopeId) -> bool {
-        scoping.scope_ancestors(scope_id).any(|scope_id| scope_id == ancestor_id)
+    fn is_scope_descendant_or_same(
+        scoping: &Scoping,
+        scope_id: ScopeId,
+        ancestor_id: ScopeId,
+    ) -> bool {
+        scope_id == ancestor_id || scoping.scope_is_descendant_of(scope_id, ancestor_id)
     }
 }

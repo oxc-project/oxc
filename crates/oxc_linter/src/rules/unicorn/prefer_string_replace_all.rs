@@ -1,13 +1,12 @@
-use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{Argument, MemberExpression, RegExpFlags},
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::Term;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
 use crate::{AstNode, ast_util::extract_regex_flags, context::LintContext, rule::Rule};
@@ -44,7 +43,8 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```js
     /// foo.replace(/a/, bar)
-    /// foo.replaceAll(/a/, bar)
+    /// foo.replaceAll('a', bar)
+    /// foo.replaceAll(/a|b/g, bar)
     ///
     /// const pattern = "not-a-regexp"
     /// foo.replace(pattern, bar)
@@ -54,6 +54,7 @@ declare_oxc_lint!(
     pedantic,
     fix,
     version = "0.0.18",
+    short_description = "Prefers `String#replaceAll()` over `String#replace()` when using a regex with the global flag.",
 );
 
 impl Rule for PreferStringReplaceAll {
@@ -90,13 +91,7 @@ impl Rule for PreferStringReplaceAll {
                             single_quote: true,
                             ..Default::default()
                         });
-                        let alloc = Allocator::default();
-                        let ast = AstBuilder::new(&alloc);
-                        codegen.print_expression(&ast.expression_string_literal(
-                            SPAN,
-                            ast.str(&k),
-                            None,
-                        ));
+                        codegen.print_string(&k);
                         fixer.replace(pattern.span(), codegen.into_source_text())
                     });
                 }

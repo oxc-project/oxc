@@ -58,6 +58,7 @@ declare_oxc_lint!(
     correctness,
     suggestion,
     version = "0.2.15",
+    short_description = "Disallow the use of the `__iterator__` property.",
 );
 
 impl Rule for NoIterator {

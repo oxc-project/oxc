@@ -24,7 +24,7 @@ fn no_nodejs_modules_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic 
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase")]
+#[schemars(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NoNodejsModulesConfig {
     /// Array of names of allowed modules. Defaults to an empty array.
     allow: FxHashSet<CompactStr>,
@@ -80,6 +80,7 @@ declare_oxc_lint!(
     style,
     config = NoNodejsModulesConfig,
     version = "1.43.0",
+    short_description = "Forbid the use of Node.js built-in modules.",
 );
 
 impl Rule for NoNodejsModules {
@@ -106,9 +107,7 @@ impl Rule for NoNodejsModules {
                 call.common_js_require().map(|s| s.value)
             }
             AstKind::ImportDeclaration(import) => Some(import.source.value),
-            AstKind::ExportNamedDeclaration(export) => {
-                export.source.as_ref().map(|item| item.value)
-            }
+            AstKind::ExportFromDeclaration(export) => Some(export.source.value),
             AstKind::ExportAllDeclaration(export_all) => Some(export_all.source.value),
             _ => return,
         };

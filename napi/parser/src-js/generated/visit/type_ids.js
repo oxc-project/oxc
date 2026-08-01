@@ -2,7 +2,7 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/estree_visit.rs`.
 
 /** Mapping from node type name to node type ID */
-export const NODE_TYPE_IDS_MAP = new Map([
+export const NODE_TYPE_IDS_MAP = /* @__PURE__ */ new Map([
   ["DebuggerStatement", 0],
   ["EmptyStatement", 1],
   ["Literal", 2],

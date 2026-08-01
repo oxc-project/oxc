@@ -202,6 +202,8 @@ pub(super) trait IndentStack {
 
     fn current_stack_mut(&mut self) -> &mut Self::Stack;
     fn history_stack_mut(&mut self) -> &mut Self::HistoryStack;
+    fn root_stack(&self) -> &Self::Stack;
+    fn root_stack_mut(&mut self) -> &mut Self::Stack;
 
     fn start_dedent(&mut self) {
         if let Some(indent) = self.current_stack_mut().pop() {
@@ -219,8 +221,23 @@ pub(super) trait IndentStack {
     fn indention(&self) -> Indention {
         self.current_stack().top().copied().unwrap_or_default()
     }
+    /// `Tag::StartMarkAsRoot`: the current indention becomes the root that
+    /// [Self::reset_indent] and literal line breaks return to.
+    fn mark_root(&mut self) {
+        let root = self.indention();
+        self.root_stack_mut().push(root);
+    }
+    /// `Tag::EndMarkAsRoot`.
+    fn end_mark_root(&mut self) {
+        self.root_stack_mut().pop();
+    }
+    /// The marked root indention; zero-indent when no `mark_as_root` is active.
+    fn root(&self) -> Indention {
+        self.root_stack().top().copied().unwrap_or_default()
+    }
     fn reset_indent(&mut self) {
-        self.current_stack_mut().push(Indention::default());
+        let root = self.root();
+        self.current_stack_mut().push(root);
     }
     fn indent(&mut self, indent_style: IndentStyle) {
         let next_indent = self.indention().increment_level(indent_style);
@@ -238,6 +255,7 @@ pub(super) struct PrintIndentStack {
     indentions: Vec<Indention>,
     history_indentions: Vec<Indention>,
     suffix_indentions: Vec<Indention>,
+    root_indentions: Vec<Indention>,
 }
 
 impl PrintIndentStack {
@@ -246,6 +264,7 @@ impl PrintIndentStack {
             indentions: vec![indention],
             history_indentions: Vec::new(),
             suffix_indentions: Vec::new(),
+            root_indentions: Vec::new(),
         }
     }
 
@@ -268,6 +287,14 @@ impl IndentStack for PrintIndentStack {
     fn history_stack_mut(&mut self) -> &mut Self::HistoryStack {
         &mut self.history_indentions
     }
+
+    fn root_stack(&self) -> &Self::Stack {
+        &self.root_indentions
+    }
+
+    fn root_stack_mut(&mut self) -> &mut Self::Stack {
+        &mut self.root_indentions
+    }
 }
 impl SuffixStack for PrintIndentStack {
     type SuffixStack = Vec<Indention>;
@@ -282,6 +309,7 @@ impl SuffixStack for PrintIndentStack {
 pub(super) struct FitsIndentStack<'print> {
     indentions: StackedStack<'print, Indention>,
     history_indentions: StackedStack<'print, Indention>,
+    root_indentions: StackedStack<'print, Indention>,
 }
 
 impl<'print> FitsIndentStack<'print> {
@@ -289,16 +317,23 @@ impl<'print> FitsIndentStack<'print> {
         print: &'print PrintIndentStack,
         saved_indent_stack: Vec<Indention>,
         saved_history_indent_stack: Vec<Indention>,
+        saved_root_indent_stack: Vec<Indention>,
     ) -> Self {
         let indentions = StackedStack::with_vec(&print.indentions, saved_indent_stack);
         let history_indentions =
             StackedStack::with_vec(&print.history_indentions, saved_history_indent_stack);
+        let root_indentions =
+            StackedStack::with_vec(&print.root_indentions, saved_root_indent_stack);
 
-        Self { indentions, history_indentions }
+        Self { indentions, history_indentions, root_indentions }
     }
 
-    pub(super) fn finish(self) -> (Vec<Indention>, Vec<Indention>) {
-        (self.indentions.into_vec(), self.history_indentions.into_vec())
+    pub(super) fn finish(self) -> (Vec<Indention>, Vec<Indention>, Vec<Indention>) {
+        (
+            self.indentions.into_vec(),
+            self.history_indentions.into_vec(),
+            self.root_indentions.into_vec(),
+        )
     }
 }
 
@@ -316,5 +351,13 @@ impl<'a> IndentStack for FitsIndentStack<'a> {
 
     fn history_stack_mut(&mut self) -> &mut Self::HistoryStack {
         &mut self.history_indentions
+    }
+
+    fn root_stack(&self) -> &Self::Stack {
+        &self.root_indentions
+    }
+
+    fn root_stack_mut(&mut self) -> &mut Self::Stack {
+        &mut self.root_indentions
     }
 }

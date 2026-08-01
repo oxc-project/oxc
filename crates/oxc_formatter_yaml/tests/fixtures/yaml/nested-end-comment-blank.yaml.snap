@@ -1,0 +1,72 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# A blank in front of an inner container's end comment is reproduced by the
+# inner flush; the outer separator and the stream's end comments must not
+# observe it again (a blank line is never invented).
+outer:
+  inner:
+    a: 1
+
+    # inner end comment
+sibling: 2
+seq:
+  - item: 1
+
+    # seq end comment
+after: 3
+doc:
+  b: 1
+
+  # body end comment
+# stream end comment
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# A blank in front of an inner container's end comment is reproduced by the
+# inner flush; the outer separator and the stream's end comments must not
+# observe it again (a blank line is never invented).
+outer:
+  inner:
+    a: 1
+
+    # inner end comment
+sibling: 2
+seq:
+  - item: 1
+
+    # seq end comment
+after: 3
+doc:
+  b: 1
+
+  # body end comment
+# stream end comment
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# A blank in front of an inner container's end comment is reproduced by the
+# inner flush; the outer separator and the stream's end comments must not
+# observe it again (a blank line is never invented).
+outer:
+  inner:
+    a: 1
+
+    # inner end comment
+sibling: 2
+seq:
+  - item: 1
+
+    # seq end comment
+after: 3
+doc:
+  b: 1
+
+  # body end comment
+# stream end comment
+
+===================== End =====================

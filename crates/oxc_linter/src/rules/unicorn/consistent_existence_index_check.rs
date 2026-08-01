@@ -69,6 +69,7 @@ declare_oxc_lint!(
     style,
     fix,
     version = "0.12.0",
+    short_description = "Enforce consistent style for element existence checks with `indexOf()`, `lastIndexOf()`, `findIndex()`, and `findLastIndex()`.",
 );
 
 const METHOD_NAMES: [&str; 4] = ["indexOf", "lastIndexOf", "findIndex", "findLastIndex"];

@@ -853,6 +853,19 @@ import { log2 } from "./log2";
 import { log10 } from "./log10";
 "#,
     );
+
+    // Already-sorted input must stay unchanged
+    assert_format(
+        r#"
+import * as Sentry from "@sentry/browser";
+import type { BrowserOptions } from "@sentry/browser";
+"#,
+        r#"{ "sortImports": { "order": "desc" } }"#,
+        r#"
+import * as Sentry from "@sentry/browser";
+import type { BrowserOptions } from "@sentry/browser";
+"#,
+    );
 }
 
 // ---

@@ -1,0 +1,21 @@
+.button {
+  & when (@theme = dark) {
+    color: white;
+  }
+  & when not (@theme = variable) {
+    border-color: red;
+  }
+  & when ( @x = 0.50 ) and ( iscolor( @c ) ) {
+    background: blue;
+  }
+  width: 100%;
+}
+.rule when ( @mode = huge ) {
+  width: 100%;
+}
+.mixin (@a) when (lightness(@a) >= 50%) {
+  background-color: black;
+}
+.guarded(@color) when (@theme = dark) and not (@compat = ie9) {
+  color: @color;
+}

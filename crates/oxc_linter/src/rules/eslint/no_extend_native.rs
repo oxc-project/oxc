@@ -78,6 +78,7 @@ declare_oxc_lint!(
     suspicious,
     config = NoExtendNativeConfig,
     version = "0.9.7",
+    short_description = "Prevents extending native global objects such as `Object`, `String`, or `Array` with new properties.",
 );
 
 impl Rule for NoExtendNative {
@@ -91,19 +92,19 @@ impl Rule for NoExtendNative {
             for reference_id in reference_id_list {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);
+                // Lowercase names cannot identify native constructors; skip before other checks.
+                let Some(first_char) = name.chars().next() else {
+                    continue;
+                };
+                if first_char.is_lowercase() {
+                    continue;
+                }
                 // If the referenced name does not appear to be a global object, skip it.
                 if !ctx.is_ecma_script_global(name) {
                     continue;
                 }
                 // If the referenced name is explicitly allowed, skip it.
-                if self.exceptions.iter().any(|exception| name == exception) {
-                    continue;
-                }
-                // If the first letter is capital, like `Object`, we will assume it is a native object
-                let Some(first_char) = name.chars().next() else {
-                    continue;
-                };
-                if first_char.is_lowercase() {
+                if self.exceptions.iter().any(|exception| name == exception.as_str()) {
                     continue;
                 }
                 let node = ctx.nodes().get_node(reference.node_id());

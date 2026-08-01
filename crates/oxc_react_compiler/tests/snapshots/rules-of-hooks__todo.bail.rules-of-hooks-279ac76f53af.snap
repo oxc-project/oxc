@@ -1,0 +1,11 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/todo.bail.rules-of-hooks-279ac76f53af.js
+---
+// @skip
+// Unsupported input
+// Valid -- this is a regression test.
+jest.useFakeTimers();
+beforeEach(() => {
+	jest.useRealTimers();
+});

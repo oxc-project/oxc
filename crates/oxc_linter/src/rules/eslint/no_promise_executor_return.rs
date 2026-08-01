@@ -2,11 +2,10 @@ use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, FunctionBody},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::UnaryOperator;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -119,6 +118,7 @@ declare_oxc_lint!(
     pending,
     config = NoPromiseExecutorReturnConfig,
     version = "1.33.0",
+    short_description = "Disallow returning values from Promise executor functions.",
 );
 
 impl Rule for NoPromiseExecutorReturn {
@@ -152,16 +152,13 @@ impl Rule for NoPromiseExecutorReturn {
                 if let Some(expr) = arrow.get_expression() {
                     // Arrow function with expression body: `new Promise(r => r(1))`
                     // This is an implicit return, report it unless allowVoid and it's a void expression
-                    if self.allow_void
-                        && let Expression::UnaryExpression(unary) = expr.get_inner_expression()
-                        && unary.operator == UnaryOperator::Void
-                    {
+                    if self.allow_void && expr.get_inner_expression().is_void() {
                         return;
                     }
-                    ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span));
+                    ctx.diagnostic(no_promise_executor_return_diagnostic(arrow.body.span()));
                 } else {
                     // Arrow function with block body: check for return statements
-                    self.check_function_body(&arrow.body, ctx);
+                    self.check_function_body(arrow.get_function_body().unwrap(), ctx);
                 }
             }
             Expression::FunctionExpression(func) => {
@@ -196,7 +193,7 @@ impl ReturnStatementFinder {
     }
 }
 
-impl Visit<'_> for ReturnStatementFinder {
+impl VisitJs<'_> for ReturnStatementFinder {
     fn visit_return_statement(&mut self, it: &oxc_ast::ast::ReturnStatement<'_>) {
         // Empty return is allowed
         let Some(argument) = &it.argument else {
@@ -204,10 +201,7 @@ impl Visit<'_> for ReturnStatementFinder {
         };
 
         // Check for void expression if allowVoid is true
-        if self.allow_void
-            && let Expression::UnaryExpression(unary) = argument.get_inner_expression()
-            && unary.operator == UnaryOperator::Void
-        {
+        if self.allow_void && argument.get_inner_expression().is_void() {
             return;
         }
 

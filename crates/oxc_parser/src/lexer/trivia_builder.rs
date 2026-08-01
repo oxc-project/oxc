@@ -1,5 +1,5 @@
 use memchr::memchr_iter;
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
@@ -38,7 +38,7 @@ pub struct TriviaBuilder<'a> {
 impl<'a> TriviaBuilder<'a> {
     pub fn new_in(allocator: &'a Allocator) -> Self {
         Self {
-            comments: ArenaVec::new_in(allocator),
+            comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
@@ -72,6 +72,14 @@ impl<'a> TriviaBuilder<'a> {
     }
 
     pub fn add_irregular_whitespace(&mut self, start: u32, end: u32) {
+        // The irregular whitespaces array is ordered; only add if not added before, to avoid
+        // duplicates when the parser looks ahead (e.g. `peek_token`) and rewinds, then re-lexes the
+        // same whitespace. Same approach as `add_comment`.
+        if let Some(last) = self.irregular_whitespaces.last()
+            && start <= last.start
+        {
+            return;
+        }
         self.irregular_whitespaces.push(Span::new(start, end));
     }
 
@@ -142,8 +150,8 @@ impl<'a> TriviaBuilder<'a> {
     /// let x = 5;
     /// ```
     ///
-    /// 2. It does not immediately follow an `=` [`Kind::Eq`] or `(` [`Kind::LParen`]
-    ///    token.
+    /// 2. It does not immediately follow an `=` [`Kind::Eq`], `(` [`Kind::LParen`]
+    ///    or `:` [`Kind::Colon`] token.
     ///
     /// ```javascript
     /// let y = // This should not be treated as trailing (follows `=`)
@@ -152,9 +160,16 @@ impl<'a> TriviaBuilder<'a> {
     /// function foo( // This should not be treated as trailing (follows `(`)
     ///     param
     /// ) {}
+    ///
+    /// let z = cond ? a : // This should not be treated as trailing (follows `:`)
+    ///     b;
     /// ```
+    ///
+    /// Treating a comment after `:` as trailing drops it (it anchors to the
+    /// previous token rather than the following operand), which breaks codegen
+    /// idempotency once a transform emits `? consequent : // comment\nalternate`.
     fn should_be_treated_as_trailing_comment(&self) -> bool {
-        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen)
+        !self.saw_newline && !matches!(self.previous_kind, Kind::Eq | Kind::LParen | Kind::Colon)
     }
 
     fn should_stay_leading(comment: &Comment) -> bool {
@@ -316,7 +331,11 @@ impl<'a> TriviaBuilder<'a> {
                     || rest.starts_with(b"node:coverage")
                     || rest.starts_with(b"istanbul ignore")
                 {
-                    comment.content = CommentContent::CoverageIgnore;
+                    comment.content = if is_coverage_ignore_file(rest) {
+                        CommentContent::CoverageIgnoreFile
+                    } else {
+                        CommentContent::CoverageIgnore
+                    };
                     return;
                 }
                 // Fall through to check license/preserve
@@ -386,6 +405,17 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
     false
 }
 
+fn is_coverage_ignore_file(source: &[u8]) -> bool {
+    fn starts_with_directive(source: &[u8], directive: &[u8]) -> bool {
+        source
+            .strip_prefix(directive)
+            .is_some_and(|rest| rest.first().is_none_or(u8::is_ascii_whitespace))
+    }
+
+    starts_with_directive(source, b"v8 ignore file")
+        || starts_with_directive(source, b"istanbul ignore file")
+}
+
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
@@ -398,7 +428,7 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.errors.is_empty());
+        assert!(ret.diagnostics.is_empty());
         ret.program.comments.iter().copied().collect::<Vec<_>>()
     }
 
@@ -663,6 +693,23 @@ function bar() {}";
     }
 
     #[test]
+    fn leading_comments_after_colon() {
+        // A line comment right after a conditional `:` anchors to the following
+        // alternate (leading), not the previous token — otherwise it is dropped.
+        let source_text = "v = cond ? a : // Leading comment\nb;";
+        let comments = get_comments(source_text);
+        let expected = vec![Comment {
+            span: Span::new(15, 33),
+            kind: CommentKind::Line,
+            position: CommentPosition::Leading,
+            attached_to: 34,
+            newlines: CommentNewlines::Trailing,
+            content: CommentContent::None,
+        }];
+        assert_eq!(comments, expected);
+    }
+
+    #[test]
     fn pure_comment_not_applied() {
         let cases = [
             "/* #__PURE__ */ React.createElement;",
@@ -757,6 +804,14 @@ function bar() {}";
             ("/* #__PURE__ */", CommentContent::Pure),
             ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* turbopackOptional: true */", CommentContent::Turbopack),
+            ("/* v8 ignore next */", CommentContent::CoverageIgnore),
+            ("/* v8 ignore filename */", CommentContent::CoverageIgnore),
+            ("/* c8 ignore file */", CommentContent::CoverageIgnore),
+            ("/* v8 ignore file */", CommentContent::CoverageIgnoreFile),
+            ("// v8 ignore file", CommentContent::CoverageIgnoreFile),
+            ("/* v8 ignore file -- @preserve */", CommentContent::CoverageIgnoreFile),
+            ("/* istanbul ignore file */", CommentContent::CoverageIgnoreFile),
+            ("// istanbul ignore file -- generated", CommentContent::CoverageIgnoreFile),
         ];
 
         for (source_text, expected) in data {

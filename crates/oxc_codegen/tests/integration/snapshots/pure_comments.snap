@@ -461,12 +461,12 @@ const Foo = /* @__PURE__ */ (() => {})()<X>;
 ########## 29
 const Foo = /* @__PURE__ */ <Foo>(() => {})()!
 ----------
-const Foo = (<Foo>(/* @__PURE__ */ (() => {})())!);
+const Foo = <Foo>(/* @__PURE__ */ (() => {})())!;
 
 ########## 30
 const Foo = /* @__PURE__ */ <Foo>(() => {})()! as X satisfies Y
 ----------
-const Foo = ((<Foo>(/* @__PURE__ */ (() => {})())!) as X) satisfies Y;
+const Foo = (<Foo>(/* @__PURE__ */ (() => {})())! as X) satisfies Y;
 
 ########## 31
 /* @__NO_SIDE_EFFECTS__ */ ((options, extraOptions) => {

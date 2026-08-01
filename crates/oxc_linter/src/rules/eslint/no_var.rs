@@ -51,6 +51,7 @@ declare_oxc_lint!(
     restriction,
     conditional_fix,
     version = "0.1.1",
+    short_description = "Enforce using `let` or `const` over `var`.",
 );
 
 impl Rule for NoVar {

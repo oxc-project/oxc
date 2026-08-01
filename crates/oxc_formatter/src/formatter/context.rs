@@ -1,14 +1,13 @@
 use std::mem;
 
 use oxc_ast::Comment;
+use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{
-    external_formatter::ExternalCallbacks, formatter::FormatElement, options::JsFormatOptions,
-};
+use crate::{external_formatter::ExternalCallbacks, options::JsFormatOptions};
 
-use super::{Comments, SourceText};
+use super::Comments;
 
 /// Entry in the Tailwind context stack, tracking whether we're inside a Tailwind class context.
 #[derive(Clone, Copy, Debug)]
@@ -120,6 +119,14 @@ impl std::fmt::Debug for JsFormatContext<'_> {
             .field("quote_needed_stack", &self.quote_needed_stack)
             .field("tailwind_classes", &self.tailwind_classes)
             .finish()
+    }
+}
+
+/// Lets embedded children's classes merge into this context's index space
+/// (`DispatchResult::remap_tailwind_into` at each embed site).
+impl oxc_formatter_core::TailwindCollector for JsFormatContext<'_> {
+    fn add_class(&mut self, class: String) -> usize {
+        self.add_tailwind_class(class)
     }
 }
 

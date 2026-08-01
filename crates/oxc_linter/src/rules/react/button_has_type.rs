@@ -51,7 +51,7 @@ impl Default for ButtonHasType {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces explicit `type` attribute for all the `button` HTML elements.
+    /// Enforces an explicit `type` attribute for all HTML `button` elements.
     ///
     /// ### Why is this bad?
     ///
@@ -77,6 +77,7 @@ declare_oxc_lint!(
     restriction,
     config = ButtonHasType,
     version = "0.1.1",
+    short_description = "Enforces an explicit `type` attribute for all HTML `button` elements.",
 );
 
 impl Rule for ButtonHasType {

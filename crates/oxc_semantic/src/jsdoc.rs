@@ -71,7 +71,7 @@ mod test {
     ) -> Semantic<'a> {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
-        SemanticBuilder::new().build(allocator.alloc(ret.program)).semantic
+        SemanticBuilder::new().with_build_nodes(true).build(allocator.alloc(ret.program)).semantic
     }
 
     fn get_jsdocs<'a>(
@@ -200,6 +200,7 @@ mod test {
             ("let v2a = 1, /** for v2b */ v2b = 2", "v2b = 2"),
             ("/** for v3a */ const v3a = 1, v3b = 2;", "const v3a = 1, v3b = 2;"),
             ("/** test */ export const e1 = 1;", "export const e1 = 1;"),
+            ("/** test */ export { x } from \"m\";", "export { x } from \"m\";"),
             ("/** test */ export default {};", "export default {};"),
             ("/** test */ import 'i1'", "import 'i1'"),
             ("/** test */ import I from 'i2'", "import I from 'i2'"),
