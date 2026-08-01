@@ -31,9 +31,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
     let mut available_names: Option<Vec<&str>> = None;
     for stmt in &program.body {
-        if let Statement::ExportNamedDeclaration(decl) = stmt
-            && decl.source.is_none()
-        {
+        if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
@@ -522,8 +520,10 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
     let text = match decl {
         ModuleDeclarationKind::Import(_) => "import statement",
         ModuleDeclarationKind::ExportAll(_)
+        | ModuleDeclarationKind::Export(_)
         | ModuleDeclarationKind::ExportDefault(_)
         | ModuleDeclarationKind::ExportNamed(_)
+        | ModuleDeclarationKind::ExportFrom(_)
         | ModuleDeclarationKind::TSExportAssignment(_)
         | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
     };
@@ -1068,7 +1068,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                         //
                         // If it *is* possible, I'm also not sure what correct behavior should be.
                         // As best guess, treating it like class properties:
-                        // Treat `parameters` like computed key, `type_annotation` like initializer value.
+                        // Treat `parameter` like computed key, `type_annotation` like initializer value.
                         if sig.type_annotation.address() == previous_node_address {
                             // In signature's `type_annotation` - `super.foo` is legal here, `super()` is not
                             if super_call_span.is_some() {
@@ -1076,7 +1076,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                             }
                             return;
                         }
-                        // In `parameters` - treat like computed key
+                        // In `parameter` - treat like computed key
                     }
                     _ => {
                         previous_node_address = ancestor_kind.address();

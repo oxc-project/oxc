@@ -831,7 +831,9 @@ impl ESTree for Statement<'_> {
             Self::ImportDeclaration(_)
             | Self::ExportAllDeclaration(_)
             | Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
             | Self::ExportNamedDeclaration(_)
+            | Self::ExportFromDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => {
                 self.to_module_declaration().serialize(serializer)
@@ -1600,7 +1602,9 @@ impl ESTree for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => it.serialize(serializer),
             Self::ExportAllDeclaration(it) => it.serialize(serializer),
             Self::ExportDefaultDeclaration(it) => it.serialize(serializer),
+            Self::ExportDeclaration(it) => it.serialize(serializer),
             Self::ExportNamedDeclaration(it) => it.serialize(serializer),
+            Self::ExportFromDeclaration(it) => it.serialize(serializer),
             Self::TSExportAssignment(it) => it.serialize(serializer),
             Self::TSNamespaceExportDeclaration(it) => it.serialize(serializer),
         }
@@ -1750,17 +1754,48 @@ impl ESTree for ImportAttributeKey<'_> {
     }
 }
 
-impl ESTree for ExportNamedDeclaration<'_> {
+impl ESTree for ExportDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ExportNamedDeclaration"));
         state.serialize_field("declaration", &self.declaration);
+        state.serialize_field("specifiers", &crate::serialize::basic::EmptyArray(self));
+        state.serialize_field("source", &crate::serialize::basic::Null(self));
+        state.serialize_ts_field(
+            "exportKind",
+            &crate::serialize::js::ExportDeclarationExportKind(self),
+        );
+        state.serialize_field("attributes", &crate::serialize::basic::EmptyArray(self));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ExportNamedDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExportNamedDeclaration"));
+        state.serialize_field("declaration", &crate::serialize::basic::Null(self));
+        state.serialize_field("specifiers", &self.specifiers);
+        state.serialize_field("source", &crate::serialize::basic::Null(self));
+        state.serialize_ts_field("exportKind", &self.export_kind);
+        state.serialize_field("attributes", &crate::serialize::basic::EmptyArray(self));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ExportFromDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("ExportNamedDeclaration"));
+        state.serialize_field("declaration", &crate::serialize::basic::Null(self));
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &self.source);
         state.serialize_ts_field("exportKind", &self.export_kind);
         state.serialize_field(
             "attributes",
-            &crate::serialize::js::ExportNamedDeclarationWithClause(self),
+            &crate::serialize::js::ExportFromDeclarationWithClause(self),
         );
         state.serialize_span(self.span);
         state.end();
@@ -2852,7 +2887,8 @@ impl ESTree for TSIndexSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIndexSignature"));
-        state.serialize_field("parameters", &self.parameters);
+        state
+            .serialize_field("parameters", &crate::serialize::ts::TSIndexSignatureParameters(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("static", &self.r#static);
@@ -2923,7 +2959,7 @@ impl ESTree for TSIndexSignatureName<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("decorators", &crate::serialize::basic::EmptyArray(self));
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
+        state.serialize_field("name", &self.name);
         state.serialize_field("optional", &crate::serialize::basic::False(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_span(self.span);

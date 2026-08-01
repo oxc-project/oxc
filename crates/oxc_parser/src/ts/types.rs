@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaBox, ArenaVec};
+use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
@@ -1536,12 +1536,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, TSIndexSignature<'a>> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
-        let (params, comma_span) = self.parse_delimited_list(
-            Kind::RBrack,
-            Kind::Comma,
-            opening_span,
-            Self::parse_ts_index_signature_name,
-        );
+        let mut parameter_count = 0;
+        let mut comma_span = None;
+        let parameter = if self.at(Kind::RBrack) || self.has_fatal_error() {
+            TSIndexSignatureName::dummy(self.allocator())
+        } else {
+            parameter_count = 1;
+            let parameter = self.parse_ts_index_signature_name();
+            while !self.at(Kind::RBrack) && !self.has_fatal_error() {
+                if !self.at(Kind::Comma) {
+                    self.set_fatal_error(diagnostics::expect_closing_or_separator(
+                        Kind::RBrack.to_str(),
+                        Kind::Comma.to_str(),
+                        self.cur_kind().to_str(),
+                        self.cur_token().span(),
+                        opening_span,
+                    ));
+                    break;
+                }
+                self.advance(Kind::Comma);
+                if self.at(Kind::RBrack) {
+                    comma_span = Some(self.prev_token_end - 1);
+                    break;
+                }
+                parameter_count += 1;
+                let _ = self.parse_ts_index_signature_name();
+            }
+            parameter
+        };
         if let Some(comma_span) = comma_span {
             self.error(diagnostics::unexpected_trailing_comma(
                 "Index signature declarations",
@@ -1549,8 +1571,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ));
         }
         self.expect(Kind::RBrack);
-        match params.as_slice() {
-            [param] => match &param.type_annotation.type_annotation {
+        if parameter_count == 1 {
+            match &parameter.type_annotation.type_annotation {
                 TSType::TSLiteralType(ty) => {
                     self.error(diagnostics::index_signature_parameter_literal_type(ty.span));
                 }
@@ -1559,11 +1581,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 | TSType::TSSymbolKeyword(_)
                 | TSType::TSAnyKeyword(_) => {}
                 ty if ty.is_keyword() => {
-                    self.error(diagnostics::index_signature_parameter_type(param.span));
+                    self.error(diagnostics::index_signature_parameter_type(parameter.span));
                 }
                 _ => {}
-            },
-            _ => self.error(diagnostics::index_signature_one_parameter(self.end_span(span))),
+            }
+        } else {
+            self.error(diagnostics::index_signature_one_parameter(self.end_span(span)));
         }
         let Some(type_annotation) = self.parse_ts_type_annotation() else {
             return self
@@ -1572,7 +1595,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_type_member_semicolon();
         TSIndexSignature::boxed(
             self.end_span(span),
-            params,
+            parameter,
             type_annotation,
             modifiers.contains(ModifierKind::Readonly),
             modifiers.contains(ModifierKind::Static),

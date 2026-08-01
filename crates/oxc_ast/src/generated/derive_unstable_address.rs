@@ -188,7 +188,11 @@ impl UnstableAddress for WithClause<'_> {}
 
 impl UnstableAddress for ImportAttribute<'_> {}
 
+impl UnstableAddress for ExportDeclaration<'_> {}
+
 impl UnstableAddress for ExportNamedDeclaration<'_> {}
+
+impl UnstableAddress for ExportFromDeclaration<'_> {}
 
 impl UnstableAddress for ExportDefaultDeclaration<'_> {}
 

@@ -739,7 +739,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
     }
 }
 
-// Serializers for `with_clause` field of `ImportDeclaration`, `ExportNamedDeclaration`,
+// Serializers for `with_clause` field of `ImportDeclaration`, `ExportFromDeclaration`,
 // and `ExportAllDeclaration` (which are renamed to `attributes` in ESTree AST).
 //
 // Serialize only the `with_entries` field of `WithClause`, and serialize `None` as empty array (`[]`).
@@ -775,15 +775,30 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         withClause === null ? [] : withClause.attributes
     "
 )]
-pub struct ExportNamedDeclarationWithClause<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
+pub struct ExportFromDeclarationWithClause<'a, 'b>(pub &'b ExportFromDeclaration<'a>);
 
-impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
+impl ESTree for ExportFromDeclarationWithClause<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
             EmptyArray(()).serialize(serializer);
         }
+    }
+}
+
+/// Serializer for the derived `exportKind` field of [`ExportDeclaration`].
+#[ast_meta]
+#[estree(
+    ts_type = "ImportOrExportKind",
+    raw_deser = "(THIS.declaration.declare === true || THIS.declaration.type === 'TSTypeAliasDeclaration' || THIS.declaration.type === 'TSInterfaceDeclaration') ? 'type' : 'value'"
+)]
+#[ts]
+pub struct ExportDeclarationExportKind<'a, 'b>(pub &'b ExportDeclaration<'a>);
+
+impl ESTree for ExportDeclarationExportKind<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.export_kind().serialize(serializer);
     }
 }
 

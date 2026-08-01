@@ -1466,9 +1466,9 @@ impl<'a> Dummy<'a> for StaticBlock<'a> {
 impl<'a> Dummy<'a> for ModuleDeclaration<'a> {
     /// Create a dummy [`ModuleDeclaration`].
     ///
-    /// Has cost of making 2 allocations (48 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::ExportDefaultDeclaration(Dummy::dummy(allocator))
+        Self::ExportNamedDeclaration(Dummy::dummy(allocator))
     }
 }
 
@@ -1643,6 +1643,19 @@ impl<'a> Dummy<'a> for ImportAttributeKey<'a> {
     }
 }
 
+impl<'a> Dummy<'a> for ExportDeclaration<'a> {
+    /// Create a dummy [`ExportDeclaration`].
+    ///
+    /// Has cost of making 1 allocation (40 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            declaration: Dummy::dummy(allocator),
+        }
+    }
+}
+
 impl<'a> Dummy<'a> for ExportNamedDeclaration<'a> {
     /// Create a dummy [`ExportNamedDeclaration`].
     ///
@@ -1651,7 +1664,20 @@ impl<'a> Dummy<'a> for ExportNamedDeclaration<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            declaration: Dummy::dummy(allocator),
+            specifiers: Dummy::dummy(allocator),
+            export_kind: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for ExportFromDeclaration<'a> {
+    /// Create a dummy [`ExportFromDeclaration`].
+    ///
+    /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
             specifiers: Dummy::dummy(allocator),
             source: Dummy::dummy(allocator),
             export_kind: Dummy::dummy(allocator),
@@ -2680,12 +2706,12 @@ impl<'a> Dummy<'a> for TSSignature<'a> {
 impl<'a> Dummy<'a> for TSIndexSignature<'a> {
     /// Create a dummy [`TSIndexSignature`].
     ///
-    /// Has cost of making 2 allocations (48 bytes).
+    /// Has cost of making 4 allocations (96 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            parameters: Dummy::dummy(allocator),
+            parameter: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             readonly: Dummy::dummy(allocator),
             r#static: Dummy::dummy(allocator),

@@ -460,20 +460,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // being created. It's an export not an import.
                 let stmt = self.parse_import_declaration(import_span, false);
                 if stmt.is_declaration() {
-                    let export_named_decl = ExportNamedDeclaration::boxed(
+                    let export_decl = ExportDeclaration::boxed(
                         self.end_span(span),
-                        Some(stmt.into_declaration()),
-                        [],
-                        None,
-                        ImportOrExportKind::Value,
-                        None,
+                        stmt.into_declaration(),
                         self,
                     );
                     if self.ctx.has_top_level() {
-                        self.module_record_builder
-                            .visit_export_named_declaration(&export_named_decl);
+                        self.module_record_builder.visit_export_declaration(&export_decl);
                     }
-                    ModuleDeclaration::ExportNamedDeclaration(export_named_decl)
+                    ModuleDeclaration::ExportDeclaration(export_decl)
                 } else {
                     return self.fatal_error(diagnostics::unexpected_export(stmt.span()));
                 }
@@ -490,19 +485,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let modifiers = self.parse_modifiers(false, false);
                 let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
-                let export_named_decl = ExportNamedDeclaration::boxed(
-                    self.end_span(span),
-                    Some(decl),
-                    [],
-                    None,
-                    ImportOrExportKind::Value,
-                    None,
-                    self,
-                );
+                let export_decl = ExportDeclaration::boxed(self.end_span(span), decl, self);
                 if self.ctx.has_top_level() {
-                    self.module_record_builder.visit_export_named_declaration(&export_named_decl);
+                    self.module_record_builder.visit_export_declaration(&export_decl);
                 }
-                ModuleDeclaration::ExportNamedDeclaration(export_named_decl)
+                ModuleDeclaration::ExportDeclaration(export_decl)
             }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
@@ -519,23 +506,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Star => {
                 ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(span))
             }
-            Kind::LCurly => {
-                ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
-            }
+            Kind::LCurly => self.parse_export_named_specifiers(span),
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
-                    Kind::LCurly => ModuleDeclaration::ExportNamedDeclaration(
-                        self.parse_export_named_specifiers(span),
-                    ),
+                    Kind::LCurly => self.parse_export_named_specifiers(span),
                     // `export type * as ...`
                     Kind::Star => ModuleDeclaration::ExportAllDeclaration(
                         self.parse_export_all_declaration(span),
                     ),
-                    _ => ModuleDeclaration::ExportNamedDeclaration(
-                        self.parse_export_named_declaration(span, decorators),
+                    _ => ModuleDeclaration::ExportDeclaration(
+                        self.parse_exported_declaration(span, decorators),
                     ),
                 }
             }
@@ -547,8 +530,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     )));
                     self.bump_any();
                 }
-                ModuleDeclaration::ExportNamedDeclaration(
-                    self.parse_export_named_declaration(span, decorators),
+                ModuleDeclaration::ExportDeclaration(
+                    self.parse_exported_declaration(span, decorators),
                 )
             }
         };
@@ -566,10 +549,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
-    fn parse_export_named_specifiers(
-        &mut self,
-        span: u32,
-    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
+    fn parse_export_named_specifiers(&mut self, span: u32) -> ModuleDeclaration<'a> {
         let export_kind = self.parse_import_or_export_kind();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -625,27 +605,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         self.asi();
         let span = self.end_span(span);
-        let export_named_decl = ExportNamedDeclaration::boxed(
-            span,
-            None,
-            specifiers,
-            source,
-            export_kind,
-            with_clause,
-            self,
-        );
-        if self.ctx.has_top_level() {
-            self.module_record_builder.visit_export_named_declaration(&export_named_decl);
+        if let Some(source) = source {
+            let export_from_decl = ExportFromDeclaration::boxed(
+                span,
+                specifiers,
+                source,
+                export_kind,
+                with_clause,
+                self,
+            );
+            if self.ctx.has_top_level() {
+                self.module_record_builder.visit_export_from_declaration(&export_from_decl);
+            }
+            ModuleDeclaration::ExportFromDeclaration(export_from_decl)
+        } else {
+            let export_named_decl =
+                ExportNamedDeclaration::boxed(span, specifiers, export_kind, self);
+            if self.ctx.has_top_level() {
+                self.module_record_builder.visit_export_named_declaration(&export_named_decl);
+            }
+            ModuleDeclaration::ExportNamedDeclaration(export_named_decl)
         }
-        export_named_decl
     }
 
     // export Declaration
-    fn parse_export_named_declaration(
+    fn parse_exported_declaration(
         &mut self,
         span: u32,
         decorators: ArenaVec<'a, Decorator<'a>>,
-    ) -> ArenaBox<'a, ExportNamedDeclaration<'a>> {
+    ) -> ArenaBox<'a, ExportDeclaration<'a>> {
         let decl_span = self.start_span();
         let reserved_ctx = self.ctx;
         let modifiers =
@@ -653,25 +641,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
         let declaration = self.parse_declaration(decl_span, &modifiers, decorators);
-        let export_kind = if declaration.declare() || declaration.is_type() {
-            ImportOrExportKind::Type
-        } else {
-            ImportOrExportKind::Value
-        };
         self.ctx = reserved_ctx;
-        let export_named_decl = ExportNamedDeclaration::boxed(
-            self.end_span(span),
-            Some(declaration),
-            [],
-            None,
-            export_kind,
-            None,
-            self,
-        );
+        let export_decl = ExportDeclaration::boxed(self.end_span(span), declaration, self);
         if self.ctx.has_top_level() {
-            self.module_record_builder.visit_export_named_declaration(&export_named_decl);
+            self.module_record_builder.visit_export_declaration(&export_decl);
         }
-        export_named_decl
+        export_decl
     }
 
     // export default HoistableDeclaration[~Yield, +Await, +Default]

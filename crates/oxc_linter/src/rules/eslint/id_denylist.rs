@@ -294,8 +294,8 @@ fn export_specifier_identifier_should_skip(
 
     matches!(
         ctx.nodes().parent_kind(specifier_node.id()),
-        AstKind::ExportNamedDeclaration(declaration)
-            if declaration.source.is_some() && specifier.local.span() == current_node.span()
+        AstKind::ExportFromDeclaration(_)
+            if specifier.local.span() == current_node.span()
     )
 }
 

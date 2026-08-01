@@ -707,7 +707,9 @@ impl ContentEq for Statement<'_> {
             (Self::ExportDefaultDeclaration(a), Self::ExportDefaultDeclaration(b)) => {
                 a.content_eq(b)
             }
+            (Self::ExportDeclaration(a), Self::ExportDeclaration(b)) => a.content_eq(b),
             (Self::ExportNamedDeclaration(a), Self::ExportNamedDeclaration(b)) => a.content_eq(b),
+            (Self::ExportFromDeclaration(a), Self::ExportFromDeclaration(b)) => a.content_eq(b),
             (Self::TSExportAssignment(a), Self::TSExportAssignment(b)) => a.content_eq(b),
             (Self::TSNamespaceExportDeclaration(a), Self::TSNamespaceExportDeclaration(b)) => {
                 a.content_eq(b)
@@ -1303,7 +1305,9 @@ impl ContentEq for ModuleDeclaration<'_> {
             (Self::ExportDefaultDeclaration(a), Self::ExportDefaultDeclaration(b)) => {
                 a.content_eq(b)
             }
+            (Self::ExportDeclaration(a), Self::ExportDeclaration(b)) => a.content_eq(b),
             (Self::ExportNamedDeclaration(a), Self::ExportNamedDeclaration(b)) => a.content_eq(b),
+            (Self::ExportFromDeclaration(a), Self::ExportFromDeclaration(b)) => a.content_eq(b),
             (Self::TSExportAssignment(a), Self::TSExportAssignment(b)) => a.content_eq(b),
             (Self::TSNamespaceExportDeclaration(a), Self::TSNamespaceExportDeclaration(b)) => {
                 a.content_eq(b)
@@ -1421,10 +1425,22 @@ impl ContentEq for ImportAttributeKey<'_> {
     }
 }
 
-impl ContentEq for ExportNamedDeclaration<'_> {
+impl ContentEq for ExportDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.declaration, &other.declaration)
-            && ContentEq::content_eq(&self.specifiers, &other.specifiers)
+    }
+}
+
+impl ContentEq for ExportNamedDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.specifiers, &other.specifiers)
+            && ContentEq::content_eq(&self.export_kind, &other.export_kind)
+    }
+}
+
+impl ContentEq for ExportFromDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.specifiers, &other.specifiers)
             && ContentEq::content_eq(&self.source, &other.source)
             && ContentEq::content_eq(&self.export_kind, &other.export_kind)
             && ContentEq::content_eq(&self.with_clause, &other.with_clause)
@@ -2247,7 +2263,7 @@ impl ContentEq for TSSignature<'_> {
 
 impl ContentEq for TSIndexSignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.parameters, &other.parameters)
+        ContentEq::content_eq(&self.parameter, &other.parameter)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
             && ContentEq::content_eq(&self.r#static, &other.r#static)

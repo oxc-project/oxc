@@ -624,7 +624,9 @@ impl GetSpanMut for Statement<'_> {
             Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportDefaultDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportNamedDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportFromDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSExportAssignment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNamespaceExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
@@ -1099,7 +1101,9 @@ impl GetSpanMut for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportDefaultDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportNamedDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportFromDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSExportAssignment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNamespaceExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
@@ -1181,7 +1185,21 @@ impl GetSpanMut for ImportAttributeKey<'_> {
     }
 }
 
+impl GetSpanMut for ExportDeclaration<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for ExportNamedDeclaration<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ExportFromDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

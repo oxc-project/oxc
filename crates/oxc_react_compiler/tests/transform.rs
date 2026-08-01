@@ -518,7 +518,7 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         .body
         .iter()
         .find_map(|stmt| match stmt {
-            Statement::ExportNamedDeclaration(decl) if decl.source.is_none() => Some(decl),
+            Statement::ExportNamedDeclaration(decl) => Some(decl),
             _ => None,
         })
         .expect("a local `export { Foo }` should round-trip");

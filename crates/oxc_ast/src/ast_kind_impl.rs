@@ -65,7 +65,9 @@ impl<'a> AstKind<'a> {
         match self {
             Self::ImportDeclaration(decl) => Some(ModuleDeclarationKind::Import(decl)),
             Self::ExportAllDeclaration(decl) => Some(ModuleDeclarationKind::ExportAll(decl)),
+            Self::ExportDeclaration(decl) => Some(ModuleDeclarationKind::Export(decl)),
             Self::ExportNamedDeclaration(decl) => Some(ModuleDeclarationKind::ExportNamed(decl)),
+            Self::ExportFromDeclaration(decl) => Some(ModuleDeclarationKind::ExportFrom(decl)),
             Self::ExportDefaultDeclaration(decl) => {
                 Some(ModuleDeclarationKind::ExportDefault(decl))
             }
@@ -515,7 +517,9 @@ impl AstKind<'_> {
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ImportAttribute(_) => "ImportAttribute".into(),
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
+            Self::ExportDeclaration(_) => "ExportDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
+            Self::ExportFromDeclaration(_) => "ExportFromDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
             Self::WithClause(_) => "WithClause".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
@@ -773,8 +777,12 @@ pub enum ModuleDeclarationKind<'a> {
     Import(&'a ImportDeclaration<'a>),
     /// An export all declaration like `export * from 'foo'`
     ExportAll(&'a ExportAllDeclaration<'a>),
+    /// An exported declaration like `export const foo = 1`
+    Export(&'a ExportDeclaration<'a>),
     /// A named export declaration like `export { foo, bar }`
     ExportNamed(&'a ExportNamedDeclaration<'a>),
+    /// A named re-export declaration like `export { foo } from 'bar'`
+    ExportFrom(&'a ExportFromDeclaration<'a>),
     /// A default export declaration like `export default foo`
     ExportDefault(&'a ExportDefaultDeclaration<'a>),
     /// A TypeScript export assignment like `export = foo`
@@ -789,7 +797,9 @@ impl ModuleDeclarationKind<'_> {
         matches!(
             self,
             Self::ExportAll(_)
+                | Self::Export(_)
                 | Self::ExportNamed(_)
+                | Self::ExportFrom(_)
                 | Self::ExportDefault(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExport(_)
@@ -802,7 +812,9 @@ impl GetSpan for ModuleDeclarationKind<'_> {
         match self {
             Self::Import(decl) => decl.span,
             Self::ExportAll(decl) => decl.span,
+            Self::Export(decl) => decl.span,
             Self::ExportNamed(decl) => decl.span,
+            Self::ExportFrom(decl) => decl.span,
             Self::ExportDefault(decl) => decl.span,
             Self::TSExportAssignment(decl) => decl.span,
             Self::TSNamespaceExport(decl) => decl.span,
@@ -816,7 +828,9 @@ impl GetAddress for ModuleDeclarationKind<'_> {
         match *self {
             Self::Import(decl) => decl.unstable_address(),
             Self::ExportAll(decl) => decl.unstable_address(),
+            Self::Export(decl) => decl.unstable_address(),
             Self::ExportNamed(decl) => decl.unstable_address(),
+            Self::ExportFrom(decl) => decl.unstable_address(),
             Self::ExportDefault(decl) => decl.unstable_address(),
             Self::TSExportAssignment(decl) => decl.unstable_address(),
             Self::TSNamespaceExport(decl) => decl.unstable_address(),

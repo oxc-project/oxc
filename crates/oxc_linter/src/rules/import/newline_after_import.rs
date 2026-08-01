@@ -485,14 +485,12 @@ fn first_decorator_start(stmt: &Statement<'_>) -> Option<u32> {
             }
             _ => None,
         },
-        Statement::ExportNamedDeclaration(export_named) => {
-            match export_named.declaration.as_ref() {
-                Some(Declaration::ClassDeclaration(class)) => {
-                    class.decorators.first().map(|decorator| decorator.span.start)
-                }
-                _ => None,
+        Statement::ExportDeclaration(export_decl) => match &export_decl.declaration {
+            Declaration::ClassDeclaration(class) => {
+                class.decorators.first().map(|decorator| decorator.span.start)
             }
-        }
+            _ => None,
+        },
         _ => None,
     }
 }

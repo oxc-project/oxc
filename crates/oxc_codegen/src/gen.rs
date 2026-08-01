@@ -3,7 +3,7 @@ use std::ops::Not;
 use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
@@ -152,7 +152,9 @@ impl Gen for Statement<'_> {
             Self::LabeledStatement(stmt) => stmt.print(p, ctx),
             Self::EmptyStatement(stmt) => stmt.print(p, ctx),
             Self::ImportDeclaration(decl) => decl.print(p, ctx),
+            Self::ExportDeclaration(decl) => decl.print(p, ctx),
             Self::ExportNamedDeclaration(decl) => decl.print(p, ctx),
+            Self::ExportFromDeclaration(decl) => decl.print(p, ctx),
             Self::ExportDefaultDeclaration(decl) => decl.print(p, ctx),
             Self::ExportAllDeclaration(decl) => decl.print(p, ctx),
             Self::WithStatement(stmt) => stmt.print(p, ctx),
@@ -1042,10 +1044,10 @@ impl Gen for ImportAttribute<'_> {
     }
 }
 
-impl Gen for ExportNamedDeclaration<'_> {
+impl Gen for ExportDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_comments_at(self.span.start);
-        if let Some(Declaration::FunctionDeclaration(func)) = &self.declaration
+        if let Declaration::FunctionDeclaration(func) = &self.declaration
             && func.pure
             && p.options.print_annotation_comment()
         {
@@ -1057,61 +1059,83 @@ impl Gen for ExportNamedDeclaration<'_> {
         p.print_indent();
         p.add_source_mapping(self.span);
         p.print_str("export");
-        if let Some(decl) = &self.declaration {
-            // A decorated class starts with `@`, so no space is needed after `export`.
-            if matches!(decl, Declaration::ClassDeclaration(c) if !c.decorators.is_empty()) {
-                p.print_soft_space();
-            } else {
-                p.print_hard_space();
-            }
-            match decl {
-                Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
-                Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
-                Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
-                Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
-                Declaration::TSGlobalDeclaration(decl) => decl.print(p, ctx),
-                Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
-                Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
-                Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
-                Declaration::TSImportEqualsDeclaration(decl) => decl.print(p, ctx),
-            }
-            if matches!(
-                decl,
-                Declaration::VariableDeclaration(_)
-                    | Declaration::TSTypeAliasDeclaration(_)
-                    | Declaration::TSImportEqualsDeclaration(_)
-            ) {
-                p.print_semicolon_after_statement();
-            } else {
-                p.print_soft_newline();
-                p.needs_semicolon = false;
-            }
-        } else {
-            if self.export_kind.is_type() {
-                p.print_hard_space();
-                p.print_str("type");
-            }
+        let decl = &self.declaration;
+        // A decorated class starts with `@`, so no space is needed after `export`.
+        if matches!(decl, Declaration::ClassDeclaration(c) if !c.decorators.is_empty()) {
             p.print_soft_space();
-            p.print_ascii_byte(b'{');
-            if !self.specifiers.is_empty() {
-                p.print_soft_space();
-                p.print_list(&self.specifiers, ctx);
-                p.print_soft_space();
-            }
-            p.print_ascii_byte(b'}');
-            if let Some(source) = &self.source {
-                p.print_soft_space();
-                p.print_str("from");
-                p.print_soft_space();
-                p.print_string_literal(source, false);
-                if let Some(with_clause) = &self.with_clause {
-                    p.print_soft_space();
-                    with_clause.print(p, ctx);
-                }
-            }
+        } else {
+            p.print_hard_space();
+        }
+        match decl {
+            Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
+            Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
+            Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSGlobalDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSImportEqualsDeclaration(decl) => decl.print(p, ctx),
+        }
+        if matches!(
+            decl,
+            Declaration::VariableDeclaration(_)
+                | Declaration::TSTypeAliasDeclaration(_)
+                | Declaration::TSImportEqualsDeclaration(_)
+        ) {
             p.print_semicolon_after_statement();
+        } else {
+            p.print_soft_newline();
+            p.needs_semicolon = false;
         }
     }
+}
+
+impl Gen for ExportNamedDeclaration<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        gen_export_specifiers(p, ctx, self.span, self.export_kind, &self.specifiers);
+        p.print_semicolon_after_statement();
+    }
+}
+
+impl Gen for ExportFromDeclaration<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        gen_export_specifiers(p, ctx, self.span, self.export_kind, &self.specifiers);
+        p.print_soft_space();
+        p.print_str("from");
+        p.print_soft_space();
+        p.print_string_literal(&self.source, false);
+        if let Some(with_clause) = &self.with_clause {
+            p.print_soft_space();
+            with_clause.print(p, ctx);
+        }
+        p.print_semicolon_after_statement();
+    }
+}
+
+fn gen_export_specifiers(
+    p: &mut Codegen,
+    ctx: Context,
+    span: Span,
+    export_kind: ImportOrExportKind,
+    specifiers: &[ExportSpecifier<'_>],
+) {
+    p.print_comments_at(span.start);
+    p.print_indent();
+    p.add_source_mapping(span);
+    p.print_str("export");
+    if export_kind.is_type() {
+        p.print_hard_space();
+        p.print_str("type");
+    }
+    p.print_soft_space();
+    p.print_ascii_byte(b'{');
+    if !specifiers.is_empty() {
+        p.print_soft_space();
+        p.print_list(specifiers, ctx);
+        p.print_soft_space();
+    }
+    p.print_ascii_byte(b'}');
 }
 
 impl Gen for TSExportAssignment<'_> {
@@ -1223,7 +1247,7 @@ impl Gen for ExportDefaultDeclaration<'_> {
             && func.pure
             && p.options.print_annotation_comment()
         {
-            // See [`ExportNamedDeclaration`] for the rationale.
+            // See [`ExportDeclaration`] for the rationale.
             p.print_annotation_comment(self.span.start, AnnotationKind::NoSideEffects, true);
         }
         p.print_indent();
@@ -3901,16 +3925,10 @@ impl Gen for TSIndexSignature<'_> {
             p.print_str("readonly ");
         }
         p.print_ascii_byte(b'[');
-        for (index, parameter) in self.parameters.iter().enumerate() {
-            if index != 0 {
-                p.print_ascii_byte(b',');
-                p.print_soft_space();
-            }
-            p.print_str(parameter.name.as_str());
-            p.print_colon();
-            p.print_soft_space();
-            parameter.type_annotation.print(p, ctx);
-        }
+        p.print_str(self.parameter.name.as_str());
+        p.print_colon();
+        p.print_soft_space();
+        self.parameter.type_annotation.print(p, ctx);
         p.print_ascii_byte(b']');
         p.print_colon();
         p.print_soft_space();

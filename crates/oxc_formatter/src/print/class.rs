@@ -204,21 +204,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
             f,
             [
                 "[",
-                self.parameters(),
+                self.parameter(),
                 "]",
                 self.type_annotation(),
                 is_class.then_some(OptionalSemicolon)
             ]
-        );
-    }
-}
-
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSIndexSignatureName<'a>>> {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        f.join_with(&soft_line_break_or_space()).entries_with_trailing_separator(
-            self.iter(),
-            ",",
-            TrailingSeparator::Disallowed,
         );
     }
 }
@@ -290,7 +280,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
         if self.is_expression()
             || !matches!(
                 self.parent(),
-                AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
+                AstNodes::ExportDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
             )
         {
             write!(f, decorators);
