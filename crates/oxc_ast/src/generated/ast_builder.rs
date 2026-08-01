@@ -1006,7 +1006,7 @@ impl<'a> Expression<'a> {
 
     /// Build an [`Expression::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -2616,7 +2616,7 @@ impl<'a> ArrayExpressionElement<'a> {
 
     /// Build an [`ArrayExpressionElement::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -4118,7 +4118,7 @@ impl<'a> PropertyKey<'a> {
 
     /// Build a [`PropertyKey::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -6151,7 +6151,7 @@ impl<'a> Argument<'a> {
 
     /// Build an [`Argument::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -6569,7 +6569,7 @@ impl<'a> UpdateExpression<'a> {
 }
 
 impl<'a> UnaryExpression<'a> {
-    /// Build an [`UnaryExpression`].
+    /// Build a [`UnaryExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena,
     /// use [`UnaryExpression::boxed`] instead.
@@ -6589,7 +6589,7 @@ impl<'a> UnaryExpression<'a> {
         UnaryExpression { node_id: Cell::new(builder.node_id()), span, operator, argument }
     }
 
-    /// Build an [`UnaryExpression`], and store it in the memory arena.
+    /// Build a [`UnaryExpression`], and store it in the memory arena.
     ///
     /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
     /// If you want a stack-allocated node, use [`UnaryExpression::new`] instead.
@@ -11582,7 +11582,7 @@ impl<'a> ForStatementInit<'a> {
 
     /// Build a [`ForStatementInit::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -14788,7 +14788,7 @@ impl<'a> ArrowFunctionBody<'a> {
 
     /// Build an [`ArrowFunctionBody::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -18420,7 +18420,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 
     /// Build an [`ExportDefaultDeclarationKind::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -20734,7 +20734,7 @@ impl<'a> JSXExpression<'a> {
 
     /// Build a [`JSXExpression::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
@@ -22151,7 +22151,7 @@ impl<'a> TSLiteral<'a> {
 
     /// Build a [`TSLiteral::UnaryExpression`].
     ///
-    /// This node contains an [`UnaryExpression`] that will be stored in the memory arena.
+    /// This node contains a [`UnaryExpression`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
