@@ -4309,8 +4309,8 @@ function walkTSIndexSignature(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkVecTSIndexSignatureName(pos + 16, ast, visitors);
-  walkBoxTSTypeAnnotation(pos + 40, ast, visitors);
+  walkTSIndexSignatureName(pos + 16, ast, visitors);
+  walkBoxTSTypeAnnotation(pos + 56, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -5967,17 +5967,6 @@ function walkBoxTSConstructSignatureDeclaration(pos, ast, visitors) {
 
 function walkBoxTSMethodSignature(pos, ast, visitors) {
   return walkTSMethodSignature(ast.buffer.int32[pos >> 2], ast, visitors);
-}
-
-function walkVecTSIndexSignatureName(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
-    pos32 = pos >> 2;
-  pos = int32[pos32];
-  const endPos = pos + int32[pos32 + 2] * 40;
-  while (pos < endPos) {
-    walkTSIndexSignatureName(pos, ast, visitors);
-    pos += 40;
-  }
 }
 
 function walkOptionTSModuleDeclarationBody(pos, ast, visitors) {

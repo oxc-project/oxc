@@ -4878,7 +4878,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSIndexSignature<'_> {
         TSIndexSignature {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            parameters: CloneIn::clone_in_impl(&self.parameters, with_semantic_ids, allocator),
+            parameter: CloneIn::clone_in_impl(&self.parameter, with_semantic_ids, allocator),
             type_annotation: CloneIn::clone_in_impl(
                 &self.type_annotation,
                 with_semantic_ids,

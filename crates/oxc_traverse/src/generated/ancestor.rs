@@ -258,7 +258,7 @@ pub(crate) enum AncestorType {
     TSInterfaceBodyBody = 234,
     TSPropertySignatureKey = 235,
     TSPropertySignatureTypeAnnotation = 236,
-    TSIndexSignatureParameters = 237,
+    TSIndexSignatureParameter = 237,
     TSIndexSignatureTypeAnnotation = 238,
     TSCallSignatureDeclarationTypeParameters = 239,
     TSCallSignatureDeclarationThisParam = 240,
@@ -776,8 +776,8 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSPropertySignatureKey as u16,
     TSPropertySignatureTypeAnnotation(TSPropertySignatureWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSPropertySignatureTypeAnnotation as u16,
-    TSIndexSignatureParameters(TSIndexSignatureWithoutParameters<'a, 't>) =
-        AncestorType::TSIndexSignatureParameters as u16,
+    TSIndexSignatureParameter(TSIndexSignatureWithoutParameter<'a, 't>) =
+        AncestorType::TSIndexSignatureParameter as u16,
     TSIndexSignatureTypeAnnotation(TSIndexSignatureWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSIndexSignatureTypeAnnotation as u16,
     TSCallSignatureDeclarationTypeParameters(
@@ -1690,10 +1690,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_index_signature(self) -> bool {
-        matches!(
-            self,
-            Self::TSIndexSignatureParameters(_) | Self::TSIndexSignatureTypeAnnotation(_)
-        )
+        matches!(self, Self::TSIndexSignatureParameter(_) | Self::TSIndexSignatureTypeAnnotation(_))
     }
 
     #[inline]
@@ -2501,7 +2498,7 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSInterfaceBodyBody(a) => a.address(),
             Self::TSPropertySignatureKey(a) => a.address(),
             Self::TSPropertySignatureTypeAnnotation(a) => a.address(),
-            Self::TSIndexSignatureParameters(a) => a.address(),
+            Self::TSIndexSignatureParameter(a) => a.address(),
             Self::TSIndexSignatureTypeAnnotation(a) => a.address(),
             Self::TSCallSignatureDeclarationTypeParameters(a) => a.address(),
             Self::TSCallSignatureDeclarationThisParam(a) => a.address(),
@@ -15040,8 +15037,8 @@ impl<'a, 't> GetAddress for TSPropertySignatureWithoutTypeAnnotation<'a, 't> {
 
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_NODE_ID: usize = offset_of!(TSIndexSignature, node_id);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_SPAN: usize = offset_of!(TSIndexSignature, span);
-pub(crate) const OFFSET_TS_INDEX_SIGNATURE_PARAMETERS: usize =
-    offset_of!(TSIndexSignature, parameters);
+pub(crate) const OFFSET_TS_INDEX_SIGNATURE_PARAMETER: usize =
+    offset_of!(TSIndexSignature, parameter);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_TYPE_ANNOTATION: usize =
     offset_of!(TSIndexSignature, type_annotation);
 pub(crate) const OFFSET_TS_INDEX_SIGNATURE_READONLY: usize = offset_of!(TSIndexSignature, readonly);
@@ -15049,12 +15046,12 @@ pub(crate) const OFFSET_TS_INDEX_SIGNATURE_STATIC: usize = offset_of!(TSIndexSig
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSIndexSignatureWithoutParameters<'a, 't>(
+pub struct TSIndexSignatureWithoutParameter<'a, 't>(
     pub(crate) *const TSIndexSignature<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
+impl<'a, 't> TSIndexSignatureWithoutParameter<'a, 't> {
     #[inline]
     pub fn node_id(self) -> &'t Cell<NodeId> {
         unsafe {
@@ -15086,7 +15083,7 @@ impl<'a, 't> TSIndexSignatureWithoutParameters<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSIndexSignatureWithoutParameters<'a, 't> {
+impl<'a, 't> GetAddress for TSIndexSignatureWithoutParameter<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }
@@ -15114,10 +15111,10 @@ impl<'a, 't> TSIndexSignatureWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn parameters(self) -> &'t ArenaVec<'a, TSIndexSignatureName<'a>> {
+    pub fn parameter(self) -> &'t TSIndexSignatureName<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
-                as *const ArenaVec<'a, TSIndexSignatureName<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_PARAMETER)
+                as *const TSIndexSignatureName<'a>)
         }
     }
 

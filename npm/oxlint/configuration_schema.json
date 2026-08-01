@@ -5661,7 +5661,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoWarningCommentsConfigJson"
+                  "$ref": "#/definitions/NoWarningCommentsConfig"
                 }
               ],
               "maxItems": 2,
@@ -12678,10 +12678,23 @@
       }
     },
     "Location": {
-      "type": "string",
-      "enum": [
-        "start",
-        "anywhere"
+      "oneOf": [
+        {
+          "description": "Terms must appear at the start of the comment, after any decoration.",
+          "type": "string",
+          "enum": [
+            "start"
+          ],
+          "markdownDescription": "Terms must appear at the start of the comment, after any decoration."
+        },
+        {
+          "description": "Terms can appear anywhere in the comment.",
+          "type": "string",
+          "enum": [
+            "anywhere"
+          ],
+          "markdownDescription": "Terms can appear anywhere in the comment."
+        }
       ]
     },
     "LogicalAssignmentOperators": {
@@ -16281,23 +16294,41 @@
       },
       "additionalProperties": false
     },
-    "NoWarningCommentsConfigJson": {
+    "NoWarningCommentsConfig": {
       "type": "object",
       "properties": {
         "decoration": {
+          "description": "An array of characters to ignore at the start of comments when `location` is `\"start\"`.\n\nUseful for ignoring common comment decorations like `*` in JSDoc-style comments.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "uniqueItems": true,
+          "markdownDescription": "An array of characters to ignore at the start of comments when `location` is `\"start\"`.\n\nUseful for ignoring common comment decorations like `*` in JSDoc-style comments."
         },
         "location": {
-          "$ref": "#/definitions/Location"
+          "description": "Where to check for the terms.",
+          "default": "start",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Location"
+            }
+          ],
+          "markdownDescription": "Where to check for the terms."
         },
         "terms": {
+          "description": "An array of terms to match. The matching is case-insensitive.",
+          "default": [
+            "todo",
+            "fixme",
+            "xxx"
+          ],
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "An array of terms to match. The matching is case-insensitive."
         }
       },
       "additionalProperties": false

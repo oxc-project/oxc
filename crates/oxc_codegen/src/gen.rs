@@ -3925,16 +3925,10 @@ impl Gen for TSIndexSignature<'_> {
             p.print_str("readonly ");
         }
         p.print_ascii_byte(b'[');
-        for (index, parameter) in self.parameters.iter().enumerate() {
-            if index != 0 {
-                p.print_ascii_byte(b',');
-                p.print_soft_space();
-            }
-            p.print_str(parameter.name.as_str());
-            p.print_colon();
-            p.print_soft_space();
-            parameter.type_annotation.print(p, ctx);
-        }
+        p.print_str(self.parameter.name.as_str());
+        p.print_colon();
+        p.print_soft_space();
+        self.parameter.type_annotation.print(p, ctx);
         p.print_ascii_byte(b']');
         p.print_colon();
         p.print_soft_space();

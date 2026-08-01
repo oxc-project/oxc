@@ -9073,10 +9073,10 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     }
 
     #[inline]
-    pub fn parameters(&self) -> &AstNode<'a, ArenaVec<'a, TSIndexSignatureName<'a>>> {
+    pub fn parameter(&self) -> &AstNode<'a, TSIndexSignatureName<'a>> {
         let following_span_start = self.inner.type_annotation.span().start;
         self.allocator.alloc(AstNode {
-            inner: &self.inner.parameters,
+            inner: &self.inner.parameter,
             allocator: self.allocator,
             parent: AstNodes::TSIndexSignature(transmute_self(self)),
             following_span_start,

@@ -1356,11 +1356,6 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_index_signature_names(&mut self, it: &mut ArenaVec<'a, TSIndexSignatureName<'a>>) {
-        walk_ts_index_signature_names(self, it);
-    }
-
-    #[inline]
     fn visit_spans(&mut self, it: &mut ArenaVec<'a, Span>) {
         walk_spans(self, it);
     }
@@ -3996,7 +3991,7 @@ pub mod walk_mut {
         let kind = AstType::TSIndexSignature;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_index_signature_names(&mut it.parameters);
+        visitor.visit_ts_index_signature_name(&mut it.parameter);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
         visitor.leave_node(kind);
     }
@@ -4795,16 +4790,6 @@ pub mod walk_mut {
     ) {
         for el in it {
             visitor.visit_ts_signature(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_ts_index_signature_names<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut ArenaVec<'a, TSIndexSignatureName<'a>>,
-    ) {
-        for el in it {
-            visitor.visit_ts_index_signature_name(el);
         }
     }
 

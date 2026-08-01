@@ -2887,7 +2887,8 @@ impl ESTree for TSIndexSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIndexSignature"));
-        state.serialize_field("parameters", &self.parameters);
+        state
+            .serialize_field("parameters", &crate::serialize::ts::TSIndexSignatureParameters(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("static", &self.r#static);

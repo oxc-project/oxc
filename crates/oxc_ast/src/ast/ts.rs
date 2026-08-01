@@ -1042,7 +1042,7 @@ pub enum TSSignature<'a> {
 /// [playground link](https://oxc-playground.netlify.app/?code=3YCAAIC9gICAgICAgIC6nsrEgtem3AB/pQsrWlLnujiFhkHVtfeFMq5RMD7X5AzJnZ5R/ecQ5KG1FUFjzXvrxFXH0m6HpS+Ob3TC8gQXeRQygA%3D%3D)
 /// ```ts
 /// type MapOf<T> = {
-/// //   _________ parameters (vec with 1 element)
+/// //   _________ parameter
 ///     [K: string]: T
 /// //               - type_annotation
 /// }
@@ -1055,7 +1055,8 @@ pub enum TSSignature<'a> {
 pub struct TSIndexSignature<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
+    #[estree(rename = "parameters", via = TSIndexSignatureParameters)]
+    pub parameter: TSIndexSignatureName<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     pub readonly: bool,
     pub r#static: bool,
