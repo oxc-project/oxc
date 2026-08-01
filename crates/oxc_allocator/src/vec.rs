@@ -515,11 +515,14 @@ impl<T: Debug> Debug for Vec<'_, T> {
 
 #[cfg(test)]
 mod test {
-    use std::cell::Cell;
+    use std::{
+        cell::Cell,
+        panic::{AssertUnwindSafe, catch_unwind},
+    };
 
     use oxc_data_structures::types::implements;
 
-    use crate::Allocator;
+    use crate::{Allocator, Slot, SlotFilled};
 
     use super::Vec;
 
@@ -677,5 +680,211 @@ mod test {
         fn _assert_vec_variant_lifetime<'a: 'b, 'b, T>(program: Vec<'a, T>) -> Vec<'b, T> {
             program
         }
+    }
+
+    // A type larger than 2 registers, so that filling a `Slot` is what `push_with` is for -
+    // writing straight into the `Vec` rather than returning a value to be copied in.
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    struct Big {
+        a: u64,
+        b: u64,
+        c: u64,
+        d: u64,
+    }
+
+    impl Big {
+        fn new(a: u64) -> Self {
+            Self { a, b: a + 1, c: a + 2, d: a + 3 }
+        }
+    }
+
+    fn fill_big(slot: Slot<'_, Big>, a: u64) -> SlotFilled<'_> {
+        slot.fill(Big::new(a))
+    }
+
+    // `push_with` where there is already capacity for the element, so no growth is needed
+    #[test]
+    fn vec_push_with_spare_capacity() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let mut v = Vec::with_capacity_in(4, &allocator);
+        v.push(Big::new(0));
+        assert_eq!(v.len(), 1);
+        assert_eq!(v.capacity(), 4);
+
+        v.push_with(|slot| fill_big(slot, 10));
+
+        // Capacity is unchanged, so the element went into the space already reserved
+        assert_eq!(v.capacity(), 4);
+        assert_eq!(v, [Big::new(0), Big::new(10)]);
+    }
+
+    // `push_with` on an empty `Vec` with no capacity at all, so the first push has to allocate
+    #[test]
+    fn vec_push_with_grows_from_empty() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let mut v = Vec::new_in(&allocator);
+        assert_eq!(v.capacity(), 0);
+
+        v.push_with(|slot| fill_big(slot, 20));
+
+        assert!(v.capacity() >= 1);
+        assert_eq!(v, [Big::new(20)]);
+    }
+
+    // `push_with` on a `Vec` which is full, so it has to reallocate and move the existing elements
+    // before the new one can be written
+    #[test]
+    fn vec_push_with_grows_when_full() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let mut v = Vec::with_capacity_in(2, &allocator);
+        v.push(Big::new(0));
+        v.push(Big::new(30));
+        assert_eq!(v.len(), 2);
+        assert_eq!(v.capacity(), 2);
+
+        v.push_with(|slot| fill_big(slot, 40));
+
+        // Reallocated, and the elements which were already there survived the move
+        assert!(v.capacity() >= 3);
+        assert_eq!(v, [Big::new(0), Big::new(30), Big::new(40)]);
+
+        // Keep going past the new capacity, to grow more than once
+        for i in 0..32usize {
+            v.push_with(|slot| fill_big(slot, 100 + i as u64));
+        }
+
+        assert_eq!(v.len(), 35);
+        assert!(v.capacity() >= 35);
+        assert_eq!(v[..3], [Big::new(0), Big::new(30), Big::new(40)]);
+        for i in 0..32usize {
+            assert_eq!(v[3 + i], Big::new(100 + i as u64));
+        }
+    }
+
+    // A `Slot` handed to `push_with` can be narrowed before being filled.
+    // `Option<&str>` rather than `Option<Big>` because `into_some` requires a niche, and `Big` has none,
+    // so `Option<Big>` is larger than `Big`.
+    #[test]
+    fn vec_push_with_narrowed_slot() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let mut v: Vec<Option<&str>> = Vec::new_in(&allocator);
+
+        v.push_with(|slot| slot.into_some().fill("filled"));
+        v.push_with(|slot| slot.fill(None));
+
+        assert!(v.capacity() >= 2);
+        assert_eq!(v, [Some("filled"), None]);
+    }
+
+    // If `fill` panics, the element is never brought within the `Vec`'s length, so nothing can read
+    // what it left behind, and the `Vec` remains usable
+    #[test]
+    fn vec_push_with_panic_leaves_len_unchanged() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let mut v = Vec::new_in(&allocator);
+        v.push_with(|slot| fill_big(slot, 60));
+
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            v.push_with(|_slot| panic!("abandon the element"));
+        }));
+        assert!(result.is_err());
+
+        assert_eq!(v.len(), 1);
+        assert_eq!(v, [Big::new(60)]);
+
+        // Still usable afterwards - the next push reuses the space the abandoned one left
+        v.push_with(|slot| fill_big(slot, 70));
+        assert_eq!(v, [Big::new(60), Big::new(70)]);
+    }
+
+    // `push_fast_with` where there is already capacity, which is the case it's optimized for
+    #[test]
+    fn vec_push_fast_with_spare_capacity() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let mut v = Vec::with_capacity_in(4, &allocator);
+        v.push(Big::new(0));
+
+        v.push_fast_with(|slot| fill_big(slot, 10));
+
+        // Capacity is unchanged, so the element went into the space already reserved
+        assert_eq!(v.capacity(), 4);
+        assert_eq!(v, [Big::new(0), Big::new(10)]);
+    }
+
+    // `push_fast_with` still has to grow when there is no capacity - the cold path
+    #[test]
+    fn vec_push_fast_with_grows() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        // No capacity at all, so the first push has to allocate
+        let mut v = Vec::new_in(&allocator);
+        v.push_fast_with(|slot| fill_big(slot, 20));
+        assert_eq!(v, [Big::new(20)]);
+
+        // Keep going past the capacity, to grow more than once
+        for i in 0..32usize {
+            v.push_fast_with(|slot| fill_big(slot, 100 + i as u64));
+        }
+
+        assert_eq!(v.len(), 33);
+        assert_eq!(v[0], Big::new(20));
+        for i in 0..32usize {
+            assert_eq!(v[1 + i], Big::new(100 + i as u64));
+        }
+    }
+
+    // A `Slot` handed to `push_fast_with` can be narrowed before being filled
+    #[test]
+    fn vec_push_fast_with_narrowed_slot() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        let mut v: Vec<Option<&str>> = Vec::with_capacity_in(2, &allocator);
+
+        v.push_fast_with(|slot| slot.into_some().fill("filled"));
+        v.push_fast_with(|slot| slot.fill(None));
+
+        assert_eq!(v, [Some("filled"), None]);
+    }
+
+    // If `fill` panics, the element is never brought within the `Vec`'s length.
+    // Covers both paths - with spare capacity, and while growing.
+    #[test]
+    fn vec_push_fast_with_panic_leaves_len_unchanged() {
+        let allocator = Allocator::default();
+        let allocator = &allocator;
+
+        // Growing path: no capacity, so `push_fast_with` grows before calling `fill`
+        let mut v = Vec::new_in(&allocator);
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            v.push_fast_with(|_slot| panic!("abandon the element"));
+        }));
+        assert!(result.is_err());
+        assert_eq!(v.len(), 0);
+
+        // The growth happened, so this one takes the spare-capacity path
+        assert!(v.capacity() >= 1);
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            v.push_fast_with(|_slot| panic!("abandon the element"));
+        }));
+        assert!(result.is_err());
+        assert_eq!(v.len(), 0);
+
+        // Still usable afterwards - the next push reuses the space the abandoned ones left
+        v.push_fast_with(|slot| fill_big(slot, 70));
+        assert_eq!(v, [Big::new(70)]);
     }
 }
