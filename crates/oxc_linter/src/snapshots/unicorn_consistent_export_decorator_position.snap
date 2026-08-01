@@ -1,0 +1,174 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:16]
+ 1 │ export default @decorator class Foo {}
+   ·                ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:16]
+ 1 │ export default @decorator class {}
+   ·                ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator export default class Foo {}
+   · ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:8]
+ 1 │ export @decorator class Foo {}
+   ·        ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator export class Foo {}
+   · ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:2:1]
+ 1 │ export default
+ 2 │ @decorator
+   · ──────────
+ 3 │ class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:2:1]
+ 1 │ export
+ 2 │ @decorator
+   · ──────────
+ 3 │ class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:16]
+ 1 │ export default @foo @bar(options) class Foo {}
+   ·                ────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @foo @bar(options) export default class Foo {}
+   · ────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `mixed`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @foo
+   · ────
+ 2 │ @bar export class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ ╭─▶ @decorator(
+ 2 │ │                   foo
+ 3 │ ╰─▶             ) export class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:2:17]
+ 1 │ namespace N {
+ 2 │                 @decorator export class Foo {}
+   ·                 ──────────
+ 3 │             }
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `before`, but found `above`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator
+   · ──────────
+ 2 │ export default class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `before`, but found `mixed`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @foo
+   · ────
+ 2 │ @bar export class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `before`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:16]
+ 1 │ export default @decorator class Foo {}
+   ·                ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `before`, but found `above`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator
+   · ──────────
+ 2 │ export class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `before`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:8]
+ 1 │ export @decorator class Foo {}
+   ·        ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `after`, but found `above`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator
+   · ──────────
+ 2 │ export default class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `after`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator export default class Foo {}
+   · ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `after`, but found `above`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator
+   · ──────────
+ 2 │ export class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `after`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator export class Foo {}
+   · ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:16]
+ 1 │ export default @decorator(/* comment */ value) class Foo {}
+   ·                ───────────────────────────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:30]
+ 1 │ export default /* comment */ @decorator class Foo {}
+   ·                              ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `before`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator /* comment */ export default class Foo {}
+   · ──────────
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `after`, but found `above`
+   ╭─[consistent_export_decorator_position.tsx:1:1]
+ 1 │ @decorator
+   · ──────────
+ 2 │ export default abstract class Foo {}
+   ╰────
+
+  ⚠ unicorn(consistent-export-decorator-position): Expected export decorators to be positioned `above`, but found `after`
+   ╭─[consistent_export_decorator_position.tsx:1:16]
+ 1 │ export default @decorator class Foo {
+   ·                ──────────
+ 2 │                 method() {}
+   ╰────
