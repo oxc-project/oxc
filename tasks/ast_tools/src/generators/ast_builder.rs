@@ -122,9 +122,9 @@ struct Param<'d> {
     is_node_id: bool,
     /// * `None` if param is not generic.
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
-    ///   e.g. `name: S1 where S1: Into<Str<'a>>`.
+    ///   e.g. `name: impl Into<Str<'a>>`.
     /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
-    ///   e.g. `params: T1 where T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>`.
+    ///   e.g. `params: impl IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>`.
     generic_type: Option<GenericType>,
 }
 
@@ -173,7 +173,7 @@ fn generate_builder_methods_for_struct(
     schema: &Schema,
 ) -> TokenStream {
     let has_lifetime = struct_def.has_lifetime(schema);
-    let (mut params, generic_params, where_clause, has_default_fields) =
+    let (mut params, generic_params, has_default_fields) =
         get_struct_params(struct_def, node_id_cell_type_id, has_lifetime, schema);
     let (fn_params, fields) = get_struct_fn_params_and_fields(&params, true, schema);
 
@@ -198,7 +198,6 @@ fn generate_builder_methods_for_struct(
         &fn_params,
         &fields,
         &generic_params,
-        &where_clause,
         &fn_name_postfix,
         &doc_postfix,
     );
@@ -216,7 +215,6 @@ fn generate_builder_methods_for_struct(
         &fn_params,
         &fields,
         &generic_params,
-        &where_clause,
         "",
         "",
     );
@@ -235,7 +233,6 @@ fn generate_builder_methods_for_struct_impl(
     fn_params: &TokenStream,
     fields: &TokenStream,
     generic_params: &TokenStream,
-    where_clause: &TokenStream,
     fn_name_postfix: &str,
     doc_postfix: &str,
 ) -> TokenStream {
@@ -270,7 +267,7 @@ fn generate_builder_methods_for_struct_impl(
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #new_fn_name #generic_params (#fn_params, builder: &B) -> Self #where_clause {
+        pub fn #new_fn_name #generic_params (#fn_params, builder: &B) -> Self {
             let builder = builder.builder();
             #struct_ident { #fields }
         }
@@ -296,7 +293,7 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = #boxed_doc2]
         #params_docs
         #[inline]
-        pub fn #boxed_fn_name #generic_params (#fn_params, builder: &B) -> ArenaBox<'a, Self> #where_clause {
+        pub fn #boxed_fn_name #generic_params (#fn_params, builder: &B) -> ArenaBox<'a, Self> {
             let builder = builder.builder();
             // Allocate via `&Allocator` (not `builder`), so `ArenaBox::new_in` shares a
             // monomorphization with every other `&Allocator`-based allocation
@@ -307,15 +304,17 @@ fn generate_builder_methods_for_struct_impl(
 
 /// Get params for builder methods for a struct.
 ///
-/// Also generates the generic params and `where` clause for the methods.
-/// These always include the builder generic `B` (and `'a` when `has_lifetime` is `false`),
-/// plus any `Into` / `IntoIn` generics derived from the struct's fields.
+/// Also generates the generic params for the methods. These contain the builder generic `B`
+/// (and `'a` when `has_lifetime` is `false`). `Into` / `IntoIn` generics derived from the struct's
+/// fields are expressed as `impl Trait` params instead.
 ///
 /// ```
-/// //        ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ generic params
-/// pub fn new<B: GetAstBuilder<'a>, T1>(span: Span, params: T1, builder: &B) -> Self
-///     where T1: IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>
-/// //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ where clause
+/// //        ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ generic params
+/// pub fn new<B: GetAstBuilder<'a>>(
+///     span: Span,
+///     params: impl IntoIn<'a, ArenaVec<'a, TSTypeParameter<'a>>>,
+///     builder: &B,
+/// ) -> Self
 /// ```
 fn get_struct_params<'s>(
     struct_def: &'s StructDef,
@@ -325,14 +324,9 @@ fn get_struct_params<'s>(
 ) -> (
     Vec<Param<'s>>, // Params
     TokenStream,    // Generic params
-    TokenStream,    // `where` clause
     bool,           // Has default fields
 ) {
-    let mut vec_generic_count = 0u32;
-    let mut str_generic_count = 0u32;
     let mut has_default_fields = false;
-
-    let mut generics = vec![];
 
     let params = struct_def
         .fields
@@ -355,31 +349,27 @@ fn get_struct_params<'s>(
                 has_default_fields = true;
             }
 
-            let generic_details = match type_def {
+            let generic_type = match type_def {
                 TypeDef::Primitive(primitive_def)
                     if matches!(primitive_def.name(), "Str" | "Ident") =>
                 {
-                    str_generic_count += 1;
-                    Some((format_ident!("S{str_generic_count}"), GenericType::Into))
+                    Some(GenericType::Into)
                 }
-                TypeDef::Vec(_) => {
-                    vec_generic_count += 1;
-                    Some((format_ident!("V{vec_generic_count}"), GenericType::IntoIn))
-                }
+                TypeDef::Vec(_) => Some(GenericType::IntoIn),
                 _ => None,
             };
 
             let (fn_param_ty, generic_type) = if is_default {
-                assert!(generic_details.is_none());
+                assert!(generic_type.is_none());
                 let ty = type_def.innermost_type(schema).ty(schema);
                 (ty, None)
-            } else if let Some((generic_ident, generic_type)) = generic_details {
-                let where_clause_part = match generic_type {
-                    GenericType::Into => quote!( #generic_ident: Into<#ty> ),
-                    GenericType::IntoIn => quote!( #generic_ident: IntoIn<'a, #ty> ),
+            } else if let Some(generic_type) = generic_type {
+                // Generics are expressed as `impl Trait` params, so they can't be turbofished,
+                // but that keeps the method signatures much shorter
+                let generic_ty = match generic_type {
+                    GenericType::Into => quote!( impl Into<#ty> ),
+                    GenericType::IntoIn => quote!( impl IntoIn<'a, #ty> ),
                 };
-                let generic_ty = quote!( #generic_ident );
-                generics.push((generic_ident, where_clause_part));
                 (generic_ty, Some(generic_type))
             } else {
                 (ty, None)
@@ -394,19 +384,9 @@ fn get_struct_params<'s>(
         .collect();
 
     let lifetime = if has_lifetime { quote!() } else { quote!( 'a, ) };
-    let generic_idents = generics.iter().map(|(generic_ident, _)| generic_ident);
-    let generic_params = quote!( <#lifetime B: GetAstBuilder<'a> #(, #generic_idents)*> );
+    let generic_params = quote!( <#lifetime B: GetAstBuilder<'a>> );
 
-    // `Into`/`IntoIn` bounds for field generics go in a `where` clause. Most methods have no field
-    // generics, so have no `where` clause.
-    let where_clause = if generics.is_empty() {
-        quote!()
-    } else {
-        let where_clause_parts = generics.iter().map(|(_, where_clause_part)| where_clause_part);
-        quote!( where #(#where_clause_parts),* )
-    };
-
-    (params, generic_params, where_clause, has_default_fields)
+    (params, generic_params, has_default_fields)
 }
 
 /// Get function params and fields for a struct builder method.
@@ -511,7 +491,7 @@ fn generate_builder_method_for_enum_variant(
     let TypeDef::Struct(struct_def) = variant_type else { panic!("Unsupported!") };
 
     let has_lifetime = enum_def.has_lifetime(schema);
-    let (mut params, generic_params, where_clause, has_default_fields) =
+    let (mut params, generic_params, has_default_fields) =
         get_struct_params(struct_def, node_id_cell_type_id, has_lifetime, schema);
 
     let method_name = format!("new_{}", variant.snake_name());
@@ -533,7 +513,6 @@ fn generate_builder_method_for_enum_variant(
             &params,
             &method_name,
             &generic_params,
-            &where_clause,
             &fn_name_postfix,
             &doc_postfix,
             is_boxed,
@@ -548,7 +527,6 @@ fn generate_builder_method_for_enum_variant(
         &params,
         &method_name,
         &generic_params,
-        &where_clause,
         "",
         "",
         is_boxed,
@@ -568,7 +546,6 @@ fn generate_builder_method_for_enum_variant_impl(
     params: &[Param],
     method_name: &str,
     generic_params: &TokenStream,
-    where_clause: &TokenStream,
     fn_name_postfix: &str,
     doc_postfix: &str,
     is_boxed: bool,
@@ -601,7 +578,7 @@ fn generate_builder_method_for_enum_variant_impl(
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params (#(#fn_params),*, builder: &B) -> Self #where_clause {
+        pub fn #fn_name #generic_params (#(#fn_params),*, builder: &B) -> Self {
             Self::#variant_ident(#struct_ident::#inner_fn_name(#(#args),*, builder.builder()))
         }
     }
