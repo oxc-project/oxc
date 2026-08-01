@@ -149,6 +149,10 @@ impl PreferExportFrom {
         let (locally_used_specifiers, violations) =
             self.analyze_import_usage(ctx, symbol_to_specifier, import_decl);
 
+        if violations.is_empty() {
+            return;
+        }
+
         let source = import_decl.source.value.as_str();
         let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
             let keyword = match with_clause.keyword {
