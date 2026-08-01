@@ -14,6 +14,10 @@ fn disallow(span: Span, fn_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `{fn_name}()` instead of `new {fn_name}()`")).with_label(span)
 }
 
+fn error_date(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Use `String(new Date())` instead of `Date()`")).with_label(span)
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct NewForBuiltins;
 
@@ -80,6 +84,13 @@ impl Rule for NewForBuiltins {
                         {
                             return;
                         }
+                    }
+
+                    // `Date()` returns a string representation of the current date and time, exactly as `new Date().toString()` does.
+                    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/Date#return_value
+                    if builtin_name == "Date" {
+                        ctx.diagnostic(error_date(call_expr.span));
+                        return;
                     }
 
                     ctx.diagnostic(enforce(call_expr.span, builtin_name));
