@@ -117,7 +117,10 @@ use std::{
 
 use oxc_data_structures::assert_unchecked;
 
-use crate::alloc::Alloc;
+use crate::{
+    alloc::Alloc,
+    slot::{Slot, SlotFilled},
+};
 
 mod raw_vec;
 use raw_vec::{AllocError, RawVec};
@@ -1548,6 +1551,168 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
 
             push_slow(self, value);
         }
+    }
+
+    /// Appends an element to the back of a vector, built in place by `fill`.
+    ///
+    /// `fill` is handed a [`Slot`] for the new element, and writes the value into it directly.
+    /// `fill` must return a [`SlotFilled`] token corresponding to the [`Slot`] it was passed.
+    ///
+    /// The advantage over [`push`] is that the space for the value is reserved before constructing the value,
+    /// which can avoid constructing the value on stack, and then copying into arena.
+    ///
+    /// The [`Vec`]'s length does not increase until `fill` returns - capacity is reserved first,
+    /// but the element is only counted once it has been written. If `fill` panics, the element
+    /// is not added - whatever it wrote lies beyond the vector's length, where nothing can read it,
+    /// and the capacity reserved for it is simply left spare.
+    ///
+    /// See also [`push_fast_with`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the number of elements in the vector overflows a `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, ArenaVec, Slot, SlotFilled};
+    ///
+    /// // Writes the element straight into the vector's buffer, instead of returning it
+    /// // for `push` to copy into place
+    /// fn make_element<'slot>(slot: Slot<'slot, [u64; 8]>) -> SlotFilled<'slot> {
+    ///     slot.fill([123; 8])
+    /// }
+    ///
+    /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
+    ///
+    /// let mut vec = ArenaVec::new_in(&allocator);
+    /// vec.push_with(make_element);
+    /// assert_eq!(vec[0], [123; 8]);
+    /// ```
+    ///
+    /// [`push`]: Self::push
+    /// [`push_fast_with`]: Self::push_fast_with
+    #[inline]
+    pub fn push_with(&mut self, fill: impl for<'slot> FnOnce(Slot<'slot, T>) -> SlotFilled<'slot>) {
+        if self.len_u32() == self.capacity_u32() {
+            // At capacity. Grow.
+            // This will panic or abort if we would allocate > `isize::MAX` bytes
+            // or if the length increment would overflow for zero-sized types
+            self.buf.grow_one();
+        }
+
+        // SAFETY: There is capacity for at least 1 more element -
+        // either there already was, or `grow_one` above reserved it
+        unsafe { self.fill_spare_slot(fill) };
+    }
+
+    /// Appends an element to the back of a vector, built in place by `fill`,
+    /// when it's likely that there's sufficient capacity.
+    ///
+    /// This method is equivalent to [`push_with`] except that it is optimized for the case where
+    /// there's capacity for at least one more element, without needing to grow. The whole
+    /// growing path is out of line, so the common case is only a bounds check and the write.
+    ///
+    /// When you're dealing with a large [`Vec`] which grows infrequently, this method can be faster.
+    ///
+    /// `fill` is handed a [`Slot`] for the new element, and writes the value into it directly.
+    /// `fill` must return a [`SlotFilled`] token corresponding to the [`Slot`] it was passed.
+    ///
+    /// The [`Vec`]'s length does not increase until `fill` returns - capacity is reserved first,
+    /// but the element is only counted once it has been written. If `fill` panics, the element
+    /// is not added - whatever it wrote lies beyond the vector's length, where nothing can read it,
+    /// and the capacity reserved for it is simply left spare.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the number of elements in the vector overflows a `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, ArenaVec, Slot, SlotFilled};
+    ///
+    /// fn make_element<'slot>(slot: Slot<'slot, [u64; 8]>) -> SlotFilled<'slot> {
+    ///     slot.fill([123; 8])
+    /// }
+    ///
+    /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
+    ///
+    /// // Capacity is reserved up front, so the growing path is never taken
+    /// let mut vec = ArenaVec::with_capacity_in(8, &allocator);
+    /// vec.push_fast_with(make_element);
+    /// assert_eq!(vec[0], [123; 8]);
+    /// ```
+    ///
+    /// [`push_with`]: Self::push_with
+    #[inline]
+    pub fn push_fast_with(
+        &mut self,
+        fill: impl for<'slot> FnOnce(Slot<'slot, T>) -> SlotFilled<'slot>,
+    ) {
+        #[expect(clippy::if_not_else)]
+        if self.len_u32() != self.capacity_u32() {
+            // Capacity for at least 1 more element. Write it.
+            // SAFETY: The check above is that there is capacity for 1 more element
+            unsafe { self.fill_spare_slot(fill) };
+        } else {
+            // At capacity. Grow, then write.
+            // This branch is rarely taken, so marked as `#[cold]` and `#[inline(never)]`.
+            //
+            // `fill` is passed in, rather than only the growing being out of line, so that this
+            // call is in tail position. Nothing has to survive it, so the hot path needs no
+            // callee-saved registers - which would cost `push`/`pop` pairs in the prologue and
+            // epilogue, executed even when the `Vec` has capacity.
+            #[cold]
+            #[inline(never)]
+            fn push_slow<T, A: Alloc>(
+                v: &mut Vec<'_, T, A>,
+                fill: impl for<'slot> FnOnce(Slot<'slot, T>) -> SlotFilled<'slot>,
+            ) {
+                // This will panic or abort if we would allocate > `isize::MAX` bytes
+                // or if the length increment would overflow for zero-sized types
+                v.buf.grow_one();
+
+                // SAFETY: `grow_one` above reserved capacity for at least 1 more element
+                unsafe { v.fill_spare_slot(fill) };
+            }
+
+            push_slow(self, fill);
+        }
+    }
+
+    /// Build the element after the last one with `fill`, and bring it within the vector's length.
+    ///
+    /// # SAFETY
+    /// There must be capacity for at least 1 more element.
+    //
+    // `#[inline(always)]` to inline into `push_with` and `push_fast_with`
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    unsafe fn fill_spare_slot(
+        &mut self,
+        fill: impl for<'slot> FnOnce(Slot<'slot, T>) -> SlotFilled<'slot>,
+    ) {
+        // SAFETY: Caller guarantees there is capacity for 1 more element, so this is in bounds
+        let end = unsafe { self.buf.ptr().add(self.len_usize()) };
+
+        // SAFETY:
+        // `end` points to the element after the last, which the caller guarantees there is capacity for,
+        // so it is sized and aligned for a `T`.
+        //
+        // `fill` cannot reach this `Vec` - it is borrowed mutably for the whole call - so the buffer
+        // cannot be moved or reallocated, and nothing but the slot can touch that memory.
+        // The element is beyond the vector's length until `increase_len` below, so if `fill` panics
+        // and never gets there, nothing can read what it left.
+        // `'slot` is fresh, being universally quantified by `fill`'s bound.
+        let slot = unsafe { Slot::new(end) };
+        let _filled_token = fill(slot);
+
+        // `fill` returned the `SlotFilled` token for that slot, and only filling it can produce one,
+        // so the element is initialized and safe to bring within the vector's length
+        self.buf.increase_len(1);
     }
 
     /// Removes the last element from a vector and returns it, or [`None`] if it
