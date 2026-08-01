@@ -1507,7 +1507,7 @@ pub struct TryStatement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
-#[generate_derive(ContentEq, GetSpan, GetSpanMut)]
+#[generate_derive(ContentEq, GetSpanMut)]
 pub enum TryStatementClauses<'a> {
     /// A `catch` clause without a `finally` clause.
     Catch(Box<'a, CatchClause<'a>>) = 0,

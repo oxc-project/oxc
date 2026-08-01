@@ -874,16 +874,6 @@ impl GetSpan for TryStatement<'_> {
     }
 }
 
-impl GetSpan for TryStatementClauses<'_> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Catch(it) => GetSpan::span(&**it),
-            Self::Finally(it) => GetSpan::span(&**it),
-            Self::CatchFinally(it) => GetSpan::span(&**it),
-        }
-    }
-}
-
 impl GetSpan for CatchClause<'_> {
     #[inline]
     fn span(&self) -> Span {
