@@ -1,7 +1,7 @@
 //! AST builder.
 //!
 //! AST nodes are created by builder methods defined on the AST types themselves,
-//! which are passed an `&impl GetAstBuilder` or `&A where A: GetAllocator`:
+//! which are passed an `&impl GetAstBuilder` or an `&impl GetAllocator`:
 //!
 //! * `Statement::new_expression_statement(span, expr, &builder)`
 //! * `Vec::new_in(&builder)`, `Ident::from_str_in(str, &builder)`
@@ -100,7 +100,7 @@ mod custom;
 /// * [`GetAllocator`]
 ///
 /// These bounds mean that any type returned by [`GetAstBuilder::builder`] can be passed to
-/// any other method which accepts any `&impl GetAstBuilder<'a>` or `&A where A: GetAllocator<'a>`
+/// any other method which accepts any `&impl GetAstBuilder<'a>` or `&impl GetAllocator<'a>`
 /// (i.e. other AST builder methods).
 pub trait AstBuild<'a>: GetAstBuilder<'a, Builder = Self> + GetAllocator<'a> {
     /// Get [`NodeId`] to assign to an AST node.

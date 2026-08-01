@@ -71,7 +71,7 @@ impl<'alloc, T> Box<'alloc, T> {
     // We always want it to be inlined.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn new_in<A: GetAllocator<'alloc>>(value: T, allocator: &A) -> Self {
+    pub fn new_in(value: T, allocator: &impl GetAllocator<'alloc>) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(NonNull::from(allocator.allocator().alloc(value)), PhantomData)
