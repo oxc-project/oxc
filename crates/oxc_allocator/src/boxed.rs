@@ -7,7 +7,7 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
-    mem,
+    mem::{self, MaybeUninit},
     ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
@@ -17,7 +17,7 @@ use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::GetAllocator;
+use crate::{GetAllocator, OwnedSlot, Slot, SlotFilled};
 
 /// A `Box` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -99,6 +99,52 @@ impl<'alloc, T> Box<'alloc, T> {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(NonNull::from(allocator.allocator().alloc(value)), PhantomData)
+    }
+
+    /// Reserve memory in the arena for a `T`, without initializing it.
+    ///
+    /// This allows making an allocation before constructing the value to put in it,
+    /// which can avoid constructing the value on stack, and then copying into arena,
+    /// as [`Box::new_in`] can do.
+    ///
+    /// Named for the `T` being reserved rather than for what it returns, so it reads
+    /// `Box::<UnaryExpression>::new_uninit_in(allocator)` - same as [std's `Box::new_uninit`].
+    ///
+    /// Write the `T` with [`write`] or [`write_with`], which give back a `Box<T>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
+    ///
+    /// // Reserve the memory now, write the value later
+    /// let uninit = Box::<u64>::new_uninit_in(&allocator);
+    /// let boxed = uninit.write(123);
+    /// assert_eq!(*boxed, 123);
+    ///
+    /// let uninit = Box::<u64>::new_uninit_in(&allocator);
+    /// let boxed = uninit.write_with(|slot| slot.fill(456));
+    /// assert_eq!(*boxed, 456);
+    /// ```
+    ///
+    /// [`write`]: Box::write
+    /// [`write_with`]: Box::write_with
+    /// [std's `Box::new_uninit`]: std::boxed::Box::new_uninit
+    //
+    // `#[inline(always)]` because the allocation is a bump-pointer increment
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn new_uninit_in(allocator: &impl GetAllocator<'alloc>) -> Box<'alloc, MaybeUninit<T>> {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        let content = allocator.allocator().alloc_uninit::<T>();
+
+        // SAFETY: `alloc_uninit` returns the only reference to memory laid out for a `T`,
+        // which lives for `'alloc`
+        unsafe { Box::from_non_null(NonNull::from(content)) }
     }
 
     /// Take ownership of the value stored in this [`Box`], consuming the box in
@@ -240,6 +286,160 @@ impl<'alloc, T> Box<'alloc, [T]> {
     }
 }
 
+impl<'alloc, T: 'alloc> Box<'alloc, MaybeUninit<T>> {
+    /// Write `value` into a [`Box<MaybeUninit<T>>`], returning a [`Box<T>`].
+    ///
+    /// See [`new_uninit_in`] for explanation of the advantages of this method.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
+    ///
+    /// let boxed = Box::<u64>::new_uninit_in(&allocator).write(123);
+    /// assert_eq!(*boxed, 123);
+    /// ```
+    ///
+    /// [`new_uninit_in`]: Box::new_uninit_in
+    //
+    // `#[inline(always)]` because this is a single store
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn write(self, value: T) -> Box<'alloc, T> {
+        self.into_owned_slot().fill(value)
+    }
+
+    /// Fill a [`Box<MaybeUninit<T>>`] with `value`, returning a [`Box<T>`].
+    ///
+    /// This is an alias for [`write`], following the "fill" naming convention of `Slot` types.
+    ///
+    /// See [`new_uninit_in`] for explanation of the advantages of this method.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box};
+    ///
+    /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
+    ///
+    /// let boxed = Box::<u64>::new_uninit_in(&allocator).fill(123);
+    /// assert_eq!(*boxed, 123);
+    /// ```
+    ///
+    /// [`write`]: Self::write
+    /// [`new_uninit_in`]: Box::new_uninit_in
+    //
+    // `#[inline(always)]` because this just delegates
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn fill(self, value: T) -> Box<'alloc, T> {
+        self.write(value)
+    }
+
+    /// Write a value into a [`Box<MaybeUninit<T>>`] with `write` function, returning a [`Box<T>`].
+    ///
+    /// `write` is passed a [`Slot`] for it to write into, and it must return the corresponding
+    /// [`SlotFilled`] token.
+    ///
+    /// This is how a caller which wants the value itself calls a function which fills a [`Slot`],
+    /// so that function does not have to be generic over where it writes.
+    ///
+    /// See [`new_uninit_in`] for explanation of the advantages of this method.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box, Slot, SlotFilled};
+    ///
+    /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
+    ///
+    /// // Writes the value straight into its final place, wherever that is
+    /// fn make_value<'slot>(slot: Slot<'slot, [u64; 8]>) -> SlotFilled<'slot> {
+    ///     slot.fill([123; 8])
+    /// }
+    ///
+    /// let boxed = Box::new_uninit_in(&allocator).write_with(make_value);
+    /// assert_eq!(*boxed, [123; 8]);
+    /// ```
+    ///
+    /// [`new_uninit_in`]: Box::new_uninit_in
+    //
+    // `#[inline(always)]` because just delegates to `write`
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn write_with(
+        self,
+        write: impl for<'slot> FnOnce(Slot<'slot, T>) -> SlotFilled<'slot>,
+    ) -> Box<'alloc, T> {
+        self.into_owned_slot().fill_with(write)
+    }
+
+    /// Fill a [`Box<MaybeUninit<T>>`] with `fill` function, returning a [`Box<T>`].
+    ///
+    /// This is an alias for [`write_with`], following the "fill" naming convention of `Slot` types.
+    ///
+    /// `fill` is passed a [`Slot`] for it to write into, and it must return the corresponding
+    /// [`SlotFilled`] token.
+    ///
+    /// This is how a caller which wants the value itself calls a function which fills a [`Slot`],
+    /// so that function does not have to be generic over where it writes.
+    ///
+    /// See [`new_uninit_in`] for explanation of the advantages of this method.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_allocator::{Allocator, Box, Slot, SlotFilled};
+    ///
+    /// let allocator = Allocator::new();
+    /// let allocator = &allocator;
+    ///
+    /// // Writes the value straight into its final place, wherever that is
+    /// fn make_value<'slot>(slot: Slot<'slot, [u64; 8]>) -> SlotFilled<'slot> {
+    ///     slot.fill([123; 8])
+    /// }
+    ///
+    /// let boxed = Box::new_uninit_in(&allocator).fill_with(make_value);
+    /// assert_eq!(*boxed, [123; 8]);
+    /// ```
+    ///
+    /// [`write_with`]: Self::write_with
+    /// [`new_uninit_in`]: Box::new_uninit_in
+    //
+    // `#[inline(always)]` because this just delegates
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn fill_with(
+        self,
+        fill: impl for<'slot> FnOnce(Slot<'slot, T>) -> SlotFilled<'slot>,
+    ) -> Box<'alloc, T> {
+        self.write_with(fill)
+    }
+
+    /// Convert a [`Box<MaybeUninit<T>>`] to an [`OwnedSlot`] for the `T`.
+    ///
+    /// The [`OwnedSlot`] can then be used to write a `T` into the [`Box`]'s allocation.
+    //
+    // `#[inline(always)]` because this is a no-op at runtime
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn into_owned_slot(self) -> OwnedSlot<'alloc, T> {
+        let ptr = Box::into_non_null(self).cast::<T>();
+
+        // SAFETY: `ptr` came from this `Box`, which held the only pointer to memory laid out for a `T`.
+        // That `Box` is consumed here, so nothing else can reach that memory.
+        // The memory is within an `Allocator`, and lives for `'alloc` - a `Box` points into the arena.
+        // Nothing can read it unless the slot is filled - the `Box` the `OwnedSlot` yields
+        // is the only way back to it, and only filling the slot produces one.
+        unsafe { OwnedSlot::from_non_null(ptr) }
+    }
+}
+
 impl<T: ?Sized> Deref for Box<'_, T> {
     type Target = T;
 
@@ -324,11 +524,12 @@ mod test {
     use std::{
         cell::Cell,
         hash::{DefaultHasher, Hash, Hasher},
+        mem::offset_of,
     };
 
     use oxc_data_structures::types::implements;
 
-    use crate::{Allocator, Vec};
+    use crate::{Allocator, FillSlot, Slot, Vec};
 
     use super::Box;
 
@@ -384,6 +585,71 @@ mod test {
         let slice = b.into_arena_slice_mut();
         slice[1] = 99;
         assert_eq!(slice, &[10, 99, 30]);
+    }
+
+    // `write` must hand back a [`Box`] for the allocation it was given, not a fresh one.
+    #[test]
+    fn box_write() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        let uninit = Box::<u64>::new_uninit_in(&allocator);
+        let ptr = Box::as_non_null(&uninit).cast::<u64>();
+
+        let boxed = uninit.write(123);
+        assert_eq!(*boxed, 123);
+        assert_eq!(Box::as_non_null(&boxed), ptr);
+    }
+
+    // `write_with` exists so that a value can be built in place a piece at a time, rather than
+    // constructed on the stack and copied in. This writes the fields one at a time.
+    #[test]
+    fn box_write_with() {
+        #[derive(PartialEq, Debug)]
+        struct Pair {
+            a: u32,
+            b: u64,
+        }
+
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        let uninit = Box::<Pair>::new_uninit_in(&allocator);
+        let ptr = Box::as_non_null(&uninit).cast::<Pair>();
+
+        let boxed = uninit.write_with(|mut slot| {
+            // Write one field through the pointer...
+            // SAFETY: The slot covers memory laid out for a `Pair`, so its `a` field is valid for writing.
+            unsafe { (&raw mut (*slot.as_mut_ptr()).a).write(1) };
+            // ...and the other by narrowing the slot to it.
+            // SAFETY: `b` lies within the `Pair` at its own offset, which is aligned for a `u64`.
+            // `a` was written above, so filling `b` leaves a valid `Pair`.
+            let b_slot: Slot<'_, u64> = unsafe { slot.into_part(offset_of!(Pair, b)) };
+            b_slot.fill(2)
+        });
+
+        assert_eq!(*boxed, Pair { a: 1, b: 2 });
+        assert_eq!(Box::as_non_null(&boxed), ptr);
+    }
+
+    // `fill` is an alias for `write`
+    #[test]
+    fn box_fill() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        let boxed = Box::<u64>::new_uninit_in(&allocator).fill(123);
+        assert_eq!(*boxed, 123);
+    }
+
+    // `fill_with` is an alias for `write_with`
+    #[test]
+    fn box_fill_with() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        let boxed = Box::<u64>::new_uninit_in(&allocator).fill_with(|slot| slot.fill(123));
+        assert_eq!(*boxed, 123);
     }
 
     #[test]
