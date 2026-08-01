@@ -1095,6 +1095,25 @@ pub fn could_be_asi_hazard(node: &AstNode, ctx: &LintContext) -> bool {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         match ancestor.kind() {
             AstKind::ExpressionStatement(expr_stmt) => {
+                // An unbraced statement body cannot continue a preceding expression:
+                // the token before it is the `)` or keyword that closes the statement
+                // head, so a semicolon is never needed. Inserting one anyway would
+                // silently empty the body, turning `if (x) [a] !== b` into
+                // `if (x) ;[a] !== b`.
+                if matches!(
+                    ctx.nodes().parent_kind(ancestor.id()),
+                    AstKind::IfStatement(_)
+                        | AstKind::WhileStatement(_)
+                        | AstKind::DoWhileStatement(_)
+                        | AstKind::ForStatement(_)
+                        | AstKind::ForInStatement(_)
+                        | AstKind::ForOfStatement(_)
+                        | AstKind::WithStatement(_)
+                        | AstKind::LabeledStatement(_)
+                ) {
+                    return false;
+                }
+
                 expr_stmt_span = Some(expr_stmt.span);
                 break;
             }
