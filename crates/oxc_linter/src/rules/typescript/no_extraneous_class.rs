@@ -136,9 +136,12 @@ impl Rule for NoExtraneousClass {
                     let mut span = class.span;
                     if let Some(decorator) = class.decorators.last() {
                         span = Span::new(decorator.span.end, span.end);
-                        // NOTE: there will always be a 'c' because of 'class' keyword.
-                        let start = ctx.source_range(span).find('c').unwrap();
-                        span = span.shrink_left(u32::try_from(start).unwrap());
+                        // NOTE: the `class` keyword always follows the decorators.
+                        if let Some(start) =
+                            ctx.find_next_token_within(span.start, span.end, "class")
+                        {
+                            span = span.shrink_left(start);
+                        }
                     }
                     let has_decorators = !class.decorators.is_empty();
                     ctx.diagnostic_with_suggestion(
@@ -280,6 +283,8 @@ fn test() {
     ];
 
     let fail = vec![
+        // the `c` inside the comment is not the `class` keyword
+        ("@dec /* c */ class Foo {}", None),
         ("class Foo {}", None),
         (
             "
