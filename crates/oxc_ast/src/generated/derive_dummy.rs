@@ -1042,6 +1042,15 @@ impl<'a> Dummy<'a> for TryStatementClauses<'a> {
     }
 }
 
+impl<'a> Dummy<'a> for CatchFinally<'a> {
+    /// Create a dummy [`CatchFinally`].
+    ///
+    /// Has cost of making 1 allocation (40 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self { handler: Dummy::dummy(allocator), finalizer: Dummy::dummy(allocator) }
+    }
+}
+
 impl<'a> Dummy<'a> for CatchClause<'a> {
     /// Create a dummy [`CatchClause`].
     ///

@@ -878,7 +878,7 @@ impl GetSpanMut for TryStatementClauses<'_> {
         match self {
             Self::Catch(it) => GetSpanMut::span_mut(&mut **it),
             Self::Finally(it) => GetSpanMut::span_mut(&mut **it),
-            Self::CatchFinally { handler: it, .. } => GetSpanMut::span_mut(&mut **it),
+            Self::CatchFinally(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

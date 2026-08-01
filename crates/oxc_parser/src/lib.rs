@@ -936,7 +936,7 @@ impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::ast::{CommentKind, Expression, Statement};
+    use oxc_ast::ast::{CommentKind, Expression, Statement, TryStatementClauses};
     use oxc_span::GetSpan;
 
     use super::*;
@@ -959,6 +959,41 @@ mod test {
         let source = "a";
         let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
         assert!(matches!(expr, Expression::Identifier(_)));
+    }
+
+    #[test]
+    fn parse_try_statement_clauses() {
+        for (source, expected) in [
+            ("try {} catch {}", "catch"),
+            ("try {} finally {}", "finally"),
+            ("try {} catch {} finally {}", "catch_finally"),
+        ] {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, source, SourceType::default()).parse();
+            assert!(ret.diagnostics.is_empty(), "{source}: {:?}", ret.diagnostics);
+            let Statement::TryStatement(statement) = &ret.program.body[0] else {
+                panic!("expected try statement");
+            };
+            assert!(matches!(
+                (&statement.clauses, expected),
+                (TryStatementClauses::Catch(_), "catch")
+                    | (TryStatementClauses::Finally(_), "finally")
+                    | (TryStatementClauses::CatchFinally(_), "catch_finally")
+            ));
+        }
+
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, "try {}", SourceType::default()).parse();
+        assert_eq!(ret.diagnostics.len(), 1);
+        let Statement::TryStatement(statement) = &ret.program.body[0] else {
+            panic!("expected try statement");
+        };
+        let TryStatementClauses::Finally(finalizer) = &statement.clauses else {
+            panic!("bare try should recover with a finalizer");
+        };
+        assert!(finalizer.body.is_empty());
+        assert!(finalizer.span.is_empty());
+        assert_eq!(finalizer.span.start, statement.block.span.end);
     }
 
     #[test]

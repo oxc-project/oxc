@@ -6073,13 +6073,13 @@ fn lower_statement<'a>(
 
             let handler_clause = match &try_stmt.clauses {
                 oxc::TryStatementClauses::Catch(handler) => handler,
-                oxc::TryStatementClauses::CatchFinally { handler, .. } => {
+                oxc::TryStatementClauses::CatchFinally(clauses) => {
                     builder.record_error(
                         ErrorCategory::Todo
                             .diagnostic("(BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause")
                             .with_labels(span),
                     )?;
-                    handler
+                    &clauses.handler
                 }
                 oxc::TryStatementClauses::Finally(_) => {
                     builder.record_error(

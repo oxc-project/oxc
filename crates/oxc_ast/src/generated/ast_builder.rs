@@ -12527,20 +12527,57 @@ impl<'a> TryStatementClauses<'a> {
         Self::Finally(BlockStatement::boxed_with_scope_id(span, body, scope_id, builder.builder()))
     }
 
+    /// Build a [`TryStatementClauses::CatchFinally`].
+    ///
+    /// This node contains a [`CatchFinally`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `handler`: The `catch` clause, including the parameter and block statement.
+    /// * `finalizer`: The `finally` block.
     #[inline]
-    pub fn new_catch_finally<B: GetAstBuilder<'a>, T1, T2>(
-        handler: T1,
-        finalizer: T2,
-        builder: &B,
-    ) -> Self
-    where
-        T1: IntoIn<'a, ArenaBox<'a, CatchClause<'a>>>,
-        T2: IntoIn<'a, ArenaBox<'a, BlockStatement<'a>>>,
-    {
-        Self::CatchFinally {
-            handler: handler.into_in(builder.builder().allocator()),
-            finalizer: finalizer.into_in(builder.builder().allocator()),
-        }
+    pub fn new_catch_finally(
+        handler: CatchClause<'a>,
+        finalizer: BlockStatement<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::CatchFinally(CatchFinally::boxed(handler, finalizer, builder.builder()))
+    }
+}
+
+impl<'a> CatchFinally<'a> {
+    /// Build a [`CatchFinally`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`CatchFinally::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `handler`: The `catch` clause, including the parameter and block statement.
+    /// * `finalizer`: The `finally` block.
+    #[inline]
+    pub fn new(
+        handler: CatchClause<'a>,
+        finalizer: BlockStatement<'a>,
+        _builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        CatchFinally { handler, finalizer }
+    }
+
+    /// Build a [`CatchFinally`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`CatchFinally::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `handler`: The `catch` clause, including the parameter and block statement.
+    /// * `finalizer`: The `finally` block.
+    #[inline]
+    pub fn boxed(
+        handler: CatchClause<'a>,
+        finalizer: BlockStatement<'a>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(handler, finalizer, builder), &builder.allocator())
     }
 }
 

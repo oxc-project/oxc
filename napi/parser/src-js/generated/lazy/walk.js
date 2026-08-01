@@ -2099,8 +2099,7 @@ function walkTryStatement(pos, ast, visitors) {
       walkBoxBlockStatement(pos + 32, ast, visitors);
       break;
     case 2:
-      walkBoxCatchClause(pos + 32, ast, visitors);
-      walkBoxBlockStatement(pos + 40, ast, visitors);
+      walkBoxCatchFinally(pos + 32, ast, visitors);
       break;
   }
 

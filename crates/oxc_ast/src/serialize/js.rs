@@ -16,7 +16,7 @@ use super::{EmptyArray, Null};
 #[ast_meta]
 #[estree(
     ts_type = "CatchClause | null",
-    raw_deser = "uint8[POS_OFFSET.clauses] === 1 ? null : DESER[Box<CatchClause>](uint8[POS_OFFSET.clauses] === 0 ? POS_OFFSET.clauses.Catch.0 : POS_OFFSET.clauses.CatchFinally.handler)",
+    raw_deser = "uint8[POS_OFFSET.clauses] === 1 ? null : (uint8[POS_OFFSET.clauses] === 0 ? DESER[Box<CatchClause>](POS_OFFSET.clauses + 8) : DESER[Box<CatchFinally>](POS_OFFSET.clauses + 8).handler)",
     raw_deser_inline
 )]
 pub struct TryStatementHandler<'a, 'b>(pub &'b TryStatement<'a>);
@@ -30,7 +30,7 @@ impl ESTree for TryStatementHandler<'_, '_> {
 #[ast_meta]
 #[estree(
     ts_type = "BlockStatement | null",
-    raw_deser = "uint8[POS_OFFSET.clauses] === 0 ? null : DESER[Box<BlockStatement>](uint8[POS_OFFSET.clauses] === 1 ? POS_OFFSET.clauses.Finally.0 : POS_OFFSET.clauses.CatchFinally.finalizer)",
+    raw_deser = "uint8[POS_OFFSET.clauses] === 0 ? null : (uint8[POS_OFFSET.clauses] === 1 ? DESER[Box<BlockStatement>](POS_OFFSET.clauses + 8) : DESER[Box<CatchFinally>](POS_OFFSET.clauses + 8).finalizer)",
     raw_deser_inline
 )]
 pub struct TryStatementFinalizer<'a, 'b>(pub &'b TryStatement<'a>);
@@ -61,14 +61,15 @@ impl ESTree for TryStatementFinalizer<'_, '_> {
     const clausesPos = POS_OFFSET.clauses;
     switch (uint8[clausesPos]) {
         case 0:
-            node.handler = DESER[Box<CatchClause>](POS_OFFSET.clauses.Catch.0);
+            node.handler = DESER[Box<CatchClause>](POS_OFFSET.clauses + 8);
             break;
         case 1:
-            node.finalizer = DESER[Box<BlockStatement>](POS_OFFSET.clauses.Finally.0);
+            node.finalizer = DESER[Box<BlockStatement>](POS_OFFSET.clauses + 8);
             break;
         case 2:
-            node.handler = DESER[Box<CatchClause>](POS_OFFSET.clauses.CatchFinally.handler);
-            node.finalizer = DESER[Box<BlockStatement>](POS_OFFSET.clauses.CatchFinally.finalizer);
+            const clauses = DESER[Box<CatchFinally>](POS_OFFSET.clauses + 8);
+            node.handler = clauses.handler;
+            node.finalizer = clauses.finalizer;
             break;
         default:
             throw new Error(`Unexpected discriminant ${uint8[clausesPos]} for TryStatementClauses`);

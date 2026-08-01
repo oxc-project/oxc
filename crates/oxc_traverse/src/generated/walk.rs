@@ -2060,12 +2060,35 @@ unsafe fn walk_try_statement_clauses<'a, State, Tr: Traverse<'a, State>>(
         TryStatementClauses::Finally(node) => {
             walk_block_statement(traverser, (&mut **node) as *mut _, ctx)
         }
-        TryStatementClauses::CatchFinally { handler, finalizer } => {
-            walk_catch_clause(traverser, (&mut **handler) as *mut _, ctx);
-            walk_block_statement(traverser, (&mut **finalizer) as *mut _, ctx);
+        TryStatementClauses::CatchFinally(node) => {
+            walk_catch_finally(traverser, (&mut **node) as *mut _, ctx)
         }
     }
     traverser.exit_try_statement_clauses(&mut *node, ctx);
+}
+
+unsafe fn walk_catch_finally<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut CatchFinally<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_catch_finally(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::CatchFinallyHandler(
+        ancestor::CatchFinallyWithoutHandler(node, PhantomData),
+    ));
+    walk_catch_clause(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CATCH_FINALLY_HANDLER) as *mut CatchClause,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::CatchFinallyFinalizer);
+    walk_block_statement(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CATCH_FINALLY_FINALIZER) as *mut BlockStatement,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_catch_finally(&mut *node, ctx);
 }
 
 unsafe fn walk_catch_clause<'a, State, Tr: Traverse<'a, State>>(

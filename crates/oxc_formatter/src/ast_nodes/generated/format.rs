@@ -2228,6 +2228,59 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TryStatement<'a>> {
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TryStatementClauses<'a>> {
+    #[inline]
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let allocator = self.allocator;
+        let parent = self.parent;
+        match self.inner {
+            TryStatementClauses::Catch(inner) => {
+                allocator
+                    .alloc(AstNode::<CatchClause> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            TryStatementClauses::Finally(inner) => {
+                allocator
+                    .alloc(AstNode::<BlockStatement> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            TryStatementClauses::CatchFinally(inner) => {
+                allocator
+                    .alloc(AstNode::<CatchFinally> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+        }
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchFinally<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchClause<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);

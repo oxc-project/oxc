@@ -1282,7 +1282,7 @@ impl Replacer for PosReplacer {
 }
 
 static POS_OFFSET_REGEX: Lazy<Regex> = lazy_regex!(
-    r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z0-9_]+)*)(?:\s*(\+|>>)\s*(\d+))?"
+    r"POS_OFFSET(?:<([A-Za-z]+)>)?\.([a-zA-Z_]+(?:\.[a-zA-Z_]+)*)(?:\s*(\+|>>)\s*(\d+))?"
 );
 
 struct PosOffsetReplacer<'s, 'd> {
@@ -1316,24 +1316,11 @@ impl Replacer for PosOffsetReplacer<'_, '_> {
         let field = struct_def.field_by_name(field_name);
         let mut offset = self.struct_offset + field.offset_64();
         let mut type_def = field.type_def(self.schema);
-        while let Some(field_name) = field_names.next() {
-            match type_def {
-                TypeDef::Struct(struct_def) => {
-                    let field = struct_def.field_by_name(field_name);
-                    offset += field.offset_64();
-                    type_def = field.type_def(self.schema);
-                }
-                TypeDef::Enum(enum_def) => {
-                    let variant = enum_def.variant_by_name(field_name);
-                    let field_name = field_names.next().unwrap_or_else(|| {
-                        panic!("Enum variant `{field_name}` must be followed by a field name")
-                    });
-                    let field = variant.field_by_name(field_name);
-                    offset += enum_def.layout_64().align + field.offset_64();
-                    type_def = field.type_def(self.schema);
-                }
-                _ => panic!("Cannot access field `{field_name}` on `{}`", type_def.name()),
-            }
+        for field_name in field_names {
+            let struct_def = type_def.as_struct().unwrap();
+            let field = struct_def.field_by_name(field_name);
+            offset += field.offset_64();
+            type_def = field.type_def(self.schema);
         }
 
         if let Some(operator) = caps.get(3) {

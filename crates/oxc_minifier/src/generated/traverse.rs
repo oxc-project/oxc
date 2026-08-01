@@ -835,6 +835,11 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_catch_finally(&mut self, node: &mut CatchFinally<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_catch_finally(&mut self, node: &mut CatchFinally<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
     fn enter_catch_clause(&mut self, node: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_catch_clause(&mut self, node: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {}

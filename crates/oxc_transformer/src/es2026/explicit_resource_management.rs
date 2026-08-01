@@ -779,7 +779,7 @@ impl<'a> ExplicitResourceManagement<'a> {
             Statement::new_try_statement(
                 span,
                 block,
-                TryStatementClauses::CatchFinally { handler: catch, finalizer: finally },
+                TryStatementClauses::new_catch_finally(catch.unbox(), finally.unbox(), ctx),
                 ctx,
             )
         });
@@ -916,7 +916,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         Statement::new_try_statement(
             span,
             body,
-            TryStatementClauses::CatchFinally { handler: catch, finalizer: finally },
+            TryStatementClauses::new_catch_finally(catch.unbox(), finally.unbox(), ctx),
             ctx,
         )
     }

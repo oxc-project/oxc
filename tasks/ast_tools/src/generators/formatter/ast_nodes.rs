@@ -537,10 +537,6 @@ fn build_following_node_chain_until_non_option(
 }
 
 fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    if enum_def.variants.iter().any(|variant| variant.fields.len() > 1) {
-        return TokenStream::new();
-    }
-
     let enum_ident = enum_def.ident();
     let type_ty = enum_def.ty(schema);
 
@@ -554,7 +550,8 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
         let inner_expr = if is_box { quote! { s.as_ref() } } else { quote! { s } };
 
-        let implementation = if has_kind(field_type, schema) {
+        let has_kind = has_kind(field_type, schema);
+        let implementation = if has_kind {
             quote! {
                 AstNodes::#node_type_ident(self.allocator.alloc(AstNode {
                     inner: #inner_expr,
@@ -569,7 +566,8 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                 panic!("No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`")
             }
         };
-        quote! { #enum_ident::#variant_name(s) => { #implementation }, }
+        let binding = if has_kind { quote!(s) } else { quote!(_) };
+        quote! { #enum_ident::#variant_name(#binding) => { #implementation }, }
     });
 
     let inherits_match_arms = enum_def.inherits_enums(schema).map(|inherited_enum_def| {

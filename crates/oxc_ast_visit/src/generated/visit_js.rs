@@ -464,6 +464,11 @@ pub trait VisitJs<'a>: Sized {
     }
 
     #[inline]
+    fn visit_catch_finally(&mut self, it: &CatchFinally<'a>) {
+        walk_catch_finally(self, it);
+    }
+
+    #[inline]
     fn visit_catch_clause(&mut self, it: &CatchClause<'a>) {
         walk_catch_clause(self, it);
     }
@@ -2031,11 +2036,15 @@ pub mod walk_js {
         match it {
             TryStatementClauses::Catch(it) => visitor.visit_catch_clause(it),
             TryStatementClauses::Finally(it) => visitor.visit_block_statement(it),
-            TryStatementClauses::CatchFinally { handler, finalizer } => {
-                visitor.visit_catch_clause(handler);
-                visitor.visit_block_statement(finalizer);
-            }
+            TryStatementClauses::CatchFinally(it) => visitor.visit_catch_finally(it),
         }
+    }
+
+    #[inline]
+    pub fn walk_catch_finally<'a, V: VisitJs<'a>>(visitor: &mut V, it: &CatchFinally<'a>) {
+        // No `AstKind` for this type
+        visitor.visit_catch_clause(&it.handler);
+        visitor.visit_block_statement(&it.finalizer);
     }
 
     #[inline]

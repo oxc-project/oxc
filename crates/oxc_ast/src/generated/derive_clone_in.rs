@@ -1998,10 +1998,26 @@ impl<'new_alloc> CloneIn<'new_alloc> for TryStatementClauses<'_> {
                 with_semantic_ids,
                 allocator,
             )),
-            Self::CatchFinally { handler, finalizer } => TryStatementClauses::CatchFinally {
-                handler: CloneIn::clone_in_impl(handler, with_semantic_ids, allocator),
-                finalizer: CloneIn::clone_in_impl(finalizer, with_semantic_ids, allocator),
-            },
+            Self::CatchFinally(it) => TryStatementClauses::CatchFinally(CloneIn::clone_in_impl(
+                it,
+                with_semantic_ids,
+                allocator,
+            )),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for CatchFinally<'_> {
+    type Cloned = CatchFinally<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        CatchFinally {
+            handler: CloneIn::clone_in_impl(&self.handler, with_semantic_ids, allocator),
+            finalizer: CloneIn::clone_in_impl(&self.finalizer, with_semantic_ids, allocator),
         }
     }
 }

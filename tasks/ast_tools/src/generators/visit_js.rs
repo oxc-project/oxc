@@ -590,77 +590,25 @@ fn generate_enum_visitor(
         .variants
         .iter()
         .filter_map(|variant| {
-            if !variant.is_named && variant.fields.len() == 1 {
-                let variant_type = variant.field_type(schema).unwrap();
-                if !innermost_is_visited(variant_type, schema) {
-                    return None;
-                }
-                let JsVisitAndMut { visit, visit_mut } = generate_visit_type(
-                    variant_type,
-                    &Target::Reference(create_ident_tokens("it")),
-                    &variant.visit.visit_args,
-                    &create_ident_tokens("it"),
-                    &quote!(visitor),
-                    false,
-                    schema,
-                )?;
-                match_arm_count += 1;
-                let variant_ident = variant.ident();
-                let match_pattern = quote!( #enum_ident::#variant_ident(it) );
-                return Some((
-                    quote!( #match_pattern => #visit, ),
-                    quote!( #match_pattern => #visit_mut, ),
-                ));
-            }
-
-            let bindings = variant
-                .fields
-                .iter()
-                .enumerate()
-                .map(|(index, field)| {
-                    if variant.is_named {
-                        field.ident()
-                    } else {
-                        create_ident_tokens(&format!("field_{index}"))
-                    }
-                })
-                .collect::<Vec<_>>();
-            let mut visits = vec![];
-            let mut visits_mut = vec![];
-            for (field, binding) in variant.fields.iter().zip(&bindings) {
-                let variant_type = field.type_def(schema);
-                if !innermost_is_visited(variant_type, schema) {
-                    continue;
-                }
-                if let Some(JsVisitAndMut { visit, visit_mut }) = generate_visit_type(
-                    variant_type,
-                    &Target::Reference(binding.clone()),
-                    &variant.visit.visit_args,
-                    binding,
-                    &quote!(visitor),
-                    false,
-                    schema,
-                ) {
-                    visits.push(quote!(#visit;));
-                    visits_mut.push(quote!(#visit_mut;));
-                }
-            }
-            if visits.is_empty() {
+            let variant_type = variant.field_type(schema)?;
+            if !innermost_is_visited(variant_type, schema) {
                 return None;
             }
+            let JsVisitAndMut { visit, visit_mut } = generate_visit_type(
+                variant_type,
+                &Target::Reference(create_ident_tokens("it")),
+                &variant.visit.visit_args,
+                &create_ident_tokens("it"),
+                &quote!(visitor),
+                false,
+                schema,
+            )?;
 
             match_arm_count += 1;
 
             let variant_ident = variant.ident();
-            let match_pattern = if variant.is_named {
-                quote!( #enum_ident::#variant_ident { #(#bindings),* } )
-            } else {
-                quote!( #enum_ident::#variant_ident(#(#bindings),*) )
-            };
-            Some((
-                quote!( #match_pattern => { #(#visits)* } ),
-                quote!( #match_pattern => { #(#visits_mut)* } ),
-            ))
+            let match_pattern = quote!( #enum_ident::#variant_ident(it) );
+            Some((quote!( #match_pattern => #visit, ), quote!( #match_pattern => #visit_mut, )))
         })
         .unzip();
 

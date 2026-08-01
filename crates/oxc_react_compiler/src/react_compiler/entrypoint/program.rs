@@ -1452,9 +1452,9 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                 match &node.clauses {
                     TryStatementClauses::Catch(handler) => self.walk_catch_clause(handler),
                     TryStatementClauses::Finally(finalizer) => self.walk_block(finalizer),
-                    TryStatementClauses::CatchFinally { handler, finalizer } => {
-                        self.walk_catch_clause(handler);
-                        self.walk_block(finalizer);
+                    TryStatementClauses::CatchFinally(clauses) => {
+                        self.walk_catch_clause(&clauses.handler);
+                        self.walk_block(&clauses.finalizer);
                     }
                 }
             }

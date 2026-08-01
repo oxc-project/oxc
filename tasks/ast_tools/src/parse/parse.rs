@@ -543,8 +543,20 @@ impl<'c> Parser<'c> {
     /// Parse enum variant to [`VariantDef`].
     fn parse_variant(&mut self, variant: &Variant) -> VariantDef {
         let name = ident_name(&variant.ident);
-        let fields = self.parse_fields(&variant.fields);
-        let is_named = matches!(variant.fields, Fields::Named(_));
+
+        let field_type_id = if variant.fields.is_empty() {
+            None
+        } else {
+            assert!(
+                variant.fields.len() == 1,
+                "Only enum variants with a single field are supported: {name}"
+            );
+            let field = variant.fields.iter().next().unwrap();
+            let type_id = self.parse_type_name(&field.ty).unwrap_or_else(|| {
+                panic!("Cannot parse type reference: {}", field.ty.to_token_stream())
+            });
+            Some(type_id)
+        };
 
         let discriminant = {
             let Some((_, discriminant)) = variant.discriminant.as_ref() else {
@@ -559,7 +571,7 @@ impl<'c> Parser<'c> {
             discriminant
         };
 
-        VariantDef::new(name, fields, is_named, discriminant)
+        VariantDef::new(name, field_type_id, discriminant)
     }
 
     /// Resolve type name to its [`TypeId`].

@@ -1514,7 +1514,20 @@ pub enum TryStatementClauses<'a> {
     /// A `finally` clause without a `catch` clause.
     Finally(Box<'a, BlockStatement<'a>>) = 1,
     /// Both a `catch` clause and a `finally` clause.
-    CatchFinally { handler: Box<'a, CatchClause<'a>>, finalizer: Box<'a, BlockStatement<'a>> } = 2,
+    CatchFinally(Box<'a, CatchFinally<'a>>) = 2,
+}
+
+/// A `catch` clause followed by a `finally` clause.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree)]
+#[estree(no_type, no_ts_def, no_parent)]
+pub struct CatchFinally<'a> {
+    /// The `catch` clause, including the parameter and block statement.
+    pub handler: CatchClause<'a>,
+    /// The `finally` block.
+    pub finalizer: BlockStatement<'a>,
 }
 
 /// Catch Clause in a [`try/catch` statement](TryStatement).

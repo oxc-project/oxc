@@ -810,9 +810,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
 
         let clauses = match (handler, finalizer) {
-            (Some(handler), Some(finalizer)) => {
-                TryStatementClauses::CatchFinally { handler, finalizer }
-            }
+            (Some(handler), Some(finalizer)) => TryStatementClauses::CatchFinally(
+                CatchFinally::boxed(handler.unbox(), finalizer.unbox(), self),
+            ),
             (Some(handler), None) => TryStatementClauses::Catch(handler),
             (None, Some(finalizer)) => TryStatementClauses::Finally(finalizer),
             (None, None) => {

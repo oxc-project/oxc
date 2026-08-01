@@ -168,6 +168,8 @@ impl<'a> TakeIn<'a> for TryStatement<'a> {}
 
 impl<'a> TakeIn<'a> for TryStatementClauses<'a> {}
 
+impl<'a> TakeIn<'a> for CatchFinally<'a> {}
+
 impl<'a> TakeIn<'a> for CatchClause<'a> {}
 
 impl<'a> TakeIn<'a> for CatchParameter<'a> {}

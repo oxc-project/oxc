@@ -4106,6 +4106,68 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
     }
 }
 
+impl<'a> AstNode<'a, TryStatementClauses<'a>> {
+    #[inline]
+    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+        let parent = self.parent;
+        let node = match self.inner {
+            TryStatementClauses::Catch(s) => AstNodes::CatchClause(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+                following_span_start: self.following_span_start,
+            })),
+            TryStatementClauses::Finally(s) => {
+                AstNodes::BlockStatement(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            TryStatementClauses::CatchFinally(_) => {
+                panic!(
+                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+        };
+        self.allocator.alloc(node)
+    }
+}
+
+impl<'a> AstNode<'a, CatchFinally<'a>> {
+    #[inline]
+    pub fn handler(&self) -> &AstNode<'a, CatchClause<'a>> {
+        let following_span_start = self.inner.finalizer.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.handler,
+            allocator: self.allocator,
+            parent: self.parent,
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn finalizer(&self) -> &AstNode<'a, BlockStatement<'a>> {
+        let following_span_start = self.following_span_start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.finalizer,
+            allocator: self.allocator,
+            parent: self.parent,
+            following_span_start,
+        })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
 impl<'a> AstNode<'a, CatchClause<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {

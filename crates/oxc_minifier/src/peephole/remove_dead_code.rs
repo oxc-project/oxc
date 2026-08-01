@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
@@ -286,8 +286,8 @@ impl<'a> PeepholeOptimizations {
         let Statement::TryStatement(s) = stmt else { return };
         if s.block.body.is_empty()
             && let Some(handler) = match &mut s.clauses {
-                TryStatementClauses::Catch(handler)
-                | TryStatementClauses::CatchFinally { handler, .. } => Some(handler),
+                TryStatementClauses::Catch(handler) => Some(handler.as_mut()),
+                TryStatementClauses::CatchFinally(clauses) => Some(&mut clauses.handler),
                 TryStatementClauses::Finally(_) => None,
             }
         {
@@ -309,27 +309,29 @@ impl<'a> PeepholeOptimizations {
 
         if matches!(
             &s.clauses,
-            TryStatementClauses::CatchFinally { finalizer, .. } if finalizer.body.is_empty()
+            TryStatementClauses::CatchFinally(clauses) if clauses.finalizer.body.is_empty()
         ) {
-            let TryStatementClauses::CatchFinally { handler, .. } = s.clauses.take_in(ctx) else {
+            let TryStatementClauses::CatchFinally(clauses) = s.clauses.take_in(ctx) else {
                 unreachable!();
             };
-            s.clauses = TryStatementClauses::Catch(handler);
+            let CatchFinally { handler, .. } = clauses.unbox();
+            s.clauses = TryStatementClauses::Catch(ArenaBox::new_in(handler, ctx));
         }
 
         let removable = s.block.body.is_empty()
             && match &s.clauses {
-                TryStatementClauses::Catch(handler)
-                | TryStatementClauses::CatchFinally { handler, .. } => handler.body.body.is_empty(),
+                TryStatementClauses::Catch(handler) => handler.body.body.is_empty(),
+                TryStatementClauses::CatchFinally(clauses) => clauses.handler.body.body.is_empty(),
                 TryStatementClauses::Finally(_) => true,
             };
         if removable {
             let span = s.span;
             let new_stmt = match s.clauses.take_in(ctx) {
                 TryStatementClauses::Catch(_) => Statement::new_empty_statement(span, ctx),
-                TryStatementClauses::Finally(finalizer)
-                | TryStatementClauses::CatchFinally { finalizer, .. } => {
-                    Statement::BlockStatement(finalizer)
+                TryStatementClauses::Finally(finalizer) => Statement::BlockStatement(finalizer),
+                TryStatementClauses::CatchFinally(clauses) => {
+                    let CatchFinally { finalizer, .. } = clauses.unbox();
+                    Statement::BlockStatement(ArenaBox::new_in(finalizer, ctx))
                 }
             };
             ctx.replace_statement(stmt, new_stmt);

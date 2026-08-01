@@ -29,14 +29,14 @@ pub struct AstNode<'a, T> {
 impl<'a> AstNode<'a, TryStatement<'a>> {
     pub fn handler(&self) -> Option<&AstNode<'a, CatchClause<'a>>> {
         let (handler, following_span_start) = match &self.inner.clauses {
-            TryStatementClauses::Catch(handler) => (handler, 0),
+            TryStatementClauses::Catch(handler) => (handler.as_ref(), 0),
             TryStatementClauses::Finally(_) => return None,
-            TryStatementClauses::CatchFinally { handler, finalizer } => {
-                (handler, finalizer.span.start)
+            TryStatementClauses::CatchFinally(clauses) => {
+                (&clauses.handler, clauses.finalizer.span.start)
             }
         };
         Some(self.allocator.alloc(AstNode {
-            inner: handler.as_ref(),
+            inner: handler,
             parent: AstNodes::TryStatement(transmute_self_node(self)),
             allocator: self.allocator,
             following_span_start,
@@ -44,13 +44,13 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
     }
 
     pub fn finalizer(&self) -> Option<&AstNode<'a, BlockStatement<'a>>> {
-        let finalizer = match &self.inner.clauses {
+        let finalizer: &BlockStatement<'a> = match &self.inner.clauses {
             TryStatementClauses::Catch(_) => return None,
-            TryStatementClauses::Finally(finalizer)
-            | TryStatementClauses::CatchFinally { finalizer, .. } => finalizer,
+            TryStatementClauses::Finally(finalizer) => finalizer,
+            TryStatementClauses::CatchFinally(clauses) => &clauses.finalizer,
         };
         Some(self.allocator.alloc(AstNode {
-            inner: finalizer.as_ref(),
+            inner: finalizer,
             parent: AstNodes::TryStatement(transmute_self_node(self)),
             allocator: self.allocator,
             following_span_start: 0,

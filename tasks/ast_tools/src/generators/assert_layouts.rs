@@ -407,48 +407,18 @@ impl LayoutCalculator<'_> {
 
         for variant_index in self.schema.enum_def(type_id).variant_indices() {
             let variant = &self.schema.enum_def(type_id).variants[variant_index];
+
             *min_discriminant = min(*min_discriminant, variant.discriminant);
             *max_discriminant = max(*max_discriminant, variant.discriminant);
 
-            let mut field_type_ids = Vec::with_capacity(variant.fields.len());
-            for field in &variant.fields {
-                field_type_ids.push(field.type_id);
+            if let Some(variant_type_id) = variant.field_type_id {
+                let variant_layout = self.calculate_type(variant_type_id);
+
+                layout_64.size = max(layout_64.size, variant_layout.layout_64.size);
+                layout_64.align = max(layout_64.align, variant_layout.layout_64.align);
+                layout_32.size = max(layout_32.size, variant_layout.layout_32.size);
+                layout_32.align = max(layout_32.align, variant_layout.layout_32.align);
             }
-            let field_layouts = field_type_ids
-                .into_iter()
-                .map(|field_type_id| self.calculate_type(field_type_id).clone())
-                .collect::<Vec<_>>();
-
-            let mut variant_layout_64 = PlatformLayout::from_size_align(0, 1);
-            let mut variant_layout_32 = PlatformLayout::from_size_align(0, 1);
-            for (field_index, field_layout) in field_layouts.iter().enumerate() {
-                let offset_64 =
-                    variant_layout_64.size.next_multiple_of(field_layout.layout_64.align);
-                let offset_32 =
-                    variant_layout_32.size.next_multiple_of(field_layout.layout_32.align);
-                variant_layout_64.size = offset_64 + field_layout.layout_64.size;
-                variant_layout_64.align =
-                    max(variant_layout_64.align, field_layout.layout_64.align);
-                variant_layout_32.size = offset_32 + field_layout.layout_32.size;
-                variant_layout_32.align =
-                    max(variant_layout_32.align, field_layout.layout_32.align);
-
-                self.schema.enum_def_mut(type_id).variants[variant_index].fields[field_index]
-                    .offset = Offset {
-                    offset_64,
-                    offset_32,
-                    layout_index: u32::try_from(field_index).unwrap(),
-                };
-            }
-            variant_layout_64.size =
-                variant_layout_64.size.next_multiple_of(variant_layout_64.align);
-            variant_layout_32.size =
-                variant_layout_32.size.next_multiple_of(variant_layout_32.align);
-
-            layout_64.size = max(layout_64.size, variant_layout_64.size);
-            layout_64.align = max(layout_64.align, variant_layout_64.align);
-            layout_32.size = max(layout_32.size, variant_layout_32.size);
-            layout_32.align = max(layout_32.align, variant_layout_32.align);
         }
 
         for inherits_index in self.schema.enum_def(type_id).inherits_indices() {

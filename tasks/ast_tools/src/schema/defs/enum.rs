@@ -1,7 +1,6 @@
 use std::{iter::FusedIterator, ops::Range, slice};
 
 use convert_case::{Case, Casing};
-use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
@@ -9,7 +8,7 @@ use syn::Ident;
 use crate::utils::{create_ident, pluralize, snake_case};
 
 use super::{
-    Containers, Def, Derives, FieldDef, File, FileId, Schema, TypeDef, TypeId, Visibility,
+    Containers, Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
     extensions::{
         ast_builder::AstBuilderType,
         clone_in::CloneInType,
@@ -115,17 +114,6 @@ impl EnumDef {
         AllVariantsIter::new(self, schema)
     }
 
-    /// Get a variant by name.
-    pub fn variant_by_name(&self, name: &str) -> &VariantDef {
-        self.variants.iter().find(|variant| variant.name() == name).unwrap_or_else(|| {
-            let enum_name = self.name();
-            let variants = self.variants.iter().map(VariantDef::name).join(", ");
-            panic!(
-                "Failed to find variant `{name}` in enum `{enum_name}`. Available variants: {variants}."
-            );
-        })
-    }
-
     /// Get iterator over enums this enum inherits from directly.
     ///
     /// To get all enums this enum inherits from, including transitively, use [`all_inherits`].
@@ -219,8 +207,7 @@ impl Def for EnumDef {
 #[derive(Debug)]
 pub struct VariantDef {
     pub name: String,
-    pub fields: Vec<FieldDef>,
-    pub is_named: bool,
+    pub field_type_id: Option<TypeId>,
     pub discriminant: Discriminant,
     pub visit: VisitFieldOrVariant,
     pub estree: ESTreeEnumVariant,
@@ -228,16 +215,10 @@ pub struct VariantDef {
 
 impl VariantDef {
     /// Create new [`VariantDef`].
-    pub fn new(
-        name: String,
-        fields: Vec<FieldDef>,
-        is_named: bool,
-        discriminant: Discriminant,
-    ) -> Self {
+    pub fn new(name: String, field_type_id: Option<TypeId>, discriminant: Discriminant) -> Self {
         Self {
             name,
-            fields,
-            is_named,
+            field_type_id,
             discriminant,
             visit: VisitFieldOrVariant::default(),
             estree: ESTreeEnumVariant::default(),
@@ -270,23 +251,7 @@ impl VariantDef {
     ///
     /// Returns `None` if variant is fieldless.
     pub fn field_type<'s>(&self, schema: &'s Schema) -> Option<&'s TypeDef> {
-        (self.fields.len() == 1).then(|| self.fields[0].type_def(schema))
-    }
-
-    /// Get a variant field by name.
-    pub fn field_by_name(&self, name: &str) -> &FieldDef {
-        self.fields.iter().find(|field| field.name() == name).unwrap_or_else(|| {
-            let variant_name = self.name();
-            let fields = self.fields.iter().map(FieldDef::name).join(", ");
-            panic!(
-                "Failed to find field `{name}` in enum variant `{variant_name}`. Available fields: {fields}."
-            );
-        })
-    }
-
-    /// Get iterator over variant field indexes.
-    pub fn field_indices(&self) -> Range<usize> {
-        0..self.fields.len()
+        self.field_type_id.map(|type_id| &schema.types[type_id])
     }
 
     /// Returns `true` if variant is fieldless.
@@ -294,7 +259,7 @@ impl VariantDef {
     /// e.g. `enum Foo { Bar, Qux(u64) }`
     /// `Bar` variant is fieldless, `Qux` variant is not.
     pub fn is_fieldless(&self) -> bool {
-        self.fields.is_empty()
+        self.field_type_id.is_none()
     }
 }
 

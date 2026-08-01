@@ -4,7 +4,7 @@ use std::{
 };
 
 use oxc_allocator::Box as ArenaBox;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, GetSpanMut, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
@@ -26,8 +26,8 @@ impl<'a> TryStatement<'a> {
     /// Returns the catch clause, when present.
     pub fn handler(&self) -> Option<&CatchClause<'a>> {
         match &self.clauses {
-            TryStatementClauses::Catch(handler)
-            | TryStatementClauses::CatchFinally { handler, .. } => Some(handler),
+            TryStatementClauses::Catch(handler) => Some(handler),
+            TryStatementClauses::CatchFinally(clauses) => Some(&clauses.handler),
             TryStatementClauses::Finally(_) => None,
         }
     }
@@ -35,10 +35,22 @@ impl<'a> TryStatement<'a> {
     /// Returns the finally block, when present.
     pub fn finalizer(&self) -> Option<&BlockStatement<'a>> {
         match &self.clauses {
-            TryStatementClauses::Finally(finalizer)
-            | TryStatementClauses::CatchFinally { finalizer, .. } => Some(finalizer),
+            TryStatementClauses::Finally(finalizer) => Some(finalizer),
+            TryStatementClauses::CatchFinally(clauses) => Some(&clauses.finalizer),
             TryStatementClauses::Catch(_) => None,
         }
+    }
+}
+
+impl GetSpan for CatchFinally<'_> {
+    fn span(&self) -> Span {
+        self.handler.span
+    }
+}
+
+impl GetSpanMut for CatchFinally<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.handler.span
     }
 }
 

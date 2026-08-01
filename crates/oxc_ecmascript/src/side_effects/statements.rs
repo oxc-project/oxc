@@ -70,8 +70,9 @@ impl<'a> MayHaveSideEffects<'a> for TryStatement<'a> {
             || match &self.clauses {
                 TryStatementClauses::Catch(handler) => handler.may_have_side_effects(ctx),
                 TryStatementClauses::Finally(finalizer) => finalizer.may_have_side_effects(ctx),
-                TryStatementClauses::CatchFinally { handler, finalizer } => {
-                    handler.may_have_side_effects(ctx) || finalizer.may_have_side_effects(ctx)
+                TryStatementClauses::CatchFinally(clauses) => {
+                    clauses.handler.may_have_side_effects(ctx)
+                        || clauses.finalizer.may_have_side_effects(ctx)
                 }
             }
     }

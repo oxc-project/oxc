@@ -191,24 +191,11 @@ fn derive_enum(
 
     let matches = enum_def.all_variants(schema).map(|variant| {
         let variant_ident = variant.ident();
-        let field = variant
-            .fields
-            .first()
-            .unwrap_or_else(|| panic!("`GetSpan` cannot be derived on fieldless enum variants"));
-        let variant_type = field.type_def(schema);
-        let binding = create_safe_ident("it");
-        let pattern = if variant.is_named {
-            let field_ident = field.ident();
-            quote!(Self::#variant_ident { #field_ident: #binding, .. })
-        } else if variant.fields.len() == 1 {
-            quote!(Self::#variant_ident(#binding))
-        } else {
-            quote!(Self::#variant_ident(#binding, ..))
-        };
+        let variant_type = variant.field_type(schema).unwrap();
         if variant_type.is_box() {
-            quote!( #pattern => #trait_ident::#method_ident(#reference **#binding) )
+            quote!( Self::#variant_ident(it) => #trait_ident::#method_ident(#reference **it) )
         } else {
-            quote!( #pattern => #trait_ident::#method_ident(#binding) )
+            quote!( Self::#variant_ident(it) => #trait_ident::#method_ident(it) )
         }
     });
 

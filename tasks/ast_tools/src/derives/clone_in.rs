@@ -179,24 +179,8 @@ fn derive_enum_body(enum_def: &EnumDef, type_ident: &Ident, schema: &Schema) -> 
         let ident = variant.ident();
         if variant.is_fieldless() {
             quote!( Self::#ident => #type_ident::#ident )
-        } else if variant.is_named {
-            let fields = variant.fields.iter().map(FieldDef::ident).collect::<Vec<_>>();
-            let cloned = fields.iter().map(|field| {
-                quote!(#field: CloneIn::clone_in_impl(#field, with_semantic_ids, allocator))
-            });
-            quote! {
-                Self::#ident { #(#fields),* } => #type_ident::#ident { #(#cloned),* }
-            }
-        } else if variant.fields.len() == 1 {
-            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_impl(it, with_semantic_ids, allocator)) )
         } else {
-            let fields = (0..variant.fields.len())
-                .map(|index| create_ident(&format!("field_{index}")))
-                .collect::<Vec<_>>();
-            let cloned = fields.iter().map(|field| {
-                quote!(CloneIn::clone_in_impl(#field, with_semantic_ids, allocator))
-            });
-            quote!( Self::#ident(#(#fields),*) => #type_ident::#ident(#(#cloned),*) )
+            quote!( Self::#ident(it) => #type_ident::#ident(CloneIn::clone_in_impl(it, with_semantic_ids, allocator)) )
         }
     });
 

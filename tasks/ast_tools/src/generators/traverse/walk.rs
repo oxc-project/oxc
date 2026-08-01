@@ -537,73 +537,31 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConf
 
     // Own variants
     for variant in &enum_def.variants {
-        if !variant.is_named && variant.fields.len() == 1 {
-            let field_type = variant.field_type(schema).unwrap();
-            let inner_type = field_type.innermost_type(schema);
-            let has_visitor = match inner_type {
-                TypeDef::Struct(s) => s.visit.has_visitor(),
-                TypeDef::Enum(e) => e.visit.has_visitor(),
-                _ => false,
-            };
-            if !has_visitor {
-                continue;
-            }
+        let Some(field_type) = variant.field_type(schema) else { continue };
+        let inner_type = field_type.innermost_type(schema);
 
-            let inner_snake = inner_type.snake_name();
-            let walk_fn = format_ident!("walk_{inner_snake}");
-            let variant_ident = variant.ident();
-            let node_expr = if field_type.is_box() {
-                quote!((&mut **node) as *mut _)
-            } else {
-                quote!(node as *mut _)
-            };
-            match_arms.extend(quote! {
-                #enum_ident::#variant_ident(node) => #walk_fn(traverser, #node_expr, ctx),
-            });
+        // Check inner type has a visitor
+        let has_visitor = match inner_type {
+            TypeDef::Struct(s) => s.visit.has_visitor(),
+            TypeDef::Enum(e) => e.visit.has_visitor(),
+            _ => false,
+        };
+        if !has_visitor {
             continue;
         }
 
+        let inner_snake = inner_type.snake_name();
+        let walk_fn = format_ident!("walk_{inner_snake}");
         let variant_ident = variant.ident();
-        let bindings = variant
-            .fields
-            .iter()
-            .enumerate()
-            .map(|(index, field)| {
-                if variant.is_named {
-                    field.ident()
-                } else {
-                    let ident = create_ident(&format!("field_{index}"));
-                    quote!(#ident)
-                }
-            })
-            .collect::<Vec<_>>();
-        let walks = variant.fields.iter().zip(&bindings).filter_map(|(field, binding)| {
-            let field_type = field.type_def(schema);
-            let inner_type = field_type.innermost_type(schema);
-            let has_visitor = match inner_type {
-                TypeDef::Struct(s) => s.visit.has_visitor(),
-                TypeDef::Enum(e) => e.visit.has_visitor(),
-                _ => false,
-            };
-            if !has_visitor {
-                return None;
-            }
-            let walk_fn = format_ident!("walk_{}", inner_type.snake_name());
-            let node_expr = if field_type.is_box() {
-                quote!((&mut **#binding) as *mut _)
-            } else {
-                quote!(#binding as *mut _)
-            };
-            Some(quote!(#walk_fn(traverser, #node_expr, ctx);))
-        });
-        let pattern = if variant.is_named {
-            quote!(#enum_ident::#variant_ident { #(#bindings),* })
+
+        let node_expr = if field_type.is_box() {
+            quote!((&mut **node) as *mut _)
         } else {
-            quote!(#enum_ident::#variant_ident(#(#bindings),*))
+            quote!(node as *mut _)
         };
 
         match_arms.extend(quote! {
-            #pattern => { #(#walks)* }
+            #enum_ident::#variant_ident(node) => #walk_fn(traverser, #node_expr, ctx),
         });
     }
 

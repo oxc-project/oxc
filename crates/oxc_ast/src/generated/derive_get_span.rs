@@ -879,7 +879,7 @@ impl GetSpan for TryStatementClauses<'_> {
         match self {
             Self::Catch(it) => GetSpan::span(&**it),
             Self::Finally(it) => GetSpan::span(&**it),
-            Self::CatchFinally { handler: it, .. } => GetSpan::span(&**it),
+            Self::CatchFinally(it) => GetSpan::span(&**it),
         }
     }
 }

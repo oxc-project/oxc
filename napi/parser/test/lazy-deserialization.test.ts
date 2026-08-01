@@ -34,6 +34,17 @@ it("parses", () => {
   expect(declarator.type).toBe("VariableDeclarator");
 });
 
+it.each([
+  ["try {} catch {}", true, false],
+  ["try {} finally {}", false, true],
+  ["try {} catch {} finally {}", true, true],
+])("preserves try statement ESTree fields for %s", (code, hasHandler, hasFinalizer) => {
+  const statement = parseSyncLazy("test.js", code).program.body[0];
+  expect(statement.handler !== null).toBe(hasHandler);
+  expect(statement.finalizer !== null).toBe(hasFinalizer);
+  expect(statement.toJSON()).not.toHaveProperty("clauses");
+});
+
 it("returns same node objects and node arrays on each access", () => {
   const data = parseSyncLazy("test.js", "let x = y + z;");
   const { program } = data;

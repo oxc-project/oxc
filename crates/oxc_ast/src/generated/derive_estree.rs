@@ -1180,6 +1180,15 @@ impl ESTree for TryStatement<'_> {
     }
 }
 
+impl ESTree for CatchFinally<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("handler", &self.handler);
+        state.serialize_field("finalizer", &self.finalizer);
+        state.end();
+    }
+}
+
 impl ESTree for CatchClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();

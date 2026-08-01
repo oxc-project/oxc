@@ -1,6 +1,6 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
@@ -527,10 +527,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         let try_statement = Statement::new_try_statement(
             span,
             block,
-            TryStatementClauses::CatchFinally {
-                handler,
-                finalizer: ArenaBox::new_in(finalizer, ctx),
-            },
+            TryStatementClauses::CatchFinally(CatchFinally::boxed(handler.unbox(), finalizer, ctx)),
             ctx,
         );
 

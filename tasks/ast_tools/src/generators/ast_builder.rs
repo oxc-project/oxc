@@ -253,14 +253,19 @@ fn generate_builder_methods_for_struct_impl(
     }
 
     let params_docs = generate_doc_comment_for_params(params);
+    let new_uses_builder = params
+        .iter()
+        .any(|param| param.is_node_id || matches!(param.generic_type, Some(GenericType::IntoIn)));
+    let builder_param = if new_uses_builder { quote!(builder) } else { quote!(_builder) };
+    let builder_binding = new_uses_builder.then(|| quote!(let builder = builder.builder();));
 
     let new_method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #new_fn_name #lifetime_param (#fn_params, builder: &impl GetAstBuilder<'a>) -> Self {
-            let builder = builder.builder();
+        pub fn #new_fn_name #lifetime_param (#fn_params, #builder_param: &impl GetAstBuilder<'a>) -> Self {
+            #builder_binding
             #struct_ident { #fields }
         }
     };
@@ -458,48 +463,6 @@ fn generate_builder_method_for_enum_variant(
     node_id_cell_type_id: TypeId,
     schema: &Schema,
 ) -> TokenStream {
-    if variant.fields.len() != 1 {
-        let method_name = format_ident!("new_{}", variant.snake_name());
-        let variant_ident = variant.ident();
-        let params = variant.fields.iter().enumerate().map(|(index, field)| {
-            let ident = field.ident();
-            let generic = format_ident!("T{}", index + 1);
-            quote!(#ident: #generic)
-        });
-        let generic_params = (1..=variant.fields.len()).map(|index| format_ident!("T{index}"));
-        let where_bounds = variant.fields.iter().enumerate().map(|(index, field)| {
-            let generic = format_ident!("T{}", index + 1);
-            let ty = field.type_def(schema).ty(schema);
-            quote!(#generic: IntoIn<'a, #ty>)
-        });
-        let values = variant.fields.iter().map(|field| {
-            let ident = field.ident();
-            if variant.is_named {
-                quote!(#ident: #ident.into_in(builder.builder().allocator()))
-            } else {
-                quote!(#ident.into_in(builder.builder().allocator()))
-            }
-        });
-        let value = if variant.is_named {
-            quote!(Self::#variant_ident { #(#values),* })
-        } else {
-            quote!(Self::#variant_ident(#(#values),*))
-        };
-        return quote! {
-            ///@@line_break
-            #[inline]
-            pub fn #method_name<B: GetAstBuilder<'a>, #(#generic_params),*>(
-                #(#params),*,
-                builder: &B,
-            ) -> Self
-            where
-                #(#where_bounds),*
-            {
-                #value
-            }
-        };
-    }
-
     let mut variant_type = variant.field_type(schema).unwrap();
     let mut is_boxed = false;
     if let TypeDef::Box(box_def) = variant_type {

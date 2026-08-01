@@ -4007,20 +4007,16 @@ export class TryStatement {
     const internal = this.#internal,
       discriminant = internal.ast.buffer[internal.pos + 24];
     if (discriminant === 1) return null;
-    return constructBoxCatchClause(
-      discriminant === 0 ? internal.pos + 32 : internal.pos + 32,
-      internal.ast,
-    );
+    if (discriminant === 0) return constructBoxCatchClause(internal.pos + 32, internal.ast);
+    return constructBoxCatchFinally(internal.pos + 32, internal.ast).handler;
   }
 
   get finalizer() {
     const internal = this.#internal,
       discriminant = internal.ast.buffer[internal.pos + 24];
     if (discriminant === 0) return null;
-    return constructBoxBlockStatement(
-      discriminant === 1 ? internal.pos + 32 : internal.pos + 40,
-      internal.ast,
-    );
+    if (discriminant === 1) return constructBoxBlockStatement(internal.pos + 32, internal.ast);
+    return constructBoxCatchFinally(internal.pos + 32, internal.ast).finalizer;
   }
 
   toJSON() {
@@ -4040,6 +4036,45 @@ export class TryStatement {
 }
 
 const DebugTryStatement = class TryStatement {};
+
+export class CatchFinally {
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    // `pos` would be same as one of fields, so add offset to ensure unique cache key
+    const cached = nodes.get(pos + 1);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos + 1, this);
+  }
+
+  get handler() {
+    const internal = this.#internal;
+    return new CatchClause(internal.pos, internal.ast);
+  }
+
+  get finalizer() {
+    const internal = this.#internal;
+    return new BlockStatement(internal.pos + 64, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      handler: this.handler,
+      finalizer: this.finalizer,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugCatchFinally.prototype);
+  }
+}
+
+const DebugCatchFinally = class CatchFinally {};
 
 export class CatchClause {
   type = "CatchClause";
@@ -13386,6 +13421,10 @@ function constructSwitchCase(pos, ast) {
 
 function constructBoxCatchClause(pos, ast) {
   return new CatchClause(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxCatchFinally(pos, ast) {
+  return new CatchFinally(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructOptionCatchParameter(pos, ast) {

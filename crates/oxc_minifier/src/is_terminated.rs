@@ -37,9 +37,9 @@ impl IsTerminated for TryStatement<'_> {
             TryStatementClauses::Finally(finalizer) => {
                 finalizer.is_terminated() || self.block.is_terminated()
             }
-            TryStatementClauses::CatchFinally { handler, finalizer } => {
-                finalizer.is_terminated()
-                    || (self.block.is_terminated() && handler.body.is_terminated())
+            TryStatementClauses::CatchFinally(clauses) => {
+                clauses.finalizer.is_terminated()
+                    || (self.block.is_terminated() && clauses.handler.body.is_terminated())
             }
         }
     }
