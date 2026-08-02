@@ -1105,6 +1105,18 @@ mod test {
     }
 
     #[test]
+    fn source_type_script_rejects_export_declarations() {
+        let allocator = Allocator::default();
+
+        let script_ret = Parser::new(&allocator, "export {};", SourceType::script()).parse();
+        assert_eq!(script_ret.diagnostics.len(), 1);
+        assert_eq!(script_ret.diagnostics[0].to_string(), "Unexpected export.");
+
+        let module_ret = Parser::new(&allocator, "export {};", SourceType::mjs()).parse();
+        assert!(module_ret.diagnostics.is_empty());
+    }
+
+    #[test]
     fn binary_file() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

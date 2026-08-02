@@ -444,12 +444,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         span: u32,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
+        let export_span = self.cur_token().span();
         self.bump_any(); // bump `export`
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and
         // isn't reparsed. e.g. `@foo export default class C { x = await + 1 }`
-        if self.source_type.is_unambiguous() && self.ctx.has_top_level() {
-            self.ctx = self.ctx.and_await(true);
+        if self.ctx.has_top_level() {
+            if !self.source_type.is_module() {
+                self.error_on_script(diagnostics::unexpected_export(export_span));
+            }
+            if self.source_type.is_unambiguous() {
+                self.ctx = self.ctx.and_await(true);
+            }
         }
         let decl = match self.cur_kind() {
             // `export import A = B`
