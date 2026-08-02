@@ -466,9 +466,12 @@ fn remove_unused_catch_parameter<'a>(
 ) -> crate::fixer::RuleFix {
     let Span { start, end, .. } = catch.span();
 
-    let (Some(paren_start), Some(paren_end_offset)) =
-        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
-    else {
+    #[expect(clippy::cast_possible_truncation)]
+    let source_end = ctx.source_text().len() as u32;
+    let (Some(paren_start), Some(paren_end_offset)) = (
+        ctx.find_prev_token_within(0, start, "("),
+        ctx.find_next_token_within(end, source_end, ")"),
+    ) else {
         return fixer.noop();
     };
 
