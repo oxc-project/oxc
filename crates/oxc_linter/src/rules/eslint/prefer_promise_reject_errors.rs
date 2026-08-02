@@ -77,7 +77,7 @@ declare_oxc_lint!(
     /// ```
     PreferPromiseRejectErrors,
     eslint,
-    style,
+    pedantic,
     none,
     config = PreferPromiseRejectErrors,
     version = "0.15.7",
