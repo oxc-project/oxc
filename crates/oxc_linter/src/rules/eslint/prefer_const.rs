@@ -236,7 +236,8 @@ impl PreferConst {
         let decl_span = decl.span();
         let decl_text = decl_span.source_text(ctx.source_text());
 
-        if let Some(let_pos) = decl_text.find("let") {
+        if let Some(let_pos) = fixer.find_next_token_within(decl_span.start, decl_span.end, "let") {
+            let let_pos = let_pos as usize;
             let new_text = format!("{}const{}", &decl_text[..let_pos], &decl_text[let_pos + 3..]);
             fixer.replace(decl_span, new_text)
         } else {
