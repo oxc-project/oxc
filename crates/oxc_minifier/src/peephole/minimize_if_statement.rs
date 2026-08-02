@@ -1,12 +1,12 @@
 use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 
+use super::PeepholeOptimizations;
 use crate::TraverseCtx;
+use crate::generated::ancestor::Ancestor;
 use crate::is_terminated::IsTerminated;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
-
-use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `MangleIf`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9860>
@@ -149,8 +149,28 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Returns true when the current statement position accepts only a single
+    /// statement, so rewriting to multiple statements requires a block wrapper.
+    fn parent_requires_single_statement(ctx: &TraverseCtx<'a>) -> bool {
+        match ctx.parent() {
+            Ancestor::ForStatementBody(_)
+            | Ancestor::ForInStatementBody(_)
+            | Ancestor::ForOfStatementBody(_)
+            | Ancestor::WhileStatementBody(_)
+            | Ancestor::DoWhileStatementBody(_)
+            | Ancestor::IfStatementConsequent(_)
+            | Ancestor::IfStatementAlternate(_)
+            | Ancestor::LabeledStatementBody(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Turns `if (test) terminated; else stmt` into an `if` statement followed by
+    /// `stmt` when the `else` branch can be moved out without changing scope
+    /// behavior.
     pub fn try_unfold_if_else(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Statement::IfStatement(if_stmt) = stmt
+            && Self::parent_requires_single_statement(ctx)
             && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
             && if_stmt.consequent.is_terminated()
             && let Some(alternate) = if_stmt.alternate.take()
