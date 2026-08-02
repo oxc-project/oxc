@@ -9,10 +9,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{
     context::LintContext,
     fixer::{FixKind, RuleFixer},
-    utils::{
-        KnownMemberExpressionProperty, PossibleJestNode, is_equality_matcher,
-        parse_expect_jest_fn_call,
-    },
+    utils::{ParsedExpectFnCall, PossibleJestNode, is_equality_matcher, parse_expect_jest_fn_call},
 };
 
 fn use_equality_matcher_diagnostic(span: Span) -> OxcDiagnostic {
@@ -119,8 +116,7 @@ pub fn run_on_jest_node<'a, 'c>(
             binary_expr,
             call_span_end,
             arg_span_end,
-            &jest_fn_call.local,
-            jest_fn_call.modifiers(),
+            &jest_fn_call,
             eq_matcher,
             add_not_modifier,
             fixer,
@@ -131,23 +127,22 @@ pub fn run_on_jest_node<'a, 'c>(
     ctx.diagnostic_with_suggestions(use_equality_matcher_diagnostic(matcher.span), suggestions);
 }
 
-fn build_code<'a: 'b, 'b>(
+fn build_code<'a>(
     binary_expr: &BinaryExpression<'a>,
     call_span_end: &str,
     arg_span_end: &str,
-    local_name: &str,
-    modifiers: impl Iterator<Item = &'b KnownMemberExpressionProperty<'a>>,
+    expect_call: &ParsedExpectFnCall<'a>,
     equality_matcher: &str,
     add_not_modifier: bool,
     fixer: RuleFixer<'_, 'a>,
 ) -> String {
     let mut content = fixer.codegen();
-    content.print_str(local_name);
+    content.print_str(&expect_call.local);
     content.print_ascii_byte(b'(');
     content.print_expression(&binary_expr.left);
     content.print_str(call_span_end);
     content.print_ascii_byte(b'.');
-    for modifier in modifiers {
+    for modifier in expect_call.modifiers() {
         let Some(modifier_name) = modifier.name() else {
             continue;
         };
