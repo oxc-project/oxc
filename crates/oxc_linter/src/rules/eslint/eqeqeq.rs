@@ -255,8 +255,9 @@ impl Rule for Eqeqeq {
 fn get_operator_span(binary_expr: &BinaryExpression, operator: &str, ctx: &LintContext) -> Span {
     let left_end = binary_expr.left.span().end;
     let right_start = binary_expr.right.span().start;
-    let between_text = Span::new(left_end, right_start).source_text(ctx.source_text());
-    let offset = between_text.find(operator).unwrap_or(0) as u32;
+    let offset = ctx
+        .find_next_token_within(left_end, right_start, operator)
+        .expect("operator token must exist");
 
     let operator_start = left_end + offset;
     let operator_end = operator_start + operator.len() as u32;
