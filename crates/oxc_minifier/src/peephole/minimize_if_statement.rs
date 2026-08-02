@@ -153,36 +153,20 @@ impl<'a> PeepholeOptimizations {
         if let Statement::IfStatement(if_stmt) = stmt
             && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
             && if_stmt.consequent.is_terminated()
+            && let Some(alternate) = if_stmt.alternate.take()
         {
-            let mut stmts = ArenaVec::from_value_in(stmt.take_in(ctx), ctx);
-            Self::try_unfold_else_after_terminator(&mut stmts, ctx);
+            let new_stmts = if let Statement::BlockStatement(block_stmt) = alternate {
+                let mut new_stmts = ArenaVec::from_value_in(stmt.take_in(ctx), ctx);
+                Self::handle_block(&mut new_stmts, block_stmt, ctx);
+                new_stmts
+            } else {
+                ArenaVec::from_array_in([stmt.take_in(ctx), alternate], ctx)
+            };
 
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
             let new_stmt =
-                Statement::new_block_statement_with_scope_id(stmt.span(), stmts, scope_id, ctx);
+                Statement::new_block_statement_with_scope_id(stmt.span(), new_stmts, scope_id, ctx);
             ctx.replace_statement(stmt, new_stmt);
-        }
-    }
-
-    pub fn try_unfold_else_after_terminator(
-        result: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        loop {
-            if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
-                && if_stmt.consequent.is_terminated()
-                && let Some(stmt) = if_stmt.alternate.take()
-            {
-                if let Statement::BlockStatement(block_stmt) = stmt {
-                    Self::handle_block(result, block_stmt, ctx);
-                } else {
-                    result.push(stmt);
-                    ctx.notice_change();
-                }
-                continue;
-            }
-            break;
         }
     }
 }
