@@ -221,7 +221,7 @@ handlebars = "6.4.2" # Template engine
 hashbrown = { version = "0.17.1", default-features = false } # Fast hash map
 hmac-sha1-compact = "1.1.7" # Self-contained, zero-dependency SHA-1
 humansize = "2.1.3" # Human-readable sizes
-ignore = "0.4.27" # Gitignore matching
+ignore = "0.4.30" # Gitignore matching
 insta = "1.48.0" # Snapshot testing
 itertools = "0.15.0" # Iterator utilities
 itoa = "1.0.18" # Integer to string
