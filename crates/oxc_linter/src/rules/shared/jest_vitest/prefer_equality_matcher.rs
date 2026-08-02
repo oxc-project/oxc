@@ -101,8 +101,7 @@ pub fn run_on_jest_node<'a, 'c>(
         return;
     };
 
-    let modifiers = jest_fn_call.modifiers();
-    let has_not_modifier = modifiers.iter().any(|modifier| modifier.is_name_equal("not"));
+    let has_not_modifier = jest_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
     let add_not_modifier = (if binary_expr.operator == BinaryOperator::StrictInequality {
         !matcher_arg_value.value
     } else {
@@ -121,7 +120,7 @@ pub fn run_on_jest_node<'a, 'c>(
             call_span_end,
             arg_span_end,
             &jest_fn_call.local,
-            &modifiers,
+            jest_fn_call.modifiers(),
             eq_matcher,
             add_not_modifier,
             fixer,
@@ -132,12 +131,12 @@ pub fn run_on_jest_node<'a, 'c>(
     ctx.diagnostic_with_suggestions(use_equality_matcher_diagnostic(matcher.span), suggestions);
 }
 
-fn build_code<'a>(
+fn build_code<'a: 'b, 'b>(
     binary_expr: &BinaryExpression<'a>,
     call_span_end: &str,
     arg_span_end: &str,
     local_name: &str,
-    modifiers: &[&KnownMemberExpressionProperty<'a>],
+    modifiers: impl Iterator<Item = &'b KnownMemberExpressionProperty<'a>>,
     equality_matcher: &str,
     add_not_modifier: bool,
     fixer: RuleFixer<'_, 'a>,

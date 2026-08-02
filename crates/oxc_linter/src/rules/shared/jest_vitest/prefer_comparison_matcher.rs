@@ -91,7 +91,7 @@ pub fn run_on_jest_node<'a, 'c>(
     }
 
     let has_not_modifier =
-        parse_expect_jest_fn.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+        parse_expect_jest_fn.modifiers().any(|modifier| modifier.is_name_equal("not"));
     let Expression::BooleanLiteral(matcher_arg_value) = first_matcher_arg.get_inner_expression()
     else {
         return;
@@ -117,7 +117,7 @@ pub fn run_on_jest_node<'a, 'c>(
             call_span_end,
             arg_span_end,
             &parse_expect_jest_fn.local,
-            &parse_expect_jest_fn.modifiers(),
+            parse_expect_jest_fn.modifiers(),
             prefer_matcher_name,
             fixer,
         );
@@ -152,12 +152,12 @@ fn invert_operator(operator: BinaryOperator) -> Option<BinaryOperator> {
     }
 }
 
-fn building_code<'a>(
+fn building_code<'a: 'b, 'b>(
     binary_expr: &BinaryExpression<'a>,
     call_span_end: &str,
     arg_span_end: &str,
     local_name: &str,
-    modifiers: &[&KnownMemberExpressionProperty<'a>],
+    modifiers: impl Iterator<Item = &'b KnownMemberExpressionProperty<'a>>,
     prefer_matcher_name: &str,
     fixer: RuleFixer<'_, 'a>,
 ) -> String {

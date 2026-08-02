@@ -1,7 +1,6 @@
 use std::{borrow::Cow, cmp::Ordering};
 
 use cow_utils::CowUtils;
-use smallvec::SmallVec;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
@@ -466,10 +465,9 @@ impl<'a> ParsedExpectFnCall<'a> {
         self.members.get(matcher_index)
     }
 
-    /// An `expect` call carries at most a couple of modifiers (`.not`, `.resolves`,
-    /// `.rejects`), so the result stays on the stack.
-    pub fn modifiers(&self) -> SmallVec<[&KnownMemberExpressionProperty<'a>; 2]> {
-        self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect()
+    /// The modifiers (`.not`, `.resolves`, `.rejects`) in the chain, in source order.
+    pub fn modifiers(&self) -> impl Iterator<Item = &KnownMemberExpressionProperty<'a>> {
+        self.modifier_indices.iter().filter_map(|i| self.members.get(*i))
     }
 }
 
