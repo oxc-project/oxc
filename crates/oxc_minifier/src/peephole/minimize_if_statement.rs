@@ -152,17 +152,17 @@ impl<'a> PeepholeOptimizations {
     /// Returns true when the current statement position accepts only a single
     /// statement, so rewriting to multiple statements requires a block wrapper.
     fn parent_requires_single_statement(ctx: &TraverseCtx<'a>) -> bool {
-        match ctx.parent() {
+        matches!(
+            ctx.parent(),
             Ancestor::ForStatementBody(_)
-            | Ancestor::ForInStatementBody(_)
-            | Ancestor::ForOfStatementBody(_)
-            | Ancestor::WhileStatementBody(_)
-            | Ancestor::DoWhileStatementBody(_)
-            | Ancestor::IfStatementConsequent(_)
-            | Ancestor::IfStatementAlternate(_)
-            | Ancestor::LabeledStatementBody(_) => true,
-            _ => false,
-        }
+                | Ancestor::ForInStatementBody(_)
+                | Ancestor::ForOfStatementBody(_)
+                | Ancestor::WhileStatementBody(_)
+                | Ancestor::DoWhileStatementBody(_)
+                | Ancestor::IfStatementConsequent(_)
+                | Ancestor::IfStatementAlternate(_)
+                | Ancestor::LabeledStatementBody(_)
+        )
     }
 
     /// Turns `if (test) terminated; else stmt` into an `if` statement followed by
