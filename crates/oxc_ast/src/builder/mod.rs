@@ -78,6 +78,7 @@
 use oxc_allocator::{Allocator, GetAllocator};
 use oxc_syntax::node::NodeId;
 
+pub mod builders;
 mod custom;
 
 /// Trait for types which can create AST nodes.

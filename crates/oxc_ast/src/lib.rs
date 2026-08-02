@@ -53,6 +53,7 @@ mod serialize;
 
 mod generated {
     pub mod ast_kind;
+    pub mod builders;
 
     #[cfg(debug_assertions)]
     mod assert_layouts;
