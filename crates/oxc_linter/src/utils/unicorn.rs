@@ -2,11 +2,11 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, CallExpression, Expression, FormalParameters, FunctionBody,
-        IdentifierReference, ImportDeclarationSpecifier, LogicalExpression, MemberExpression,
-        Statement, match_member_expression,
+        IdentifierReference, ImportDeclaration, ImportDeclarationSpecifier, LogicalExpression,
+        MemberExpression, Statement, match_member_expression,
     },
 };
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{ContentEq, Span};
 use oxc_syntax::{
     operator::LogicalOperator,
@@ -32,6 +32,28 @@ pub const BUILT_IN_ERRORS: [&str; 9] = [
     "AggregateError",
 ];
 
+/// Resolves `ident` to the [`ImportDeclaration`] that binds it, along with its [`SymbolId`].
+///
+/// Returns `None` when the reference is unresolved, the symbol is not an import binding,
+/// or its declaration is not directly enclosed by an `ImportDeclaration`.
+fn resolve_import_declaration<'a>(
+    ident: &IdentifierReference,
+    ctx: &LintContext<'a>,
+) -> Option<(SymbolId, &'a ImportDeclaration<'a>)> {
+    let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id()?;
+
+    if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+        return None;
+    }
+
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return None;
+    };
+
+    Some((symbol_id, import_decl))
+}
+
 /// Returns `true` when `ident` resolves to any import binding from `module_name`.
 ///
 /// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
@@ -44,21 +66,8 @@ pub fn is_import_from_module(
     module_name: &str,
     ctx: &LintContext,
 ) -> bool {
-    let reference = ctx.scoping().get_reference(ident.reference_id());
-    let Some(symbol_id) = reference.symbol_id() else {
-        return false;
-    };
-
-    if !ctx.scoping().symbol_flags(symbol_id).is_import() {
-        return false;
-    }
-
-    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
-    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
-        return false;
-    };
-
-    import_decl.source.value.as_str() == module_name
+    resolve_import_declaration(ident, ctx)
+        .is_some_and(|(_, import_decl)| import_decl.source.value.as_str() == module_name)
 }
 
 /// Returns `true` when `ident` resolves to a named import with the given source module and
@@ -77,18 +86,13 @@ pub fn is_import_symbol(
     imported_name: &str,
     ctx: &LintContext,
 ) -> bool {
-    if !is_import_from_module(ident, module_name, ctx) {
+    let Some((symbol_id, import_decl)) = resolve_import_declaration(ident, ctx) else {
+        return false;
+    };
+
+    if import_decl.source.value.as_str() != module_name {
         return false;
     }
-
-    let reference = ctx.scoping().get_reference(ident.reference_id());
-    let Some(symbol_id) = reference.symbol_id() else {
-        return false;
-    };
-    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
-    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
-        return false;
-    };
 
     import_decl.specifiers.iter().flatten().any(|specifier| match specifier {
         ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
