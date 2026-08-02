@@ -169,9 +169,15 @@ impl<T: ?Sized> Box<'_, T> {
     ///
     /// # SAFETY
     ///
-    /// * Pointer must point to a valid `T`.
     /// * Pointer must point to within an `Allocator`.
-    /// * Caller must ensure that the pointer is valid for the lifetime of the `Box`.
+    /// * Pointer must point to memory sized and aligned for a `T`.
+    /// * That memory must stay valid for the lifetime of the [`Box`].
+    /// * That memory must hold a valid `T` before the [`Box`] is dereferenced.
+    ///
+    /// The `T` does not have to be initialized when the [`Box`] is created.
+    /// A [`Box`] is only a pointer, so creating one neither reads nor drops its pointee.
+    /// But caller must ensure it's never dereferenced, or passed to safe code which could,
+    /// before the `T` is initialized.
     pub const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
