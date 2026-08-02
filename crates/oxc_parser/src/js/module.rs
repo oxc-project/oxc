@@ -450,7 +450,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Module goal so the declaration parses under `Await` on the first pass and
         // isn't reparsed. e.g. `@foo export default class C { x = await + 1 }`
         if self.ctx.has_top_level() {
-            if !self.source_type.is_module() {
+            if self.source_type.is_script() || self.source_type.is_unambiguous() {
                 self.error_on_script(diagnostics::unexpected_export(export_span));
             }
             if self.source_type.is_unambiguous() {

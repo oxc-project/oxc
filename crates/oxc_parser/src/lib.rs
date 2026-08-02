@@ -1114,6 +1114,14 @@ mod test {
 
         let module_ret = Parser::new(&allocator, "export {};", SourceType::mjs()).parse();
         assert!(module_ret.diagnostics.is_empty());
+
+        let commonjs_ret = Parser::new(
+            &allocator,
+            "export function foo(): void; export function foo() {}",
+            SourceType::cjs().with_typescript(true),
+        )
+        .parse();
+        assert!(commonjs_ret.diagnostics.is_empty());
     }
 
     #[test]

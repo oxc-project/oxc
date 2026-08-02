@@ -3,7 +3,7 @@ commit: c86e9e4b
 parser_babel Summary:
 AST Parsed     : 2235/2235 (100.00%)
 Positive Passed: 2221/2235 (99.37%)
-Negative Passed: 1728/1743 (99.14%)
+Negative Passed: 1729/1743 (99.20%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -15,8 +15,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/conditional/arrow-param/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/invalid-as-namespace-duplicate-identifier/input.ts
 
@@ -5412,6 +5410,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                     ──────────
    ╰────
 
+  × Unexpected export.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:1]
+ 1 │ export \u0061sync function y() { await x }
+   · ──────
+   ╰────
+
   × Keywords cannot contain escape characters
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/invalid-escape-export-async-function/input.js:1:8]
  1 │ export \u0061sync function y() { await x }
@@ -9815,6 +9819,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ───────────
    ╰────
 
+  × Unexpected export.
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-identifier/invalid_expression_await/input.js:1:1]
+ 1 │ export var answer = await + 1;
+   · ──────
+   ╰────
+
   × Cannot use export statement outside a module
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-identifier/invalid_expression_await/input.js:1:1]
  1 │ export var answer = await + 1;
@@ -9839,6 +9849,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Unexpected export.
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-identifier/invalid_var_await/input.js:1:1]
+ 1 │ export var await;
+   · ──────
+   ╰────
 
   × Cannot use export statement outside a module
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-identifier/invalid_var_await/input.js:1:1]
@@ -13976,6 +13992,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ───────
    ╰────
   help: Remove the duplicate modifier.
+
+  × Unexpected export.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts:1:1]
+ 1 │ export = f;
+   · ──────
+   ╰────
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/empty-type-parameters/input.ts:1:13]

@@ -1,16 +1,14 @@
 commit: c86e9e4b
 
-Passed: 771/1164
+Passed: 734/1164
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
-* babel-plugin-transform-export-namespace-from
 * babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-react-display-name
 
 
-# babel-preset-env (38/85)
+# babel-preset-env (35/85)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
@@ -27,10 +25,49 @@ env: Systemjs module is not implemented.
 env: Umd module is not implemented.
 
 * export-namespace-from/auto-esm-not-supported/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-preset-env/test/fixtures/export-namespace-from/auto-esm-not-supported/input.mjs:1:1]
+ 1 | export * as foo from "./foo.mjs";
+   : ^^^^^^
+   `----
+
 
 * export-namespace-from/auto-export-namespace-not-supported/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-preset-env/test/fixtures/export-namespace-from/auto-export-namespace-not-supported/input.mjs:1:1]
+ 1 | export * as foo from "./foo.mjs";
+   : ^^^^^^
+   `----
+
+
+* export-namespace-from/false-export-namespace-not-supported/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-preset-env/test/fixtures/export-namespace-from/false-export-namespace-not-supported/input.mjs:1:1]
+ 1 | export * as foo from "./foo.mjs";
+   : ^^^^^^
+   `----
+
+
+* export-namespace-from/false-export-namespace-not-supported-caller-supported/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-preset-env/test/fixtures/export-namespace-from/false-export-namespace-not-supported-caller-supported/input.mjs:1:1]
+ 1 | export * as foo from "./foo.mjs";
+   : ^^^^^^
+   `----
+
+
+* export-namespace-from/false-export-namespace-supported/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-preset-env/test/fixtures/export-namespace-from/false-export-namespace-supported/input.mjs:1:1]
+ 1 | export * as foo from "./foo.mjs";
+   : ^^^^^^
+   `----
+
 
 * modules/auto-cjs/input.mjs
 x Output mismatch
@@ -75,13 +112,26 @@ x Output mismatch
 x Output mismatch
 
 * plugins-integration/issue-16155/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-preset-env/test/fixtures/plugins-integration/issue-16155/input.mjs:1:1]
+ 1 | export * as Extra from "./extra.js"
+   : ^^^^^^
+   `----
+
 
 * plugins-integration/issue-7527/input.mjs
 x Output mismatch
 
 * plugins-integration/regression-2892/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-preset-env/test/fixtures/plugins-integration/regression-2892/input.mjs:1:1]
+ 1 | export default class Foo {
+   : ^^^^^^
+ 2 |   async bar() {
+   `----
+
 
 * plugins-integration/regression-4855/input.js
 x Output mismatch
@@ -153,12 +203,128 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (25/28)
+# babel-plugin-transform-explicit-resource-management (18/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
 * transform-sync/named-evaluation/input.js
 x Output mismatch
+
+* transform-top-level/await-or-not-preserved/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/await-or-not-preserved/input.mjs:4:1]
+ 3 | 
+ 4 | export { x, y };
+   : ^^^^^^
+   `----
+
+
+* transform-top-level/hoisting/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting/input.mjs:2:1]
+ 1 | import { doSomething } from "somewhere";
+ 2 | export * from "somewhere else";
+   : ^^^^^^
+ 3 | export * as ns from "somewhere else";
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting/input.mjs:3:1]
+ 2 | export * from "somewhere else";
+ 3 | export * as ns from "somewhere else";
+   : ^^^^^^
+ 4 | 
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting/input.mjs:7:1]
+ 6 | function h() { b; A; }
+ 7 | export function g() { c; }
+   : ^^^^^^
+ 8 | 
+   `----
+
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting/input.mjs:11:1]
+ 10 | 
+ 11 | export { f };
+    : ^^^^^^
+ 12 | export let { b } = {};
+    `----
+
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting/input.mjs:12:1]
+ 11 | export { f };
+ 12 | export let { b } = {};
+    : ^^^^^^
+ 13 | 
+    `----
+
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting/input.mjs:16:1]
+ 15 | class A {}
+ 16 | export class B {}
+    : ^^^^^^
+ 17 | 
+    `----
+
+
+* transform-top-level/hoisting-default-clas-anon/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting-default-clas-anon/input.mjs:2:1]
+ 1 | using x = null;
+ 2 | export default class {}
+   : ^^^^^^
+   `----
+
+
+* transform-top-level/hoisting-default-class/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting-default-class/input.mjs:2:1]
+ 1 | using x = null;
+ 2 | export default class C {}
+   : ^^^^^^
+   `----
+
+
+* transform-top-level/hoisting-default-expr/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting-default-expr/input.mjs:2:1]
+ 1 | using x = null;
+ 2 | export default doSomething();
+   : ^^^^^^
+   `----
+
+
+* transform-top-level/hoisting-default-fn/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting-default-fn/input.mjs:2:1]
+ 1 | using x = null;
+ 2 | export default function fn() {}
+   : ^^^^^^
+   `----
+
+
+* transform-top-level/hoisting-default-fn-anon/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-top-level/hoisting-default-fn-anon/input.mjs:2:1]
+ 1 | using x = null;
+ 2 | export default function fn() {}
+   : ^^^^^^
+   `----
+
 
 * transform-top-level/hoisting-mutate-outer-class-binding/input.js
 x Output mismatch
@@ -178,7 +344,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (214/269)
+# babel-plugin-transform-class-properties (193/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -196,6 +362,57 @@ x Output mismatch
 
 * assumption-setPublicClassFields/computed/input.js
 x Output mismatch
+
+* assumption-setPublicClassFields/non-block-arrow-func/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/assumption-setPublicClassFields/non-block-arrow-func/input.mjs:1:1]
+ 1 | export default param =>
+   : ^^^^^^
+ 2 |   class App {
+   `----
+
+
+* assumption-setPublicClassFields/regression-T2983/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/assumption-setPublicClassFields/regression-T2983/input.mjs:5:1]
+ 4 | 
+ 5 | export default class {
+   : ^^^^^^
+ 6 |   static test = true
+   `----
+
+
+* assumption-setPublicClassFields/regression-T7364/input.mjs
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/assumption-setPublicClassFields/regression-T7364/input.mjs:13:1]
+ 12 | 
+ 13 | export default class MyClass3 {
+    : ^^^^^^
+ 14 |   myAsyncMethod = async () => {
+    `----
+
+
+* assumption-setPublicClassFields/static-export/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/assumption-setPublicClassFields/static-export/input.mjs:1:1]
+ 1 | export class MyClass {
+   : ^^^^^^
+ 2 |   static property = value;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/assumption-setPublicClassFields/static-export/input.mjs:5:1]
+ 4 | 
+ 5 | export default class MyClass2 {
+   : ^^^^^^
+ 6 |   static property = value;
+   `----
+
 
 * assumption-setPublicClassFields/static-infer-name/input.js
 x Output mismatch
@@ -228,7 +445,24 @@ x Output mismatch
 x Output mismatch
 
 * private/class-shadow-builtins/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private/class-shadow-builtins/input.mjs:1:1]
+ 1 | export class TypeError {
+   : ^^^^^^
+ 2 |   #message
+   `----
+
+
+* private/non-block-arrow-func/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private/non-block-arrow-func/input.mjs:1:1]
+ 1 | export default param =>
+   : ^^^^^^
+ 2 |   class App {
+   `----
+
 
 * private/optional-chain-cast-to-boolean/input.js
 x Output mismatch
@@ -251,6 +485,47 @@ x Output mismatch
 * private/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
+* private/regression-T2983/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private/regression-T2983/input.mjs:5:1]
+ 4 | 
+ 5 | export default class {
+   : ^^^^^^
+ 6 |   static #test = true
+   `----
+
+
+* private/regression-T7364/input.mjs
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private/regression-T7364/input.mjs:13:1]
+ 12 | 
+ 13 | export default class MyClass3 {
+    : ^^^^^^
+ 14 |   #myAsyncMethod = async () => {
+    `----
+
+
+* private/static-export/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private/static-export/input.mjs:1:1]
+ 1 | export class MyClass {
+   : ^^^^^^
+ 2 |   static #property = value;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private/static-export/input.mjs:5:1]
+ 4 | 
+ 5 | export default class MyClass2 {
+   : ^^^^^^
+ 6 |   static #property = value;
+   `----
+
+
 * private/static-infer-name/input.js
 x Output mismatch
 
@@ -261,7 +536,24 @@ x Output mismatch
 x Output mismatch
 
 * private-loose/class-shadow-builtins/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private-loose/class-shadow-builtins/input.mjs:1:1]
+ 1 | export class TypeError {
+   : ^^^^^^
+ 2 |   #message
+   `----
+
+
+* private-loose/non-block-arrow-func/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private-loose/non-block-arrow-func/input.mjs:1:1]
+ 1 | export default param =>
+   : ^^^^^^
+ 2 |   class App {
+   `----
+
 
 * private-loose/optional-chain-before-member-call/input.js
 x Output mismatch
@@ -308,11 +600,37 @@ x Output mismatch
 * private-loose/parenthesized-optional-member-call-with-transform/input.js
 x Output mismatch
 
+* private-loose/static-export/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private-loose/static-export/input.mjs:1:1]
+ 1 | export class MyClass {
+   : ^^^^^^
+ 2 |   static #property = value;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/private-loose/static-export/input.mjs:5:1]
+ 4 | 
+ 5 | export default class MyClass2 {
+   : ^^^^^^
+ 6 |   static #property = value;
+   `----
+
+
 * private-loose/static-infer-name/input.js
 x Output mismatch
 
 * public/class-shadow-builtins/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public/class-shadow-builtins/input.mjs:1:1]
+ 1 | export class TypeError {
+   : ^^^^^^
+ 2 |   message
+   `----
+
 
 * public/computed/input.js
 x Output mismatch
@@ -320,14 +638,123 @@ x Output mismatch
 * public/delete-super-property/input.js
 x Output mismatch
 
+* public/non-block-arrow-func/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public/non-block-arrow-func/input.mjs:1:1]
+ 1 | export default param =>
+   : ^^^^^^
+ 2 |   class App {
+   `----
+
+
+* public/regression-T2983/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public/regression-T2983/input.mjs:5:1]
+ 4 | 
+ 5 | export default class {
+   : ^^^^^^
+ 6 |   static test = true
+   `----
+
+
+* public/regression-T7364/input.mjs
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public/regression-T7364/input.mjs:13:1]
+ 12 | 
+ 13 | export default class MyClass3 {
+    : ^^^^^^
+ 14 |   myAsyncMethod = async () => {
+    `----
+
+
+* public/static-export/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public/static-export/input.mjs:1:1]
+ 1 | export class MyClass {
+   : ^^^^^^
+ 2 |   static property = value;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public/static-export/input.mjs:5:1]
+ 4 | 
+ 5 | export default class MyClass2 {
+   : ^^^^^^
+ 6 |   static property = value;
+   `----
+
+
 * public/static-infer-name/input.js
 x Output mismatch
 
 * public-loose/class-shadow-builtins/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public-loose/class-shadow-builtins/input.mjs:1:1]
+ 1 | export class TypeError {
+   : ^^^^^^
+ 2 |   message
+   `----
+
 
 * public-loose/computed/input.js
 x Output mismatch
+
+* public-loose/non-block-arrow-func/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public-loose/non-block-arrow-func/input.mjs:1:1]
+ 1 | export default param =>
+   : ^^^^^^
+ 2 |   class App {
+   `----
+
+
+* public-loose/regression-T2983/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public-loose/regression-T2983/input.mjs:5:1]
+ 4 | 
+ 5 | export default class {
+   : ^^^^^^
+ 6 |   static test = true
+   `----
+
+
+* public-loose/regression-T7364/input.mjs
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public-loose/regression-T7364/input.mjs:13:1]
+ 12 | 
+ 13 | export default class MyClass3 {
+    : ^^^^^^
+ 14 |   myAsyncMethod = async () => {
+    `----
+
+
+* public-loose/static-export/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public-loose/static-export/input.mjs:1:1]
+ 1 | export class MyClass {
+   : ^^^^^^
+ 2 |   static property = value;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/public-loose/static-export/input.mjs:5:1]
+ 4 | 
+ 5 | export default class MyClass2 {
+   : ^^^^^^
+ 6 |   static property = value;
+   `----
+
 
 * public-loose/static-infer-name/input.js
 x Output mismatch
@@ -337,6 +764,38 @@ x Output mismatch
 
 * regression/6153/input.js
 x Output mismatch
+
+* regression/7951/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/regression/7951/input.mjs:1:1]
+ 1 | export class Foo extends Bar {
+   : ^^^^^^
+ 2 |   static foo = {};
+   `----
+
+
+* regression/T2983/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/regression/T2983/input.mjs:5:1]
+ 4 | 
+ 5 | export default class {
+   : ^^^^^^
+ 6 |   static test = true
+   `----
+
+
+* regression/T7364/input.mjs
+
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-class-properties/test/fixtures/regression/T7364/input.mjs:13:1]
+ 12 | 
+ 13 | export default class MyClass3 {
+    : ^^^^^^
+ 14 |   myAsyncMethod = async () => {
+    `----
+
 
 * source-maps/private-get/input.js
 x Output mismatch
@@ -827,6 +1286,44 @@ x Output mismatch
 x Output mismatch
 
 
+# babel-plugin-transform-export-namespace-from (0/4)
+* export-namespace/namespace-default/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-export-namespace-from/test/fixtures/export-namespace/namespace-default/input.mjs:1:1]
+ 1 | export * as default from "foo";
+   : ^^^^^^
+   `----
+
+
+* export-namespace/namespace-es6/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-export-namespace-from/test/fixtures/export-namespace/namespace-es6/input.mjs:1:1]
+ 1 | export * as foo from "bar";
+   : ^^^^^^
+   `----
+
+
+* export-namespace/namespace-string/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-export-namespace-from/test/fixtures/export-namespace/namespace-string/input.mjs:1:1]
+ 1 | export * as "some exports" from "foo";
+   : ^^^^^^
+   `----
+
+
+* export-namespace/namespace-typescript/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-export-namespace-from/test/fixtures/export-namespace/namespace-typescript/input.mjs:1:1]
+ 1 | export * as foo from "bar";
+   : ^^^^^^
+   `----
+
+
+
 # babel-plugin-transform-nullish-coalescing-operator (9/24)
 * assumption-noDocumentAll/transform/input.js
 x Output mismatch
@@ -879,7 +1376,35 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (29/39)
+# babel-plugin-transform-object-rest-spread (28/39)
+* object-rest/export/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/export/input.mjs:2:1]
+ 1 | // ExportNamedDeclaration
+ 2 | export var { b, ...c } = asdf2;
+   : ^^^^^^
+ 3 | // Skip
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/export/input.mjs:4:1]
+ 3 | // Skip
+ 4 | export var { bb, cc } = ads;
+   : ^^^^^^
+ 5 | export var [ dd, ee, ...ff ] = ads;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/export/input.mjs:5:1]
+ 4 | export var { bb, cc } = ads;
+ 5 | export var [ dd, ee, ...ff ] = ads;
+   : ^^^^^^
+   `----
+
+
 * object-rest/for-x/input.js
 x Output mismatch
 
@@ -927,11 +1452,27 @@ x Output mismatch
 # babel-plugin-transform-async-to-generator (9/31)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 
+  x Unexpected export.
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-async-to-generator/test/fixtures/assumption-ignoreFunctionLength-true/basic/input.mjs:15:1]
+ 14 | 
+ 15 | export default async ([...x]) => {};
+    : ^^^^^^
+ 16 | 
+    `----
+
+
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
   | rest-spread.
 
 
 * assumption-ignoreFunctionLength-true/export-default-function/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-async-to-generator/test/fixtures/assumption-ignoreFunctionLength-true/export-default-function/input.mjs:1:1]
+ 1 | export default async function (x) {}
+   : ^^^^^^
+   `----
+
 
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
   | rest-spread.
@@ -974,16 +1515,41 @@ x Output mismatch
 x Output mismatch
 
 * export-async/default-arrow-export/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-async-to-generator/test/fixtures/export-async/default-arrow-export/input.mjs:1:1]
+ 1 | export default async () => { return await foo(); }
+   : ^^^^^^
+   `----
+
 
 * export-async/default-export/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-async-to-generator/test/fixtures/export-async/default-export/input.mjs:1:1]
+ 1 | export default async function myFunc() {}
+   : ^^^^^^
+   `----
+
 
 * export-async/import-and-export/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-async-to-generator/test/fixtures/export-async/import-and-export/input.mjs:3:1]
+ 2 | 
+ 3 | export async function foo () { }
+   : ^^^^^^
+   `----
+
 
 * export-async/lone-export/input.mjs
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-async-to-generator/test/fixtures/export-async/lone-export/input.mjs:1:1]
+ 1 | export async function foo () { }
+   : ^^^^^^
+   `----
+
 
 * regression/15978/input.js
 x Output mismatch
@@ -1128,9 +1694,15 @@ after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 
 * declarations/nested-namespace/input.mjs
-Bindings mismatch:
-after transform: ScopeId(0): ["P"]
-rebuilt        : ScopeId(0): []
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/declarations/nested-namespace/input.mjs:2:1]
+ 1 | ; // Otherwise-empty file
+ 2 | export declare namespace P {
+   : ^^^^^^
+ 3 |   export namespace C {}
+   `----
+
 
 * enum/enum-merging-inner-references/input.ts
 Symbol redeclarations mismatch for "Animals":
@@ -1448,6 +2020,18 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
   x Option `useBuiltIns` is not implemented for object-rest-spread.
+
+
+
+# babel-plugin-transform-react-display-name (15/16)
+* with-jsx-plugin/export-default/input.mjs
+
+  x Unexpected export.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-display-name/test/fixtures/with-jsx-plugin/export-default/input.mjs:1:1]
+ 1 | export default React.createClass({
+   : ^^^^^^
+ 2 |   render: function render() {
+   `----
 
 
 
