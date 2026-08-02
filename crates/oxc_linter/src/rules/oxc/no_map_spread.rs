@@ -16,6 +16,7 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::node::NodeId;
 
 use crate::{
     AstNode,
@@ -578,6 +579,9 @@ struct SpreadInReturnVisitor<'a, 'ctx, F> {
     cb: F,
     cb_scope_id: ScopeId,
     is_in_return: bool,
+    /// Declarations currently being visited while following identifiers
+    /// returned from the map callback.
+    visiting_declarations: Vec<NodeId>,
     /// Span covering returned expression. [`None`] when not in a return
     /// statement or no value is being returned (e.g. `return;`, but not `return
     /// undefined;`).
@@ -596,14 +600,20 @@ where
                     cb,
                     cb_scope_id: f.scope_id(),
                     is_in_return: f.is_expression(),
+                    visiting_declarations: Vec::new(),
                     return_span: f.is_expression().then(|| f.body.span()),
                 };
                 visitor.visit_arrow_function_body(&f.body);
                 return Some(visitor);
             }
-            Expression::FunctionExpression(f) => {
-                Self { ctx, cb, cb_scope_id: f.scope_id(), is_in_return: false, return_span: None }
-            }
+            Expression::FunctionExpression(f) => Self {
+                ctx,
+                cb,
+                cb_scope_id: f.scope_id(),
+                is_in_return: false,
+                visiting_declarations: Vec::new(),
+                return_span: None,
+            },
             _ => unreachable!(),
         };
 
@@ -677,10 +687,20 @@ where
                     return;
                 }
 
+                // Multiple bindings in the same declaration can reference
+                // one another in default values. Avoid recursively revisiting
+                // their declaration (and self-referential declarations).
+                let declaration_id = self.ctx.scoping().symbol_declaration(symbol_id);
+                if self.visiting_declarations.contains(&declaration_id) {
+                    return;
+                }
+                self.visiting_declarations.push(declaration_id);
+
                 // walk the declaration
-                let declaration_node =
-                    self.ctx.nodes().get_node(self.ctx.scoping().symbol_declaration(symbol_id));
+                let declaration_node = self.ctx.nodes().get_node(declaration_id);
                 self.visit_kind(declaration_node.kind());
+                let popped = self.visiting_declarations.pop();
+                debug_assert_eq!(popped, Some(declaration_id));
             }
             _ => {}
         }
@@ -747,6 +767,13 @@ fn test() {
         // ignoreArgs
         ("function foo(a) { return a.map(x => ({ ...(x ?? y) })) }", None),
         ("const foo = a => a.map(x => ({ ...(x ?? y) }))", None),
+        (
+            "const ids = result.map(obj => {
+                const { item: { id, alias = id } = {} } = obj;
+                return alias;
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -807,6 +834,13 @@ fn test() {
             Some(json!([{ "ignoreArgs": false }])),
         ),
         ("const foo = a => a.map(x => ({ ...(x ?? y) }))", Some(json!([{ "ignoreArgs": false }]))),
+        (
+            "const ids = result.map(obj => {
+                const { a = { ...obj }, b = a } = obj;
+                return b;
+            });",
+            None,
+        ),
     ];
 
     let fix: Vec<ExpectFixTestCase> = vec![
