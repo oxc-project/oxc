@@ -155,12 +155,15 @@ impl<'a> PeepholeOptimizations {
             && if_stmt.consequent.is_terminated()
             && let Some(alternate) = if_stmt.alternate.take()
         {
-            let new_stmts = if let Statement::BlockStatement(block_stmt) = alternate {
-                let mut new_stmts = ArenaVec::from_value_in(stmt.take_in(ctx), ctx);
-                Self::handle_block(&mut new_stmts, block_stmt, ctx);
-                new_stmts
-            } else {
-                ArenaVec::from_array_in([stmt.take_in(ctx), alternate], ctx)
+            let new_stmts = match alternate {
+                Statement::BlockStatement(block_stmt)
+                    if !block_stmt.body.iter().any(Self::statement_cares_about_scope) =>
+                {
+                    let mut new_stmts = ArenaVec::from_value_in(stmt.take_in(ctx), ctx);
+                    new_stmts.append(&mut block_stmt.unbox().body);
+                    new_stmts
+                }
+                alternate => ArenaVec::from_array_in([stmt.take_in(ctx), alternate], ctx),
             };
 
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());

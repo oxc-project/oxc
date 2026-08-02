@@ -1265,7 +1265,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
-    pub fn handle_block(
+    fn handle_block(
         result: &mut ArenaVec<'a, Statement<'a>>,
         block_stmt: ArenaBox<'a, BlockStatement<'a>>,
         ctx: &mut TraverseCtx<'a>,
