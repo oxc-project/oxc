@@ -100,11 +100,18 @@ fn is_blank_jsdoc(content: &str) -> bool {
 fn fix_span(jsdoc_span: Span, source_text: &str) -> Span {
     let mut span = Span::new(jsdoc_span.start - 3, jsdoc_span.end + 2);
     let prefix = &source_text[..span.start as usize];
+    let line_start = prefix.rfind('\n').map_or(0, |index| index + 1);
 
-    if let Some(line_break) = prefix.rfind('\n')
-        && prefix[line_break + 1..].bytes().all(|byte| matches!(byte, b' ' | b'\t'))
-    {
-        span.start = u32::try_from(line_break).unwrap_or(span.start);
+    if prefix[line_start..].bytes().all(|byte| matches!(byte, b' ' | b'\t')) {
+        span.start = u32::try_from(line_start).unwrap_or(span.start);
+
+        let suffix = &source_text[span.end as usize..];
+        span.end += if suffix.starts_with("\r\n") {
+            2
+        } else {
+            u32::from(suffix.starts_with('\r') || suffix.starts_with('\n'))
+        };
+
         return span;
     }
 
@@ -195,6 +202,7 @@ fn test() {
                   ",
             None,
         ),
+        ("foo();\r\n/** */\r\nbar();", Some(serde_json::json!([ { "enableFixer": true, }, ]))),
     ];
 
     let fix = vec![
@@ -234,6 +242,11 @@ fn test() {
                   ",
             "
                   ",
+            Some(serde_json::json!([ { "enableFixer": true, }, ])),
+        ),
+        (
+            "foo();\r\n/** */\r\nbar();",
+            "foo();\r\nbar();",
             Some(serde_json::json!([ { "enableFixer": true, }, ])),
         ),
     ];
