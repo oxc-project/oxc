@@ -34,10 +34,10 @@ jobs:
           path: /home/runner/.rustup
           cache: rust
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
       - run: rustup component add llvm-tools-preview
-      - uses: taiki-e/install-action@7572810d7dd469b651bb7793945692cf78da5dd7 # v2.85.0
+      - uses: taiki-e/install-action@065d6a08a14e61e89fb0a4c10eecdbdef39c7d8e # v2.85.4
         with:
           tool: cargo-llvm-cov
 
