@@ -102,7 +102,7 @@ fn test_fold_returns() {
         "function f(){return x?(y+=1):(y+=2)}",
     );
 
-    test("function f(){if(x)return;else return 2-x}", "function f(){if (!x) return 2 - x;}");
+    test("function f(){if(x)return;else return 2-x}", "function f(){return x?void 0:2 - x;}");
     test("function f(){if(x)return;return 2-x}", "function f(){if (!x) return 2 - x;}");
     test("function f(){if(x)return x;else return}", "function f(){if(x)return x;}");
     test("function f(){if(x)return x;return}", "function f(){if(x)return x}");

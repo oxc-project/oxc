@@ -912,22 +912,7 @@ impl<'a> PeepholeOptimizations {
             {
                 // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 result.push(Statement::IfStatement(if_stmt));
-                loop {
-                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                        && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
-                        && if_stmt.consequent.is_terminated()
-                        && let Some(stmt) = if_stmt.alternate.take()
-                    {
-                        if let Statement::BlockStatement(block_stmt) = stmt {
-                            Self::handle_block(result, block_stmt, ctx);
-                        } else {
-                            result.push(stmt);
-                            ctx.notice_change();
-                        }
-                        continue;
-                    }
-                    break;
-                }
+                Self::try_unfold_else_after_terminator(result, ctx);
                 return ControlFlow::Continue(());
             }
         }
@@ -1272,7 +1257,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
-    fn handle_block(
+    pub fn handle_block(
         result: &mut ArenaVec<'a, Statement<'a>>,
         block_stmt: ArenaBox<'a, BlockStatement<'a>>,
         ctx: &mut TraverseCtx<'a>,

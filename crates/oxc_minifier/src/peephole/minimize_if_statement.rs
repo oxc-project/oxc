@@ -1,10 +1,10 @@
-use oxc_allocator::TakeIn;
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 
+use crate::TraverseCtx;
+use crate::is_terminated::IsTerminated;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
-
-use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -146,6 +146,43 @@ impl<'a> PeepholeOptimizations {
             Statement::BlockStatement(block_stmt) if block_stmt.body.is_empty() => true,
             Statement::EmptyStatement(_) => true,
             _ => false,
+        }
+    }
+
+    pub fn try_unfold_if_else(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Statement::IfStatement(if_stmt) = stmt
+            && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
+            && if_stmt.consequent.is_terminated()
+        {
+            let mut stmts = ArenaVec::from_value_in(stmt.take_in(ctx), ctx);
+            Self::try_unfold_else_after_terminator(&mut stmts, ctx);
+
+            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+            let new_stmt =
+                Statement::new_block_statement_with_scope_id(stmt.span(), stmts, scope_id, ctx);
+            ctx.replace_statement(stmt, new_stmt);
+        }
+    }
+
+    pub fn try_unfold_else_after_terminator(
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        loop {
+            if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
+                && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
+                && if_stmt.consequent.is_terminated()
+                && let Some(stmt) = if_stmt.alternate.take()
+            {
+                if let Statement::BlockStatement(block_stmt) = stmt {
+                    Self::handle_block(result, block_stmt, ctx);
+                } else {
+                    result.push(stmt);
+                    ctx.notice_change();
+                }
+                continue;
+            }
+            break;
         }
     }
 }
