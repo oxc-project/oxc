@@ -199,7 +199,7 @@ fn has_blank_line_between(left: Span, right: Span, ctx: &LintContext) -> bool {
 
     let between_span = Span::new(left.end, right.start);
 
-    ctx.source_range(between_span).contains("\n")
+    ctx.source_range(between_span).contains('\n')
 }
 
 #[test]
