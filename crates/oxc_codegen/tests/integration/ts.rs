@@ -359,6 +359,12 @@ fn ts_as_expression_in_binary_expr() {
 }
 
 #[test]
+fn ts_cast_expression_in_conditional_test() {
+    test_same("let a = typeof ((\"a\" as unknown) ? /a/ : false);\n");
+    test_same("let a = typeof ((\"a\" satisfies foo) ? /a/ : false);\n");
+}
+
+#[test]
 fn ts_type_assertion() {
     // `<T>x` (TS angle-bracket assertion) is only valid in non-tsx source.
     let test_ts =
