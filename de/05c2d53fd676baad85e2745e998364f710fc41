@@ -1,0 +1,49 @@
+Cargo.lock
+  s_0468d6c34590c4::t_b77c651dd04d07 1845-1855
+tasks/coverage/src/estree_cases.rs
+  s_0468d6c34590c4::t_3f1688822e8ebd 1-81
+.github/workflows/ci.yml
+  s_0468d6c34590c4::t_3d85198a5d13d1 235-262
+Cargo.toml
+  s_0468d6c34590c4::t_fc249778169f88 171
+justfile
+  s_0468d6c34590c4::t_e96da7c0f6e984 129-133
+pnpm-lock.yaml
+  s_0468d6c34590c4::t_99022023e4a4a1 405-413
+pnpm-workspace.yaml
+  s_0468d6c34590c4::t_e5261884ddab8d 9
+tasks/ast_transfer_conformance/.gitignore
+  s_0468d6c34590c4::t_636126f2863d32 1-4
+tasks/ast_transfer_conformance/Cargo.toml
+  s_0468d6c34590c4::t_5413fc6d338c47 1-29
+tasks/ast_transfer_conformance/README.md
+  s_0468d6c34590c4::t_88dc8b5e9e26d2 1-20
+tasks/ast_transfer_conformance/build.rs
+  s_0468d6c34590c4::t_99a83e9cb18d3e 1-3
+tasks/ast_transfer_conformance/package.json
+  s_0468d6c34590c4::t_4086bca41c3c0d 1-20
+tasks/ast_transfer_conformance/src/lib.rs
+  s_0468d6c34590c4::t_0c873f1ce8aef5 1-237
+tasks/ast_transfer_conformance/test/conformance.test.ts
+  s_0468d6c34590c4::t_6e3384c2078259 1-138
+tasks/coverage/src/lib.rs
+  s_0468d6c34590c4::t_f146a3a63210e5 4
+tasks/coverage/src/load.rs
+  s_0468d6c34590c4::t_7baf329ddb57fd 199,265
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "de05c2d53fd676baad85e2745e998364f710fc41",
+  "prompts": {},
+  "sessions": {
+    "s_0468d6c34590c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc85d-f98e-7651-a22e-427584ce496d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
