@@ -17,9 +17,6 @@ impl<'a> JSDocFinder<'a> {
         Self { attached, not_attached }
     }
 
-    /// Borrows rather than clones: `JSDoc` caches its parse in a `OnceCell`. Handing out a clone
-    /// parses into the temporary, leaving the cell in the map uninitialized, so the next lookup
-    /// clones an empty cache and parses again - once per caller.
     pub fn get_one_by_node<'b>(
         &'b self,
         nodes: &AstNodes<'a>,
