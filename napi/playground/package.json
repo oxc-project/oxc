@@ -3,6 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
+  "files": [
+    "browser.js",
+    "index.d.ts",
+    "index.js",
+    "playground.wasi-browser.js",
+    "playground.wasi.cjs",
+    "playground.wasm32-wasi.debug.wasm",
+    "playground.wasm32-wasi.wasm",
+    "wasi-worker-browser.mjs",
+    "wasi-worker.mjs"
+  ],
   "type": "module",
   "exports": {
     ".": {
