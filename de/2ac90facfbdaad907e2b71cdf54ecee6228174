@@ -1,0 +1,21 @@
+tasks/ast_transfer_conformance/src/lib.rs
+  s_0468d6c34590c4::t_e500dea465a7ef 66,200-206
+tasks/ast_transfer_conformance/test/conformance.test.ts
+  s_0468d6c34590c4::t_dcc2dbbd85c651 72,113-124,133,143-147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "de2ac90facfbdaad907e2b71cdf54ecee6228174",
+  "prompts": {},
+  "sessions": {
+    "s_0468d6c34590c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc85d-f98e-7651-a22e-427584ce496d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
