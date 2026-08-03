@@ -1,0 +1,19 @@
+napi/parser/package.json
+  s_22934ff2bbec66::t_e12357fde4e5ae 68,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f1eb99fdce90d45774cf8e927fa95e8825aeb3bb",
+  "prompts": {},
+  "sessions": {
+    "s_22934ff2bbec66": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc75b-94a9-7b43-a314-8fc80679555d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
