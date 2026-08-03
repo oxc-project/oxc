@@ -22,3 +22,9 @@
     [main-end] theme(spacing.4)
     [full-end];
 }
+
+/* ...but INSIDE function arguments the line structure is NOT preserved: re-wrap */
+.args {
+  grid-template-columns: repeat(2, minmax(0, 1fr)
+    minmax(0, 2fr));
+}
