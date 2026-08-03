@@ -14,8 +14,6 @@ impl<'a> PeepholeOptimizations {
         if_stmt: &mut IfStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
-
         // Flip empty consequent so the rest of the function can assume consequent is non-empty.
         if Self::is_statement_empty(&if_stmt.consequent) {
             if if_stmt.alternate.is_none() {
@@ -61,7 +59,6 @@ impl<'a> PeepholeOptimizations {
                     let new_test = unary_expr.argument.take_in(ctx);
                     ctx.replace_expression(&mut if_stmt.test, new_test);
                     std::mem::swap(&mut if_stmt.consequent, alternate);
-                    Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
                 }
             }
         } else if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
@@ -94,6 +91,8 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_expression(&mut if_stmt.test, new_test);
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
+
+        Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         None
     }
 
