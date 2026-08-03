@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.62.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- a0c7788 ast: [**BREAKING**] Change `TSIndexSignatureName::name` to `Ident` (#25150) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 1b57f78 oxfmt: Support tsx-in-vue (#25063) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- a9e76e9 oxfmt: Rework tsx-in-vue support (#25106) (leaysgur)
+- ca1ba71 formatter: Hug arrows with type-reference return annotations (#25044) (Pitiș Radu)
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+
+### ⚡ Performance
+
+- b91d5a8 formatter_css,formatter_graphql,formatter_yaml,formatter_json: Pre alloc IR buffers (#25234) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+- 193e16f formatter/jsdoc: Correct `str_width` attribution (#25142) (leaysgur)
+
 ## [0.61.0] - 2026-07-27
 
 ### 🐛 Bug Fixes
