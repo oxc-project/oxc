@@ -7,7 +7,7 @@ use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, l
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let peeked = self.lexer.peek_token().kind();
 
@@ -103,7 +103,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl_parent: VariableDeclarationParent,
         kind: VariableDeclarationKind,
     ) -> VariableDeclarator<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let id = self.parse_binding_pattern();
 
@@ -184,7 +184,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         statement_ctx: StatementContext,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let is_await = self.eat(Kind::Await);
         let kind = if is_await {

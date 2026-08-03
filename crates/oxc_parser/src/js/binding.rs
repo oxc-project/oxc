@@ -9,7 +9,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `SingleNameBinding`
     ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
     pub(super) fn parse_binding_pattern_with_initializer(&mut self) -> BindingPattern<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let pattern = self.parse_binding_pattern();
         self.context_add(Context::In, |p| p.parse_initializer(start, pattern))
     }
@@ -41,7 +41,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.3.3 Object Binding Pattern
     fn parse_object_binding_pattern(&mut self) -> BindingPattern<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (list, rest) = self.parse_delimited_list_with_rest(
@@ -64,7 +64,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.3.3 Array Binding Pattern
     fn parse_array_binding_pattern(&mut self) -> BindingPattern<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let (list, rest) = self.parse_delimited_list_with_rest(
@@ -88,9 +88,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.3.3 Binding Rest Property
     pub(crate) fn parse_rest_element(&mut self) -> ArenaBox<'a, BindingRestElement<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `...`
-        let init_span = self.start_span();
+        let init_span = self.cur_start();
 
         let pattern = self.parse_binding_pattern_kind();
         // Rest element does not allow `?`, checked in checker/typescript.rs
@@ -123,9 +123,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// The type annotation will be parsed by the caller and stored on FormalParameterRest
     /// We don't consume it here so the caller can access it
     pub(crate) fn parse_rest_element_for_formal_parameter(&mut self) -> BindingRestElement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `...`
-        let init_span = self.start_span();
+        let init_span = self.cur_start();
 
         let pattern = self.parse_binding_pattern_kind();
         // Rest element does not allow `?`, checked in checker/typescript.rs
@@ -152,7 +152,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `SingleNameBinding`[?Yield, ?Await]
     ///     `PropertyName`[?Yield, ?Await] : `BindingElement`[?Yield, ?Await]
     pub(super) fn parse_binding_property(&mut self) -> BindingProperty<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let mut shorthand = false;
         let is_binding_identifier = self.cur_kind().is_binding_identifier();

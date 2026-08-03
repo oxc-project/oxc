@@ -494,7 +494,7 @@ impl<C: Config> ParserImpl<'_, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
         let mut modifiers = Modifiers::empty();
         while let Some(modifier_kind) = self.get_modifier() {
-            let modifier = Modifier::new(self.start_span(), modifier_kind);
+            let modifier = Modifier::new(self.cur_start(), modifier_kind);
             self.bump_any();
             self.check_modifier(modifiers.kinds(), modifier);
             modifiers.add(modifier.kind, modifier.start);
@@ -556,7 +556,7 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let kind = self.cur_kind();
 
         if kind == Kind::Const {

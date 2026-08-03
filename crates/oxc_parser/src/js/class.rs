@@ -216,7 +216,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_class_body(&mut self) -> ArenaBox<'a, ClassBody<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let class_elements = self.parse_normal_list_breakable(Kind::LCurly, Kind::RCurly, |p| {
             // Skip empty class element `;`
             if p.eat(Kind::Semicolon) {
@@ -244,7 +244,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_class_element_impl(&mut self) -> ClassElement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(

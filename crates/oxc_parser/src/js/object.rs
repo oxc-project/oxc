@@ -17,7 +17,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (object_expression_properties, comma_span) = self.context_add(Context::In, |p| {
@@ -44,7 +44,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// `PropertyDefinition`[Yield, Await]
     fn parse_object_literal_element(&mut self) -> ArenaBox<'a, ObjectProperty<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let modifiers = self.parse_modifiers(
             /* permit_const_as_modifier */ false,
@@ -139,7 +139,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
     pub(crate) fn parse_spread_element(&mut self) -> ArenaBox<'a, SpreadElement<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher();
         SpreadElement::boxed(self.end_span(start), argument, self)

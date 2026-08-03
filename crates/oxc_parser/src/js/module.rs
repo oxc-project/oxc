@@ -333,7 +333,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     // import * as name from "module-name"
     fn parse_import_namespace_specifier(&mut self) -> ImportDeclarationSpecifier<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `*`
         self.expect(Kind::As);
         let local = self.parse_binding_identifier();
@@ -371,7 +371,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.advance(keyword_kind);
 
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (with_entries, _) = self.context_remove(self.ctx, |p| {
@@ -397,7 +397,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let key = match self.cur_kind() {
             Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
             _ => ImportAttributeKey::Identifier(self.parse_identifier_name()),
@@ -455,7 +455,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let decl = match self.cur_kind() {
             // `export import A = B`
             Kind::Import => {
-                let import_span = self.start_span();
+                let import_span = self.cur_start();
                 self.bump_any();
                 // Pass `should_record_module_record: false` to prevent an `import` module record
                 // being created. It's an export not an import.
@@ -475,7 +475,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             Kind::At => {
-                let class_span = self.start_span();
+                let class_span = self.cur_start();
                 let after_export_decorators = self.parse_decorators();
                 if !decorators.is_empty() {
                     for decorator in &after_export_decorators {
@@ -635,7 +635,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ArenaBox<'a, ExportDeclaration<'a>> {
-        let decl_span = self.start_span();
+        let decl_span = self.cur_start();
         let reserved_ctx = self.ctx;
         let modifiers =
             if self.is_ts { self.eat_modifiers_before_declaration() } else { Modifiers::empty() };
@@ -674,7 +674,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ExportDefaultDeclarationKind<'a> {
-        let decl_span = self.start_span();
+        let decl_span = self.cur_start();
 
         // export default /* @__NO_SIDE_EFFECTS__ */ ...
         let has_no_side_effects_comment =
@@ -692,7 +692,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             decorators.extend(after_export_decorators);
         }
 
-        let function_span = self.start_span();
+        let function_span = self.cur_start();
 
         // ExportDeclaration :
         //   export default HoistableDeclaration
@@ -707,7 +707,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // a declaration. `[no LineTerminator here]` maps to `!next.is_on_new_line()`.
         let kind = self.cur_kind();
         if matches!(kind, Kind::Abstract | Kind::Async | Kind::Interface) {
-            let modifier_span = self.start_span();
+            let modifier_span = self.cur_start();
             let next = self.lexer.peek_token();
             if !next.is_on_new_line() {
                 // export default abstract class C {}
@@ -828,7 +828,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         specifier_type: ImportOrExport,
         parent_kind: ImportOrExportKind,
     ) -> ImportOrExportSpecifier<'a> {
-        let specifier_span = self.start_span();
+        let specifier_span = self.cur_start();
         let type_or_name_token = self.cur_token();
         let type_or_name_token_kind = type_or_name_token.kind();
         let mut check_identifier_token = self.cur_token();

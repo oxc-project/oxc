@@ -52,7 +52,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section [Expression](https://tc39.es/ecma262/#sec-ecmascript-language-expressions)
     pub(crate) fn parse_expr(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let has_decorator = self.ctx.has_decorator();
         if has_decorator {
@@ -229,7 +229,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // FunctionExpression, GeneratorExpression
         // AsyncFunctionExpression, AsyncGeneratorExpression
         if self.at_function_with_async() {
-            let start = self.start_span();
+            let start = self.cur_start();
             let r#async = self.eat(Kind::Async);
             return self.parse_function_expression(start, r#async);
         }
@@ -243,7 +243,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::LCurly => Expression::ObjectExpression(self.parse_object_expression()),
             // ClassExpression
             Kind::Class => self.parse_class_expression(
-                self.start_span(),
+                self.cur_start(),
                 &Modifiers::empty(),
                 ArenaVec::new_in(self),
             ),
@@ -269,13 +269,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         // Capture annotation flags before bumping `(` since bump resets them
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         self.bump_any(); // `bump` `(`
-        let expr_span = self.start_span();
+        let expr_span = self.cur_start();
         let (mut expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
                 Kind::RParen,
@@ -334,7 +334,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.2.2 This Expression
     fn parse_this_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any();
         Expression::new_this_expression(self.end_span(start), self)
     }
@@ -359,7 +359,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_literal_boolean(&mut self) -> ArenaBox<'a, BooleanLiteral> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let value = match self.cur_kind() {
             Kind::True => true,
             Kind::False => false,
@@ -511,7 +511,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     [ `ElementList`[?Yield, ?Await] ]
     ///     [ `ElementList`[?Yield, ?Await] , Elisionopt ]
     pub(crate) fn parse_array_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let (elements, comma_span) = self.context_add(Context::In, |p| {
@@ -549,7 +549,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `NoSubstitutionTemplate`
     ///     `SubstitutionTemplate`[?Yield, ?Await, ?Tagged]
     pub(crate) fn parse_template_literal(&mut self, tagged: bool) -> TemplateLiteral<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
 
         let (quasis, expressions) = match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
@@ -619,7 +619,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_template_element(&mut self, tagged: bool) -> TemplateElement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let cur_kind = self.cur_kind();
         let end_offset: u32 = match cur_kind {
             Kind::TemplateHead | Kind::TemplateMiddle => 2,
@@ -672,7 +672,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 ImportCall or ImportMeta
     fn parse_import_meta_or_call(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `import`
         match self.cur_kind() {
             Kind::Dot => {
@@ -713,7 +713,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// V8 Runtime calls.
     /// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
     pub(crate) fn parse_v8_intrinsic_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.expect(Kind::Percent);
         let name = self.parse_identifier_name();
 
@@ -742,7 +742,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 Left-Hand-Side Expression
     pub(crate) fn parse_lhs_expression_or_higher(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let mut in_optional_chain = false;
         // `MemberExpression`
         let primary = self.parse_primary_expression();
@@ -794,7 +794,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 Super Call
     fn parse_super(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `super`
         let span = self.end_span(start);
 
@@ -986,7 +986,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// [NewExpression](https://tc39.es/ecma262/#sec-new-operator)
     fn parse_new_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `new`
 
         if self.eat(Kind::Dot) {
@@ -1003,7 +1003,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
         }
 
-        let rhs_span = self.start_span();
+        let rhs_span = self.cur_start();
         let is_import = self.at(Kind::Import); // Syntax Error for `new import('mod')` but not `new (import('mod'))`.
         let mut optional = false;
         let mut callee = {
@@ -1201,7 +1201,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_jsx_expression();
         }
 
-        let start = self.start_span();
+        let start = self.cur_start();
         let lhs = self.parse_lhs_expression_or_higher();
         // ++ -- postfix update expressions
         let post_kind = self.cur_kind();
@@ -1271,11 +1271,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_unary_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let operator = map_unary_operator(self.cur_kind());
         self.bump_any();
         let pure_comment_index = self.lexer.trivia_builder.previous_token_has_pure_comment();
-        let mut argument = self.parse_simple_unary_expression(self.start_span());
+        let mut argument = self.parse_simple_unary_expression(self.cur_start());
         if let Some(index) = pure_comment_index
             && !Self::set_pure_on_call_or_new_expr(&mut argument)
         {
@@ -1288,7 +1288,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         lhs_precedence: Precedence,
     ) -> Expression<'a> {
-        let lhs_span = self.start_span();
+        let lhs_span = self.cur_start();
 
         let lhs_parenthesized = self.at(Kind::LParen);
         // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
@@ -1510,7 +1510,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return arrow_expr;
         }
 
-        let start = self.start_span();
+        let start = self.cur_start();
         let lhs_parenthesized = self.at(Kind::LParen);
         let lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
         let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(start));
@@ -1705,9 +1705,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Case 1: In await context (async function, module top-level, unambiguous mode top-level)
         // Always parse as await expression
         if self.ctx.has_await() {
-            let start = self.start_span();
+            let start = self.cur_start();
             self.bump_any(); // consume `await`
-            let argument = self.parse_unary_expression_or_higher(self.start_span());
+            let argument = self.parse_unary_expression_or_higher(self.cur_start());
             return Expression::new_await_expression(self.end_span(start), argument, self);
         }
 
@@ -1722,7 +1722,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Inside a function: await is always invalid in non-async functions, even in ESM.
         // Report error immediately.
         if self.is_unambiguous_await() {
-            let start = self.start_span();
+            let start = self.cur_start();
 
             if self.ctx.has_top_level() {
                 // At top level - upgrade to ESM immediately (like Babel's `sawUnambiguousESM`)
@@ -1737,7 +1737,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.bump_any(); // consume `await`
             // Parse argument with await context enabled for this expression
             self.ctx = self.ctx.and_await(true);
-            let argument = self.parse_unary_expression_or_higher(self.start_span());
+            let argument = self.parse_unary_expression_or_higher(self.cur_start());
             self.ctx = self.ctx.and_await(false);
             return Expression::new_await_expression(self.end_span(start), argument, self);
         }
@@ -1749,7 +1749,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_decorated_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(false, false);
         if self.at(Kind::Class) {
@@ -1776,7 +1776,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   ( `Expression`[+In, ?Yield, ?Await] )
     ///   `DecoratorCallExpression`
     pub(crate) fn parse_decorator(&mut self) -> Decorator<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump @
         let expr = self.context_add(Context::Decorator, Self::parse_lhs_expression_or_higher);
         Decorator::new(self.end_span(start), expr, self)

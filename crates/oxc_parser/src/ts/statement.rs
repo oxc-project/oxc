@@ -45,7 +45,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_ts_enum_body(&mut self) -> TSEnumBody<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (members, _) = self.parse_delimited_list(
@@ -59,7 +59,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> TSEnumMember<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let id = self.parse_ts_enum_member_name();
         let initializer = if self.eat(Kind::Eq) {
             Some(self.parse_assignment_expression_or_higher())
@@ -119,7 +119,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at(Kind::Colon) {
             return None;
         }
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump ':'
         let type_annotation = self.parse_ts_type();
         Some(TSTypeAnnotation::boxed(self.end_span(start), type_annotation, self))
@@ -273,7 +273,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let mut extends = ArenaVec::with_capacity_in(1, self);
         loop {
-            let start = self.start_span();
+            let start = self.cur_start();
             let mut extend = self.parse_lhs_expression_or_higher();
             if self.fatal_error.is_some() {
                 break;
@@ -300,14 +300,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_ts_interface_body(&mut self) -> ArenaBox<'a, TSInterfaceBody<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let body_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
         TSInterfaceBody::boxed(self.end_span(start), body_list, self)
     }
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> TSSignature<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let kind = self.cur_kind();
 
         if matches!(kind, Kind::LParen | Kind::LAngle) {
@@ -488,7 +488,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         in_ts_namespace_body: bool,
     ) -> ArenaBox<'a, TSModuleBlock<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.expect(Kind::LCurly);
         // Remove TopLevel context for module block
         let (directives, statements) = self.context_remove(Context::TopLevel, |p| {
@@ -506,7 +506,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
         let body = if self.eat(Kind::Dot) {
-            let start = self.start_span();
+            let start = self.cur_start();
             let decl = self.parse_module_or_namespace_declaration(start, kind, &Modifiers::empty());
             TSModuleDeclarationBody::TSModuleDeclaration(decl)
         } else {
@@ -536,7 +536,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, TSGlobalDeclaration<'a>> {
-        let keyword_start = self.start_span();
+        let keyword_start = self.cur_start();
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_start);
 
@@ -678,7 +678,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.parse_ts_function_impl(start, FunctionKind::Declaration, modifiers);
                     Declaration::FunctionDeclaration(decl)
                 } else {
-                    let start = self.start_span();
+                    let start = self.cur_start();
                     let r#async = self.eat(Kind::Async);
                     let decl = self.parse_function_impl(start, r#async, FunctionKind::Declaration);
                     Declaration::FunctionDeclaration(decl)
@@ -710,11 +710,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.expect(Kind::LAngle);
         let type_annotation = self.parse_ts_type();
         self.expect(Kind::RAngle);
-        let lhs_span = self.start_span();
+        let lhs_span = self.cur_start();
         let expression = self.parse_simple_unary_expression(lhs_span);
         let span = self.end_span(start);
 
@@ -733,7 +733,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         self.expect(Kind::Eq);
 
-        let reference_span = self.start_span();
+        let reference_span = self.cur_start();
         let module_reference = if self.eat(Kind::Require) {
             self.expect(Kind::LParen);
             let expression = self.parse_literal_string();
@@ -804,7 +804,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> ArenaBox<'a, TSThisParameter<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any();
         let this_span = self.end_span(start);
 

@@ -23,7 +23,7 @@ impl<'a> Dummy<'a> for JSXClosing<'a> {
 
 impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `<`
         let kind = self.cur_kind();
         let expr = if kind == Kind::RAngle {
@@ -139,7 +139,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   `JSXNamespacedName`
     ///   `JSXMemberExpression`
     fn parse_jsx_element_name(&mut self) -> JSXElementName<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let (identifier, contains_dash) = self.parse_jsx_identifier();
 
         // <namespace:property />
@@ -268,7 +268,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             match self.cur_kind() {
                 Kind::LAngle => {
-                    let start = self.start_span();
+                    let start = self.cur_start();
                     self.bump_any(); // bump `<`
                     let kind = self.cur_kind();
 
@@ -296,7 +296,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     return self.unexpected();
                 }
                 Kind::LCurly => {
-                    let start = self.start_span();
+                    let start = self.cur_start();
                     self.bump_any(); // bump `{`
 
                     // {...expr}
@@ -430,7 +430,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `JSXAttribute` :
     ///   `JSXAttributeName` `JSXAttributeInitializer_opt`
     fn parse_jsx_attribute(&mut self) -> ArenaBox<'a, JSXAttribute<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let name = self.parse_jsx_attribute_name();
         let value = if self.at(Kind::Eq) {
             self.advance_for_jsx_attribute_value();
@@ -444,7 +444,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `JSXSpreadAttribute` :
     ///   { ... `AssignmentExpression` }
     fn parse_jsx_spread_attribute(&mut self) -> ArenaBox<'a, JSXSpreadAttribute<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3);
         let argument = self.parse_expr();
@@ -456,7 +456,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   `JSXIdentifier`
     ///   `JSXNamespacedName`
     fn parse_jsx_attribute_name(&mut self) -> JSXAttributeName<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let (identifier, _) = self.parse_jsx_identifier();
 
         if self.eat(Kind::Colon) {
@@ -479,7 +479,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {
-                let start = self.start_span();
+                let start = self.cur_start();
                 self.bump_any(); // bump `{`
 
                 let expr =
@@ -505,7 +505,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         JSXIdentifier<'a>, // JSX identifier
         bool,              // `true` if contains `-`
     ) {
-        let start = self.start_span();
+        let start = self.cur_start();
         let kind = self.cur_kind();
         if kind != Kind::Ident && !kind.is_any_keyword() {
             return (self.unexpected(), false);

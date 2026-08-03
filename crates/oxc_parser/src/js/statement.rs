@@ -16,7 +16,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // or Module.
     pub(crate) fn parse_hashbang(&mut self) -> Option<Hashbang<'a>> {
         if self.cur_kind() == Kind::HashbangComment {
-            let start = self.start_span();
+            let start = self.cur_start();
             self.bump_any();
             let span = self.end_span(start);
             let src = &self.source_text[span.start as usize + 2..span.end as usize];
@@ -151,28 +151,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Try => self.parse_try_statement(),
             Kind::Debugger => self.parse_debugger_statement(),
             Kind::Class => self.parse_class_statement(
-                self.start_span(),
+                self.cur_start(),
                 stmt_ctx,
                 &Modifiers::empty(),
                 ArenaVec::new_in(self),
             ),
-            Kind::Export => {
-                self.parse_export_declaration(self.start_span(), ArenaVec::new_in(self))
-            }
+            Kind::Export => self.parse_export_declaration(self.cur_start(), ArenaVec::new_in(self)),
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => {
-                let start = self.start_span();
+                let start = self.cur_start();
                 self.bump_any();
                 self.parse_variable_statement(start, VariableDeclarationKind::Var, stmt_ctx)
             }
             // Fast path
             Kind::Function => {
-                self.parse_function_declaration(self.start_span(), /* async */ false, stmt_ctx)
+                self.parse_function_declaration(self.cur_start(), /* async */ false, stmt_ctx)
             }
             Kind::At => self.parse_decorated_statement(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
-            Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
+            Kind::Async => self.parse_async_statement(self.cur_start(), stmt_ctx),
             Kind::Import => self.parse_import_statement(),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(stmt_ctx),
@@ -193,7 +191,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             | Kind::Global
                 if self.is_ts && self.at_start_of_ts_declaration() =>
             {
-                self.parse_ts_declaration_statement(self.start_span(), stmt_ctx)
+                self.parse_ts_declaration_statement(self.cur_start(), stmt_ctx)
             }
             _ => self.parse_expression_or_labeled_statement(),
         };
@@ -250,7 +248,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_expression_or_labeled_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let expr = self.parse_expr();
         if let Expression::Identifier(ident) = &expr {
             // Section 14.13 Labelled Statement
@@ -266,7 +264,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> ArenaBox<'a, BlockStatement<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
@@ -301,7 +299,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.4 Empty Statement
     fn parse_empty_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `;`
         Statement::new_empty_statement(self.end_span(start), self)
     }
@@ -318,7 +316,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.6 If Statement
     fn parse_if_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `if`
         let test = self.parse_paren_expression();
         let consequent = self.parse_statement_list_item(StatementContext::If);
@@ -329,7 +327,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.7.2 Do-While Statement
     fn parse_do_while_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `do`
         let body = self.parse_statement_list_item(StatementContext::Do);
         self.expect(Kind::While);
@@ -340,7 +338,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.7.3 While Statement
     fn parse_while_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `while`
         let test = self.parse_paren_expression();
         let body = self.parse_statement_list_item(StatementContext::While);
@@ -349,7 +347,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.7.4 For Statement
     fn parse_for_statement(&mut self) -> Statement<'a> {
-        let for_start = self.start_span();
+        let for_start = self.cur_start();
         self.bump_any(); // bump `for`
 
         // [+Await]
@@ -383,7 +381,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // `for (const` | `for (var`
         match self.cur_kind() {
             Kind::Const => {
-                let decl_start = self.start_span();
+                let decl_start = self.cur_start();
                 self.bump_any();
                 return self.parse_variable_declaration_for_statement(
                     for_start,
@@ -394,7 +392,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 );
             }
             Kind::Var => {
-                let decl_start = self.start_span();
+                let decl_start = self.cur_start();
                 self.bump_any();
                 return self.parse_variable_declaration_for_statement(
                     for_start,
@@ -406,7 +404,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Kind::Let => {
                 // `for (let`
-                let decl_start = self.start_span();
+                let decl_start = self.cur_start();
                 // disallow `for (let in ...`
                 if self.lexer.peek_token().kind().is_after_let() {
                     self.bump_any(); // bump `let`
@@ -473,7 +471,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let is_let = self.at(Kind::Let);
         // `async` is allowed as `for (async of ...)` if `async` is escaped
         let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
-        let expr_span = self.start_span();
+        let expr_span = self.cur_start();
 
         let init_expression = self.context_remove(Context::In, ParserImpl::parse_expr);
 
@@ -653,7 +651,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.8 Continue Statement
     fn parse_continue_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `continue`
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
@@ -663,7 +661,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.9 Break Statement
     fn parse_break_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `break`
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()) };
@@ -676,7 +674,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///   return ;
     ///   return [no `LineTerminator` here] Expression[+In, ?Yield, ?Await] ;
     fn parse_return_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `return`
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
@@ -701,7 +699,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.11 With Statement
     fn parse_with_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `with`
         let object = self.parse_paren_expression();
         let body = self.parse_statement_list_item(StatementContext::With);
@@ -711,7 +709,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.12 Switch Statement
     fn parse_switch_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression();
         // A `switch` may contain at most one `default` clause. Track the first one
@@ -736,7 +734,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_switch_case(&mut self) -> SwitchCase<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let test = match self.cur_kind() {
             Kind::Default => {
                 self.bump_any();
@@ -784,7 +782,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.14 Throw Statement
     fn parse_throw_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `throw`
         if self.cur_token().is_on_new_line() {
             self.error(diagnostics::illegal_newline(
@@ -800,7 +798,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.15 Try Statement
     fn parse_try_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // bump `try`
 
         let block = self.parse_block();
@@ -818,7 +816,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_catch_clause(&mut self) -> ArenaBox<'a, CatchClause<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `catch`
         let pattern = if self.eat(Kind::LParen) {
             let (pattern, type_annotation) = self.parse_binding_pattern_with_type_annotation();
@@ -844,7 +842,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 14.16 Debugger Statement
     fn parse_debugger_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any();
         self.asi();
         Statement::new_debugger_statement(self.end_span(start), self)
@@ -852,7 +850,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse const declaration or `const enum`.
     fn parse_const_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any();
         if self.is_ts && self.at(Kind::Enum) {
             let modifiers = Modifiers::new_single(ModifierKind::Const, start);
@@ -864,7 +862,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse import statement or import expression.
     fn parse_import_statement(&mut self) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         if matches!(self.lexer.peek_token().kind(), Kind::Dot | Kind::LParen) {
             // Parse the whole expression `import.meta.url`.
             self.parse_expression_or_labeled_statement()
@@ -889,12 +887,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Parse statements that start with `@`.
     fn parse_decorated_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let decorators = self.parse_decorators();
         let kind = self.cur_kind();
         if kind == Kind::Export {
             // Export span.start starts after decorators.
-            return self.parse_export_declaration(self.start_span(), decorators);
+            return self.parse_export_declaration(self.cur_start(), decorators);
         }
         let modifiers = self.parse_modifiers(false, false);
         if self.at(Kind::Class) {

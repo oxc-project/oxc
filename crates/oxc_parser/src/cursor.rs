@@ -23,7 +23,7 @@ pub struct ParserCheckpoint<'a> {
 impl<'a, C: Config> ParserImpl<'a, C> {
     /// Get current token's span start.
     #[inline]
-    pub(crate) fn start_span(&self) -> u32 {
+    pub(crate) fn cur_start(&self) -> u32 {
         self.token.start()
     }
 

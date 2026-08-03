@@ -29,7 +29,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_function_body(&mut self) -> ArenaBox<'a, FunctionBody<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
 
@@ -47,7 +47,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         func_kind: FunctionKind,
         params_kind: FormalParameterKind,
     ) -> (Option<ArenaBox<'a, TSThisParameter<'a>>>, ArenaBox<'a, FormalParameters<'a>>) {
-        let start = self.start_span();
+        let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let this_param = if self.is_ts && self.at(Kind::This) {
@@ -131,7 +131,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 break;
             }
 
-            let start = self.start_span();
+            let start = self.cur_start();
             let decorators = self.parse_decorators();
 
             if self.at(Kind::Dot3) {
@@ -481,7 +481,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         generator: Option<u32>,
         func_kind: FunctionKind,
     ) -> ArenaBox<'a, Function<'a>> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.parse_function(
             start,
             None,
@@ -498,7 +498,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// yield [no `LineTerminator` here] `AssignmentExpression`
     /// yield [no `LineTerminator` here] * `AssignmentExpression`
     pub(crate) fn parse_yield_expression(&mut self) -> Expression<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         self.bump_any(); // advance `yield`
 
         let has_yield = self.ctx.has_yield();

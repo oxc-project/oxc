@@ -35,7 +35,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
         if self.at(Kind::Async) && self.is_un_parenthesized_async_arrow_function_worker() {
-            let start = self.start_span();
+            let start = self.cur_start();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
             let Expression::Identifier(ident) = &expr else {
@@ -255,7 +255,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_parenthesized_arrow_function_head(&mut self) -> ArrowFunctionHead<'a> {
-        let start = self.start_span();
+        let start = self.cur_start();
         let r#async = self.eat(Kind::Async);
 
         let has_await = self.ctx.has_await();
