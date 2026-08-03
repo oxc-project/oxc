@@ -77,17 +77,6 @@ impl<'alloc, T> Box<'alloc, T> {
         Self(NonNull::from(allocator.allocator().alloc(value)), PhantomData)
     }
 
-    /// Create a fake [`Box`] with a dangling pointer.
-    ///
-    /// # SAFETY
-    /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
-    /// Only purpose is for mocking types without allocating for const assertions.
-    pub const unsafe fn dangling() -> Self {
-        // SAFETY: None of `from_non_null`'s invariants are satisfied, but caller promises
-        // never to dereference the `Box`
-        unsafe { Self::from_non_null(ptr::NonNull::dangling()) }
-    }
-
     /// Take ownership of the value stored in this [`Box`], consuming the box in
     /// the process.
     ///
