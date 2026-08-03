@@ -1,7 +1,6 @@
 use std::{
     alloc::Layout,
     fmt::{self, Debug, Display},
-    mem,
     ptr::{self, NonNull},
     slice,
 };
@@ -182,10 +181,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
     ) -> BitSet<'new_alloc> {
         let slice = self.entries.as_ref();
 
-        // SAFETY: `slice` already exists, so its layout must be valid
-        let layout = unsafe {
-            Layout::from_size_align_unchecked(mem::size_of_val(slice), align_of::<usize>())
-        };
+        let layout = Layout::for_value(slice);
         let dst_ptr = allocator.alloc_layout(layout).cast::<usize>();
 
         // SAFETY: We just allocated space for `slice.len()` x `usize`s, starting at `dst_ptr`
