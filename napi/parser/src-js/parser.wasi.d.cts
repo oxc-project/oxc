@@ -15,42 +15,42 @@ export class Visitor {
   visit(program: Program): void;
 }
 export interface Comment {
-  type: 'Line' | 'Block'
-  value: string
-  start: number
-  end: number
+  type: "Line" | "Block";
+  value: string;
+  start: number;
+  end: number;
 }
 
 export interface ErrorLabel {
-  message: string | null
-  start: number
-  end: number
+  message: string | null;
+  start: number;
+  end: number;
 }
 
 export interface OxcError {
-  severity: Severity
-  message: string
-  labels: Array<ErrorLabel>
-  helpMessage: string | null
-  codeframe: string | null
+  severity: Severity;
+  message: string;
+  labels: Array<ErrorLabel>;
+  helpMessage: string | null;
+  codeframe: string | null;
 }
 
 export declare const enum Severity {
-  Error = 'Error',
-  Warning = 'Warning',
-  Advice = 'Advice'
+  Error = "Error",
+  Warning = "Warning",
+  Advice = "Advice",
 }
 export declare class ParseResult {
-  get program(): import("@oxc-project/types").Program
-  get module(): EcmaScriptModule
-  get comments(): Array<Comment>
-  get errors(): Array<OxcError>
+  get program(): import("@oxc-project/types").Program;
+  get module(): EcmaScriptModule;
+  get comments(): Array<Comment>;
+  get errors(): Array<OxcError>;
 }
 
 export interface DynamicImport {
-  start: number
-  end: number
-  moduleRequest: Span
+  start: number;
+  end: number;
+  moduleRequest: Span;
 }
 
 export interface EcmaScriptModule {
@@ -61,84 +61,84 @@ export interface EcmaScriptModule {
    *
    * Dynamic imports `import('foo')` are ignored since they can be used in non-ESM files.
    */
-  hasModuleSyntax: boolean
+  hasModuleSyntax: boolean;
   /** Import statements. */
-  staticImports: Array<StaticImport>
+  staticImports: Array<StaticImport>;
   /** Export statements. */
-  staticExports: Array<StaticExport>
+  staticExports: Array<StaticExport>;
   /** Dynamic import expressions. */
-  dynamicImports: Array<DynamicImport>
+  dynamicImports: Array<DynamicImport>;
   /** Span positions` of `import.meta` */
-  importMetas: Array<Span>
+  importMetas: Array<Span>;
 }
 
 export interface ExportExportName {
-  kind: ExportExportNameKind
-  name: string | null
-  start: number | null
-  end: number | null
+  kind: ExportExportNameKind;
+  name: string | null;
+  start: number | null;
+  end: number | null;
 }
 
 export declare const enum ExportExportNameKind {
   /** `export { name } */
-  Name = 'Name',
+  Name = "Name",
   /** `export default expression` */
-  Default = 'Default',
+  Default = "Default",
   /** `export * from "mod" */
-  None = 'None'
+  None = "None",
 }
 
 export interface ExportImportName {
-  kind: ExportImportNameKind
-  name: string | null
-  start: number | null
-  end: number | null
+  kind: ExportImportNameKind;
+  name: string | null;
+  start: number | null;
+  end: number | null;
 }
 
 export declare const enum ExportImportNameKind {
   /** `export { name } */
-  Name = 'Name',
+  Name = "Name",
   /** `export * as ns from "mod"` */
-  All = 'All',
+  All = "All",
   /** `export * from "mod"` */
-  AllButDefault = 'AllButDefault',
+  AllButDefault = "AllButDefault",
   /** Does not have a specifier. */
-  None = 'None'
+  None = "None",
 }
 
 export interface ExportLocalName {
-  kind: ExportLocalNameKind
-  name: string | null
-  start: number | null
-  end: number | null
+  kind: ExportLocalNameKind;
+  name: string | null;
+  start: number | null;
+  end: number | null;
 }
 
 export declare const enum ExportLocalNameKind {
   /** `export { name } */
-  Name = 'Name',
+  Name = "Name",
   /** `export default expression` */
-  Default = 'Default',
+  Default = "Default",
   /**
    * If the exported value is not locally accessible from within the module.
    * `export default function () {}`
    */
-  None = 'None'
+  None = "None",
 }
 
 export interface ImportName {
-  kind: ImportNameKind
-  name: string | null
-  start: number | null
-  end: number | null
+  kind: ImportNameKind;
+  name: string | null;
+  start: number | null;
+  end: number | null;
 }
 
 export declare const enum ImportNameKind {
   /** `import { x } from "mod"` */
-  Name = 'Name',
+  Name = "Name",
   /** `import * as ns from "mod"` */
-  NamespaceObject = 'NamespaceObject',
+  NamespaceObject = "NamespaceObject",
   /** `import defaultExport from "mod"` */
-  Default = 'Default'
+  Default = "Default",
 }
 
 /**
@@ -154,13 +154,17 @@ export declare const enum ImportNameKind {
  * Generally `parseSync` is preferable to use as it does not have the overhead of spawning a thread.
  * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
  */
-export declare function parse(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
+export declare function parse(
+  filename: string,
+  sourceText: string,
+  options?: ParserOptions | undefined | null,
+): Promise<ParseResult>;
 
 export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */
-  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
+  lang?: "js" | "jsx" | "ts" | "tsx" | "dts";
   /** Treat the source text as `script` or `module` code. */
-  sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
+  sourceType?: "script" | "module" | "commonjs" | "unambiguous" | undefined;
   /**
    * Return an AST which includes TypeScript-related properties, or excludes them.
    *
@@ -168,7 +172,7 @@ export interface ParserOptions {
    * `'ts'` is default for TS / TSX files.
    * The type of the file is determined from `lang` option, or extension of provided `filename`.
    */
-  astType?: 'js' | 'ts'
+  astType?: "js" | "ts";
   /**
    * Controls whether the `range` property is included on AST nodes.
    * The `range` property is a `[number, number]` which indicates the start/end offsets
@@ -176,7 +180,7 @@ export interface ParserOptions {
    *
    * @default false
    */
-  range?: boolean
+  range?: boolean;
   /**
    * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
@@ -186,7 +190,7 @@ export interface ParserOptions {
    *
    * @default true
    */
-  preserveParens?: boolean
+  preserveParens?: boolean;
   /**
    * Produce semantic errors with an additional AST pass.
    * Semantic errors depend on symbols and scopes, where the parser does not construct.
@@ -194,7 +198,7 @@ export interface ParserOptions {
    *
    * @default false
    */
-  showSemanticErrors?: boolean
+  showSemanticErrors?: boolean;
 }
 
 /**
@@ -207,32 +211,36 @@ export interface ParserOptions {
  * If you need to parallelize parsing multiple files, it is recommended to use worker threads
  * with `parseSync` rather than using `parse`.
  */
-export declare function parseSync(filename: string, sourceText: string, options?: ParserOptions | undefined | null): ParseResult
+export declare function parseSync(
+  filename: string,
+  sourceText: string,
+  options?: ParserOptions | undefined | null,
+): ParseResult;
 
 /** Returns `true` if raw transfer is supported on this platform. */
-export declare function rawTransferSupported(): boolean
+export declare function rawTransferSupported(): boolean;
 
 export interface Span {
-  start: number
-  end: number
+  start: number;
+  end: number;
 }
 
 export interface StaticExport {
-  start: number
-  end: number
-  entries: Array<StaticExportEntry>
+  start: number;
+  end: number;
+  entries: Array<StaticExportEntry>;
 }
 
 export interface StaticExportEntry {
-  start: number
-  end: number
-  moduleRequest: ValueSpan | null
+  start: number;
+  end: number;
+  moduleRequest: ValueSpan | null;
   /** The name under which the desired binding is exported by the module`. */
-  importName: ExportImportName
+  importName: ExportImportName;
   /** The name used to export this binding by this module. */
-  exportName: ExportExportName
+  exportName: ExportExportName;
   /** The name that is used to locally access the exported value from within the importing module. */
-  localName: ExportLocalName
+  localName: ExportLocalName;
   /**
    * Whether the export is a TypeScript `export type`.
    *
@@ -246,14 +254,14 @@ export interface StaticExportEntry {
    * export type { foo } from 'mod';
    * ```
    */
-  isType: boolean
+  isType: boolean;
 }
 
 export interface StaticImport {
   /** Start of import statement. */
-  start: number
+  start: number;
   /** End of import statement. */
-  end: number
+  end: number;
   /**
    * Import source.
    *
@@ -262,13 +270,13 @@ export interface StaticImport {
    * //                   ^^^
    * ```
    */
-  moduleRequest: ValueSpan
+  moduleRequest: ValueSpan;
   /**
    * Import specifiers.
    *
    * Empty for `import "mod"`.
    */
-  entries: Array<StaticImportEntry>
+  entries: Array<StaticImportEntry>;
 }
 
 export interface StaticImportEntry {
@@ -282,7 +290,7 @@ export interface StaticImportEntry {
    * //       ^^^
    * ```
    */
-  importName: ImportName
+  importName: ImportName;
   /**
    * The name that is used to locally access the imported value from within the importing module.
    * ```js
@@ -292,7 +300,7 @@ export interface StaticImportEntry {
    * //              ^^^
    * ```
    */
-  localName: ValueSpan
+  localName: ValueSpan;
   /**
    * Whether this binding is for a TypeScript type-only import.
    *
@@ -302,11 +310,11 @@ export interface StaticImportEntry {
    * import { type foo } from "mod";
    * ```
    */
-  isType: boolean
+  isType: boolean;
 }
 
 export interface ValueSpan {
-  value: string
-  start: number
-  end: number
+  value: string;
+  start: number;
+  end: number;
 }

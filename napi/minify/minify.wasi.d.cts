@@ -6,7 +6,7 @@ export interface CodegenOptions {
    *
    * @default true
    */
-  removeWhitespace?: boolean
+  removeWhitespace?: boolean;
   /**
    * How to handle legal comments (comments containing `@license`, `@preserve`, or starting with `//!`/`/*!`).
    *
@@ -18,7 +18,7 @@ export interface CodegenOptions {
    *
    * @default "none" (when minifying)
    */
-legalComments?: 'none' | 'inline' | 'eof' | 'external' | { linked: string }
+  legalComments?: "none" | "inline" | "eof" | "external" | { linked: string };
 }
 
 export interface CompressOptions {
@@ -36,34 +36,34 @@ export interface CompressOptions {
    *
    * @see [oxc#target](https://oxc.rs/docs/guide/usage/transformer/lowering#target)
    */
-  target?: string | Array<string>
+  target?: string | Array<string>;
   /**
    * Pass true to discard calls to `console.*`.
    *
    * @default false
    */
-  dropConsole?: boolean
+  dropConsole?: boolean;
   /**
    * Remove `debugger;` statements.
    *
    * @default true
    */
-  dropDebugger?: boolean
+  dropDebugger?: boolean;
   /**
    * Pass `true` to drop unreferenced functions and variables.
    *
    * Simple direct variable assignments do not count as references unless set to `keep_assign`.
    * @default true
    */
-  unused?: boolean | 'keep_assign'
+  unused?: boolean | "keep_assign";
   /** Keep function / class names. */
-  keepNames?: CompressOptionsKeepNames
+  keepNames?: CompressOptionsKeepNames;
   /**
    * Join consecutive var, let and const statements.
    *
    * @default true
    */
-  joinVars?: boolean
+  joinVars?: boolean;
   /**
    * Join consecutive simple statements using the comma operator.
    *
@@ -71,7 +71,7 @@ export interface CompressOptions {
    *
    * @default true
    */
-  sequences?: boolean
+  sequences?: boolean;
   /**
    * Set of label names to drop from the code.
    *
@@ -79,11 +79,11 @@ export interface CompressOptions {
    *
    * @default []
    */
-  dropLabels?: Array<string>
+  dropLabels?: Array<string>;
   /** Limit the maximum number of iterations for debugging purpose. */
-  maxIterations?: number
+  maxIterations?: number;
   /** Treeshake options. */
-  treeshake?: TreeShakeOptions
+  treeshake?: TreeShakeOptions;
 }
 
 export interface CompressOptionsKeepNames {
@@ -94,7 +94,7 @@ export interface CompressOptionsKeepNames {
    *
    * @default false
    */
-  function: boolean
+  function: boolean;
   /**
    * Keep class names so that `Class.prototype.name` is preserved.
    *
@@ -102,7 +102,7 @@ export interface CompressOptionsKeepNames {
    *
    * @default false
    */
-  class: boolean
+  class: boolean;
 }
 
 export interface LegalCommentsLinked {
@@ -110,18 +110,18 @@ export interface LegalCommentsLinked {
    * Extract legal comments and write them to the given path, with a link
    * comment appended to the generated code.
    */
-  linked: string
+  linked: string;
 }
 
 export declare const enum LegalCommentsMode {
   /** Do not preserve any legal comments. */
-  None = 'none',
+  None = "none",
   /** Preserve all legal comments inline. */
-  Inline = 'inline',
+  Inline = "inline",
   /** Move all legal comments to the end of the file. */
-  Eof = 'eof',
+  Eof = "eof",
   /** Extract legal comments without linking. */
-  External = 'external'
+  External = "external",
 }
 
 export interface MangleOptions {
@@ -130,13 +130,13 @@ export interface MangleOptions {
    *
    * @default true for modules and commonjs, otherwise false
    */
-  toplevel?: boolean
+  toplevel?: boolean;
   /**
    * Preserve `name` property for functions and classes.
    *
    * @default false
    */
-  keepNames?: boolean | MangleOptionsKeepNames
+  keepNames?: boolean | MangleOptionsKeepNames;
   /**
    * Names that bindings must not be renamed to, and that bindings already
    * carrying them keep. Equivalent to terser's `mangle.reserved`.
@@ -147,9 +147,9 @@ export interface MangleOptions {
    *
    * @default []
    */
-  reserved?: Array<string>
+  reserved?: Array<string>;
   /** Debug mangled names. */
-  debug?: boolean
+  debug?: boolean;
 }
 
 export interface MangleOptionsKeepNames {
@@ -158,13 +158,13 @@ export interface MangleOptionsKeepNames {
    *
    * @default false
    */
-  function: boolean
+  function: boolean;
   /**
    * Preserve `name` property for classes.
    *
    * @default false
    */
-  class: boolean
+  class: boolean;
 }
 
 /**
@@ -172,30 +172,38 @@ export interface MangleOptionsKeepNames {
  *
  * Note: This function can be slower than `minifySync` due to the overhead of spawning a thread.
  */
-export declare function minify(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): Promise<MinifyResult>
+export declare function minify(
+  filename: string,
+  sourceText: string,
+  options?: MinifyOptions | undefined | null,
+): Promise<MinifyResult>;
 
 export interface MinifyOptions {
   /** Use when minifying an ES module. */
-  module?: boolean
-  compress?: boolean | CompressOptions
-  mangle?: boolean | MangleOptions
-  codegen?: boolean | CodegenOptions
-  sourcemap?: boolean
+  module?: boolean;
+  compress?: boolean | CompressOptions;
+  mangle?: boolean | MangleOptions;
+  codegen?: boolean | CodegenOptions;
+  sourcemap?: boolean;
 }
 
 export interface MinifyResult {
-  code: string
-  map?: SourceMap
-  errors: Array<OxcError>
+  code: string;
+  map?: SourceMap;
+  errors: Array<OxcError>;
   /**
    * Legal comments extracted from the source code.
    * Only populated when `codegen.legalComments` is `"linked"` or `"external"`.
    */
-  legalComments: Array<string>
+  legalComments: Array<string>;
 }
 
 /** Minify synchronously. */
-export declare function minifySync(filename: string, sourceText: string, options?: MinifyOptions | undefined | null): MinifyResult
+export declare function minifySync(
+  filename: string,
+  sourceText: string,
+  options?: MinifyOptions | undefined | null,
+): MinifyResult;
 
 export interface TreeShakeOptions {
   /**
@@ -206,20 +214,20 @@ export interface TreeShakeOptions {
    *
    * @default true
    */
-  annotations?: boolean
+  annotations?: boolean;
   /**
    * Whether to treat this function call as pure.
    *
    * This function is called for normal function calls, new calls, and
    * tagged template calls.
    */
-  manualPureFunctions?: Array<string>
+  manualPureFunctions?: Array<string>;
   /**
    * Whether property read accesses have side effects.
    *
    * @default 'always'
    */
-  propertyReadSideEffects?: boolean | 'always'
+  propertyReadSideEffects?: boolean | "always";
   /**
    * Whether property write accesses (assignments to member expressions) have side effects.
    *
@@ -228,7 +236,7 @@ export interface TreeShakeOptions {
    *
    * @default true
    */
-  propertyWriteSideEffects?: boolean
+  propertyWriteSideEffects?: boolean;
   /**
    * Whether accessing a global variable has side effects.
    *
@@ -237,7 +245,7 @@ export interface TreeShakeOptions {
    *
    * @default true
    */
-  unknownGlobalSideEffects?: boolean
+  unknownGlobalSideEffects?: boolean;
   /**
    * Whether invalid import statements have side effects.
    *
@@ -246,41 +254,41 @@ export interface TreeShakeOptions {
    *
    * @default true
    */
-  invalidImportSideEffects?: boolean
+  invalidImportSideEffects?: boolean;
 }
 export interface Comment {
-  type: 'Line' | 'Block'
-  value: string
-  start: number
-  end: number
+  type: "Line" | "Block";
+  value: string;
+  start: number;
+  end: number;
 }
 
 export interface ErrorLabel {
-  message: string | null
-  start: number
-  end: number
+  message: string | null;
+  start: number;
+  end: number;
 }
 
 export interface OxcError {
-  severity: Severity
-  message: string
-  labels: Array<ErrorLabel>
-  helpMessage: string | null
-  codeframe: string | null
+  severity: Severity;
+  message: string;
+  labels: Array<ErrorLabel>;
+  helpMessage: string | null;
+  codeframe: string | null;
 }
 
 export declare const enum Severity {
-  Error = 'Error',
-  Warning = 'Warning',
-  Advice = 'Advice'
+  Error = "Error",
+  Warning = "Warning",
+  Advice = "Advice",
 }
 export interface SourceMap {
-  file?: string
-  mappings: string
-  names: Array<string>
-  sourceRoot?: string
-  sources: Array<string>
-  sourcesContent?: Array<string>
-  version: number
-  x_google_ignoreList?: Array<number>
+  file?: string;
+  mappings: string;
+  names: Array<string>;
+  sourceRoot?: string;
+  sources: Array<string>;
+  sourcesContent?: Array<string>;
+  version: number;
+  x_google_ignoreList?: Array<number>;
 }
