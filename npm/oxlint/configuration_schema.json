@@ -9558,6 +9558,9 @@
         "unicorn/prefer-type-error": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-unary-minus": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/relative-url-style": {
           "anyOf": [
             {

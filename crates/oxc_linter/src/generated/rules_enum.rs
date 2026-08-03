@@ -730,6 +730,7 @@ pub use crate::rules::unicorn::prefer_structured_clone::PreferStructuredClone as
 pub use crate::rules::unicorn::prefer_ternary::PreferTernary as UnicornPreferTernary;
 pub use crate::rules::unicorn::prefer_top_level_await::PreferTopLevelAwait as UnicornPreferTopLevelAwait;
 pub use crate::rules::unicorn::prefer_type_error::PreferTypeError as UnicornPreferTypeError;
+pub use crate::rules::unicorn::prefer_unary_minus::PreferUnaryMinus as UnicornPreferUnaryMinus;
 pub use crate::rules::unicorn::relative_url_style::RelativeUrlStyle as UnicornRelativeUrlStyle;
 pub use crate::rules::unicorn::require_array_join_separator::RequireArrayJoinSeparator as UnicornRequireArrayJoinSeparator;
 pub use crate::rules::unicorn::require_module_attributes::RequireModuleAttributes as UnicornRequireModuleAttributes;
@@ -1457,6 +1458,7 @@ pub enum RuleEnum {
     UnicornPreferTernary(UnicornPreferTernary),
     UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait),
     UnicornPreferTypeError(UnicornPreferTypeError),
+    UnicornPreferUnaryMinus(UnicornPreferUnaryMinus),
     UnicornRelativeUrlStyle(UnicornRelativeUrlStyle),
     UnicornRequireArrayJoinSeparator(UnicornRequireArrayJoinSeparator),
     UnicornRequireModuleAttributes(UnicornRequireModuleAttributes),
@@ -2388,7 +2390,8 @@ const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = UNICORN_PREFER_STRING_TRIM_STA
 const UNICORN_PREFER_TERNARY_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
 const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_TERNARY_ID + 1usize;
 const UNICORN_PREFER_TYPE_ERROR_ID: usize = UNICORN_PREFER_TOP_LEVEL_AWAIT_ID + 1usize;
-const UNICORN_RELATIVE_URL_STYLE_ID: usize = UNICORN_PREFER_TYPE_ERROR_ID + 1usize;
+const UNICORN_PREFER_UNARY_MINUS_ID: usize = UNICORN_PREFER_TYPE_ERROR_ID + 1usize;
+const UNICORN_RELATIVE_URL_STYLE_ID: usize = UNICORN_PREFER_UNARY_MINUS_ID + 1usize;
 const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = UNICORN_RELATIVE_URL_STYLE_ID + 1usize;
 const UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID: usize =
     UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID + 1usize;
@@ -2685,7 +2688,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 849usize] = [
+static RULE_NAMES: [&str; 850usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3272,6 +3275,7 @@ static RULE_NAMES: [&str; 849usize] = [
     UnicornPreferTernary::NAME,
     UnicornPreferTopLevelAwait::NAME,
     UnicornPreferTypeError::NAME,
+    UnicornPreferUnaryMinus::NAME,
     UnicornRelativeUrlStyle::NAME,
     UnicornRequireArrayJoinSeparator::NAME,
     UnicornRequireModuleAttributes::NAME,
@@ -4227,6 +4231,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UNICORN_PREFER_TERNARY_ID,
             Self::UnicornPreferTopLevelAwait(_) => UNICORN_PREFER_TOP_LEVEL_AWAIT_ID,
             Self::UnicornPreferTypeError(_) => UNICORN_PREFER_TYPE_ERROR_ID,
+            Self::UnicornPreferUnaryMinus(_) => UNICORN_PREFER_UNARY_MINUS_ID,
             Self::UnicornRelativeUrlStyle(_) => UNICORN_RELATIVE_URL_STYLE_ID,
             Self::UnicornRequireArrayJoinSeparator(_) => UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID,
             Self::UnicornRequireModuleAttributes(_) => UNICORN_REQUIRE_MODULE_ATTRIBUTES_ID,
@@ -5243,6 +5248,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UnicornPreferTernary::CATEGORY,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::CATEGORY,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::CATEGORY,
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::CATEGORY,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::CATEGORY,
             Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::CATEGORY,
             Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::CATEGORY,
@@ -6229,6 +6235,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UnicornPreferTernary::FIX,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::FIX,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::FIX,
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::FIX,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::FIX,
             Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::FIX,
             Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::FIX,
@@ -7375,6 +7382,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UnicornPreferTernary::documentation(),
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::documentation(),
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::documentation(),
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::documentation(),
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::documentation(),
             Self::UnicornRequireArrayJoinSeparator(_) => {
                 UnicornRequireArrayJoinSeparator::documentation()
@@ -9454,6 +9462,8 @@ impl RuleEnum {
             }
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::config_schema(generator)
                 .or_else(|| UnicornPreferTypeError::schema(generator)),
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::config_schema(generator)
+                .or_else(|| UnicornPreferUnaryMinus::schema(generator)),
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::config_schema(generator)
                 .or_else(|| UnicornRelativeUrlStyle::schema(generator)),
             Self::UnicornRequireArrayJoinSeparator(_) => {
@@ -10784,6 +10794,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => "unicorn",
             Self::UnicornPreferTopLevelAwait(_) => "unicorn",
             Self::UnicornPreferTypeError(_) => "unicorn",
+            Self::UnicornPreferUnaryMinus(_) => "unicorn",
             Self::UnicornRelativeUrlStyle(_) => "unicorn",
             Self::UnicornRequireArrayJoinSeparator(_) => "unicorn",
             Self::UnicornRequireModuleAttributes(_) => "unicorn",
@@ -12734,6 +12745,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(rule) => rule.to_configuration(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.to_configuration(),
             Self::UnicornPreferTypeError(rule) => rule.to_configuration(),
+            Self::UnicornPreferUnaryMinus(rule) => rule.to_configuration(),
             Self::UnicornRelativeUrlStyle(rule) => rule.to_configuration(),
             Self::UnicornRequireArrayJoinSeparator(rule) => rule.to_configuration(),
             Self::UnicornRequireModuleAttributes(rule) => rule.to_configuration(),
@@ -13590,6 +13602,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(rule) => rule.run(node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run(node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run(node, ctx),
+            Self::UnicornPreferUnaryMinus(rule) => rule.run(node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run(node, ctx),
             Self::UnicornRequireArrayJoinSeparator(rule) => rule.run(node, ctx),
             Self::UnicornRequireModuleAttributes(rule) => rule.run(node, ctx),
@@ -14456,6 +14469,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(rule) => rule.run_once(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_once(ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_once(ctx),
+            Self::UnicornPreferUnaryMinus(rule) => rule.run_once(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_once(ctx),
             Self::UnicornRequireArrayJoinSeparator(rule) => rule.run_once(ctx),
             Self::UnicornRequireModuleAttributes(rule) => rule.run_once(ctx),
@@ -15417,6 +15431,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferUnaryMinus(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornRequireArrayJoinSeparator(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornRequireModuleAttributes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16306,6 +16321,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(rule) => rule.should_run(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.should_run(ctx),
             Self::UnicornPreferTypeError(rule) => rule.should_run(ctx),
+            Self::UnicornPreferUnaryMinus(rule) => rule.should_run(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.should_run(ctx),
             Self::UnicornRequireArrayJoinSeparator(rule) => rule.should_run(ctx),
             Self::UnicornRequireModuleAttributes(rule) => rule.should_run(ctx),
@@ -17429,6 +17445,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UnicornPreferTernary::IS_TSGOLINT_RULE,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::IS_TSGOLINT_RULE,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::IS_TSGOLINT_RULE,
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::IS_TSGOLINT_RULE,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::IS_TSGOLINT_RULE,
             Self::UnicornRequireArrayJoinSeparator(_) => {
                 UnicornRequireArrayJoinSeparator::IS_TSGOLINT_RULE
@@ -18528,6 +18545,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UnicornPreferTernary::VERSION,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::VERSION,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::VERSION,
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::VERSION,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::VERSION,
             Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::VERSION,
             Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::VERSION,
@@ -19580,6 +19598,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UnicornPreferTernary::HAS_CONFIG,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::HAS_CONFIG,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::HAS_CONFIG,
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::HAS_CONFIG,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::HAS_CONFIG,
             Self::UnicornRequireArrayJoinSeparator(_) => {
                 UnicornRequireArrayJoinSeparator::HAS_CONFIG
@@ -20581,6 +20600,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(_) => UnicornPreferTernary::INFO,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::INFO,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::INFO,
+            Self::UnicornPreferUnaryMinus(_) => UnicornPreferUnaryMinus::INFO,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::INFO,
             Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::INFO,
             Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::INFO,
@@ -21461,6 +21481,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(rule) => rule.types_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.types_info(),
             Self::UnicornPreferTypeError(rule) => rule.types_info(),
+            Self::UnicornPreferUnaryMinus(rule) => rule.types_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.types_info(),
             Self::UnicornRequireArrayJoinSeparator(rule) => rule.types_info(),
             Self::UnicornRequireModuleAttributes(rule) => rule.types_info(),
@@ -22314,6 +22335,7 @@ impl RuleEnum {
             Self::UnicornPreferTernary(rule) => rule.run_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_info(),
             Self::UnicornPreferTypeError(rule) => rule.run_info(),
+            Self::UnicornPreferUnaryMinus(rule) => rule.run_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_info(),
             Self::UnicornRequireArrayJoinSeparator(rule) => rule.run_info(),
             Self::UnicornRequireModuleAttributes(rule) => rule.run_info(),
@@ -23281,6 +23303,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferTernary(UnicornPreferTernary::default()),
         RuleEnum::UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait::default()),
         RuleEnum::UnicornPreferTypeError(UnicornPreferTypeError::default()),
+        RuleEnum::UnicornPreferUnaryMinus(UnicornPreferUnaryMinus::default()),
         RuleEnum::UnicornRelativeUrlStyle(UnicornRelativeUrlStyle::default()),
         RuleEnum::UnicornRequireArrayJoinSeparator(UnicornRequireArrayJoinSeparator::default()),
         RuleEnum::UnicornRequireModuleAttributes(UnicornRequireModuleAttributes::default()),

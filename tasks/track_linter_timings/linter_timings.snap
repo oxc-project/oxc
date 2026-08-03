@@ -653,6 +653,7 @@ unicorn/prefer-structured-clone                            |  62606
 unicorn/prefer-ternary                                     |  13190
 unicorn/prefer-top-level-await                             |  62606
 unicorn/prefer-type-error                                  |    224
+unicorn/prefer-unary-minus                                 |  20604
 unicorn/relative-url-style                                 |   1421
 unicorn/require-array-join-separator                       |  62606
 unicorn/require-module-attributes                          |    126
