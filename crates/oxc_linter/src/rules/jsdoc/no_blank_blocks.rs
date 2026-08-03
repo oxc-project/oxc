@@ -76,11 +76,10 @@ impl Rule for NoBlankBlocks {
             }
 
             let diagnostic = no_blank_blocks_diagnostic(jsdoc.span);
-            if self.enable_fixer {
-                ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                    let span = fix_span(jsdoc.span, source_text);
-                    fixer.delete_range(span)
-                });
+            if self.enable_fixer
+                && let Some(span) = fix_span(jsdoc.span, source_text)
+            {
+                ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.delete_range(span));
             } else {
                 ctx.diagnostic(diagnostic);
             }
@@ -96,32 +95,32 @@ fn is_blank_jsdoc(content: &str) -> bool {
     })
 }
 
-/// Expands JSDoc span to include `/**` and `*/`
-fn fix_span(jsdoc_span: Span, source_text: &str) -> Span {
-    let mut span = Span::new(jsdoc_span.start - 3, jsdoc_span.end + 2);
-    let prefix = &source_text[..span.start as usize];
+/// Expands a standalone JSDoc block to include its indentation and following line ending.
+fn fix_span(jsdoc_span: Span, source_text: &str) -> Option<Span> {
+    let comment_span = Span::new(jsdoc_span.start - 3, jsdoc_span.end + 2);
+    let prefix = &source_text[..comment_span.start as usize];
     let line_start = prefix.rfind('\n').map_or(0, |index| index + 1);
 
-    if prefix[line_start..].bytes().all(|byte| matches!(byte, b' ' | b'\t')) {
-        span.start = u32::try_from(line_start).unwrap_or(span.start);
-
-        let suffix = &source_text[span.end as usize..];
-        span.end += if suffix.starts_with("\r\n") {
-            2
-        } else {
-            u32::from(suffix.starts_with('\r') || suffix.starts_with('\n'))
-        };
-
-        return span;
+    if !prefix[line_start..].bytes().all(|byte| matches!(byte, b' ' | b'\t')) {
+        return None;
     }
 
-    if let Some(next) = source_text[span.end as usize..].chars().next()
-        && next.is_whitespace()
-    {
-        span.end += u32::try_from(next.len_utf8()).unwrap_or_default();
+    let suffix = &source_text[comment_span.end as usize..];
+    let line_end = suffix.find(['\r', '\n']).unwrap_or(suffix.len());
+    if !suffix[..line_end].bytes().all(|byte| matches!(byte, b' ' | b'\t')) {
+        return None;
     }
 
-    span
+    let line_ending_len = if suffix[line_end..].starts_with("\r\n") {
+        2
+    } else {
+        usize::from(line_end < suffix.len())
+    };
+
+    Some(Span::new(
+        u32::try_from(line_start).unwrap_or(comment_span.start),
+        comment_span.end + u32::try_from(line_end + line_ending_len).unwrap_or_default(),
+    ))
 }
 
 #[test]
@@ -247,6 +246,11 @@ fn test() {
         (
             "foo();\r\n/** */\r\nbar();",
             "foo();\r\nbar();",
+            Some(serde_json::json!([ { "enableFixer": true, }, ])),
+        ),
+        (
+            "const result = typeof/** */value;",
+            "const result = typeof/** */value;",
             Some(serde_json::json!([ { "enableFixer": true, }, ])),
         ),
     ];
