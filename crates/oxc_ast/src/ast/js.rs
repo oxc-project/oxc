@@ -1488,15 +1488,46 @@ pub struct ThrowStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    via = TryStatementConverter,
+    add_fields(handler = TryStatementHandler, finalizer = TryStatementFinalizer),
+    field_order(block, handler, finalizer, span),
+)]
 pub struct TryStatement<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     /// Statements in the `try` block
     pub block: Box<'a, BlockStatement<'a>>,
-    /// The `catch` clause, including the parameter and the block statement
-    pub handler: Option<Box<'a, CatchClause<'a>>>,
-    /// The `finally` clause
-    pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
+    /// The `catch` and/or `finally` clauses.
+    #[estree(skip)]
+    pub clauses: TryStatementClauses<'a>,
+}
+
+/// Clauses following a [`TryStatement`].
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, GetSpanMut)]
+pub enum TryStatementClauses<'a> {
+    /// A `catch` clause without a `finally` clause.
+    Catch(Box<'a, CatchClause<'a>>) = 0,
+    /// A `finally` clause without a `catch` clause.
+    Finally(Box<'a, BlockStatement<'a>>) = 1,
+    /// Both a `catch` clause and a `finally` clause.
+    CatchFinally(Box<'a, CatchFinally<'a>>) = 2,
+}
+
+/// A `catch` clause followed by a `finally` clause.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree)]
+#[estree(no_type, no_ts_def, no_parent)]
+pub struct CatchFinally<'a> {
+    /// The `catch` clause, including the parameter and block statement.
+    pub handler: CatchClause<'a>,
+    /// The `finally` block.
+    pub finalizer: BlockStatement<'a>,
 }
 
 /// Catch Clause in a [`try/catch` statement](TryStatement).

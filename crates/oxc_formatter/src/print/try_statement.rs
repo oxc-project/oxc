@@ -42,6 +42,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
     }
 }
 
+impl<'a> FormatWrite<'a> for AstNode<'a, CatchFinally<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, [self.handler(), space(), "finally", space(), self.finalizer()]);
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments();

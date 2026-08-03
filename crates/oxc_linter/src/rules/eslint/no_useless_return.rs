@@ -159,7 +159,7 @@ impl NoUselessReturn {
                 AstKind::BlockStatement(block) => {
                     let parent_kind = nodes.parent_kind(ancestor_id);
                     if let AstKind::TryStatement(try_stmt) = parent_kind
-                        && try_stmt.finalizer.as_ref().is_some_and(|f| f.span == block.span)
+                        && try_stmt.finalizer().is_some_and(|f| f.span == block.span)
                     {
                         return AncestorAnalysis::NotUseless;
                     }
@@ -187,10 +187,8 @@ impl NoUselessReturn {
 
                 AstKind::TryStatement(try_stmt) => {
                     let in_try = try_stmt.block.span.contains_inclusive(current_span);
-                    let in_catch = try_stmt
-                        .handler
-                        .as_ref()
-                        .is_some_and(|h| h.span.contains_inclusive(current_span));
+                    let in_catch =
+                        try_stmt.handler().is_some_and(|h| h.span.contains_inclusive(current_span));
 
                     if in_try || in_catch {
                         current_span = try_stmt.span;
@@ -320,8 +318,7 @@ impl NoUselessReturn {
                 AstKind::BlockStatement(block) => {
                     if let AstKind::TryStatement(try_stmt) = nodes.parent_kind(ancestor_id)
                         && try_stmt
-                            .finalizer
-                            .as_ref()
+                            .finalizer()
                             .is_some_and(|finalizer| finalizer.span == block.span)
                     {
                         return true;

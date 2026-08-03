@@ -1,5 +1,5 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
@@ -284,8 +284,12 @@ impl<'a> PeepholeOptimizations {
 
     pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::TryStatement(s) = stmt else { return };
-        if let Some(handler) = &s.handler
-            && s.block.body.is_empty()
+        if s.block.body.is_empty()
+            && let Some(handler) = match &mut s.clauses {
+                TryStatementClauses::Catch(handler) => Some(handler.as_mut()),
+                TryStatementClauses::CatchFinally(clauses) => Some(&mut clauses.handler),
+                TryStatementClauses::Finally(_) => None,
+            }
         {
             let body = &handler.body.body;
             let is_canonical_body =
@@ -293,7 +297,6 @@ impl<'a> PeepholeOptimizations {
             if !is_canonical_body {
                 let mut var = KeepVar::new();
                 var.visit_block_statement(&handler.body);
-                let Some(handler) = &mut s.handler else { return };
 
                 for dropped in handler.body.body.take_in(ctx) {
                     ctx.drop_statement(&dropped);
@@ -304,22 +307,32 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        if let Some(finalizer) = &s.finalizer
-            && finalizer.body.is_empty()
-            && s.handler.is_some()
-        {
-            s.finalizer = None;
+        if matches!(
+            &s.clauses,
+            TryStatementClauses::CatchFinally(clauses) if clauses.finalizer.body.is_empty()
+        ) {
+            let TryStatementClauses::CatchFinally(clauses) = s.clauses.take_in(ctx) else {
+                unreachable!();
+            };
+            let CatchFinally { handler, .. } = clauses.unbox();
+            s.clauses = TryStatementClauses::Catch(ArenaBox::new_in(handler, ctx));
         }
 
-        if s.block.body.is_empty()
-            && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
-        {
-            let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
-                std::mem::swap(finalizer, &mut block);
-                Statement::BlockStatement(block)
-            } else {
-                Statement::new_empty_statement(s.span, ctx)
+        let removable = s.block.body.is_empty()
+            && match &s.clauses {
+                TryStatementClauses::Catch(handler) => handler.body.body.is_empty(),
+                TryStatementClauses::CatchFinally(clauses) => clauses.handler.body.body.is_empty(),
+                TryStatementClauses::Finally(_) => true,
+            };
+        if removable {
+            let span = s.span;
+            let new_stmt = match s.clauses.take_in(ctx) {
+                TryStatementClauses::Catch(_) => Statement::new_empty_statement(span, ctx),
+                TryStatementClauses::Finally(finalizer) => Statement::BlockStatement(finalizer),
+                TryStatementClauses::CatchFinally(clauses) => {
+                    let CatchFinally { finalizer, .. } = clauses.unbox();
+                    Statement::BlockStatement(ArenaBox::new_in(finalizer, ctx))
+                }
             };
             ctx.replace_statement(stmt, new_stmt);
         }

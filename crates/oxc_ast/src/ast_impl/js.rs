@@ -4,7 +4,7 @@ use std::{
 };
 
 use oxc_allocator::Box as ArenaBox;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, GetSpanMut, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
 
@@ -19,6 +19,48 @@ impl Program<'_> {
     /// Returns `true` if this program has a `"use strict"` directive.
     pub fn has_use_strict_directive(&self) -> bool {
         self.directives.iter().any(Directive::is_use_strict)
+    }
+}
+
+impl<'a> TryStatement<'a> {
+    /// Returns the catch clause, when present.
+    pub fn handler(&self) -> Option<&CatchClause<'a>> {
+        match &self.clauses {
+            TryStatementClauses::Catch(handler) => Some(handler),
+            TryStatementClauses::CatchFinally(clauses) => Some(&clauses.handler),
+            TryStatementClauses::Finally(_) => None,
+        }
+    }
+
+    /// Returns the finally block, when present.
+    pub fn finalizer(&self) -> Option<&BlockStatement<'a>> {
+        match &self.clauses {
+            TryStatementClauses::Finally(finalizer) => Some(finalizer),
+            TryStatementClauses::CatchFinally(clauses) => Some(&clauses.finalizer),
+            TryStatementClauses::Catch(_) => None,
+        }
+    }
+}
+
+impl GetSpan for TryStatementClauses<'_> {
+    fn span(&self) -> Span {
+        match self {
+            TryStatementClauses::Catch(catch_clause) => catch_clause.span(),
+            TryStatementClauses::Finally(block_statement) => block_statement.span(),
+            TryStatementClauses::CatchFinally(catch_finally) => catch_finally.span(),
+        }
+    }
+}
+
+impl GetSpan for CatchFinally<'_> {
+    fn span(&self) -> Span {
+        Span::new(self.handler.span().start, self.finalizer.span().end)
+    }
+}
+
+impl GetSpanMut for CatchFinally<'_> {
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.handler.span
     }
 }
 

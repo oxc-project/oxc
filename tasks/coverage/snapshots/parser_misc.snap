@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 74/74 (100.00%)
 Positive Passed: 74/74 (100.00%)
-Negative Passed: 155/155 (100.00%)
+Negative Passed: 156/156 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -4181,6 +4181,13 @@ Negative Passed: 155/155 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × Missing catch or finally clause
+   ╭─[misc/fail/try-without-clauses.js:1:7]
+ 1 │ try {}
+   ·       ▲
+   ╰────
+  help: Either unwrap this try block or add catch / finally clause
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]

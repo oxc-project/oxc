@@ -10,12 +10,52 @@ use oxc_span::{GetSpan, Span};
 
 use super::AstNodes;
 
+#[inline]
+fn transmute_self_node<'a, T>(node: &AstNode<'a, T>) -> &'a AstNode<'a, T> {
+    #[expect(clippy::undocumented_unsafe_blocks)]
+    unsafe {
+        transmute(node)
+    }
+}
+
 pub struct AstNode<'a, T> {
     pub(super) inner: &'a T,
     pub(super) parent: AstNodes<'a>,
     pub(super) allocator: &'a Allocator,
     /// The start position of the following sibling node, or 0 if none.
     pub(super) following_span_start: u32,
+}
+
+impl<'a> AstNode<'a, TryStatement<'a>> {
+    pub fn handler(&self) -> Option<&AstNode<'a, CatchClause<'a>>> {
+        let (handler, following_span_start) = match &self.inner.clauses {
+            TryStatementClauses::Catch(handler) => (handler.as_ref(), 0),
+            TryStatementClauses::Finally(_) => return None,
+            TryStatementClauses::CatchFinally(clauses) => {
+                (&clauses.handler, clauses.finalizer.span.start)
+            }
+        };
+        Some(self.allocator.alloc(AstNode {
+            inner: handler,
+            parent: AstNodes::TryStatement(transmute_self_node(self)),
+            allocator: self.allocator,
+            following_span_start,
+        }))
+    }
+
+    pub fn finalizer(&self) -> Option<&AstNode<'a, BlockStatement<'a>>> {
+        let finalizer: &BlockStatement<'a> = match &self.inner.clauses {
+            TryStatementClauses::Catch(_) => return None,
+            TryStatementClauses::Finally(finalizer) => finalizer,
+            TryStatementClauses::CatchFinally(clauses) => &clauses.finalizer,
+        };
+        Some(self.allocator.alloc(AstNode {
+            inner: finalizer,
+            parent: AstNodes::TryStatement(transmute_self_node(self)),
+            allocator: self.allocator,
+            following_span_start: 0,
+        }))
+    }
 }
 
 impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {

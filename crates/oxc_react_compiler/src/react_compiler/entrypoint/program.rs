@@ -337,12 +337,12 @@ fn returns_non_node_in_stmt(stmt: &Statement, result: &mut bool) {
             for s in &try_stmt.block.body {
                 returns_non_node_in_stmt(s, result);
             }
-            if let Some(ref handler) = try_stmt.handler {
+            if let Some(handler) = try_stmt.handler() {
                 for s in &handler.body.body {
                     returns_non_node_in_stmt(s, result);
                 }
             }
-            if let Some(ref finalizer) = try_stmt.finalizer {
+            if let Some(finalizer) = try_stmt.finalizer() {
                 for s in &finalizer.body {
                     returns_non_node_in_stmt(s, result);
                 }
@@ -482,12 +482,12 @@ fn calls_hooks_or_creates_jsx_in_stmt(stmt: &Statement) -> bool {
             if calls_hooks_or_creates_jsx_in_stmts(&try_stmt.block.body) {
                 return true;
             }
-            if let Some(ref handler) = try_stmt.handler
+            if let Some(handler) = try_stmt.handler()
                 && calls_hooks_or_creates_jsx_in_stmts(&handler.body.body)
             {
                 return true;
             }
-            if let Some(ref finalizer) = try_stmt.finalizer
+            if let Some(finalizer) = try_stmt.finalizer()
                 && calls_hooks_or_creates_jsx_in_stmts(&finalizer.body)
             {
                 return true;
@@ -1340,6 +1340,14 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         }
     }
 
+    fn walk_catch_clause(&mut self, handler: &'b CatchClause<'ast>) {
+        let pushed = self.try_push_scope(handler.scope_id.get());
+        self.walk_block(&handler.body);
+        if pushed {
+            self.scope_stack.pop();
+        }
+    }
+
     fn walk_function_body_block(&mut self, body: &'b FunctionBody<'ast>) {
         // A function body BlockStatement shares the function's scope in the Babel
         // model and never gets its own scope entry, so do not push a scope here.
@@ -1441,15 +1449,13 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             Statement::ThrowStatement(node) => self.walk_expression(&node.argument),
             Statement::TryStatement(node) => {
                 self.walk_block(&node.block);
-                if let Some(handler) = &node.handler {
-                    let pushed = self.try_push_scope(handler.scope_id.get());
-                    self.walk_block(&handler.body);
-                    if pushed {
-                        self.scope_stack.pop();
+                match &node.clauses {
+                    TryStatementClauses::Catch(handler) => self.walk_catch_clause(handler),
+                    TryStatementClauses::Finally(finalizer) => self.walk_block(finalizer),
+                    TryStatementClauses::CatchFinally(clauses) => {
+                        self.walk_catch_clause(&clauses.handler);
+                        self.walk_block(&clauses.finalizer);
                     }
-                }
-                if let Some(finalizer) = &node.finalizer {
-                    self.walk_block(finalizer);
                 }
             }
             Statement::LabeledStatement(node) => self.walk_statement(&node.body),

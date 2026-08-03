@@ -785,7 +785,10 @@ impl<'a> ObjectRestSpread<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaBox<'a, VariableDeclaration<'a>> {
         let mut flags = kind_to_symbol_flags(kind);
-        if matches!(ctx.parent(), Ancestor::TryStatementHandler(_)) {
+        if matches!(
+            ctx.parent(),
+            Ancestor::TryStatementClauses(_) | Ancestor::CatchFinallyHandler(_)
+        ) {
             // try {} catch (ref) {}
             //               ^^^
             flags |= SymbolFlags::CatchVariable;

@@ -76,7 +76,7 @@ impl Rule for NoEmpty {
                 }
                 ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
                     if let AstKind::TryStatement(try_stmt) = parent
-                        && let Some(try_block_stmt) = &try_stmt.finalizer
+                        && let Some(try_block_stmt) = try_stmt.finalizer()
                         && try_block_stmt.span == block.span
                     {
                         return if let Some(finally_kw_start) = find_finally_start(ctx, block) {

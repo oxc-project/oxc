@@ -567,8 +567,16 @@ const _: () = {
     assert!(offset_of!(TryStatement, span) == 0);
     assert!(offset_of!(TryStatement, node_id) == 8);
     assert!(offset_of!(TryStatement, block) == 16);
-    assert!(offset_of!(TryStatement, handler) == 24);
-    assert!(offset_of!(TryStatement, finalizer) == 32);
+    assert!(offset_of!(TryStatement, clauses) == 24);
+
+    assert!(size_of::<TryStatementClauses>() == 16);
+    assert!(align_of::<TryStatementClauses>() == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<CatchFinally>() == 104);
+    assert!(align_of::<CatchFinally>() == 8);
+    assert!(offset_of!(CatchFinally, handler) == 0);
+    assert!(offset_of!(CatchFinally, finalizer) == 64);
 
     // Padding: 0 bytes
     assert!(size_of::<CatchClause>() == 64);
@@ -2398,8 +2406,16 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TryStatement, span) == 0);
     assert!(offset_of!(TryStatement, node_id) == 8);
     assert!(offset_of!(TryStatement, block) == 12);
-    assert!(offset_of!(TryStatement, handler) == 16);
-    assert!(offset_of!(TryStatement, finalizer) == 20);
+    assert!(offset_of!(TryStatement, clauses) == 16);
+
+    assert!(size_of::<TryStatementClauses>() == 8);
+    assert!(align_of::<TryStatementClauses>() == 4);
+
+    // Padding: 0 bytes
+    assert!(size_of::<CatchFinally>() == 76);
+    assert!(align_of::<CatchFinally>() == 4);
+    assert!(offset_of!(CatchFinally, handler) == 0);
+    assert!(offset_of!(CatchFinally, finalizer) == 44);
 
     // Padding: 0 bytes
     assert!(size_of::<CatchClause>() == 44);

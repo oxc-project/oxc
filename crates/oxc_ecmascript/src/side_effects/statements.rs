@@ -67,17 +67,23 @@ impl<'a> MayHaveSideEffects<'a> for SwitchStatement<'a> {
 impl<'a> MayHaveSideEffects<'a> for TryStatement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.block.may_have_side_effects(ctx)
-            || self.handler.as_ref().is_some_and(|catch_clause| {
-                catch_clause
-                    .param
-                    .as_ref()
-                    .is_some_and(|param| param.pattern.may_have_side_effects(ctx))
-                    || catch_clause.body.may_have_side_effects(ctx)
-            })
-            || self.finalizer.as_ref().is_some_and(|finalizer| finalizer.may_have_side_effects(ctx))
+            || match &self.clauses {
+                TryStatementClauses::Catch(handler) => handler.may_have_side_effects(ctx),
+                TryStatementClauses::Finally(finalizer) => finalizer.may_have_side_effects(ctx),
+                TryStatementClauses::CatchFinally(clauses) => {
+                    clauses.handler.may_have_side_effects(ctx)
+                        || clauses.finalizer.may_have_side_effects(ctx)
+                }
+            }
     }
 }
 
+impl<'a> MayHaveSideEffects<'a> for CatchClause<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        self.param.as_ref().is_some_and(|param| param.pattern.may_have_side_effects(ctx))
+            || self.body.may_have_side_effects(ctx)
+    }
+}
 impl<'a> MayHaveSideEffects<'a> for WhileStatement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.test.may_have_side_effects(ctx) || self.body.may_have_side_effects(ctx)

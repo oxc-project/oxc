@@ -702,6 +702,68 @@ fn generate_struct(
         }
     }
 
+    // `TryStatement` stores its ESTree `handler` and `finalizer` fields behind a clause enum.
+    // Lazy deserialization does not use ESTree converters, so expose those fields explicitly.
+    if struct_def.name() == "TryStatement" {
+        let clauses_field = struct_def.field_by_name("clauses");
+        let clauses = clauses_field.type_def(schema).as_enum().unwrap();
+        let payload_offset = clauses.layout_64().align;
+        let variant_type = |name| {
+            clauses
+                .variants
+                .iter()
+                .find(|variant| variant.name() == name)
+                .unwrap()
+                .field_type(schema)
+                .unwrap()
+        };
+        let catch_type = variant_type("Catch");
+        let finally_type = variant_type("Finally");
+        let catch_finally_type = variant_type("CatchFinally");
+
+        let clauses_pos = internal_pos_offset(clauses_field.offset_64());
+        let payload_pos = internal_pos_offset(clauses_field.offset_64() + payload_offset);
+        let catch_constructor = catch_type.constructor_name(schema);
+        let finally_constructor = finally_type.constructor_name(schema);
+        let catch_finally_constructor = catch_finally_type.constructor_name(schema);
+
+        #[rustfmt::skip]
+        write_it!(getters, "
+            get handler() {{
+                const internal = this.#internal,
+                    discriminant = internal.ast.buffer[{clauses_pos}];
+                if (discriminant === 1) return null;
+                if (discriminant === 0) return {catch_constructor}({payload_pos}, internal.ast);
+                return {catch_finally_constructor}({payload_pos}, internal.ast).handler;
+            }}
+
+            get finalizer() {{
+                const internal = this.#internal,
+                    discriminant = internal.ast.buffer[{clauses_pos}];
+                if (discriminant === 0) return null;
+                if (discriminant === 1) return {finally_constructor}({payload_pos}, internal.ast);
+                return {catch_finally_constructor}({payload_pos}, internal.ast).finalizer;
+            }}
+        ");
+        write_it!(to_json, "handler: this.handler,\nfinalizer: this.finalizer,\n");
+
+        let clauses_pos = pos_offset(clauses_field.offset_64());
+        let payload_pos = pos_offset(clauses_field.offset_64() + payload_offset);
+        let catch_walk = catch_type.walk_name(schema);
+        let finally_walk = finally_type.walk_name(schema);
+        let catch_finally_walk = catch_finally_type.walk_name(schema);
+        write_it!(
+            walk_stmts,
+            "
+            switch (ast.buffer[{clauses_pos}]) {{
+                case 0: {catch_walk}({payload_pos}, ast, visitors); break;
+                case 1: {finally_walk}({payload_pos}, ast, visitors); break;
+                case 2: {catch_finally_walk}({payload_pos}, ast, visitors); break;
+            }}
+        "
+        );
+    }
+
     let type_prop_init = if !has_type_field && !struct_def.estree.no_type {
         to_json = format!("type: '{struct_name}',\n{to_json}");
         format!("type = '{struct_name}';")

@@ -295,7 +295,7 @@ declare_oxc_lint!(
 );
 impl PreserveCaughtError {
     fn check_try_statement<'a>(&self, try_stmt: &'a TryStatement<'a>, ctx: &LintContext<'a>) {
-        if let Some(catch_clause) = &try_stmt.handler {
+        if let Some(catch_clause) = try_stmt.handler() {
             self.check_catch_clause(catch_clause, ctx);
         }
     }

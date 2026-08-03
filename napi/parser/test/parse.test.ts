@@ -6,9 +6,39 @@ import type {
   ExpressionStatement,
   ParserOptions,
   Program,
+  TryStatement,
   TSTypeAliasDeclaration,
   VariableDeclaration,
 } from "../src-js/index.js";
+
+describe("try statement clauses", () => {
+  const cases = [
+    ["try {} catch {}", true, false],
+    ["try {} finally {}", false, true],
+    ["try {} catch {} finally {}", true, true],
+  ] as const;
+
+  it.each(cases)("preserves ESTree fields for %s", (code, hasHandler, hasFinalizer) => {
+    const ret = parseSync("test.js", code);
+    expect(ret.errors).toHaveLength(0);
+    const statement = ret.program.body[0] as TryStatement;
+    expect(statement.handler !== null).toBe(hasHandler);
+    expect(statement.finalizer !== null).toBe(hasFinalizer);
+    expect(statement).not.toHaveProperty("clauses");
+  });
+
+  it.each(cases)(
+    "preserves ESTree fields in raw transfer for %s",
+    (code, hasHandler, hasFinalizer) => {
+      const ret = parseSync("test.js", code, { experimentalRawTransfer: true });
+      expect(ret.errors).toHaveLength(0);
+      const statement = ret.program.body[0] as TryStatement;
+      expect(statement.handler !== null).toBe(hasHandler);
+      expect(statement.finalizer !== null).toBe(hasFinalizer);
+      expect(statement).not.toHaveProperty("clauses");
+    },
+  );
+});
 
 describe("parse", () => {
   const code = "/* comment */ foo";

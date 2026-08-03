@@ -375,7 +375,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             BlockStatement::boxed_with_scope_id(SPAN, [for_statement], block_scope_id, ctx)
         };
 
-        let catch_clause = {
+        let handler = {
             let catch_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
@@ -383,7 +383,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
-            Some(CatchClause::boxed_with_scope_id(
+            CatchClause::boxed_with_scope_id(
                 SPAN,
                 Some(CatchParameter::new(SPAN, err_ident.create_binding_pattern(ctx), None, ctx)),
                 {
@@ -419,10 +419,10 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 },
                 catch_scope_id,
                 ctx,
-            ))
+            )
         };
 
-        let finally = {
+        let finalizer = {
             let finally_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             let try_statement = {
                 let try_block_scope_id =
@@ -513,15 +513,23 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                     };
                     BlockStatement::boxed_with_scope_id(SPAN, [if_statement], finally_scope_id, ctx)
                 };
-                Statement::new_try_statement(SPAN, block, None, Some(finally), ctx)
+                Statement::new_try_statement(
+                    SPAN,
+                    block,
+                    TryStatementClauses::Finally(finally),
+                    ctx,
+                )
             };
 
-            let block_statement =
-                BlockStatement::boxed_with_scope_id(SPAN, [try_statement], finally_scope_id, ctx);
-            Some(block_statement)
+            BlockStatement::new_with_scope_id(SPAN, [try_statement], finally_scope_id, ctx)
         };
 
-        let try_statement = Statement::new_try_statement(span, block, catch_clause, finally, ctx);
+        let try_statement = Statement::new_try_statement(
+            span,
+            block,
+            TryStatementClauses::CatchFinally(CatchFinally::boxed(handler.unbox(), finalizer, ctx)),
+            ctx,
+        );
 
         items.push(try_statement);
         items

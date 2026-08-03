@@ -424,6 +424,16 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_try_statement_clauses(&mut self, it: &mut TryStatementClauses<'a>) {
+        walk_try_statement_clauses(self, it);
+    }
+
+    #[inline]
+    fn visit_catch_finally(&mut self, it: &mut CatchFinally<'a>) {
+        walk_catch_finally(self, it);
+    }
+
+    #[inline]
     fn visit_catch_clause(&mut self, it: &mut CatchClause<'a>) {
         walk_catch_clause(self, it);
     }
@@ -2407,13 +2417,28 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_block_statement(&mut it.block);
-        if let Some(handler) = &mut it.handler {
-            visitor.visit_catch_clause(handler);
-        }
-        if let Some(finalizer) = &mut it.finalizer {
-            visitor.visit_block_statement(finalizer);
-        }
+        visitor.visit_try_statement_clauses(&mut it.clauses);
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_try_statement_clauses<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TryStatementClauses<'a>,
+    ) {
+        // No `AstType` for this type
+        match it {
+            TryStatementClauses::Catch(it) => visitor.visit_catch_clause(it),
+            TryStatementClauses::Finally(it) => visitor.visit_block_statement(it),
+            TryStatementClauses::CatchFinally(it) => visitor.visit_catch_finally(it),
+        }
+    }
+
+    #[inline]
+    pub fn walk_catch_finally<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CatchFinally<'a>) {
+        // No `AstType` for this type
+        visitor.visit_catch_clause(&mut it.handler);
+        visitor.visit_block_statement(&mut it.finalizer);
     }
 
     #[inline]

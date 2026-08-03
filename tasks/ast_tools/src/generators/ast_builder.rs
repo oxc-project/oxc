@@ -253,14 +253,19 @@ fn generate_builder_methods_for_struct_impl(
     }
 
     let params_docs = generate_doc_comment_for_params(params);
+    let new_uses_builder = params
+        .iter()
+        .any(|param| param.is_node_id || matches!(param.generic_type, Some(GenericType::IntoIn)));
+    let builder_param = if new_uses_builder { quote!(builder) } else { quote!(_builder) };
+    let builder_binding = new_uses_builder.then(|| quote!(let builder = builder.builder();));
 
     let new_method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #new_fn_name #lifetime_param (#fn_params, builder: &impl GetAstBuilder<'a>) -> Self {
-            let builder = builder.builder();
+        pub fn #new_fn_name #lifetime_param (#fn_params, #builder_param: &impl GetAstBuilder<'a>) -> Self {
+            #builder_binding
             #struct_ident { #fields }
         }
     };
