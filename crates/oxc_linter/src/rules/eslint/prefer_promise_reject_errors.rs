@@ -214,6 +214,10 @@ fn test() {
         ("Promise.reject(new Error())", None),
         ("Promise.reject(new TypeError)", None),
         ("Promise.reject(new Error('foo'))", None),
+        (
+            "declare const error: Error | undefined; new Promise((_, reject) => { if (error) reject(error); });",
+            None,
+        ),
         ("Promise.reject(foo || 5)", None),
         ("Promise.reject(5 && foo)", None),
         ("new Foo((resolve, reject) => reject(5))", None),

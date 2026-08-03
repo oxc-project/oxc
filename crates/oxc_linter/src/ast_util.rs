@@ -630,11 +630,11 @@ fn could_be_error_impl(
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
-                    if decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| could_be_error_impl(ctx, init, visited))
-                    {
+                    let Some(init) = &decl.init else {
+                        return ctx.scoping().symbol_flags(symbol_id).is_ambient();
+                    };
+
+                    if could_be_error_impl(ctx, init, visited) {
                         return true;
                     }
 
