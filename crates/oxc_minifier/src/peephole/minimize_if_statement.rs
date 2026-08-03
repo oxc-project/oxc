@@ -1,10 +1,10 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
+use crate::TraverseCtx;
+use crate::is_terminated::IsTerminated;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
-
-use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -38,17 +38,22 @@ impl<'a> PeepholeOptimizations {
         // Consequent is non-empty from here on.
 
         if let Some(alternate) = &mut if_stmt.alternate {
-            if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
-                if let Statement::ExpressionStatement(alternate_expr_stmt) = alternate {
-                    // `if (a) b(); else c();` => `a ? b() : c();`
-                    let test = if_stmt.test.take_in(ctx);
-                    let consequent = expr_stmt.expression.take_in(ctx);
-                    let alternate = alternate_expr_stmt.expression.take_in(ctx);
-                    let expr =
-                        Self::minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
-                    return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
-                }
-            } else {
+            if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent
+                && let Statement::ExpressionStatement(alternate_expr_stmt) = alternate
+            {
+                // `if (a) b(); else c();` => `a ? b() : c();`
+                let test = if_stmt.test.take_in(ctx);
+                let consequent = expr_stmt.expression.take_in(ctx);
+                let alternate = alternate_expr_stmt.expression.take_in(ctx);
+                let expr =
+                    Self::minimize_conditional(if_stmt.span, test, consequent, alternate, ctx);
+                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+            }
+
+            let is_alternate_terminated = alternate.is_terminated();
+            let is_consequent_terminated = if_stmt.consequent.is_terminated();
+
+            if is_alternate_terminated == is_consequent_terminated {
                 // Normalize: move the `!` out of the test by swapping branches.
                 // Avoid swapping when alternate is an `if` — that risks a worse chain.
                 // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
@@ -60,6 +65,15 @@ impl<'a> PeepholeOptimizations {
                     ctx.replace_expression(&mut if_stmt.test, new_test);
                     std::mem::swap(&mut if_stmt.consequent, alternate);
                 }
+            } else if is_alternate_terminated {
+                let new_test = match &mut if_stmt.test {
+                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                        unary_expr.argument.take_in(ctx)
+                    }
+                    _ => Self::minimize_not(if_stmt.test.span(), if_stmt.test.take_in(ctx), ctx),
+                };
+                ctx.replace_expression(&mut if_stmt.test, new_test);
+                std::mem::swap(&mut if_stmt.consequent, alternate);
             }
         } else if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             // `if (!a) b();` => `a || b();`
