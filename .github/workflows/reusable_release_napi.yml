@@ -78,7 +78,7 @@ jobs:
 
           - os: ubuntu-latest
             target: wasm32-wasip1-threads
-            build: pnpm build --target wasm32-wasip1-threads
+            build: pnpm build-wasm
 
           - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
