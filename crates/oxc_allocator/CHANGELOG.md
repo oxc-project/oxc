@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- f0a41c8 allocator: [**BREAKING**] Remove `ArenaBox::dangling` method (#25236) (overlookmotel)
+
+### 🚀 Features
+
+- 3c8312e allocator: Make `Box` `Send` + `Sync` when the type it contains is (#25242) (overlookmotel)
+
 ## [0.141.0] - 2026-07-20
 
 ### 🚀 Features
