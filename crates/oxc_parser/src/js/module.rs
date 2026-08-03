@@ -31,12 +31,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `ImportCall` : import ( `AssignmentExpression` )
     pub(crate) fn parse_import_expression(
         &mut self,
-        span: u32,
+        start: u32,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
         self.expect(Kind::LParen);
         if self.eat(Kind::RParen) {
-            let error = diagnostics::import_requires_a_specifier(self.end_span(span));
+            let error = diagnostics::import_requires_a_specifier(self.end_span(start));
             return self.fatal_error(error);
         }
         let has_in = self.ctx.has_in();
@@ -50,11 +50,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Allow trailing comma
         self.bump(Kind::Comma);
         if !self.eat(Kind::RParen) {
-            let error = diagnostics::import_arguments(self.end_span(span));
+            let error = diagnostics::import_arguments(self.end_span(start));
             return self.fatal_error(error);
         }
         self.ctx = self.ctx.and_in(has_in);
-        let expr = ImportExpression::boxed(self.end_span(span), expression, arguments, phase, self);
+        let expr =
+            ImportExpression::boxed(self.end_span(start), expression, arguments, phase, self);
         self.module_record_builder.visit_import_expression(&expr);
         Expression::ImportExpression(expr)
     }
@@ -71,7 +72,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 16.2.2 Import Declaration
     pub(crate) fn parse_import_declaration(
         &mut self,
-        span: u32,
+        start: u32,
         should_record_module_record: bool,
     ) -> Statement<'a> {
         let token_after_import = self.cur_token();
@@ -96,7 +97,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let decl = self.parse_ts_import_equals_declaration(
                 ImportOrExportKind::Value,
                 identifier_after_import,
-                span,
+                start,
             );
             return Statement::from(decl);
         } else if self.is_ts && token_after_import.kind() == Kind::Type {
@@ -130,7 +131,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let decl = self.parse_ts_import_equals_declaration(
                             ImportOrExportKind::Type,
                             identifier_after_import.unwrap(),
-                            span,
+                            start,
                         );
                         return Statement::from(decl);
                     } else if self.at(Kind::From) {
@@ -240,7 +241,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let source = self.parse_literal_string();
         let with_clause = self.parse_import_attributes();
         self.asi();
-        let span = self.end_span(span);
+        let span = self.end_span(start);
 
         let import_decl = ImportDeclaration::boxed(
             span,
@@ -332,11 +333,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     // import * as name from "module-name"
     fn parse_import_namespace_specifier(&mut self) -> ImportDeclarationSpecifier<'a> {
-        let span = self.start_span();
+        let start = self.start_span();
         self.bump_any(); // advance `*`
         self.expect(Kind::As);
         let local = self.parse_binding_identifier();
-        let span = self.end_span(span);
+        let span = self.end_span(start);
         ImportDeclarationSpecifier::new_import_namespace_specifier(span, local, self)
     }
 
@@ -370,7 +371,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.advance(keyword_kind);
 
-        let span = self.start_span();
+        let start = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (with_entries, _) = self.context_remove(self.ctx, |p| {
@@ -392,11 +393,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         }
 
-        Some(WithClause::boxed(self.end_span(span), keyword, with_entries, self))
+        Some(WithClause::boxed(self.end_span(start), keyword, with_entries, self))
     }
 
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {
-        let span = self.start_span();
+        let start = self.start_span();
         let key = match self.cur_kind() {
             Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
             _ => ImportAttributeKey::Identifier(self.parse_identifier_name()),
@@ -408,12 +409,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ));
         }
         let value = self.parse_literal_string();
-        ImportAttribute::new(self.end_span(span), key, value, self)
+        ImportAttribute::new(self.end_span(start), key, value, self)
     }
 
     pub(crate) fn parse_ts_export_assignment_declaration(
         &mut self,
-        start_span: u32,
+        start: u32,
     ) -> ArenaBox<'a, TSExportAssignment<'a>> {
         self.expect(Kind::Eq);
         let expression = self.parse_assignment_expression_or_higher();
@@ -421,12 +422,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.ctx.has_top_level() {
             self.module_record_builder.set_module_syntax();
         }
-        TSExportAssignment::boxed(self.end_span(start_span), expression, self)
+        TSExportAssignment::boxed(self.end_span(start), expression, self)
     }
 
     pub(crate) fn parse_ts_export_namespace(
         &mut self,
-        start_span: u32,
+        start: u32,
     ) -> ArenaBox<'a, TSNamespaceExportDeclaration<'a>> {
         self.expect(Kind::As);
         self.expect(Kind::Namespace);
@@ -435,13 +436,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.ctx.has_top_level() {
             self.module_record_builder.set_module_syntax();
         }
-        TSNamespaceExportDeclaration::boxed(self.end_span(start_span), id, self)
+        TSNamespaceExportDeclaration::boxed(self.end_span(start), id, self)
     }
 
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
     pub(crate) fn parse_export_declaration(
         &mut self,
-        span: u32,
+        start: u32,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> Statement<'a> {
         self.bump_any(); // bump `export`
@@ -461,7 +462,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let stmt = self.parse_import_declaration(import_span, false);
                 if stmt.is_declaration() {
                     let export_decl = ExportDeclaration::boxed(
-                        self.end_span(span),
+                        self.end_span(start),
                         stmt.into_declaration(),
                         self,
                     );
@@ -485,40 +486,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let modifiers = self.parse_modifiers(false, false);
                 let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
-                let export_decl = ExportDeclaration::boxed(self.end_span(span), decl, self);
+                let export_decl = ExportDeclaration::boxed(self.end_span(start), decl, self);
                 if self.ctx.has_top_level() {
                     self.module_record_builder.visit_export_declaration(&export_decl);
                 }
                 ModuleDeclaration::ExportDeclaration(export_decl)
             }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
-                self.parse_ts_export_assignment_declaration(span),
+                self.parse_ts_export_assignment_declaration(start),
             ),
             Kind::As if self.is_ts && self.lexer.peek_token().kind() == Kind::Namespace => {
                 // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
-                    self.parse_ts_export_namespace(span),
+                    self.parse_ts_export_namespace(start),
                 )
             }
             Kind::Default => ModuleDeclaration::ExportDefaultDeclaration(
-                self.parse_export_default_declaration(span, decorators),
+                self.parse_export_default_declaration(start, decorators),
             ),
             Kind::Star => {
-                ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(span))
+                ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(start))
             }
-            Kind::LCurly => self.parse_export_named_specifiers(span),
+            Kind::LCurly => self.parse_export_named_specifiers(start),
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
-                    Kind::LCurly => self.parse_export_named_specifiers(span),
+                    Kind::LCurly => self.parse_export_named_specifiers(start),
                     // `export type * as ...`
                     Kind::Star => ModuleDeclaration::ExportAllDeclaration(
-                        self.parse_export_all_declaration(span),
+                        self.parse_export_all_declaration(start),
                     ),
                     _ => ModuleDeclaration::ExportDeclaration(
-                        self.parse_exported_declaration(span, decorators),
+                        self.parse_exported_declaration(start, decorators),
                     ),
                 }
             }
@@ -531,7 +532,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     self.bump_any();
                 }
                 ModuleDeclaration::ExportDeclaration(
-                    self.parse_exported_declaration(span, decorators),
+                    self.parse_exported_declaration(start, decorators),
                 )
             }
         };
@@ -549,7 +550,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
-    fn parse_export_named_specifiers(&mut self, span: u32) -> ModuleDeclaration<'a> {
+    fn parse_export_named_specifiers(&mut self, start: u32) -> ModuleDeclaration<'a> {
         let export_kind = self.parse_import_or_export_kind();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
@@ -604,7 +605,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         self.asi();
-        let span = self.end_span(span);
+        let span = self.end_span(start);
         if let Some(source) = source {
             let export_from_decl = ExportFromDeclaration::boxed(
                 span,
@@ -631,7 +632,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // export Declaration
     fn parse_exported_declaration(
         &mut self,
-        span: u32,
+        start: u32,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ArenaBox<'a, ExportDeclaration<'a>> {
         let decl_span = self.start_span();
@@ -642,7 +643,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let declaration = self.parse_declaration(decl_span, &modifiers, decorators);
         self.ctx = reserved_ctx;
-        let export_decl = ExportDeclaration::boxed(self.end_span(span), declaration, self);
+        let export_decl = ExportDeclaration::boxed(self.end_span(start), declaration, self);
         if self.ctx.has_top_level() {
             self.module_record_builder.visit_export_declaration(&export_decl);
         }
@@ -654,13 +655,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // export default AssignmentExpression[+In, ~Yield, +Await] ;
     fn parse_export_default_declaration(
         &mut self,
-        span: u32,
+        start: u32,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ArenaBox<'a, ExportDefaultDeclaration<'a>> {
         let default_keyword_span = self.cur_token().span();
         self.advance(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
-        let span = self.end_span(span);
+        let span = self.end_span(start);
         let export_default_decl = ExportDefaultDeclaration::boxed(span, declaration, self);
         if self.ctx.has_top_level() {
             self.module_record_builder
@@ -789,7 +790,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     //   NamedExports
     fn parse_export_all_declaration(
         &mut self,
-        span: u32,
+        start: u32,
     ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
@@ -798,7 +799,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let source = self.parse_literal_string();
         let with_clause = self.parse_import_attributes();
         self.asi();
-        let span = self.end_span(span);
+        let span = self.end_span(start);
         let export_all_decl =
             ExportAllDeclaration::boxed(span, exported, source, with_clause, export_kind, self);
         if self.ctx.has_top_level() {
