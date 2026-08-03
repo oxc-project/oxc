@@ -475,8 +475,15 @@ pub(super) struct ValueContext<'a> {
 }
 
 impl ValueContext<'_> {
+    /// Source-driven grid layout applies to the DECLARATION value only, never inside
+    /// function arguments (Prettier's `isGridValue` also requires the value node itself).
+    ///
+    /// Inside arguments the normal value rules must run: the grid rule turns EVERY gap-free
+    /// pair into a plain space, which would split a `theme(spacing.4)` path
+    /// (ONE postcss word, see `is_word_glued_number`) into `theme(spacing 0.4)`.
     fn is_grid(&self) -> bool {
-        self.decl_prop.is_some_and(|p| p == "grid" || p.starts_with("grid-template"))
+        !self.in_args
+            && self.decl_prop.is_some_and(|p| p == "grid" || p.starts_with("grid-template"))
     }
 
     fn is_font_or_custom(&self) -> bool {

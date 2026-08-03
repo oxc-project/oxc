@@ -1,0 +1,25 @@
+/* Source-driven grid layout (hardline per source break, never re-wrapped) is a
+   DECLARATION-value rule; inside function arguments the normal value rules run.
+   Otherwise every gap-free pair in the args gets a plain space, which splits a
+   Tailwind `theme()` path (ONE postcss word) into a decimal number:
+   `theme(spacing.4)` -> `theme(spacing 0.4)`. */
+.theme-paths {
+  --gutter: theme(spacing.5);
+  margin: theme(spacing.4);
+  grid-template-rows: theme(spacing.4) auto theme(spacing.5);
+  grid-template-columns: theme(colors.red.500);
+  grid: theme(spacing.4) / auto;
+}
+.nested-args {
+  grid-template-columns: minmax(theme(spacing.4), 1fr);
+}
+/* The value's own line structure is still preserved... */
+.track-list {
+  grid-template-areas: "a a"
+    "b c";
+}
+/* ...while argument lists re-wrap normally. */
+.args {
+  grid-template-columns: repeat(2, minmax(0, 1fr)
+    minmax(0, 2fr));
+}
