@@ -118,7 +118,7 @@ fn is_expr_global_builtin<'a, 'b>(
     } else {
         let member_expr = expr.as_member_expression()?;
 
-        let Expression::Identifier(ident) = member_expr.object() else {
+        let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
             return None;
         };
 
@@ -337,14 +337,14 @@ fn test() {
                 }
                 return Map()
             }",
-        // "function foo() {
-        //         return(globalThis).Map()
-        //     }",
+        "function foo() {
+                return(globalThis).Map()
+            }",
         "const foo = Date();",
         "const foo = globalThis.Date();",
-        // "function foo() {
-        //         return(globalThis).Date();
-        //     }",
+        "function foo() {
+                return(globalThis).Date();
+            }",
         "const foo = Date(/*comment*/);",
         "const foo = globalThis/*comment*/.Date();",
         "const foo = Date(bar);",
