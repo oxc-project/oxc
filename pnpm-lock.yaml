@@ -143,8 +143,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@oxc-project/types':
-        specifier: ^0.142.0
-        version: 0.142.0
+        specifier: ^0.143.0
+        version: 0.143.0
       '@type-challenges/utils':
         specifier: ^0.1.1
         version: 0.1.1
@@ -2064,6 +2064,9 @@ packages:
   '@oxc-project/types@0.142.0':
     resolution: {integrity: sha512-7W+2q5AKQVU36fkaryontrHn3YDt1RyUYXatw9i5H8ocYe2sPKSFB6eS8WNPeRKiN1qAWWZUPm7gwFzJGrccqQ==}
 
+  '@oxc-project/types@0.143.0':
+    resolution: {integrity: sha512-u6JZdLBTLotrNC9Vd6vPssINdzcCzleKAH6EJKImQb7GtYvX5keN2dxkoK44stCc4tffE6QQRtZTXVSzsLUlWA==}
+
   '@oxfmt/binding-android-arm-eabi@0.60.0':
     resolution: {integrity: sha512-1q4q4Jc8FlOMVojEisyFAVyl8h1yawNv6phjgmhGVEDeyeOdsSnSr9x0+D4mOnEKvpO5L4mxKZ/DP9X6U3A/Mw==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -2881,6 +2884,12 @@ packages:
     peerDependencies:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
+
+  '@rolldown/binding-android-arm64@1.2.2':
+    resolution: {integrity: sha512-l7x215OGvo1s52JWmR8U/DAVzEDWBCIbTm28aeJV/WDTSHgcKXaZTuBT0hJMs5NggilfJTW3clZVvd24yfKJxA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    cpu: [arm64]
+    os: [android]
 
   '@rolldown/binding-darwin-arm64@1.2.2':
     resolution: {integrity: sha512-9u9Xv6c1AJZT0FfwH5vrMG5Jjcwhc1MlyrPu0XfTqkzsmqfks2M6W/o5XwAJgVVN/jHpqqngC1WevHKKTIUtIA==}
@@ -7374,6 +7383,8 @@ snapshots:
 
   '@oxc-project/types@0.142.0': {}
 
+  '@oxc-project/types@0.143.0': {}
+
   '@oxfmt/binding-android-arm-eabi@0.60.0':
     optional: true
 
@@ -7984,6 +7995,9 @@ snapshots:
       clsx: 2.1.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
+
+  '@rolldown/binding-android-arm64@1.2.2':
+    optional: true
 
   '@rolldown/binding-darwin-arm64@1.2.2':
     optional: true
@@ -10332,6 +10346,7 @@ snapshots:
       '@oxc-project/types': 0.142.0
       '@rolldown/pluginutils': 1.0.0
     optionalDependencies:
+      '@rolldown/binding-android-arm64': 1.2.2
       '@rolldown/binding-darwin-arm64': 1.2.2
       '@rolldown/binding-darwin-x64': 1.2.2
       '@rolldown/binding-freebsd-x64': 1.2.2
