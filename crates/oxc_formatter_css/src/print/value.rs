@@ -463,7 +463,8 @@ pub(super) struct ValueContext<'a> {
     pub tail_bound: Option<u32>,
     /// Inside `url(...)`: colons stay tight (`url(fbglyph:cross-outline)`).
     pub in_url: bool,
-    /// Inside function/include arguments (comment-slot rules differ).
+    /// Inside function/include arguments
+    /// (comment-slot rules differ, and the grid line-structure rule is top-level only, see `is_grid`).
     pub in_args: bool,
     /// A multi-line `raws.between` was printed before the value:
     /// Prettier's printer counts its full width, so the first trailing comment always wraps.
@@ -1025,18 +1026,33 @@ fn raw_token<'b, 'a>(value: &'b ComponentValue<'a>) -> Option<&'b Token<'a>> {
 }
 
 /// Decides the separator BEFORE `values[i]` (i >= 1).
-///
-/// In Prettier's loop terms:
-/// - `iNode` = `values[i - 1]`
-/// - `iNextNode` = `values[i]`
-/// - `iPrevNode` = `values[i - 2]`
-/// - `iNextNextNode` = `values[i + 1]`
 fn separator_between(
     values: &[ComponentValue<'_>],
     i: usize,
     ctx: ValueContext<'_>,
     source: SourceText<'_>,
 ) -> Separator {
+    let sep = base_separator(values, i, ctx);
+    // Grid: preserve source line structure:
+    // Prettier emits a hardline where the source breaks and a PLAIN SPACE otherwise
+    // (never re-wraps a single-line grid value, however long).
+    // Only LAYOUT outcomes are overridden:
+    // a glued pair (`Tight`/`Word`) is part of ONE postcss word (`sandstone.10`, `1fr/2fr`)
+    // and survives verbatim in grid values too, grid never splits what other properties keep glued.
+    if ctx.is_grid() && matches!(sep, Separator::Line | Separator::Space) {
+        let prev_end = to_span(values[i - 1].span()).end;
+        let curr_start = to_span(values[i].span()).start;
+        return if source.bytes_contain(prev_end, curr_start, b'\n') {
+            Separator::Hard
+        } else {
+            Separator::Space
+        };
+    }
+    sep
+}
+
+/// The separator rules WITHOUT the grid line-structure override (`separator_between` applies that on top).
+fn base_separator(values: &[ComponentValue<'_>], i: usize, ctx: ValueContext<'_>) -> Separator {
     let prev = &values[i - 1];
     let curr = &values[i];
     let prev_span = to_span(prev.span());
@@ -1045,17 +1061,6 @@ fn separator_between(
     let gap_empty = prev_span.end == curr_span.start;
     // `hasEmptyRawBefore(iNode)`
     let prev_gap_empty = i >= 2 && to_span(values[i - 2].span()).end == prev_span.start;
-
-    // Grid: preserve source line structure:
-    // Prettier emits a hardline where the source breaks and a PLAIN SPACE otherwise
-    // (never re-wraps a single-line grid value, however long).
-    if ctx.is_grid() {
-        let gap = source.bytes_range(prev_span.end, curr_span.start);
-        if gap.contains(&b'\n') || gap.contains(&b'\r') {
-            return Separator::Hard;
-        }
-        return Separator::Space;
-    }
 
     // Solidus (`/`) spacing rules
     if is_solidus(curr) || is_solidus(prev) {
@@ -1109,15 +1114,22 @@ fn separator_between(
         return Separator::Line;
     }
 
-    // Less lookups: `@var [@result]` loses the gap (`var [@lookup]` rule)
+    // Less lookups: `@var [@result]` loses the gap (`var [@lookup]` rule).
+    // A `[...]` continues a lookup chain only when the chain HEAD is a Less value (`@config[@key][@key2]`);
+    // bracket runs without one are NOT lookups (CSS grid line names: `[row1-end]` newline `[row2-start]` stays two values).
     if matches!(curr, ComponentValue::BracketBlock(_))
-        && matches!(
-            prev,
-            ComponentValue::LessVariable(_)
-                | ComponentValue::LessNamespaceValue(_)
-                | ComponentValue::BracketBlock(_)
-                | ComponentValue::LessMixinCall(_)
-        )
+        && values[..i]
+            .iter()
+            .rev()
+            .find(|v| !matches!(v, ComponentValue::BracketBlock(_)))
+            .is_some_and(|head| {
+                matches!(
+                    head,
+                    ComponentValue::LessVariable(_)
+                        | ComponentValue::LessNamespaceValue(_)
+                        | ComponentValue::LessMixinCall(_)
+                )
+            })
     {
         return Separator::Tight;
     }
