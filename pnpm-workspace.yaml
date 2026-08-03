@@ -8,9 +8,9 @@ packages:
   - tasks/compat_data
 
 catalog:
-  "@emnapi/core": 1.11.3
-  "@emnapi/runtime": 1.11.3
-  emnapi: 1.11.3
+  "@emnapi/core": 2.0.0-alpha.3
+  "@emnapi/runtime": 2.0.0-alpha.3
+  emnapi: 2.0.0-alpha.3
   "@arethetypeswrong/core": 0.18.5
   "@napi-rs/cli": 3.8.2
   "@napi-rs/wasm-runtime": 1.2.1

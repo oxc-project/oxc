@@ -67,7 +67,7 @@
     "postbuild-dev": "node scripts/patch.js",
     "build-wasi": "napi build --target wasm32-wasip1-threads",
     "build-wasm": "pnpm run build-wasm-dev --release",
-    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts parser.wasi.d.cts",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir src-js",
     "build-browser-bundle": "node scripts/build-browser-bundle.js",
     "test": "pnpm run test-node run",
