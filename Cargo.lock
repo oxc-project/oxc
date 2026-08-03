@@ -1676,9 +1676,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "3.0.12"
+version = "3.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6967692b4c51de292573c3f5eed236b6df29ac47d122379ad3a9d209776a9cf3"
+checksum = "90c92d1151042aaef88266115387e2506b61fbf8b5adf899e31b593df8763d25"
 dependencies = [
  "miniz_oxide 0.9.1",
  "postcard",
