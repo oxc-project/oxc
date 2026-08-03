@@ -1,12 +1,10 @@
-use std::cell::Cell;
-
 use oxc_formatter_core::{
-    Buffer, SourceText,
+    Buffer, SourceText, SpanCursor,
     builders::{align, empty_line, expand_parent, hard_line_break, line_suffix, space, text},
     spec::is_suppression_marker,
     write,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::print::{YamlFormatter, format_with};
 
@@ -20,65 +18,28 @@ pub struct SourceComment {
     pub own_line_column: Option<u32>,
 }
 
-/// Cursor over a sorted comment list that hands out unprinted slices in span order.
+impl GetSpan for SourceComment {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+/// Cursor over the sorted comment list.
 ///
 /// YAML comments are always single-line (`# ...` to end of line);
 /// the parser collects them into a flat, source-ordered list and `format()` bridges them to [`SourceComment`]s.
 /// Comment placement (leading / trailing / end) is decided positionally at print sites.
+pub type Comments<'a> = SpanCursor<'a, SourceComment>;
+
+/// `anchor`, moved past the most recently consumed comment when that lies beyond it.
 ///
-/// `cursor` is a [`Cell`] so the API works through `&self`.
-pub struct Comments<'a> {
-    inner: &'a [SourceComment],
-    cursor: Cell<usize>,
-}
-
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [SourceComment]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns the next unprinted comment without consuming it.
-    pub fn peek(&self) -> Option<SourceComment> {
-        self.inner.get(self.cursor.get()).copied()
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [SourceComment] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [SourceComment] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = SourceComment> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |c| c.span.end <= upper_bound)
-    }
-
-    /// `anchor`, moved past the most recently consumed comment when that lies beyond it.
-    ///
-    /// A nested container's end-comment flush consumes comments PAST the outer caller's anchor
-    /// (a deeper-indented run belongs to the inner container),
-    /// reproducing the vertical spacing in front of them as it prints.
-    /// Gap measurement resuming from the unmoved anchor would observe that same spacing again
-    /// and emit a second blank line.
-    pub fn gap_anchor_after_consumed(&self, anchor: u32) -> u32 {
-        let last_consumed_end = self.cursor.get().checked_sub(1).map(|i| self.inner[i].span.end);
-        last_consumed_end.map_or(anchor, |end| anchor.max(end))
-    }
+/// A nested container's end-comment flush consumes comments PAST the outer caller's anchor
+/// (a deeper-indented run belongs to the inner container),
+/// reproducing the vertical spacing in front of them as it prints.
+/// Gap measurement resuming from the unmoved anchor would observe that same spacing again
+/// and emit a second blank line.
+pub fn gap_anchor_after_consumed(anchor: u32, f: &YamlFormatter<'_, '_>) -> u32 {
+    f.context().comments().last_consumed().map_or(anchor, |c| anchor.max(c.span.end))
 }
 
 pub use oxc_formatter_core::spec::{Gap, classify_gap};
@@ -98,7 +59,7 @@ pub fn write_blank_preserving_break(
     upper_bound: u32,
     f: &mut YamlFormatter<'_, '_>,
 ) {
-    let prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
+    let prev_end = gap_anchor_after_consumed(prev_end, f);
     if prev_end < upper_bound
         && classify_gap(f.context().source_text().bytes_range(prev_end, upper_bound)) == Gap::Blank
     {
@@ -279,7 +240,7 @@ pub fn flush_container_end_comments(
     f: &mut YamlFormatter<'_, '_>,
 ) -> u32 {
     let source = f.context().source_text();
-    let mut prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
+    let mut prev_end = gap_anchor_after_consumed(prev_end, f);
     loop {
         let Some(comment) = f.context().comments().peek() else { return prev_end };
         let span = comment.span;

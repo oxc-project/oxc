@@ -5,7 +5,7 @@
 Language-agnostic formatting infrastructure, ported from [Biome](https://github.com/biomejs/biome)'s `biome_formatter` crate.
 
 Every language-specific formatter in the oxc ecosystem (`oxc_formatter` for JS/TS, `oxc_formatter_json`, and future CSS/GraphQL/etc.) builds on this crate.
-It owns the IR and the printing pipeline; it knows nothing about any concrete language (no comments, no quote rules, those live in the consumer crates).
+It owns the IR and the printing pipeline; it knows nothing about any concrete language (no comment placement rules, no quote rules, those live in the consumer crates).
 
 ### The IR ("Document") and pipeline
 
@@ -87,14 +87,18 @@ formatter's IR be built inside another's document (e.g. graphql-in-js):
 
 ### What belongs in core (the boundary)
 
-Two layers, two admission rules. A type/fn that fits neither belongs in a consumer crate.
+Three layers, three admission rules. A type/fn that fits none of them belongs in a consumer crate.
 
 - (1) engine: The IR + Printer + the option types the `Printer` actually consumes
   - `PrinterOptions`: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`
 
-Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own
+Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own.
 
-- (2) `spec/`: Shared formatter behaviors reused across language formatters
+- (2) `source/`: Source-side access mechanics (`SourceText`, `SpanCursor`)
+
+Admission: the structure makes no output decision by itself; language differences arrive as data (offsets, the item type), never as parameters encoding grammar or policy.
+
+- (3) `spec/`: Shared formatter behaviors reused across language formatters
 
 Output targets Prettier compatibility, but the layer is defined by what it is, not by Prettier.
 
@@ -125,6 +129,9 @@ Newline-adjacent helpers split along the same line:
   - It takes a raw `&[u8]` slice, never offsets (`SourceText` addresses), `spec/` interprets, consumers compose the two at the call site
 - Precedent for gate 2: json/js measure gaps under ECMAScript lexis (LS/PS terminators, blanks before a separator comma ignored)
   - So they keep their own helpers instead of a parameter here
+
+`SpanCursor<T: GetSpan>` follows the same split from the position side:
+core owns the span-ordered cursor mechanics; what the items mean (comments) and where they are placed stay consumer-owned.
 
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 

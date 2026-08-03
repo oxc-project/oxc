@@ -1,12 +1,10 @@
-use std::cell::Cell;
-
 use oxc_formatter_core::{
-    Buffer, SourceText,
+    Buffer, SourceText, SpanCursor,
     builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
     spec::is_suppression_marker,
     write,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::print::{CssFormatter, format_with};
 
@@ -21,51 +19,14 @@ pub struct CssComment {
     pub inline: bool,
 }
 
-/// Cursor over a sorted comment list that hands out unprinted comments in span order.
-///
-/// `cursor` is a [`Cell`] so the API works through `&self`
-/// (mirrors `oxc_formatter_graphql`'s `Comments`).
-pub struct Comments<'a> {
-    inner: &'a [CssComment],
-    cursor: Cell<usize>,
-}
-
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [CssComment]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns the next unprinted comment without consuming it.
-    pub fn peek(&self) -> Option<CssComment> {
-        self.inner.get(self.cursor.get()).copied()
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [CssComment] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [CssComment] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = CssComment> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |c| c.span.end <= upper_bound)
+impl GetSpan for CssComment {
+    fn span(&self) -> Span {
+        self.span
     }
 }
+
+/// Cursor over the sorted comment list.
+pub type Comments<'a> = SpanCursor<'a, CssComment>;
 
 pub use oxc_formatter_core::spec::{Gap, classify_gap};
 

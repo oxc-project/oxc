@@ -28,7 +28,7 @@ mod macros;
 mod options;
 pub mod printer;
 mod simple_context;
-mod source_text;
+mod source;
 pub mod spec;
 mod state;
 mod traits;
@@ -65,7 +65,7 @@ pub use options::{
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;
-pub use source_text::SourceText;
+pub use source::{SourceText, SpanCursor};
 pub use state::FormatState;
 pub use traits::{FormatContext, FormatOptions};
 
