@@ -460,6 +460,11 @@ fn bitwise_and() {
 
 #[test]
 fn equality() {
+    test_unambiguous("(null < 356) > /a/;", "null < 356 > /a/;\n");
+    test_unambiguous(
+        "for (value of (this < \"hello\") > (/a/ / value?.value));",
+        "for (value of this < \"hello\" > /a/ / value?.value);\n",
+    );
     test_minify("a == b != c === d !== e", "a==b!=c===d!==e;");
     test_minify("a == (b != (c === (d !== e)))", "a==(b!=(c===(d!==e)));");
     test_minify("(((a == b) != c) === d) !== e", "a==b!=c===d!==e;");

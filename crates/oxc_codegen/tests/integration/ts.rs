@@ -359,6 +359,14 @@ fn ts_as_expression_in_binary_expr() {
 }
 
 #[test]
+fn comparison_before_regexp() {
+    test_same("(null < 356) > /a/;\n");
+    test_idempotency("for (value of (this < \"hello\") > (/a/ / value?.value));");
+    test_idempotency("(a < b) > /x/.source");
+    test_idempotency("(a < b) > /x/.test('')");
+}
+
+#[test]
 fn ts_type_assertion() {
     // `<T>x` (TS angle-bracket assertion) is only valid in non-tsx source.
     let test_ts =

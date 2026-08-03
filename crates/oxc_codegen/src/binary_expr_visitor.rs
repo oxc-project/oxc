@@ -4,13 +4,57 @@
 
 use std::ops::Not;
 
-use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
+use oxc_ast::ast::{BinaryExpression, ChainElement, Expression, LogicalExpression};
 use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator},
     precedence::{GetPrecedence, Precedence},
 };
 
 use crate::{Codegen, Context, Operator, cjs_module_lexer, r#gen::GenExpr};
+
+fn expression_starts_with_regexp(expression: &Expression) -> bool {
+    match expression.without_parentheses() {
+        Expression::RegExpLiteral(_) => true,
+        Expression::BinaryExpression(expression) => expression_starts_with_regexp(&expression.left),
+        Expression::StaticMemberExpression(expression) => {
+            expression_starts_with_regexp(&expression.object)
+        }
+        Expression::ComputedMemberExpression(expression) => {
+            expression_starts_with_regexp(&expression.object)
+        }
+        Expression::PrivateFieldExpression(expression) => {
+            expression_starts_with_regexp(&expression.object)
+        }
+        Expression::CallExpression(expression) => expression_starts_with_regexp(&expression.callee),
+        Expression::TaggedTemplateExpression(expression) => {
+            expression_starts_with_regexp(&expression.tag)
+        }
+        Expression::TSNonNullExpression(expression) => {
+            expression_starts_with_regexp(&expression.expression)
+        }
+        Expression::TSInstantiationExpression(expression) => {
+            expression_starts_with_regexp(&expression.expression)
+        }
+        Expression::ChainExpression(expression) => match &expression.expression {
+            ChainElement::CallExpression(expression) => {
+                expression_starts_with_regexp(&expression.callee)
+            }
+            ChainElement::TSNonNullExpression(expression) => {
+                expression_starts_with_regexp(&expression.expression)
+            }
+            ChainElement::StaticMemberExpression(expression) => {
+                expression_starts_with_regexp(&expression.object)
+            }
+            ChainElement::ComputedMemberExpression(expression) => {
+                expression_starts_with_regexp(&expression.object)
+            }
+            ChainElement::PrivateFieldExpression(expression) => {
+                expression_starts_with_regexp(&expression.object)
+            }
+        },
+        _ => false,
+    }
+}
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -213,6 +257,16 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 ) {
                     self.left_precedence = Precedence::Call;
                 }
+            }
+            BinaryishOperator::Binary(operator)
+                if operator.is_compare()
+                    && p.is_typescript
+                    && matches!(e.left(), Expression::BinaryExpression(left) if left.operator.is_compare())
+                    && expression_starts_with_regexp(e.right()) =>
+            {
+                // TypeScript parses `a < b > / x` as an instantiation expression followed by
+                // division. Preserve `(a < b) > /x/` so `/x/` remains a regexp literal.
+                self.left_precedence = Precedence::Compare;
             }
 
             _ => {}
