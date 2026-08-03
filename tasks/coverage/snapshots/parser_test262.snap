@@ -21408,6 +21408,13 @@ Negative Passed: 4651/4651 (100.00%)
     ╰────
   note: This identifier is reserved in strict mode code
 
+  × Unexpected export.
+    ╭─[test262/test/language/global-code/export.js:22:1]
+ 21 │ 
+ 22 │ export default null;
+    · ──────
+    ╰────
+
   × Cannot use export statement outside a module
     ╭─[test262/test/language/global-code/export.js:22:1]
  21 │ 
@@ -22432,6 +22439,13 @@ Negative Passed: 4651/4651 (100.00%)
     ╭─[test262/test/language/import/import-defer/syntax/invalid-defer-named.js:34:1]
  33 │ 
  34 │ import defer { default as x } from "./dep_FIXTURE.js";
+    · ──────
+    ╰────
+
+  × Unexpected export.
+    ╭─[test262/test/language/import/import-defer/syntax/invalid-export-defer-namespace.js:33:1]
+ 32 │ 
+ 33 │ export defer * as ns from "./dep_FIXTURE.js";
     · ──────
     ╰────
 

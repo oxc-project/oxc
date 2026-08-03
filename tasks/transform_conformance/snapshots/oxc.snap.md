@@ -1,17 +1,14 @@
 commit: c86e9e4b
 
-Passed: 270/398
+Passed: 240/398
 
 # All Passed:
-* babel-plugin-transform-class-static-block
 * babel-plugin-transform-private-methods
 * babel-plugin-transform-logical-assignment-operators
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-chaining
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-async-generator-functions
-* babel-plugin-transform-object-rest-spread
-* babel-plugin-transform-async-to-generator
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 * babel-preset-typescript
@@ -21,20 +18,30 @@ Passed: 270/398
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (3/4)
+# babel-plugin-transform-explicit-resource-management (2/4)
 * export-class-name/input.js
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
-rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(5), ReferenceId(6)]
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(3): []
-rebuilt        : SymbolId(3): [ReferenceId(4)]
-Reference symbol mismatch for "C":
-after transform: SymbolId(1) "C"
-rebuilt        : SymbolId(3) "C"
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-explicit-resource-management/test/fixtures/export-class-name/input.js:3:1]
+ 2 | 
+ 3 | export class C {
+   : ^^^^^^
+ 4 |   static getSelf() { return C; }
+   `----
 
 
-# babel-plugin-transform-class-properties (29/33)
+* try-catch/input.js
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-explicit-resource-management/test/fixtures/try-catch/input.js:1:1]
+ 1 | export class WorkspaceResolver {
+   : ^^^^^^
+ 2 |     async invite() {
+   `----
+
+
+
+# babel-plugin-transform-class-properties (28/33)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -47,12 +54,108 @@ x Output mismatch
 * static-super-tagged-template/input.js
 x Output mismatch
 
+* typescript/class-fields-with-computed-key/input.ts
 
-# babel-plugin-transform-typescript (41/60)
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-class-properties/test/fixtures/typescript/class-fields-with-computed-key/input.ts:3:1]
+ 2 | 
+ 3 | export class Obj {
+   : ^^^^^^
+ 4 |   public readonly [Collection.identifier] = true;
+   `----
+
+
+
+# babel-plugin-transform-class-static-block (4/5)
+* properties-and-methods/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-class-static-block/test/fixtures/properties-and-methods/input.ts:3:1]
+ 2 | 
+ 3 | export class C {
+   : ^^^^^^
+ 4 |   // Private properties and methods use up prop names for static block
+   `----
+
+
+
+# babel-plugin-transform-object-rest-spread (7/8)
+* object-rest/export/input.js
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/export/input.js:1:1]
+ 1 | export let { ...a0 } = foo;
+   : ^^^^^^
+ 2 | export let [{...b0}] = z
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/export/input.js:2:1]
+ 1 | export let { ...a0 } = foo;
+ 2 | export let [{...b0}] = z
+   : ^^^^^^
+   `----
+
+
+
+# babel-plugin-transform-async-to-generator (25/28)
+* function/export/default-with-name/input.js
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-async-to-generator/test/fixtures/function/export/default-with-name/input.js:1:1]
+ 1 | export default async function D(a, b = 0) {
+   : ^^^^^^
+ 2 |   await Promise.resolve();
+   `----
+
+
+* function/export/default-without-name/input.js
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-async-to-generator/test/fixtures/function/export/default-without-name/input.js:1:1]
+ 1 | export default async function (a, b = 0) {
+   : ^^^^^^
+ 2 |   await Promise.resolve();
+   `----
+
+
+* function/export/named/input.js
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-async-to-generator/test/fixtures/function/export/named/input.js:1:1]
+ 1 | export async function named(...args) {
+   : ^^^^^^
+ 2 |   await Promise.resolve();
+   `----
+
+
+
+# babel-plugin-transform-typescript (29/60)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
 rebuilt        : []
+
+* class-constructor-arguments-with-declared-fields/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/class-constructor-arguments-with-declared-fields/input.ts:6:1]
+ 5 | // purely defensive.)
+ 6 | export class WithStaticSameName {
+   : ^^^^^^
+ 7 |   static x = 0;
+   `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/class-constructor-arguments-with-declared-fields/input.ts:11:1]
+ 10 | 
+ 11 | export class WithPrivateSameName {
+    : ^^^^^^
+ 12 |   #x = 0;
+    `----
+
 
 * computed-constant-value/input.ts
 Unresolved references mismatch:
@@ -61,6 +164,26 @@ rebuilt        : ["Infinity"]
 Unresolved reference IDs mismatch for "Infinity":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
 rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
+
+* computed-static-property-with-constructor/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/computed-static-property-with-constructor/input.ts:1:1]
+ 1 | export class SampleClass {
+   : ^^^^^^
+ 2 |     static [Symbol.toPrimitive] = "test";
+   `----
+
+
+* const-enum-value-ref-kept/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/const-enum-value-ref-kept/input.ts:9:1]
+ 8 | 
+ 9 | export default Phase;
+   : ^^^^^^
+   `----
+
 
 * declare-and-definite-with-initializer/input.ts
 
@@ -85,9 +208,50 @@ rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12
 
 
 * elimination-declare/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "ReactiveMarker", "ReactiveMarkerSymbol"]
-rebuilt        : ScopeId(0): []
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/elimination-declare/input.ts:3:1]
+ 2 | 
+ 3 | export declare class ReactiveMarker {
+   : ^^^^^^
+ 4 |   private [ReactiveMarkerSymbol]?: void
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/elimination-declare/input.ts:7:1]
+ 6 | 
+ 7 | export declare const A = 1
+   : ^^^^^^
+   `----
+
+
+* elimination-empty-export-named/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/elimination-empty-export-named/input.ts:1:1]
+ 1 | export {} from 'mod';
+   : ^^^^^^
+ 2 | export {} from './app.ts';
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/elimination-empty-export-named/input.ts:2:1]
+ 1 | export {} from 'mod';
+ 2 | export {} from './app.ts';
+   : ^^^^^^
+ 3 | export {}
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/elimination-empty-export-named/input.ts:3:1]
+ 2 | export {} from './app.ts';
+ 3 | export {}
+   : ^^^^^^
+   `----
+
 
 * enum-member-reference/input.ts
 Missing ReferenceId: "Foo"
@@ -133,18 +297,43 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), R
 rebuilt        : SymbolId(0): [ReferenceId(5)]
 
 * export-elimination/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok"]
-rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok", "T"]
-Symbol flags mismatch for "T":
-after transform: SymbolId(9): SymbolFlags(Function | TypeAlias)
-rebuilt        : SymbolId(8): SymbolFlags(Function)
-Symbol span mismatch for "T":
-after transform: SymbolId(9): Span { start: 205, end: 206 }
-rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(9): [Span { start: 205, end: 206 }, Span { start: 226, end: 227 }]
-rebuilt        : SymbolId(8): []
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:11:1]
+ 10 | 
+ 11 | export { Im, Ok, Foo, Bar, Func, Baz, Baq, Name };
+    : ^^^^^^
+ 12 | 
+    `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:17:1]
+ 16 | }
+ 17 | export { T }
+    : ^^^^^^
+    `----
+
+
+* exports/type-and-non-type/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/exports/type-and-non-type/input.ts:4:1]
+ 3 | 
+ 4 | export { type ToastProps, ToastViewport };
+   : ^^^^^^
+   `----
+
+
+* jsx/issue-10956/input.tsx
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/jsx/issue-10956/input.tsx:3:1]
+ 2 | /** @jsxRuntime classic */
+ 3 | export const foo = <div></div>
+   : ^^^^^^
+   `----
+
 
 * namespace/import-=/input.ts
 Symbol reference IDs mismatch for "A":
@@ -159,27 +348,125 @@ Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
 
+* namespace/redeclaration-with-interface/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/namespace/redeclaration-with-interface/input.ts:1:1]
+ 1 | export interface Foo {}
+   : ^^^^^^
+ 2 | export namespace Foo {
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/namespace/redeclaration-with-interface/input.ts:2:1]
+ 1 | export interface Foo {}
+ 2 | export namespace Foo {
+   : ^^^^^^
+ 3 |   export const Bar = 1;
+   `----
+
+
+* namespace/redeclaration-with-type-alias/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/namespace/redeclaration-with-type-alias/input.ts:1:1]
+ 1 | export type Foo = {};
+   : ^^^^^^
+ 2 | export namespace Foo {
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/namespace/redeclaration-with-type-alias/input.ts:2:1]
+ 1 | export type Foo = {};
+ 2 | export namespace Foo {
+   : ^^^^^^
+ 3 |     export const Bar = 0;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/namespace/redeclaration-with-type-alias/input.ts:5:1]
+ 4 | }
+ 5 | export namespace Foo {
+   : ^^^^^^
+ 6 |     export const Zoo = 1;
+   `----
+
+
+* namespace/redeclaration-with-type-only-namespace/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/namespace/redeclaration-with-type-only-namespace/input.ts:1:1]
+ 1 | export namespace Foo {
+   : ^^^^^^
+ 2 |     export type T = 0;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/namespace/redeclaration-with-type-only-namespace/input.ts:4:1]
+ 3 | }
+ 4 | export namespace Foo {
+   : ^^^^^^
+ 5 |     export const Bar = 1;
+   `----
+
+
+* optimize-enums/exported-not-removed/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/optimize-enums/exported-not-removed/input.ts:1:1]
+ 1 | export enum Direction {
+   : ^^^^^^
+ 2 |   Up,
+   `----
+
+
 * optimize-enums/merged-enum/input.ts
 Unresolved references mismatch:
 after transform: ["A"]
 rebuilt        : []
 
+* optimize-enums/re-exported-not-removed/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/optimize-enums/re-exported-not-removed/input.ts:5:1]
+ 4 | enum B { Y = "hello" }
+ 5 | export { A, B }
+   : ^^^^^^
+ 6 | 
+   `----
+
+
 * redeclarations/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A"]
-rebuilt        : ScopeId(0): ["A", "B", "T"]
-Symbol flags mismatch for "T":
-after transform: SymbolId(1): SymbolFlags(Import | TypeAlias)
-rebuilt        : SymbolId(1): SymbolFlags(Import)
-Symbol redeclarations mismatch for "T":
-after transform: SymbolId(1): [Span { start: 149, end: 150 }, Span { start: 170, end: 171 }]
-rebuilt        : SymbolId(1): []
-Symbol flags mismatch for "B":
-after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
-Symbol redeclarations mismatch for "B":
-after transform: SymbolId(2): [Span { start: 289, end: 290 }, Span { start: 304, end: 305 }]
-rebuilt        : SymbolId(2): []
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/redeclarations/input.ts:4:1]
+ 3 | const A: A = 0;
+ 4 | export {A};
+   : ^^^^^^
+ 5 | 
+   `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/redeclarations/input.ts:9:1]
+  8 | type T = number;
+  9 | export { T }
+    : ^^^^^^
+ 10 | 
+    `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/redeclarations/input.ts:15:1]
+ 14 | type B = number;
+ 15 | export { B }
+    : ^^^^^^
+    `----
+
 
 * remove-class-properties-without-initializer/input.ts
 Unresolved references mismatch:
@@ -187,15 +474,61 @@ after transform: ["dce"]
 rebuilt        : []
 
 * remove-unused-import-equals/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["D", "a", "b", "bar", "c"]
-rebuilt        : ScopeId(0): ["a", "b", "bar", "c"]
-Unresolved reference IDs mismatch for "foo":
-after transform: [ReferenceId(0), ReferenceId(6)]
-rebuilt        : [ReferenceId(0)]
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/remove-unused-import-equals/input.ts:17:1]
+ 16 | 
+ 17 | export let bar = c
+    : ^^^^^^
+    `----
+
 
 * ts-declaration-empty-output/input.d.ts
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/ts-declaration-empty-output/input.d.ts:1:1]
+ 1 | export interface Things<P, T> {
+   : ^^^^^^
+ 2 |     p: P;
+   `----
+
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/ts-declaration-empty-output/input.d.ts:6:1]
+ 5 | 
+ 6 | export interface Props {
+   : ^^^^^^
+ 7 | }
+   `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/ts-declaration-empty-output/input.d.ts:9:1]
+  8 | 
+  9 | export default class MyComponent {
+    : ^^^^^^
+ 10 |     props: Props;
+    `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/ts-declaration-empty-output/input.d.ts:12:1]
+ 11 | }
+ 12 | export namespace Something {
+    : ^^^^^^
+ 13 |     export const foo = 123;
+    `----
+
+
+* ts-private-field-with-remove-class-fields-without-initializer/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/ts-private-field-with-remove-class-fields-without-initializer/input.ts:1:1]
+ 1 | export class ArrayBufferViewTransferable implements Transferable {
+   : ^^^^^^
+ 2 |   #view: ArrayBufferView;
+   `----
+
 
 * use-define-for-class-fields/input.ts
 Unresolved references mismatch:
@@ -208,7 +541,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (51/54)
+# babel-plugin-transform-react-jsx (50/54)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"
@@ -222,30 +555,31 @@ x Output mismatch
 * refresh/react-refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch
 
+* spread-props-classic/input.jsx
 
-# legacy-decorators (20/106)
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/spread-props-classic/input.jsx:1:1]
+ 1 | export function Foo(props) {
+   : ^^^^^^
+ 2 |   return (
+   `----
+
+
+
+# legacy-decorators (13/106)
 * oxc/accessor/input.ts
 x Output mismatch
 
 * oxc/accessor-name-collision/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop", "property"]
-rebuilt        : ScopeId(0): ["Foo", "_prop", "_prop2", "_prop3", "prop"]
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Reference symbol mismatch for "property":
-after transform: SymbolId(0) "property"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "property"]
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/accessor-name-collision/input.ts:6:1]
+ 5 | 
+ 6 | export class Foo {
+   : ^^^^^^
+ 7 |   @property()
+   `----
+
 
 * oxc/accessor-with-class-properties/input.ts
 Bindings mismatch:
@@ -273,10 +607,59 @@ Unresolved references mismatch:
 after transform: ["WeakMap", "babelHelpers"]
 rebuilt        : ["WeakMap", "a", "babelHelpers", "dec"]
 
+* oxc/class-without-name-with-decorated-static-element/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/class-without-name-with-decorated-static-element/input.ts:3:1]
+ 2 | 
+ 3 | export default class {
+   : ^^^^^^
+ 4 |   @dec
+   `----
+
+
 * oxc/class-without-name-with-decorated_class/input.ts
-Symbol flags mismatch for "_default":
-after transform: SymbolId(1): SymbolFlags(Class)
-rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/class-without-name-with-decorated_class/input.ts:4:1]
+ 3 | @dec
+ 4 | export default class {
+   : ^^^^^^
+ 5 |   @dec
+   `----
+
+
+* oxc/class-without-name-with-decorated_element/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/class-without-name-with-decorated_element/input.ts:3:1]
+ 2 | 
+ 3 | export default class {
+   : ^^^^^^
+ 4 |   @dec
+   `----
+
+
+* oxc/export-class-method-decorated/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/export-class-method-decorated/input.ts:1:1]
+ 1 | export class T {
+   : ^^^^^^
+ 2 |   @first() method(@first() test) {
+   `----
+
+
+* oxc/metadata/abstract-class/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/abstract-class/input.ts:4:1]
+ 3 | @dce()
+ 4 | export abstract class AbstractClass {
+   : ^^^^^^
+ 5 |     constructor(public dependency: Dependency) {}
+   `----
+
 
 * oxc/metadata/ambient-declared-class/input.ts
 Bindings mismatch:
@@ -294,6 +677,17 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "babelHelpers"]
 rebuilt        : ["Ambient", "Object", "babelHelpers", "dec"]
+
+* oxc/metadata/class-and-method-decorators/input.ts
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/class-and-method-decorators/input.ts:5:1]
+ 4 | @singleton()
+ 5 | export class Problem extends C {
+   : ^^^^^^
+ 6 |   @deco()
+   `----
+
 
 * oxc/metadata/class-expression-via-const/input.ts
 Bindings mismatch:
@@ -342,6 +736,17 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "babelHelpers"]
 rebuilt        : ["Object", "babelHelpers", "dec"]
+
+* oxc/metadata/enum-types/input.ts
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/enum-types/input.ts:48:1]
+ 47 | 
+ 48 | export class Foo {
+    : ^^^^^^
+ 49 |   @decorate
+    `----
+
 
 * oxc/metadata/erased-import-no-type-keyword/input.ts
 Bindings mismatch:
@@ -443,80 +848,35 @@ after transform: [ReferenceId(9), ReferenceId(21)]
 rebuilt        : [ReferenceId(8)]
 
 * oxc/metadata/params/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Foo", "methodDecorator", "paramDecorator"]
-rebuilt        : ScopeId(0): ["Foo"]
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "methodDecorator":
-after transform: SymbolId(0) "methodDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Reference symbol mismatch for "paramDecorator":
-after transform: SymbolId(2) "paramDecorator"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Boolean", "Function", "Number", "String", "babelHelpers"]
-rebuilt        : ["Boolean", "Function", "Number", "String", "babelHelpers", "methodDecorator", "paramDecorator"]
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/params/input.ts:4:1]
+ 3 | 
+ 4 | export class Foo {
+   : ^^^^^^
+ 5 |   @methodDecorator(1)
+   `----
+
 
 * oxc/metadata/private-in-expression-in-decorator/input.ts
-Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
-Bindings mismatch:
-after transform: ScopeId(1): ["Cls"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(3): ["Cls2"]
-rebuilt        : ScopeId(4): []
-Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
-Symbol scope ID mismatch for "Cls":
-after transform: SymbolId(4): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
-Symbol reference IDs mismatch for "Cls":
-after transform: SymbolId(4): []
-rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(7)]
-Symbol scope ID mismatch for "Cls2":
-after transform: SymbolId(5): ScopeId(3)
-rebuilt        : SymbolId(2): ScopeId(0)
-Symbol reference IDs mismatch for "Cls2":
-after transform: SymbolId(5): []
-rebuilt        : SymbolId(2): [ReferenceId(11), ReferenceId(17)]
-Reference symbol mismatch for "Cls":
-after transform: SymbolId(1) "Cls"
-rebuilt        : SymbolId(1) "Cls"
-Reference symbol mismatch for "Cls":
-after transform: SymbolId(1) "Cls"
-rebuilt        : SymbolId(1) "Cls"
-Reference symbol mismatch for "Cls2":
-after transform: SymbolId(2) "Cls2"
-rebuilt        : SymbolId(2) "Cls2"
-Reference symbol mismatch for "Cls2":
-after transform: SymbolId(2) "Cls2"
-rebuilt        : SymbolId(2) "Cls2"
-Unresolved reference IDs mismatch for "babelHelpers":
-after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
-rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/private-in-expression-in-decorator/input.ts:4:1]
+ 3 | @dec
+ 4 | export class Cls {
+   : ^^^^^^
+ 5 |   #zoo = 0;
+   `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/private-in-expression-in-decorator/input.ts:11:1]
+ 10 | @dec
+ 11 | export class Cls2 {
+    : ^^^^^^
+ 12 |   #zoo = 0;
+    `----
+
 
 * oxc/metadata/readonly-array/input.ts
 Bindings mismatch:
@@ -544,15 +904,15 @@ after transform: ["Object", "babelHelpers"]
 rebuilt        : ["Object", "babelHelpers", "dec"]
 
 * oxc/metadata/static-anonymous-class-expression/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "Foo", "dec"]
-rebuilt        : ScopeId(0): ["A", "Foo"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Error", "Object", "babelHelpers"]
-rebuilt        : ["Error", "Object", "babelHelpers", "dec"]
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/static-anonymous-class-expression/input.ts:5:1]
+ 4 | @dec()
+ 5 | export class Foo {
+   : ^^^^^^
+ 6 |   static Error1 = class extends Error {};
+   `----
+
 
 * oxc/metadata/typescript-syntax/input.ts
 
@@ -591,10 +951,45 @@ Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
 rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
 
+* oxc/with-class-private-properties/input.ts
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/with-class-private-properties/input.ts:10:1]
+  9 | @dec
+ 10 | export class D {
+    : ^^^^^^
+ 11 |   prop = 0;
+    `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/with-class-private-properties/input.ts:18:1]
+ 17 | @dec
+ 18 | export default class E {
+    : ^^^^^^
+ 19 |   prop = 0;
+    `----
+
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/with-class-private-properties/input.ts:30:1]
+ 29 | 
+ 30 | export class G {
+    : ^^^^^^
+ 31 |   @dec
+    `----
+
+
 * oxc/with-class-private-properties-unnamed-default-export/input.ts
-Symbol flags mismatch for "_default":
-after transform: SymbolId(0): SymbolFlags(Class)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/with-class-private-properties-unnamed-default-export/input.ts:2:1]
+ 1 | @dec
+ 2 | export default class {
+   : ^^^^^^
+ 3 |   prop = 0;
+   `----
+
 
 * typescript/accessor/decoratorOnClassAccessor1/input.ts
 Bindings mismatch:
@@ -727,32 +1122,46 @@ x Output mismatch
 x Output mismatch
 
 * typescript/decoratedClassExportsCommonJS1/input.ts
-x Output mismatch
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/decoratedClassExportsCommonJS1/input.ts:10:1]
+  9 | @Something({ v: () => Testing123 })
+ 10 | export class Testing123 {
+    : ^^^^^^
+ 11 |     static prop0: string;
+    `----
+
 
 * typescript/decoratedClassExportsCommonJS2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123", "forwardRef"]
-rebuilt        : ScopeId(0): ["Testing123"]
-Reference symbol mismatch for "Something":
-after transform: SymbolId(2) "Something"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["Something", "babelHelpers"]
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/decoratedClassExportsCommonJS2/input.ts:10:1]
+  9 | @Something({ v: () => Testing123 })
+ 10 | export class Testing123 { }
+    : ^^^^^^
+    `----
+
 
 * typescript/decoratedClassExportsSystem1/input.ts
-x Output mismatch
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/decoratedClassExportsSystem1/input.ts:10:1]
+  9 | @Something({ v: () => Testing123 })
+ 10 | export class Testing123 {
+    : ^^^^^^
+ 11 |     static prop0: string;
+    `----
+
 
 * typescript/decoratedClassExportsSystem2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Something", "Testing123", "forwardRef"]
-rebuilt        : ScopeId(0): ["Testing123"]
-Reference symbol mismatch for "Something":
-after transform: SymbolId(2) "Something"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["Something", "babelHelpers"]
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/decoratedClassExportsSystem2/input.ts:10:1]
+  9 | @Something({ v: () => Testing123 })
+ 10 | export class Testing123 { }
+    : ^^^^^^
+    `----
+
 
 * typescript/decoratorChecksFunctionBodies/input.ts
 Scope flags mismatch:
@@ -774,26 +1183,26 @@ after transform: ["babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/decoratorOnClass2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/decoratorOnClass2/input.ts:7:1]
+ 6 | @dec
+ 7 | export class C {
+   : ^^^^^^
+ 8 | }
+   `----
+
 
 * typescript/decoratorOnClass3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["babelHelpers", "dec"]
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/decoratorOnClass3/input.ts:6:1]
+ 5 | 
+ 6 | export
+   : ^^^^^^
+ 7 | @dec
+   `----
+
 
 * typescript/decoratorOnClass4/input.ts
 Bindings mismatch:
@@ -1196,7 +1605,7 @@ after transform: ["babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 
-# plugin-styled-components (25/40)
+# plugin-styled-components (22/40)
 * minify-comments/input.js
 Unresolved references mismatch:
 after transform: ["x", "y", "z"]
@@ -1218,7 +1627,15 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/css-declared-after-component/input.jsx
-x Output mismatch
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/plugin-styled-components/test/fixtures/styled-components/css-declared-after-component/input.jsx:4:1]
+ 3 | 
+ 4 | export default function Example() {
+   : ^^^^^^
+ 5 |   return <div css={someCss}>oops</div>
+   `----
+
 
 * styled-components/does-not-replace-native-with-no-tags/input.js
 x Output mismatch
@@ -1233,15 +1650,59 @@ x Output mismatch
 x Output mismatch
 
 * styled-components/transpile-css-prop-add-import/input.jsx
-x Output mismatch
+
+  x Flow is not supported
+   ,-[tasks/transform_conformance/tests/plugin-styled-components/test/fixtures/styled-components/transpile-css-prop-add-import/input.jsx:1:1]
+ 1 | // @flow
+   : ^^^^^^^^
+ 2 | import React from 'react'
+   `----
+
 
 * styled-components/transpile-css-prop-add-require/input.jsx
-x Output mismatch
+
+  x Flow is not supported
+   ,-[tasks/transform_conformance/tests/plugin-styled-components/test/fixtures/styled-components/transpile-css-prop-add-require/input.jsx:1:1]
+ 1 | // @flow
+   : ^^^^^^^^
+ 2 | import React from 'react'
+   `----
+
 
 * styled-components/transpile-css-prop-all-options-on/input.jsx
 x Output mismatch
 
 * styled-components/transpile-require-default/input.js
 x Output mismatch
+
+* styled-components/use-directory-name/input.js
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/plugin-styled-components/test/fixtures/styled-components/use-directory-name/input.js:6:1]
+ 5 | styled.div``;
+ 6 | export default styled.button``;
+   : ^^^^^^
+   `----
+
+
+* styled-components/use-file-name/input.js
+
+  x Unexpected export.
+   ,-[tasks/transform_conformance/tests/plugin-styled-components/test/fixtures/styled-components/use-file-name/input.js:6:1]
+ 5 | styled.div``;
+ 6 | export default styled.button``;
+   : ^^^^^^
+   `----
+
+
+* styled-components/use-namespace/input.js
+
+  x Unexpected export.
+    ,-[tasks/transform_conformance/tests/plugin-styled-components/test/fixtures/styled-components/use-namespace/input.js:23:1]
+ 22 | 
+ 23 | export default styled.default.button``
+    : ^^^^^^
+    `----
+
 
 

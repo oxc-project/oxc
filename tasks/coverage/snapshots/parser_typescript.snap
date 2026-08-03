@@ -6812,9 +6812,23 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts:1:1]
+ 1 │ export import defaultBinding1, { } from "./server";
+   · ──────
+ 2 │ export var x1: number = defaultBinding1;
+   ╰────
+
+  × Unexpected export.
    ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportWithExport.ts:1:8]
  1 │ export import defaultBinding1, { } from "./server";
    ·        ────────────────────────────────────────────
+ 2 │ export import defaultBinding2, { a } from "./server";
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportWithExport.ts:1:1]
+ 1 │ export import defaultBinding1, { } from "./server";
+   · ──────
  2 │ export import defaultBinding2, { a } from "./server";
    ╰────
 
@@ -6826,9 +6840,23 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts:1:1]
+ 1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
+   · ──────
+ 2 │ export var x: number = defaultBinding;
+   ╰────
+
+  × Unexpected export.
    ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingWithExport.ts:1:8]
  1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
    ·        ──────────────────────────────────────────────────────────────
+ 2 │ export var x: number = nameSpaceBinding.a;
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingWithExport.ts:1:1]
+ 1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
+   · ──────
  2 │ export var x: number = nameSpaceBinding.a;
    ╰────
 
@@ -6850,6 +6878,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ export var x = defaultBinding;
    ╰────
 
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingWithExport.ts:1:1]
+ 1 │ export import defaultBinding from "./server";
+   · ──────
+ 2 │ export var x = defaultBinding;
+   ╰────
+
   × Identifier `nameSpaceBinding1` has already been declared
    ╭─[typescript/tests/cases/compiler/es6ImportNameSpaceImportMergeErrors.ts:4:13]
  3 │ 
@@ -6866,6 +6901,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts:1:8]
  1 │ export import * as nameSpaceBinding from "server";
    ·        ───────────────────────────────────────────
+ 2 │ export var x = nameSpaceBinding.a;
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts:1:1]
+ 1 │ export import * as nameSpaceBinding from "server";
+   · ──────
  2 │ export var x = nameSpaceBinding.a;
    ╰────
 
@@ -6987,6 +7029,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  2 │ export import { a } from "./server";
    ╰────
 
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportWithExport.ts:1:1]
+ 1 │ export import { } from "./server";
+   · ──────
+ 2 │ export import { a } from "./server";
+   ╰────
+
   × Expected `from` but found `decimal`
    ╭─[typescript/tests/cases/compiler/es6ImportParseErrors.ts:1:8]
  1 │ import 10;
@@ -6998,6 +7047,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/compiler/es6ImportWithoutFromClauseWithExport.ts:1:8]
  1 │ export import "server";
    ·        ────────────────
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportWithoutFromClauseWithExport.ts:1:1]
+ 1 │ export import "server";
+   · ──────
    ╰────
 
   × TS(1030): 'export' modifier already seen.
