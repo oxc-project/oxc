@@ -276,6 +276,9 @@ These test suites are pre-cloned and ready to search:
 - **TypeScript** (`tasks/coverage/typescript/`) - TypeScript syntax and semantics
 - **Prettier** (`tasks/prettier_conformance/prettier/`) - Formatting expectations
 
+NOTE: These suites are script-cloned and fully gitignored. ripgrep respects `.gitignore`, so a plain `rg` inside them silently returns nothing.
+Use `rg --no-ignore` (or `-u`) when searching them.
+
 ### Snapshot Testing
 
 - Uses `insta` crate for snapshot testing
