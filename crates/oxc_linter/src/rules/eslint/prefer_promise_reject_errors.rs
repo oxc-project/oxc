@@ -35,6 +35,12 @@ declare_oxc_lint!(
     ///
     /// Require using Error objects as Promise rejection reasons.
     ///
+    /// ::: warning
+    /// This rule is not as accurate as the type-aware
+    /// [typescript/prefer-promise-reject-errors](https://oxc.rs/docs/guide/usage/linter/rules/typescript/prefer-promise-reject-errors.html)
+    /// rule. We recommend using the TypeScript rule when type information is available.
+    /// :::
+    ///
     /// ### Why is this bad?
     ///
     /// It is considered good practice to only pass instances of the built-in `Error` object to the
