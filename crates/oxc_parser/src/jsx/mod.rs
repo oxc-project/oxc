@@ -327,7 +327,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parses the closing element or fragment after `</` has been consumed.
     fn parse_jsx_closing_inline(
         &mut self,
-        open_angle_span: u32,
+        open_angle_start: u32,
         in_jsx_child: bool,
     ) -> JSXClosing<'a> {
         if self.at(Kind::RAngle) {
@@ -337,7 +337,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 self.expect(Kind::RAngle);
             }
-            JSXClosing::Fragment(JSXClosingFragment::new(self.end_span(open_angle_span), self))
+            JSXClosing::Fragment(JSXClosingFragment::new(self.end_span(open_angle_start), self))
         } else {
             // Closing element: </name>
             let name = self.parse_jsx_element_name();
@@ -347,7 +347,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::RAngle);
             }
             JSXClosing::Element(JSXClosingElement::boxed(
-                self.end_span(open_angle_span),
+                self.end_span(open_angle_start),
                 name,
                 self,
             ))

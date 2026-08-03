@@ -471,7 +471,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let is_let = self.at(Kind::Let);
         // `async` is allowed as `for (async of ...)` if `async` is escaped
         let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
-        let expr_span = self.cur_start();
+        let expr_start = self.cur_start();
 
         let init_expression = self.context_remove(Context::In, ParserImpl::parse_expr);
 
@@ -484,11 +484,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Of => {
                 if !r#await && is_async && init_expression.is_identifier_reference() {
                     // `for (async of ...)` is not allowed
-                    self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
+                    self.error(diagnostics::for_loop_async_of(self.end_span(expr_start)));
                 }
                 if is_let {
                     // `for (let of ...)`, `for (let.something of ...)` is not allowed
-                    self.error(diagnostics::for_loop_let_reserved_word(self.end_span(expr_span)));
+                    self.error(diagnostics::for_loop_let_reserved_word(self.end_span(expr_start)));
                 }
                 let target = AssignmentTarget::cover(init_expression, self);
                 let for_stmt_left = ForStatementLeft::from(target);

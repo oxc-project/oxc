@@ -20,7 +20,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
-        let (object_expression_properties, comma_span) = self.context_add(Context::In, |p| {
+        let (object_expression_properties, comma_start) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
                 Kind::Comma,
@@ -28,8 +28,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Self::parse_object_expression_property,
             )
         });
-        if let Some(comma_span) = comma_span {
-            self.state.trailing_commas.insert(start, self.end_span(comma_span));
+        if let Some(comma_start) = comma_start {
+            self.state.trailing_commas.insert(start, self.end_span(comma_start));
         }
         self.expect(Kind::RCurly);
         ObjectExpression::boxed(self.end_span(start), object_expression_properties, self)

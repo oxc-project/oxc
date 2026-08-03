@@ -52,9 +52,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             p.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature)
         });
         let return_type = {
-            let return_type_span = self.cur_start();
+            let return_type_start = self.cur_start();
             let return_type = self.parse_return_type();
-            TSTypeAnnotation::boxed(self.end_span(return_type_span), return_type, self)
+            TSTypeAnnotation::boxed(self.end_span(return_type_start), return_type, self)
         };
 
         let span = self.end_span(start);
@@ -821,9 +821,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         let mut type_annotation = None;
         if self.eat(Kind::Is) {
-            let type_span = self.cur_start();
+            let type_start = self.cur_start();
             let ty = self.parse_ts_type();
-            type_annotation = Some(TSTypeAnnotation::boxed(self.end_span(type_span), ty, self));
+            type_annotation = Some(TSTypeAnnotation::boxed(self.end_span(type_start), ty, self));
         }
         TSType::new_ts_type_predicate(
             self.end_span(asserts_start),
@@ -1209,9 +1209,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         // Use the actual string from the source (not a static string) to ensure it's in the arena
         let key_name = self.ident(self.cur_string());
-        let with_key_span = self.cur_start();
+        let with_key_start = self.cur_start();
         self.bump_any();
-        let with_key = IdentifierName::boxed(self.end_span(with_key_span), key_name, self);
+        let with_key = IdentifierName::boxed(self.end_span(with_key_start), key_name, self);
 
         self.expect(Kind::Colon);
 
@@ -1225,7 +1225,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // Create the outer `with: { ... }` property
         let with_property = ObjectPropertyKind::new_object_property(
-            self.end_span(with_key_span),
+            self.end_span(with_key_start),
             PropertyKind::Init,
             PropertyKey::StaticIdentifier(with_key),
             value,
@@ -1270,7 +1270,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
 
-            let prop_span = self.cur_start();
+            let prop_start = self.cur_start();
 
             // Check for computed property
             if self.at(Kind::LBrack) {
@@ -1284,7 +1284,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
                 let property = ObjectPropertyKind::new_object_property(
-                    self.end_span(prop_span),
+                    self.end_span(prop_start),
                     PropertyKind::Init,
                     key,
                     value,
@@ -1310,7 +1310,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let value = self.parse_assignment_expression_or_higher();
 
             let property = ObjectPropertyKind::new_object_property(
-                self.end_span(prop_span),
+                self.end_span(prop_start),
                 PropertyKind::Init,
                 key,
                 value,
@@ -1536,7 +1536,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let mut parameter_count = 0;
-        let mut comma_span = None;
+        let mut comma_start = None;
         let parameter = if self.at(Kind::RBrack) || self.has_fatal_error() {
             TSIndexSignatureName::dummy(self.allocator())
         } else {
@@ -1555,7 +1555,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 self.advance(Kind::Comma);
                 if self.at(Kind::RBrack) {
-                    comma_span = Some(self.prev_token_end - 1);
+                    comma_start = Some(self.prev_token_end - 1);
                     break;
                 }
                 parameter_count += 1;
@@ -1563,10 +1563,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             parameter
         };
-        if let Some(comma_span) = comma_span {
+        if let Some(comma_start) = comma_start {
             self.error(diagnostics::unexpected_trailing_comma(
                 "Index signature declarations",
-                self.end_span(comma_span),
+                self.end_span(comma_start),
             ));
         }
         self.expect(Kind::RBrack);

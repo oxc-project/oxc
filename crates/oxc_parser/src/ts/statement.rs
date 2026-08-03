@@ -714,8 +714,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LAngle);
         let type_annotation = self.parse_ts_type();
         self.expect(Kind::RAngle);
-        let lhs_span = self.cur_start();
-        let expression = self.parse_simple_unary_expression(lhs_span);
+        let lhs_start = self.cur_start();
+        let expression = self.parse_simple_unary_expression(lhs_start);
         let span = self.end_span(start);
 
         if matches!(self.source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts)) {
@@ -733,18 +733,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Declaration<'a> {
         self.expect(Kind::Eq);
 
-        let reference_span = self.cur_start();
+        let reference_start = self.cur_start();
         let module_reference = if self.eat(Kind::Require) {
             self.expect(Kind::LParen);
             let expression = self.parse_literal_string();
             self.expect(Kind::RParen);
             TSModuleReference::new_external_module_reference(
-                self.end_span(reference_span),
+                self.end_span(reference_start),
                 expression,
                 self,
             )
         } else {
-            self.parse_ts_module_reference(reference_span)
+            self.parse_ts_module_reference(reference_start)
         };
 
         self.asi();

@@ -455,11 +455,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let decl = match self.cur_kind() {
             // `export import A = B`
             Kind::Import => {
-                let import_span = self.cur_start();
+                let import_start = self.cur_start();
                 self.bump_any();
                 // Pass `should_record_module_record: false` to prevent an `import` module record
                 // being created. It's an export not an import.
-                let stmt = self.parse_import_declaration(import_span, false);
+                let stmt = self.parse_import_declaration(import_start, false);
                 if stmt.is_declaration() {
                     let export_decl = ExportDeclaration::boxed(
                         self.end_span(start),
@@ -475,7 +475,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
             }
             Kind::At => {
-                let class_span = self.cur_start();
+                let class_start = self.cur_start();
                 let after_export_decorators = self.parse_decorators();
                 if !decorators.is_empty() {
                     for decorator in &after_export_decorators {
@@ -484,7 +484,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 }
                 decorators.extend(after_export_decorators);
                 let modifiers = self.parse_modifiers(false, false);
-                let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
+                let class_decl = self.parse_class_declaration(class_start, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
                 let export_decl = ExportDeclaration::boxed(self.end_span(start), decl, self);
                 if self.ctx.has_top_level() {
@@ -635,13 +635,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ArenaBox<'a, ExportDeclaration<'a>> {
-        let decl_span = self.cur_start();
+        let decl_start = self.cur_start();
         let reserved_ctx = self.ctx;
         let modifiers =
             if self.is_ts { self.eat_modifiers_before_declaration() } else { Modifiers::empty() };
         self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
-        let declaration = self.parse_declaration(decl_span, &modifiers, decorators);
+        let declaration = self.parse_declaration(decl_start, &modifiers, decorators);
         self.ctx = reserved_ctx;
         let export_decl = ExportDeclaration::boxed(self.end_span(start), declaration, self);
         if self.ctx.has_top_level() {
@@ -674,7 +674,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ExportDefaultDeclarationKind<'a> {
-        let decl_span = self.cur_start();
+        let decl_start = self.cur_start();
 
         // export default /* @__NO_SIDE_EFFECTS__ */ ...
         let has_no_side_effects_comment =
@@ -692,7 +692,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             decorators.extend(after_export_decorators);
         }
 
-        let function_span = self.cur_start();
+        let function_start = self.cur_start();
 
         // ExportDeclaration :
         //   export default HoistableDeclaration
@@ -707,15 +707,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // a declaration. `[no LineTerminator here]` maps to `!next.is_on_new_line()`.
         let kind = self.cur_kind();
         if matches!(kind, Kind::Abstract | Kind::Async | Kind::Interface) {
-            let modifier_span = self.cur_start();
+            let modifier_start = self.cur_start();
             let next = self.lexer.peek_token();
             if !next.is_on_new_line() {
                 // export default abstract class C {}
                 if kind == Kind::Abstract && next.kind() == Kind::Class {
                     self.bump_any();
-                    let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_span);
+                    let modifiers = Modifiers::new_single(ModifierKind::Abstract, modifier_start);
                     return ExportDefaultDeclarationKind::ClassDeclaration(
-                        self.parse_class_declaration(decl_span, &modifiers, decorators),
+                        self.parse_class_declaration(decl_start, &modifiers, decorators),
                     );
                 }
                 // export default async function f() {}
@@ -725,7 +725,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
                     }
                     let mut func = self.parse_function_impl(
-                        function_span,
+                        function_start,
                         /* r#async */ true,
                         FunctionKind::DefaultExport,
                     );
@@ -741,7 +741,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
                     }
                     if let Declaration::TSInterfaceDeclaration(decl) =
-                        self.parse_ts_interface_declaration(modifier_span, &Modifiers::empty())
+                        self.parse_ts_interface_declaration(modifier_start, &Modifiers::empty())
                     {
                         return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
                     }
@@ -754,7 +754,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // export default class C {}
         if kind == Kind::Class {
             return ExportDefaultDeclarationKind::ClassDeclaration(self.parse_class_declaration(
-                decl_span,
+                decl_start,
                 &Modifiers::empty(),
                 decorators,
             ));
@@ -767,7 +767,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // export default function f() {}
         if kind == Kind::Function {
             let mut func = self.parse_function_impl(
-                function_span,
+                function_start,
                 /* r#async */ false,
                 FunctionKind::DefaultExport,
             );
@@ -828,7 +828,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         specifier_type: ImportOrExport,
         parent_kind: ImportOrExportKind,
     ) -> ImportOrExportSpecifier<'a> {
-        let specifier_span = self.cur_start();
+        let specifier_start = self.cur_start();
         let type_or_name_token = self.cur_token();
         let type_or_name_token_kind = type_or_name_token.kind();
         let mut check_identifier_token = self.cur_token();
@@ -932,7 +932,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self);
                 let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
-                    self.end_span(specifier_span),
+                    self.end_span(specifier_start),
                     imported,
                     local,
                     kind,
@@ -952,7 +952,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     None => self.duplicate_module_export_name(&name),
                 };
                 ImportOrExportSpecifier::Export(ExportSpecifier::new(
-                    self.end_span(specifier_span),
+                    self.end_span(specifier_start),
                     local,
                     name,
                     kind,

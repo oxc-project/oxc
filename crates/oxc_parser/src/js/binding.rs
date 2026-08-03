@@ -90,7 +90,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_rest_element(&mut self) -> ArenaBox<'a, BindingRestElement<'a>> {
         let start = self.cur_start();
         self.bump_any(); // advance `...`
-        let init_span = self.cur_start();
+        let init_start = self.cur_start();
 
         let pattern = self.parse_binding_pattern_kind();
         // Rest element does not allow `?`, checked in checker/typescript.rs
@@ -111,7 +111,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Rest element does not allow `= initializer`
         // function foo([...x = []]) { }
         //                    ^^^^ A rest element cannot have an initializer
-        let argument = self.context_add(Context::In, |p| p.parse_initializer(init_span, pattern));
+        let argument = self.context_add(Context::In, |p| p.parse_initializer(init_start, pattern));
         if let BindingPattern::AssignmentPattern(pat) = &argument {
             self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
         }
@@ -125,7 +125,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_rest_element_for_formal_parameter(&mut self) -> BindingRestElement<'a> {
         let start = self.cur_start();
         self.bump_any(); // advance `...`
-        let init_span = self.cur_start();
+        let init_start = self.cur_start();
 
         let pattern = self.parse_binding_pattern_kind();
         // Rest element does not allow `?`, checked in checker/typescript.rs
@@ -140,7 +140,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Rest parameter does not allow `= initializer`
         // function foo(...x = []) { }
         //                 ^^^^^^ A rest parameter cannot have an initializer
-        let argument = self.context_add(Context::In, |p| p.parse_initializer(init_span, pattern));
+        let argument = self.context_add(Context::In, |p| p.parse_initializer(init_start, pattern));
         if let BindingPattern::AssignmentPattern(pat) = &argument {
             self.error(diagnostics::a_rest_parameter_cannot_have_an_initializer(pat.span));
         }
