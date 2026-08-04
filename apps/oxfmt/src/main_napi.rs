@@ -17,6 +17,11 @@ use crate::{
     lsp::run_lsp,
 };
 
+// Keep the addon image mapped for process lifetime: napi-rs's background Tokio runtime
+// shutdown can otherwise let Node unload this library while runtime threads still
+// execute its code (see `oxc_napi::pin_module_image`).
+oxc_napi::pin_addon_image!();
+
 /// NAPI based JS CLI entry point.
 /// For pure Rust CLI entry point, see `main.rs`.
 ///

@@ -1,8 +1,10 @@
 mod comment;
 mod error;
+mod module_pin;
 
 pub use comment::*;
 pub use error::*;
+pub use module_pin::pin_module_image;
 
 use oxc_ast::{CommentKind, ast::Program};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
