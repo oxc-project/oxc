@@ -32,6 +32,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
    ╭─[property.tsx:1:1]
+ 1 │ node['innerHTML'] = htmlString;
+   · ──────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
  1 │ t.innerHTML = `<span>${name}</span>`;
    · ────────────────────────────────────
    ╰────
@@ -216,5 +223,19 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[property.tsx:1:1]
  1 │ frame.srcdoc = evil;
    · ───────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ el.innerHTML = safeHTML`<b>${evil}</b>`;
+   · ───────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ el.innerHTML = DOMPurify.sanitize(evil);
+   · ───────────────────────────────────────
    ╰────
   help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.

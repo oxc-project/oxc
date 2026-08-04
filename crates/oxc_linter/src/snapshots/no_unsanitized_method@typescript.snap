@@ -2,6 +2,13 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.ts:1:1]
+ 1 │ (node.insertAdjacentHTML as InsertFn)('beforebegin', htmlString);
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
   ⚠ no_unsanitized(method): Unsafe call to node!().insertAdjacentHTML for argument 1
    ╭─[method.ts:1:1]
  1 │ node!().insertAdjacentHTML('beforebegin', htmlString);

@@ -246,3 +246,52 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
   help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to document.write for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ document['write'](evil)
+   · ───────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ (node.insertAdjacentHTML ||= fallback)('beforebegin', evil)
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ (node.insertAdjacentHTML &&= fallback)('beforebegin', evil)
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ (node.insertAdjacentHTML ??= fallback)('beforebegin', evil)
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to document.write for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ document.write(evil)
+   · ────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ n.insertAdjacentHTML('afterend', DOMPurify.sanitize(evil));
+   · ──────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to html for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ html(evil)
+   · ──────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.

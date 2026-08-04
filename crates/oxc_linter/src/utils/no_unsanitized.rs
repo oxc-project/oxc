@@ -16,37 +16,63 @@ use serde::Deserialize;
 
 use crate::context::LintContext;
 
+/// Escaping functions the upstream plugin knows without configuration.
+const DEFAULT_TAGGED_TEMPLATES: [&str; 2] = ["Sanitizer.escapeHTML", "escapeHTML"];
+const DEFAULT_METHODS: [&str; 2] = ["Sanitizer.unwrapSafeHTML", "unwrapSafeHTML"];
+
 /// Escaping functions whose output is considered safe HTML.
-#[derive(Debug, Clone)]
+///
+/// A field that was not configured falls back to the built-in list, an explicitly
+/// empty list disables it, mirroring `escapeObject.methods || VALID_UNWRAPPERS`
+/// upstream.
+#[derive(Debug, Default, Clone)]
 pub struct EscapeConfig {
-    pub tagged_templates: Vec<CompactStr>,
-    pub methods: Vec<CompactStr>,
+    tagged_templates: Option<Vec<CompactStr>>,
+    methods: Option<Vec<CompactStr>>,
 }
 
-impl Default for EscapeConfig {
-    fn default() -> Self {
-        Self {
-            tagged_templates: vec![
-                CompactStr::new("Sanitizer.escapeHTML"),
-                CompactStr::new("escapeHTML"),
-            ],
-            methods: vec![
-                CompactStr::new("Sanitizer.unwrapSafeHTML"),
-                CompactStr::new("unwrapSafeHTML"),
-            ],
+impl EscapeConfig {
+    fn tagged_templates(&self) -> Escapers<'_> {
+        match &self.tagged_templates {
+            Some(configured) => Escapers::Configured(configured),
+            None => Escapers::Default(&DEFAULT_TAGGED_TEMPLATES),
+        }
+    }
+
+    fn methods(&self) -> Escapers<'_> {
+        match &self.methods {
+            Some(configured) => Escapers::Configured(configured),
+            None => Escapers::Default(&DEFAULT_METHODS),
         }
     }
 }
 
-impl EscapeConfig {
-    /// Applies the `escape` part of a user configuration on top of `self`.
-    pub fn apply(&mut self, schema: &EscapeSchema) {
-        if let Some(tagged_templates) = &schema.tagged_templates {
-            self.tagged_templates =
-                tagged_templates.iter().map(|s| CompactStr::from(s.as_str())).collect();
+enum Escapers<'a> {
+    Configured(&'a [CompactStr]),
+    Default(&'a [&'static str]),
+}
+
+impl Escapers<'_> {
+    fn contains(&self, name: &str) -> bool {
+        match self {
+            Self::Configured(escapers) => escapers.iter().any(|escaper| escaper == name),
+            Self::Default(escapers) => escapers.contains(&name),
         }
-        if let Some(methods) = &schema.methods {
-            self.methods = methods.iter().map(|s| CompactStr::from(s.as_str())).collect();
+    }
+}
+
+impl From<&EscapeSchema> for EscapeConfig {
+    /// An `escape` object replaces a previous one as a whole, as upstream's
+    /// `Object.assign` does.
+    fn from(schema: &EscapeSchema) -> Self {
+        let convert = |names: &Option<Vec<String>>| -> Option<Vec<CompactStr>> {
+            names
+                .as_ref()
+                .map(|names| names.iter().map(|name| CompactStr::from(name.as_str())).collect())
+        };
+        Self {
+            tagged_templates: convert(&schema.tagged_templates),
+            methods: convert(&schema.methods),
         }
     }
 }
@@ -112,10 +138,10 @@ impl Sanitization<'_> {
                 .iter()
                 .all(|expression| self.is_allowed_expression(expression, ctx, seen)),
             Expression::TaggedTemplateExpression(tagged) => {
-                is_allowed_callee(&tagged.tag, &self.escape.tagged_templates, ctx)
+                is_allowed_callee(&tagged.tag, &self.escape.tagged_templates(), ctx)
             }
             Expression::CallExpression(call) => {
-                is_allowed_callee(&call.callee, &self.escape.methods, ctx)
+                is_allowed_callee(&call.callee, &self.escape.methods(), ctx)
             }
             Expression::BinaryExpression(binary) => {
                 self.is_allowed_expression(&binary.left, ctx, seen)
@@ -209,18 +235,15 @@ fn write_expression<'a, 'b>(
 
 fn is_allowed_callee<'a>(
     callee: &Expression<'a>,
-    allowed: &[CompactStr],
+    allowed: &Escapers<'_>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let Some(name) = callee_code_name(callee, ctx) else {
-        return false;
-    };
-    allowed.iter().any(|candidate| candidate.as_str() == name)
+    callee_code_name(callee, ctx).is_some_and(|name| allowed.contains(&name))
 }
 
 /// `foo` for `foo()`, `obj.foo` for `obj.foo()`, using source text for
 /// non-identifier objects, matching the upstream `getCodeName` helper.
-pub fn callee_code_name<'a>(callee: &Expression<'a>, ctx: &LintContext<'a>) -> Option<String> {
+fn callee_code_name<'a>(callee: &Expression<'a>, ctx: &LintContext<'a>) -> Option<String> {
     match callee {
         Expression::Identifier(identifier) => Some(identifier.name.to_string()),
         Expression::StaticMemberExpression(member) => {

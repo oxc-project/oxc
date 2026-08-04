@@ -1,24 +1,26 @@
 use lazy_regex::Regex;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, TaggedTemplateExpression},
+    ast::{Argument, AssignmentOperator, AssignmentTarget, Expression, TemplateLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
-use serde::Deserialize;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{ArrayValidation, InstanceType, Schema, SchemaObject, SingleOrVec},
+};
+use serde::{Deserialize, de::Error as _};
 use serde_json::Value;
 
 use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{
-        EscapeConfig, EscapeSchema, Sanitization, SinkValue, callee_code_name, object_code_name,
-    },
+    utils::{EscapeConfig, EscapeSchema, Sanitization, SinkValue, object_code_name},
 };
 
 fn unsafe_call_diagnostic(callee: &str, argument: usize, span: Span) -> OxcDiagnostic {
@@ -39,6 +41,23 @@ struct SinkCheck {
     escape: EscapeConfig,
 }
 
+/// A built-in sink, before user configuration is applied.
+struct DefaultSink {
+    name: &'static str,
+    properties: &'static [usize],
+    object_matches: Option<&'static [&'static str]>,
+}
+
+/// `document` is a regex upstream, so it also matches `documentish`, `window.document`, ...
+const DEFAULT_SINKS: [DefaultSink; 6] = [
+    DefaultSink { name: "insertAdjacentHTML", properties: &[1], object_matches: None },
+    DefaultSink { name: "import", properties: &[0], object_matches: None },
+    DefaultSink { name: "createContextualFragment", properties: &[0], object_matches: None },
+    DefaultSink { name: "write", properties: &[0], object_matches: Some(&["document"]) },
+    DefaultSink { name: "writeln", properties: &[0], object_matches: Some(&["document"]) },
+    DefaultSink { name: "setHTMLUnsafe", properties: &[0], object_matches: None },
+];
+
 #[derive(Debug, Clone)]
 pub struct MethodConfig {
     checks: FxHashMap<CompactStr, SinkCheck>,
@@ -52,50 +71,90 @@ impl Default for MethodConfig {
 }
 
 fn default_checks() -> FxHashMap<CompactStr, SinkCheck> {
-    let sink = |properties: Vec<usize>, object_matches: Option<Vec<Regex>>| SinkCheck {
-        properties,
-        object_matches,
-        escape: EscapeConfig::default(),
-    };
-    // `document` as a regex, as upstream: it matches `documentish`, `window.document`, ...
-    let document = || Some(vec![Regex::new("(?i)document").unwrap()]);
-    FxHashMap::from_iter([
-        (CompactStr::new("insertAdjacentHTML"), sink(vec![1], None)),
-        (CompactStr::new("import"), sink(vec![0], None)),
-        (CompactStr::new("createContextualFragment"), sink(vec![0], None)),
-        (CompactStr::new("write"), sink(vec![0], document())),
-        (CompactStr::new("writeln"), sink(vec![0], document())),
-        (CompactStr::new("setHTMLUnsafe"), sink(vec![0], None)),
-    ])
+    DEFAULT_SINKS
+        .iter()
+        .map(|sink| {
+            let object_matches = sink
+                .object_matches
+                .map(|patterns| patterns.iter().map(|p| compile_regex(p).unwrap()).collect());
+            (
+                CompactStr::new(sink.name),
+                SinkCheck {
+                    properties: sink.properties.to_vec(),
+                    object_matches,
+                    escape: EscapeConfig::default(),
+                },
+            )
+        })
+        .collect()
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct Method(Box<MethodConfig>);
 
+/// The first options object, applying to every sink.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct MethodOptionsSchema {
-    /// Escaping functions which mark a value as safe, for every sink.
+pub struct MethodGlobalOptions {
+    /// Escaping functions which mark a value as safe.
     escape: Option<EscapeSchema>,
     /// Drops the built-in sink list, so only sinks given in the second options
-    /// object are checked.
+    /// object are checked. Built-in sinks named there keep their argument indices.
     default_disable: Option<bool>,
-    /// Regexes the object of a call must match, for every sink.
+    /// Regexes the name of the object a method is called on must match.
+    ///
+    /// These are Rust regexes, which do not support backreferences or lookaround.
     object_matches: Option<Vec<String>>,
-    /// Argument indices which are parsed as HTML, for every sink.
+    /// Argument indices which are parsed as HTML.
     properties: Option<Vec<usize>>,
     /// Whether values coming from local `let`/`const` variables are traced back
     /// to their initializers. Defaults to `true`.
     variable_tracing: Option<bool>,
 }
 
-/// The per-sink options of the second options object.
+/// The options of a single sink in the second options object.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct SinkSchema {
+struct MethodSinkOptions {
+    /// Escaping functions accepted for this sink, replacing the ones from the
+    /// first options object.
     escape: Option<EscapeSchema>,
+    /// Regexes the name of the object must match, replacing the ones from the
+    /// first options object.
     object_matches: Option<Vec<String>>,
+    /// Argument indices which are parsed as HTML.
     properties: Option<Vec<usize>>,
+}
+
+/// `[globalOptions, { methodName: sinkOptions }]`, as upstream.
+#[derive(Debug)]
+#[expect(unused)] // only for schemars
+pub struct MethodOptionsSchema(MethodGlobalOptions, FxHashMap<String, MethodSinkOptions>);
+
+impl JsonSchema for MethodOptionsSchema {
+    fn schema_name() -> String {
+        "MethodOptionsSchema".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let global = r#gen.subschema_for::<MethodGlobalOptions>();
+        let sinks = r#gen.subschema_for::<FxHashMap<String, MethodSinkOptions>>();
+
+        SchemaObject {
+            instance_type: Some(InstanceType::Array.into()),
+            array: Some(Box::new(ArrayValidation {
+                items: Some(SingleOrVec::Vec(vec![global, sinks])),
+                max_items: Some(2),
+                ..Default::default()
+            })),
+            ..Default::default()
+        }
+        .into()
+    }
 }
 
 declare_oxc_lint!(
@@ -152,6 +211,17 @@ declare_oxc_lint!(
     ///   ]
     /// }
     /// ```
+    ///
+    /// `objectMatches` patterns are matched case-insensitively as Rust regexes,
+    /// which unlike JavaScript regexes support no backreferences and no lookaround.
+    /// A pattern that fails to compile is reported as a configuration error rather
+    /// than silently disabling the sink.
+    ///
+    /// ### Known limitations
+    ///
+    /// Calls whose method name is only known at runtime (`node[whichMethod](evil)`)
+    /// and arguments hidden behind a spread (`node.insertAdjacentHTML(...args)`)
+    /// are not reported, as upstream.
     Method,
     no_unsanitized,
     restriction,
@@ -162,65 +232,102 @@ declare_oxc_lint!(
 
 impl Rule for Method {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let parent = value.get(0).cloned().unwrap_or(Value::Null);
-        let parent: MethodOptionsSchema = if parent.is_null() {
-            MethodOptionsSchema::default()
-        } else {
-            serde_json::from_value(parent)?
+        let global = match value.get(0) {
+            Some(global) if !global.is_null() => {
+                serde_json::from_value::<MethodGlobalOptions>(global.clone())?
+            }
+            _ => MethodGlobalOptions::default(),
         };
-        let children: FxHashMap<String, SinkSchema> = match value.get(1) {
+        let sinks: FxHashMap<String, MethodSinkOptions> = match value.get(1) {
             Some(Value::Object(_)) => serde_json::from_value(value[1].clone())?,
             _ => FxHashMap::default(),
         };
 
-        let default_disable = parent.default_disable.unwrap_or(false);
-        let mut checks = if default_disable { FxHashMap::default() } else { default_checks() };
+        let global_escape = global.escape.as_ref().map(EscapeConfig::from);
+        let global_object_matches =
+            global.object_matches.as_ref().map(|patterns| compile_regexes(patterns)).transpose()?;
 
-        // The first options object applies to every sink, ...
-        for check in checks.values_mut() {
-            apply_parent(check, &parent);
-        }
-        // ... the second one adds or overrides individual sinks.
-        for (name, child) in &children {
-            let name = CompactStr::from(name.as_str());
-            let mut check = checks.remove(&name).unwrap_or_else(|| {
-                let escape = if default_disable {
-                    EscapeConfig { tagged_templates: Vec::new(), methods: Vec::new() }
-                } else {
-                    EscapeConfig::default()
-                };
-                let mut check = SinkCheck { properties: Vec::new(), object_matches: None, escape };
-                apply_parent(&mut check, &parent);
-                check
-            });
-            if let Some(escape) = &child.escape {
-                check.escape.apply(escape);
-            }
-            if let Some(properties) = &child.properties {
-                check.properties.clone_from(properties);
-            }
-            if let Some(object_matches) = &child.object_matches {
-                check.object_matches = Some(compile_regexes(object_matches));
-            }
-            checks.insert(name, check);
+        // Without `defaultDisable` every built-in sink is checked, with it only the
+        // ones named in the second options object -- but those keep the built-in
+        // argument indices.
+        let default_disable = global.default_disable.unwrap_or(false);
+        let names: Vec<&str> = if default_disable {
+            sinks.keys().map(String::as_str).collect()
+        } else {
+            DEFAULT_SINKS
+                .iter()
+                .map(|sink| sink.name)
+                .chain(
+                    sinks
+                        .keys()
+                        .map(String::as_str)
+                        .filter(|name| !DEFAULT_SINKS.iter().any(|sink| sink.name == *name)),
+                )
+                .collect()
+        };
+
+        let mut checks = FxHashMap::default();
+        for name in names {
+            let default = DEFAULT_SINKS.iter().find(|sink| sink.name == name);
+            let sink = sinks.get(name);
+
+            let properties = sink
+                .and_then(|sink| sink.properties.clone())
+                .or_else(|| global.properties.clone())
+                .or_else(|| default.map(|default| default.properties.to_vec()))
+                .unwrap_or_default();
+
+            let object_matches = match sink.and_then(|sink| sink.object_matches.as_ref()) {
+                Some(patterns) => Some(compile_regexes(patterns)?),
+                None => match &global_object_matches {
+                    Some(regexes) => Some(regexes.clone()),
+                    None => default
+                        .and_then(|default| default.object_matches)
+                        .map(|patterns| {
+                            patterns.iter().map(|pattern| compile_regex(pattern)).collect()
+                        })
+                        .transpose()?,
+                },
+            };
+
+            // An `escape` object replaces the one it overrides as a whole.
+            let escape = sink
+                .and_then(|sink| sink.escape.as_ref())
+                .map(EscapeConfig::from)
+                .or_else(|| global_escape.clone())
+                .unwrap_or_default();
+
+            checks.insert(CompactStr::from(name), SinkCheck { properties, object_matches, escape });
         }
 
         Ok(Self(Box::new(MethodConfig {
             checks,
-            variable_tracing: parent.variable_tracing.unwrap_or(true),
+            variable_tracing: global.variable_tracing.unwrap_or(true),
         })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::CallExpression(call) => self.check_call(call, ctx),
-            AstKind::TaggedTemplateExpression(tagged) => self.check_tagged_template(tagged, ctx),
+            AstKind::CallExpression(call) => {
+                if call.arguments.is_empty() {
+                    return;
+                }
+                let Some(callee) = effective_callee(&call.callee) else {
+                    return;
+                };
+                self.check(callee, &SinkArguments::Call(&call.arguments), call.span, ctx);
+            }
+            AstKind::TaggedTemplateExpression(tagged) => {
+                let Some(callee) = effective_callee(&tagged.tag) else {
+                    return;
+                };
+                self.check(callee, &SinkArguments::Template(&tagged.quasi), tagged.span, ctx);
+            }
             AstKind::ImportExpression(import) => {
-                self.check(
+                self.check_sink(
                     "import",
                     None,
-                    &[SinkValue::Expression(&import.source)],
-                    "import",
+                    &SinkArguments::Single(&import.source),
                     import.span,
                     ctx,
                 );
@@ -231,73 +338,32 @@ impl Rule for Method {
 }
 
 impl Method {
-    fn check_call<'a>(&self, call: &CallExpression<'a>, ctx: &LintContext<'a>) {
-        if call.arguments.is_empty() {
-            return;
-        }
-        // Tagged templates are visited on their own.
-        let Some(callee) = effective_callee(&call.callee) else {
-            return;
-        };
-        let arguments: Vec<SinkValue> = call
-            .arguments
-            .iter()
-            .map(|argument| match argument {
-                Argument::SpreadElement(_) => SinkValue::Unsupported,
-                argument => {
-                    argument.as_expression().map_or(SinkValue::Unsupported, SinkValue::Expression)
-                }
-            })
-            .collect();
-        self.check_callee(callee, &arguments, call.span, ctx);
-    }
-
-    /// A tagged template behaves like a call with the quasis as first argument,
-    /// followed by the interpolated expressions.
-    fn check_tagged_template<'a>(
+    fn check<'a>(
         &self,
-        tagged: &TaggedTemplateExpression<'a>,
-        ctx: &LintContext<'a>,
-    ) {
-        let Some(callee) = effective_callee(&tagged.tag) else {
-            return;
-        };
-        let mut arguments = vec![SinkValue::Quasis];
-        arguments.extend(tagged.quasi.expressions.iter().map(SinkValue::Expression));
-        self.check_callee(callee, &arguments, tagged.span, ctx);
-    }
-
-    fn check_callee<'a>(
-        &self,
-        callee: &Expression<'a>,
-        arguments: &[SinkValue<'a, '_>],
+        callee: Callee<'a, '_>,
+        arguments: &SinkArguments<'a, '_>,
         span: Span,
         ctx: &LintContext<'a>,
     ) {
-        let (method_name, object) = match callee {
-            Expression::Identifier(identifier) => (identifier.name.as_str(), None),
-            Expression::StaticMemberExpression(member) => {
-                // `foo.import(bar)` is a plain method call, not a dynamic import.
-                if member.property.name == "import" {
-                    return;
-                }
-                (member.property.name.as_str(), Some(&member.object))
-            }
-            _ => return,
+        let Some((method_name, object)) = callee.parts() else {
+            return;
         };
-        let code_name = callee_code_name(callee, ctx).unwrap_or_else(|| method_name.to_string());
-        self.check(method_name, object, arguments, &code_name, span, ctx);
+        // `foo.import(bar)` is a plain method call, not a dynamic import.
+        if method_name == "import" && object.is_some() {
+            return;
+        }
+        self.check_sink(method_name, object, arguments, span, ctx);
     }
 
-    fn check<'a>(
+    fn check_sink<'a>(
         &self,
         method_name: &str,
         object: Option<&Expression<'a>>,
-        arguments: &[SinkValue<'a, '_>],
-        code_name: &str,
+        arguments: &SinkArguments<'a, '_>,
         span: Span,
         ctx: &LintContext<'a>,
     ) {
+        // Cheapest first: most calls are not sinks at all.
         let Some(check) = self.0.checks.get(method_name) else {
             return;
         };
@@ -319,43 +385,135 @@ impl Method {
             let Some(argument) = arguments.get(*index) else {
                 continue;
             };
-            if !sanitization.is_allowed(*argument, ctx) {
-                ctx.diagnostic(unsafe_call_diagnostic(code_name, *index, span));
+            if !sanitization.is_allowed(argument, ctx) {
+                let code_name = match object {
+                    Some(object) => format!("{}.{method_name}", object_code_name(object, ctx)),
+                    None => method_name.to_string(),
+                };
+                ctx.diagnostic(unsafe_call_diagnostic(&code_name, *index, span));
             }
         }
     }
 }
 
-fn apply_parent(check: &mut SinkCheck, parent: &MethodOptionsSchema) {
-    if let Some(escape) = &parent.escape {
-        check.escape.apply(escape);
-    }
-    if let Some(properties) = &parent.properties {
-        check.properties.clone_from(properties);
-    }
-    if let Some(object_matches) = &parent.object_matches {
-        check.object_matches = Some(compile_regexes(object_matches));
+/// The arguments of a sink, without collecting them into a new list.
+enum SinkArguments<'a, 'b> {
+    Call(&'b ArenaVec<'a, Argument<'a>>),
+    /// A tagged template behaves like a call with the quasis as first argument,
+    /// followed by the interpolated expressions.
+    Template(&'b TemplateLiteral<'a>),
+    /// The single argument of a dynamic `import()`.
+    Single(&'b Expression<'a>),
+}
+
+impl<'a, 'b> SinkArguments<'a, 'b> {
+    fn get(&self, index: usize) -> Option<SinkValue<'a, 'b>> {
+        match self {
+            Self::Call(arguments) => match arguments.get(index)? {
+                Argument::SpreadElement(_) => Some(SinkValue::Unsupported),
+                argument => Some(
+                    argument.as_expression().map_or(SinkValue::Unsupported, SinkValue::Expression),
+                ),
+            },
+            Self::Template(template) => match index.checked_sub(1) {
+                None => Some(SinkValue::Quasis),
+                Some(index) => template.expressions.get(index).map(SinkValue::Expression),
+            },
+            Self::Single(expression) => (index == 0).then_some(SinkValue::Expression(expression)),
+        }
     }
 }
 
-fn compile_regexes(patterns: &[String]) -> Vec<Regex> {
-    patterns.iter().filter_map(|pattern| Regex::new(&format!("(?i){pattern}")).ok()).collect()
+/// What a call expression actually calls.
+#[derive(Clone, Copy)]
+enum Callee<'a, 'b> {
+    Expression(&'b Expression<'a>),
+    /// The left-hand side of a logical assignment, whose value may well be the
+    /// sink that was already there: `(node.insertAdjacentHTML ||= fallback)(...)`.
+    AssignmentTarget(&'b AssignmentTarget<'a>),
+}
+
+impl<'a, 'b> Callee<'a, 'b> {
+    /// Method name and the object it is called on, if any.
+    fn parts(self) -> Option<(&'a str, Option<&'b Expression<'a>>)> {
+        let member = match self {
+            Self::Expression(Expression::Identifier(identifier)) => {
+                return Some((identifier.name.as_str(), None));
+            }
+            Self::Expression(expression) => expression.as_member_expression()?,
+            Self::AssignmentTarget(target) => {
+                let simple = target.as_simple_assignment_target()?;
+                match simple.get_expression() {
+                    Some(expression) => expression.get_inner_expression().get_member_expr()?,
+                    None => simple.as_member_expression()?,
+                }
+            }
+        };
+        Some((member.static_property_name()?, Some(member.object())))
+    }
+}
+
+fn compile_regexes(patterns: &[String]) -> Result<Vec<Regex>, serde_json::Error> {
+    patterns.iter().map(|pattern| compile_regex(pattern)).collect()
+}
+
+fn compile_regex(pattern: &str) -> Result<Regex, serde_json::Error> {
+    Regex::new(&format!("(?i){pattern}")).map_err(|err| {
+        serde_json::Error::custom(format!("invalid `objectMatches` regex `{pattern}`: {err}"))
+    })
 }
 
 /// Resolves what is actually being called, following the upstream
 /// `checkCallExpression` walk.
 ///
-/// Returns `None` for callees the rule intentionally does not reason about,
-/// such as calls, conditionals or function expressions.
-fn effective_callee<'a, 'b>(callee: &'b Expression<'a>) -> Option<&'b Expression<'a>> {
+/// Returns `None` for callees the rule intentionally does not reason about.
+// The ignored callee shapes are listed one by one on purpose, so that they are
+// documented rather than hidden behind the catch-all arm.
+#[expect(clippy::match_same_arms)]
+fn effective_callee<'a, 'b>(callee: &'b Expression<'a>) -> Option<Callee<'a, 'b>> {
     match callee {
-        Expression::Identifier(_) | Expression::StaticMemberExpression(_) => Some(callee),
+        Expression::Identifier(_)
+        | Expression::StaticMemberExpression(_)
+        | Expression::ComputedMemberExpression(_) => Some(Callee::Expression(callee)),
         Expression::ParenthesizedExpression(paren) => effective_callee(&paren.expression),
-        Expression::TSNonNullExpression(non_null) => effective_callee(&non_null.expression),
+        Expression::TSNonNullExpression(_)
+        | Expression::TSAsExpression(_)
+        | Expression::TSSatisfiesExpression(_)
+        | Expression::TSTypeAssertion(_)
+        | Expression::TSInstantiationExpression(_) => {
+            effective_callee(callee.get_inner_expression())
+        }
         // The value of a sequence is its last expression.
         Expression::SequenceExpression(sequence) => effective_callee(sequence.expressions.last()?),
-        // `(a.b = c.d)()` calls whatever was assigned.
-        Expression::AssignmentExpression(assignment) => effective_callee(&assignment.right),
+        Expression::AssignmentExpression(assignment) => match assignment.operator {
+            // `(a.b = c.d)()` calls whatever was assigned.
+            AssignmentOperator::Assign => effective_callee(&assignment.right),
+            // A logical assignment may evaluate to the previous value of the
+            // left-hand side, so that is what gets called.
+            AssignmentOperator::LogicalOr
+            | AssignmentOperator::LogicalAnd
+            | AssignmentOperator::LogicalNullish => {
+                Some(Callee::AssignmentTarget(&assignment.left))
+            }
+            // Arithmetic and bitwise compound assignments cannot produce a callable sink.
+            _ => None,
+        },
+        // Known callee shapes whose target the rule cannot resolve, listed
+        // explicitly so that new expression kinds are not silently ignored.
+        Expression::CallExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::ConditionalExpression(_)
+        | Expression::LogicalExpression(_)
+        | Expression::ArrowFunctionExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::AwaitExpression(_)
+        | Expression::ThisExpression(_)
+        | Expression::Super(_)
+        | Expression::ChainExpression(_)
+        | Expression::ImportExpression(_)
+        | Expression::TaggedTemplateExpression(_)
+        | Expression::YieldExpression(_)
+        | Expression::PrivateFieldExpression(_) => None,
         _ => None,
     }
 }
@@ -436,6 +594,31 @@ fn test() {
         ("let l = ['afterend', 'harmless']; foo.insertAdjacentHTML(...l);", None),
         ("foo.insertAdjacentHTML(wrongParamCount);", None),
         ("foo.setHTMLUnsafe('static string')", None),
+        // computed member access with a dynamic key: documented false negative
+        ("document[whichMethod](evil)", None),
+        // a spread argument shifts the checked index out of range, as upstream
+        ("foo.insertAdjacentHTML(...args);", None),
+        // a logical assignment callee is treated as a call to the existing sink
+        ("(node.insertAdjacentHTML ||= fallback)('beforebegin', '<b>static</b>')", None),
+        // an arithmetic compound assignment cannot produce a callable sink
+        ("(node.insertAdjacentHTML += fallback)('beforebegin', evil)", None),
+        // `defaultDisable` with a re-enabled built-in sink keeps its argument index,
+        // so the harmless first argument stays unchecked
+        (
+            "document.write('<b>static</b>')",
+            Some(json!([{"defaultDisable": true}, {"write": {"objectMatches": ["document"]}}])),
+        ),
+        // a per-sink `escape` replaces the global one as a whole, so `methods`
+        // falls back to the built-in escapers again
+        (
+            "n.insertAdjacentHTML('afterend', Sanitizer.unwrapSafeHTML(x));",
+            Some(json!([
+                {"escape": {"methods": ["DOMPurify.sanitize"]}},
+                {"insertAdjacentHTML": {"escape": {"taggedTemplates": ["safeHTML"]}}}
+            ])),
+        ),
+        // per-sink configuration of a method that is not a built-in sink
+        ("html('<b>static</b>')", Some(json!([{}, {"html": {"properties": [0]}}]))),
     ];
 
     let fail = vec![
@@ -510,6 +693,27 @@ fn test() {
         ),
         ("(info.current = n.insertAdjacentHTML)('beforebegin', c)", None),
         ("foo.setHTMLUnsafe(badness)", None),
+        // computed member access with a static key
+        ("document['write'](evil)", None),
+        // logical assignment callee: the call may hit the sink that was there before
+        ("(node.insertAdjacentHTML ||= fallback)('beforebegin', evil)", None),
+        ("(node.insertAdjacentHTML &&= fallback)('beforebegin', evil)", None),
+        ("(node.insertAdjacentHTML ??= fallback)('beforebegin', evil)", None),
+        // `defaultDisable` with a re-enabled built-in sink keeps its argument index
+        (
+            "document.write(evil)",
+            Some(json!([{"defaultDisable": true}, {"write": {"objectMatches": ["document"]}}])),
+        ),
+        // the per-sink `escape` object replaces the global one as a whole
+        (
+            "n.insertAdjacentHTML('afterend', DOMPurify.sanitize(evil));",
+            Some(json!([
+                {"escape": {"methods": ["DOMPurify.sanitize"]}},
+                {"insertAdjacentHTML": {"escape": {"taggedTemplates": ["safeHTML"]}}}
+            ])),
+        ),
+        // per-sink configuration of a method that is not a built-in sink
+        ("html(evil)", Some(json!([{}, {"html": {"properties": [0]}}]))),
     ];
 
     Tester::new(Method::NAME, Method::PLUGIN, pass, fail).test_and_snapshot();
@@ -521,6 +725,7 @@ fn test() {
     ];
 
     let ts_fail = vec![
+        ("(node.insertAdjacentHTML as InsertFn)('beforebegin', htmlString);", None),
         ("node!().insertAdjacentHTML('beforebegin', htmlString);", None),
         ("node!.insertAdjacentHTML('beforebegin', htmlString);", None),
         ("(x as HTMLElement).insertAdjacentHTML('beforebegin', htmlString)", None),
@@ -530,4 +735,16 @@ fn test() {
         .change_rule_path_extension("ts")
         .with_snapshot_suffix("typescript")
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_object_matches_regex_is_a_configuration_error() {
+    let error = Method::from_configuration(serde_json::json!([{"objectMatches": ["("]}]))
+        .expect_err("an invalid regex must be rejected instead of disabling the sink");
+    assert!(error.to_string().contains("invalid `objectMatches` regex"));
+
+    let error =
+        Method::from_configuration(serde_json::json!([{}, {"write": {"objectMatches": ["*"]}}]))
+            .expect_err("an invalid regex must be rejected instead of disabling the sink");
+    assert!(error.to_string().contains("invalid `objectMatches` regex"));
 }

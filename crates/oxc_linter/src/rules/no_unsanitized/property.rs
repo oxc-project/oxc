@@ -1,13 +1,18 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentOperator, AssignmentTarget, MemberExpression},
+    ast::{AssignmentOperator, AssignmentTarget},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use schemars::JsonSchema;
+use rustc_hash::FxHashMap;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{ArrayValidation, InstanceType, Schema, SchemaObject, SingleOrVec},
+};
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::{
     AstNode,
@@ -26,36 +31,77 @@ fn unsafe_assignment_diagnostic(property: &str, span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Clone)]
 pub struct PropertyConfig {
-    /// Property names which are treated as HTML sinks.
-    properties: Vec<CompactStr>,
-    escape: EscapeConfig,
+    /// Property names treated as HTML sinks, with the escaping functions accepted
+    /// for each of them.
+    checks: FxHashMap<CompactStr, EscapeConfig>,
     variable_tracing: bool,
 }
 
 impl Default for PropertyConfig {
     fn default() -> Self {
-        Self {
-            properties: vec![CompactStr::new("innerHTML"), CompactStr::new("outerHTML")],
-            escape: EscapeConfig::default(),
-            variable_tracing: true,
-        }
+        Self { checks: default_checks(), variable_tracing: true }
     }
+}
+
+fn default_checks() -> FxHashMap<CompactStr, EscapeConfig> {
+    FxHashMap::from_iter([
+        (CompactStr::new("innerHTML"), EscapeConfig::default()),
+        (CompactStr::new("outerHTML"), EscapeConfig::default()),
+    ])
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct Property(Box<PropertyConfig>);
 
+/// The first options object, applying to every property.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct PropertyOptionsSchema {
+pub struct PropertyGlobalOptions {
     /// Escaping functions which mark a value as safe.
     escape: Option<EscapeSchema>,
     /// Whether values assigned from local `let`/`const` variables are traced back
     /// to their initializers. Defaults to `true`.
     variable_tracing: Option<bool>,
-    /// Property names treated as HTML sinks, replacing the defaults
-    /// `["innerHTML", "outerHTML"]`.
-    properties: Option<Vec<String>>,
+}
+
+/// The options of a single property in the second options object.
+#[derive(Debug, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PropertySinkOptions {
+    /// Escaping functions accepted for this property, replacing the ones from the
+    /// first options object.
+    escape: Option<EscapeSchema>,
+}
+
+/// `[globalOptions, { propertyName: sinkOptions }]`, as upstream.
+#[derive(Debug)]
+#[expect(unused)] // only for schemars
+pub struct PropertyOptionsSchema(PropertyGlobalOptions, FxHashMap<String, PropertySinkOptions>);
+
+impl JsonSchema for PropertyOptionsSchema {
+    fn schema_name() -> String {
+        "PropertyOptionsSchema".to_string()
+    }
+
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        let global = r#gen.subschema_for::<PropertyGlobalOptions>();
+        let sinks = r#gen.subschema_for::<FxHashMap<String, PropertySinkOptions>>();
+
+        SchemaObject {
+            instance_type: Some(InstanceType::Array.into()),
+            array: Some(Box::new(ArrayValidation {
+                items: Some(SingleOrVec::Vec(vec![global, sinks])),
+                max_items: Some(2),
+                ..Default::default()
+            })),
+            ..Default::default()
+        }
+        .into()
+    }
 }
 
 declare_oxc_lint!(
@@ -93,6 +139,9 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
+    /// The first object configures every property, the second one adds properties
+    /// to the built-in `innerHTML` and `outerHTML` or overrides their escapers:
+    ///
     /// ```json
     /// {
     ///   "no-unsanitized/property": [
@@ -102,12 +151,19 @@ declare_oxc_lint!(
     ///         "taggedTemplates": ["safeHTML"],
     ///         "methods": ["DOMPurify.sanitize"]
     ///       },
-    ///       "properties": ["innerHTML", "outerHTML", "srcdoc"],
     ///       "variableTracing": true
+    ///     },
+    ///     {
+    ///       "srcdoc": {}
     ///     }
     ///   ]
     /// }
     /// ```
+    ///
+    /// ### Known limitations
+    ///
+    /// Assignments whose property name is only known at runtime
+    /// (`node[whichProperty] = evil`) are not reported, as upstream.
     Property,
     no_unsanitized,
     restriction,
@@ -118,25 +174,39 @@ declare_oxc_lint!(
 
 impl Rule for Property {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut config = PropertyConfig::default();
+        let global = match value.get(0) {
+            Some(global) if !global.is_null() => {
+                serde_json::from_value::<PropertyGlobalOptions>(global.clone())?
+            }
+            _ => PropertyGlobalOptions::default(),
+        };
+        let sinks: FxHashMap<String, PropertySinkOptions> = match value.get(1) {
+            Some(Value::Object(_)) => serde_json::from_value(value[1].clone())?,
+            _ => FxHashMap::default(),
+        };
 
-        let options = value.get(0).cloned().unwrap_or(serde_json::Value::Null);
-        if options.is_null() {
-            return Ok(Self(Box::new(config)));
+        let global_escape = global.escape.as_ref().map(EscapeConfig::from);
+        let mut checks = default_checks();
+        if let Some(global_escape) = &global_escape {
+            for escape in checks.values_mut() {
+                *escape = global_escape.clone();
+            }
         }
-        let options: PropertyOptionsSchema = serde_json::from_value(options)?;
+        // The second object adds properties to the defaults, or overrides their escapers.
+        for (property, sink) in &sinks {
+            let escape = sink
+                .escape
+                .as_ref()
+                .map(EscapeConfig::from)
+                .or_else(|| global_escape.clone())
+                .unwrap_or_default();
+            checks.insert(CompactStr::from(property.as_str()), escape);
+        }
 
-        if let Some(escape) = &options.escape {
-            config.escape.apply(escape);
-        }
-        if let Some(variable_tracing) = options.variable_tracing {
-            config.variable_tracing = variable_tracing;
-        }
-        if let Some(properties) = options.properties {
-            config.properties = properties.iter().map(|s| CompactStr::from(s.as_str())).collect();
-        }
-
-        Ok(Self(Box::new(config)))
+        Ok(Self(Box::new(PropertyConfig {
+            checks,
+            variable_tracing: global.variable_tracing.unwrap_or(true),
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -149,12 +219,11 @@ impl Rule for Property {
         let Some(property) = assigned_property_name(&assignment.left) else {
             return;
         };
-        if !self.0.properties.iter().any(|p| p == property) {
+        let Some(escape) = self.0.checks.get(property) else {
             return;
-        }
+        };
 
-        let sanitization =
-            Sanitization { escape: &self.0.escape, variable_tracing: self.0.variable_tracing };
+        let sanitization = Sanitization { escape, variable_tracing: self.0.variable_tracing };
         if !sanitization.is_allowed(SinkValue::Expression(&assignment.right), ctx) {
             ctx.diagnostic(unsafe_assignment_diagnostic(property, assignment.span));
         }
@@ -177,7 +246,10 @@ fn is_checked_operator(operator: AssignmentOperator) -> bool {
 }
 
 /// Name of the statically known property being assigned to, e.g. `innerHTML` for
-/// `node.innerHTML = x`. Computed accesses are not resolved, as upstream.
+/// `node.innerHTML = x` and for `node["innerHTML"] = x`.
+///
+/// A computed access with a dynamic key (`node[name] = x`) cannot be resolved and
+/// is not reported, as upstream.
 fn assigned_property_name<'a>(target: &AssignmentTarget<'a>) -> Option<&'a str> {
     let simple = target.as_simple_assignment_target()?;
     let member = match simple.get_expression() {
@@ -185,10 +257,7 @@ fn assigned_property_name<'a>(target: &AssignmentTarget<'a>) -> Option<&'a str> 
         Some(expression) => expression.get_inner_expression().get_member_expr(),
         None => simple.as_member_expression(),
     }?;
-    match member {
-        MemberExpression::StaticMemberExpression(member) => Some(member.property.name.as_str()),
-        _ => None,
-    }
+    member.static_property_name()
 }
 
 #[test]
@@ -224,6 +293,20 @@ fn test() {
         // not a sink
         ("document.toString = evil;", None),
         ("document.writeln(Sanitizer.escapeHTML`<em>${evil}</em>`);", None),
+        // computed member access with a static key
+        ("node['innerHTML'] = '<b>static</b>';", None),
+        // computed member with a dynamic key is a documented false negative
+        ("node[whichProperty] = evil;", None),
+        // per-property escaper, replacing the global one
+        (
+            "el.innerHTML = safeHTML`<b>${evil}</b>`;",
+            Some(json!([{}, {"innerHTML": {"escape": {"taggedTemplates": ["safeHTML"]}}}])),
+        ),
+        // a property added through the second object keeps the global escapers
+        (
+            "frame.srcdoc = DOMPurify.sanitize(evil);",
+            Some(json!([{"escape": {"methods": ["DOMPurify.sanitize"]}}, {"srcdoc": {}}])),
+        ),
         // configured escapers
         (
             "w.innerHTML = templateEscaper`<em>${evil}</em>`;",
@@ -261,6 +344,7 @@ fn test() {
         ("a.innerHTML += htmlString;", None),
         ("a.innerHTML += template.toHtml();", None),
         ("m.outerHTML = htmlString;", None),
+        ("node['innerHTML'] = htmlString;", None),
         ("t.innerHTML = `<span>${name}</span>`;", None),
         ("t.innerHTML = `<span>${'foobar'}</span>${evil}`;", None),
         ("node.innerHTML = '<span>'+ htmlInput;", None),
@@ -301,7 +385,22 @@ fn test() {
             Some(json!([{"variableTracing": false}])),
         ),
         // configurable sinks
-        ("frame.srcdoc = evil;", Some(json!([{"properties": ["srcdoc"]}]))),
+        // per-property configuration in the second options object
+        ("frame.srcdoc = evil;", Some(json!([{}, {"srcdoc": {}}]))),
+        (
+            "el.innerHTML = safeHTML`<b>${evil}</b>`;",
+            Some(
+                json!([{"escape": {"taggedTemplates": ["otherEscaper"]}}, {"innerHTML": {"escape": {"taggedTemplates": ["alsoNot"]}}}]),
+            ),
+        ),
+        // a per-property `escape` replaces the global one as a whole, so
+        // `methods` falls back to the built-in escapers again
+        (
+            "el.innerHTML = DOMPurify.sanitize(evil);",
+            Some(
+                json!([{"escape": {"methods": ["DOMPurify.sanitize"]}}, {"innerHTML": {"escape": {"taggedTemplates": ["safeHTML"]}}}]),
+            ),
+        ),
     ];
 
     Tester::new(Property::NAME, Property::PLUGIN, pass, fail).test_and_snapshot();
