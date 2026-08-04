@@ -1,0 +1,248 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ node.insertAdjacentHTML('beforebegin', htmlString);
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ node.insertAdjacentHTML('beforebegin', template.getHTML());
+   · ──────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to document.write for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ document.write('<span>'+ htmlInput + '</span>');
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to documentish.write for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ documentish.write('<span>'+ htmlInput + '</span>');
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to documentIframe.write for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ documentIframe.write('<span>'+ htmlInput + '</span>');
+   · ─────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to document.writeln for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ document.writeln(evil);
+   · ──────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to window.document.writeln for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ window.document.writeln(bad);
+   · ────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to this().insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:25]
+ 1 │ function foo() { return this().insertAdjacentHTML(foo, bar); };
+   ·                         ───────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to b.other for argument 0
+   ╭─[method.tsx:1:35]
+ 1 │ document.write(evil); b.thing(x); b.other(me);
+   ·                                   ───────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to getDocument(myID).write for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ getDocument(myID).write(evil)
+   · ─────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to range.createContextualFragment for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ range.createContextualFragment(badness)
+   · ───────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to import for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ import(foo)
+   · ───────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ (0, node.insertAdjacentHTML)('beforebegin', evil);
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ n.insertAdjacentHTML('afterend', templateEscaper(evil, options));
+   · ────────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ n.insertAdjacentHTML('afterend', sanitize`<em>${evil}</em>`);
+   · ────────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to document.writeln for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ document.writeln(Sanitizer.escapeHTML`<em>${evil}</em>`);
+   · ────────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:22]
+ 1 │ describe.each`table${node.insertAdjacentHTML('beforebegin', htmlString)}`(name, fn, timeout)
+   ·                      ──────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to document.writeln for argument 0
+   ╭─[method.tsx:1:22]
+ 1 │ describe.each`table${document.writeln(evil)}`(name, fn, timeout)
+   ·                      ──────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ node.insertAdjacentHTML`text ${variable}`
+   · ─────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to custom for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ custom`text ${variable}`
+   · ────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to custom for argument 2
+   ╭─[method.tsx:1:1]
+ 1 │ custom`text ${variable} ${variable2}`
+   · ─────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to foo.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:19]
+ 1 │ async () => await foo.insertAdjacentHTML('afterend', blah);
+   ·                   ────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to foo.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:20]
+ 1 │ async () => (await foo.insertAdjacentHTML('afterend', blah))();
+   ·                    ────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to (await foo)().insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:13]
+ 1 │ async () => (await foo)().insertAdjacentHTML('afterend', blah);
+   ·             ──────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ (e = node.insertAdjacentHTML)('beforebegin', evil)
+   · ──────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to node.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:6]
+ 1 │ (e = node.insertAdjacentHTML('beforebegin', evil))()
+   ·      ────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:29]
+ 1 │ var copies = '<b>safe</b>'; n.insertAdjacentHTML('beforebegin', copies);
+   ·                             ───────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:20]
+ 1 │ let copies = evil; n.insertAdjacentHTML('beforebegin', copies);
+   ·                    ───────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:54]
+ 1 │ let copies = '<b>safe</b>'; copies = suddenlyUnsafe; n.insertAdjacentHTML('beforebegin', copies);
+   ·                                                      ───────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:66]
+ 1 │ function test(evil) { let copies = '<b>safe</b>'; copies = evil; n.insertAdjacentHTML('beforebegin', copies); }
+   ·                                                                  ───────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:73]
+ 1 │ const fn = function (evil) { let copies = '<b>safe</b>'; copies = evil; n.insertAdjacentHTML('beforebegin', copies); }
+   ·                                                                         ───────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:67]
+ 1 │ const fn = (evil) => { let copies = '<b>safe</b>'; copies = evil; n.insertAdjacentHTML('beforebegin', copies); }
+   ·                                                                   ───────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:60]
+ 1 │ let c; if (cond) { c = '<b>safe</b>'; } else { c = evil; } n.insertAdjacentHTML('beforebegin', `${c}`);
+   ·                                                            ───────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to n.insertAdjacentHTML for argument 1
+   ╭─[method.tsx:1:1]
+ 1 │ (info.current = n.insertAdjacentHTML)('beforebegin', c)
+   · ───────────────────────────────────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(method): Unsafe call to foo.setHTMLUnsafe for argument 0
+   ╭─[method.tsx:1:1]
+ 1 │ foo.setHTMLUnsafe(badness)
+   · ──────────────────────────
+   ╰────
+  help: Pass a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.

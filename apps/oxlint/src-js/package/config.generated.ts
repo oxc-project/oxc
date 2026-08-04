@@ -56,7 +56,8 @@ export type LintPluginOptionsSchema =
   | "react-perf"
   | "promise"
   | "node"
-  | "vue";
+  | "vue"
+  | "no-unsanitized";
 export type LintPlugins = LintPluginOptionsSchema[];
 export type RuleNoConfig = AllowWarnDeny | [AllowWarnDeny];
 export type Mode2 = "as-needed" | "always" | "never";
@@ -1225,6 +1226,8 @@ export interface DummyRuleMap {
   "no-unsafe-finally"?: RuleNoConfig;
   "no-unsafe-negation"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeNegation];
   "no-unsafe-optional-chaining"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeOptionalChaining];
+  "no-unsanitized/method"?: RuleNoConfig | [AllowWarnDeny, MethodOptionsSchema];
+  "no-unsanitized/property"?: RuleNoConfig | [AllowWarnDeny, PropertyOptionsSchema];
   "no-unused-expressions"?: RuleNoConfig | [AllowWarnDeny, NoUnusedExpressionsConfig];
   "no-unused-labels"?: RuleNoConfig;
   "no-unused-private-class-members"?: RuleNoConfig;
@@ -3807,6 +3810,61 @@ export interface NoUnsafeOptionalChaining {
    * If this is true, this rule warns arithmetic operations on optional chaining expressions, which possibly result in NaN.
    */
   disallowArithmeticOperators?: boolean;
+}
+export interface MethodOptionsSchema {
+  /**
+   * Drops the built-in sink list, so only sinks given in the second options
+   * object are checked.
+   */
+  defaultDisable?: boolean;
+  /**
+   * Escaping functions which mark a value as safe, for every sink.
+   */
+  escape?: EscapeSchema;
+  /**
+   * Regexes the object of a call must match, for every sink.
+   */
+  objectMatches?: string[];
+  /**
+   * Argument indices which are parsed as HTML, for every sink.
+   */
+  properties?: number[];
+  /**
+   * Whether values coming from local `let`/`const` variables are traced back
+   * to their initializers. Defaults to `true`.
+   */
+  variableTracing?: boolean;
+}
+/**
+ * The `escape` option of both `no-unsanitized` rules.
+ */
+export interface EscapeSchema {
+  /**
+   * Methods which return safe HTML.
+   * Defaults to `["Sanitizer.unwrapSafeHTML", "unwrapSafeHTML"]`.
+   */
+  methods?: string[];
+  /**
+   * Tagged template functions which return safe HTML.
+   * Defaults to `["Sanitizer.escapeHTML", "escapeHTML"]`.
+   */
+  taggedTemplates?: string[];
+}
+export interface PropertyOptionsSchema {
+  /**
+   * Escaping functions which mark a value as safe.
+   */
+  escape?: EscapeSchema;
+  /**
+   * Property names treated as HTML sinks, replacing the defaults
+   * `["innerHTML", "outerHTML"]`.
+   */
+  properties?: string[];
+  /**
+   * Whether values assigned from local `let`/`const` variables are traced back
+   * to their initializers. Defaults to `true`.
+   */
+  variableTracing?: boolean;
 }
 export interface NoUnusedExpressionsConfig {
   /**

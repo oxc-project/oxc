@@ -368,6 +368,7 @@ pub use crate::rules::nextjs::no_sync_scripts::NoSyncScripts as NextjsNoSyncScri
 pub use crate::rules::nextjs::no_title_in_document_head::NoTitleInDocumentHead as NextjsNoTitleInDocumentHead;
 pub use crate::rules::nextjs::no_typos::NoTypos as NextjsNoTypos;
 pub use crate::rules::nextjs::no_unwanted_polyfillio::NoUnwantedPolyfillio as NextjsNoUnwantedPolyfillio;
+pub use crate::rules::no_unsanitized::method::Method as NoUnsanitizedMethod;
 pub use crate::rules::no_unsanitized::property::Property as NoUnsanitizedProperty;
 pub use crate::rules::node::callback_return::CallbackReturn as NodeCallbackReturn;
 pub use crate::rules::node::exports_style::ExportsStyle as NodeExportsStyle;
@@ -1723,6 +1724,7 @@ pub enum RuleEnum {
     VueValidDefineOptions(VueValidDefineOptions),
     VueValidDefineProps(VueValidDefineProps),
     VueValidNextTick(VueValidNextTick),
+    NoUnsanitizedMethod(NoUnsanitizedMethod),
     NoUnsanitizedProperty(NoUnsanitizedProperty),
 }
 const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = 0usize;
@@ -2681,7 +2683,8 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-const NO_UNSANITIZED_PROPERTY_ID: usize = VUE_VALID_NEXT_TICK_ID + 1usize;
+const NO_UNSANITIZED_METHOD_ID: usize = VUE_VALID_NEXT_TICK_ID + 1usize;
+const NO_UNSANITIZED_PROPERTY_ID: usize = NO_UNSANITIZED_METHOD_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
         match self {
@@ -3662,6 +3665,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VUE_VALID_DEFINE_OPTIONS_ID,
             Self::VueValidDefineProps(_) => VUE_VALID_DEFINE_PROPS_ID,
             Self::VueValidNextTick(_) => VUE_VALID_NEXT_TICK_ID,
+            Self::NoUnsanitizedMethod(_) => NO_UNSANITIZED_METHOD_ID,
             Self::NoUnsanitizedProperty(_) => NO_UNSANITIZED_PROPERTY_ID,
         }
     }
@@ -4628,6 +4632,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
             Self::VueValidNextTick(_) => VueValidNextTick::NAME,
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::NAME,
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::NAME,
         }
     }
@@ -5652,6 +5657,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
             Self::VueValidNextTick(_) => VueValidNextTick::CATEGORY,
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::CATEGORY,
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::CATEGORY,
         }
     }
@@ -6619,6 +6625,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
             Self::VueValidNextTick(_) => VueValidNextTick::FIX,
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::FIX,
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::FIX,
         }
     }
@@ -7854,6 +7861,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
             Self::VueValidNextTick(_) => VueValidNextTick::documentation(),
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::documentation(),
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::documentation(),
         }
     }
@@ -10294,6 +10302,8 @@ impl RuleEnum {
                 .or_else(|| VueValidDefineProps::schema(generator)),
             Self::VueValidNextTick(_) => VueValidNextTick::config_schema(generator)
                 .or_else(|| VueValidNextTick::schema(generator)),
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::config_schema(generator)
+                .or_else(|| NoUnsanitizedMethod::schema(generator)),
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::config_schema(generator)
                 .or_else(|| NoUnsanitizedProperty::schema(generator)),
         }
@@ -11147,6 +11157,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
             Self::VueValidNextTick(_) => "vue",
+            Self::NoUnsanitizedMethod(_) => "no_unsanitized",
             Self::NoUnsanitizedProperty(_) => "no_unsanitized",
         }
     }
@@ -13882,6 +13893,9 @@ impl RuleEnum {
             Self::VueValidNextTick(_) => {
                 Ok(Self::VueValidNextTick(VueValidNextTick::from_configuration(value)?))
             }
+            Self::NoUnsanitizedMethod(_) => {
+                Ok(Self::NoUnsanitizedMethod(NoUnsanitizedMethod::from_configuration(value)?))
+            }
             Self::NoUnsanitizedProperty(_) => {
                 Ok(Self::NoUnsanitizedProperty(NoUnsanitizedProperty::from_configuration(value)?))
             }
@@ -14740,6 +14754,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
             Self::VueValidNextTick(rule) => rule.to_configuration(),
+            Self::NoUnsanitizedMethod(rule) => rule.to_configuration(),
             Self::NoUnsanitizedProperty(rule) => rule.to_configuration(),
         }
     }
@@ -15593,6 +15608,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run(node, ctx),
             Self::VueValidDefineProps(rule) => rule.run(node, ctx),
             Self::VueValidNextTick(rule) => rule.run(node, ctx),
+            Self::NoUnsanitizedMethod(rule) => rule.run(node, ctx),
             Self::NoUnsanitizedProperty(rule) => rule.run(node, ctx),
         }
     }
@@ -16458,6 +16474,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run_once(ctx),
             Self::VueValidDefineProps(rule) => rule.run_once(ctx),
             Self::VueValidNextTick(rule) => rule.run_once(ctx),
+            Self::NoUnsanitizedMethod(rule) => rule.run_once(ctx),
             Self::NoUnsanitizedProperty(rule) => rule.run_once(ctx),
         }
     }
@@ -17440,6 +17457,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidNextTick(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NoUnsanitizedMethod(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NoUnsanitizedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
         }
     }
@@ -18306,6 +18324,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
             Self::VueValidNextTick(rule) => rule.should_run(ctx),
+            Self::NoUnsanitizedMethod(rule) => rule.should_run(ctx),
             Self::NoUnsanitizedProperty(rule) => rule.should_run(ctx),
         }
     }
@@ -19540,6 +19559,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
             Self::VueValidNextTick(_) => VueValidNextTick::IS_TSGOLINT_RULE,
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::IS_TSGOLINT_RULE,
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::IS_TSGOLINT_RULE,
         }
     }
@@ -20566,6 +20586,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::VERSION,
             Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
             Self::VueValidNextTick(_) => VueValidNextTick::VERSION,
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::VERSION,
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::VERSION,
         }
     }
@@ -21631,6 +21652,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
             Self::VueValidNextTick(_) => VueValidNextTick::HAS_CONFIG,
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::HAS_CONFIG,
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::HAS_CONFIG,
         }
     }
@@ -22599,6 +22621,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::INFO,
             Self::VueValidDefineProps(_) => VueValidDefineProps::INFO,
             Self::VueValidNextTick(_) => VueValidNextTick::INFO,
+            Self::NoUnsanitizedMethod(_) => NoUnsanitizedMethod::INFO,
             Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::INFO,
         }
     }
@@ -23456,6 +23479,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
             Self::VueValidNextTick(rule) => rule.types_info(),
+            Self::NoUnsanitizedMethod(rule) => rule.types_info(),
             Self::NoUnsanitizedProperty(rule) => rule.types_info(),
         }
     }
@@ -24308,6 +24332,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
             Self::VueValidNextTick(rule) => rule.run_info(),
+            Self::NoUnsanitizedMethod(rule) => rule.run_info(),
             Self::NoUnsanitizedProperty(rule) => rule.run_info(),
         }
     }
@@ -25296,6 +25321,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueValidDefineOptions(VueValidDefineOptions::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
         RuleEnum::VueValidNextTick(VueValidNextTick::default()),
+        RuleEnum::NoUnsanitizedMethod(NoUnsanitizedMethod::default()),
         RuleEnum::NoUnsanitizedProperty(NoUnsanitizedProperty::default()),
     ]
 });

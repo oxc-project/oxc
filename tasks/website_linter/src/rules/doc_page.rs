@@ -355,6 +355,9 @@ fn upstream_docs_url(plugin: &str, name: &str) -> Option<String> {
             "https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/{name}.md"
         ),
         "vue" => format!("https://eslint.vuejs.org/rules/{name}.html"),
+        "no_unsanitized" => format!(
+            "https://github.com/mozilla/eslint-plugin-no-unsanitized/blob/main/docs/rules/{name}.md"
+        ),
         _ => return None,
     })
 }

@@ -911,6 +911,7 @@ pub(crate) mod vue {
 
 /// <https://github.com/mozilla/eslint-plugin-no-unsanitized>
 pub(crate) mod no_unsanitized {
+    pub mod method;
     pub mod property;
 }
 

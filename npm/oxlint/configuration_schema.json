@@ -5479,6 +5479,26 @@
             }
           ]
         },
+        "no-unsanitized/method": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/MethodOptionsSchema"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "no-unsanitized/property": {
           "anyOf": [
             {
@@ -10751,6 +10771,7 @@
       "additionalProperties": false
     },
     "EscapeSchema": {
+      "description": "The `escape` option of both `no-unsanitized` rules.",
       "type": "object",
       "properties": {
         "methods": {
@@ -10770,7 +10791,8 @@
           "markdownDescription": "Tagged template functions which return safe HTML.\nDefaults to `[\"Sanitizer.escapeHTML\", \"escapeHTML\"]`."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "markdownDescription": "The `escape` option of both `no-unsanitized` rules."
     },
     "ExhaustiveDepsConfig": {
       "type": "object",
@@ -13160,6 +13182,49 @@
           "markdownDescription": "Prefer using `.each` to create parameterized tests."
         }
       ]
+    },
+    "MethodOptionsSchema": {
+      "type": "object",
+      "properties": {
+        "defaultDisable": {
+          "description": "Drops the built-in sink list, so only sinks given in the second options\nobject are checked.",
+          "type": "boolean",
+          "markdownDescription": "Drops the built-in sink list, so only sinks given in the second options\nobject are checked."
+        },
+        "escape": {
+          "description": "Escaping functions which mark a value as safe, for every sink.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/EscapeSchema"
+            }
+          ],
+          "markdownDescription": "Escaping functions which mark a value as safe, for every sink."
+        },
+        "objectMatches": {
+          "description": "Regexes the object of a call must match, for every sink.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Regexes the object of a call must match, for every sink."
+        },
+        "properties": {
+          "description": "Argument indices which are parsed as HTML, for every sink.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          },
+          "markdownDescription": "Argument indices which are parsed as HTML, for every sink."
+        },
+        "variableTracing": {
+          "description": "Whether values coming from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`.",
+          "type": "boolean",
+          "markdownDescription": "Whether values coming from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`."
+        }
+      },
+      "additionalProperties": false
     },
     "MethodSignatureStyleConfig": {
       "oneOf": [
