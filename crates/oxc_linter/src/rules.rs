@@ -513,6 +513,7 @@ pub(crate) mod unicorn {
     pub mod no_array_reduce;
     pub mod no_array_reverse;
     pub mod no_array_sort;
+    pub mod no_async_promise_finally;
     pub mod no_await_expression_member;
     pub mod no_await_in_promise_methods;
     pub mod no_confusing_array_with;

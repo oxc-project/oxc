@@ -550,6 +550,7 @@ unicorn/no-array-method-this-argument                      |  62606
 unicorn/no-array-reduce                                    |  62606
 unicorn/no-array-reverse                                   |  62606
 unicorn/no-array-sort                                      |  62606
+unicorn/no-async-promise-finally                           |  62606
 unicorn/no-await-expression-member                         |  95297
 unicorn/no-await-in-promise-methods                        |  62606
 unicorn/no-confusing-array-with                            |  62606

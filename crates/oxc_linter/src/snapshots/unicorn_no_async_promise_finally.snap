@@ -1,0 +1,116 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:17]
+ 1 │ promise.finally(async () => {})
+   ·                 ──────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:17]
+ 1 │ promise.finally(async () => cleanup())
+   ·                 ─────────────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:17]
+ 1 │ promise.finally(async () => { await cleanup(); })
+   ·                 ────────────────────────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:17]
+ 1 │ promise.finally(async function () { await cleanup(); })
+   ·                 ──────────────────────────────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:32]
+ 1 │ Promise.resolve(value).finally(async () => cleanup())
+   ·                                ─────────────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:43]
+ 1 │ new Promise(resolve => resolve()).finally(async () => cleanup())
+   ·                                           ─────────────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:18]
+ 1 │ promise?.finally(async () => {})
+   ·                  ──────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:19]
+ 1 │ promise.finally?.(async () => {})
+   ·                   ──────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:20]
+ 1 │ promise["finally"](async () => {})
+   ·                    ──────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:20]
+ 1 │ promise[`finally`](async () => {})
+   ·                    ──────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:43]
+ 1 │ const method = "finally"; promise[method](async () => {});
+   ·                                           ──────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:45]
+ 1 │ async function cleanup() {} promise.finally(cleanup);
+   ·                                             ───────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:49]
+ 1 │ const cleanup = async () => {}; promise.finally(cleanup);
+   ·                                                 ───────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:55]
+ 1 │ const cleanup = async function () {}; promise.finally(cleanup);
+   ·                                                       ───────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:45]
+ 1 │ type Callback = () => void; promise.finally((async () => {}) as Callback);
+   ·                                             ────────────────────────────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.
+
+  ⚠ unicorn(no-async-promise-finally): Do not pass an async function to `Promise#finally()`.
+   ╭─[no_async_promise_finally.tsx:1:91]
+ 1 │ type Callback = () => void; const cleanup = (async () => {}) as Callback; promise.finally(cleanup);
+   ·                                                                                           ───────
+   ╰────
+  help: Use a synchronous callback so the promise is not delayed by unrelated async work.

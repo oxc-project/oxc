@@ -1543,6 +1543,7 @@ export interface DummyRuleMap {
   "unicorn/no-array-reduce"?: RuleNoConfig | [AllowWarnDeny, NoArrayReduce];
   "unicorn/no-array-reverse"?: RuleNoConfig | [AllowWarnDeny, NoArrayReverse];
   "unicorn/no-array-sort"?: RuleNoConfig | [AllowWarnDeny, NoArraySort];
+  "unicorn/no-async-promise-finally"?: RuleNoConfig;
   "unicorn/no-await-expression-member"?: RuleNoConfig;
   "unicorn/no-await-in-promise-methods"?: RuleNoConfig;
   "unicorn/no-confusing-array-with"?: RuleNoConfig;

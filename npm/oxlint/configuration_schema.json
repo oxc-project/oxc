@@ -8959,6 +8959,9 @@
             }
           ]
         },
+        "unicorn/no-async-promise-finally": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-await-expression-member": {
           "$ref": "#/definitions/RuleNoConfig"
         },

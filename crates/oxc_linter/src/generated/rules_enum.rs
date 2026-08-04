@@ -627,6 +627,7 @@ pub use crate::rules::unicorn::no_array_method_this_argument::NoArrayMethodThisA
 pub use crate::rules::unicorn::no_array_reduce::NoArrayReduce as UnicornNoArrayReduce;
 pub use crate::rules::unicorn::no_array_reverse::NoArrayReverse as UnicornNoArrayReverse;
 pub use crate::rules::unicorn::no_array_sort::NoArraySort as UnicornNoArraySort;
+pub use crate::rules::unicorn::no_async_promise_finally::NoAsyncPromiseFinally as UnicornNoAsyncPromiseFinally;
 pub use crate::rules::unicorn::no_await_expression_member::NoAwaitExpressionMember as UnicornNoAwaitExpressionMember;
 pub use crate::rules::unicorn::no_await_in_promise_methods::NoAwaitInPromiseMethods as UnicornNoAwaitInPromiseMethods;
 pub use crate::rules::unicorn::no_confusing_array_with::NoConfusingArrayWith as UnicornNoConfusingArrayWith;
@@ -1353,6 +1354,7 @@ pub enum RuleEnum {
     UnicornNoArrayReduce(UnicornNoArrayReduce),
     UnicornNoArrayReverse(UnicornNoArrayReverse),
     UnicornNoArraySort(UnicornNoArraySort),
+    UnicornNoAsyncPromiseFinally(UnicornNoAsyncPromiseFinally),
     UnicornNoAwaitExpressionMember(UnicornNoAwaitExpressionMember),
     UnicornNoAwaitInPromiseMethods(UnicornNoAwaitInPromiseMethods),
     UnicornNoConfusingArrayWith(UnicornNoConfusingArrayWith),
@@ -2265,7 +2267,8 @@ const UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID: usize = UNICORN_NO_ARRAY_FOR_EAC
 const UNICORN_NO_ARRAY_REDUCE_ID: usize = UNICORN_NO_ARRAY_METHOD_THIS_ARGUMENT_ID + 1usize;
 const UNICORN_NO_ARRAY_REVERSE_ID: usize = UNICORN_NO_ARRAY_REDUCE_ID + 1usize;
 const UNICORN_NO_ARRAY_SORT_ID: usize = UNICORN_NO_ARRAY_REVERSE_ID + 1usize;
-const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = UNICORN_NO_ARRAY_SORT_ID + 1usize;
+const UNICORN_NO_ASYNC_PROMISE_FINALLY_ID: usize = UNICORN_NO_ARRAY_SORT_ID + 1usize;
+const UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID: usize = UNICORN_NO_ASYNC_PROMISE_FINALLY_ID + 1usize;
 const UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID: usize =
     UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID + 1usize;
 const UNICORN_NO_CONFUSING_ARRAY_WITH_ID: usize = UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID + 1usize;
@@ -3248,6 +3251,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UNICORN_NO_ARRAY_REDUCE_ID,
             Self::UnicornNoArrayReverse(_) => UNICORN_NO_ARRAY_REVERSE_ID,
             Self::UnicornNoArraySort(_) => UNICORN_NO_ARRAY_SORT_ID,
+            Self::UnicornNoAsyncPromiseFinally(_) => UNICORN_NO_ASYNC_PROMISE_FINALLY_ID,
             Self::UnicornNoAwaitExpressionMember(_) => UNICORN_NO_AWAIT_EXPRESSION_MEMBER_ID,
             Self::UnicornNoAwaitInPromiseMethods(_) => UNICORN_NO_AWAIT_IN_PROMISE_METHODS_ID,
             Self::UnicornNoConfusingArrayWith(_) => UNICORN_NO_CONFUSING_ARRAY_WITH_ID,
@@ -4223,6 +4227,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::NAME,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::NAME,
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::NAME,
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::NAME,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::NAME,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::NAME,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::NAME,
@@ -5216,6 +5221,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::CATEGORY,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::CATEGORY,
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::CATEGORY,
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::CATEGORY,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::CATEGORY,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::CATEGORY,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::CATEGORY,
@@ -6212,6 +6218,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::FIX,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::FIX,
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::FIX,
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::FIX,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::FIX,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::FIX,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::FIX,
@@ -7310,6 +7317,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::documentation(),
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::documentation(),
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::documentation(),
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::documentation(),
             Self::UnicornNoAwaitExpressionMember(_) => {
                 UnicornNoAwaitExpressionMember::documentation()
             }
@@ -9227,6 +9235,10 @@ impl RuleEnum {
                 .or_else(|| UnicornNoArrayReverse::schema(generator)),
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::config_schema(generator)
                 .or_else(|| UnicornNoArraySort::schema(generator)),
+            Self::UnicornNoAsyncPromiseFinally(_) => {
+                UnicornNoAsyncPromiseFinally::config_schema(generator)
+                    .or_else(|| UnicornNoAsyncPromiseFinally::schema(generator))
+            }
             Self::UnicornNoAwaitExpressionMember(_) => {
                 UnicornNoAwaitExpressionMember::config_schema(generator)
                     .or_else(|| UnicornNoAwaitExpressionMember::schema(generator))
@@ -10774,6 +10786,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => "unicorn",
             Self::UnicornNoArrayReverse(_) => "unicorn",
             Self::UnicornNoArraySort(_) => "unicorn",
+            Self::UnicornNoAsyncPromiseFinally(_) => "unicorn",
             Self::UnicornNoAwaitExpressionMember(_) => "unicorn",
             Self::UnicornNoAwaitInPromiseMethods(_) => "unicorn",
             Self::UnicornNoConfusingArrayWith(_) => "unicorn",
@@ -12702,6 +12715,9 @@ impl RuleEnum {
             Self::UnicornNoArraySort(_) => {
                 Ok(Self::UnicornNoArraySort(UnicornNoArraySort::from_configuration(value)?))
             }
+            Self::UnicornNoAsyncPromiseFinally(_) => Ok(Self::UnicornNoAsyncPromiseFinally(
+                UnicornNoAsyncPromiseFinally::from_configuration(value)?,
+            )),
             Self::UnicornNoAwaitExpressionMember(_) => Ok(Self::UnicornNoAwaitExpressionMember(
                 UnicornNoAwaitExpressionMember::from_configuration(value)?,
             )),
@@ -14361,6 +14377,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(rule) => rule.to_configuration(),
             Self::UnicornNoArrayReverse(rule) => rule.to_configuration(),
             Self::UnicornNoArraySort(rule) => rule.to_configuration(),
+            Self::UnicornNoAsyncPromiseFinally(rule) => rule.to_configuration(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.to_configuration(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.to_configuration(),
             Self::UnicornNoConfusingArrayWith(rule) => rule.to_configuration(),
@@ -15215,6 +15232,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(rule) => rule.run(node, ctx),
             Self::UnicornNoArrayReverse(rule) => rule.run(node, ctx),
             Self::UnicornNoArraySort(rule) => rule.run(node, ctx),
+            Self::UnicornNoAsyncPromiseFinally(rule) => rule.run(node, ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run(node, ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run(node, ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run(node, ctx),
@@ -16079,6 +16097,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(rule) => rule.run_once(ctx),
             Self::UnicornNoArrayReverse(rule) => rule.run_once(ctx),
             Self::UnicornNoArraySort(rule) => rule.run_once(ctx),
+            Self::UnicornNoAsyncPromiseFinally(rule) => rule.run_once(ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_once(ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_once(ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run_once(ctx),
@@ -17022,6 +17041,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoArrayReverse(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoArraySort(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoAsyncPromiseFinally(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17925,6 +17945,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(rule) => rule.should_run(ctx),
             Self::UnicornNoArrayReverse(rule) => rule.should_run(ctx),
             Self::UnicornNoArraySort(rule) => rule.should_run(ctx),
+            Self::UnicornNoAsyncPromiseFinally(rule) => rule.should_run(ctx),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.should_run(ctx),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.should_run(ctx),
             Self::UnicornNoConfusingArrayWith(rule) => rule.should_run(ctx),
@@ -18984,6 +19005,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::IS_TSGOLINT_RULE,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::IS_TSGOLINT_RULE,
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::IS_TSGOLINT_RULE,
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::IS_TSGOLINT_RULE,
             Self::UnicornNoAwaitExpressionMember(_) => {
                 UnicornNoAwaitExpressionMember::IS_TSGOLINT_RULE
             }
@@ -20115,6 +20137,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::VERSION,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::VERSION,
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::VERSION,
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::VERSION,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::VERSION,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::VERSION,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::VERSION,
@@ -21161,6 +21184,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::HAS_CONFIG,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::HAS_CONFIG,
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::HAS_CONFIG,
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::HAS_CONFIG,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::HAS_CONFIG,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::HAS_CONFIG,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::HAS_CONFIG,
@@ -22176,6 +22200,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::INFO,
             Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::INFO,
             Self::UnicornNoArraySort(_) => UnicornNoArraySort::INFO,
+            Self::UnicornNoAsyncPromiseFinally(_) => UnicornNoAsyncPromiseFinally::INFO,
             Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::INFO,
             Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::INFO,
             Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::INFO,
@@ -23070,6 +23095,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(rule) => rule.types_info(),
             Self::UnicornNoArrayReverse(rule) => rule.types_info(),
             Self::UnicornNoArraySort(rule) => rule.types_info(),
+            Self::UnicornNoAsyncPromiseFinally(rule) => rule.types_info(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.types_info(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.types_info(),
             Self::UnicornNoConfusingArrayWith(rule) => rule.types_info(),
@@ -23921,6 +23947,7 @@ impl RuleEnum {
             Self::UnicornNoArrayReduce(rule) => rule.run_info(),
             Self::UnicornNoArrayReverse(rule) => rule.run_info(),
             Self::UnicornNoArraySort(rule) => rule.run_info(),
+            Self::UnicornNoAsyncPromiseFinally(rule) => rule.run_info(),
             Self::UnicornNoAwaitExpressionMember(rule) => rule.run_info(),
             Self::UnicornNoAwaitInPromiseMethods(rule) => rule.run_info(),
             Self::UnicornNoConfusingArrayWith(rule) => rule.run_info(),
@@ -24870,6 +24897,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoArrayReduce(UnicornNoArrayReduce::default()),
         RuleEnum::UnicornNoArrayReverse(UnicornNoArrayReverse::default()),
         RuleEnum::UnicornNoArraySort(UnicornNoArraySort::default()),
+        RuleEnum::UnicornNoAsyncPromiseFinally(UnicornNoAsyncPromiseFinally::default()),
         RuleEnum::UnicornNoAwaitExpressionMember(UnicornNoAwaitExpressionMember::default()),
         RuleEnum::UnicornNoAwaitInPromiseMethods(UnicornNoAwaitInPromiseMethods::default()),
         RuleEnum::UnicornNoConfusingArrayWith(UnicornNoConfusingArrayWith::default()),
