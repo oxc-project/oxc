@@ -99,7 +99,11 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
 }
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
-    check_ts_module_or_global_declaration(decl.span, ctx);
+    if matches!(&decl.id, TSModuleDeclarationName::StringLiteral(_)) {
+        check_ambient_module_declaration(decl.span, ctx);
+    } else {
+        check_ts_module_or_global_declaration(decl.span, ctx);
+    }
     check_ts_export_assignment_in_module_decl(decl, ctx);
 }
 
@@ -128,8 +132,35 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
             }
             _ => {
                 ctx.error(diagnostics::not_allowed_namespace_declaration(span));
+                break;
             }
         }
+    }
+}
+
+fn check_ambient_module_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
+    let mut ancestors =
+        ctx.ancestry().ancestor_kinds().filter(|kind| !kind.is_module_declaration());
+
+    match ancestors.next() {
+        Some(AstKind::Program(_)) => {}
+        Some(AstKind::TSModuleBlock(_)) => match ancestors.next() {
+            Some(AstKind::TSModuleDeclaration(decl))
+                if matches!(&decl.id, TSModuleDeclarationName::StringLiteral(_))
+                    && ctx.source_type.is_script()
+                    && matches!(ancestors.next(), Some(AstKind::Program(_))) =>
+            {
+                // Module augmentations may be nested directly in a top-level ambient module.
+            }
+            Some(AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)) => {
+                ctx.error(diagnostics::nested_ambient_module_declaration(span));
+            }
+            _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
+        },
+        Some(AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)) => {
+            ctx.error(diagnostics::nested_ambient_module_declaration(span));
+        }
+        _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
     }
 }
 
