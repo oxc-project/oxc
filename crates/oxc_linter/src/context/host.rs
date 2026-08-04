@@ -44,6 +44,9 @@ pub struct ContextSubHost<'a> {
     /// Parser tokens collected during parsing.
     /// Empty if parsing failed, or tokens are disabled (no JS plugins).
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
+    /// Stable source text for this script section
+    /// which remains available even after `semantic` is taken while running JS plugins.
+    pub(super) source_text: &'a str,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
@@ -68,6 +71,8 @@ impl<'a> ContextSubHost<'a> {
             "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
         );
 
+        let source_text = semantic.source_text();
+
         let disable_directives = DisableDirectivesBuilder::new()
             .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
@@ -75,6 +80,7 @@ impl<'a> ContextSubHost<'a> {
         Self {
             semantic,
             module_record,
+            source_text,
             source_text_offset,
             disable_directives,
             framework_options: options.framework_options,
@@ -102,6 +108,11 @@ impl<'a> ContextSubHost<'a> {
     /// Shared reference to the [`FrameworkOptions`]
     pub fn framework_options(&self) -> FrameworkOptions {
         self.framework_options
+    }
+
+    #[inline]
+    pub fn source_text(&self) -> &'a str {
+        self.source_text
     }
 }
 
@@ -310,12 +321,17 @@ impl<'a> ContextHost<'a> {
         &self.config.env
     }
 
+    #[inline]
+    pub fn source_text(&self) -> &'a str {
+        self.current_sub_host().source_text()
+    }
+
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
     pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
         if self.with_ignore_fixes {
-            let source_text = self.semantic().source_text();
+            let source_text = self.source_text();
             diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
         }
         if self.current_sub_host().source_text_offset != 0 {
@@ -327,7 +343,7 @@ impl<'a> ContextHost<'a> {
     // Append a list of diagnostics. Only used in report_unused_directives.
     fn append_diagnostics(&self, mut diagnostics: Vec<Message>) {
         if self.with_ignore_fixes {
-            let source_text = self.semantic().source_text();
+            let source_text = self.source_text();
             for diagnostic in &mut diagnostics {
                 diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
             }
@@ -358,7 +374,7 @@ impl<'a> ContextHost<'a> {
         // relate to lint result, check after linter run finish
         let unused_disable_comments = self.disable_directives().collect_unused_disable_comments();
         let fix_message = "remove unused disable directive";
-        let source_text = self.semantic().source_text();
+        let source_text = self.source_text();
 
         for unused_disable_comment in unused_disable_comments {
             let span = unused_disable_comment.span;

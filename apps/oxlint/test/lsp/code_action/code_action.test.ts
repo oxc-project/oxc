@@ -10,6 +10,7 @@ describe("LSP code actions", () => {
       ["fix/test.ts", "typescript"],
       ["suggestion/test.ts", "typescript"],
       ["js-plugin-fix/test.js", "javascript"],
+      ["js-plugin-fix/non-zero-offset.js", "javascript"],
       ["js-plugin-suggestion/test.js", "javascript"],
     ])("should handle %s", async (path, languageId) => {
       expect(await fixFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
