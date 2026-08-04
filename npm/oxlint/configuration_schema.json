@@ -5491,10 +5491,16 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/MethodOptionsSchema"
+                  "$ref": "#/definitions/MethodGlobalOptions"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/MethodSinkOptions"
+                  }
                 }
               ],
-              "maxItems": 2,
+              "maxItems": 3,
               "minItems": 2
             }
           ]
@@ -5511,10 +5517,16 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/PropertyOptionsSchema"
+                  "$ref": "#/definitions/PropertyGlobalOptions"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/PropertySinkOptions"
+                  }
                 }
               ],
-              "maxItems": 2,
+              "maxItems": 3,
               "minItems": 2
             }
           ]
@@ -13183,40 +13195,41 @@
         }
       ]
     },
-    "MethodOptionsSchema": {
+    "MethodGlobalOptions": {
+      "description": "The first options object, applying to every sink.",
       "type": "object",
       "properties": {
         "defaultDisable": {
-          "description": "Drops the built-in sink list, so only sinks given in the second options\nobject are checked.",
+          "description": "Drops the built-in sink list, so only sinks given in the second options\nobject are checked. Built-in sinks named there keep their argument indices.",
           "type": "boolean",
-          "markdownDescription": "Drops the built-in sink list, so only sinks given in the second options\nobject are checked."
+          "markdownDescription": "Drops the built-in sink list, so only sinks given in the second options\nobject are checked. Built-in sinks named there keep their argument indices."
         },
         "escape": {
-          "description": "Escaping functions which mark a value as safe, for every sink.",
+          "description": "Escaping functions which mark a value as safe.",
           "allOf": [
             {
               "$ref": "#/definitions/EscapeSchema"
             }
           ],
-          "markdownDescription": "Escaping functions which mark a value as safe, for every sink."
+          "markdownDescription": "Escaping functions which mark a value as safe."
         },
         "objectMatches": {
-          "description": "Regexes the object of a call must match, for every sink.",
+          "description": "Regexes the name of the object a method is called on must match.\n\nThese are Rust regexes, which do not support backreferences or lookaround.",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Regexes the object of a call must match, for every sink."
+          "markdownDescription": "Regexes the name of the object a method is called on must match.\n\nThese are Rust regexes, which do not support backreferences or lookaround."
         },
         "properties": {
-          "description": "Argument indices which are parsed as HTML, for every sink.",
+          "description": "Argument indices which are parsed as HTML.",
           "type": "array",
           "items": {
             "type": "integer",
             "format": "uint",
             "minimum": 0.0
           },
-          "markdownDescription": "Argument indices which are parsed as HTML, for every sink."
+          "markdownDescription": "Argument indices which are parsed as HTML."
         },
         "variableTracing": {
           "description": "Whether values coming from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`.",
@@ -13224,7 +13237,8 @@
           "markdownDescription": "Whether values coming from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "markdownDescription": "The first options object, applying to every sink."
     },
     "MethodSignatureStyleConfig": {
       "oneOf": [
@@ -13245,6 +13259,41 @@
           "markdownDescription": "Enforce using method signature for functions. Use this if you aren't using TypeScript's strict mode and prefer this style."
         }
       ]
+    },
+    "MethodSinkOptions": {
+      "description": "The options of a single sink in the second options object.",
+      "type": "object",
+      "properties": {
+        "escape": {
+          "description": "Escaping functions accepted for this sink, replacing the ones from the\nfirst options object.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/EscapeSchema"
+            }
+          ],
+          "markdownDescription": "Escaping functions accepted for this sink, replacing the ones from the\nfirst options object."
+        },
+        "objectMatches": {
+          "description": "Regexes the name of the object must match, replacing the ones from the\nfirst options object.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Regexes the name of the object must match, replacing the ones from the\nfirst options object."
+        },
+        "properties": {
+          "description": "Argument indices which are parsed as HTML.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0.0
+          },
+          "markdownDescription": "Argument indices which are parsed as HTML."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "The options of a single sink in the second options object."
     },
     "Mode": {
       "oneOf": [
@@ -18078,7 +18127,8 @@
         "$ref": "#/definitions/PropertyDetails"
       }
     },
-    "PropertyOptionsSchema": {
+    "PropertyGlobalOptions": {
+      "description": "The first options object, applying to every property.",
       "type": "object",
       "properties": {
         "escape": {
@@ -18090,21 +18140,31 @@
           ],
           "markdownDescription": "Escaping functions which mark a value as safe."
         },
-        "properties": {
-          "description": "Property names treated as HTML sinks, replacing the defaults\n`[\"innerHTML\", \"outerHTML\"]`.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Property names treated as HTML sinks, replacing the defaults\n`[\"innerHTML\", \"outerHTML\"]`."
-        },
         "variableTracing": {
           "description": "Whether values assigned from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`.",
           "type": "boolean",
           "markdownDescription": "Whether values assigned from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`."
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "markdownDescription": "The first options object, applying to every property."
+    },
+    "PropertySinkOptions": {
+      "description": "The options of a single property in the second options object.",
+      "type": "object",
+      "properties": {
+        "escape": {
+          "description": "Escaping functions accepted for this property, replacing the ones from the\nfirst options object.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/EscapeSchema"
+            }
+          ],
+          "markdownDescription": "Escaping functions accepted for this property, replacing the ones from the\nfirst options object."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "The options of a single property in the second options object."
     },
     "RadixType": {
       "oneOf": [

@@ -353,6 +353,8 @@ nextjs/no-styled-jsx-in-document                           |    452
 nextjs/no-sync-scripts                                     |    452
 nextjs/no-title-in-document-head                           |    103
 nextjs/no-unwanted-polyfillio                              |    452
+no_unsanitized/method                                      |  62626
+no_unsanitized/property                                    |  13005
 node/callback-return                                       |  62606
 node/exports-style                                         |      7
 node/global-require                                        |  62606

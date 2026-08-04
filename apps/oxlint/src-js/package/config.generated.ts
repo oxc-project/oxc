@@ -1226,8 +1226,26 @@ export interface DummyRuleMap {
   "no-unsafe-finally"?: RuleNoConfig;
   "no-unsafe-negation"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeNegation];
   "no-unsafe-optional-chaining"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeOptionalChaining];
-  "no-unsanitized/method"?: RuleNoConfig | [AllowWarnDeny, MethodOptionsSchema];
-  "no-unsanitized/property"?: RuleNoConfig | [AllowWarnDeny, PropertyOptionsSchema];
+  "no-unsanitized/method"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, MethodGlobalOptions]
+    | [
+        AllowWarnDeny,
+        MethodGlobalOptions,
+        {
+          [k: string]: MethodSinkOptions | undefined;
+        }
+      ];
+  "no-unsanitized/property"?:
+    | RuleNoConfig
+    | [AllowWarnDeny, PropertyGlobalOptions]
+    | [
+        AllowWarnDeny,
+        PropertyGlobalOptions,
+        {
+          [k: string]: PropertySinkOptions | undefined;
+        }
+      ];
   "no-unused-expressions"?: RuleNoConfig | [AllowWarnDeny, NoUnusedExpressionsConfig];
   "no-unused-labels"?: RuleNoConfig;
   "no-unused-private-class-members"?: RuleNoConfig;
@@ -3811,22 +3829,27 @@ export interface NoUnsafeOptionalChaining {
    */
   disallowArithmeticOperators?: boolean;
 }
-export interface MethodOptionsSchema {
+/**
+ * The first options object, applying to every sink.
+ */
+export interface MethodGlobalOptions {
   /**
    * Drops the built-in sink list, so only sinks given in the second options
-   * object are checked.
+   * object are checked. Built-in sinks named there keep their argument indices.
    */
   defaultDisable?: boolean;
   /**
-   * Escaping functions which mark a value as safe, for every sink.
+   * Escaping functions which mark a value as safe.
    */
   escape?: EscapeSchema;
   /**
-   * Regexes the object of a call must match, for every sink.
+   * Regexes the name of the object a method is called on must match.
+   *
+   * These are Rust regexes, which do not support backreferences or lookaround.
    */
   objectMatches?: string[];
   /**
-   * Argument indices which are parsed as HTML, for every sink.
+   * Argument indices which are parsed as HTML.
    */
   properties?: number[];
   /**
@@ -3850,21 +3873,48 @@ export interface EscapeSchema {
    */
   taggedTemplates?: string[];
 }
-export interface PropertyOptionsSchema {
+/**
+ * The options of a single sink in the second options object.
+ */
+export interface MethodSinkOptions {
+  /**
+   * Escaping functions accepted for this sink, replacing the ones from the
+   * first options object.
+   */
+  escape?: EscapeSchema;
+  /**
+   * Regexes the name of the object must match, replacing the ones from the
+   * first options object.
+   */
+  objectMatches?: string[];
+  /**
+   * Argument indices which are parsed as HTML.
+   */
+  properties?: number[];
+}
+/**
+ * The first options object, applying to every property.
+ */
+export interface PropertyGlobalOptions {
   /**
    * Escaping functions which mark a value as safe.
    */
   escape?: EscapeSchema;
   /**
-   * Property names treated as HTML sinks, replacing the defaults
-   * `["innerHTML", "outerHTML"]`.
-   */
-  properties?: string[];
-  /**
    * Whether values assigned from local `let`/`const` variables are traced back
    * to their initializers. Defaults to `true`.
    */
   variableTracing?: boolean;
+}
+/**
+ * The options of a single property in the second options object.
+ */
+export interface PropertySinkOptions {
+  /**
+   * Escaping functions accepted for this property, replacing the ones from the
+   * first options object.
+   */
+  escape?: EscapeSchema;
 }
 export interface NoUnusedExpressionsConfig {
   /**
