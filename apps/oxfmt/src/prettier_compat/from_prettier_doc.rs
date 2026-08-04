@@ -165,9 +165,16 @@ fn convert_line<'a>(
         // after a COLUMN-0 literal line is absorbed (Prettier prints both newlines).
         // This mechanical conversion cannot apply the `empty_line()` workaround;
         // see `hard_line_after_column_zero_literal_line_is_absorbed` in `oxc_formatter_core`.
+        // Known gap: a bare `{line, hard, literal}` (Prettier's `literallineWithoutBreakParent`)
+        // also lands here and over-propagates.
+        // `Literal` expands enclosing groups and no non-propagating literal mode exists
+        // (the paired `literalline` form is unaffected, its propagation rides the following `break-parent`).
         out.push(FormatElement::Line(LineMode::Literal));
     } else if hard {
-        out.push(FormatElement::Line(LineMode::Hard));
+        // `{line, hard}` alone is Prettier's `hardlineWithoutBreakParent`;
+        // its `hardline` arrives as the `[{line, hard}, {break-parent}]` pair,
+        // whose propagation the following `break-parent` → `ExpandParent` carries.
+        out.push(FormatElement::Line(LineMode::HardWithoutExpand));
     } else if soft {
         out.push(FormatElement::Line(LineMode::Soft));
     } else {
@@ -400,7 +407,7 @@ fn extract_group_id(
 /// the finishing step of the Doc→IR conversion (Prettier-fallback path only;
 /// Rust formatters write IR that never needs it):
 /// - strip trailing hardline (useless for embedded parts)
-/// - collapse double-hardlines `[Hard, ExpandParent, Hard, ExpandParent]` → `[Empty, ExpandParent]`
+/// - collapse double-hardlines `[HardWithoutExpand, ExpandParent, HardWithoutExpand, ExpandParent]` → `[Empty, ExpandParent]`
 /// - merge consecutive Text nodes (the Prettier Doc path can emit adjacent `Text`s)
 /// - trim a Text's trailing spaces/tabs when a hard/empty line follows:
 ///   Prettier's own printer trims at every line break,
@@ -413,7 +420,7 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
     // Strip trailing hardline
     if ir.len() >= 2
         && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
-        && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::Hard))
+        && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::HardWithoutExpand))
     {
         let new_len = ir.len() - 2;
         ir.truncate(new_len);
@@ -424,9 +431,9 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
     while read < ir.len() {
         // Collapse double-hardline → empty line
         if read + 3 < ir.len()
-            && matches!(ir[read], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read], FormatElement::Line(LineMode::HardWithoutExpand))
             && matches!(ir[read + 1], FormatElement::ExpandParent)
-            && matches!(ir[read + 2], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 2], FormatElement::Line(LineMode::HardWithoutExpand))
             && matches!(ir[read + 3], FormatElement::ExpandParent)
         {
             ir[write] = FormatElement::Line(LineMode::Empty);
@@ -454,14 +461,18 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
                 sb.into_str()
             };
             // Prettier's own printer trims at every line break regardless of the doc structure around it,
-            // so a break hiding behind tags (`Text("a  "), StartIndent, Hard` from `["a  ", indent([hardline, ..])]`) still trims,
+            // so a break hiding behind tags (`Text("a  "), StartIndent, <hard line>`
+            // from `["a  ", indent([hardline, ..])]`) still trims,
             // look through tag/expand-parent markers for it (only when there is anything to trim in the first place).
             let trimmed = if text.ends_with([' ', '\t'])
                 && ir[read..]
                     .iter()
                     .find(|el| !matches!(el, FormatElement::Tag(_) | FormatElement::ExpandParent))
                     .is_some_and(|el| {
-                        matches!(el, FormatElement::Line(LineMode::Hard | LineMode::Empty))
+                        matches!(
+                            el,
+                            FormatElement::Line(LineMode::HardWithoutExpand | LineMode::Empty)
+                        )
                     }) {
                 text.trim_end_matches([' ', '\t'])
             } else {

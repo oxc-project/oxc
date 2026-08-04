@@ -149,7 +149,7 @@ impl Document<'_> {
                     // `FormatElement::Token` cannot contain line breaks
                     FormatElement::Text { text: _, width } => width.propagates_expand(),
                     FormatElement::ExpandParent => true,
-                    FormatElement::Line(mode) => mode.will_break(),
+                    FormatElement::Line(mode) => mode.propagates_expand(),
                     _ => false,
                 };
 
@@ -193,10 +193,10 @@ impl FormatElements for [FormatElement<'_>] {
                 FormatElement::Interned(interned) if ignore_depth == 0 && interned.will_break() => {
                     return true;
                 }
-                // No `ignore_depth` guard on purpose:
-                // like Prettier's `hardline` (which carries a `breakParent`),
-                // a hard line written directly inside a line suffix still propagates the break
-                // to the enclosing groups.
+                // No `ignore_depth` guard on purpose: like Prettier's `willBreak`,
+                // any always-breaking line counts — even directly inside a line suffix,
+                // and independently of whether it propagates expansion
+                // (`HardWithoutExpand` answers "will this print a newline" with yes too).
                 FormatElement::Line(line) if line.will_break() => {
                     return true;
                 }

@@ -184,7 +184,7 @@ fn convert_elements(
                         push_line(current_children_mut(&mut stack)?, *mode);
                         printer.line = LineState::Content;
                     }
-                    LineMode::Hard | LineMode::Empty => {
+                    LineMode::Hard | LineMode::HardWithoutExpand | LineMode::Empty => {
                         printer.flush_pending_space(&mut stack)?;
                         // Mimic the printer's `line_width > 0` guard and `has_empty_line` cap:
                         // the printer only emits a newline when the line has content,
@@ -461,6 +461,9 @@ fn push_line(children: &mut Vec<Value>, mode: LineMode) {
         LineMode::Hard => {
             children.push(json!({"type": "line", "hard": true}));
             children.push(json!({"type": "break-parent"}));
+        }
+        LineMode::HardWithoutExpand => {
+            children.push(json!({"type": "line", "hard": true}));
         }
         LineMode::Empty => {
             // hardline x2

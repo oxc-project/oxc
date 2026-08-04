@@ -295,8 +295,17 @@ macro_rules! dbg_write {
 /// the content up to the first non-soft line break without exceeding the configured print width.
 /// This definition differs from groups as that non-soft line breaks make group expand.
 ///
-/// [crate::BestFitting] acts as a "break" boundary, meaning that it is considered to fit
+/// A consequence of that first-line measurement:
+/// variant selection CANNOT depend on whether a variant's own content breaks,
+/// a variant holding a forced break (a hard line, an expanded group) is still selected when its first line fits.
+/// To flip layouts on "does this content break",
+/// put the content in a [group with an id](crate::builders::IfGroupBreaks::with_group_id)
+/// and switch with [crate::builders::if_group_breaks] instead.
 ///
+/// [crate::BestFitting] acts as an expansion boundary:
+/// an expanding element inside a variant never expands the groups enclosing the [crate::BestFitting]
+/// (see [crate::Document::propagate_expand]), it is the ONLY boundary;
+/// conditional content tags are transparent to propagation.
 ///
 /// [`Flat`]: crate::format_element::PrintMode::Flat
 /// [`Expanded`]: crate::format_element::PrintMode::Expanded

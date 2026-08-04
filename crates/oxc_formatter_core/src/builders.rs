@@ -111,6 +111,24 @@ impl Line {
     const fn new(mode: LineMode) -> Self {
         Self { mode }
     }
+
+    /// Prints as a line break but does NOT force enclosing groups to expand
+    /// (Prettier's `hardlineWithoutBreakParent`);
+    /// pair with an explicit [expand_parent] where propagation IS wanted.
+    ///
+    /// The primitive for a line break inside conditional content
+    /// (see the [if_group_breaks] docs) and for layouts like markdown tables
+    /// that break lines without expanding the surrounding structure.
+    ///
+    /// Must only be called on [hard_line_break] (debug-asserted).
+    #[must_use]
+    pub const fn without_expand_parent(mut self) -> Self {
+        match self.mode {
+            LineMode::Hard => self.mode = LineMode::HardWithoutExpand,
+            _ => debug_assert!(false, "without_expand_parent is only valid on hard_line_break()"),
+        }
+        self
+    }
 }
 
 impl<C> Format<'_, C> for Line {
@@ -793,6 +811,16 @@ impl<C> Format<'_, C> for ExpandParent {
 
 /// Adds a conditional content that is emitted only if it isn't inside an enclosing `Group` that
 /// is printed on a single line.
+///
+/// NOTE: A conditional tag is NOT an expansion boundary.
+/// An expanding element inside the content (a hard line break above all) expands
+/// the enclosing groups at build time (see [crate::Document::propagate_expand]) even when the branch is never printed.
+///
+/// Prettier's `ifBreak` bodies don't have this problem only because they typically sit inside a `conditionalGroup`,
+/// whose boundary swallows the propagation;
+/// a 1:1 port of `ifBreak(...hardline...)` here silently breaks every group around it.
+/// For a line break inside the body use [`hard_line_break().without_expand_parent()`](Line::without_expand_parent),
+/// keeping a plain [hard_line_break] only when every enclosing group must break whenever this construct is emitted at all.
 #[inline]
 pub fn if_group_breaks<'ast, C, Content>(content: &Content) -> IfGroupBreaks<'_, 'ast, C>
 where

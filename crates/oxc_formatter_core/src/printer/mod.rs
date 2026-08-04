@@ -158,6 +158,7 @@ impl<'a> Printer<'a> {
                             return Ok(());
                         }
                         LineMode::Hard
+                        | LineMode::HardWithoutExpand
                         | LineMode::Empty
                         | LineMode::ExactLineBreaks(_)
                         | LineMode::Literal => {
@@ -1115,6 +1116,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                         }
                         LineMode::Soft => {}
                         LineMode::Hard
+                        | LineMode::HardWithoutExpand
                         | LineMode::Empty
                         | LineMode::ExactLineBreaks(_)
                         | LineMode::Literal => {
@@ -1476,7 +1478,7 @@ mod tests {
 
     use crate::{
         Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
-        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer,
+        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
         builders::{
             align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
             hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
@@ -2161,6 +2163,105 @@ two lines`,
             printed.as_code(),
             "The referenced group breaks.\nThis group breaks because:\nIt measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text."
         );
+    }
+
+    #[test]
+    fn conditional_content_is_transparent_to_expand_propagation() {
+        // A hard line inside a conditional body expands the enclosing group at build time
+        // even when the body never prints (see the `if_group_breaks` docs): conditional tags are not expansion boundaries.
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            let group_id = f.state().group_id("watched");
+            write!(f, [group(&token("short")).with_group_id(Some(group_id)), space()]);
+            write!(
+                f,
+                [group(&format_args!(
+                    token("a"),
+                    soft_line_break_or_space(),
+                    if_group_breaks(&hard_line_break()).with_group_id(Some(group_id)),
+                    token("b"),
+                ))]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        // The watched group is flat, so the conditional body is skipped — yet its hard
+        // line already expanded the enclosing group: `a b` would fit, but prints broken.
+        assert_eq!(printed.as_code(), "short a\nb");
+    }
+
+    #[test]
+    fn hard_line_without_expand_parent_breaks_but_does_not_propagate() {
+        // Prettier's `hardlineWithoutBreakParent`: always prints a line break,
+        // yet the enclosing group still measures flat and its soft lines stay flat.
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [group(&format_args!(
+                    token("a"),
+                    soft_line_break_or_space(),
+                    token("b"),
+                    hard_line_break().without_expand_parent(),
+                    token("c"),
+                ))]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        assert_eq!(printed.as_code(), "a b\nc");
+    }
+
+    #[test]
+    fn best_fitting_is_an_expansion_boundary() {
+        // A hard line inside a `best_fitting` variant does not expand enclosing groups
+        // (see `Document::propagate_expand`): the group around it still measures flat
+        // and the most-flat variant is chosen.
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [group(&format_args!(
+                    token("a"),
+                    soft_line_break_or_space(),
+                    best_fitting![
+                        format_args!(token("first")),
+                        format_args!(token("expanded"), hard_line_break(), token("tail")),
+                    ],
+                ))]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        assert_eq!(printed.as_code(), "a first");
+    }
+
+    #[test]
+    fn best_fitting_selects_a_variant_whose_content_force_breaks() {
+        // Variant measurement early-exits `Yes` at the first line break: a variant
+        // holding a forced break is still selected when its first line fits, so
+        // "does this content break" cannot drive variant selection
+        // (watch a group id with `if_group_breaks` for that).
+        let allocator = Allocator::default();
+        let content = test_format_with(|f| {
+            write!(
+                f,
+                [best_fitting![
+                    format_args!(
+                        token("first line"),
+                        group(&format_args!(token(" broken"), hard_line_break(), token("tail")))
+                    ),
+                    format_args!(token("never chosen")),
+                ]]
+            );
+        });
+
+        let printed = format_simple(&allocator, &content);
+
+        assert_eq!(printed.as_code(), "first line broken\ntail");
     }
 
     #[test]

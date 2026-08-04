@@ -19,7 +19,16 @@ Key IR pieces are all exported from the crate root.
 The semantics of each building block live in the `builders.rs` rustdocs.
 e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
 
-Prettier doc primitives are ported on demand; still missing: `hardlineWithoutBreakParent` (for markdown tables) and the `trim`.
+Prettier doc primitives are ported on demand; still missing: the `trim`.
+
+Composite primitives translate rather than port 1:1:
+
+- `hardlineWithoutBreakParent` is `hard_line_break().without_expand_parent()`
+- `conditionalGroup` is `best_fitting!`: same expansion boundary, same flat-first variant trial.
+  Prettier's own doesn't switch variants on inner breaks either ("the user is expected to manually handle what breaks");
+  that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
+  See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
+  Only the Doc→IR mechanical conversion has no mapping (oxfmt's `prettier_compat` rejects `expandedStates`).
 
 ### The printer never trims
 
