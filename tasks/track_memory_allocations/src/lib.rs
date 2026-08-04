@@ -564,7 +564,10 @@ fn write_snapshot(file_path: &str, entries: &[(&TestFile, StageStats)]) -> Resul
 
     let mut out = String::new();
     let committed_doc = committed_docs.first();
-    for (file, stats) in entries {
+    for (i, (file, stats)) in entries.iter().enumerate() {
+        if i > 0 {
+            out.push('\n');
+        }
         let committed_file = committed_doc.get(file.file_name.as_str());
         let metrics = stats.metrics(file.source_text.len());
         render_file_stats(&mut out, &file.file_name, &metrics, committed_file);
@@ -596,5 +599,4 @@ fn render_file_stats(
         }
         .unwrap();
     }
-    out.push('\n');
 }
