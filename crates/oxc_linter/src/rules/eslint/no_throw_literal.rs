@@ -140,6 +140,10 @@ fn test() {
         // local reference resolution
         "const err = new Error(); throw err;",
         "let err: Error | null = null; err = new Error('My error'); throw err;",
+        // declaration without an initializer, assigned before the `throw`
+        "let err: Error | undefined; err = new Error('My error'); throw err;",
+        "let err; err = new Error('My error'); throw err;",
+        "declare let err: Error; throw err;",
         "function main(x) { throw x; }", // cannot determine type of x
         "function main(x: any) { throw x; }",
         "function main(x: TypeError) { throw x; }",
@@ -171,6 +175,9 @@ fn test() {
         // local reference resolution
         "let foo = 'foo'; throw foo;",
         "let err: Error | null = null; throw err; err = new Error('My error');",
+        // declaration without an initializer, assigned only after the `throw`
+        "let err: Error | undefined; throw err; err = new Error('My error');",
+        "let err: Error | undefined; err = 'foo' as unknown as Error; throw err;",
         "let foo = 'foo' as unknown as Error; throw foo;",
         "function foo() {}; throw foo;",
         "const foo = () => {}; throw foo;",

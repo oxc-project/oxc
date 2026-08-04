@@ -630,14 +630,18 @@ fn could_be_error_impl(
             let decl = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
             match decl.kind() {
                 AstKind::VariableDeclarator(decl) => {
-                    let Some(init) = &decl.init else {
-                        return ctx.scoping().symbol_flags(symbol_id).is_ambient();
-                    };
-
-                    if could_be_error_impl(ctx, init, visited) {
+                    if let Some(init) = &decl.init {
+                        if could_be_error_impl(ctx, init, visited) {
+                            return true;
+                        }
+                    } else if ctx.scoping().symbol_flags(symbol_id).is_ambient() {
+                        // Ambient declarations (e.g. `declare let e: Error;`) never have an
+                        // initializer, and no assignment is visible to us.
                         return true;
                     }
 
+                    // A declaration without an initializer is still assignable later on, so fall
+                    // through to the assignment scan below instead of assuming `undefined`.
                     ctx.scoping().get_resolved_references(symbol_id).any(|reference| {
                         if !reference.is_write() {
                             return false;
