@@ -46,6 +46,8 @@ Stream-tail end comments (`write_end_comments`) are the one document-layer excep
 Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Current divergences:
 
 - anchor/tag order (prettier#19524): source order is preserved, never reordered
+- EOF blank lines: the file always ends with exactly one newline, like every other formatter crate
+  (`|+` keep-chomped verbatim tails excepted); Prettier YAML alone preserves EOF blank lines verbatim
 - `# prettier-ignore` range (prettier#13008): suppresses exactly one node, never every following node
 - anchor next-line comments (prettier#10518 / #9327): structurally avoided, the positional cursor makes them the next node's leading comments
 - blank lines (prettier#15528): one unified rule:
