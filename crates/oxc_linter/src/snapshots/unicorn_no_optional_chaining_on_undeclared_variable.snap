@@ -1,0 +1,166 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo?.bar;
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo?.();
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo?.bar();
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo?.bar?.baz;
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo.bar?.();
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo.bar?.baz;
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo?.().bar?.baz;
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo?.bar().baz?.qux;
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:2]
+ 1 │ (foo?.bar)?.baz;
+   ·  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:2]
+ 1 │ (foo?.bar)?.();
+   ·  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo[bar]?.baz;
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo?.[bar];
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:2:17]
+ 1 │ function fn() {
+ 2 │                 foo?.bar;
+   ·                 ───
+ 3 │             }
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:2]
+ 1 │ (foo as Foo)?.bar;
+   ·  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:1]
+ 1 │ foo!.bar?.();
+   · ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:2]
+ 1 │ (foo?.bar as Foo)?.baz;
+   ·  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:2]
+ 1 │ (foo<string>)?.bar;
+   ·  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:2]
+ 1 │ (foo<string>)?.();
+   ·  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:2]
+ 1 │ (foo<string>).bar?.baz;
+   ·  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:16]
+ 1 │ type foo = {}; foo?.bar;
+   ·                ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:18]
+ 1 │ interface foo {} foo?.bar;
+   ·                  ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:31]
+ 1 │ import type {foo} from "foo"; foo?.bar;
+   ·                               ───
+   ╰────
+  help: Declare `foo` before using optional chaining.
+
+  ⚠ unicorn(no-optional-chaining-on-undeclared-variable): Optional chaining on undeclared variable `foo` throws a ReferenceError.
+   ╭─[no_optional_chaining_on_undeclared_variable.ts:1:31]
+ 1 │ import {type foo} from "foo"; foo.bar?.baz;
+   ·                               ───
+   ╰────
+  help: Declare `foo` before using optional chaining.

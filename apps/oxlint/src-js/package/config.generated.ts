@@ -1565,6 +1565,7 @@ export interface DummyRuleMap {
   "unicorn/no-new-buffer"?: RuleNoConfig;
   "unicorn/no-null"?: RuleNoConfig | [AllowWarnDeny, NoNull];
   "unicorn/no-object-as-default-parameter"?: RuleNoConfig;
+  "unicorn/no-optional-chaining-on-undeclared-variable"?: RuleNoConfig;
   "unicorn/no-process-exit"?: RuleNoConfig;
   "unicorn/no-single-promise-in-promise-methods"?: RuleNoConfig;
   "unicorn/no-static-only-class"?: RuleNoConfig;

@@ -9059,6 +9059,9 @@
         "unicorn/no-object-as-default-parameter": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-optional-chaining-on-undeclared-variable": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-process-exit": {
           "$ref": "#/definitions/RuleNoConfig"
         },

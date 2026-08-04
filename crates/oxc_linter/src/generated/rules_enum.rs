@@ -649,6 +649,7 @@ pub use crate::rules::unicorn::no_new_array::NoNewArray as UnicornNoNewArray;
 pub use crate::rules::unicorn::no_new_buffer::NoNewBuffer as UnicornNoNewBuffer;
 pub use crate::rules::unicorn::no_null::NoNull as UnicornNoNull;
 pub use crate::rules::unicorn::no_object_as_default_parameter::NoObjectAsDefaultParameter as UnicornNoObjectAsDefaultParameter;
+pub use crate::rules::unicorn::no_optional_chaining_on_undeclared_variable::NoOptionalChainingOnUndeclaredVariable as UnicornNoOptionalChainingOnUndeclaredVariable;
 pub use crate::rules::unicorn::no_process_exit::NoProcessExit as UnicornNoProcessExit;
 pub use crate::rules::unicorn::no_single_promise_in_promise_methods::NoSinglePromiseInPromiseMethods as UnicornNoSinglePromiseInPromiseMethods;
 pub use crate::rules::unicorn::no_static_only_class::NoStaticOnlyClass as UnicornNoStaticOnlyClass;
@@ -1375,6 +1376,7 @@ pub enum RuleEnum {
     UnicornNoNewBuffer(UnicornNoNewBuffer),
     UnicornNoNull(UnicornNoNull),
     UnicornNoObjectAsDefaultParameter(UnicornNoObjectAsDefaultParameter),
+    UnicornNoOptionalChainingOnUndeclaredVariable(UnicornNoOptionalChainingOnUndeclaredVariable),
     UnicornNoProcessExit(UnicornNoProcessExit),
     UnicornNoSinglePromiseInPromiseMethods(UnicornNoSinglePromiseInPromiseMethods),
     UnicornNoStaticOnlyClass(UnicornNoStaticOnlyClass),
@@ -2290,7 +2292,10 @@ const UNICORN_NO_NEW_ARRAY_ID: usize = UNICORN_NO_NESTED_TERNARY_ID + 1usize;
 const UNICORN_NO_NEW_BUFFER_ID: usize = UNICORN_NO_NEW_ARRAY_ID + 1usize;
 const UNICORN_NO_NULL_ID: usize = UNICORN_NO_NEW_BUFFER_ID + 1usize;
 const UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID: usize = UNICORN_NO_NULL_ID + 1usize;
-const UNICORN_NO_PROCESS_EXIT_ID: usize = UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID + 1usize;
+const UNICORN_NO_OPTIONAL_CHAINING_ON_UNDECLARED_VARIABLE_ID: usize =
+    UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID + 1usize;
+const UNICORN_NO_PROCESS_EXIT_ID: usize =
+    UNICORN_NO_OPTIONAL_CHAINING_ON_UNDECLARED_VARIABLE_ID + 1usize;
 const UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID: usize = UNICORN_NO_PROCESS_EXIT_ID + 1usize;
 const UNICORN_NO_STATIC_ONLY_CLASS_ID: usize =
     UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID + 1usize;
@@ -3272,6 +3277,9 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(_) => UNICORN_NO_NEW_BUFFER_ID,
             Self::UnicornNoNull(_) => UNICORN_NO_NULL_ID,
             Self::UnicornNoObjectAsDefaultParameter(_) => UNICORN_NO_OBJECT_AS_DEFAULT_PARAMETER_ID,
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UNICORN_NO_OPTIONAL_CHAINING_ON_UNDECLARED_VARIABLE_ID
+            }
             Self::UnicornNoProcessExit(_) => UNICORN_NO_PROCESS_EXIT_ID,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UNICORN_NO_SINGLE_PROMISE_IN_PROMISE_METHODS_ID
@@ -4247,6 +4255,9 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::NAME,
             Self::UnicornNoNull(_) => UnicornNoNull::NAME,
             Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::NAME,
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::NAME
+            }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::NAME,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::NAME
@@ -5242,6 +5253,9 @@ impl RuleEnum {
             Self::UnicornNoObjectAsDefaultParameter(_) => {
                 UnicornNoObjectAsDefaultParameter::CATEGORY
             }
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::CATEGORY
+            }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::CATEGORY,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::CATEGORY
@@ -6236,6 +6250,9 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::FIX,
             Self::UnicornNoNull(_) => UnicornNoNull::FIX,
             Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::FIX,
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::FIX
+            }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::FIX,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::FIX
@@ -7341,6 +7358,9 @@ impl RuleEnum {
             Self::UnicornNoNull(_) => UnicornNoNull::documentation(),
             Self::UnicornNoObjectAsDefaultParameter(_) => {
                 UnicornNoObjectAsDefaultParameter::documentation()
+            }
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::documentation()
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::documentation(),
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
@@ -9296,6 +9316,10 @@ impl RuleEnum {
                 UnicornNoObjectAsDefaultParameter::config_schema(generator)
                     .or_else(|| UnicornNoObjectAsDefaultParameter::schema(generator))
             }
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::config_schema(generator)
+                    .or_else(|| UnicornNoOptionalChainingOnUndeclaredVariable::schema(generator))
+            }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::config_schema(generator)
                 .or_else(|| UnicornNoProcessExit::schema(generator)),
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
@@ -10796,6 +10820,7 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(_) => "unicorn",
             Self::UnicornNoNull(_) => "unicorn",
             Self::UnicornNoObjectAsDefaultParameter(_) => "unicorn",
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => "unicorn",
             Self::UnicornNoProcessExit(_) => "unicorn",
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => "unicorn",
             Self::UnicornNoStaticOnlyClass(_) => "unicorn",
@@ -12774,6 +12799,11 @@ impl RuleEnum {
                     UnicornNoObjectAsDefaultParameter::from_configuration(value)?,
                 ))
             }
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                Ok(Self::UnicornNoOptionalChainingOnUndeclaredVariable(
+                    UnicornNoOptionalChainingOnUndeclaredVariable::from_configuration(value)?,
+                ))
+            }
             Self::UnicornNoProcessExit(_) => {
                 Ok(Self::UnicornNoProcessExit(UnicornNoProcessExit::from_configuration(value)?))
             }
@@ -14383,6 +14413,7 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(rule) => rule.to_configuration(),
             Self::UnicornNoNull(rule) => rule.to_configuration(),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.to_configuration(),
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(rule) => rule.to_configuration(),
             Self::UnicornNoProcessExit(rule) => rule.to_configuration(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.to_configuration(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.to_configuration(),
@@ -15237,6 +15268,7 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(rule) => rule.run(node, ctx),
             Self::UnicornNoNull(rule) => rule.run(node, ctx),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run(node, ctx),
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(rule) => rule.run(node, ctx),
             Self::UnicornNoProcessExit(rule) => rule.run(node, ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run(node, ctx),
             Self::UnicornNoStaticOnlyClass(rule) => rule.run(node, ctx),
@@ -16101,6 +16133,7 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(rule) => rule.run_once(ctx),
             Self::UnicornNoNull(rule) => rule.run_once(ctx),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run_once(ctx),
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(rule) => rule.run_once(ctx),
             Self::UnicornNoProcessExit(rule) => rule.run_once(ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run_once(ctx),
             Self::UnicornNoStaticOnlyClass(rule) => rule.run_once(ctx),
@@ -17046,6 +17079,9 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoNull(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::UnicornNoProcessExit(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -17947,6 +17983,7 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(rule) => rule.should_run(ctx),
             Self::UnicornNoNull(rule) => rule.should_run(ctx),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.should_run(ctx),
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(rule) => rule.should_run(ctx),
             Self::UnicornNoProcessExit(rule) => rule.should_run(ctx),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.should_run(ctx),
             Self::UnicornNoStaticOnlyClass(rule) => rule.should_run(ctx),
@@ -19015,6 +19052,9 @@ impl RuleEnum {
             Self::UnicornNoNull(_) => UnicornNoNull::IS_TSGOLINT_RULE,
             Self::UnicornNoObjectAsDefaultParameter(_) => {
                 UnicornNoObjectAsDefaultParameter::IS_TSGOLINT_RULE
+            }
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::IS_TSGOLINT_RULE
             }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::IS_TSGOLINT_RULE,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
@@ -20141,6 +20181,9 @@ impl RuleEnum {
             Self::UnicornNoObjectAsDefaultParameter(_) => {
                 UnicornNoObjectAsDefaultParameter::VERSION
             }
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::VERSION
+            }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::VERSION,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::VERSION
@@ -21189,6 +21232,9 @@ impl RuleEnum {
             Self::UnicornNoObjectAsDefaultParameter(_) => {
                 UnicornNoObjectAsDefaultParameter::HAS_CONFIG
             }
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::HAS_CONFIG
+            }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::HAS_CONFIG,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::HAS_CONFIG
@@ -22200,6 +22246,9 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::INFO,
             Self::UnicornNoNull(_) => UnicornNoNull::INFO,
             Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::INFO,
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(_) => {
+                UnicornNoOptionalChainingOnUndeclaredVariable::INFO
+            }
             Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::INFO,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
                 UnicornNoSinglePromiseInPromiseMethods::INFO
@@ -23092,6 +23141,7 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(rule) => rule.types_info(),
             Self::UnicornNoNull(rule) => rule.types_info(),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.types_info(),
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(rule) => rule.types_info(),
             Self::UnicornNoProcessExit(rule) => rule.types_info(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.types_info(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.types_info(),
@@ -23943,6 +23993,7 @@ impl RuleEnum {
             Self::UnicornNoNewBuffer(rule) => rule.run_info(),
             Self::UnicornNoNull(rule) => rule.run_info(),
             Self::UnicornNoObjectAsDefaultParameter(rule) => rule.run_info(),
+            Self::UnicornNoOptionalChainingOnUndeclaredVariable(rule) => rule.run_info(),
             Self::UnicornNoProcessExit(rule) => rule.run_info(),
             Self::UnicornNoSinglePromiseInPromiseMethods(rule) => rule.run_info(),
             Self::UnicornNoStaticOnlyClass(rule) => rule.run_info(),
@@ -24894,6 +24945,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoNewBuffer(UnicornNoNewBuffer::default()),
         RuleEnum::UnicornNoNull(UnicornNoNull::default()),
         RuleEnum::UnicornNoObjectAsDefaultParameter(UnicornNoObjectAsDefaultParameter::default()),
+        RuleEnum::UnicornNoOptionalChainingOnUndeclaredVariable(
+            UnicornNoOptionalChainingOnUndeclaredVariable::default(),
+        ),
         RuleEnum::UnicornNoProcessExit(UnicornNoProcessExit::default()),
         RuleEnum::UnicornNoSinglePromiseInPromiseMethods(
             UnicornNoSinglePromiseInPromiseMethods::default(),
