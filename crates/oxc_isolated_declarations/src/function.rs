@@ -90,7 +90,9 @@ impl<'a> IsolatedDeclarations<'a> {
                     {
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
-                        } else if !ts_type.is_maybe_undefined() {
+                        } else if matches!(ts_type, TSType::TSAnyKeyword(_))
+                            || !ts_type.is_maybe_undefined()
+                        {
                             // union with `undefined`
                             return TSTypeAnnotation::boxed(
                                 SPAN,
