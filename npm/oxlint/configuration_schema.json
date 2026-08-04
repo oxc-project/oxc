@@ -5479,6 +5479,26 @@
             }
           ]
         },
+        "no-unsanitized/property": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PropertyOptionsSchema"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "no-unused-expressions": {
           "anyOf": [
             {
@@ -10730,6 +10750,28 @@
       },
       "additionalProperties": false
     },
+    "EscapeSchema": {
+      "type": "object",
+      "properties": {
+        "methods": {
+          "description": "Methods which return safe HTML.\nDefaults to `[\"Sanitizer.unwrapSafeHTML\", \"unwrapSafeHTML\"]`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Methods which return safe HTML.\nDefaults to `[\"Sanitizer.unwrapSafeHTML\", \"unwrapSafeHTML\"]`."
+        },
+        "taggedTemplates": {
+          "description": "Tagged template functions which return safe HTML.\nDefaults to `[\"Sanitizer.escapeHTML\", \"escapeHTML\"]`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Tagged template functions which return safe HTML.\nDefaults to `[\"Sanitizer.escapeHTML\", \"escapeHTML\"]`."
+        }
+      },
+      "additionalProperties": false
+    },
     "ExhaustiveDepsConfig": {
       "type": "object",
       "properties": {
@@ -12664,7 +12706,8 @@
         "react-perf",
         "promise",
         "node",
-        "vue"
+        "vue",
+        "no-unsanitized"
       ]
     },
     "LintPlugins": {
@@ -17969,6 +18012,34 @@
       "additionalItems": {
         "$ref": "#/definitions/PropertyDetails"
       }
+    },
+    "PropertyOptionsSchema": {
+      "type": "object",
+      "properties": {
+        "escape": {
+          "description": "Escaping functions which mark a value as safe.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/EscapeSchema"
+            }
+          ],
+          "markdownDescription": "Escaping functions which mark a value as safe."
+        },
+        "properties": {
+          "description": "Property names treated as HTML sinks, replacing the defaults\n`[\"innerHTML\", \"outerHTML\"]`.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Property names treated as HTML sinks, replacing the defaults\n`[\"innerHTML\", \"outerHTML\"]`."
+        },
+        "variableTracing": {
+          "description": "Whether values assigned from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`.",
+          "type": "boolean",
+          "markdownDescription": "Whether values assigned from local `let`/`const` variables are traced back\nto their initializers. Defaults to `true`."
+        }
+      },
+      "additionalProperties": false
     },
     "RadixType": {
       "oneOf": [

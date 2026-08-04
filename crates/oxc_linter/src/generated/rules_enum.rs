@@ -368,6 +368,7 @@ pub use crate::rules::nextjs::no_sync_scripts::NoSyncScripts as NextjsNoSyncScri
 pub use crate::rules::nextjs::no_title_in_document_head::NoTitleInDocumentHead as NextjsNoTitleInDocumentHead;
 pub use crate::rules::nextjs::no_typos::NoTypos as NextjsNoTypos;
 pub use crate::rules::nextjs::no_unwanted_polyfillio::NoUnwantedPolyfillio as NextjsNoUnwantedPolyfillio;
+pub use crate::rules::no_unsanitized::property::Property as NoUnsanitizedProperty;
 pub use crate::rules::node::callback_return::CallbackReturn as NodeCallbackReturn;
 pub use crate::rules::node::exports_style::ExportsStyle as NodeExportsStyle;
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
@@ -1722,6 +1723,7 @@ pub enum RuleEnum {
     VueValidDefineOptions(VueValidDefineOptions),
     VueValidDefineProps(VueValidDefineProps),
     VueValidNextTick(VueValidNextTick),
+    NoUnsanitizedProperty(NoUnsanitizedProperty),
 }
 const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = 0usize;
 const IMPORT_DEFAULT_ID: usize = IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID + 1usize;
@@ -2679,6 +2681,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
+const NO_UNSANITIZED_PROPERTY_ID: usize = VUE_VALID_NEXT_TICK_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
         match self {
@@ -3659,6 +3662,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VUE_VALID_DEFINE_OPTIONS_ID,
             Self::VueValidDefineProps(_) => VUE_VALID_DEFINE_PROPS_ID,
             Self::VueValidNextTick(_) => VUE_VALID_NEXT_TICK_ID,
+            Self::NoUnsanitizedProperty(_) => NO_UNSANITIZED_PROPERTY_ID,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -4624,6 +4628,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
             Self::VueValidNextTick(_) => VueValidNextTick::NAME,
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::NAME,
         }
     }
     pub fn category(&self) -> RuleCategory {
@@ -5647,6 +5652,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
             Self::VueValidNextTick(_) => VueValidNextTick::CATEGORY,
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::CATEGORY,
         }
     }
     #[doc = r" This [`Rule`]'s auto-fix capabilities."]
@@ -6613,6 +6619,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
             Self::VueValidNextTick(_) => VueValidNextTick::FIX,
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::FIX,
         }
     }
     #[cfg(feature = "ruledocs")]
@@ -7847,6 +7854,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
             Self::VueValidNextTick(_) => VueValidNextTick::documentation(),
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::documentation(),
         }
     }
     #[cfg(feature = "ruledocs")]
@@ -10286,6 +10294,8 @@ impl RuleEnum {
                 .or_else(|| VueValidDefineProps::schema(generator)),
             Self::VueValidNextTick(_) => VueValidNextTick::config_schema(generator)
                 .or_else(|| VueValidNextTick::schema(generator)),
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::config_schema(generator)
+                .or_else(|| NoUnsanitizedProperty::schema(generator)),
         }
     }
     pub fn plugin_name(&self) -> &'static str {
@@ -11137,6 +11147,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
             Self::VueValidNextTick(_) => "vue",
+            Self::NoUnsanitizedProperty(_) => "no_unsanitized",
         }
     }
     pub fn from_configuration(
@@ -13871,6 +13882,9 @@ impl RuleEnum {
             Self::VueValidNextTick(_) => {
                 Ok(Self::VueValidNextTick(VueValidNextTick::from_configuration(value)?))
             }
+            Self::NoUnsanitizedProperty(_) => {
+                Ok(Self::NoUnsanitizedProperty(NoUnsanitizedProperty::from_configuration(value)?))
+            }
         }
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
@@ -14726,6 +14740,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
             Self::VueValidNextTick(rule) => rule.to_configuration(),
+            Self::NoUnsanitizedProperty(rule) => rule.to_configuration(),
         }
     }
     #[inline(never)]
@@ -15578,6 +15593,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run(node, ctx),
             Self::VueValidDefineProps(rule) => rule.run(node, ctx),
             Self::VueValidNextTick(rule) => rule.run(node, ctx),
+            Self::NoUnsanitizedProperty(rule) => rule.run(node, ctx),
         }
     }
     pub(crate) fn run<'a, const TIMINGS: bool>(
@@ -16442,6 +16458,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run_once(ctx),
             Self::VueValidDefineProps(rule) => rule.run_once(ctx),
             Self::VueValidNextTick(rule) => rule.run_once(ctx),
+            Self::NoUnsanitizedProperty(rule) => rule.run_once(ctx),
         }
     }
     pub(crate) fn run_once<const TIMINGS: bool>(
@@ -17423,6 +17440,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidNextTick(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NoUnsanitizedProperty(rule) => rule.run_on_jest_node(jest_node, ctx),
         }
     }
     pub(crate) fn run_on_jest_node<'a, 'c, const TIMINGS: bool>(
@@ -18288,6 +18306,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
             Self::VueValidNextTick(rule) => rule.should_run(ctx),
+            Self::NoUnsanitizedProperty(rule) => rule.should_run(ctx),
         }
     }
     pub fn is_tsgolint_rule(&self) -> bool {
@@ -19521,6 +19540,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
             Self::VueValidNextTick(_) => VueValidNextTick::IS_TSGOLINT_RULE,
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::IS_TSGOLINT_RULE,
         }
     }
     #[doc = r" The version of oxlint in which this rule was first available."]
@@ -20546,6 +20566,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::VERSION,
             Self::VueValidDefineProps(_) => VueValidDefineProps::VERSION,
             Self::VueValidNextTick(_) => VueValidNextTick::VERSION,
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::VERSION,
         }
     }
     #[doc = r" Whether this rule declares a configuration type."]
@@ -21610,6 +21631,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
             Self::VueValidNextTick(_) => VueValidNextTick::HAS_CONFIG,
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::HAS_CONFIG,
         }
     }
     #[doc = r" Additional information about this rule."]
@@ -22577,6 +22599,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(_) => VueValidDefineOptions::INFO,
             Self::VueValidDefineProps(_) => VueValidDefineProps::INFO,
             Self::VueValidNextTick(_) => VueValidNextTick::INFO,
+            Self::NoUnsanitizedProperty(_) => NoUnsanitizedProperty::INFO,
         }
     }
     #[doc = r" A short, one-line summary of what this rule does."]
@@ -23433,6 +23456,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
             Self::VueValidNextTick(rule) => rule.types_info(),
+            Self::NoUnsanitizedProperty(rule) => rule.types_info(),
         }
     }
     pub fn run_info(&self) -> RuleRunFunctionsImplemented {
@@ -24284,6 +24308,7 @@ impl RuleEnum {
             Self::VueValidDefineOptions(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
             Self::VueValidNextTick(rule) => rule.run_info(),
+            Self::NoUnsanitizedProperty(rule) => rule.run_info(),
         }
     }
 }
@@ -25271,5 +25296,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueValidDefineOptions(VueValidDefineOptions::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
         RuleEnum::VueValidNextTick(VueValidNextTick::default()),
+        RuleEnum::NoUnsanitizedProperty(NoUnsanitizedProperty::default()),
     ]
 });

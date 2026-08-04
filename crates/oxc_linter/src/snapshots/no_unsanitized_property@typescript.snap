@@ -1,0 +1,24 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.ts:1:1]
+ 1 │ x!().innerHTML = htmlString
+   · ───────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.ts:1:1]
+ 1 │ (x as HTMLElement).innerHTML = htmlString
+   · ─────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.ts:1:1]
+ 1 │ lol.innerHTML = (foo as string);
+   · ───────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.

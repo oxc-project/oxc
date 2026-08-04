@@ -909,6 +909,11 @@ pub(crate) mod vue {
     pub mod valid_next_tick;
 }
 
+/// <https://github.com/mozilla/eslint-plugin-no-unsanitized>
+pub(crate) mod no_unsanitized {
+    pub mod property;
+}
+
 pub(crate) mod shared;
 
 // Re-export RuleEnum, RULES, and all rule type aliases from generated code

@@ -1,0 +1,220 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ m.innerHTML = htmlString;
+   · ────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ a.innerHTML += htmlString;
+   · ─────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ a.innerHTML += template.toHtml();
+   · ────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to outerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ m.outerHTML = htmlString;
+   · ────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ t.innerHTML = `<span>${name}</span>`;
+   · ────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ t.innerHTML = `<span>${'foobar'}</span>${evil}`;
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ node.innerHTML = '<span>'+ htmlInput;
+   · ────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ node.innerHTML = '<span>'+ htmlInput + '</span>';
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ title.innerHTML = _('WB_LT_TIPS_S_SEARCH', {value0:engine});
+   · ───────────────────────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ x.innerHTML = Sanitizer.escapeHTML(evil)
+   · ────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ x.innerHTML = Sanitizer.escapeHTML(`evil`)
+   · ──────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ y.innerHTML = ((arrow_function)=>null)`some HTML`
+   · ─────────────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ this.imeList.innerHTML = Sanitizer.unrapSafeHTML(...listHtml);
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ g.innerHTML = potentiallyUnsafe;
+   · ───────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:25]
+ 1 │ function foo() { return this().innerHTML = evil; };
+   ·                         ───────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:22]
+ 1 │ describe.each`table${m.innerHTML = htmlString}`(name, fn, timeout)
+   ·                      ────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ a.innerHTML = somefn()()
+   · ────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ a.innerHTML = (cond ? maybe_safe : or_evil)()
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ yoink.innerHTML &&= bar;
+   · ───────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ yoink.innerHTML ||= bar;
+   · ───────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:1]
+ 1 │ yoink.innerHTML ??= bar;
+   · ───────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:36]
+ 1 │ copy = '<b>safe</b>'; copy = evil; y.innerHTML = copy;
+   ·                                    ──────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:54]
+ 1 │ let copies = '<b>safe</b>'; copies = suddenlyUnsafe; y.innerHTML = copies;
+   ·                                                      ────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:63]
+ 1 │ let copies = '<b>safe</b>'; if (monday) { copies = badness }; y.innerHTML = copies;
+   ·                                                               ────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:62]
+ 1 │ let copies = '<b>safe</b>'; (() => { copies = badness; })(); y.innerHTML = copies;
+   ·                                                              ────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:77]
+ 1 │ let obj = { prop: '<b>safe</b>' }; doSomething(obj); let copies = obj.prop; y.innerHTML = copies;
+   ·                                                                             ────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:60]
+ 1 │ let c; if (cond) { c = '<b>safe</b>'; } else { c = evil; } a.innerHTML = `${c}`;
+   ·                                                            ────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:48]
+ 1 │ let c; c = 'apparently-safe'; functionCall(c); n.innerHTML = c.property;
+   ·                                                ────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:37]
+ 1 │ let text = ''; text = `${text}<p>`; scratchDiv.innerHTML = text;
+   ·                                     ───────────────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to innerHTML
+   ╭─[property.tsx:1:84]
+ 1 │ let msg = '<b>safe</b>'; let altMsg = 'also cool';  if (monday) { msg = altMsg; }; y.innerHTML = msg;
+   ·                                                                                    ─────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
+
+  ⚠ no_unsanitized(property): Unsafe assignment to srcdoc
+   ╭─[property.tsx:1:1]
+ 1 │ frame.srcdoc = evil;
+   · ───────────────────
+   ╰────
+  help: Assign a string literal, or wrap the value in an escaping function such as `Sanitizer.escapeHTML`.
