@@ -527,6 +527,11 @@ impl<'a> Printer<'a> {
 
         stack.push(TagKind::Fill, args);
 
+        // This fill may itself be printed inside another fill's item;
+        // its own decisions take over for the duration of this call
+        // (a nested fill's entries pair with the nested fill's separators, not the outer one's).
+        let saved_fill_separator_mode = self.state.fill_separator_mode.take();
+
         while matches!(queue.top(), Some(FormatElement::Tag(Tag::StartEntry))) {
             let mut measurer = FitsMeasurer::new_flat(queue, stack, indent_stack, self);
 
@@ -582,6 +587,7 @@ impl<'a> Printer<'a> {
                     stack,
                     indent_stack,
                     args.with_print_mode(PrintMode::Flat),
+                    PrintMode::Flat,
                 )?;
                 self.print_fill_separator(
                     queue,
@@ -606,18 +612,27 @@ impl<'a> Printer<'a> {
                 }
             };
 
-            self.print_fill_item(queue, stack, indent_stack, args.with_print_mode(item_mode))?;
+            let separator_mode = match last_pair_layout {
+                FillPairLayout::Flat => PrintMode::Flat,
+                FillPairLayout::ItemFlatSeparatorExpanded
+                | FillPairLayout::Expanded
+                | FillPairLayout::ItemMaybeFlat => PrintMode::Expanded,
+            };
+
+            self.print_fill_item(
+                queue,
+                stack,
+                indent_stack,
+                args.with_print_mode(item_mode),
+                separator_mode,
+            )?;
 
             if matches!(queue.top(), Some(FormatElement::Tag(Tag::StartEntry))) {
-                let separator_mode = match last_pair_layout {
-                    FillPairLayout::Flat => PrintMode::Flat,
-                    FillPairLayout::ItemFlatSeparatorExpanded
-                    | FillPairLayout::Expanded
-                    | FillPairLayout::ItemMaybeFlat => PrintMode::Expanded,
-                };
-
                 // Push a new stack frame with print mode `Flat` for the case where the separator gets printed in expanded mode
                 // but does contain a group to ensure that the group will measure "fits" with the "flat" versions of the next item/separator.
+                // (Sibling of the single-shot separator-mode hint in [Self::print_fill_item]:
+                // this one covers walks escaping the separator, optimistically flat for all following entries;
+                // the hint covers walks escaping the item, with the decided mode for exactly its separator.)
                 stack.push(TagKind::Fill, args.with_print_mode(PrintMode::Flat));
                 self.print_fill_separator(
                     queue,
@@ -629,6 +644,8 @@ impl<'a> Printer<'a> {
             }
         }
 
+        self.state.fill_separator_mode = saved_fill_separator_mode;
+
         if queue.top() == Some(&FormatElement::Tag(Tag::EndFill)) {
             Ok(())
         } else {
@@ -637,14 +654,30 @@ impl<'a> Printer<'a> {
     }
 
     /// Semantic alias for [Self::print_entry] for fill items.
+    ///
+    /// `separator_mode` is the print mode the fill has already decided for the separator following this item;
+    /// it is exposed through [PrinterState::fill_separator_mode] for the duration of the item,
+    /// so that a fits measurement escaping the item's entry measures the separator as
+    /// it will actually print instead of with the fill's own (expanded) mode.
+    ///
+    /// This mirrors Prettier, which pushes the decided separator command onto its command stack before printing the item,
+    /// where a `shouldRemeasure` fits walk finds it.
+    /// Without this, a flat-decided JSX whitespace separator (`if_group_breaks(["{\" \"}", ...])`) would materialize its expanded-only content
+    /// during the walk and over-count the width, expanding a group that the fill already measured to fit (issue #21916).
+    /// A frame-based version (like the `Fill(Flat)` wrapper around the expanded separator below) cannot express this:
+    /// a frame's mode would also apply to every entry beyond the separator, while the decided mode holds for exactly one entry.
     fn print_fill_item(
         &mut self,
         queue: &mut PrintQueue<'a>,
         stack: &mut PrintCallStack,
         indent_stack: &mut PrintIndentStack,
         args: PrintElementArgs,
+        separator_mode: PrintMode,
     ) -> PrintResult<()> {
-        self.print_entry(queue, stack, indent_stack, args)
+        self.state.fill_separator_mode = Some(separator_mode);
+        let result = self.print_entry(queue, stack, indent_stack, args);
+        self.state.fill_separator_mode = None;
+        result
     }
 
     /// Semantic alias for [Self::print_entry] for fill separators.
@@ -827,6 +860,16 @@ struct PrinterState<'a> {
     pending_indent: Indention,
     pending_space: bool,
     measured_group_fits: bool,
+    /// The already-decided print mode of the separator following the fill item that is currently being printed,
+    /// set by [Printer::print_fill_item] so that a fits measurement escaping the item's entry measures the separator
+    /// as it will actually print (Prettier keeps the decided separator command on its command stack, where its `fits` walk finds it).
+    /// `None` outside of fill item printing.
+    ///
+    /// Known limitation: the hint is one fill level deep (`print_fill_entries` saves and clears the outer value around a nested fill).
+    /// A walk that leaves the printed fill entirely and continues into an outer fill's entries measures
+    /// that fill's separator with the fill frame's own mode again;
+    /// covering any depth would need Prettier's full command-stack shape.
+    fill_separator_mode: Option<PrintMode>,
     line_width: usize,
     has_empty_line: bool,
     line_suffixes: LineSuffixes<'a>,
@@ -969,6 +1012,14 @@ struct FitsMeasurer<'a, 'print> {
     indent_stack: FitsIndentStack<'print>,
     printer: &'print mut Printer<'a>,
     must_be_flat: bool,
+    /// Copy of [PrinterState::fill_separator_mode]:
+    /// the decided print mode for the separator entry following the fill item the measurement starts in.
+    /// Consumed (single-shot) by the first `StartEntry` the walk sees at the printed fill's own level, see [Self::fits_element].
+    fill_separator_mode: Option<PrintMode>,
+    /// Number of `StartFill` tags entered during this measurement.
+    /// The separator mode above only applies to entries of the fill the printer is currently printing (depth 0),
+    /// not to entries of nested fills the walk enters on its own.
+    fill_depth: u32,
 }
 
 impl<'a, 'print> FitsMeasurer<'a, 'print> {
@@ -980,6 +1031,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     ) -> Self {
         let mut measurer = Self::new(print_queue, print_stack, print_indent_stack, printer);
         measurer.must_be_flat = true;
+        // Flat measurements are the fill's own pair measurements;
+        // the separator-mode hint is only for measurements started while printing a fill item.
+        measurer.fill_separator_mode = None;
         measurer
     }
 
@@ -1018,12 +1072,16 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
             sorted_tailwind_classes: printer.state.sorted_tailwind_classes,
         };
 
+        let fill_separator_mode = printer.state.fill_separator_mode;
+
         Self {
             state: fits_state,
             queue: fits_queue,
             stack: fits_stack,
             indent_stack: fits_indent_stack,
             must_be_flat: false,
+            fill_separator_mode,
+            fill_depth: 0,
             printer,
         }
     }
@@ -1290,11 +1348,42 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
             }
 
-            FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
+            FormatElement::Tag(tag @ StartFill) => {
+                self.fill_depth += 1;
+                self.stack.push(tag.kind(), args);
+            }
+            FormatElement::Tag(tag @ EndFill) => {
+                if self.fill_depth == 0 {
+                    // The walk left the fill whose item is currently being printed (the item was the last entry);
+                    // the printer's separator-mode hint no longer applies.
+                    self.fill_separator_mode = None;
+                } else {
+                    self.fill_depth -= 1;
+                }
+                self.stack.pop(tag.kind())?;
+            }
+            FormatElement::Tag(tag @ StartLabelled(_)) => {
+                self.stack.push(tag.kind(), args);
+            }
+            FormatElement::Tag(tag @ StartEntry) => {
+                // A `StartEntry` seen while the top frame is the printed fill's own frame
+                // (depth 0; the walk started inside the item, so its `EndEntry` has popped back to it)
+                // is the first entry after that item:
+                // its separator. Measure it with the print mode the printer has already decided for it,
+                // exactly as it is going to be printed (single-shot, see [PrinterState::fill_separator_mode]).
+                let args = if let Some(mode) = self.fill_separator_mode
+                    && self.fill_depth == 0
+                    && self.stack.top_kind() == Some(TagKind::Fill)
+                {
+                    self.fill_separator_mode = None;
+                    args.with_print_mode(mode)
+                } else {
+                    args
+                };
                 self.stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent),
             ) => {
                 self.stack.pop(tag.kind())?;
             }
