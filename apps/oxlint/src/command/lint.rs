@@ -451,6 +451,10 @@ pub struct EnablePlugins {
     /// Enable the vue plugin and detect vue usage problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub vue_plugin: OverrideToggle,
+
+    /// Enable the no-unsanitized plugin and detect unsanitized HTML sinks
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub no_unsanitized_plugin: OverrideToggle,
 }
 
 /// Enables or disables a boolean option, or leaves it unset.
@@ -526,6 +530,7 @@ impl EnablePlugins {
         self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
         self.node_plugin.inspect(|yes| plugins.set(LintPlugins::NODE, yes));
         self.vue_plugin.inspect(|yes| plugins.set(LintPlugins::VUE, yes));
+        self.no_unsanitized_plugin.inspect(|yes| plugins.set(LintPlugins::NO_UNSANITIZED, yes));
     }
 }
 

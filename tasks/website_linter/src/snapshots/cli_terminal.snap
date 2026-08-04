@@ -50,6 +50,7 @@ Enable/Disable Plugins
         --promise-plugin      Enable the promise plugin and detect promise usage problems
         --node-plugin         Enable the node plugin and detect node usage problems
         --vue-plugin          Enable the vue plugin and detect vue usage problems
+        --no-unsanitized-plugin  Enable the no-unsanitized plugin and detect unsanitized HTML sinks
 
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in
