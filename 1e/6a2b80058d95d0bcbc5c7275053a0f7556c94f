@@ -1,0 +1,25 @@
+napi/parser/src-js/generated/lazy/constructors.js
+  s_78f0111ec83a40::t_e7dbbee68698d5 9862,9877-9878,10450,10465-10466
+napi/parser/src-js/generated/lazy/type_ids.js
+  s_78f0111ec83a40::t_ab03cac15f8bf4 193
+napi/parser/src-js/generated/lazy/walk.js
+  s_78f0111ec83a40::t_0e9401bb02d0a4 4221,4400
+tasks/ast_tools/src/generators/raw_transfer_lazy.rs
+  s_78f0111ec83a40::t_c83899cc01dcf3 16-17,178,657,659,699
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1e6a2b80058d95d0bcbc5c7275053a0f7556c94f",
+  "prompts": {},
+  "sessions": {
+    "s_78f0111ec83a40": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f2438-e6d8-7702-aeee-a9ba6fe387d9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/unicorn/prefer_math_trunc.rs
+  s_ae3f9195bf6285::t_7f384935f4c3c3 200,204-205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "83e4f0a8f33aa76367d44fdd780b263a6f3e43a2",
+  "prompts": {},
+  "sessions": {
+    "s_ae3f9195bf6285": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6c4-7cce-7ca0-abc4-637a36cb5d82",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
