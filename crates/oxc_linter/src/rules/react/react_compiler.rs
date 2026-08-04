@@ -308,6 +308,30 @@ function Component(props) {
             }",
             None,
         ),
+        // BigInt built-in should not be flagged
+        (
+            "function Component({ value }) {
+              const id = BigInt(value);
+              return <div>{id.toString()}</div>;
+        }",
+            None,
+        ),
+        // Number built-in should not be flagged
+        (
+            "function Component({ value }) {
+              const n = Number(value);
+              return <div>{n}</div>;
+        }",
+            None,
+        ),
+        // String built-in should not be flagged
+        (
+            "function Component({ value }) {
+              const s = String(value);
+              return <div>{s}</div>;
+        }",
+            None,
+        ),
     ];
 
     let fail = vec![
