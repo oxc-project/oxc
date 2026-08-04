@@ -1549,6 +1549,7 @@ export interface DummyRuleMap {
   "unicorn/no-console-spaces"?: RuleNoConfig;
   "unicorn/no-document-cookie"?: RuleNoConfig;
   "unicorn/no-empty-file"?: RuleNoConfig;
+  "unicorn/no-global-object-property-assignment"?: RuleNoConfig;
   "unicorn/no-hex-escape"?: RuleNoConfig;
   "unicorn/no-immediate-mutation"?: RuleNoConfig;
   "unicorn/no-instanceof-array"?: RuleNoConfig;

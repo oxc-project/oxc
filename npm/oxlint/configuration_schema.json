@@ -8977,6 +8977,9 @@
         "unicorn/no-empty-file": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-global-object-property-assignment": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-hex-escape": {
           "$ref": "#/definitions/RuleNoConfig"
         },

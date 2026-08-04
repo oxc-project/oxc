@@ -3196,6 +3196,11 @@ impl RuleRunner for crate::rules::unicorn::no_empty_file::NoEmptyFile {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_global_object_property_assignment::NoGlobalObjectPropertyAssignment {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[AstType::ComputedMemberExpression, AstType::PrivateFieldExpression, AstType::StaticMemberExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::no_hex_escape::NoHexEscape {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::RegExpLiteral,

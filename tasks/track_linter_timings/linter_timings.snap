@@ -556,6 +556,7 @@ unicorn/no-confusing-array-with                            |  62606
 unicorn/no-console-spaces                                  |  62606
 unicorn/no-document-cookie                                 |  13005
 unicorn/no-empty-file                                      |      7
+unicorn/no-global-object-property-assignment               |  95297
 unicorn/no-hex-escape                                      |  63282
 unicorn/no-immediate-mutation                              |  24802
 unicorn/no-instanceof-array                                |  20604

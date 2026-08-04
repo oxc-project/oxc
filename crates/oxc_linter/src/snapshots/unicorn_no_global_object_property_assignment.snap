@@ -1,0 +1,118 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ globalThis.foo = 1
+   · ──────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ window.foo += 1
+   · ──────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ self.foo ||= value
+   · ────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ global.foo++
+   · ──────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ globalThis["foo"] = 1
+   · ─────────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:2:22]
+ 1 │ ({
+ 2 │                 foo: globalThis.foo,
+   ·                      ──────────────
+ 3 │             } = object);
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:2]
+ 1 │ [globalThis.foo] = array
+   ·  ──────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:6]
+ 1 │ ({...globalThis.foo} = object)
+   ·      ──────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:5]
+ 1 │ [...globalThis.foo] = array
+   ·     ──────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:6]
+ 1 │ for (globalThis.foo of iterable) {}
+   ·      ──────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:6]
+ 1 │ for (globalThis.foo in object) {}
+   ·      ──────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ globalThis!.foo = 1
+   · ───────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ (globalThis as any).foo = 1
+   · ───────────────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ (<any>globalThis).foo = 1
+   · ─────────────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ (globalThis satisfies any).foo = 1
+   · ──────────────────────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
+
+  ⚠ unicorn(no-global-object-property-assignment): Do not assign properties on the global object.
+   ╭─[no_global_object_property_assignment.ts:1:1]
+ 1 │ globalThis.foo! = 1
+   · ──────────────
+   ╰────
+  help: Store application state in a module or another explicitly owned object.
