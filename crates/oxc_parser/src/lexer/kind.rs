@@ -272,16 +272,6 @@ impl Kind {
         self.is_identifier_name() && !self.is_reserved_keyword()
     }
 
-    /// TypeScript Identifier
-    ///
-    /// <https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/parser.ts#L2316-L2335>
-    #[inline]
-    pub const fn is_ts_identifier(self, is_yield_context: bool, is_await_context: bool) -> bool {
-        self.is_identifier_reference(is_yield_context, is_await_context)
-            && !self.is_strict_mode_contextual_keyword()
-            && !self.is_contextual_keyword()
-    }
-
     /// `IdentifierName`
     /// All identifier names are either `Ident` or keywords (Await..=Null in the enum).
     #[inline]

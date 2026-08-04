@@ -10,7 +10,7 @@ mod expression;
 mod function;
 mod module;
 mod object;
-mod operator;
+pub mod operator;
 mod statement;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
