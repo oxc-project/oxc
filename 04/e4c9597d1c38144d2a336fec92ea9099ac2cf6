@@ -1,0 +1,25 @@
+tasks/coverage/snapshots/parser_babel.snap
+  s_9bd969add77d8b::t_efae8cf3b14121 5,251-261
+tasks/coverage/snapshots/semantic_babel.snap
+  s_9bd969add77d8b::t_d3f44b537f39cd 5,446-448
+crates/oxc_semantic/src/checker/typescript.rs
+  s_9bd969add77d8b::t_d9af4aded70e2e 8,151-152
+crates/oxc_semantic/tests/integration/modules.rs
+  s_9bd969add77d8b::t_85f1226f59f63c 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "04e4c9597d1c38144d2a336fec92ea9099ac2cf6",
+  "prompts": {},
+  "sessions": {
+    "s_9bd969add77d8b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fcced-ea1d-79a0-b8f7-d708327dee58",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
