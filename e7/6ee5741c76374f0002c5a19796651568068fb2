@@ -1,0 +1,23 @@
+crates/oxc_semantic/src/checker/typescript.rs
+  s_9bd969add77d8b::t_dbf1fff6458ae6 102-106,135-162
+crates/oxc_semantic/src/diagnostics.rs
+  s_9bd969add77d8b::t_27cde56cd74191 364-375
+crates/oxc_semantic/tests/integration/modules.rs
+  s_9bd969add77d8b::t_dbd256a83f104e 5-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e76ee5741c76374f0002c5a19796651568068fb2",
+  "prompts": {},
+  "sessions": {
+    "s_9bd969add77d8b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fcced-ea1d-79a0-b8f7-d708327dee58",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
