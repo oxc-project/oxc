@@ -1,0 +1,27 @@
+crates/oxc_linter/src/config/rules.rs
+  s_d6b486dc86f567::t_a68f0252778168 662-670,673,675-683,686,1012-1024
+apps/oxlint/src/lsp/options.rs
+  s_d6b486dc86f567::t_2c541c633b5aa8 6,133,276
+apps/oxlint/src/lsp/server_linter.rs
+  s_d6b486dc86f567::t_88891a928bd7a0 1525,1528,1543
+crates/oxc_linter/src/config/mod.rs
+  s_d6b486dc86f567::t_8bb93332e9d516 23
+crates/oxc_linter/src/lib.rs
+  s_d6b486dc86f567::t_7cfe7f4606caa1 66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "94c12dff8950cf7c698def35d9025cce32e9798f",
+  "prompts": {},
+  "sessions": {
+    "s_d6b486dc86f567": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd23a-8817-71a2-bb69-a7ebf8d0fa77",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
