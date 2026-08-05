@@ -1,6 +1,8 @@
 use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
 
+use oxc_formatter_core::DispatchOutcome;
+
 use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
 /// Format a Markdown-in-JS tagged template literal via the Doc→IR path.
@@ -32,12 +34,11 @@ pub(super) fn try_embed_markdown<'a>(
     // Phase 3: Get the IR from the dispatcher
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
-        allocator,
-        group_id_builder,
-        "markdown",
-        &[text],
-    ) else {
+    let Ok(DispatchOutcome::Formatted(result)) = f
+        .context()
+        .external_callbacks()
+        .dispatch_embedded(allocator, group_id_builder, "markdown", &[text])
+    else {
         return false;
     };
     let Some(mut ir) = result.docs.into_iter().next() else {
