@@ -347,6 +347,11 @@ impl<'a> IsolatedDeclarations<'a> {
                     let type_annotation =
                         if param.accessibility.is_some_and(TSAccessibility::is_private) {
                             None
+                        } else if param.initializer.is_some() {
+                            param.type_annotation.clone_in(self.allocator()).or_else(|| {
+                                self.infer_type_from_formal_parameter(param)
+                                    .map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self))
+                            })
                         } else {
                             // transformed params will definitely have type annotation
                             typed_params.items[index].type_annotation.clone_in(self.allocator())
