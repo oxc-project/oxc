@@ -49,18 +49,13 @@ pub struct ModuleRecord {
     pub resolved_absolute_path: PathBuf,
 
     /// Identifies [`Self::resolved_absolute_path`] within a lint run: two records have the same
-    /// id if and only if they have the same resolved path.
+    /// id only if they have the same resolved path.
     ///
-    /// Cross-module analysis compares modules constantly, and `Path`'s `PartialEq` and `Hash` both
-    /// walk the path component by component — the same reason `Runtime` keys its maps on `OsStr`.
-    /// Comparing ids instead makes that a `u32` compare. Set by `Runtime` when the record is
-    /// created; records [`ModuleRecord::new`] builds outside a lint run get a distinct id each, so
-    /// they never compare equal to one another.
+    /// Cross-module analysis compares modules constantly, and so comparing a `u32` is much
+    /// faster than comparing a `PathBuf`.
     pub path_id: u32,
 
     /// Is [`Self::resolved_absolute_path`] inside a `node_modules` directory?
-    ///
-    /// Answered once here rather than by walking the path's components at each use.
     pub is_node_module: bool,
 
     /// `[[RequestedModules]]`
