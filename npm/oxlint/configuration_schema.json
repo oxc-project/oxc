@@ -2049,6 +2049,15 @@
       },
       "additionalProperties": false
     },
+    "DescriptionFormatConfig": {
+      "type": "object",
+      "properties": {
+        "descriptionFormat": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "Destructure": {
       "oneOf": [
         {
@@ -2106,13 +2115,7 @@
           "$ref": "#/definitions/RequireDescription"
         },
         {
-          "type": "object",
-          "properties": {
-            "descriptionFormat": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
+          "$ref": "#/definitions/DescriptionFormatConfig"
         }
       ]
     },
