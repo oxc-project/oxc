@@ -522,7 +522,6 @@ fn report_split(
         return;
     }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
-        let source = ctx.source_text();
         let keyword = declaration.kind.as_str();
         let exported =
             matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExportNamedDeclaration(_));
@@ -531,9 +530,8 @@ fn report_split(
         for pair in declaration.declarations.windows(2) {
             let left = &pair[0];
             let right = &pair[1];
-            let gap = &source[left.span.end as usize..right.span.start as usize];
-            if let Some(index) = gap.find(',') {
-                let comma = left.span.end + u32::try_from(index).unwrap();
+            if let Some(offset) = ctx.find_next_token_within(left.span.end, right.span.start, ",") {
+                let comma = left.span.end + offset;
                 let separator = if comma + 1 == right.span.start { "; " } else { ";" };
                 fixes.push(Fix::new(separator, Span::sized(comma, 1)));
                 fixes.push(Fix::new(prefix.clone(), Span::empty(right.span.start)));
