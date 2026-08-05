@@ -527,9 +527,7 @@ fn report_split(
             matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExportNamedDeclaration(_));
         let prefix = if exported { format!("export {keyword} ") } else { format!("{keyword} ") };
         let mut fixes = fixer.new_fix_with_capacity((declaration.declarations.len() - 1) * 2);
-        for pair in declaration.declarations.windows(2) {
-            let left = &pair[0];
-            let right = &pair[1];
+        for [left, right] in declaration.declarations.array_windows() {
             if let Some(offset) = ctx.find_next_token_within(left.span.end, right.span.start, ",") {
                 let comma = left.span.end + offset;
                 let separator = if comma + 1 == right.span.start { "; " } else { ";" };
