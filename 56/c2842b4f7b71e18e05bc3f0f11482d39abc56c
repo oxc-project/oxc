@@ -1,0 +1,29 @@
+tasks/ast_transfer_conformance/src-js/generated/raw_transfer_back.js
+  s_0468d6c34590c4::t_a1db6c88dad7b7 28-37,294,952-960
+tasks/ast_transfer_conformance/src/generated/raw_transfer_back_constants.rs
+  s_0468d6c34590c4::t_021d6cb446cd5e 26-33
+.github/workflows/ci.yml
+  s_0468d6c34590c4::t_6e0d6a5a9f8079 260
+crates/oxc_allocator/src/from_raw_parts.rs
+  s_0468d6c34590c4::t_a05672f206b3cb 111
+tasks/ast_transfer_conformance/test/snapshots/identity.snap.md
+  s_0468d6c34590c4::t_6313add9ab2ff9 2
+tasks/coverage/src/load.rs
+  s_0468d6c34590c4::t_c65d38537be339 6,22-39,59-67,83-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "56c2842b4f7b71e18e05bc3f0f11482d39abc56c",
+  "prompts": {},
+  "sessions": {
+    "s_0468d6c34590c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc85d-f98e-7651-a22e-427584ce496d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

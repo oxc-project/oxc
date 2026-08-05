@@ -1,0 +1,43 @@
+.github/generated/ast_changes_watch_list.yml
+  s_0468d6c34590c4::t_eedb509819a0c9 71-72
+tasks/ast_tools/src/generators/raw_transfer_back.rs
+  s_0468d6c34590c4::t_46804a7d08bd95 1-336
+tasks/ast_transfer_conformance/src-js/generated/raw_transfer_back.js
+  s_0468d6c34590c4::t_007e7a1bc16fdf 1-177
+tasks/ast_transfer_conformance/src/generated/raw_transfer_back_constants.rs
+  s_0468d6c34590c4::t_aab79cd5b2cfdd 1-32
+tasks/ast_transfer_conformance/test/snapshots/identity.snap.md
+  s_8f0d61316a881f::t_bedaa5aa8e0daf 1-2
+crates/oxc_allocator/src/from_raw_parts.rs
+  s_0468d6c34590c4::t_58fc7db2e50548 106-113
+tasks/ast_tools/src/generators/mod.rs
+  s_0468d6c34590c4::t_b7d9c9a4ae8ad7 21-22,46-47
+tasks/ast_tools/src/generators/raw_transfer.rs
+  s_0468d6c34590c4::t_a48a18878dd7fc 52,62,66,1435,1437,1439,1672
+tasks/ast_tools/src/main.rs
+  s_0468d6c34590c4::t_aca00ad672f7ea 240-242,281-282
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5c70361eb08bb17534b2ebe081ee6feabe81097a",
+  "prompts": {},
+  "sessions": {
+    "s_0468d6c34590c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc85d-f98e-7651-a22e-427584ce496d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_8f0d61316a881f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6af0-50ab-7272-ad21-e840f52a58af",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

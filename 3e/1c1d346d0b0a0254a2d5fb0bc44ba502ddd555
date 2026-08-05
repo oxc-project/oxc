@@ -1,0 +1,31 @@
+tasks/ast_transfer_conformance/src-js/generated/raw_transfer_back.js
+  s_0468d6c34590c4::t_08ee249bce67c1 61-62,83-101,121,218-220,337-346,414-473,492-495,501,504,507-511,514-515,517,525,528,531,549-570
+tasks/ast_transfer_conformance/src/generated/raw_transfer_back_constants.rs
+  s_0468d6c34590c4::t_87d54b38e0aace 58-59,76-92
+tasks/ast_transfer_conformance/test/conformance.test.ts
+  s_0468d6c34590c4::t_f272ab26ba45b1 4,129-137,179-180,191-258,333-343
+tasks/ast_tools/src/generators/raw_transfer_back.rs
+  s_0468d6c34590c4::t_f7d82233b4046e 41-44,67-74,181-182,226-275,383-384,410-435,524-525,546-564,659-660,681-699,719,813-815,920-929,979-1038,1057-1060,1066,1069,1072-1076,1079-1080,1082,1090,1093,1096,1114-1135
+tasks/ast_transfer_conformance/README.md
+  s_0468d6c34590c4::t_232f02d44f503f 12-13,16-20
+tasks/ast_transfer_conformance/src/lib.rs
+  s_0468d6c34590c4::t_2d29967e0a3d8f 400-401,408,417-425,711-779,922-932,1066-1073
+tasks/ast_transfer_conformance/test/snapshots/identity.snap.md
+  s_0468d6c34590c4::t_12b18a606c9a78 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3e1c1d346d0b0a0254a2d5fb0bc44ba502ddd555",
+  "prompts": {},
+  "sessions": {
+    "s_0468d6c34590c4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc85d-f98e-7651-a22e-427584ce496d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
