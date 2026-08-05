@@ -35,7 +35,7 @@ impl DiagnosticReporter for AgentReporter {
 }
 
 fn format_agent(diagnostic: &Error) -> String {
-    let Info { start, filename, message, rule_id, .. } = Info::new(diagnostic);
+    let Info { start, filename, message: info_message, rule_id, .. } = Info::new(diagnostic);
     let filename = if filename.is_empty() {
         diagnostic
             .source_code()
@@ -51,7 +51,8 @@ fn format_agent(diagnostic: &Error) -> String {
     };
     let rule = rule_id.map_or_else(String::new, |rule_id| format!(" {rule_id}"));
     // `Info` only fills in the message when the diagnostic has a resolvable label.
-    let rendered_message = if message.is_empty() { diagnostic.to_string() } else { message };
+    let rendered_message =
+        if info_message.is_empty() { diagnostic.to_string() } else { info_message };
     let message = compact_message(&rendered_message);
     let help = diagnostic
         .help()
