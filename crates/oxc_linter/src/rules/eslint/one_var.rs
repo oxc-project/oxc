@@ -481,10 +481,10 @@ fn report_join(
     previous: &VariableDeclaration<'_>,
     message: String,
 ) {
-    ctx.diagnostic_with_fix(one_var_diagnostic(declaration.span, message), |_fixer| {
+    ctx.diagnostic_with_fix(one_var_diagnostic(declaration.span, message), |fixer| {
         let source = ctx.source_text();
         let previous_source = previous.span.source_text(source);
-        let mut fixes = Vec::with_capacity(3);
+        let mut fixes = fixer.new_fix_with_capacity(3);
         if let Some(index) = previous_source.rfind(';') {
             let start = previous.span.start + u32::try_from(index).unwrap();
             fixes.push(Fix::new(",", Span::sized(start, 1)));
@@ -506,7 +506,7 @@ fn report_join(
                 u32::try_from(keyword.len()).unwrap(),
             )));
         }
-        fixes.into_iter().collect::<RuleFix>().with_message("Combine variable declarations")
+        fixes.with_message("Combine variable declarations")
     });
 }
 
