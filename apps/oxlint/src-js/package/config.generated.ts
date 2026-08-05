@@ -238,12 +238,7 @@ export type ImportKind = "none" | "all" | "multiple" | "single";
 export type SortOrder = "desc" | "asc";
 export type ArrayOption = "array" | "array-simple" | "generic";
 export type ReadonlyArrayOption = "array" | "array-simple" | "generic";
-export type DirectiveConfigSchema =
-  | boolean
-  | RequireDescription
-  | {
-      descriptionFormat?: string;
-    };
+export type DirectiveConfigSchema = boolean | RequireDescription | DescriptionFormatConfig;
 export type RequireDescription = "allow-with-description";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
 export type PreferGenericType = "constructor" | "type-annotation";
@@ -5217,6 +5212,9 @@ export interface BanTsCommentConfig {
    * How to handle the `@ts-nocheck` directive.
    */
   "ts-nocheck"?: DirectiveConfigSchema;
+}
+export interface DescriptionFormatConfig {
+  descriptionFormat?: string;
 }
 export interface ConsistentReturnConfig {
   /**
