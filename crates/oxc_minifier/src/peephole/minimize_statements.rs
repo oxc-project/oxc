@@ -1140,32 +1140,29 @@ impl<'a> PeepholeOptimizations {
                 Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
                     // Annex B.3.5 allows initializers in non-strict mode
                     // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
-                    // If there's a side-effectful initializer, we should not move the previous statement inside.
-                    let has_side_effectful_initializer = {
-                        if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
-                            if var_decl.declarations.len() == 1 {
-                                // only var can have a initializer
-                                var_decl.kind.is_var()
-                                    && var_decl.declarations[0]
-                                        .init
-                                        .as_ref()
-                                        .is_some_and(|init| init.may_have_side_effects(ctx))
-                            } else {
-                                // the spec does not allow multiple declarations though
-                                true
-                            }
-                        } else {
-                            false
-                        }
-                    };
                     // Only allow inlining when the for-in variable is declared with `var`.
                     // Block-scoped declarations (let/const) can cause variable shadowing issues
                     // where the inlined expression might reference a variable with the same name
                     // as the for-in variable, but after inlining, it would incorrectly refer to
                     // the shadowed for-in variable instead.
-                    // See: https://github.com/oxc-project/oxc/issues/18650
-                    let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
-                    if !has_side_effectful_initializer && !is_block_scoped {
+                    // <https://github.com/oxc-project/oxc/issues/18650>
+                    let can_inline = if let ForStatementLeft::VariableDeclaration(var_decl) =
+                        &for_in_stmt.left
+                    {
+                        match var_decl.declarations.as_slice() {
+                            [decl] => {
+                                var_decl.kind.is_var()
+                                    && !decl
+                                        .init
+                                        .as_ref()
+                                        .is_some_and(|init| init.may_have_side_effects(ctx))
+                            }
+                            _ => false,
+                        }
+                    } else {
+                        true
+                    };
+                    if can_inline {
                         let a = &mut prev_expr_stmt.expression;
                         for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
                         let dropped = result.pop().unwrap();
