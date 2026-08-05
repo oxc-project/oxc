@@ -1,6 +1,6 @@
 use std::{path::PathBuf, str::FromStr, sync::OnceLock};
 
-use bpaf::{Bpaf, doc::Style};
+use bpaf::{Bpaf, OptionParser, doc::Style};
 use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 
 use crate::output_formatter::OutputFormat;
@@ -12,7 +12,7 @@ use super::{
 };
 
 #[derive(Debug, Clone, Bpaf)]
-#[bpaf(options, version(VERSION))]
+#[bpaf(options, version(VERSION), generate(lint_command_parser))]
 pub struct LintCommand {
     #[bpaf(external)]
     pub basic_options: BasicOptions,
@@ -278,6 +278,9 @@ pub struct WarningOptions {
 pub struct OutputOptions {
     /// Use a specific output format. Possible values:
     /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
+    ///
+    /// Without this flag, `agent` is auto-selected when an AI agent environment is
+    /// detected, and `github` inside GitHub Actions
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
 
@@ -369,14 +372,36 @@ impl FromStr for DebugOptions {
 
 #[expect(clippy::unnecessary_wraps)]
 fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
-    if cfg!(debug_assertions) {
-        Ok(OutputFormat::Default)
-    } else if !cfg!(test) && crate::agent_detection::is_agent() {
+    if agent_format_is_default() {
         Ok(OutputFormat::Agent)
-    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+    } else if !cfg!(debug_assertions)
+        && std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true")
+    {
         Ok(OutputFormat::Github)
     } else {
         Ok(OutputFormat::Default)
+    }
+}
+
+/// Whether the `agent` output format is the default for this build and
+/// environment. One predicate shared by format selection and the `--help`
+/// footer, so the help can never claim a default the build does not use.
+/// Debug and test builds always default to `default` format.
+fn agent_format_is_default() -> bool {
+    !cfg!(debug_assertions) && !cfg!(test) && crate::agent_detection::is_agent()
+}
+
+/// The bpaf-generated parser is wrapped so every entry point (the standalone
+/// binary in `main.rs` and the napi path in `run.rs`) gets the agent-mode
+/// footer without new public API (#24998).
+pub fn lint_command() -> OptionParser<LintCommand> {
+    let parser = lint_command_parser();
+    if agent_format_is_default() {
+        parser.footer(
+            "Note: an AI agent environment was detected. The `agent` output format (one line per diagnostic, no summary) is used by default. Pass --format=default for the full output.",
+        )
+    } else {
+        parser
     }
 }
 
@@ -553,6 +578,7 @@ pub enum ReportUnusedDirectives {
 }
 
 /// Inline Configuration Comments
+
 #[derive(Debug, Clone, Bpaf)]
 pub struct InlineConfigOptions {
     #[bpaf(external)]

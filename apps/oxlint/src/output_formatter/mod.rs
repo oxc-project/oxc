@@ -139,6 +139,12 @@ trait InternalFormatter {
         None
     }
 
+    /// Whether this format renders the `--debug=timings` table. Only the
+    /// `default` format does (#24998).
+    fn supports_rule_timings(&self) -> bool {
+        false
+    }
+
     /// oxlint words with [`DiagnosticService`](oxc_diagnostics::DiagnosticService),
     /// which uses a own reporter to output to stdout.
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter>;
@@ -177,6 +183,12 @@ impl OutputFormatter {
     /// At the end of the Lint command we may output extra information.
     pub fn lint_command_info(&self, lint_command_info: &LintCommandInfo) -> Option<String> {
         self.internal.lint_command_info(lint_command_info)
+    }
+
+    /// Whether the active format renders the `--debug=timings` table.
+    /// See [`InternalFormatter::supports_rule_timings`] for more details.
+    pub fn supports_rule_timings(&self) -> bool {
+        self.internal.supports_rule_timings()
     }
 
     /// Returns the [`DiagnosticReporter`] which then will be used by [`DiagnosticService`](oxc_diagnostics::DiagnosticService)
