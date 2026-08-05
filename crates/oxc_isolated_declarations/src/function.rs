@@ -89,22 +89,21 @@ impl<'a> IsolatedDeclarations<'a> {
                     if is_remaining_params_have_required || (param.optional && param.has_modifier())
                     {
                         // `is_maybe_undefined` includes `any`, but declaration emit must
-                        // preserve an explicit `| undefined` for a defaulted `any` parameter.
+                        // preserve an explicit `| undefined` for a defaulted type containing
+                        // `any`, unless the type already contains `undefined` explicitly.
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
-                        } else if matches!(ts_type, TSType::TSAnyKeyword(_))
+                        } else if (contains_any(&ts_type) && !contains_undefined(&ts_type))
                             || !ts_type.is_maybe_undefined()
                         {
-                            // union with `undefined`
-                            return TSTypeAnnotation::boxed(
-                                SPAN,
-                                TSType::new_ts_union_type(
-                                    SPAN,
-                                    [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
-                                    self,
-                                ),
-                                self,
-                            );
+                            let undefined = TSType::new_ts_undefined_keyword(SPAN, self);
+                            let ts_type = if let TSType::TSUnionType(mut union) = ts_type {
+                                union.types.push(undefined);
+                                TSType::TSUnionType(union)
+                            } else {
+                                TSType::new_ts_union_type(SPAN, [ts_type, undefined], self)
+                            };
+                            return TSTypeAnnotation::boxed(SPAN, ts_type, self);
                         }
                     }
 
@@ -191,4 +190,20 @@ impl<'a> IsolatedDeclarations<'a> {
 
 pub fn get_function_span(func: &Function<'_>) -> Span {
     func.id.as_ref().map_or_else(|| Span::empty(func.params.span.start), |id| id.span)
+}
+
+fn contains_any(ts_type: &TSType<'_>) -> bool {
+    match ts_type {
+        TSType::TSAnyKeyword(_) => true,
+        TSType::TSUnionType(union) => union.types.iter().any(contains_any),
+        _ => false,
+    }
+}
+
+fn contains_undefined(ts_type: &TSType<'_>) -> bool {
+    match ts_type {
+        TSType::TSUndefinedKeyword(_) => true,
+        TSType::TSUnionType(union) => union.types.iter().any(contains_undefined),
+        _ => false,
+    }
 }

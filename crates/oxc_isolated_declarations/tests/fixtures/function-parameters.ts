@@ -29,6 +29,8 @@ export const fooBad2 = ({a, b} = { a: 1, b: 2 }): number => {
 
 
 export function withAny(a: any = 1, b: string): void { }
+export function withAnyUnion(a: any | string = 1, b: string): void { }
+export function withAnyUndefinedUnion(a: any | undefined = 1, b: string): void { }
 export function withUnknown(a: unknown = 1, b: string): void { }
 
 export function withTypeAssertion(a = /regular-repression-cannot-infer/ as any): void { }

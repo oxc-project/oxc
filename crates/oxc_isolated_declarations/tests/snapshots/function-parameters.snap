@@ -16,6 +16,8 @@ export declare function fnDeclBad3<T>(p: T, r2: T, rParam?: T): void;
 export declare function fooBad(): number;
 export declare const fooBad2: () => number;
 export declare function withAny(a: any | undefined, b: string): void;
+export declare function withAnyUnion(a: any | string | undefined, b: string): void;
+export declare function withAnyUndefinedUnion(a: any | undefined, b: string): void;
 export declare function withUnknown(a: unknown, b: string): void;
 export declare function withTypeAssertion(a?: any): void;
 export declare function restWithDefault(...[value, options]: [string, object]): void;
