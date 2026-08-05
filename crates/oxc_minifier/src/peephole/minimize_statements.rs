@@ -1140,7 +1140,8 @@ impl<'a> PeepholeOptimizations {
                 Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
                     // Annex B.3.5 allows initializers in non-strict mode
                     // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
-                    // Only allow inlining when the for-in variable is declared with `var`.
+                    // Only allow inlining when the for-in variable is declared with `var` and
+                    // there's not a side-effectful initializer.
                     // Block-scoped declarations (let/const) can cause variable shadowing issues
                     // where the inlined expression might reference a variable with the same name
                     // as the for-in variable, but after inlining, it would incorrectly refer to
