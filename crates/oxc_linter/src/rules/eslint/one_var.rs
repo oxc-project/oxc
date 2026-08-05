@@ -23,30 +23,49 @@ fn one_var_diagnostic(span: Span, message: String) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+/// Controls how variable declarators are grouped into declarations.
 enum OneVarMode {
+    /// Requires one declaration per variable kind in each applicable scope.
     #[default]
     Always,
+    /// Requires each declarator to have its own declaration statement.
     Never,
+    /// Requires adjacent declarations of the same kind to be combined.
     Consecutive,
 }
 
+/// Options for configuring declaration grouping by kind or initialization state.
+///
+/// `initialized` and `uninitialized` take precedence over the per-kind option for the
+/// corresponding declarators.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct OneVarOptions {
+    /// Controls grouping for `const` declarations.
     r#const: Option<OneVarMode>,
+    /// Keeps direct `require(...)` initializers separate from other initialized declarations.
     separate_requires: bool,
+    /// Controls grouping for `var` declarations.
     var: Option<OneVarMode>,
+    /// Controls grouping for `await using` declarations.
     await_using: Option<OneVarMode>,
+    /// Controls grouping for `let` declarations.
     r#let: Option<OneVarMode>,
+    /// Controls grouping for `using` declarations.
     using: Option<OneVarMode>,
+    /// Controls grouping for initialized declarators, overriding per-kind options.
     initialized: Option<OneVarMode>,
+    /// Controls grouping for uninitialized declarators, overriding per-kind options.
     uninitialized: Option<OneVarMode>,
 }
 
+/// Configuration accepted by the `one-var` rule.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
 enum OneVarConfig {
+    /// Applies one grouping mode to every declaration kind and initialization state.
     Mode(OneVarMode),
+    /// Configures grouping by declaration kind or initialization state.
     Options(OneVarOptions),
 }
 
@@ -57,6 +76,7 @@ impl Default for OneVarConfig {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+/// Enforces consistent grouping of variable declarations.
 pub struct OneVar(OneVarConfig);
 
 declare_oxc_lint!(
