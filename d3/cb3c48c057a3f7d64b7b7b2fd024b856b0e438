@@ -1,0 +1,23 @@
+crates/oxc_isolated_declarations/src/function.rs
+  s_81aa9ae97a4b56::t_98cd795eb1bc4e 92-93,96,99-106,194-209
+crates/oxc_isolated_declarations/tests/snapshots/function-parameters.snap
+  s_81aa9ae97a4b56::t_a35418ae7208b3 19-20
+crates/oxc_isolated_declarations/tests/fixtures/function-parameters.ts
+  s_81aa9ae97a4b56::t_809070df4a26e3 32-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d3cb3c48c057a3f7d64b7b7b2fd024b856b0e438",
+  "prompts": {},
+  "sessions": {
+    "s_81aa9ae97a4b56": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fcd56-1364-7280-88b2-faab2b21f15f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
