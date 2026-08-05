@@ -644,6 +644,7 @@ pub use crate::rules::unicorn::no_invalid_remove_event_listener::NoInvalidRemove
 pub use crate::rules::unicorn::no_length_as_slice_end::NoLengthAsSliceEnd as UnicornNoLengthAsSliceEnd;
 pub use crate::rules::unicorn::no_lonely_if::NoLonelyIf as UnicornNoLonelyIf;
 pub use crate::rules::unicorn::no_magic_array_flat_depth::NoMagicArrayFlatDepth as UnicornNoMagicArrayFlatDepth;
+pub use crate::rules::unicorn::no_negated_comparison::NoNegatedComparison as UnicornNoNegatedComparison;
 pub use crate::rules::unicorn::no_negated_condition::NoNegatedCondition as UnicornNoNegatedCondition;
 pub use crate::rules::unicorn::no_negation_in_equality_check::NoNegationInEqualityCheck as UnicornNoNegationInEqualityCheck;
 pub use crate::rules::unicorn::no_nested_ternary::NoNestedTernary as UnicornNoNestedTernary;
@@ -1371,6 +1372,7 @@ pub enum RuleEnum {
     UnicornNoLengthAsSliceEnd(UnicornNoLengthAsSliceEnd),
     UnicornNoLonelyIf(UnicornNoLonelyIf),
     UnicornNoMagicArrayFlatDepth(UnicornNoMagicArrayFlatDepth),
+    UnicornNoNegatedComparison(UnicornNoNegatedComparison),
     UnicornNoNegatedCondition(UnicornNoNegatedCondition),
     UnicornNoNegationInEqualityCheck(UnicornNoNegationInEqualityCheck),
     UnicornNoNestedTernary(UnicornNoNestedTernary),
@@ -2288,7 +2290,8 @@ const UNICORN_NO_LENGTH_AS_SLICE_END_ID: usize =
     UNICORN_NO_INVALID_REMOVE_EVENT_LISTENER_ID + 1usize;
 const UNICORN_NO_LONELY_IF_ID: usize = UNICORN_NO_LENGTH_AS_SLICE_END_ID + 1usize;
 const UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID: usize = UNICORN_NO_LONELY_IF_ID + 1usize;
-const UNICORN_NO_NEGATED_CONDITION_ID: usize = UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID + 1usize;
+const UNICORN_NO_NEGATED_COMPARISON_ID: usize = UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID + 1usize;
+const UNICORN_NO_NEGATED_CONDITION_ID: usize = UNICORN_NO_NEGATED_COMPARISON_ID + 1usize;
 const UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID: usize = UNICORN_NO_NEGATED_CONDITION_ID + 1usize;
 const UNICORN_NO_NESTED_TERNARY_ID: usize = UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID + 1usize;
 const UNICORN_NO_NEW_ARRAY_ID: usize = UNICORN_NO_NESTED_TERNARY_ID + 1usize;
@@ -2685,7 +2688,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 849usize] = [
+static RULE_NAMES: [&str; 850usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3186,6 +3189,7 @@ static RULE_NAMES: [&str; 849usize] = [
     UnicornNoLengthAsSliceEnd::NAME,
     UnicornNoLonelyIf::NAME,
     UnicornNoMagicArrayFlatDepth::NAME,
+    UnicornNoNegatedComparison::NAME,
     UnicornNoNegatedCondition::NAME,
     UnicornNoNegationInEqualityCheck::NAME,
     UnicornNoNestedTernary::NAME,
@@ -4123,6 +4127,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UNICORN_NO_LENGTH_AS_SLICE_END_ID,
             Self::UnicornNoLonelyIf(_) => UNICORN_NO_LONELY_IF_ID,
             Self::UnicornNoMagicArrayFlatDepth(_) => UNICORN_NO_MAGIC_ARRAY_FLAT_DEPTH_ID,
+            Self::UnicornNoNegatedComparison(_) => UNICORN_NO_NEGATED_COMPARISON_ID,
             Self::UnicornNoNegatedCondition(_) => UNICORN_NO_NEGATED_CONDITION_ID,
             Self::UnicornNoNegationInEqualityCheck(_) => UNICORN_NO_NEGATION_IN_EQUALITY_CHECK_ID,
             Self::UnicornNoNestedTernary(_) => UNICORN_NO_NESTED_TERNARY_ID,
@@ -5131,6 +5136,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::CATEGORY,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::CATEGORY,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::CATEGORY,
+            Self::UnicornNoNegatedComparison(_) => UnicornNoNegatedComparison::CATEGORY,
             Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::CATEGORY,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::CATEGORY,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::CATEGORY,
@@ -6129,6 +6135,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::FIX,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::FIX,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::FIX,
+            Self::UnicornNoNegatedComparison(_) => UnicornNoNegatedComparison::FIX,
             Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::FIX,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::FIX,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::FIX,
@@ -7233,6 +7240,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::documentation(),
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::documentation(),
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::documentation(),
+            Self::UnicornNoNegatedComparison(_) => UnicornNoNegatedComparison::documentation(),
             Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::documentation(),
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 UnicornNoNegationInEqualityCheck::documentation()
@@ -9181,6 +9189,10 @@ impl RuleEnum {
                 UnicornNoMagicArrayFlatDepth::config_schema(generator)
                     .or_else(|| UnicornNoMagicArrayFlatDepth::schema(generator))
             }
+            Self::UnicornNoNegatedComparison(_) => {
+                UnicornNoNegatedComparison::config_schema(generator)
+                    .or_else(|| UnicornNoNegatedComparison::schema(generator))
+            }
             Self::UnicornNoNegatedCondition(_) => {
                 UnicornNoNegatedCondition::config_schema(generator)
                     .or_else(|| UnicornNoNegatedCondition::schema(generator))
@@ -10698,6 +10710,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => "unicorn",
             Self::UnicornNoLonelyIf(_) => "unicorn",
             Self::UnicornNoMagicArrayFlatDepth(_) => "unicorn",
+            Self::UnicornNoNegatedComparison(_) => "unicorn",
             Self::UnicornNoNegatedCondition(_) => "unicorn",
             Self::UnicornNoNegationInEqualityCheck(_) => "unicorn",
             Self::UnicornNoNestedTernary(_) => "unicorn",
@@ -11824,6 +11837,9 @@ impl RuleEnum {
             Self::UnicornNoInstanceofBuiltins(_) => Ok(Self::UnicornNoInstanceofBuiltins(
                 UnicornNoInstanceofBuiltins::from_configuration(value)?,
             )),
+            Self::UnicornNoNegatedComparison(_) => Ok(Self::UnicornNoNegatedComparison(
+                UnicornNoNegatedComparison::from_configuration(value)?,
+            )),
             Self::UnicornNoNull(_) => {
                 Ok(Self::UnicornNoNull(UnicornNoNull::from_configuration(value)?))
             }
@@ -12648,6 +12664,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.to_configuration(),
             Self::UnicornNoLonelyIf(rule) => rule.to_configuration(),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.to_configuration(),
+            Self::UnicornNoNegatedComparison(rule) => rule.to_configuration(),
             Self::UnicornNoNegatedCondition(rule) => rule.to_configuration(),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.to_configuration(),
             Self::UnicornNoNestedTernary(rule) => rule.to_configuration(),
@@ -13504,6 +13521,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run(node, ctx),
             Self::UnicornNoLonelyIf(rule) => rule.run(node, ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run(node, ctx),
+            Self::UnicornNoNegatedComparison(rule) => rule.run(node, ctx),
             Self::UnicornNoNegatedCondition(rule) => rule.run(node, ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run(node, ctx),
             Self::UnicornNoNestedTernary(rule) => rule.run(node, ctx),
@@ -14370,6 +14388,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run_once(ctx),
             Self::UnicornNoLonelyIf(rule) => rule.run_once(ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run_once(ctx),
+            Self::UnicornNoNegatedComparison(rule) => rule.run_once(ctx),
             Self::UnicornNoNegatedCondition(rule) => rule.run_once(ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run_once(ctx),
             Self::UnicornNoNestedTernary(rule) => rule.run_once(ctx),
@@ -15317,6 +15336,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoLonelyIf(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoNegatedComparison(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoNegatedCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoNestedTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16220,6 +16240,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.should_run(ctx),
             Self::UnicornNoLonelyIf(rule) => rule.should_run(ctx),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.should_run(ctx),
+            Self::UnicornNoNegatedComparison(rule) => rule.should_run(ctx),
             Self::UnicornNoNegatedCondition(rule) => rule.should_run(ctx),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.should_run(ctx),
             Self::UnicornNoNestedTernary(rule) => rule.should_run(ctx),
@@ -17287,6 +17308,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::IS_TSGOLINT_RULE,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::IS_TSGOLINT_RULE,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::IS_TSGOLINT_RULE,
+            Self::UnicornNoNegatedComparison(_) => UnicornNoNegatedComparison::IS_TSGOLINT_RULE,
             Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::IS_TSGOLINT_RULE,
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 UnicornNoNegationInEqualityCheck::IS_TSGOLINT_RULE
@@ -18416,6 +18438,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::VERSION,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::VERSION,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::VERSION,
+            Self::UnicornNoNegatedComparison(_) => UnicornNoNegatedComparison::VERSION,
             Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::VERSION,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::VERSION,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::VERSION,
@@ -19464,6 +19487,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::HAS_CONFIG,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::HAS_CONFIG,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::HAS_CONFIG,
+            Self::UnicornNoNegatedComparison(_) => UnicornNoNegatedComparison::HAS_CONFIG,
             Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::HAS_CONFIG,
             Self::UnicornNoNegationInEqualityCheck(_) => {
                 UnicornNoNegationInEqualityCheck::HAS_CONFIG
@@ -20481,6 +20505,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::INFO,
             Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::INFO,
             Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::INFO,
+            Self::UnicornNoNegatedComparison(_) => UnicornNoNegatedComparison::INFO,
             Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::INFO,
             Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::INFO,
             Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::INFO,
@@ -21375,6 +21400,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.types_info(),
             Self::UnicornNoLonelyIf(rule) => rule.types_info(),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.types_info(),
+            Self::UnicornNoNegatedComparison(rule) => rule.types_info(),
             Self::UnicornNoNegatedCondition(rule) => rule.types_info(),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.types_info(),
             Self::UnicornNoNestedTernary(rule) => rule.types_info(),
@@ -22228,6 +22254,7 @@ impl RuleEnum {
             Self::UnicornNoLengthAsSliceEnd(rule) => rule.run_info(),
             Self::UnicornNoLonelyIf(rule) => rule.run_info(),
             Self::UnicornNoMagicArrayFlatDepth(rule) => rule.run_info(),
+            Self::UnicornNoNegatedComparison(rule) => rule.run_info(),
             Self::UnicornNoNegatedCondition(rule) => rule.run_info(),
             Self::UnicornNoNegationInEqualityCheck(rule) => rule.run_info(),
             Self::UnicornNoNestedTernary(rule) => rule.run_info(),
@@ -23181,6 +23208,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornNoLengthAsSliceEnd(UnicornNoLengthAsSliceEnd::default()),
         RuleEnum::UnicornNoLonelyIf(UnicornNoLonelyIf::default()),
         RuleEnum::UnicornNoMagicArrayFlatDepth(UnicornNoMagicArrayFlatDepth::default()),
+        RuleEnum::UnicornNoNegatedComparison(UnicornNoNegatedComparison::default()),
         RuleEnum::UnicornNoNegatedCondition(UnicornNoNegatedCondition::default()),
         RuleEnum::UnicornNoNegationInEqualityCheck(UnicornNoNegationInEqualityCheck::default()),
         RuleEnum::UnicornNoNestedTernary(UnicornNoNestedTernary::default()),
