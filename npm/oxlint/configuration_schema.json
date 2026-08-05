@@ -3581,6 +3581,26 @@
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/no-blank-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoBlankBlocks"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/no-defaults": {
           "anyOf": [
             {
@@ -13766,6 +13786,18 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true` the `int32Hint` option allows the use of bitwise OR in |0\npattern for type casting.\n\nFor example with `{ \"int32Hint\": true }` the following is permitted:\n\n```javascript\nconst b = a|0;\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoBlankBlocks": {
+      "type": "object",
+      "properties": {
+        "enableFixer": {
+          "description": "Whether to automatically remove blank JSDoc blocks.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to automatically remove blank JSDoc blocks."
         }
       },
       "additionalProperties": false

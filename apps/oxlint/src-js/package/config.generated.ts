@@ -1035,6 +1035,7 @@ export interface DummyRuleMap {
   "jsdoc/check-tag-names"?: RuleNoConfig | [AllowWarnDeny, CheckTagNamesConfig];
   "jsdoc/empty-tags"?: RuleNoConfig | [AllowWarnDeny, EmptyTagsConfig];
   "jsdoc/implements-on-classes"?: RuleNoConfig;
+  "jsdoc/no-blank-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBlankBlocks];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
@@ -2574,6 +2575,12 @@ export interface EmptyTagsConfig {
    * Additional tags to check for their descriptions.
    */
   tags?: string[];
+}
+export interface NoBlankBlocks {
+  /**
+   * Whether to automatically remove blank JSDoc blocks.
+   */
+  enableFixer?: boolean;
 }
 export interface NoDefaultsConfig {
   /**
