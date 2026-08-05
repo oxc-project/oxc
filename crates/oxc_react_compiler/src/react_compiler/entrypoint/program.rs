@@ -279,6 +279,9 @@ fn get_function_name_from_id<'ast>(id: Option<&BindingIdentifier<'ast>>) -> Opti
 /// Check if an expression is a "non-node" return value (indicating the function
 /// is not a React component). This matches the TS `isNonNode` function.
 fn is_non_node(expr: &Expression) -> bool {
+    if let Expression::ParenthesizedExpression(parenthesized) = expr {
+        return is_non_node(&parenthesized.expression);
+    }
     matches!(
         expr,
         Expression::ObjectExpression(_)
