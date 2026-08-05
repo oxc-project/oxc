@@ -66,7 +66,6 @@ pub fn format<'a>(
     };
 
     let ir = Document::new(elements, sorted_tailwind_classes);
-    ir.propagate_expand();
 
     Ok(Formatted::new(ir, context))
 }
@@ -77,7 +76,6 @@ pub fn format<'a>(
 /// Unlike [`format()`], this:
 /// - allocates from the shared arena in `ctx`
 /// - emits neither a BOM nor the trailing newline
-/// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
 /// The returned [`EmbeddedIr`] also carries the pre-sort `@apply` Tailwind
 /// classes the IR's `TailwindClass(index)` elements refer to (empty unless

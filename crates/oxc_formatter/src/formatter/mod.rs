@@ -60,9 +60,7 @@ pub fn format<'ast>(
     let sorted_tailwind_classes =
         context.external_callbacks().sort_tailwind_classes(tailwind_classes);
 
-    let document = Document::new(elements, sorted_tailwind_classes);
+    let ir = Document::new(elements, sorted_tailwind_classes);
 
-    document.propagate_expand();
-
-    Formatted::new(document, context)
+    Formatted::new(ir, context)
 }

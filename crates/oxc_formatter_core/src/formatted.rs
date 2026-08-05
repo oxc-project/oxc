@@ -25,8 +25,14 @@ impl<'a, C> Formatted<'a, C> {
         &mut self.document
     }
 
-    /// Consumes `self` and returns the formatted document.
-    pub fn into_document(self) -> Document<'a> {
+    /// Consumes `self` and returns the finalized document:
+    /// group expansion is propagated across the whole IR, including any embedded IR merged into it.
+    ///
+    /// Finalization must run once on the final document, never on partial embedded IR;
+    /// [`Self::print`] / [`Self::print_with_indent`] finalize themselves,
+    /// so this is only for consumers that bypass them (e.g. IR to Prettier Doc conversion).
+    pub fn into_final_document(self) -> Document<'a> {
+        self.document.propagate_expand();
         self.document
     }
 }
@@ -34,11 +40,14 @@ impl<'a, C> Formatted<'a, C> {
 impl<C: FormatContext> Formatted<'_, C> {
     /// Prints the formatted document to a string.
     ///
+    /// Finalizes the document first (see [`Self::into_final_document`]).
+    ///
     /// # Errors
     /// Returns `PrintError` if the document contains invalid structure.
     pub fn print(self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
         let source_size_hint = self.context.source_code().len();
+        self.document.propagate_expand();
         let (elements, sorted_tailwind_classes) =
             self.document.into_elements_and_tailwind_classes();
         let printed =
@@ -49,11 +58,14 @@ impl<C: FormatContext> Formatted<'_, C> {
 
     /// Prints the formatted document to a string, starting at the given indentation level.
     ///
+    /// Finalizes the document first (see [`Self::into_final_document`]).
+    ///
     /// # Errors
     /// Returns `PrintError` if the document contains invalid structure.
     pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
         let source_size_hint = self.context.source_code().len();
+        self.document.propagate_expand();
         let (elements, sorted_tailwind_classes) =
             self.document.into_elements_and_tailwind_classes();
         let printed =
