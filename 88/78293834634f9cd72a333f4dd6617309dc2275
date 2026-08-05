@@ -1,0 +1,23 @@
+crates/oxc_linter/src/rules/eslint/one_var.rs
+  s_ff6963ce079f14::t_7760196c2052fc 478,490,500,503-504
+apps/oxlint/src-js/package/config.generated.ts
+  s_ff6963ce079f14::t_64408db483a930 192-202,4238-4243,4245-4247,4249-4251,4253-4255,4257-4259,4261-4263,4265-4267,4269-4271,4273-4275
+npm/oxlint/configuration_schema.json
+  s_ff6963ce079f14::t_5c5d41f193102d 16608-16614,16617,16620-16626,16629-16635,16637-16638,16641-16668,16671,16675,16681-16682,16685,16691-16692,16695,16701-16702,16705,16711-16712,16715,16717-16718,16721,16727-16728,16731,16737-16738,16741,16747-16748,16751-16752
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8878293834634f9cd72a333f4dd6617309dc2275",
+  "prompts": {},
+  "sessions": {
+    "s_ff6963ce079f14": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd193-58ed-76a0-becd-48395498c606",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
