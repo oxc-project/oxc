@@ -2,7 +2,11 @@ use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{prelude::*, trivia::FormatLeadingComments},
+    format_args,
+    formatter::{
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
+    },
     print::semicolon::OptionalSemicolon,
     utils::suppressed::FormatSuppressedNode,
     write,
@@ -32,13 +36,42 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
             f.source_text().has_line_terminator_after_skipping_comments(self.span.start + 1);
 
         let format_inner = format_with(|f| {
-            if should_expand {
-                let comments = if f.comments().has_leading_own_line_comment(self.key.span.start) {
-                    f.context().comments().comments_before(self.key.span.start)
+            // Comments between `{` and `[` are the mapped type's dangling comments, joined by hard line breaks.
+            // After the last one: a hard line break when it is a line comment or the source breaks after it,
+            // otherwise a group collapsing to a space when the member fits on the line.
+            // Only the last comment goes inside that group: the ones before it always hard-break.
+            let comments = f.context().comments().comments_before_character(self.span.start, b'[');
+            if let Some((last, rest)) = comments.split_last() {
+                if last.is_line() || last.followed_by_newline() {
+                    write!(
+                        f,
+                        [
+                            FormatDanglingComments::Comments {
+                                comments,
+                                indent: DanglingIndentMode::None
+                            },
+                            hard_line_break()
+                        ]
+                    );
                 } else {
-                    f.context().comments().comments_before_character(self.span.start, b'[')
-                };
-                write!(f, FormatLeadingComments::Comments(comments));
+                    write!(
+                        f,
+                        [
+                            FormatDanglingComments::Comments {
+                                comments: rest,
+                                indent: DanglingIndentMode::None
+                            },
+                            (!rest.is_empty()).then_some(hard_line_break()),
+                            group(&format_args!(
+                                FormatDanglingComments::Comments {
+                                    comments: std::slice::from_ref(last),
+                                    indent: DanglingIndentMode::None
+                                },
+                                soft_line_break_or_space()
+                            ))
+                        ]
+                    );
+                }
             }
 
             if let Some(readonly) = self.readonly() {
@@ -50,28 +83,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
                 write!(f, [prefix, "readonly", space()]);
             }
 
-            let format_inner_inner = format_with(|f| {
-                write!(f, "[");
-                write!(f, key);
-                write!(f, [space(), "in", space(), constraint]);
+            let format_key_in_constraint = format_with(|f| {
+                write!(f, [key, space(), "in", space(), constraint]);
                 if let Some(name_type) = &name_type {
                     write!(f, [space(), "as", space(), name_type]);
                 }
                 key.format_trailing_comments(f);
-                write!(f, "]");
-                if let Some(optional) = self.optional() {
-                    write!(
-                        f,
-                        match optional {
-                            TSMappedTypeModifierOperator::True => "?",
-                            TSMappedTypeModifierOperator::Plus => "+?",
-                            TSMappedTypeModifierOperator::Minus => "-?",
-                        }
-                    );
-                }
             });
 
-            write!(f, [group(&format_inner_inner)]);
+            write!(f, ["[", group(&soft_block_indent(&format_key_in_constraint)), "]"]);
+            if let Some(optional) = self.optional() {
+                write!(
+                    f,
+                    match optional {
+                        TSMappedTypeModifierOperator::True => "?",
+                        TSMappedTypeModifierOperator::Plus => "+?",
+                        TSMappedTypeModifierOperator::Minus => "-?",
+                    }
+                );
+            }
             if let Some(type_annotation) = &self.type_annotation() {
                 write!(f, [":", space(), type_annotation]);
             }

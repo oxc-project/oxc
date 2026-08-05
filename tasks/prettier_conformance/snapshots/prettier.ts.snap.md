@@ -1,4 +1,4 @@
-ts compatibility: 622/659 (94.39%), 15 files skipped
+ts compatibility: 624/659 (94.69%), 15 files skipped
 
 # Failed
 
@@ -9,7 +9,6 @@ ts compatibility: 622/659 (94.39%), 15 files skipped
 | typescript/as/comments/17407.ts | 💥 | 47.06% |
 | typescript/call/callee-comments.ts | 💥 | 75.00% |
 | typescript/cast/18406.ts | 💥 | 84.21% |
-| typescript/comments/mapped-types.ts | 💥 | 85.71% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/comments/type-parameters.ts | 💥 | 81.82% |
 | typescript/comments/first-argument/first-argument.ts | 💥 | 81.16% |
@@ -23,7 +22,6 @@ ts compatibility: 622/659 (94.39%), 15 files skipped
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/property-signature/consistent-with-flow/union.ts | 💥 | 80.00% |
 | typescript/template-literals/member-expression.ts | 💥 | 65.12% |
-| typescript/type-parameters-arguments/10732.ts | 💥 | 66.67% |
 | typescript/type-parameters-arguments/18041.ts | 💥 | 91.43% |
 | typescript/type-parameters-arguments/18604.ts | 💥 | 60.00% |
 | typescript/type-parameters-arguments/19505.ts | 💥 | 61.54% |
