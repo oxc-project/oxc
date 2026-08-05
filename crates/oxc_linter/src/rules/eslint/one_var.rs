@@ -13,7 +13,7 @@ use oxc_syntax::{node::NodeId, scope::ScopeId};
 use crate::{
     AstNode,
     context::LintContext,
-    fixer::{Fix, RuleFix},
+    fixer::Fix,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -483,24 +483,28 @@ fn report_join(
     message: String,
 ) {
     ctx.diagnostic_with_fix(one_var_diagnostic(declaration.span, message), |fixer| {
-        let source = ctx.source_text();
-        let previous_source = previous.span.source_text(source);
         let mut fixes = fixer.new_fix_with_capacity(3);
-        if let Some(index) = previous_source.rfind(';') {
-            let start = previous.span.start + index as u32;
+        if let Some(offset) =
+            ctx.find_next_token_within(previous.span.start, previous.span.end, ";")
+        {
+            let start = previous.span.start + offset;
             fixes.push(Fix::new(",", Span::sized(start, 1)));
         } else {
             fixes.push(Fix::new(",", Span::empty(previous.span.end)));
         }
         let keyword = declaration.kind.as_str();
-        let declaration_source = declaration.span.source_text(source);
         if declaration.kind == VariableDeclarationKind::AwaitUsing {
             fixes.push(Fix::delete(Span::sized(declaration.span.start, 5)));
-            let using_offset = declaration_source.find("using").unwrap();
-            fixes.push(Fix::delete(Span::sized(declaration.span.start + using_offset as u32, 5)));
-        } else if let Some(offset) = declaration_source.find(keyword) {
+            let offset = ctx
+                .find_next_token_within(declaration.span.start, declaration.span.end, "using")
+                .expect("`await using` declaration must contain a `using` keyword");
+            fixes.push(Fix::delete(Span::sized(declaration.span.start + offset, 5)));
+        } else {
+            let offset = ctx
+                .find_next_token_within(declaration.span.start, declaration.span.end, keyword)
+                .expect("variable declaration must contain its declaration keyword");
             fixes.push(Fix::delete(Span::sized(
-                declaration.span.start + offset as u32,
+                declaration.span.start + offset,
                 keyword.len() as u32,
             )));
         }
@@ -526,12 +530,13 @@ fn report_split(
         let prefix = if exported { format!("export {keyword} ") } else { format!("{keyword} ") };
         let mut fixes = fixer.new_fix_with_capacity((declaration.declarations.len() - 1) * 2);
         for [left, right] in declaration.declarations.array_windows() {
-            if let Some(offset) = ctx.find_next_token_within(left.span.end, right.span.start, ",") {
-                let comma = left.span.end + offset;
-                let separator = if comma + 1 == right.span.start { "; " } else { ";" };
-                fixes.push(Fix::new(separator, Span::sized(comma, 1)));
-                fixes.push(Fix::new(prefix.clone(), Span::empty(right.span.start)));
-            }
+            let offset = ctx
+                .find_next_token_within(left.span.end, right.span.start, ",")
+                .expect("variable declarators must be separated by a comma");
+            let comma = left.span.end + offset;
+            let separator = if comma + 1 == right.span.start { "; " } else { ";" };
+            fixes.push(Fix::new(separator, Span::sized(comma, 1)));
+            fixes.push(Fix::new(prefix.clone(), Span::empty(right.span.start)));
         }
         fixes.with_message("Split variable declarations")
     });
