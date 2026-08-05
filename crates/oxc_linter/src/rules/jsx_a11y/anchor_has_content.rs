@@ -52,17 +52,6 @@ declare_oxc_lint!(
     ///
     /// Alternatively, you may use the `title` prop or the `aria-label` prop.
     ///
-    /// ### Options
-    ///
-    /// This rule accepts a `components` option containing custom component names that should be
-    /// checked in addition to the native `a` element.
-    ///
-    /// ```json
-    /// {
-    ///   "components": ["Anchor"]
-    /// }
-    /// ```
-    ///
     /// ### Why is this bad?
     ///
     /// Anchor elements without content can be confusing for users relying
