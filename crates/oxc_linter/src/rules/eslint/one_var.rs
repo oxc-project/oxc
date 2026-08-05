@@ -405,7 +405,7 @@ fn statement_node_id(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<NodeId
     let parent = ctx.nodes().parent_node(node.id());
     if is_statement_list_parent(parent.kind()) {
         Some(node.id())
-    } else if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
+    } else if matches!(parent.kind(), AstKind::ExportDeclaration(_)) {
         let grandparent = ctx.nodes().parent_node(parent.id());
         is_statement_list_parent(grandparent.kind()).then_some(parent.id())
     } else {
@@ -421,7 +421,7 @@ fn previous_declaration<'a, 'c>(
     let parent = nodes.parent_node(node.id());
     let (statement_span, statement_parent) = if is_statement_list_parent(parent.kind()) {
         (node.span(), parent)
-    } else if matches!(parent.kind(), AstKind::ExportNamedDeclaration(_)) {
+    } else if matches!(parent.kind(), AstKind::ExportDeclaration(_)) {
         let grandparent = nodes.parent_node(parent.id());
         if !is_statement_list_parent(grandparent.kind()) {
             return None;
@@ -525,8 +525,7 @@ fn report_split(
     }
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let keyword = declaration.kind.as_str();
-        let exported =
-            matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExportNamedDeclaration(_));
+        let exported = matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExportDeclaration(_));
         let prefix = if exported { format!("export {keyword} ") } else { format!("{keyword} ") };
         let mut fixes = fixer.new_fix_with_capacity((declaration.declarations.len() - 1) * 2);
         for [left, right] in declaration.declarations.array_windows() {
