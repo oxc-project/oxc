@@ -189,6 +189,18 @@ export type ExportsStyleMode = "module.exports" | "exports";
 export type HandleCallbackErrConfig = string;
 export type NoMixedRequiresConfig = boolean | NoMixedRequiresOptions;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
+/**
+ * Enforces consistent grouping of variable declarations.
+ */
+export type OneVar = OneVarConfig;
+/**
+ * Configuration accepted by the `one-var` rule.
+ */
+export type OneVarConfig = OneVarMode | OneVarOptions;
+/**
+ * Controls how variable declarators are grouped into declarations.
+ */
+export type OneVarMode = "always" | "never" | "consecutive";
 export type Destructuring = "any" | "all";
 export type PreferDestructuringOption = PreferDestructuringTargetOption | PreferDestructuringAssignmentConfig;
 export type TerminationMethod = string | string[];
@@ -1258,6 +1270,7 @@ export interface DummyRuleMap {
   "node/no-top-level-await"?: RuleNoConfig | [AllowWarnDeny, NoTopLevelAwaitConfig];
   "object-shorthand"?:
     RuleNoConfig | [AllowWarnDeny, ShorthandType] | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
+  "one-var"?: RuleNoConfig | [AllowWarnDeny, OneVar];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "oxc/approx-constant"?: RuleNoConfig;
   "oxc/bad-array-method-on-arguments"?: RuleNoConfig;
@@ -4227,6 +4240,46 @@ export interface ObjectShorthandOptions {
   avoidQuotes?: boolean;
   ignoreConstructors?: boolean;
   methodsIgnorePattern?: string;
+}
+/**
+ * Options for configuring declaration grouping by kind or initialization state.
+ *
+ * `initialized` and `uninitialized` take precedence over the per-kind option for the
+ * corresponding declarators.
+ */
+export interface OneVarOptions {
+  /**
+   * Controls grouping for `await using` declarations.
+   */
+  awaitUsing?: OneVarMode;
+  /**
+   * Controls grouping for `const` declarations.
+   */
+  const?: OneVarMode;
+  /**
+   * Controls grouping for initialized declarators, overriding per-kind options.
+   */
+  initialized?: OneVarMode;
+  /**
+   * Controls grouping for `let` declarations.
+   */
+  let?: OneVarMode;
+  /**
+   * Keeps direct `require(...)` initializers separate from other initialized declarations.
+   */
+  separateRequires?: boolean;
+  /**
+   * Controls grouping for uninitialized declarators, overriding per-kind options.
+   */
+  uninitialized?: OneVarMode;
+  /**
+   * Controls grouping for `using` declarations.
+   */
+  using?: OneVarMode;
+  /**
+   * Controls grouping for `var` declarations.
+   */
+  var?: OneVarMode;
 }
 export interface NoAsyncEndpointHandlersConfig {
   /**

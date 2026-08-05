@@ -155,6 +155,7 @@ eslint/no-var                                              |  31363
 eslint/no-void                                             |   9106
 eslint/no-warning-comments                                 |      7
 eslint/object-shorthand                                    |  46617
+eslint/one-var                                             |      7
 eslint/operator-assignment                                 |  13005
 eslint/prefer-arrow-callback                               |  14283
 eslint/prefer-const                                        |  31363
