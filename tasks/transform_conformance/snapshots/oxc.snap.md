@@ -1,6 +1,6 @@
 commit: 06b6eae3
 
-Passed: 270/398
+Passed: 271/399
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,7 +48,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (41/60)
+# babel-plugin-transform-typescript (42/61)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
