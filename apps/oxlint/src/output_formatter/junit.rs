@@ -131,6 +131,32 @@ mod test {
         assert_eq!(output, EXPECTED_REPORT);
     }
 
+    // The message is escaped once and interpolated into both the attribute and the element
+    // body, so assert both. Also the only coverage of a non-empty rule name.
+    #[test]
+    fn test_junit_reporter_escapes_message_and_reports_rule() {
+        const EXPECTED_REPORT: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Oxlint" tests="1" failures="0" errors="1">
+    <testsuite name="file.js" tests="1" disabled="0" errors="1" failures="0">
+        <testcase name="eslint(no-debugger)">
+            <error message="unexpected &apos;a &lt; b&apos; &amp; &quot;c&quot;">line 1, column 1, unexpected &apos;a &lt; b&apos; &amp; &quot;c&quot;</error>
+        </testcase>
+    </testsuite>
+</testsuites>
+"#;
+        let mut reporter = JUnitReporter::default();
+
+        reporter.render_error(
+            OxcDiagnostic::error("unexpected 'a < b' & \"c\"")
+                .with_error_code("eslint", "no-debugger")
+                .with_label(Span::new(0, 8))
+                .with_source_code(NamedSource::new("file.js", "debugger;")),
+        );
+
+        let output = reporter.finish(&DiagnosticResult::default()).unwrap();
+        assert_eq!(output, EXPECTED_REPORT);
+    }
+
     #[test]
     fn test_junit_reporter_multiple_files() {
         const EXPECTED_REPORT: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
