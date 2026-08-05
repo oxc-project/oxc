@@ -2,7 +2,7 @@ commit: 06b6eae3
 
 parser_babel Summary:
 AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 2219/2234 (99.33%)
+Positive Passed: 2218/2234 (99.28%)
 Negative Passed: 1727/1742 (99.14%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -246,6 +246,23 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts:3:8]
+ 2 │ namespace M.N.O {}
+ 3 │ module "m" {}
+   ·        ───
+ 4 │ module 'n' {}
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts:4:8]
+ 3 │ module "m" {}
+ 4 │ module 'n' {}
+   ·        ───
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts

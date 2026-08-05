@@ -409,6 +409,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
+        if !self.ctx.has_ambient() {
+            self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
+        }
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
             let block = self.parse_ts_module_block(/* in_ts_namespace_body */ false);

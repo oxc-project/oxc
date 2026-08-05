@@ -3,7 +3,7 @@ commit: b465fdbf
 parser_typescript Summary:
 AST Parsed     : 9779/9779 (100.00%)
 Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1645/2640 (62.31%)
+Negative Passed: 1647/2640 (62.39%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -775,8 +775,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pushTypeGetT
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/qualifiedModuleLocals.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/quickinfoTypeAtReturnPositionsInaccurate.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/quotedModuleNameMustBeAmbient.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reboundIdentifierOnImportAlias.ts
 
@@ -1741,8 +1739,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration10.ts
 
@@ -11293,6 +11289,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·         ┬
    ·         ╰── `;` expected
  4 │ 
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[typescript/tests/cases/compiler/quotedModuleNameMustBeAmbient.ts:1:8]
+ 1 │ module 'M' {}
+   ·        ───
+ 2 │ 
    ╰────
 
   × Expected `,` or `)` but found `!`
@@ -26812,6 +26815,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MissingTokens/parserMissingToken2.ts:1:1]
  1 │ / b;
    · ────
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts:1:8]
+ 1 │ module "Foo" {
+   ·        ─────
+ 2 │ }
    ╰────
 
   × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
