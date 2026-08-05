@@ -475,6 +475,7 @@ fn report_join_with_optional_previous<'a>(
     }
 }
 
+#[expect(clippy::cast_possible_truncation)]
 fn report_join(
     ctx: &LintContext<'_>,
     declaration: &VariableDeclaration<'_>,
@@ -486,7 +487,7 @@ fn report_join(
         let previous_source = previous.span.source_text(source);
         let mut fixes = fixer.new_fix_with_capacity(3);
         if let Some(index) = previous_source.rfind(';') {
-            let start = previous.span.start + u32::try_from(index).unwrap();
+            let start = previous.span.start + index as u32;
             fixes.push(Fix::new(",", Span::sized(start, 1)));
         } else {
             fixes.push(Fix::new(",", Span::empty(previous.span.end)));
@@ -496,14 +497,11 @@ fn report_join(
         if declaration.kind == VariableDeclarationKind::AwaitUsing {
             fixes.push(Fix::delete(Span::sized(declaration.span.start, 5)));
             let using_offset = declaration_source.find("using").unwrap();
-            fixes.push(Fix::delete(Span::sized(
-                declaration.span.start + u32::try_from(using_offset).unwrap(),
-                5,
-            )));
+            fixes.push(Fix::delete(Span::sized(declaration.span.start + using_offset as u32, 5)));
         } else if let Some(offset) = declaration_source.find(keyword) {
             fixes.push(Fix::delete(Span::sized(
-                declaration.span.start + u32::try_from(offset).unwrap(),
-                u32::try_from(keyword.len()).unwrap(),
+                declaration.span.start + offset as u32,
+                keyword.len() as u32,
             )));
         }
         fixes.with_message("Combine variable declarations")
