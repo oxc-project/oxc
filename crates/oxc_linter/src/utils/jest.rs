@@ -6,8 +6,8 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
-        match_member_expression,
+        CallExpression, Expression, IdentifierReference, ImportDeclaration,
+        ImportDeclarationSpecifier, match_member_expression,
     },
 };
 use oxc_semantic::{AstNode, ReferenceId, Semantic, SymbolId};
@@ -45,6 +45,10 @@ const JEST_METHOD_NAMES: [&str; 19] = [
     "xit",
     "xtest",
 ];
+
+fn is_jest_import_source(source: &str) -> bool {
+    matches!(source, "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum JestFnKind {
@@ -159,6 +163,90 @@ pub struct PossibleJestNode<'a, 'b> {
     pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
 }
 
+enum PossibleJestCallSource<'a> {
+    Import { original: &'a str },
+    ImportUnaliased,
+    Global,
+}
+
+impl<'a> PossibleJestCallSource<'a> {
+    fn original(self) -> Option<&'a str> {
+        match self {
+            Self::Import { original } => Some(original),
+            Self::ImportUnaliased | Self::Global => None,
+        }
+    }
+}
+
+pub fn run_on_possible_jest_call<'a, 'c, F>(
+    node: &'c AstNode<'a>,
+    ctx: &'c LintContext<'a>,
+    callback: F,
+) where
+    F: FnOnce(&PossibleJestNode<'a, 'c>, &'c LintContext<'a>),
+{
+    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let Some(source) = possible_jest_call_source(call_expr, ctx) else { return };
+
+    callback(&PossibleJestNode { node, original: source.original() }, ctx);
+}
+
+fn possible_jest_call_source<'a>(
+    call_expr: &'a CallExpression<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<PossibleJestCallSource<'a>> {
+    let ident = resolve_first_ident(&call_expr.callee)?;
+    let reference_id = ident.reference_id();
+    let scoping = ctx.scoping();
+    let reference = scoping.get_reference(reference_id);
+
+    if let Some(symbol_id) = reference.symbol_id() {
+        if !scoping.symbol_flags(symbol_id).is_import() {
+            return None;
+        }
+
+        let id = scoping.symbol_declaration(symbol_id);
+        let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(id) else {
+            return None;
+        };
+
+        if is_jest_import_source(import_decl.source.value.as_str()) {
+            let name = scoping.symbol_name(symbol_id);
+            return Some(
+                find_original_name(import_decl, name)
+                    .map_or(PossibleJestCallSource::ImportUnaliased, |original| {
+                        PossibleJestCallSource::Import { original }
+                    }),
+            );
+        }
+
+        return None;
+    }
+
+    if JEST_METHOD_NAMES.contains(&ident.name.as_str())
+        && scoping
+            .root_unresolved_references()
+            .get(ident.name.as_str())
+            .is_some_and(|reference_ids| reference_ids.contains(&reference_id))
+    {
+        return Some(PossibleJestCallSource::Global);
+    }
+
+    None
+}
+
+fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierReference<'a>> {
+    match expr {
+        Expression::Identifier(ident) => Some(ident),
+        match_member_expression!(Expression) => {
+            resolve_first_ident(expr.to_member_expression().object())
+        }
+        Expression::CallExpression(call_expr) => resolve_first_ident(&call_expr.callee),
+        Expression::TaggedTemplateExpression(tagged_expr) => resolve_first_ident(&tagged_expr.tag),
+        _ => None,
+    }
+}
+
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn collect_possible_jest_call_node<'a, 'c>(
@@ -230,10 +318,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
-                    import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
-                ) {
+                if is_jest_import_source(import_decl.source.value.as_str()) {
                     let original = find_original_name(import_decl, name);
                     let ret = reference_ids
                         .iter()
