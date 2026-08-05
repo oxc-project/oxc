@@ -2639,18 +2639,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
-        let kind = AstKind::TSModuleDeclaration(self.alloc(decl));
+    fn visit_ts_external_module_declaration(&mut self, decl: &TSExternalModuleDeclaration<'a>) {
+        let kind = AstKind::TSExternalModuleDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.enter_ambient_context(decl.declare);
-        decl.bind(self);
         self.visit_span(&decl.span);
-        self.visit_ts_module_declaration_name(&decl.id);
+        self.visit_string_literal(&decl.id);
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
-                if decl.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)
-                {
+                if decl.has_use_strict_directive() {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags
@@ -2658,8 +2656,31 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             &decl.scope_id,
         );
         if let Some(body) = &decl.body {
-            self.visit_ts_module_declaration_body(body);
+            self.visit_ts_module_block(body);
         }
+        self.leave_scope();
+        self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
+    }
+
+    fn visit_ts_namespace_declaration(&mut self, decl: &TSNamespaceDeclaration<'a>) {
+        let kind = AstKind::TSNamespaceDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
+        decl.bind(self);
+        self.visit_span(&decl.span);
+        self.visit_binding_identifier(&decl.id);
+        self.enter_scope(
+            {
+                let mut flags = ScopeFlags::TsModuleBlock;
+                if decl.has_use_strict_directive() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &decl.scope_id,
+        );
+        self.visit_ts_namespace_declaration_body(&decl.body);
         self.leave_scope();
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);

@@ -477,7 +477,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 | Declaration::TSTypeAliasDeclaration(_)
                                 | Declaration::TSInterfaceDeclaration(_)
                                 | Declaration::TSEnumDeclaration(_)
-                                | Declaration::TSModuleDeclaration(_)
+                                | Declaration::TSExternalModuleDeclaration(_)
+                                | Declaration::TSNamespaceDeclaration(_)
                                 // Note: `TSGlobalDeclaration` cannot be exported
                                 | Declaration::TSImportEqualsDeclaration(_)
                             ) {

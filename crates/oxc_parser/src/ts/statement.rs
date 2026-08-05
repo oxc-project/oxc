@@ -390,32 +390,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
         modifiers: &Modifiers,
-    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
+    ) -> Declaration<'a> {
         let kind = if self.eat(Kind::Namespace) {
-            TSModuleDeclarationKind::Namespace
+            TSNamespaceDeclarationKind::Namespace
         } else {
             self.expect(Kind::Module);
             if self.at(Kind::Str) {
-                return self.parse_ambient_external_module_declaration(start, modifiers);
+                return Declaration::TSExternalModuleDeclaration(
+                    self.parse_ambient_external_module_declaration(start, modifiers),
+                );
             }
-            TSModuleDeclarationKind::Module
+            TSNamespaceDeclarationKind::Module
         };
-        self.parse_module_or_namespace_declaration(start, kind, modifiers)
+        Declaration::TSNamespaceDeclaration(
+            self.parse_module_or_namespace_declaration(start, kind, modifiers),
+        )
     }
 
     fn parse_ambient_external_module_declaration(
         &mut self,
         start: u32,
         modifiers: &Modifiers,
-    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
-        let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
+    ) -> ArenaBox<'a, TSExternalModuleDeclaration<'a>> {
+        let id = self.parse_literal_string();
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
         }
         let body = if self.at(Kind::LCurly) {
             // External module body (`declare module "x" {}`); `import`/`export` are allowed here.
-            let block = self.parse_ts_module_block(/* in_ts_namespace_body */ false);
-            Some(TSModuleDeclarationBody::TSModuleBlock(block))
+            Some(self.parse_ts_module_block(/* in_ts_namespace_body */ false))
         } else {
             self.asi();
             None
@@ -426,11 +429,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        TSModuleDeclaration::boxed(
+        TSExternalModuleDeclaration::boxed(
             self.end_span(start),
             id,
             body,
-            TSModuleDeclarationKind::Module,
             modifiers.contains_declare(),
             self,
         )
@@ -504,19 +506,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_module_or_namespace_declaration(
         &mut self,
         start: u32,
-        kind: TSModuleDeclarationKind,
+        kind: TSNamespaceDeclarationKind,
         modifiers: &Modifiers,
-    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
-        let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
+    ) -> ArenaBox<'a, TSNamespaceDeclaration<'a>> {
+        let id = self.parse_binding_identifier();
         let body = if self.eat(Kind::Dot) {
             let start = self.cur_start();
             let decl = self.parse_module_or_namespace_declaration(start, kind, &Modifiers::empty());
-            TSModuleDeclarationBody::TSModuleDeclaration(decl)
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(decl)
         } else {
             // Internal namespace body — validate each statement inline as it is parsed
             // (see `check_namespace_body_statement`), avoiding a second pass over the body.
             let block = self.parse_ts_module_block(/* in_ts_namespace_body */ true);
-            TSModuleDeclarationBody::TSModuleBlock(block)
+            TSNamespaceDeclarationBody::TSModuleBlock(block)
         };
         self.verify_modifiers(
             modifiers,
@@ -524,10 +526,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
-        TSModuleDeclaration::boxed(
+        TSNamespaceDeclaration::boxed(
             self.end_span(start),
             id,
-            Some(body),
+            body,
             kind,
             modifiers.contains_declare(),
             self,
@@ -658,8 +660,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start)
             }
             Kind::Module | Kind::Namespace if self.is_ts => {
-                let decl = self.parse_ts_module_declaration(start, modifiers);
-                Declaration::TSModuleDeclaration(decl)
+                self.parse_ts_module_declaration(start, modifiers)
             }
             Kind::Global if self.is_ts => {
                 let decl = self.parse_ts_global_declaration(start, modifiers);

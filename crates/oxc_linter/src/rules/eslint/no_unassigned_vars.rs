@@ -79,7 +79,9 @@ impl Rule for NoUnassignedVars {
         if ctx.nodes().ancestors(node.id()).skip(1).any(|ancestor| {
             matches!(
                 ancestor.kind(),
-                AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)
+                AstKind::TSExternalModuleDeclaration(_)
+                    | AstKind::TSNamespaceDeclaration(_)
+                    | AstKind::TSGlobalDeclaration(_)
             )
         }) {
             return;

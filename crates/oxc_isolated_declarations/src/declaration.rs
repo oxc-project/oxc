@@ -124,38 +124,52 @@ impl<'a> IsolatedDeclarations<'a> {
         TSModuleBlock::boxed(SPAN, [], stmts, self)
     }
 
-    pub(crate) fn transform_ts_module_declaration(
+    pub(crate) fn transform_ts_external_module_declaration(
         &mut self,
-        decl: &ArenaBox<'a, TSModuleDeclaration<'a>>,
-    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
+        decl: &ArenaBox<'a, TSExternalModuleDeclaration<'a>>,
+    ) -> ArenaBox<'a, TSExternalModuleDeclaration<'a>> {
         if decl.declare {
             return decl.clone_in(self.allocator());
         }
 
-        let Some(body) = &decl.body else {
+        let body = decl.body.as_ref().map(|block| self.transform_ts_module_block(block));
+        TSExternalModuleDeclaration::boxed(
+            decl.span,
+            decl.id.clone_in(self.allocator()),
+            body,
+            self.is_declare(),
+            self,
+        )
+    }
+
+    pub(crate) fn transform_ts_namespace_declaration(
+        &mut self,
+        decl: &ArenaBox<'a, TSNamespaceDeclaration<'a>>,
+    ) -> ArenaBox<'a, TSNamespaceDeclaration<'a>> {
+        if decl.declare {
             return decl.clone_in(self.allocator());
-        };
+        }
 
         // Follows https://github.com/microsoft/TypeScript/pull/54134
-        let kind = TSModuleDeclarationKind::Namespace;
-        match body {
-            TSModuleDeclarationBody::TSModuleDeclaration(inner_decl) => {
-                let inner = self.transform_ts_module_declaration(inner_decl);
-                TSModuleDeclaration::boxed(
+        let kind = TSNamespaceDeclarationKind::Namespace;
+        match &decl.body {
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner_decl) => {
+                let inner = self.transform_ts_namespace_declaration(inner_decl);
+                TSNamespaceDeclaration::boxed(
                     decl.span,
                     decl.id.clone_in(self.allocator()),
-                    Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
+                    TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner),
                     kind,
                     self.is_declare(),
                     self,
                 )
             }
-            TSModuleDeclarationBody::TSModuleBlock(block) => {
+            TSNamespaceDeclarationBody::TSModuleBlock(block) => {
                 let body = self.transform_ts_module_block(block);
-                TSModuleDeclaration::boxed(
+                TSNamespaceDeclaration::boxed(
                     decl.span,
                     decl.id.clone_in(self.allocator()),
-                    Some(TSModuleDeclarationBody::TSModuleBlock(body)),
+                    TSNamespaceDeclarationBody::TSModuleBlock(body),
                     kind,
                     self.is_declare(),
                     self,
@@ -210,16 +224,19 @@ impl<'a> IsolatedDeclarations<'a> {
                     None
                 }
             }
-            Declaration::TSModuleDeclaration(decl) => {
-                if !check_binding
-                    || matches!(
-                        &decl.id,
-                        TSModuleDeclarationName::Identifier(ident)
-                            if self.scope.has_reference(&ident.name)
-                    )
-                {
-                    Some(Declaration::TSModuleDeclaration(
-                        self.transform_ts_module_declaration(decl),
+            Declaration::TSExternalModuleDeclaration(decl) => {
+                if check_binding {
+                    None
+                } else {
+                    Some(Declaration::TSExternalModuleDeclaration(
+                        self.transform_ts_external_module_declaration(decl),
+                    ))
+                }
+            }
+            Declaration::TSNamespaceDeclaration(decl) => {
+                if !check_binding || self.scope.has_reference(&decl.id.name) {
+                    Some(Declaration::TSNamespaceDeclaration(
+                        self.transform_ts_namespace_declaration(decl),
                     ))
                 } else {
                     None

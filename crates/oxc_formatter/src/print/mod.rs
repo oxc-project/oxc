@@ -1941,7 +1941,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypePredicate<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if self.declare() {
+            write!(f, ["declare", space()]);
+        }
+
+        write!(f, ["module", space(), self.id()]);
+
+        if let Some(body) = self.body() {
+            write!(f, [space(), body]);
+        } else {
+            write!(f, OptionalSemicolon);
+        }
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNamespaceDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.declare() {
             write!(f, ["declare", space()]);
@@ -1951,29 +1967,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
 
         write!(f, [space(), self.id()]);
 
-        if let Some(body) = self.body() {
-            let mut body = body;
-            loop {
-                match body.as_ast_nodes() {
-                    AstNodes::TSModuleDeclaration(b) => {
-                        write!(f, [".", b.id()]);
-                        if let Some(b) = &b.body() {
-                            body = b;
-                        } else {
-                            break;
-                        }
-                    }
-                    AstNodes::TSModuleBlock(body) => {
-                        write!(f, [space(), body]);
-                        break;
-                    }
-                    _ => {
-                        unreachable!()
-                    }
+        let mut body = self.body();
+        loop {
+            match body.as_ast_nodes() {
+                AstNodes::TSNamespaceDeclaration(namespace) => {
+                    write!(f, [".", namespace.id()]);
+                    body = namespace.body();
+                }
+                AstNodes::TSModuleBlock(body) => {
+                    write!(f, [space(), body]);
+                    break;
+                }
+                _ => {
+                    unreachable!()
                 }
             }
-        } else {
-            write!(f, OptionalSemicolon);
         }
     }
 }

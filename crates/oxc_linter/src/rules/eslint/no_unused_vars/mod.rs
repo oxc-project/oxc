@@ -366,7 +366,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::TSModuleDeclaration(namespace) => {
+            AstKind::TSNamespaceDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }

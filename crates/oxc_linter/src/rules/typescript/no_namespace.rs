@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::TSModuleDeclarationName};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -124,16 +124,13 @@ impl Rule for NoNamespace {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
+        let AstKind::TSNamespaceDeclaration(declaration) = node.kind() else {
             return;
         };
-        if !matches!(&declaration.id, TSModuleDeclarationName::Identifier(_)) {
-            return;
-        }
 
-        // Ignore nested `TSModuleDeclaration`s
-        // e.g. the 2 inner `TSModuleDeclaration`s in `module A.B.C {}`
-        if let AstKind::TSModuleDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
+        // Ignore nested `TSNamespaceDeclaration`s
+        // e.g. the 2 inner declarations in `module A.B.C {}`
+        if let AstKind::TSNamespaceDeclaration(_) = ctx.nodes().parent_kind(node.id()) {
             return;
         }
 

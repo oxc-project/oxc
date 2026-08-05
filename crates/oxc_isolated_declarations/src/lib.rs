@@ -218,24 +218,20 @@ impl<'a> IsolatedDeclarations<'a> {
         for (idx, &stmt) in stmts.iter().enumerate() {
             match stmt {
                 match_declaration!(Statement) => {
-                    if let Statement::TSModuleDeclaration(decl) = stmt {
+                    if let Statement::TSExternalModuleDeclaration(decl) = stmt {
                         // `declare module "foo" { ... }`
                         // We need to emit it anyway
-                        if decl.id.is_string_literal() {
-                            let mut decl = decl.clone_in(self.allocator());
-                            // Remove export keyword from all statements in `declare module "xxx" { ... }`
-                            if let Some(body) =
-                                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
-                            {
-                                Self::strip_export_keyword(&mut body.body);
-                            }
-
-                            // We need to visit the module declaration to collect all references
-                            self.scope.visit_ts_module_declaration(decl.as_ref());
-
-                            transformed_stmts[idx] = Some(Statement::TSModuleDeclaration(decl));
-                            transformed_count += 1;
+                        let mut decl = decl.clone_in(self.allocator());
+                        // Remove export keyword from all statements in `declare module "xxx" { ... }`
+                        if let Some(body) = &mut decl.body {
+                            Self::strip_export_keyword(&mut body.body);
                         }
+
+                        // We need to visit the module declaration to collect all references
+                        self.scope.visit_ts_external_module_declaration(decl.as_ref());
+
+                        transformed_stmts[idx] = Some(Statement::TSExternalModuleDeclaration(decl));
+                        transformed_count += 1;
                     } else if let Statement::TSGlobalDeclaration(decl) = stmt {
                         // `declare global { ... }`
                         // We need to emit it anyway
@@ -524,14 +520,14 @@ impl<'a> IsolatedDeclarations<'a> {
 
     /// Collect exported names from a namespace declaration into `assignable_properties`.
     fn collect_namespace_properties(
-        decl: &TSModuleDeclaration<'a>,
+        decl: &TSNamespaceDeclaration<'a>,
         assignable_properties: &mut FxHashMap<&'a str, FxHashSet<Str<'a>>>,
     ) {
-        if decl.kind != TSModuleDeclarationKind::Namespace {
+        if decl.kind != TSNamespaceDeclarationKind::Namespace {
             return;
         }
-        let TSModuleDeclarationName::Identifier(ident) = &decl.id else { return };
-        let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &decl.body else { return };
+        let ident = &decl.id;
+        let TSNamespaceDeclarationBody::TSModuleBlock(block) = &decl.body else { return };
         for stmt in &block.body {
             let Statement::ExportDeclaration(decl) = stmt else { continue };
             match &decl.declaration {
@@ -595,7 +591,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                         }
                     }
-                    Declaration::TSModuleDeclaration(decl) => {
+                    Declaration::TSNamespaceDeclaration(decl) => {
                         Self::collect_namespace_properties(
                             decl,
                             &mut assignable_properties_for_namespace,
@@ -631,7 +627,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                 }
-                Statement::TSModuleDeclaration(decl) => {
+                Statement::TSNamespaceDeclaration(decl) => {
                     Self::collect_namespace_properties(
                         decl,
                         &mut assignable_properties_for_namespace,

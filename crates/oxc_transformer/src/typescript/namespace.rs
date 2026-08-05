@@ -44,7 +44,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
 
         for stmt in program.body.take_in(ctx) {
             match stmt {
-                Statement::TSModuleDeclaration(decl) => {
+                Statement::TSExternalModuleDeclaration(decl) => {
+                    if !self.allow_namespaces {
+                        ctx.state.error(namespace_not_supported(decl.span));
+                    }
+
+                    Self::handle_external(&decl, ctx);
+                    continue;
+                }
+                Statement::TSNamespaceDeclaration(decl) => {
                     if !self.allow_namespaces {
                         ctx.state.error(namespace_not_supported(decl.span));
                     }
@@ -63,19 +71,31 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
                         let declaration = &export_decl.declaration;
                         // Note: No need to check for `TSGlobalDeclaration` here, as it can't be exported
                         debug_assert!(!matches!(declaration, Declaration::TSGlobalDeclaration(_)));
-                        matches!(declaration, Declaration::TSModuleDeclaration(module_decl) if !module_decl.declare)
+                        matches!(declaration, Declaration::TSExternalModuleDeclaration(module_decl) if !module_decl.declare)
+                            || matches!(declaration, Declaration::TSNamespaceDeclaration(namespace_decl) if !namespace_decl.declare)
                     } =>
                 {
-                    let Declaration::TSModuleDeclaration(decl) = export_decl.unbox().declaration
-                    else {
-                        unreachable!()
-                    };
-
-                    if !self.allow_namespaces {
-                        ctx.state.error(namespace_not_supported(decl.span));
+                    match export_decl.unbox().declaration {
+                        Declaration::TSExternalModuleDeclaration(decl) => {
+                            if !self.allow_namespaces {
+                                ctx.state.error(namespace_not_supported(decl.span));
+                            }
+                            Self::handle_external(&decl, ctx);
+                        }
+                        Declaration::TSNamespaceDeclaration(decl) => {
+                            if !self.allow_namespaces {
+                                ctx.state.error(namespace_not_supported(decl.span));
+                            }
+                            self.handle_nested(
+                                decl,
+                                /* is_export */ true,
+                                &mut new_stmts,
+                                None,
+                                ctx,
+                            );
+                        }
+                        _ => unreachable!(),
                     }
-
-                    self.handle_nested(decl, /* is_export */ true, &mut new_stmts, None, ctx);
                     continue;
                 }
                 _ => {}
@@ -89,10 +109,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
 }
 
 impl<'a> TypeScriptNamespace {
+    fn handle_external(decl: &TSExternalModuleDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !decl.declare {
+            ctx.state.error(ambient_module_nested(decl.span));
+        }
+    }
+
     #[expect(clippy::self_only_used_in_recursion)]
     fn handle_nested(
         &self,
-        decl: ArenaBox<'a, TSModuleDeclaration<'a>>,
+        decl: ArenaBox<'a, TSNamespaceDeclaration<'a>>,
         is_export: bool,
         parent_stmts: &mut ArenaVec<'a, Statement<'a>>,
         parent_binding: Option<&BoundIdentifier<'a>>,
@@ -102,13 +128,7 @@ impl<'a> TypeScriptNamespace {
             return;
         }
 
-        // Skip empty declaration e.g. `namespace x;`
-        let TSModuleDeclaration { span, id, body, scope_id, .. } = decl.unbox();
-
-        let TSModuleDeclarationName::Identifier(ident) = id else {
-            ctx.state.error(ambient_module_nested(span));
-            return;
-        };
+        let TSNamespaceDeclaration { span, id: ident, body, scope_id, .. } = decl.unbox();
 
         // Return early if this declaration is empty or only contains type declarations —
         // it emits no JS.
@@ -155,13 +175,9 @@ impl<'a> TypeScriptNamespace {
             }
         }
 
-        let Some(body) = body else {
-            return;
-        };
-
         let binding = BoundIdentifier::from_binding_ident(&ident);
 
-        // Reuse `TSModuleDeclaration`'s scope in transformed function
+        // Reuse `TSNamespaceDeclaration`'s scope in transformed function
         let scope_id = scope_id.get().unwrap();
         let uid_binding =
             ctx.generate_uid(&binding.name, scope_id, SymbolFlags::FunctionScopedVariable);
@@ -170,7 +186,7 @@ impl<'a> TypeScriptNamespace {
         let namespace_top_level;
 
         match body {
-            TSModuleDeclarationBody::TSModuleBlock(block) => {
+            TSNamespaceDeclarationBody::TSModuleBlock(block) => {
                 let block = block.unbox();
                 directives = block.directives;
                 namespace_top_level = block.body;
@@ -179,8 +195,8 @@ impl<'a> TypeScriptNamespace {
             //   namespace X {
             //     export namespace Y {}
             //   }
-            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => {
-                let declaration = Declaration::TSModuleDeclaration(declaration);
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(declaration) => {
+                let declaration = Declaration::TSNamespaceDeclaration(declaration);
                 let export_decl = ExportDeclaration::boxed(SPAN, declaration, ctx);
                 let stmt = Statement::ExportDeclaration(export_decl);
                 directives = ArenaVec::new_in(ctx);
@@ -192,13 +208,16 @@ impl<'a> TypeScriptNamespace {
 
         for stmt in namespace_top_level {
             match stmt {
-                Statement::TSModuleDeclaration(decl) => {
+                Statement::TSExternalModuleDeclaration(decl) => {
+                    Self::handle_external(&decl, ctx);
+                }
+                Statement::TSNamespaceDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                 }
                 Statement::TSGlobalDeclaration(_) => {
                     // Remove it.
-                    // Note: It is legal to have a `TSGlobalDeclaration` nested within a `TSModuleDeclaration`,
-                    // where identifier is a string literal: `declare module 'foo' { global {} }`
+                    // Note: It is legal to have a `TSGlobalDeclaration` nested within an external
+                    // module: `declare module 'foo' { global {} }`.
                 }
                 Statement::ExportDeclaration(export_decl) => {
                     let decl = export_decl.unbox().declaration;
@@ -244,7 +263,10 @@ impl<'a> TypeScriptNamespace {
                                 Self::handle_variable_declaration(var_decl, &uid_binding, ctx);
                             new_stmts.extend(stmts);
                         }
-                        Declaration::TSModuleDeclaration(module_decl) => {
+                        Declaration::TSExternalModuleDeclaration(module_decl) => {
+                            Self::handle_external(&module_decl, ctx);
+                        }
+                        Declaration::TSNamespaceDeclaration(module_decl) => {
                             self.handle_nested(
                                 module_decl,
                                 /* is_export */
@@ -537,9 +559,15 @@ impl<'a> TypeScriptNamespace {
 /// Check if the statements contain a namespace declaration
 fn has_namespace(stmts: &[Statement]) -> bool {
     stmts.iter().any(|stmt| match stmt {
-        Statement::TSModuleDeclaration(_) | Statement::TSGlobalDeclaration(_) => true,
+        Statement::TSExternalModuleDeclaration(_)
+        | Statement::TSNamespaceDeclaration(_)
+        | Statement::TSGlobalDeclaration(_) => true,
         Statement::ExportDeclaration(decl) => {
-            matches!(decl.declaration, Declaration::TSModuleDeclaration(_))
+            matches!(
+                decl.declaration,
+                Declaration::TSExternalModuleDeclaration(_)
+                    | Declaration::TSNamespaceDeclaration(_)
+            )
         }
         _ => false,
     })

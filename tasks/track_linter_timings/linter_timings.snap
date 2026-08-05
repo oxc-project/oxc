@@ -501,7 +501,7 @@ typescript/no-import-type-side-effects                     |     99
 typescript/no-inferrable-types                             |  55071
 typescript/no-invalid-void-type                            |    731
 typescript/no-misused-new                                  |    636
-typescript/no-namespace                                    |      6
+typescript/no-namespace                                    |      5
 typescript/no-non-null-asserted-nullish-coalescing         |   7341
 typescript/no-non-null-asserted-optional-chain             |    577
 typescript/no-non-null-assertion                           |    577
@@ -520,7 +520,7 @@ typescript/prefer-enum-initializers                        |     23
 typescript/prefer-for-of                                   |    557
 typescript/prefer-function-type                            |  14798
 typescript/prefer-literal-enum-member                      |    196
-typescript/prefer-namespace-keyword                        |      6
+typescript/prefer-namespace-keyword                        |      5
 typescript/prefer-ts-expect-error                          |      4
 typescript/triple-slash-reference                          |      4
 typescript/unified-signatures                              |   1116
