@@ -501,13 +501,13 @@ fn report_split(
         ctx.diagnostic(diagnostic);
         return;
     }
-    ctx.diagnostic_with_fix(diagnostic, |_fixer| {
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let source = ctx.source_text();
         let keyword = declaration.kind.as_str();
         let exported =
             matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExportNamedDeclaration(_));
         let prefix = if exported { format!("export {keyword} ") } else { format!("{keyword} ") };
-        let mut fixes = Vec::with_capacity((declaration.declarations.len() - 1) * 2);
+        let mut fixes = fixer.new_fix_with_capacity((declaration.declarations.len() - 1) * 2);
         for pair in declaration.declarations.windows(2) {
             let left = &pair[0];
             let right = &pair[1];
@@ -519,7 +519,7 @@ fn report_split(
                 fixes.push(Fix::new(prefix.clone(), Span::empty(right.span.start)));
             }
         }
-        fixes.into_iter().collect::<RuleFix>().with_message("Split variable declarations")
+        fixes.with_message("Split variable declarations")
     });
 }
 
