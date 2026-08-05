@@ -59,7 +59,6 @@ impl Default for OneVarConfig {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct OneVar(OneVarConfig);
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
