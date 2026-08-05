@@ -779,8 +779,7 @@ impl ContentEq for VariableDeclarationKind {
 
 impl ContentEq for VariableDeclarator<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.kind, &other.kind)
-            && ContentEq::content_eq(&self.id, &other.id)
+        ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.init, &other.init)
             && ContentEq::content_eq(&self.definite, &other.definite)

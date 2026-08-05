@@ -11,7 +11,7 @@ use oxc_syntax::node::NodeId;
 use oxc_syntax::symbol::SymbolId;
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
 const PATH_MODULES: [&str; 2] = ["path", "node:path"];
 const URL_MODULES: [&str; 2] = ["url", "node:url"];
@@ -329,7 +329,7 @@ fn check_variable_declarator(
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    if !variable_declarator.kind.is_const() {
+    if !variable_declaration_kind(variable_declarator, ctx).is_const() {
         return false;
     }
 
@@ -392,7 +392,9 @@ fn iterate_problems_from_filename(
     }
 
     let AstKind::VariableDeclarator(parent) = ctx.nodes().kind(parent_id) else { return };
-    if !parent.kind.is_const() || parent.init.as_ref().is_none_or(|init| init.span() != node_span) {
+    if !variable_declaration_kind(parent, ctx).is_const()
+        || parent.init.as_ref().is_none_or(|init| init.span() != node_span)
+    {
         return;
     }
 

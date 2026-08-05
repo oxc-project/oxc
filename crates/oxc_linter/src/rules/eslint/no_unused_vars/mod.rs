@@ -302,7 +302,7 @@ impl NoUnusedVars {
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if self.is_allowed_variable_declaration(symbol, decl) {
+                if self.is_allowed_variable_declaration(symbol, decl, ctx) {
                     return;
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {

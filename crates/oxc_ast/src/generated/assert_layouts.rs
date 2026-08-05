@@ -412,13 +412,12 @@ const _: () = {
     assert!(size_of::<VariableDeclarationKind>() == 1);
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<VariableDeclarator>() == 56);
     assert!(align_of::<VariableDeclarator>() == 8);
     assert!(offset_of!(VariableDeclarator, span) == 0);
     assert!(offset_of!(VariableDeclarator, node_id) == 8);
-    assert!(offset_of!(VariableDeclarator, kind) == 12);
-    assert!(offset_of!(VariableDeclarator, definite) == 13);
+    assert!(offset_of!(VariableDeclarator, definite) == 12);
     assert!(offset_of!(VariableDeclarator, id) == 16);
     assert!(offset_of!(VariableDeclarator, type_annotation) == 32);
     assert!(offset_of!(VariableDeclarator, init) == 40);
@@ -2250,13 +2249,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<VariableDeclarationKind>() == 1);
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<VariableDeclarator>() == 36);
     assert!(align_of::<VariableDeclarator>() == 4);
     assert!(offset_of!(VariableDeclarator, span) == 0);
     assert!(offset_of!(VariableDeclarator, node_id) == 8);
-    assert!(offset_of!(VariableDeclarator, kind) == 12);
-    assert!(offset_of!(VariableDeclarator, definite) == 13);
+    assert!(offset_of!(VariableDeclarator, definite) == 12);
     assert!(offset_of!(VariableDeclarator, id) == 16);
     assert!(offset_of!(VariableDeclarator, type_annotation) == 24);
     assert!(offset_of!(VariableDeclarator, init) == 28);

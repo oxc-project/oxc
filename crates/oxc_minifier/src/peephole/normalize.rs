@@ -289,9 +289,6 @@ impl<'a> Normalize {
             if all_declarations_are_only_read {
                 // mark all declarations as `let`
                 decl.kind = VariableDeclarationKind::Let;
-                for decl in &mut decl.declarations {
-                    decl.kind = VariableDeclarationKind::Let;
-                }
             }
         }
     }

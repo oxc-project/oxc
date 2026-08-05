@@ -254,11 +254,11 @@ impl<'a> TypeScriptNamespace {
                             }
                         }
                         Declaration::VariableDeclaration(var_decl) => {
-                            var_decl.declarations.iter().for_each(|decl| {
-                                if !decl.kind.is_const() {
+                            if !var_decl.kind.is_const() {
+                                var_decl.declarations.iter().for_each(|decl| {
                                     ctx.state.error(namespace_exporting_non_const(decl.span));
-                                }
-                            });
+                                });
+                            }
                             let stmts =
                                 Self::handle_variable_declaration(var_decl, &uid_binding, ctx);
                             new_stmts.extend(stmts);
@@ -338,7 +338,7 @@ impl<'a> TypeScriptNamespace {
         let kind = VariableDeclarationKind::Let;
         let decl = {
             let pattern = binding.create_spanned_binding_pattern(binding_span, ctx);
-            VariableDeclarator::new(span, kind, pattern, None, None, false, ctx)
+            VariableDeclarator::new(span, pattern, None, None, false, ctx)
         };
         Declaration::new_variable_declaration(span, kind, [decl], false, ctx)
     }

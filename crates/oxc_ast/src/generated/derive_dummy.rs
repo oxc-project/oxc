@@ -767,7 +767,6 @@ impl<'a> Dummy<'a> for VariableDeclarator<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            kind: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             init: Dummy::dummy(allocator),

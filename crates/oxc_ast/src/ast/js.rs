@@ -1216,8 +1216,6 @@ pub enum VariableDeclarationKind {
 pub struct VariableDeclarator<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(skip)]
-    pub kind: VariableDeclarationKind,
     #[estree(via = VariableDeclaratorId)]
     pub id: BindingPattern<'a>,
     #[ts]

@@ -1493,7 +1493,7 @@ function deserializeVariableDeclarator(pos) {
       type: "VariableDeclarator",
       id: null,
       init: null,
-      definite: deserializeBool(pos + 13),
+      definite: deserializeBool(pos + 12),
       start: (start = deserializeI32(pos)),
       end: (end = deserializeI32(pos + 4)),
       range: [start, end],

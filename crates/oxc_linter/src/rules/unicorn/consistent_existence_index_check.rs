@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentExistenceIndexCheck;
@@ -97,7 +97,9 @@ impl Rule for ConsistentExistenceIndexCheck {
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
-            if variables_declarator.kind != VariableDeclarationKind::Const {
+            if variable_declaration_kind(variables_declarator, ctx)
+                != VariableDeclarationKind::Const
+            {
                 return;
             }
 

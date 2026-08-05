@@ -59,14 +59,14 @@ impl Rule for NoUnassignedVars {
         let AstKind::VariableDeclarator(declarator) = node.kind() else {
             return;
         };
-        if declarator.init.is_some() || declarator.kind.is_const() {
+        if declarator.init.is_some() {
             return;
         }
         let parent_node = ctx.nodes().parent_node(node.id());
         let AstKind::VariableDeclaration(parent) = parent_node.kind() else {
             return;
         };
-        if parent.declare {
+        if parent.kind.is_const() || parent.declare {
             return;
         }
         let grand_parent = ctx.nodes().parent_node(parent_node.id());

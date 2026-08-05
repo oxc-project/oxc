@@ -348,7 +348,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
 
                         if let Some(new_declarator) =
-                            self.transform_variable_declarator(declarator, true)
+                            self.transform_variable_declarator(declarator, declaration.kind, true)
                         {
                             self.scope.visit_variable_declarator(&new_declarator);
                             transformed_variable_declarator.insert(declarator.span, new_declarator);

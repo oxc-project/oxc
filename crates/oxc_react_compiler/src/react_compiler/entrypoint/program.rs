@@ -2261,7 +2261,6 @@ fn ox_build_gated_const_decl<'a>(
 ) -> Statement<'a> {
     let declarator = VariableDeclarator::new(
         SPAN,
-        VariableDeclarationKind::Const,
         BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
         None,
         Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
@@ -2806,15 +2805,8 @@ fn ox_add_imports_to_program<'a>(
                 false,
                 ast,
             );
-            let declarator = VariableDeclarator::new(
-                SPAN,
-                VariableDeclarationKind::Const,
-                object_pattern,
-                None,
-                Some(require_call),
-                false,
-                ast,
-            );
+            let declarator =
+                VariableDeclarator::new(SPAN, object_pattern, None, Some(require_call), false, ast);
             let decl = VariableDeclaration::boxed(
                 SPAN,
                 VariableDeclarationKind::Const,

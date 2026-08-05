@@ -5211,7 +5211,6 @@ impl<'a, 't> GetAddress for VariableDeclarationWithoutDeclarations<'a, 't> {
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_NODE_ID: usize =
     offset_of!(VariableDeclarator, node_id);
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_SPAN: usize = offset_of!(VariableDeclarator, span);
-pub(crate) const OFFSET_VARIABLE_DECLARATOR_KIND: usize = offset_of!(VariableDeclarator, kind);
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_ID: usize = offset_of!(VariableDeclarator, id);
 pub(crate) const OFFSET_VARIABLE_DECLARATOR_TYPE_ANNOTATION: usize =
     offset_of!(VariableDeclarator, type_annotation);
@@ -5237,14 +5236,6 @@ impl<'a, 't> VariableDeclaratorWithoutId<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t VariableDeclarationKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_KIND)
-                as *const VariableDeclarationKind)
-        }
     }
 
     #[inline]
@@ -5297,14 +5288,6 @@ impl<'a, 't> VariableDeclaratorWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn kind(self) -> &'t VariableDeclarationKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_KIND)
-                as *const VariableDeclarationKind)
-        }
-    }
-
-    #[inline]
     pub fn id(self) -> &'t BindingPattern<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_ID)
@@ -5351,14 +5334,6 @@ impl<'a, 't> VariableDeclaratorWithoutInit<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn kind(self) -> &'t VariableDeclarationKind {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATOR_KIND)
-                as *const VariableDeclarationKind)
-        }
     }
 
     #[inline]

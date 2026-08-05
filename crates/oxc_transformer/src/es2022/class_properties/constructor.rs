@@ -341,7 +341,6 @@ impl<'a> ClassProperties<'a> {
             VariableDeclarationKind::Var,
             [VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 super_binding.create_binding_pattern(ctx),
                 None,
                 Some(super_func),

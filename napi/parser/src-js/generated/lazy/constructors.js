@@ -3000,7 +3000,7 @@ export class VariableDeclarator {
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 12, internal.ast);
   }
 
   toJSON() {

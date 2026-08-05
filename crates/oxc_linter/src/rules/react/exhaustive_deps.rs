@@ -31,6 +31,7 @@ use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     ast_util::{
         get_declaration_from_reference_id, get_declaration_of_variable, get_enclosing_function,
     },
@@ -1130,7 +1131,7 @@ fn is_stable_value<'a, 'b>(
             }
 
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
-            if declaration.kind == VariableDeclarationKind::Const
+            if variable_declaration_kind(declaration, ctx) == VariableDeclarationKind::Const
                 && (matches!(
                     init.get_inner_expression(),
                     Expression::BooleanLiteral(_)

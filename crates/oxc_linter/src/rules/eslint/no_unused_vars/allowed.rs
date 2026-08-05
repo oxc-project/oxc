@@ -5,7 +5,8 @@ use oxc_semantic::{NodeId, Semantic};
 
 use super::{NoUnusedVars, Symbol, options::ArgsOption};
 use crate::{
-    ModuleRecord,
+    LintContext, ModuleRecord,
+    ast_util::variable_declaration_kind,
     rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding},
 };
 
@@ -165,8 +166,10 @@ impl NoUnusedVars {
         &self,
         symbol: &Symbol<'_, 'a>,
         decl: &VariableDeclarator<'a>,
+        ctx: &LintContext<'a>,
     ) -> bool {
-        if decl.kind.is_var() && self.vars.is_local() && symbol.is_root() {
+        if variable_declaration_kind(decl, ctx).is_var() && self.vars.is_local() && symbol.is_root()
+        {
             return true;
         }
 
@@ -175,7 +178,7 @@ impl NoUnusedVars {
             return true;
         }
 
-        if self.ignore_using_declarations && decl.kind.is_using() {
+        if self.ignore_using_declarations && variable_declaration_kind(decl, ctx).is_using() {
             return true;
         }
 

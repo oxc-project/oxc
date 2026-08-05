@@ -17,12 +17,13 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let is_declare = matches!(
-            builder.ancestry().parent_kind(),
-            AstKind::VariableDeclaration(decl) if decl.declare
-        );
+        let AstKind::VariableDeclaration(declaration) = builder.ancestry().parent_kind() else {
+            unreachable!();
+        };
+        let kind = declaration.kind;
+        let is_declare = declaration.declare;
 
-        let (mut includes, excludes) = match self.kind {
+        let (mut includes, excludes) = match kind {
             VariableDeclarationKind::Const
             | VariableDeclarationKind::Using
             | VariableDeclarationKind::AwaitUsing => (
@@ -41,7 +42,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             includes |= SymbolFlags::Ambient;
         }
 
-        if self.kind.is_lexical() {
+        if kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
                 let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));

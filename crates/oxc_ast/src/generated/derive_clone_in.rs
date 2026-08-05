@@ -1570,7 +1570,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclarator<'_> {
         VariableDeclarator {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
             type_annotation: CloneIn::clone_in_impl(
                 &self.type_annotation,

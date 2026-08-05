@@ -3327,11 +3327,6 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     }
 
     #[inline]
-    pub fn kind(&self) -> VariableDeclarationKind {
-        self.inner.kind
-    }
-
-    #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingPattern<'a>> {
         let following_span_start = self
             .inner

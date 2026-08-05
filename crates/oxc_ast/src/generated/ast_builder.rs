@@ -10008,7 +10008,6 @@ impl<'a> VariableDeclarator<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `id`
     /// * `type_annotation`
     /// * `init`
@@ -10016,7 +10015,6 @@ impl<'a> VariableDeclarator<'a> {
     #[inline]
     pub fn new(
         span: Span,
-        kind: VariableDeclarationKind,
         id: BindingPattern<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         init: Option<Expression<'a>>,
@@ -10027,7 +10025,6 @@ impl<'a> VariableDeclarator<'a> {
         VariableDeclarator {
             node_id: Cell::new(builder.node_id()),
             span,
-            kind,
             id,
             type_annotation,
             init,

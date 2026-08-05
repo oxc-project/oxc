@@ -22,6 +22,18 @@ use crate::{
     utils::{get_function_nearest_jsdoc_node, is_regexp_callee},
 };
 
+/// Get the declaration kind for a variable declarator from its parent declaration.
+pub fn variable_declaration_kind(
+    declarator: &VariableDeclarator<'_>,
+    ctx: &LintContext<'_>,
+) -> VariableDeclarationKind {
+    let AstKind::VariableDeclaration(declaration) = ctx.nodes().parent_kind(declarator.node_id())
+    else {
+        unreachable!();
+    };
+    declaration.kind
+}
+
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
 /// 1. Literal booleans (`true` or `false`)
