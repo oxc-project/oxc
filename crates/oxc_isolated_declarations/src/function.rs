@@ -88,6 +88,8 @@ impl<'a> IsolatedDeclarations<'a> {
                     // we need to add undefined to it's type
                     if is_remaining_params_have_required || (param.optional && param.has_modifier())
                     {
+                        // `is_maybe_undefined` includes `any`, but declaration emit must
+                        // preserve an explicit `| undefined` for a defaulted `any` parameter.
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if matches!(ts_type, TSType::TSAnyKeyword(_))
