@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
@@ -32,31 +34,33 @@ impl DiagnosticReporter for JUnitReporter {
 }
 
 fn format_junit(diagnostics: &[Error]) -> String {
-    let mut grouped: FxHashMap<String, Vec<&Error>> = FxHashMap::default();
+    // `Info::new` scans the source to resolve the span, so build it exactly once per
+    // diagnostic and group by index rather than re-deriving it inside the render loop.
+    let infos: Vec<Info> = diagnostics.iter().map(Info::new).collect();
 
-    for diagnostic in diagnostics {
-        let info = Info::new(diagnostic);
-        grouped.entry(info.filename).or_default().push(diagnostic);
+    let mut grouped: FxHashMap<&str, Vec<usize>> = FxHashMap::default();
+    for (index, info) in infos.iter().enumerate() {
+        grouped.entry(info.filename.as_str()).or_default().push(index);
     }
 
-    let mut filenames: Vec<_> = grouped.keys().cloned().collect();
-    filenames.sort();
+    let mut filenames: Vec<&str> = grouped.keys().copied().collect();
+    filenames.sort_unstable();
 
     let mut total_errors = 0;
     let mut total_warnings = 0;
-    let mut test_suites = Vec::new();
+    let mut test_suites = String::new();
 
-    for filename in filenames {
-        let diagnostics = grouped.get(&filename).expect("filename collected from map");
+    for (suite_index, filename) in filenames.iter().enumerate() {
+        let indices = grouped.get(filename).expect("filename collected from map");
         let mut test_cases = String::new();
         let mut error = 0;
         let mut warning = 0;
 
-        for diagnostic in diagnostics {
-            let rule = diagnostic.code().map_or_else(String::new, |code| code.to_string());
-            let Info { message, start, .. } = Info::new(diagnostic);
+        for &index in indices {
+            let Info { message, start, rule_id, .. } = &infos[index];
+            let rule = rule_id.as_deref().unwrap_or("");
 
-            let severity = if diagnostic.severity() == Some(Severity::Error) {
+            let severity = if diagnostics[index].severity() == Some(Severity::Error) {
                 total_errors += 1;
                 error += 1;
                 "error"
@@ -65,38 +69,29 @@ fn format_junit(diagnostics: &[Error]) -> String {
                 warning += 1;
                 "failure"
             };
-            let description =
-                format!("line {}, column {}, {}", start.line, start.column, xml_escape(&message));
+            let escaped_message = xml_escape(message);
 
-            let status = format!(
-                "            <{} message=\"{}\">{}</{}>",
-                severity,
-                xml_escape(&message),
-                description,
-                severity
+            let _ = write!(
+                test_cases,
+                "\n        <testcase name=\"{rule}\">\n            <{severity} message=\"{escaped_message}\">line {}, column {}, {escaped_message}</{severity}>\n        </testcase>",
+                start.line, start.column,
             );
-            let test_case =
-                format!("\n        <testcase name=\"{rule}\">\n{status}\n        </testcase>");
-            test_cases.push_str(&test_case);
         }
-        test_suites.push(format!(
-            "    <testsuite name=\"{}\" tests=\"{}\" disabled=\"0\" errors=\"{}\" failures=\"{}\">{}\n    </testsuite>",
-            filename,
-            diagnostics.len(),
-            error,
-            warning,
-            test_cases
-        ));
-    }
-    let test_suites = format!(
-        "<testsuites name=\"Oxlint\" tests=\"{}\" failures=\"{}\" errors=\"{}\">\n{}\n</testsuites>\n",
-        total_errors + total_warnings,
-        total_warnings,
-        total_errors,
-        test_suites.join("\n")
-    );
 
-    format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{test_suites}")
+        if suite_index > 0 {
+            test_suites.push('\n');
+        }
+        let _ = write!(
+            test_suites,
+            "    <testsuite name=\"{filename}\" tests=\"{}\" disabled=\"0\" errors=\"{error}\" failures=\"{warning}\">{test_cases}\n    </testsuite>",
+            indices.len(),
+        );
+    }
+
+    format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuites name=\"Oxlint\" tests=\"{}\" failures=\"{total_warnings}\" errors=\"{total_errors}\">\n{test_suites}\n</testsuites>\n",
+        total_errors + total_warnings,
+    )
 }
 
 #[cfg(test)]
