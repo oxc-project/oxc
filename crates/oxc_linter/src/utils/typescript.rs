@@ -117,7 +117,8 @@ pub enum NameSpecifier {
 /// including `global {}` nested inside ambient modules or namespaces.
 pub fn has_ambient_typescript_ancestor(node_id: NodeId, nodes: &AstNodes) -> bool {
     nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
-        AstKind::TSModuleDeclaration(module) => module.declare,
+        AstKind::TSExternalModuleDeclaration(module) => module.declare,
+        AstKind::TSNamespaceDeclaration(namespace) => namespace.declare,
         // `TSGlobalDeclaration`s are only valid inside ambient declarations, hence
         // we do not need to check `declare` as it only tracks an explicit `declare global`.
         AstKind::TSGlobalDeclaration(_) => true,

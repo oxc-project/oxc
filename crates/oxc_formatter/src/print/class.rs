@@ -204,7 +204,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
             f,
             [
                 "[",
-                self.parameter(),
+                group(&soft_block_indent(self.parameter())),
                 "]",
                 self.type_annotation(),
                 is_class.then_some(OptionalSemicolon)

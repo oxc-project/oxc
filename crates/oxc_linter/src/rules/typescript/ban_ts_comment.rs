@@ -302,15 +302,11 @@ impl BanTsComment {
 pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, &str)> {
     let prefix = "@ts-";
 
-    let mut last_line_start = None;
-    let mut char_indices = raw.char_indices().peekable();
-    while let Some((_, c)) = char_indices.next() {
-        if c == '\n' {
-            last_line_start = char_indices.peek().map(|(i, _)| *i);
-        }
+    if !raw.contains(prefix) {
+        return None;
     }
 
-    let multi_len = last_line_start.unwrap_or(0);
+    let multi_len = if single_line { 0 } else { raw.rfind('\n').map_or(0, |i| i + 1) };
     let line = &raw[multi_len..];
 
     // Check the content before the prefix

@@ -1,0 +1,80 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// issue #25286 (sibling): the mapped type key gets its own bracket group,
+// so an overlong key breaks after `[` instead of overflowing printWidth
+type A = {
+  [KeyNameHere in keyof SomeVeryLongGenericTypeNameHere as Uppercase<KeyNameHere & string>]: X;
+};
+type B = {
+  +readonly [VeryLongKeyName in keyof SomeExtremelyLongSourceTypeNameGoesHere]-?: SomeValue;
+};
+type C = { [K in keyof T]: T[K] };
+
+==================== Output ====================
+----------------------------------------
+{ bracketSpacing: true, printWidth: 80 }
+----------------------------------------
+// issue #25286 (sibling): the mapped type key gets its own bracket group,
+// so an overlong key breaks after `[` instead of overflowing printWidth
+type A = {
+  [
+    KeyNameHere in keyof SomeVeryLongGenericTypeNameHere as Uppercase<
+      KeyNameHere & string
+    >
+  ]: X;
+};
+type B = {
+  +readonly [
+    VeryLongKeyName in keyof SomeExtremelyLongSourceTypeNameGoesHere
+  ]-?: SomeValue;
+};
+type C = { [K in keyof T]: T[K] };
+
+-----------------------------------------
+{ bracketSpacing: true, printWidth: 100 }
+-----------------------------------------
+// issue #25286 (sibling): the mapped type key gets its own bracket group,
+// so an overlong key breaks after `[` instead of overflowing printWidth
+type A = {
+  [KeyNameHere in keyof SomeVeryLongGenericTypeNameHere as Uppercase<KeyNameHere & string>]: X;
+};
+type B = {
+  +readonly [VeryLongKeyName in keyof SomeExtremelyLongSourceTypeNameGoesHere]-?: SomeValue;
+};
+type C = { [K in keyof T]: T[K] };
+
+-----------------------------------------
+{ bracketSpacing: false, printWidth: 80 }
+-----------------------------------------
+// issue #25286 (sibling): the mapped type key gets its own bracket group,
+// so an overlong key breaks after `[` instead of overflowing printWidth
+type A = {
+  [
+    KeyNameHere in keyof SomeVeryLongGenericTypeNameHere as Uppercase<
+      KeyNameHere & string
+    >
+  ]: X;
+};
+type B = {
+  +readonly [
+    VeryLongKeyName in keyof SomeExtremelyLongSourceTypeNameGoesHere
+  ]-?: SomeValue;
+};
+type C = {[K in keyof T]: T[K]};
+
+------------------------------------------
+{ bracketSpacing: false, printWidth: 100 }
+------------------------------------------
+// issue #25286 (sibling): the mapped type key gets its own bracket group,
+// so an overlong key breaks after `[` instead of overflowing printWidth
+type A = {
+  [KeyNameHere in keyof SomeVeryLongGenericTypeNameHere as Uppercase<KeyNameHere & string>]: X;
+};
+type B = {
+  +readonly [VeryLongKeyName in keyof SomeExtremelyLongSourceTypeNameGoesHere]-?: SomeValue;
+};
+type C = {[K in keyof T]: T[K]};
+
+===================== End =====================

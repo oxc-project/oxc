@@ -139,16 +139,15 @@ impl JsonReporter {
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-json>
 fn format_json(diagnostics: &mut Vec<Error>) -> String {
     let handler = JSONReportHandler::new();
-    let messages = diagnostics
-        .drain(..)
-        .map(|error| {
-            let mut output = String::new();
-            handler.render_report(&mut output, error.as_ref()).unwrap();
-            output
-        })
-        .collect::<Vec<_>>()
-        .join(",\n");
-    format!("[{messages}]")
+    let mut output = String::from("[");
+    for (index, error) in diagnostics.drain(..).enumerate() {
+        if index > 0 {
+            output.push_str(",\n");
+        }
+        handler.render_report(&mut output, error.as_ref()).unwrap();
+    }
+    output.push(']');
+    output
 }
 
 #[cfg(test)]

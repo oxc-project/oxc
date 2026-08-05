@@ -424,11 +424,11 @@ impl<'a> TakeIn<'a> for TSTypePredicate<'a> {}
 
 impl<'a> TakeIn<'a> for TSTypePredicateName<'a> {}
 
-impl<'a> TakeIn<'a> for TSModuleDeclaration<'a> {}
+impl<'a> TakeIn<'a> for TSExternalModuleDeclaration<'a> {}
 
-impl<'a> TakeIn<'a> for TSModuleDeclarationName<'a> {}
+impl<'a> TakeIn<'a> for TSNamespaceDeclaration<'a> {}
 
-impl<'a> TakeIn<'a> for TSModuleDeclarationBody<'a> {}
+impl<'a> TakeIn<'a> for TSNamespaceDeclarationBody<'a> {}
 
 impl<'a> TakeIn<'a> for TSGlobalDeclaration<'a> {}
 

@@ -292,7 +292,9 @@ impl<'a> VisitJs<'a> for ContextIdentifierVisitor<'a> {
 
     fn visit_ts_enum_declaration(&mut self, _it: &TSEnumDeclaration<'a>) {}
 
-    fn visit_ts_module_declaration(&mut self, _it: &TSModuleDeclaration<'a>) {}
+    fn visit_ts_external_module_declaration(&mut self, _it: &TSExternalModuleDeclaration<'a>) {}
+
+    fn visit_ts_namespace_declaration(&mut self, _it: &TSNamespaceDeclaration<'a>) {}
 }
 
 impl<'a> ContextIdentifierVisitor<'a> {

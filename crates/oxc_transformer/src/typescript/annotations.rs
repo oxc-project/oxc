@@ -518,10 +518,11 @@ impl<'a> TypeScriptAnnotations<'a> {
     #[inline]
     fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match decl {
-            // Remove type aliases, interfaces, and `declare global {}`
+            // Remove type aliases, interfaces, global declarations, and external modules.
             Declaration::TSTypeAliasDeclaration(_)
             | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => false,
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::TSExternalModuleDeclaration(_) => false,
             // Remove `declare var/let/const`
             Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
             // Remove `declare function` and function overload signatures (no body)
@@ -530,16 +531,15 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
             // Remove `declare class`
             Declaration::ClassDeclaration(class_decl) => !class_decl.declare,
-            // Remove `declare module` or uninstantiated namespace declarations.
+            // Remove declared or uninstantiated namespace declarations.
             // Keep instantiated `module` declarations — they have runtime
             // representation and need to be transformed.
-            Declaration::TSModuleDeclaration(module_decl) => {
-                !module_decl.declare
-                    && !matches!(
-                        &module_decl.id,
-                        TSModuleDeclarationName::Identifier(ident)
-                            if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
-                    )
+            Declaration::TSNamespaceDeclaration(namespace_decl) => {
+                !namespace_decl.declare
+                    && !ctx
+                        .scoping()
+                        .symbol_flags(namespace_decl.id.symbol_id())
+                        .is_namespace_module()
             }
             // Remove `declare enum`
             Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
