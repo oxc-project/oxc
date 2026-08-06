@@ -122,6 +122,10 @@ Import discipline (convention): `spec/` only imports `std`, `cow-utils`, etc.
 A pure predicate over text shared by design (e.g. `is_suppression_marker`: all formatters honor the same ignore directives) is a desired contract and belongs here.
 Unlike option types like `QuoteStyle`, where sharing would encode a coincidental contract that breaks when languages diverge.
 
+`spec/front_matter.rs` shows the same line from the envelope side:
+core owns pure detection (`parse_front_matter`, a Prettier `front-matter/parse.js` port) and byte-preserving blanking only.
+What the header language MEANS and how the block composes into output stay host policy, Astro's leading `---` is a JS component script, not YAML, so a central "every `---` is YAML" rule can never exist here.
+
 Parameterizing language differences (sharpened gate 2), when a shared helper needs to vary per language:
 
 - a value / classifier / data parameter keeps it in core (core asserts nothing)

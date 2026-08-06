@@ -3,9 +3,10 @@ use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Sty
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, InputKind,
-    VecBuffer,
+    Buffer, BufferExtensions, DispatchOutcome, DispatchRequest, Document, EmbeddedIr, Format,
+    FormatElement, FormatSession, FormatState, Formatted, InputKind, VecBuffer,
     builders::{empty_line, hard_line_break, text},
+    spec::{FrontMatter, blank_front_matter, parse_front_matter},
     write,
 };
 use oxc_span::Span;
@@ -27,9 +28,8 @@ pub type TailwindSorter<'s> = &'s dyn Fn(Vec<String>) -> Vec<String>;
 
 /// Parse `source_text` as a stylesheet and build its formatter IR.
 ///
-/// `sort_tailwind_classes` sorts the `@apply` classes collected when
-/// [`CssFormatOptions::sort_tailwindcss`] is on; `None` (or an unset option)
-/// prints them as-is.
+/// `sort_tailwind_classes` sorts the `@apply` classes collected
+/// when [`CssFormatOptions::sort_tailwindcss`] is on; `None` (or an unset option) prints them as-is.
 ///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error, including recoverable ones.
@@ -41,9 +41,9 @@ pub fn format<'a>(
     options: CssFormatOptions,
     sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
-    // NOTE: this wrapper labels the run `PhysicalFile`, so front-matter support may land on this entry.
-    // Every embedded caller (css-in-js, JSDoc fences) reaches the crate through `format_to_ir` as a `Fragment` instead,
-    // and fence content starting with `---` never acquires file envelope semantics.
+    // NOTE: this wrapper labels the run `PhysicalFile` with NO dispatcher:
+    // front matter is detected but its body degrades to verbatim (`PreserveOriginal`).
+    // Hosts that want the block formatted use `format_with_session` with a dispatcher.
     format_with_session(
         &FormatSession::new(allocator, InputKind::PhysicalFile, None),
         source_text,
@@ -52,9 +52,11 @@ pub fn format<'a>(
     )
 }
 
-/// Like [`format()`], but on a caller-supplied [`FormatSession`]:
-/// the root that lets this formatter dispatch its own embedded languages
-/// (front matter YAML, once wired) through the session's dispatcher.
+/// Like [`format()`], but on a caller-supplied [`FormatSession`].
+///
+/// The session's dispatcher formats this document's front matter body
+/// (YAML through oxfmt's native registry;
+/// see `write_front_matter` for the routing and every verbatim degradation).
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -64,12 +66,22 @@ pub fn format_with_session<'a>(
     options: CssFormatOptions,
     sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
+    // The envelope matrix has one decision input, the session's `InputKind`:
+    // this entry is the physical-root half (owns BOM + front matter);
+    // every embedded kind goes through `format_to_ir`.
+    debug_assert!(
+        session.input_kind() == InputKind::PhysicalFile,
+        "format_with_session is the physical-root entry; embedded inputs go through format_to_ir"
+    );
     let allocator = session.allocator();
     let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
 
-    let (stylesheet, source, comments) =
-        parse_stylesheet(allocator, source_text, options, /* tolerate_placeholders */ false)?;
-    let front_matter = parse_front_matter(source);
+    // A document root owns front matter;
+    // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
+    let PreparedSource { source, parse_source, front_matter } =
+        prepare_source(allocator, source_text);
+    let (stylesheet, comments) =
+        parse_stylesheet(allocator, parse_source, options, /* tolerate_placeholders */ false)?;
 
     let context =
         CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
@@ -121,20 +133,41 @@ pub fn format_to_ir<'a>(
     template_placeholders: bool,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
-    // Input hygiene: embedded sources may carry a BOM; strip it, never re-emit.
-    let (_, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let (stylesheet, source, comments) = parse_stylesheet(
+    let input_kind = session.input_kind();
+
+    // A BOM marks a document this entry does not own: physical roots handle
+    // BOMs at `format_with_session`; an embedded input carrying one is refused
+    // wholesale (the host degrades to `PreserveOriginal`, keeping the part as-is).
+    if oxc_formatter_core::spec::split_bom(source_text).0 {
+        return Err(OxcDiagnostic::error(
+            "Embedded CSS input starts with a BOM; the part is preserved as-is",
+        ));
+    }
+
+    let prepared = prepare_source(allocator, source_text);
+    if prepared.front_matter.is_some() && input_kind != InputKind::VirtualDocument {
+        // A fragment (css-in-js, JSDoc fence) never acquires file envelope semantics:
+        // refuse the whole child instead of partially treating its head as front matter.
+        // Only a `VirtualDocument` (a complete embedded document, e.g. a fenced stylesheet) formats front matter like a root.
+        return Err(OxcDiagnostic::error(
+            "Front matter in a CSS fragment; the part is preserved as-is",
+        ));
+    }
+    let (stylesheet, comments) = parse_stylesheet(
         allocator,
-        source_text,
+        prepared.parse_source,
         options,
         /* tolerate_placeholders */ template_placeholders,
     )?;
 
-    let context = CssFormatContext::new(options, source, comments, template_placeholders);
+    let context = CssFormatContext::new(options, prepared.source, comments, template_placeholders);
     let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::new(&mut state);
 
-    write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet });
+    write!(
+        &mut buffer,
+        FormatCssEmbedded { stylesheet: &stylesheet, front_matter: prepared.front_matter }
+    );
 
     let elements = buffer.into_vec();
     let tailwind_classes = state.context_mut().take_tailwind_classes();
@@ -142,41 +175,48 @@ pub fn format_to_ir<'a>(
     Ok(EmbeddedIr { ir: elements, tailwind_classes })
 }
 
-/// Parse the source into an AST and collect comments, bailing out on any error.
-///
-/// Copies the source into the arena so every slice taken from it carries `'a`.
-/// Entries own the BOM strip; a leading `\u{feff}` still reaching this point is content
-/// (e.g. a doubled BOM's second copy) and is the parser's to judge.
-fn parse_stylesheet<'a>(
-    allocator: &'a Allocator,
-    source_text: &str,
-    options: CssFormatOptions,
-    tolerate_placeholders: bool,
-) -> Result<(Stylesheet<'a>, &'a str, &'a [CssComment]), OxcDiagnostic> {
+/// Normalized arena source, its front matter (when present),
+/// and the copy the CSS parser actually sees
+/// (front matter blanked byte-preservingly so every span, comment, and source-gap scan aligns with `source`).
+struct PreparedSource<'a> {
+    source: &'a str,
+    parse_source: &'a str,
+    front_matter: Option<FrontMatter<'a>>,
+}
+
+fn prepare_source<'a>(allocator: &'a Allocator, source_text: &str) -> PreparedSource<'a> {
     // NOTE: Normalize line endings BEFORE parsing like Prettier, unlike other `oxc_formatter_xxx`.
     // For CSS formatter, the printer slices verbatim text from the source in many places.
     // (comments, progid, custom properties, ...etc)
     // And a raw `\r` reaching the core `text()` builder panics.
     // Spans stay consistent because parse and print both use the normalized copy.
-    let source_text = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
-    let source: &'a str = allocator.alloc_str(&source_text);
+    let normalized = oxc_formatter_core::normalize_newlines(source_text, ['\r']);
+    let source: &'a str = allocator.alloc_str(&normalized);
 
     // Front matter is not CSS:
-    // blank it out (preserving line structure so spans and gaps stay aligned)
-    // and print it verbatim from `source`.
-    let parse_source: &'a str = match parse_front_matter(source) {
-        Some(fm) => {
-            let end = fm.raw.len();
-            let mut blanked = String::with_capacity(source.len());
-            for c in source[..end].chars() {
-                blanked.push(if c == '\n' || c == '\r' { c } else { ' ' });
-            }
-            blanked.push_str(&source[end..]);
-            allocator.alloc_str(&blanked)
-        }
+    // blank it out for the parser and keep the detection for the print side
+    // (verbatim or dispatched, `write_front_matter`).
+    let front_matter = parse_front_matter(source);
+    let parse_source: &'a str = match &front_matter {
+        Some(fm) => allocator.alloc_str(&blank_front_matter(source, fm.raw.len())),
         None => source,
     };
 
+    PreparedSource { source, parse_source, front_matter }
+}
+
+/// Parse the (already normalized, front-matter-blanked) source into an AST
+/// and collect comments, bailing out on any error.
+///
+/// `parse_source` comes from [`prepare_source`]; entries own the BOM strip,
+/// and a leading `\u{feff}` still reaching this point is content
+/// (e.g. a doubled BOM's second copy) and is the parser's to judge.
+fn parse_stylesheet<'a>(
+    allocator: &'a Allocator,
+    parse_source: &'a str,
+    options: CssFormatOptions,
+    tolerate_placeholders: bool,
+) -> Result<(Stylesheet<'a>, &'a [CssComment]), OxcDiagnostic> {
     let mut parser = ParserBuilder::new(allocator, parse_source)
         .syntax(options.variant.to_css_syntax())
         .options(ParserOptions {
@@ -218,7 +258,7 @@ fn parse_stylesheet<'a>(
     )
     .into_arena_slice();
 
-    Ok((stylesheet, source, comments))
+    Ok((stylesheet, comments))
 }
 
 fn to_diagnostic(error: &oxc_css_parser::error::Error) -> OxcDiagnostic {
@@ -232,100 +272,62 @@ pub fn to_span(span: &oxc_css_parser::Span) -> Span {
     )
 }
 
-/// Prettier-style front matter
-/// (`---` / `+++` fence starting at offset 0, closed by the same fence on its own line).
+/// Writes the front matter block:
+/// dispatched through the session when its language qualifies, verbatim otherwise.
+/// Never fails, any refusal keeps the block as-is while the CSS body still formats
+/// (a document must not lose its front matter bytes over an optional embed).
 ///
-/// The opening fence may carry an explicit language tag (`---yaml`, `---mycustomparser`)
-/// captured in [`Self::language`] (empty if absent).
-struct FrontMatter<'a> {
-    /// The full verbatim slice from offset 0 to the end of the closing fence.
-    raw: &'a str,
-    /// The opening delimiter literal — `"---"` or `"+++"`.
-    delim: &'static str,
-    /// Explicit language tag from the opening fence's first line, trimmed.
-    /// Empty when the fence is a bare `---` / `+++`.
-    language: &'a str,
+/// Language routing: only a resolved `yaml` / `toml` is ever dispatched.
+/// Any other explicit language (`---css`, …) stays raw WITHOUT consulting the registry.
+/// NOTE: TOML currently has no IR-capable formatter, so it degrades to verbatim through `PreserveOriginal`.
+fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {
+    if matches!(fm.language(), "yaml" | "toml") {
+        let body = fm.value.trim();
+        if body.is_empty() {
+            // Empty block: the delimiters alone
+            write_front_matter_frame(fm, None, f);
+            return;
+        }
+        // The body is a Fragment:
+        // front matter inside front matter must never acquire envelope semantics (generic FM recursion).
+        let outcome = f.session().dispatch(DispatchRequest {
+            language: fm.language(),
+            texts: &[body],
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        });
+        if let Ok(DispatchOutcome::Formatted(mut result)) = outcome
+            && result.docs.len() == 1
+        {
+            result.remap_tailwind_into(f.context_mut());
+            let ir = result.docs.into_iter().next().expect("length checked above");
+            write_front_matter_frame(fm, Some(ir), f);
+            return;
+        }
+        // `PreserveOriginal`, an operational error,
+        // or an unexpected doc count: fall through to the verbatim block below.
+    }
+    write!(f, text(fm.raw));
 }
 
-/// Detects [`FrontMatter`] at the start of `source`
-/// (single parse, shared by the parse-side blanking and the print-side dispatch).
-fn parse_front_matter(source: &str) -> Option<FrontMatter<'_>> {
-    let delim = if source.starts_with("---") {
-        "---"
-    } else if source.starts_with("+++") {
-        "+++"
-    } else {
-        return None;
-    };
-
-    let first_line_end = source.find('\n')?;
-    let language = source[delim.len()..first_line_end].trim();
-    let mut line_start = first_line_end + 1;
-    while line_start < source.len() {
-        let line_end = source[line_start..].find('\n').map_or(source.len(), |i| line_start + i);
-        let line = source[line_start..line_end].trim_end_matches('\r');
-        if line.trim_end() == delim {
-            let raw_end = line_start + line.trim_end().len();
-            return Some(FrontMatter { raw: &source[..raw_end], delim, language });
-        }
-        line_start = line_end + 1;
+/// The composed shape (Prettier `embed.js` + `printer-postcss.js` css-root):
+/// opening delimiter with the explicit language re-emitted (`---yaml`),
+/// the child IR between hardlines, then the closing delimiter (a `...` closing stays `...`).
+fn write_front_matter_frame<'a>(
+    fm: &FrontMatter<'a>,
+    body: Option<ArenaVec<'a, FormatElement<'a>>>,
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    write!(f, text(fm.start_delimiter));
+    if let Some(language) = fm.explicit_language {
+        write!(f, text(language));
     }
-    None
-}
-
-/// Best-effort YAML front-matter normalization (Prettier reformats it with its YAML printer):
-/// `key: value` spacing and 2-space nesting indents.
-/// Returns `None` (verbatim) for any construct beyond plain mappings,
-/// sequence items and comments, e.g. block scalars, quoted keys.
-fn try_format_yaml_front_matter(front_matter: &str) -> Option<String> {
-    let inner = front_matter.strip_prefix("---")?.strip_suffix("---")?;
-    let mut out = String::with_capacity(front_matter.len());
-    out.push_str("---\n");
-    // Source indents of mapping keys awaiting nested content.
-    let mut stack: Vec<usize> = vec![];
-    for line in inner.lines().skip(1) {
-        let content = line.trim();
-        if content.is_empty() {
-            continue;
-        }
-        let indent = line.len() - line.trim_start().len();
-        while stack.last().is_some_and(|&top| indent <= top) {
-            stack.pop();
-        }
-        let level = stack.len();
-        for _ in 0..level {
-            out.push_str("  ");
-        }
-        if let Some(rest) = content.strip_prefix("- ") {
-            out.push_str("- ");
-            out.push_str(rest.trim());
-        } else if content.starts_with('#') {
-            out.push_str(content);
-        } else if let Some(colon) = content.find(':') {
-            let key = &content[..colon];
-            if key.is_empty() || key.contains([' ', '\t', '"', '\'', '{', '[', '#']) {
-                return None;
-            }
-            let value = content[colon + 1..].trim();
-            if value.is_empty() {
-                out.push_str(key);
-                out.push(':');
-                stack.push(indent);
-            } else {
-                if value.starts_with(['|', '>', '&', '*', '{', '[']) {
-                    return None;
-                }
-                out.push_str(key);
-                out.push_str(": ");
-                out.push_str(value);
-            }
-        } else {
-            return None;
-        }
-        out.push('\n');
+    if let Some(ir) = body {
+        write!(f, hard_line_break());
+        f.write_elements(ir);
     }
-    out.push_str("---");
-    Some(out)
+    write!(f, hard_line_break());
+    write!(f, text(fm.end_delimiter));
 }
 
 /// Emits the stylesheet followed by any trailing comments, and the final newline.
@@ -335,28 +337,24 @@ struct FormatCssRoot<'b, 'a> {
     front_matter: Option<FrontMatter<'a>>,
 }
 
+/// Whether anything (statements or comments) follows the envelope,
+/// deciding the front matter/body gap and the final newline.
+fn has_content(stylesheet: &Stylesheet, f: &CssFormatter<'_, '_>) -> bool {
+    !stylesheet.statements.is_empty() || f.context().comments().peek().is_some()
+}
+
 impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssRoot<'_, 'a> {
     fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
         if self.has_bom {
             write!(f, text("\u{feff}"));
         }
 
-        let has_content =
-            !self.stylesheet.statements.is_empty() || f.context().comments().peek().is_some();
+        let has_content = has_content(self.stylesheet, f);
         if let Some(fm) = &self.front_matter {
-            // YAML normalization runs only for the default `---` shape (no explicit tag);
-            // `+++` (TOML) and explicit non-default languages stay verbatim.
-            // Prettier delegates them to dedicated language printers we don't bridge for now.
-            let normalized = (fm.delim == "---" && fm.language.is_empty())
-                .then(|| try_format_yaml_front_matter(fm.raw))
-                .flatten();
-            if let Some(s) = normalized {
-                write!(f, text(f.allocator().alloc_str(&s)));
-            } else {
-                write!(f, text(fm.raw));
-            }
+            write_front_matter(fm, f);
             if has_content {
-                // A hardline plus a blank line (consecutive hardlines collapse).
+                // Always exactly one blank line between the block and the body
+                // (regardless of the source gap; measured Prettier behavior).
                 write!(f, empty_line());
             } else {
                 write!(f, hard_line_break());
@@ -372,13 +370,24 @@ impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssRoot<'_, 'a> {
     }
 }
 
-/// Emits the stylesheet only; no BOM, no final newline.
+/// Emits the stylesheet only; no BOM, no final newline
+/// (front matter still prints for a `VirtualDocument`, whose complete-document envelope the host hands over;
+/// the surrounding layout stays the host's).
 struct FormatCssEmbedded<'b, 'a> {
     stylesheet: &'b Stylesheet<'a>,
+    front_matter: Option<FrontMatter<'a>>,
 }
 
 impl<'a> Format<'a, CssFormatContext<'a>> for FormatCssEmbedded<'_, 'a> {
     fn fmt(&self, f: &mut CssFormatter<'_, 'a>) {
+        if let Some(fm) = &self.front_matter {
+            let has_content = has_content(self.stylesheet, f);
+            write_front_matter(fm, f);
+            if has_content {
+                write!(f, empty_line());
+            }
+        }
+
         print::write_stylesheet(self.stylesheet, f);
     }
 }
