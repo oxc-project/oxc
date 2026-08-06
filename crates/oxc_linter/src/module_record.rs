@@ -4,10 +4,7 @@ use std::{
     ffi::OsStr,
     fmt,
     path::{Component, Path, PathBuf},
-    sync::{
-        Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak,
-        atomic::{AtomicU32, Ordering},
-    },
+    sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -16,11 +13,6 @@ use oxc_semantic::Semantic;
 use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
-
-/// Ids for records built outside a lint run, counting down from `u32::MAX` so they never collide
-/// with the ids `Runtime` interns (which count up from 1). Such records are not part of a linked
-/// graph, so they only need to be distinct from each other.
-static NEXT_UNSHARED_PATH_ID: AtomicU32 = AtomicU32::new(u32::MAX);
 
 /// Is `path` inside a `node_modules` directory?
 ///
@@ -53,6 +45,9 @@ pub struct ModuleRecord {
     ///
     /// Cross-module analysis compares modules constantly, and so comparing a `u32` is much
     /// faster than comparing a `PathBuf`.
+    ///
+    /// `0` until `Runtime` interns the path, which it does for every record it links into a
+    /// module graph. An unlinked record has no `loaded_modules`, so nothing ever compares its id.
     pub path_id: u32,
 
     /// Is [`Self::resolved_absolute_path`] inside a `node_modules` directory?
@@ -500,7 +495,7 @@ impl ModuleRecord {
         Self {
             has_module_syntax: other.has_module_syntax,
             resolved_absolute_path: path.to_path_buf(),
-            path_id: NEXT_UNSHARED_PATH_ID.fetch_sub(1, Ordering::Relaxed),
+            path_id: 0,
             is_node_module: path_is_node_module(path),
             requested_modules: other
                 .requested_modules
@@ -555,7 +550,7 @@ impl ModuleRecord {
     /// # Panics
     ///
     /// * If the RwLock is poisoned (which only happens if a thread panicked while holding the lock).
-    pub fn write_loaded_modules(
+    pub(crate) fn write_loaded_modules(
         &self,
     ) -> RwLockWriteGuard<'_, FxHashMap<CompactStr, Weak<ModuleRecord>>> {
         self.loaded_modules.write().unwrap()
