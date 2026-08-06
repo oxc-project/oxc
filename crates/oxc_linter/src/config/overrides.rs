@@ -81,19 +81,32 @@ impl JsonSchema for OxlintOverrides {
 #[non_exhaustive]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct OxlintOverride {
-    /// A list of glob patterns to override.
+    /// Glob patterns selecting which files this override applies to.
     ///
-    /// ## Example
-    /// `[ "*.test.ts", "*.spec.ts" ]`
+    /// Patterns use [`fast_glob`](https://crates.io/crates/fast-glob) syntax and are
+    /// matched against paths relative to the configuration file's directory.
+    /// A pattern without `/` is recursive (`*.ts` matches nested files).
+    ///
+    /// ## Examples
+    ///
+    /// ```json
+    /// ["*.test.ts", "*.spec.ts"]
+    /// ["src/**/*.{ts,tsx}"]
+    /// ["scripts/*.mjs"]
+    /// ```
     pub files: GlobSet,
 
-    /// A list of glob patterns to exclude from this override.
+    /// Glob patterns to exclude from this override.
     ///
     /// Files matching these patterns are not globally ignored; this override
-    /// simply does not apply to them.
+    /// simply does not apply to them. Uses the same [`fast_glob`](https://crates.io/crates/fast-glob)
+    /// syntax and relative-path rules as [`Self::files`].
     ///
-    /// ## Example
-    /// `[ "*.generated.ts", "fixtures/**" ]`
+    /// ## Examples
+    ///
+    /// ```json
+    /// ["*.generated.ts", "fixtures/**"]
+    /// ```
     #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
     pub exclude_files: GlobSet,
 
