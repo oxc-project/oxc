@@ -68,7 +68,8 @@ pub struct Runtime {
     /// with a `u32` compare instead of a `Path` one. See [`ModuleRecord::path_id`].
     ///
     /// Taken once per created record, not per comparison, so the lock is uncontended in practice.
-    path_ids: Mutex<(FxHashMap<PathBuf, u32>, u32)>,
+    /// Keyed on the same `Arc` [`Self::modules_by_path`] holds, so a key costs a refcount bump.
+    path_ids: Mutex<(FxHashMap<Arc<OsStr>, u32>, u32)>,
     /// Collected disable directives from linted files
     disable_directives_map: Arc<Mutex<FxHashMap<PathBuf, DisableDirectives>>>,
 }
@@ -285,14 +286,14 @@ impl Runtime {
     /// # Panics
     ///
     /// * If the mutex is poisoned (which only happens if a thread panicked while holding it).
-    fn intern_path(&self, path: &Path) -> u32 {
+    fn intern_path(&self, path: &Arc<OsStr>) -> u32 {
         let (ids, next) = &mut *self.path_ids.lock().unwrap();
-        if let Some(id) = ids.get(path) {
+        if let Some(id) = ids.get(&**path) {
             return *id;
         }
         let id = *next;
         *next += 1;
-        ids.insert(path.to_path_buf(), id);
+        ids.insert(Arc::clone(path), id);
         id
     }
 
@@ -1044,7 +1045,7 @@ impl Runtime {
 
                 let mut section_contents = SmallVec::new();
                 records = self.process_source(
-                    Path::new(path),
+                    path,
                     ext,
                     check_syntax_errors,
                     source_type,
@@ -1074,7 +1075,7 @@ impl Runtime {
             };
 
             let records = self.process_source(
-                Path::new(path),
+                path,
                 ext,
                 check_syntax_errors,
                 source_type,
@@ -1090,7 +1091,7 @@ impl Runtime {
     #[expect(clippy::too_many_arguments)]
     fn process_source<'a>(
         &self,
-        path: &Path,
+        path: &Arc<OsStr>,
         ext: &str,
         check_syntax_errors: bool,
         source_type: SourceType,
@@ -1150,7 +1151,7 @@ impl Runtime {
     #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
-        path: &Path,
+        path: &Arc<OsStr>,
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
@@ -1182,7 +1183,7 @@ impl Runtime {
         let mut semantic = semantic_ret.semantic;
         semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
 
-        let mut module_record = ModuleRecord::new(path, &ret.module_record, &semantic);
+        let mut module_record = ModuleRecord::new(Path::new(path), &ret.module_record, &semantic);
         // Only worth interning when the module graph is built: without a resolver nothing links
         // these records together, so the distinct id `ModuleRecord::new` assigns is enough, and
         // every run — including ones with no cross-module rules — skips the lock.
@@ -1202,7 +1203,7 @@ impl Runtime {
                 .requested_modules
                 .keys()
                 .filter_map(|specifier| {
-                    let resolution = resolver.resolve_file(path, specifier).ok()?;
+                    let resolution = resolver.resolve_file(Path::new(path), specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
                         resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
