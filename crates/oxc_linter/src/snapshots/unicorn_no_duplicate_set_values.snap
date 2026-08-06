@@ -1,0 +1,141 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `1` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:16]
+ 1 │ new Set([1, 2, 1])
+   ·                ─
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `"foo"` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:24]
+ 1 │ new Set(["foo", "bar", "foo"])
+   ·                        ─────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `null` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:16]
+ 1 │ new Set([null, null])
+   ·                ────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `undefined` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:21]
+ 1 │ new Set([undefined, undefined])
+   ·                     ─────────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `undefined` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:12]
+ 1 │ new Set([, undefined])
+   ·            ─────────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `undefined` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:21]
+ 1 │ new Set([undefined, ,])
+   ·                     ─
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `undefined` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:11]
+ 1 │ new Set([,,])
+   ·           ─
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `-1` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:14]
+ 1 │ new Set([-1, -1])
+   ·              ──
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `NaN` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:15]
+ 1 │ new Set([NaN, NaN])
+   ·               ───
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `-0` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:13]
+ 1 │ new Set([0, -0])
+   ·             ──
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `1` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:13]
+ 1 │ new Set([1, 1, 2, 2])
+   ·             ─
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `2` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:19]
+ 1 │ new Set([1, 1, 2, 2])
+   ·                   ─
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `2` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:17]
+ 1 │ new Set([1 + 1, 2])
+   ·                 ─
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `"foo"` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:17]
+ 1 │ new Set([`foo`, "foo"])
+   ·                 ─────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `foo` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:15]
+ 1 │ new Set([foo, foo])
+   ·               ───
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `foo.bar` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:19]
+ 1 │ new Set([foo.bar, foo.bar])
+   ·                   ───────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `foo.bar` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:22]
+ 1 │ new Set([foo["bar"], foo.bar])
+   ·                      ───────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `this.foo` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:20]
+ 1 │ new Set([this.foo, this.foo])
+   ·                    ────────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `foo` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:23]
+ 1 │ new Set([foo, ...bar, foo])
+   ·                       ───
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `2` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:30]
+ 1 │ const foo = 2; new Set([foo, 2]);
+   ·                              ─
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `'bar'` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:34]
+ 1 │ const foo = 'bar'; new Set([foo, 'bar']);
+   ·                                  ─────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `undefined` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:38]
+ 1 │ const foo = undefined; new Set([foo, undefined]);
+   ·                                      ─────────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-set-values): Remove duplicate value `foo` from the Set.
+   ╭─[no_duplicate_set_values.tsx:1:31]
+ 1 │ const foo = {}; new Set([foo, foo]);
+   ·                               ───
+   ╰────
