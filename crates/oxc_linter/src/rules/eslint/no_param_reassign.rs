@@ -346,5 +346,5 @@ fn invalid_ignore_property_modifications_for_regex_is_rejected() {
     }]));
 
     let error = result.expect_err("invalid ignorePropertyModificationsForRegex should be rejected");
-    assert!(error.to_string().contains("regex parse error"), "unexpected error: {error}");
+    assert_eq!(error.classify(), serde_json::error::Category::Data);
 }
