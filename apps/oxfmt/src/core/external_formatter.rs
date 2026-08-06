@@ -251,9 +251,10 @@ impl ExternalFormatter {
     ///    so they ride the SAME parent batch as path 1.
     ///    The standalone CSS sort closure is NOT invoked here.
     /// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
-    ///    Goes through the string channel,
-    ///    `format_embedded()` returns a formatted string (not parent-integrated IR),
-    ///    so the sort must run inside that call, not via `DispatchResult` remapping.
+    ///    Goes through the string channel's dispatcher adapter,
+    ///    which returns a formatted string (not parent-integrated IR),
+    ///    so there is no parent index space to remap into:
+    ///    the adapter sorts the returned `DispatchResult::tailwind_classes` itself before printing.
     ///    The `string_channel::build_embedded_callback` factory receives the sorter for this case.
     ///
     /// All four paths use the SAME `sort_tailwindcss_classes` napi callback; only the wiring differs.

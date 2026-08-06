@@ -5,8 +5,8 @@
 //! this module is its concrete counterpart owned by the orchestrator (Oxfmt).
 //!
 //! - [`dispatcher`] (every build): the native registry — `ResolvedDispatchConfig`
-//!   (lazy per-language options) + `build_dispatcher` with Rust branches for
-//!   graphql / css / yaml; IR integrates into the parent's arena / `GroupId` space
+//!   (lazy per-language options) + `build_dispatcher` with a Rust branch per `NativeLanguage`;
+//!   IR integrates into the parent's arena / `GroupId` space
 //! - [`prettier_fallback`] (napi only): Prettier Doc→IR path for the rest
 //! - [`string_channel`] (napi only): string-in/string-out channel
 //!   - JSDoc fenced blocks + html-in-js fallback

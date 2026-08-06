@@ -54,11 +54,7 @@ describe("JSDoc", () => {
     );
   });
 
-  it("should format fenced scss, less and graphql through the Rust standalone path", async () => {
-    // Since plan Step 5-1, these languages format via `oxc_formatter_css` /
-    // `oxc_formatter_graphql` (string-in/string-out) instead of Prettier.
-    // scss/less use their own variant (the old Prettier path parsed all of
-    // css/scss/less as scss).
+  it("should format fenced scss, less and graphql through the native dispatch registry", async () => {
     const source = `
 /**
  * \`\`\`scss
@@ -107,8 +103,67 @@ describe("JSDoc", () => {
     );
   });
 
+  it("should format fenced json, json5 and yaml via the native registry", async () => {
+    const source = `
+/**
+ * \`\`\`json
+ * {"a":1,   "b":[2,3]}
+ * \`\`\`
+ *
+ * \`\`\`json5
+ * {a:1,}
+ * \`\`\`
+ *
+ * \`\`\`yaml
+ * key:   value
+ * list:
+ *   -   1
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.js", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`json
+ * { "a": 1, "b": [2, 3] }
+ * \`\`\`
+ *
+ * \`\`\`json5
+ * { a: 1 }
+ * \`\`\`
+ *
+ * \`\`\`yaml
+ * key: value
+ * list:
+ *   - 1
+ * \`\`\`
+ */
+`.trimStart(),
+    );
+  });
+
+  it("should keep fenced code verbatim for languages outside the registry", async () => {
+    const source = `
+/**
+ * \`\`\`ruby
+ * var =   1
+ * \`\`\`
+ *
+ * \`\`\`python
+ * x   =   1
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(`${source}\n`);
+  });
+
   it("should keep fenced code verbatim when the Rust formatter cannot parse it", async () => {
-    // Parse errors inside comments are NOT diagnostics and stays as-is.
     const source = `
 /**
  * \`\`\`css
