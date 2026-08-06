@@ -12,7 +12,7 @@ use tracing::{debug, debug_span};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::HtmlEmbedMeta;
-use oxc_formatter_core::{DispatchOutcome, DispatchResult, EmbeddedContext, UniqueGroupIdBuilder};
+use oxc_formatter_core::{DispatchOutcome, DispatchResult, FormatSession, UniqueGroupIdBuilder};
 
 use crate::{
     core::{
@@ -31,7 +31,7 @@ pub fn build_prettier_fallback(
     dispatch_config: Arc<ResolvedDispatchConfig>,
     format_embedded_doc: FormatEmbeddedDocWithConfigCallback,
 ) -> PrettierDocFallback {
-    Arc::new(move |ctx: &EmbeddedContext<'_, '_>, language: &str, texts: &[&str]| {
+    Arc::new(move |session: &FormatSession<'_>, language: &str, texts: &[&str]| {
         let Some(parser_name) = language_to_prettier_parser(language) else {
             // An unsupported language is a deliberate skip, not an operational error.
             debug!("No Prettier parser for language '{language}', part stays as-is");
@@ -62,8 +62,8 @@ pub fn build_prettier_fallback(
                 to_format_elements_for_template(
                     language,
                     doc_jsons,
-                    ctx.allocator,
-                    ctx.group_id_builder,
+                    session.allocator(),
+                    session.group_id_builder(),
                 )
                 .map(DispatchOutcome::Formatted)
             })

@@ -23,9 +23,12 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - Drives context-dependent decisions like forced parentheses / quote style
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
-- `ExternalCallbacks` (in `external_formatter.rs`): The host-supplied `FormatDispatcher`
-  (embedded-language formatting, see `oxc_formatter_core`'s `embedded` module)
-  plus string-based / Tailwind callbacks delegated back to the host
+- `format_with_session`: session-aware entry whose `FormatSession` carries the
+  host-supplied `FormatDispatcher` for embedded languages
+  (plain `format` / `format_program` wrap a dispatcher-less `PhysicalFile` session)
+- `ExternalCallbacks` (in `external_formatter.rs`): the string-based (JSDoc fences + html-in-js recovery)
+  and Tailwind callbacks delegated back to the host;
+  IR-channel dispatch is NOT here, it travels on the session
 
 ### Generated code
 

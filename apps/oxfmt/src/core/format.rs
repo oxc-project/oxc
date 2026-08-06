@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::JsFormatOptions;
 #[cfg(feature = "napi")]
 use oxc_formatter_core::CoreFormatOptions;
+use oxc_formatter_core::{FormatSession, InputKind};
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
@@ -401,16 +402,20 @@ impl SourceFormatter {
         let allocator = self.allocator_pool.get();
 
         #[cfg(feature = "napi")]
-        let external_callbacks =
-            Some(self.build_external_callbacks(&format_options, config, core, path));
+        let (external_callbacks, dispatcher) = {
+            let (callbacks, dispatcher) =
+                self.build_external_callbacks(&format_options, config, core, path);
+            (Some(callbacks), dispatcher)
+        };
         #[cfg(not(feature = "napi"))]
-        let external_callbacks = {
+        let (external_callbacks, dispatcher) = {
             let _ = path;
-            None
+            (None, None)
         };
 
-        let formatted = oxc_formatter::format(
-            &allocator,
+        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, dispatcher);
+        let formatted = oxc_formatter::format_with_session(
+            &session,
             source_text,
             source_type,
             format_options,
@@ -621,20 +626,22 @@ impl SourceFormatter {
     ///
     /// Tailwind is always considered "capable" here because `oxc_formatter` embeds the sorter internally;
     /// the inject helper itself decides whether to fire based on user config.
+    /// Also returns the `FormatDispatcher` for the JS root's `FormatSession`
+    /// (`None` when `embeddedLanguageFormatting: off`; the gate is owned by `ExternalFormatter::to_external_callbacks`).
     fn build_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
         config: &Arc<FormatConfig>,
         core: CoreFormatOptions,
         path: &Path,
-    ) -> oxc_formatter::ExternalCallbacks {
+    ) -> (oxc_formatter::ExternalCallbacks, Option<oxc_formatter_core::FormatDispatcher>) {
         let external_formatter = self
             .external_formatter
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        // Per-language options are mapped lazily at dispatch time; `core` is the
-        // validated bundle carried on the strategy since resolution.
+        // Per-language options are mapped lazily at dispatch time;
+        // `core` is the validated bundle carried on the strategy since resolution.
         let dispatch_config = Arc::new(
             ResolvedDispatchConfig::new(Arc::clone(config), core).with_path(path.to_path_buf()),
         );

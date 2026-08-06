@@ -12,7 +12,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{Document, EmbeddedContext, FormatOptions, Printer, UniqueGroupIdBuilder};
+use oxc_formatter_core::{Document, FormatOptions, FormatSession, InputKind, Printer};
 use oxc_formatter_css::{CssFormatOptions, CssVariant, format_to_ir};
 
 fn main() {
@@ -30,14 +30,9 @@ fn main() {
         CssFormatOptions { variant: CssVariant::Scss, line_width, ..CssFormatOptions::default() };
 
     let allocator = Allocator::new();
-    let group_id_builder = UniqueGroupIdBuilder::default();
-    let ctx = EmbeddedContext {
-        allocator: &allocator,
-        group_id_builder: &group_id_builder,
-        dispatcher: None,
-    };
+    let session = FormatSession::new(&allocator, InputKind::Fragment, None);
 
-    match format_to_ir(&ctx, &source_text, options) {
+    match format_to_ir(&session, &source_text, options, /* template_placeholders */ true) {
         Ok(embedded) => {
             let document = Document::new(embedded.ir, Vec::new());
             document.propagate_expand();

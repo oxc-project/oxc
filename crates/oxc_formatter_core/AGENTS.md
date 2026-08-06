@@ -75,25 +75,23 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ### Embedded-language infrastructure (`embedded.rs`, `session.rs`)
 
-`EmbeddedContext` / `FormatDispatcher` / `DispatchResult` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
+`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchResult` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
 - The orchestrator (oxfmt) assembles the dispatcher, mapping language names to formatter implementations (or a Prettier fallback)
-  - Formatter crates only invoke it
-- Parent and child share one arena and one `GroupId` space through `EmbeddedContext`
+  - Formatter crates only invoke it via `FormatSession::dispatch`
+- Parent and child share one arena and one `GroupId` space through the session
 - A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort Tailwind classes), one shape for every child language, no per-crate tuples
 - Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`)
   - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
 - Consumers access `DispatchResult.docs` directly (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`)
   - Call `DispatchResult::remap_tailwind_into` first when the child may carry classes, the printer's `debug_assert` catches a forgotten merge
-- `FormatSession` (`session.rs`) is the successor execution unit:
+- `FormatSession` (`session.rs`) is the execution unit:
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the dispatcher, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
-  - `FormatState` holds one (`new_with_session`; plain `new` wraps a dispatcher-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write.
-  - `EmbeddedContext` remains as a migration adapter until every entry point is session-aware
+  - `FormatState` holds one (`new_with_session`; plain `new` wraps a dispatcher-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write
 - A dispatch states its request as `DispatchRequest` (language, texts, `InputKind`, pair-specific context) and yields `Result<DispatchOutcome, String>`:
   - `DispatchOutcome::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
   - Optional-embed callers degrade the same way for both, but never conflate them at the source
   - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
-    (the JS host's legacy `dispatch_embedded` adapter bypasses the guard until it migrates to sessions)
 
 ## What belongs in core (the boundary)
 

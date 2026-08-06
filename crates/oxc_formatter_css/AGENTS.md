@@ -8,9 +8,10 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
-- Two entry points:
-  - `format()`: standalone files (returns a printable `Formatted`)
-  - `format_to_ir()`: embedded use via the dispatcher (e.g. css-in-js); tolerates `${}` placeholders and `TopLevelDeclaration`
+- Entry points:
+  - `format()`: standalone files (returns a printable `Formatted`); wraps a dispatcher-less session
+  - `format_with_session()`: standalone on a caller-supplied `FormatSession` (the root that will dispatch front-matter YAML once wired)
+  - `format_to_ir()`: embedded use via the dispatcher; the `template_placeholders` mode enables `${}` placeholders and `TopLevelDeclaration` (css-in-js), `false` is the strict whole-stylesheet grammar
 
 ### Forked parser
 
@@ -22,7 +23,7 @@ The fork adds:
   - Backtick-delimited marker `` `<prefix><digits>` `` with a parameterized inner affix (`TemplatePlaceholder { prefix }`);
   - Backtick is invalid CSS/SCSS/Sass (only Less's inline-JS delimiter), so the marker is
     unmistakably out-of-band, not a real `@var`/`$var` or at-rule
-  - Only `format_to_ir` enables it (with the option unset a backtick is a syntax error)
+  - Only `format_to_ir` with `template_placeholders: true` enables it (with the option unset a backtick is a syntax error)
   - MUST be used with `Syntax::Scss`; css-in-js is `CssVariant::Scss`-hardcoded
   - Tokenized as one typed `Token::Placeholder { index, suffix }` accepted in value / selector / statement / declaration-name positions
     - Per-position layout and coverage: see "css-in-js specifics" below

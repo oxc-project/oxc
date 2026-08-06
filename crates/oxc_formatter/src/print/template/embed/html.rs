@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{DispatchOutcome, FormatElement};
+use oxc_formatter_core::{DispatchOutcome, DispatchRequest, FormatElement, InputKind};
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
@@ -53,13 +53,12 @@ pub(super) fn format_html_doc<'a>(
         let has_leading_ws = cooked.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = cooked.ends_with(|c: char| c.is_ascii_whitespace());
 
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Ok(DispatchOutcome::Formatted(mut result)) = f
-            .context()
-            .external_callbacks()
-            .dispatch_embedded(allocator, group_id_builder, embedded_language, &[cooked])
-        else {
+        let Ok(DispatchOutcome::Formatted(mut result)) = f.session().dispatch(DispatchRequest {
+            language: embedded_language,
+            texts: &[cooked],
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        }) else {
             return false;
         };
         let Some(html_has_multiple_root_elements) = result
@@ -80,6 +79,7 @@ pub(super) fn format_html_doc<'a>(
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
+        let allocator = f.allocator();
         super::escape_template_chars_in_ir(&mut ir, allocator, f.options().indent_width);
 
         let content = format_once(|f| f.write_elements(ir));
@@ -120,17 +120,16 @@ pub(super) fn format_html_doc<'a>(
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
 
     // Phase 2: Format via the dispatcher (IR path)
-    let allocator = f.allocator();
-    let group_id_builder = f.group_id_builder();
-    let Ok(DispatchOutcome::Formatted(mut result)) = f
-        .context()
-        .external_callbacks()
-        .dispatch_embedded(allocator, group_id_builder, embedded_language, &[joined])
-    else {
+    let Ok(DispatchOutcome::Formatted(mut result)) = f.session().dispatch(DispatchRequest {
+        language: embedded_language,
+        texts: &[joined],
+        input_kind: InputKind::Fragment,
+        parent_context: None,
+    }) else {
         // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
         // returned Prettier's `Doc` output may contain `conditionalGroup`.
         // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
-        // So `dispatch_embedded()` will return `Err`.
+        // So the dispatch will return `Err`.
         //
         // In Prettier, `conditionalGroup` is only used by JS and YAML formatting.
         // And we want to format JS by `oxc_formatter` via oxfmt-plugin,
@@ -139,9 +138,12 @@ pub(super) fn format_html_doc<'a>(
         // Support `conditionalGroup` and convert to our `BestFitting` may be possible,
         // but it also requires placeholder replacement, which is non-trivial.
         //
-        // NOTE: `Ok(PreserveOriginal)` lands here too and gets the same recovery attempt;
-        // splitting the match (PreserveOriginal -> plain template path)
-        // is deferred until this site is session-aware.
+        // NOTE: `Ok(PreserveOriginal)` lands here too and gets the same recovery attempt
+        // (today it only arises when the dispatcher is absent,
+        // in which case the string callback is absent under the same gate
+        // and recovery degrades to the plain template path anyway).
+        // Splitting the match is string-channel-migration work,
+        // out of scope while html stays on the Prettier string path.
         return format_js_in_html_as_fallback(joined, &expressions, f);
     };
 

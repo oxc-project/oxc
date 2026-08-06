@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    DispatchOutcome, FormatElement, IndentWidth,
+    DispatchOutcome, DispatchRequest, FormatElement, IndentWidth, InputKind,
     format_element::{LineMode, TextWidth},
 };
 
@@ -87,13 +87,12 @@ pub(super) fn format_graphql_doc<'a>(
     let all_irs = if texts_to_format.is_empty() {
         vec![]
     } else {
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Ok(DispatchOutcome::Formatted(result)) = f
-            .context()
-            .external_callbacks()
-            .dispatch_embedded(allocator, group_id_builder, "graphql", &texts_to_format)
-        else {
+        let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
+            language: "graphql",
+            texts: &texts_to_format,
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        }) else {
             return false;
         };
         // One IR per sent text is the dispatcher contract for GraphQL.
