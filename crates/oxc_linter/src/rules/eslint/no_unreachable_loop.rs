@@ -285,8 +285,14 @@ fn has_next_iteration_path(
                 }
                 EdgeType::Unreachable
                 | EdgeType::NewFunction
-                | EdgeType::Join
                 | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
+                // Convergence point after a finalizer completes, i.e. the
+                // statement following the `try`. Only reachable through a
+                // `Finalize` edge, which is gated below, so following it here
+                // cannot resurrect an abrupt path.
+                EdgeType::Join => {
+                    stack.push(edge.target());
+                }
                 EdgeType::Finalize => {
                     if finalizer_can_continue_to_loop(
                         edge.target(),
@@ -296,6 +302,16 @@ fn has_next_iteration_path(
                         unreachable,
                     ) {
                         return true;
+                    }
+
+                    // A block that completes normally has no edge out other
+                    // than this one: control runs the finalizer and resumes
+                    // after the `try`. When the block instead exits abruptly
+                    // the finalizer resumes that exit, so the only way it
+                    // reaches the next iteration is the `continue` the check
+                    // above looks for.
+                    if block_completes_normally(source, ctx) {
+                        stack.push(edge.target());
                     }
                 }
                 EdgeType::Error(ErrorEdgeKind::Explicit) => {
@@ -700,7 +716,12 @@ fn is_synthetic_continuation(
 
         for edge in graph
             .edges_directed(current, Direction::Incoming)
-            .filter(|edge| matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump))
+            // `Join` reaches the empty block the builder emits after a
+            // finalizer. Without it, the block that resumes the loop after a
+            // `try`/`finally` looks like it belongs to nothing.
+            .filter(|edge| {
+                matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump | EdgeType::Join)
+            })
         {
             let source = edge.source();
             if is_unreachable_block(source, ctx, unreachable) {
@@ -721,6 +742,21 @@ fn is_synthetic_continuation(
     }
 
     false
+}
+
+/// `true` when control can fall off the end of `block_id` instead of leaving it
+/// through `break`, `continue`, `return` or `throw`. An implicit throw is an
+/// error edge rather than an instruction, so it does not count as abrupt here.
+fn block_completes_normally(block_id: BlockNodeId, ctx: &LintContext<'_>) -> bool {
+    !ctx.cfg().basic_block(block_id).instructions().iter().any(|instruction| {
+        matches!(
+            instruction.kind,
+            InstructionKind::Break(_)
+                | InstructionKind::Continue(_)
+                | InstructionKind::Return(_)
+                | InstructionKind::Throw
+        )
+    })
 }
 
 fn owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
@@ -961,6 +997,23 @@ fn test() {
         ("while(true); while(true) break;", None).into(),
         ("while (true) {} while (foo) break;", None).into(),
         ("while (a) { try { continue; } finally {} }", None).into(),
+        // A `try` body that completes normally runs the finalizer and then
+        // resumes after the `try`, so every loop below iterates.
+        ("while (a) { try { foo(); } finally { bar(); } }", None).into(),
+        ("while (a) { try { foo(); } finally {} }", None).into(),
+        ("while (a) { try { foo(); } catch (e) { bar(); } finally { baz(); } }", None).into(),
+        ("while (a) { try { foo(); } finally { bar(); } baz(); }", None).into(),
+        ("function f() { while (a) { try { foo(); } catch (e) { return; } finally { bar(); } } }", None)
+            .into(),
+        ("while (a) { try { foo(); } finally { continue; } }", None).into(),
+        ("function f() { while (a) { try { foo(); } finally { if (a) continue; else return; } } }", None)
+            .into(),
+        ("while (a) { try { try { foo(); } finally { bar(); } } finally { baz(); } }", None).into(),
+        ("for (const x of xs) { try { foo(x); } finally { bar(x); } }", None).into(),
+        ("for (let i = 0; i < a; i++) { try { foo(); } finally { bar(); } }", None).into(),
+        ("for (const k in a) { try { foo(); } finally { bar(); } }", None).into(),
+        ("do { try { foo(); } finally { bar(); } } while (a);", None).into(),
+        ("outer: while (a) { try { foo(); } finally { continue outer; } }", None).into(),
         ("while (a) { try { break; } finally { continue; } }", None).into(),
         ("while (a) { try { break; } finally { if (foo) continue; } }", None).into(),
         ("while (a) { try { throw err; } finally { continue; } }", None).into(),
@@ -1017,6 +1070,15 @@ fn test() {
         }
     }
     fail.extend([
+        // The finalizer runs, then resumes the abrupt exit that entered it.
+        ("function f() { while (a) { try { foo(); } finally { return; } } }", None).into(),
+        ("while (a) { try { foo(); } finally { break; } }", None).into(),
+        ("function f() { while (a) { try { return; } finally { bar(); } } }", None).into(),
+        ("while (a) { try { break; } finally { bar(); } }", None).into(),
+        ("while (a) { try { throw err; } finally { bar(); } }", None).into(),
+        ("function f() { while (a) { try { foo(); } finally { bar(); } return; } }", None).into(),
+        ("function f() { while (a) { try { return; } catch (e) { return; } finally { bar(); } } }", None)
+            .into(),
         ("function f() { while (a) { try { ; return; } catch { continue; } } }", None).into(),
         ("function f() { while (a) { try { let value = 1; return; } catch { continue; } } }", None)
             .into(),
