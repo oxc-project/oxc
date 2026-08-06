@@ -132,6 +132,19 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 
 // ---
 
+/// A leading BOM is preserved (Prettier does the same).
+#[test]
+fn bom_is_preserved() {
+    let allocator = Allocator::default();
+    let formatted =
+        format(&allocator, "\u{feff}a {\n  color: red;\n}\n", CssFormatOptions::default(), None)
+            .expect("BOM input should parse")
+            .print()
+            .expect("print should succeed")
+            .into_code();
+    assert_eq!(formatted, "\u{feff}a {\n  color: red;\n}\n");
+}
+
 /// Any parse error must surface as `Err` from the standalone `format()` entry,
 /// including oxc-css-parser's recoverable ones (top-level declarations are invalid here
 /// too — only the embedded `format_to_ir` entry tolerates them, see

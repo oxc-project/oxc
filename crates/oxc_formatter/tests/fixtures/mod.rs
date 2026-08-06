@@ -118,5 +118,24 @@ fn test_file(path: &Path) {
     });
 }
 
+/// A leading BOM is preserved (Prettier does the same);
+/// `oxc_parser` keeps it in the source and the root re-emits it at byte 0.
+#[test]
+fn bom_is_preserved() {
+    let allocator = Allocator::default();
+    let formatted = oxc_formatter::format(
+        &allocator,
+        "\u{feff}let a = 1",
+        SourceType::mjs(),
+        JsFormatOptions::default(),
+        None,
+    )
+    .expect("BOM input should parse")
+    .print()
+    .expect("print should succeed")
+    .into_code();
+    assert_eq!(formatted, "\u{feff}let a = 1;\n");
+}
+
 // Include auto-generated test functions from build.rs
 include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
