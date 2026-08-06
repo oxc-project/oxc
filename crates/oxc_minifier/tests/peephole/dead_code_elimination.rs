@@ -1056,3 +1056,14 @@ fn dce_keeps_implicitly_observable_bindings() {
         options,
     );
 }
+
+#[test]
+fn keep_division_operands() {
+    // Reducing a division by the GCD of its operands is a size-only rewrite: it yields
+    // no constant, so it can never enable a removal and must not run here. The constant
+    // folds that do produce a value are still expected to.
+    test_same("x = 100 / 200;");
+    test_same("x = 7 / 21;");
+    test_same("x = -3 / -7;");
+    test("x = 360 / 360;", "x = 1;");
+}
