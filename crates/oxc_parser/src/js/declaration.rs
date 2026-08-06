@@ -134,7 +134,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         let decl = VariableDeclarator::new(
             self.end_span(start),
-            kind,
             id,
             type_annotation,
             init,
@@ -143,13 +142,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         );
         if self.ctx.has_ambient()
             && let Some(init) = &decl.init
-            && !decl.kind.is_using()
-            && !(decl.kind.is_const() && decl.type_annotation.is_none())
+            && !kind.is_using()
+            && !(kind.is_const() && decl.type_annotation.is_none())
         {
             self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
         }
         if decl_parent == VariableDeclarationParent::Statement {
-            self.check_missing_initializer(&decl);
+            self.check_missing_initializer(&decl, kind);
         }
         if let Some(definite_start) = definite_start {
             let span = Span::sized(definite_start, 1);
@@ -164,14 +163,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decl
     }
 
-    pub(crate) fn check_missing_initializer(&mut self, decl: &VariableDeclarator<'a>) {
+    pub(crate) fn check_missing_initializer(
+        &mut self,
+        decl: &VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
+    ) {
         if decl.init.is_none() && !self.ctx.has_ambient() {
             if !matches!(decl.id, BindingPattern::BindingIdentifier(_)) {
                 self.error(diagnostics::invalid_destructuring_declaration(decl.id.span()));
-            } else if decl.kind == VariableDeclarationKind::Const {
+            } else if kind == VariableDeclarationKind::Const {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
                 self.error(diagnostics::missing_initializer_in_const(decl.id.span()));
-            } else if decl.kind.is_using() {
+            } else if kind.is_using() {
                 self.error(diagnostics::using_declarations_must_be_initialized(decl.id.span()));
             }
         }

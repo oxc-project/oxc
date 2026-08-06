@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentExistenceIndexCheck;
@@ -97,7 +97,9 @@ impl Rule for ConsistentExistenceIndexCheck {
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
-            if variables_declarator.kind != VariableDeclarationKind::Const {
+            if variable_declaration_kind(variables_declarator, ctx)
+                != VariableDeclarationKind::Const
+            {
                 return;
             }
 
@@ -129,34 +131,20 @@ impl Rule for ConsistentExistenceIndexCheck {
                     let operator_span = Span::new(operator_start, operator_end);
                     let operator_source = ctx.source_range(operator_span);
 
-                    let operator_matches =
-                        operator_source.match_indices(replacement.original_operator);
-                    let mut operator_replacement_text = operator_source.to_string();
-
-                    for (index, text) in operator_matches {
-                        let comments = ctx.comments_range(operator_start..operator_end);
-
-                        let start = operator_start + u32::try_from(index).unwrap_or(0);
-                        let length = u32::try_from(text.len()).unwrap_or(0);
-                        let span = Span::sized(start, length);
-
-                        let mut is_in_comment = false;
-
-                        for comment in comments {
-                            if comment.span.contains_inclusive(span) {
-                                is_in_comment = true;
-                                break;
-                            }
-                        }
-
-                        if !is_in_comment {
-                            let head = &operator_source[..index];
-                            let tail = &operator_source[index + text.len()..];
-
-                            operator_replacement_text =
-                                format!("{}{}{}", head, replacement.replacement_operator, tail);
-                        }
-                    }
+                    let Some(operator_offset) = ctx.find_next_token_within(
+                        operator_start,
+                        operator_end,
+                        replacement.original_operator,
+                    ) else {
+                        return fixer.noop();
+                    };
+                    let operator_index = operator_offset as usize;
+                    let operator_replacement_text = format!(
+                        "{}{}{}",
+                        &operator_source[..operator_index],
+                        replacement.replacement_operator,
+                        &operator_source[operator_index + replacement.original_operator.len()..],
+                    );
 
                     let fixer = fixer.for_multifix();
                     let mut rule_fixes = fixer.new_fix_with_capacity(2);

@@ -6,7 +6,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
+    rule::Rule,
+};
 
 fn bad_char_at_comparison_diagnostic(
     character_access: Span,
@@ -140,13 +143,15 @@ fn is_definitely_string(expr: &Expression, ctx: &LintContext) -> bool {
             let declaration =
                 ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id)).kind();
 
-            declaration.as_variable_declarator().is_some_and(is_definitely_string_declarator)
+            declaration
+                .as_variable_declarator()
+                .is_some_and(|declarator| is_definitely_string_declarator(declarator, ctx))
         }
         _ => false,
     }
 }
 
-fn is_definitely_string_declarator(declarator: &VariableDeclarator) -> bool {
+fn is_definitely_string_declarator(declarator: &VariableDeclarator, ctx: &LintContext) -> bool {
     if declarator
         .type_annotation
         .as_ref()
@@ -155,7 +160,9 @@ fn is_definitely_string_declarator(declarator: &VariableDeclarator) -> bool {
         return true;
     }
 
-    if !declarator.kind.is_const() || !declarator.id.is_binding_identifier() {
+    if !variable_declaration_kind(declarator, ctx).is_const()
+        || !declarator.id.is_binding_identifier()
+    {
         return false;
     }
 

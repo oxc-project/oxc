@@ -63,7 +63,7 @@ mod tester;
 
 mod lint_runner;
 
-pub use crate::config::plugins::normalize_plugin_name;
+pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
     DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,

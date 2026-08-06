@@ -189,6 +189,18 @@ export type ExportsStyleMode = "module.exports" | "exports";
 export type HandleCallbackErrConfig = string;
 export type NoMixedRequiresConfig = boolean | NoMixedRequiresOptions;
 export type ShorthandType = "always" | "methods" | "properties" | "consistent" | "consistent-as-needed" | "never";
+/**
+ * Enforces consistent grouping of variable declarations.
+ */
+export type OneVar = OneVarConfig;
+/**
+ * Configuration accepted by the `one-var` rule.
+ */
+export type OneVarConfig = OneVarMode | OneVarOptions;
+/**
+ * Controls how variable declarators are grouped into declarations.
+ */
+export type OneVarMode = "always" | "never" | "consecutive";
 export type Destructuring = "any" | "all";
 export type PreferDestructuringOption = PreferDestructuringTargetOption | PreferDestructuringAssignmentConfig;
 export type TerminationMethod = string | string[];
@@ -238,12 +250,7 @@ export type ImportKind = "none" | "all" | "multiple" | "single";
 export type SortOrder = "desc" | "asc";
 export type ArrayOption = "array" | "array-simple" | "generic";
 export type ReadonlyArrayOption = "array" | "array-simple" | "generic";
-export type DirectiveConfigSchema =
-  | boolean
-  | RequireDescription
-  | {
-      descriptionFormat?: string;
-    };
+export type DirectiveConfigSchema = boolean | RequireDescription | DescriptionFormatConfig;
 export type RequireDescription = "allow-with-description";
 export type ClassLiteralPropertyStyleOption = "fields" | "getters";
 export type PreferGenericType = "constructor" | "type-annotation";
@@ -1028,6 +1035,7 @@ export interface DummyRuleMap {
   "jsdoc/check-tag-names"?: RuleNoConfig | [AllowWarnDeny, CheckTagNamesConfig];
   "jsdoc/empty-tags"?: RuleNoConfig | [AllowWarnDeny, EmptyTagsConfig];
   "jsdoc/implements-on-classes"?: RuleNoConfig;
+  "jsdoc/no-blank-blocks"?: RuleNoConfig | [AllowWarnDeny, NoBlankBlocks];
   "jsdoc/no-defaults"?: RuleNoConfig | [AllowWarnDeny, NoDefaultsConfig];
   "jsdoc/require-param"?: RuleNoConfig | [AllowWarnDeny, RequireParamConfig];
   "jsdoc/require-param-description"?: RuleNoConfig | [AllowWarnDeny, RequireParamDescriptionConfig];
@@ -1047,7 +1055,7 @@ export interface DummyRuleMap {
   "jsdoc/require-yields-type"?: RuleNoConfig;
   "jsx-a11y/alt-text"?: RuleNoConfig | [AllowWarnDeny, AltTextConfigSchema];
   "jsx-a11y/anchor-ambiguous-text"?: RuleNoConfig | [AllowWarnDeny, AnchorAmbiguousTextConfig];
-  "jsx-a11y/anchor-has-content"?: RuleNoConfig;
+  "jsx-a11y/anchor-has-content"?: RuleNoConfig | [AllowWarnDeny, AnchorHasContentConfig];
   "jsx-a11y/anchor-is-valid"?: RuleNoConfig | [AllowWarnDeny, AnchorIsValidConfig];
   "jsx-a11y/aria-activedescendant-has-tabindex"?: RuleNoConfig;
   "jsx-a11y/aria-props"?: RuleNoConfig;
@@ -1258,6 +1266,7 @@ export interface DummyRuleMap {
   "node/no-top-level-await"?: RuleNoConfig | [AllowWarnDeny, NoTopLevelAwaitConfig];
   "object-shorthand"?:
     RuleNoConfig | [AllowWarnDeny, ShorthandType] | [AllowWarnDeny, ShorthandType, ObjectShorthandOptions];
+  "one-var"?: RuleNoConfig | [AllowWarnDeny, OneVar];
   "operator-assignment"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "oxc/approx-constant"?: RuleNoConfig;
   "oxc/bad-array-method-on-arguments"?: RuleNoConfig;
@@ -2567,6 +2576,12 @@ export interface EmptyTagsConfig {
    */
   tags?: string[];
 }
+export interface NoBlankBlocks {
+  /**
+   * Whether to automatically remove blank JSDoc blocks.
+   */
+  enableFixer?: boolean;
+}
 export interface NoDefaultsConfig {
   /**
    * If true, report the presence of optional param names (square brackets) on `@param` tags.
@@ -2708,6 +2723,12 @@ export interface AnchorAmbiguousTextConfig {
    * List of ambiguous words or phrases that should be flagged in anchor text.
    */
   words?: string[];
+}
+export interface AnchorHasContentConfig {
+  /**
+   * Additional custom component names to treat as anchor elements.
+   */
+  components?: string[];
 }
 export interface AnchorIsValidConfig {
   /**
@@ -4222,6 +4243,46 @@ export interface ObjectShorthandOptions {
   ignoreConstructors?: boolean;
   methodsIgnorePattern?: string;
 }
+/**
+ * Options for configuring declaration grouping by kind or initialization state.
+ *
+ * `initialized` and `uninitialized` take precedence over the per-kind option for the
+ * corresponding declarators.
+ */
+export interface OneVarOptions {
+  /**
+   * Controls grouping for `await using` declarations.
+   */
+  awaitUsing?: OneVarMode;
+  /**
+   * Controls grouping for `const` declarations.
+   */
+  const?: OneVarMode;
+  /**
+   * Controls grouping for initialized declarators, overriding per-kind options.
+   */
+  initialized?: OneVarMode;
+  /**
+   * Controls grouping for `let` declarations.
+   */
+  let?: OneVarMode;
+  /**
+   * Keeps direct `require(...)` initializers separate from other initialized declarations.
+   */
+  separateRequires?: boolean;
+  /**
+   * Controls grouping for uninitialized declarators, overriding per-kind options.
+   */
+  uninitialized?: OneVarMode;
+  /**
+   * Controls grouping for `using` declarations.
+   */
+  using?: OneVarMode;
+  /**
+   * Controls grouping for `var` declarations.
+   */
+  var?: OneVarMode;
+}
 export interface NoAsyncEndpointHandlersConfig {
   /**
    * An array of names that are allowed to be async.
@@ -5217,6 +5278,9 @@ export interface BanTsCommentConfig {
    * How to handle the `@ts-nocheck` directive.
    */
   "ts-nocheck"?: DirectiveConfigSchema;
+}
+export interface DescriptionFormatConfig {
+  descriptionFormat?: string;
 }
 export interface ConsistentReturnConfig {
   /**

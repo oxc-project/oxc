@@ -9,10 +9,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{
     context::LintContext,
     fixer::RuleFixer,
-    utils::{
-        KnownMemberExpressionProperty, PossibleJestNode, is_equality_matcher,
-        parse_expect_jest_fn_call,
-    },
+    utils::{ParsedExpectFnCall, PossibleJestNode, is_equality_matcher, parse_expect_jest_fn_call},
 };
 
 fn use_to_be_comparison(preferred_method: &str, span: Span) -> OxcDiagnostic {
@@ -91,7 +88,7 @@ pub fn run_on_jest_node<'a, 'c>(
     }
 
     let has_not_modifier =
-        parse_expect_jest_fn.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+        parse_expect_jest_fn.modifiers().any(|modifier| modifier.is_name_equal("not"));
     let Expression::BooleanLiteral(matcher_arg_value) = first_matcher_arg.get_inner_expression()
     else {
         return;
@@ -116,8 +113,7 @@ pub fn run_on_jest_node<'a, 'c>(
             binary_expr,
             call_span_end,
             arg_span_end,
-            &parse_expect_jest_fn.local,
-            &parse_expect_jest_fn.modifiers(),
+            &parse_expect_jest_fn,
             prefer_matcher_name,
             fixer,
         );
@@ -156,18 +152,17 @@ fn building_code<'a>(
     binary_expr: &BinaryExpression<'a>,
     call_span_end: &str,
     arg_span_end: &str,
-    local_name: &str,
-    modifiers: &[&KnownMemberExpressionProperty<'a>],
+    expect_call: &ParsedExpectFnCall<'a>,
     prefer_matcher_name: &str,
     fixer: RuleFixer<'_, 'a>,
 ) -> String {
     let mut content = fixer.codegen();
-    content.print_str(local_name);
+    content.print_str(&expect_call.local);
     content.print_ascii_byte(b'(');
     content.print_expression(&binary_expr.left);
     content.print_str(call_span_end);
     content.print_ascii_byte(b'.');
-    for modifier in modifiers {
+    for modifier in expect_call.modifiers() {
         let Some(modifier_name) = modifier.name() else {
             continue;
         };

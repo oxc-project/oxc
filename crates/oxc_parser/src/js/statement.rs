@@ -591,7 +591,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Semicolon);
         if let Some(ForStatementInit::VariableDeclaration(decl)) = &init {
             for d in &decl.declarations {
-                self.check_missing_initializer(d);
+                self.check_missing_initializer(d, decl.kind);
             }
         }
         let test = if matches!(self.cur_kind(), Kind::Semicolon | Kind::RParen) {

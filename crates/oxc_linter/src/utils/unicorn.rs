@@ -1,3 +1,5 @@
+use smallvec::SmallVec;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -439,7 +441,8 @@ where
     P: IntoIterator<Item = S>,
     S: AsRef<[&'a str]>,
 {
-    let mut path = Vec::new();
+    // Member chains are short in practice; keep the segments on the stack.
+    let mut path: SmallVec<[&str; 4]> = SmallVec::new();
 
     while let Some(member_expr) = expr.as_member_expression() {
         let MemberExpression::StaticMemberExpression(static_mem_expr) = member_expr else {

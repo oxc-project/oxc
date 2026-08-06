@@ -30,6 +30,8 @@
     "unicorn/prefer-math-constants": "No need to implement, already covered by `oxc/approx-constant`.",
     "unicorn/no-invalid-character-comparison": "No need to implement, already covered by `oxc/bad-char-at-comparison`.",
     "unicorn/require-array-sort-compare": "No need to implement, already implemented by `typescript/require-array-sort-compare` via tsgolint.",
+    "unicorn/no-barrel-files": "No need to implement separately; similar functionality is available via `oxc/no-barrel-file`",
+    "unicorn/no-useless-concat": "No need to implement separately; `eslint/no-useless-concat` already covers the diagnostics and will implement the suggestion fixer.",
     "eslint/no-negated-in-lhs": "Replaced by `eslint/no-unsafe-negation`, which we support.",
     "eslint/no-catch-shadow": "Replaced by `eslint/no-shadow`.",
     "eslint/id-blacklist": "Replaced by `eslint/id-denylist`.",

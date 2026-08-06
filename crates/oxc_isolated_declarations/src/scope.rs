@@ -199,10 +199,11 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             Declaration::TSEnumDeclaration(decl) => {
                 self.add_binding(decl.id.name.into(), KindFlags::All);
             }
-            Declaration::TSModuleDeclaration(decl) => {
-                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
-                    self.add_binding(ident.name.into(), KindFlags::All);
-                }
+            Declaration::TSExternalModuleDeclaration(_) => {
+                // no binding
+            }
+            Declaration::TSNamespaceDeclaration(decl) => {
+                self.add_binding(decl.id.name.into(), KindFlags::All);
             }
             Declaration::TSGlobalDeclaration(_) => {
                 // no binding

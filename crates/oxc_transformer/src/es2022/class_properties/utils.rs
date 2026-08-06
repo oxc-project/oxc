@@ -18,7 +18,6 @@ pub(super) fn create_variable_declaration<'a>(
     let kind = VariableDeclarationKind::Var;
     let declarator = VariableDeclarator::new(
         SPAN,
-        kind,
         binding.create_binding_pattern(ctx),
         None,
         Some(init),

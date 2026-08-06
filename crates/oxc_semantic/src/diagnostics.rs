@@ -362,6 +362,18 @@ pub fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn not_allowed_ambient_module_declaration(span: Span) -> OxcDiagnostic {
+    ts_error("1234", "An ambient module declaration is only allowed at the top level in a file.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn nested_ambient_module_declaration(span: Span) -> OxcDiagnostic {
+    ts_error("2435", "Ambient modules cannot be nested in other modules or namespaces.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn global_scope_augmentation_should_have_declare_modifier(span: Span) -> OxcDiagnostic {
     ts_error(
         "2670",

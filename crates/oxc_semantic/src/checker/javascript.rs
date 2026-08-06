@@ -254,7 +254,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             // * It is a Syntax Error if the BoundNames of BindingList contains "let".
             for node_kind in ctx.ancestry().ancestor_kinds() {
                 match node_kind {
-                    AstKind::VariableDeclarator(decl) => {
+                    AstKind::VariableDeclaration(decl) => {
                         if decl.kind.is_lexical() {
                             ctx.error(diagnostics::invalid_let_declaration(
                                 decl.kind.as_str(),
@@ -616,7 +616,10 @@ pub fn check_variable_declarator_redeclaration(
     decl: &VariableDeclarator,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if decl.kind != VariableDeclarationKind::Var {
+    let AstKind::VariableDeclaration(declaration) = ctx.ancestry().parent_kind() else {
+        unreachable!();
+    };
+    if declaration.kind != VariableDeclarationKind::Var {
         return;
     }
 

@@ -279,6 +279,9 @@ fn get_function_name_from_id<'ast>(id: Option<&BindingIdentifier<'ast>>) -> Opti
 /// Check if an expression is a "non-node" return value (indicating the function
 /// is not a React component). This matches the TS `isNonNode` function.
 fn is_non_node(expr: &Expression) -> bool {
+    if let Expression::ParenthesizedExpression(parenthesized) = expr {
+        return is_non_node(&parenthesized.expression);
+    }
     matches!(
         expr,
         Expression::ObjectExpression(_)
@@ -1348,6 +1351,53 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         }
     }
 
+    fn walk_formal_parameters(&mut self, params: &'b FormalParameters<'ast>) {
+        for param in &params.items {
+            for decorator in &param.decorators {
+                self.walk_expression(&decorator.expression);
+            }
+            self.walk_binding_pattern(&param.pattern);
+            if let Some(initializer) = &param.initializer {
+                self.walk_expression(initializer);
+            }
+        }
+        if let Some(rest) = &params.rest {
+            for decorator in &rest.decorators {
+                self.walk_expression(&decorator.expression);
+            }
+            self.walk_binding_pattern(&rest.rest.argument);
+        }
+    }
+
+    fn walk_binding_pattern(&mut self, pattern: &'b BindingPattern<'ast>) {
+        match pattern {
+            BindingPattern::BindingIdentifier(_) => {}
+            BindingPattern::ObjectPattern(object) => {
+                for property in &object.properties {
+                    if property.computed {
+                        self.walk_property_key(&property.key);
+                    }
+                    self.walk_binding_pattern(&property.value);
+                }
+                if let Some(rest) = &object.rest {
+                    self.walk_binding_pattern(&rest.argument);
+                }
+            }
+            BindingPattern::ArrayPattern(array) => {
+                for element in array.elements.iter().flatten() {
+                    self.walk_binding_pattern(element);
+                }
+                if let Some(rest) = &array.rest {
+                    self.walk_binding_pattern(&rest.argument);
+                }
+            }
+            BindingPattern::AssignmentPattern(assignment) => {
+                self.walk_binding_pattern(&assignment.left);
+                self.walk_expression(&assignment.right);
+            }
+        }
+    }
+
     fn walk_statement(&mut self, stmt: &'b Statement<'ast>) {
         match stmt {
             Statement::BlockStatement(node) => self.walk_block(node),
@@ -1560,7 +1610,10 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
 
         if !skip_body {
             // Babel `fn.skip()` is only called for compiled functions; other
-            // functions are descended to find nested declarations.
+            // functions are descended to find nested declarations. Parameters
+            // are visited before the body because their defaults may contain a
+            // compilable function (for example, `Wrapper = memo(() => ...)`).
+            self.walk_formal_parameters(&func.params);
             if let Some(body) = &func.body {
                 self.walk_function_body_block(body);
             }
@@ -1598,6 +1651,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         };
 
         if !skip_body {
+            self.walk_formal_parameters(&arrow.params);
             if let Some(expression) = arrow.get_expression() {
                 self.walk_expression(expression);
             } else {
@@ -1780,6 +1834,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                 if is_method {
                     if let Expression::FunctionExpression(func) = &p.value {
                         let pushed = self.try_push_scope(func.scope_id.get());
+                        self.walk_formal_parameters(&func.params);
                         if let Some(body) = &func.body {
                             self.walk_function_body_block(body);
                         }
@@ -2206,7 +2261,6 @@ fn ox_build_gated_const_decl<'a>(
 ) -> Statement<'a> {
     let declarator = VariableDeclarator::new(
         SPAN,
-        VariableDeclarationKind::Const,
         BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
         None,
         Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
@@ -2751,15 +2805,8 @@ fn ox_add_imports_to_program<'a>(
                 false,
                 ast,
             );
-            let declarator = VariableDeclarator::new(
-                SPAN,
-                VariableDeclarationKind::Const,
-                object_pattern,
-                None,
-                Some(require_call),
-                false,
-                ast,
-            );
+            let declarator =
+                VariableDeclarator::new(SPAN, object_pattern, None, Some(require_call), false, ast);
             let decl = VariableDeclaration::boxed(
                 SPAN,
                 VariableDeclarationKind::Const,

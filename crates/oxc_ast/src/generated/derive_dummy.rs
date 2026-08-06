@@ -767,7 +767,6 @@ impl<'a> Dummy<'a> for VariableDeclarator<'a> {
         Self {
             node_id: Dummy::dummy(allocator),
             span: Dummy::dummy(allocator),
-            kind: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             init: Dummy::dummy(allocator),
@@ -2835,10 +2834,26 @@ impl<'a> Dummy<'a> for TSTypePredicateName<'a> {
     }
 }
 
-impl<'a> Dummy<'a> for TSModuleDeclaration<'a> {
-    /// Create a dummy [`TSModuleDeclaration`].
+impl<'a> Dummy<'a> for TSExternalModuleDeclaration<'a> {
+    /// Create a dummy [`TSExternalModuleDeclaration`].
     ///
     /// Does not allocate any data into arena.
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self {
+            node_id: Dummy::dummy(allocator),
+            span: Dummy::dummy(allocator),
+            id: Dummy::dummy(allocator),
+            body: Dummy::dummy(allocator),
+            declare: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
+        }
+    }
+}
+
+impl<'a> Dummy<'a> for TSNamespaceDeclaration<'a> {
+    /// Create a dummy [`TSNamespaceDeclaration`].
+    ///
+    /// Has cost of making 1 allocation (64 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             node_id: Dummy::dummy(allocator),
@@ -2852,8 +2867,8 @@ impl<'a> Dummy<'a> for TSModuleDeclaration<'a> {
     }
 }
 
-impl<'a> Dummy<'a> for TSModuleDeclarationKind {
-    /// Create a dummy [`TSModuleDeclarationKind`].
+impl<'a> Dummy<'a> for TSNamespaceDeclarationKind {
+    /// Create a dummy [`TSNamespaceDeclarationKind`].
     ///
     /// Does not allocate any data into arena.
     #[inline(always)]
@@ -2862,17 +2877,8 @@ impl<'a> Dummy<'a> for TSModuleDeclarationKind {
     }
 }
 
-impl<'a> Dummy<'a> for TSModuleDeclarationName<'a> {
-    /// Create a dummy [`TSModuleDeclarationName`].
-    ///
-    /// Does not allocate any data into arena.
-    fn dummy(allocator: &'a Allocator) -> Self {
-        Self::Identifier(Dummy::dummy(allocator))
-    }
-}
-
-impl<'a> Dummy<'a> for TSModuleDeclarationBody<'a> {
-    /// Create a dummy [`TSModuleDeclarationBody`].
+impl<'a> Dummy<'a> for TSNamespaceDeclarationBody<'a> {
+    /// Create a dummy [`TSNamespaceDeclarationBody`].
     ///
     /// Has cost of making 1 allocation (64 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {

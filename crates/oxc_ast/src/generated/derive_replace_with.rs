@@ -422,11 +422,11 @@ impl<'a> ReplaceWith<'a> for TSTypePredicate<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSTypePredicateName<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclaration<'a> {}
+impl<'a> ReplaceWith<'a> for TSExternalModuleDeclaration<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationName<'a> {}
+impl<'a> ReplaceWith<'a> for TSNamespaceDeclaration<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationBody<'a> {}
+impl<'a> ReplaceWith<'a> for TSNamespaceDeclarationBody<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSGlobalDeclaration<'a> {}
 

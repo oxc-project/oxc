@@ -1167,9 +1167,10 @@ pub enum Declaration<'a> {
     TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 35,
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
-    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+    TSExternalModuleDeclaration(Box<'a, TSExternalModuleDeclaration<'a>>) = 38,
+    TSNamespaceDeclaration(Box<'a, TSNamespaceDeclaration<'a>>) = 39,
+    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 40,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 41,
 }
 
 /// `let a;` in `let a; a = 1;`
@@ -1215,8 +1216,6 @@ pub enum VariableDeclarationKind {
 pub struct VariableDeclarator<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(skip)]
-    pub kind: VariableDeclarationKind,
     #[estree(via = VariableDeclaratorId)]
     pub id: BindingPattern<'a>,
     #[ts]

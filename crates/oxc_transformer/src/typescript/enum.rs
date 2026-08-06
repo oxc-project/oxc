@@ -295,15 +295,8 @@ impl<'a> TypeScriptEnum {
                 enum_symbol_id,
                 ctx,
             );
-            let decl = VariableDeclarator::new(
-                span,
-                kind,
-                binding,
-                None,
-                Some(call_expression),
-                false,
-                ctx,
-            );
+            let decl =
+                VariableDeclarator::new(span, binding, None, Some(call_expression), false, ctx);
             [decl]
         };
         let variable_declaration =
