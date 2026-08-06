@@ -281,7 +281,7 @@ impl Runtime {
     }
 
     /// Id for `path`, shared by every [`ModuleRecord`] resolving to it. See
-    /// [`ModuleRecord::path_id`].
+    /// [`ModuleRecord::path_id`]. Counts from 1, leaving 0 to mean "never interned".
     ///
     /// # Panics
     ///
@@ -1185,8 +1185,8 @@ impl Runtime {
 
         let mut module_record = ModuleRecord::new(Path::new(path), &ret.module_record, &semantic);
         // Only worth interning when the module graph is built: without a resolver nothing links
-        // these records together, so the distinct id `ModuleRecord::new` assigns is enough, and
-        // every run — including ones with no cross-module rules — skips the lock.
+        // these records together, so nothing compares their ids, and every run — including ones
+        // with no cross-module rules — skips the lock.
         if self.resolver.is_some() {
             module_record.path_id = self.intern_path(path);
         }
