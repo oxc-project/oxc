@@ -72,8 +72,6 @@ pub fn format_to_ir<'a>(
     options: JsonFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
-    // Input hygiene: embedded sources may carry a BOM; strip it, never re-emit.
-    let (_, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let parsed = parse_json(allocator, source_text, options.variant)?;
 
     let context = JsonFormatContext::new(
