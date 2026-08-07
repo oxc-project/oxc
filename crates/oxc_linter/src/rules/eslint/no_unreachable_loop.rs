@@ -304,12 +304,20 @@ fn has_next_iteration_path(
                         return true;
                     }
 
-                    // A block that completes normally has no edge out other
-                    // than this one: control runs the finalizer and resumes
-                    // after the `try`. When the block instead exits abruptly
-                    // the finalizer resumes that exit, so the only way it
-                    // reaches the next iteration is the `continue` the check
-                    // above looks for.
+                    // Control runs the finalizer and resumes after the `try`.
+                    // When the block instead exits abruptly the finalizer
+                    // resumes that exit, so the only way it reaches the next
+                    // iteration is the `continue` the check above looks for.
+                    //
+                    // The builder attaches a `Finalize` edge to every block
+                    // under the finalizer, not just the protected region's
+                    // fallthrough exit, so `source` can be an intermediate
+                    // block (an `if` condition, say) whose every branch still
+                    // exits abruptly. That does not leak a next-iteration path:
+                    // when the protected region cannot complete normally the
+                    // builder marks the block after the `try` unreachable and
+                    // emits `Unreachable` in place of `Join`, which this search
+                    // does not follow. See the `try`/`finally` fail cases.
                     if block_completes_normally(source, ctx) {
                         stack.push(edge.target());
                     }
@@ -1009,6 +1017,17 @@ fn test() {
         ("function f() { while (a) { try { foo(); } finally { if (a) continue; else return; } } }", None)
             .into(),
         ("while (a) { try { try { foo(); } finally { bar(); } } finally { baz(); } }", None).into(),
+        // A branch that can fall through keeps the loop alive, even when a
+        // sibling branch exits.
+        ("function f() { while (a) { try { if (b) { return; } } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { if (b) return; foo(); } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { if (b) continue; else return; } finally { bar(); } } }", None)
+            .into(),
+        // Nothing falls out of the `try`, but the `catch` completes normally.
+        ("function f() { while (a) { try { if (b) return; else return; } catch (e) {} finally { bar(); } } }", None)
+            .into(),
         ("for (const x of xs) { try { foo(x); } finally { bar(x); } }", None).into(),
         ("for (let i = 0; i < a; i++) { try { foo(); } finally { bar(); } }", None).into(),
         ("for (const k in a) { try { foo(); } finally { bar(); } }", None).into(),
@@ -1071,6 +1090,18 @@ fn test() {
     }
     fail.extend([
         // The finalizer runs, then resumes the abrupt exit that entered it.
+        // The `if`/`switch`/inner-loop shapes matter because the builder gives
+        // every block under the finalizer a `Finalize` edge, so the search also
+        // sees intermediate blocks that carry no abrupt instruction themselves.
+        ("function f() { while (a) { try { if (b) return; else return; } finally { bar(); } } }", None)
+            .into(),
+        ("while (a) { try { if (b) break; else break; } finally { bar(); } }", None).into(),
+        ("function f() { while (a) { try { if (b) return; else throw err; } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { switch (b) { case 1: return; default: return; } } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { for (;;) { return; } } finally { bar(); } } }", None)
+            .into(),
         ("function f() { while (a) { try { foo(); } finally { return; } } }", None).into(),
         ("while (a) { try { foo(); } finally { break; } }", None).into(),
         ("function f() { while (a) { try { return; } finally { bar(); } } }", None).into(),
