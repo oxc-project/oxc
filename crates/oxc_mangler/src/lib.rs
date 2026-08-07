@@ -6,7 +6,7 @@ use oxc_index::IndexVec;
 use oxc_syntax::class::ClassId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use base54::base54;
+pub use base54::base54;
 use oxc_allocator::{Allocator, ArenaHashSet, ArenaVec, BitSet};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;

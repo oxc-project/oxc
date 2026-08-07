@@ -168,6 +168,7 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
     .build(scoping, &mut program);
     let ret = Minifier::new(MinifierOptions {
         mangle: (!options.compress_only).then(MangleOptions::default),
+        mangle_properties: None,
         compress: Some(CompressOptions::default()),
     })
     .minify(&allocator, &mut program);
