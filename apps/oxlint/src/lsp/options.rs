@@ -29,11 +29,9 @@ pub enum Run {
 #[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum SuppressedViolationSeverity {
-    /// Keep the rule's own Error/Warning severity (the diagnostic is still faded via the
-    /// `UNNECESSARY` tag).
-    #[default]
-    Original,
     Hint,
+    Information,
+    #[default]
     Warning,
     Error,
 }
@@ -125,7 +123,8 @@ pub struct LintOptions {
     /// instead of hiding them entirely. Unset is treated as `true`; set to `false` to hide them.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub show_suppressed_violations: Option<bool>,
-    /// Severity used to render bulk-suppressed violations when they are shown.
+    /// Severity used to render bulk-suppressed violations when they are shown. Defaults to
+    /// `warning`.
     #[schemars(with = "Option<SuppressedViolationSeverity>")]
     pub suppressed_violation_severity: SuppressedViolationSeverity,
 }
@@ -312,7 +311,7 @@ mod test {
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix",
             "showSuppressedViolations": false,
-            "suppressedViolationSeverity": "hint",
+            "suppressedViolationSeverity": "information",
             "rulesCustomization": {
                 "no-unused-vars": {
                     "severity": "error",
@@ -334,7 +333,7 @@ mod test {
         assert!(!options.should_show_suppressed_violations());
         assert_eq!(
             options.suppressed_violation_severity,
-            SuppressedViolationSeverity::Hint
+            SuppressedViolationSeverity::Information
         );
 
         assert!(options.rules_customization.is_some());
@@ -378,7 +377,7 @@ mod test {
         assert!(options.should_show_suppressed_violations());
         assert_eq!(
             options.suppressed_violation_severity,
-            SuppressedViolationSeverity::Original
+            SuppressedViolationSeverity::Warning
         );
     }
 

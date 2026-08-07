@@ -81,7 +81,7 @@ describe("LSP linting", () => {
       expect(surfaced).toHaveLength(1);
       for (const diagnostic of suppressed) {
         expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
-        expect(diagnostic.severity).toBe(DiagnosticSeverity.Error);
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Warning);
       }
       expect(surfaced[0]?.tags).toBeUndefined();
     });
@@ -105,14 +105,14 @@ describe("LSP linting", () => {
         "suppressions",
         "severity.js",
         "javascript",
-        { suppressedViolationSeverity: "hint" },
+        { suppressedViolationSeverity: "information" },
       );
       const suppressed = diagnostics.filter(({ code }) => code === "eslint(no-console)");
 
       expect(suppressed).toHaveLength(2);
       for (const diagnostic of suppressed) {
         expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
-        expect(diagnostic.severity).toBe(DiagnosticSeverity.Hint);
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Information);
       }
     });
 
@@ -131,7 +131,7 @@ describe("LSP linting", () => {
       }
     });
 
-    it("discovers a suppression baseline below the workspace root", async () => {
+    it("ignores a suppression baseline below the workspace root", async () => {
       const diagnostics = await lintFixtureDiagnostics(
         FIXTURES_DIR,
         "suppressions-nested",
@@ -142,7 +142,23 @@ describe("LSP linting", () => {
 
       expect(suppressed).toHaveLength(2);
       for (const diagnostic of suppressed) {
-        expect(diagnostic.tags).toEqual([DiagnosticTag.Unnecessary]);
+        expect(diagnostic.tags).toBeUndefined();
+      }
+    });
+
+    it("surfaces diagnostics when the suppression baseline is malformed", async () => {
+      const diagnostics = await lintFixtureDiagnostics(
+        FIXTURES_DIR,
+        "suppressions-malformed",
+        "test.js",
+        "javascript",
+      );
+      const noConsole = diagnostics.filter(({ code }) => code === "eslint(no-console)");
+
+      expect(noConsole).toHaveLength(2);
+      for (const diagnostic of noConsole) {
+        expect(diagnostic.tags).toBeUndefined();
+        expect(diagnostic.severity).toBe(DiagnosticSeverity.Error);
       }
     });
 

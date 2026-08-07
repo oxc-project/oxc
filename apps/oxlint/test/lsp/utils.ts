@@ -451,7 +451,7 @@ type OxlintLSPConfig = {
   configPath?: string;
   typeAware?: boolean;
   showSuppressedViolations?: boolean;
-  suppressedViolationSeverity?: "original" | "hint" | "warning" | "error";
+  suppressedViolationSeverity?: "hint" | "information" | "warning" | "error";
   rulesCustomization?: Record<
     string,
     {

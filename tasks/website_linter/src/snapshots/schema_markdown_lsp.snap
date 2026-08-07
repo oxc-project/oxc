@@ -114,10 +114,11 @@ instead of hiding them entirely. Unset is treated as `true`; set to `false` to h
 
 ## suppressedViolationSeverity
 
-type: `"hint" | "warning" | "error" | "original"`
+type: `"hint" | "information" | "warning" | "error"`
 
 
-Severity used to render bulk-suppressed violations when they are shown.
+Severity used to render bulk-suppressed violations when they are shown. Defaults to
+`warning`.
 
 
 ## tsConfigPath

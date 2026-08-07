@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -398,69 +398,15 @@ impl ServerLinterBuilder {
 
 const SUPPRESSIONS_FILE_NAME: &str = "oxlint-suppressions.json";
 
-#[derive(Default)]
-struct SuppressionCache {
-    roots_by_directory: FxHashMap<PathBuf, Option<PathBuf>>,
-    managers_by_root: FxHashMap<PathBuf, Option<Arc<DiffManager>>>,
-}
-
 struct WorkspaceSuppressions {
     workspace_root: PathBuf,
-    cache: Mutex<SuppressionCache>,
+    manager: Option<Arc<DiffManager>>,
 }
 
 impl WorkspaceSuppressions {
     fn new(workspace_root: PathBuf) -> Self {
-        Self { workspace_root, cache: Mutex::new(SuppressionCache::default()) }
-    }
-
-    fn partition_file(
-        &self,
-        path: &Path,
-        messages: Vec<oxc_linter::Message>,
-    ) -> (Vec<oxc_linter::Message>, Vec<oxc_linter::Message>) {
-        let Some(root) = self.suppression_root(path) else {
-            return (messages, Vec::new());
-        };
-        let Some(manager) = self.suppression_manager(&root) else {
-            return (messages, Vec::new());
-        };
-
-        manager.partition_file(path, &root, messages)
-    }
-
-    fn suppression_root(&self, path: &Path) -> Option<PathBuf> {
-        let directory = path.parent()?;
-        let cached = {
-            self.cache.lock().unwrap().roots_by_directory.get(directory).cloned()
-        };
-        if let Some(root) = cached {
-            return root;
-        }
-
-        let root = directory
-            .ancestors()
-            .take_while(|ancestor| ancestor.starts_with(&self.workspace_root))
-            .find(|ancestor| ancestor.join(SUPPRESSIONS_FILE_NAME).is_file())
-            .map(Path::to_path_buf);
-
-        self.cache
-            .lock()
-            .unwrap()
-            .roots_by_directory
-            .insert(directory.to_path_buf(), root.clone());
-
-        root
-    }
-
-    fn suppression_manager(&self, root: &Path) -> Option<Arc<DiffManager>> {
-        let cached = { self.cache.lock().unwrap().managers_by_root.get(root).cloned() };
-        if let Some(manager) = cached {
-            return manager;
-        }
-
         let suppression_manager =
-            SuppressionManager::load(root, SUPPRESSIONS_FILE_NAME, false, false);
+            SuppressionManager::load(&workspace_root, SUPPRESSIONS_FILE_NAME, false, false);
         let manager = match &suppression_manager.file_action {
             OxlintSuppressionFileAction::Malformed(error) => {
                 warn!("{error}");
@@ -469,13 +415,19 @@ impl WorkspaceSuppressions {
             _ => Some(suppression_manager.build_diff()),
         };
 
-        self.cache
-            .lock()
-            .unwrap()
-            .managers_by_root
-            .insert(root.to_path_buf(), manager.clone());
+        Self { workspace_root, manager }
+    }
 
-        manager
+    fn partition_file(
+        &self,
+        path: &Path,
+        messages: Vec<oxc_linter::Message>,
+    ) -> (Vec<oxc_linter::Message>, Vec<oxc_linter::Message>) {
+        let Some(manager) = &self.manager else {
+            return (messages, Vec::new());
+        };
+
+        manager.partition_file(path, &self.workspace_root, messages)
     }
 }
 
@@ -490,7 +442,7 @@ pub struct ServerLinter {
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
-    /// Bulk-suppression baselines discovered from the linted file up to the workspace root.
+    /// Bulk-suppression baseline loaded from the workspace root.
     suppressions: WorkspaceSuppressions,
     /// Whether suppressed violations are rendered (faded) in the editor instead of hidden.
     show_suppressed_violations: bool,
@@ -585,7 +537,7 @@ impl Tool for ServerLinter {
         }
 
         // Re-lint open documents when the bulk-suppression baseline changes.
-        watchers.push("**/oxlint-suppressions.json".to_string());
+        watchers.push(SUPPRESSIONS_FILE_NAME.to_string());
 
         watchers
     }
@@ -946,11 +898,11 @@ impl ServerLinter {
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
         if self.show_suppressed_violations {
-            let severity_override = match self.suppressed_violation_severity {
-                SuppressedViolationSeverity::Original => None,
-                SuppressedViolationSeverity::Hint => Some(DiagnosticSeverity::HINT),
-                SuppressedViolationSeverity::Warning => Some(DiagnosticSeverity::WARNING),
-                SuppressedViolationSeverity::Error => Some(DiagnosticSeverity::ERROR),
+            let severity = match self.suppressed_violation_severity {
+                SuppressedViolationSeverity::Hint => DiagnosticSeverity::HINT,
+                SuppressedViolationSeverity::Information => DiagnosticSeverity::INFORMATION,
+                SuppressedViolationSeverity::Warning => DiagnosticSeverity::WARNING,
+                SuppressedViolationSeverity::Error => DiagnosticSeverity::ERROR,
             };
             for message in suppressed {
                 if let Some(mut report) = message_to_lsp_diagnostic(
@@ -962,9 +914,7 @@ impl ServerLinter {
                     // Fade the diagnostic (greyed out in VS Code / neovim-lsp) while preserving
                     // its code actions so developers can remove baselined violations over time.
                     report.diagnostic.tags = Some(vec![DiagnosticTag::UNNECESSARY]);
-                    if let Some(severity) = severity_override {
-                        report.diagnostic.severity = Some(severity);
-                    }
+                    report.diagnostic.severity = Some(severity);
                     messages.push(report);
                 }
             }
@@ -1107,7 +1057,7 @@ mod test_watchers {
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
-            assert_eq!(patterns[4], "**/oxlint-suppressions.json".to_string());
+            assert_eq!(patterns[4], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1125,7 +1075,7 @@ mod test_watchers {
             assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
-            assert_eq!(patterns[4], "**/oxlint-suppressions.json".to_string());
+            assert_eq!(patterns[4], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1140,7 +1090,7 @@ mod test_watchers {
 
             assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], "configs/lint.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint-suppressions.json".to_string());
+            assert_eq!(patterns[1], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1156,7 +1106,7 @@ mod test_watchers {
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
             assert_eq!(patterns[4], "lint.json".to_string());
-            assert_eq!(patterns[5], "**/oxlint-suppressions.json".to_string());
+            assert_eq!(patterns[5], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1172,7 +1122,7 @@ mod test_watchers {
             assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], ".oxlintrc.json".to_string());
             assert_eq!(patterns[1], "lint.json".to_string());
-            assert_eq!(patterns[2], "**/oxlint-suppressions.json".to_string());
+            assert_eq!(patterns[2], "oxlint-suppressions.json".to_string());
         }
 
         #[test]
@@ -1191,7 +1141,7 @@ mod test_watchers {
             assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
             assert_eq!(patterns[3], "**/oxlint.config.mts".to_string());
             assert_eq!(patterns[4], "**/tsconfig*.json".to_string());
-            assert_eq!(patterns[5], "**/oxlint-suppressions.json".to_string());
+            assert_eq!(patterns[5], "oxlint-suppressions.json".to_string());
         }
     }
 
@@ -1250,7 +1200,7 @@ mod test_watchers {
             assert_eq!(watch_patterns.as_ref().unwrap()[4], "**/tsconfig*.json".to_string());
             assert_eq!(
                 watch_patterns.as_ref().unwrap()[5],
-                "**/oxlint-suppressions.json".to_string()
+                "oxlint-suppressions.json".to_string()
             );
         }
     }
