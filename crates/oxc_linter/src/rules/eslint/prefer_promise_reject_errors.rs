@@ -197,7 +197,9 @@ fn check_reject_in_function(
         let Some(parent) = outermost_paren_parent(parent, ctx) else { continue };
 
         if let AstKind::CallExpression(call_expr) = parent.kind() {
-            check_reject_call(call_expr, ctx, allow_empty_reject);
+            if call_expr.callee.span().contains_inclusive(member_expr.span) {
+                check_reject_call(call_expr, ctx, allow_empty_reject);
+            }
         }
     }
 }
@@ -256,6 +258,7 @@ fn test() {
         ("new Promise(function (resolve, ...rest) { rest[0](new Error('')); });", None),
         ("new Promise(function (...rest) { rest[0](new Error('')); });", None),
         ("new Promise(function (...rest) { rest[1](new Error('')); });", None),
+        ("new Promise(function (...rest) { foo(5, (rest[1])); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
     ];
