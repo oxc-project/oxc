@@ -359,15 +359,23 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
 
     if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
         let is_call_call = is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2));
+        let is_apply_call = is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2));
 
-        if (is_call_call || is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2)))
+        if (is_call_call || is_apply_call)
             && is_prototype_property(member_expr_obj, "concat", Some("Array"))
             && let Some(first_argument) = call_expr.arguments[0].as_expression()
             && is_empty_array_expression(first_argument)
             && (is_call_call
                 || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))
         {
-            ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
+            if is_apply_call && let Some(Argument::Identifier(array)) = call_expr.arguments.get(1) {
+                let replacement = format!("{}.flat()", ctx.source_range(array.span));
+                ctx.diagnostic_with_fix(prefer_array_flat_diagnostic(call_expr.span), |fixer| {
+                    fixer.replace(call_expr.span, replacement)
+                });
+            } else {
+                ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
+            }
         }
     }
 }
@@ -645,9 +653,8 @@ fn test() {
             "const Items = [] as unknown[]; Items.flatMap(x => x);",
             "const Items = [] as unknown[]; Items.flat();",
         ),
-        // TODO: Get these passing.
-        // ("/**/[].concat.apply([], array)", "/**/array.flat()"),
-        // ("Array.prototype.concat.apply([], array)", "array.flat()"),
+        ("/**/[].concat.apply([], array)", "/**/array.flat()"),
+        ("Array.prototype.concat.apply([], array)", "array.flat()"),
     ];
 
     Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)
