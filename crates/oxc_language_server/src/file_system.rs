@@ -11,7 +11,14 @@ use crate::{ConcurrentHashMap, LanguageId, TextDocument};
 
 #[derive(Debug, Default)]
 pub struct LSPFileSystem {
-    files: ConcurrentHashMap<Uri, (LanguageId, Arc<str>)>,
+    files: ConcurrentHashMap<Uri, OpenDocument>,
+}
+
+#[derive(Debug)]
+struct OpenDocument {
+    language_id: LanguageId,
+    version: i32,
+    text: Arc<str>,
 }
 
 /// Represents a resolved file path that can be used for file system operations.
@@ -80,27 +87,45 @@ impl LSPFileSystem {
     }
 
     pub fn set(&self, uri: Uri, content: String) {
-        let language_id = self.get_language_id(&uri).unwrap_or_default();
-        self.files.pin().insert(uri, (language_id, Arc::from(content)));
+        let version = self.get_version(&uri).unwrap_or_default();
+        self.set_with_version(uri, version, content);
     }
 
-    pub fn set_with_language(&self, uri: Uri, language_id: LanguageId, content: String) {
-        self.files.pin().insert(uri, (language_id, Arc::from(content)));
+    pub fn set_with_version(&self, uri: Uri, version: i32, content: String) {
+        let language_id = self.get_language_id(&uri).unwrap_or_default();
+        self.set_with_language(uri, language_id, version, content);
+    }
+
+    pub fn set_with_language(
+        &self,
+        uri: Uri,
+        language_id: LanguageId,
+        version: i32,
+        content: String,
+    ) {
+        self.files
+            .pin()
+            .insert(uri, OpenDocument { language_id, version, text: Arc::from(content) });
     }
 
     pub fn get_language_id(&self, uri: &Uri) -> Option<LanguageId> {
-        self.files.pin().get(uri).map(|(lang, _)| lang.clone())
+        self.files.pin().get(uri).map(|doc| doc.language_id.clone())
     }
 
-    pub fn get_document<'a>(&self, uri: &'a Uri) -> TextDocument<'a> {
-        self.files.pin().get(uri).map_or_else(
-            || TextDocument { uri, language_id: LanguageId::default(), text: None },
-            |(language_id, content)| TextDocument {
-                uri,
-                language_id: language_id.clone(),
-                text: Some(Arc::clone(content)),
-            },
-        )
+    pub fn get_version(&self, uri: &Uri) -> Option<i32> {
+        self.files.pin().get(uri).map(|doc| doc.version)
+    }
+
+    pub fn get_document(&self, uri: Uri) -> TextDocument {
+        let binding = self.files.pin();
+        let Some(doc) = binding.get(&uri) else {
+            return TextDocument { uri, language_id: LanguageId::default(), text: None };
+        };
+        TextDocument {
+            uri,
+            language_id: doc.language_id.clone(),
+            text: Some(Arc::clone(&doc.text)),
+        }
     }
 
     pub fn is_open(&self, uri: &Uri) -> bool {

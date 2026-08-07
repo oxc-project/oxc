@@ -653,7 +653,7 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
-        Ok(vec![(document.uri.clone(), self.run_file(document.uri, document.text.as_deref())?)])
+        Ok(vec![(document.uri.clone(), self.run_file(&document.uri, document.text.as_deref())?)])
     }
 
     /// Lint a file with the current linter
@@ -674,6 +674,14 @@ impl Tool for ServerLinter {
             return Ok(vec![]);
         }
         self.run_diagnostic(document)
+    }
+
+    fn should_lint_on_change(&self) -> bool {
+        self.run == Run::OnType
+    }
+
+    fn should_lint_on_save(&self) -> bool {
+        self.run == Run::OnSave
     }
 
     fn remove_uri_cache(&self, uri: &Uri) {
