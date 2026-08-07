@@ -153,6 +153,7 @@ mod tests {
                 | "react/no-will-update-set-state"
                 | "react/rules-of-hooks"
                 | "typescript/class-literal-property-style"
+                | "typescript/no-unnecessary-condition"
                 | "typescript/no-floating-promises"
                 | "typescript/no-explicit-any"
                 | "unicorn/prefer-array-find"

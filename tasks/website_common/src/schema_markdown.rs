@@ -228,15 +228,7 @@ impl Renderer {
                     // properties (e.g. `description`) exist. Combine the property-level
                     // description (context-specific) with the referenced type's description
                     // (generic semantics) so neither layer is hidden by the other.
-                    if let Some(outer_desc) =
-                        schema.metadata.as_ref().and_then(|m| m.description.clone())
-                    {
-                        section.description = if section.description.is_empty() {
-                            outer_desc
-                        } else {
-                            format!("{outer_desc}\n\n{}", section.description)
-                        };
-                    }
+                    Self::prepend_description(schema, &mut section);
                     section.sanitize();
                     section
                 })
@@ -445,7 +437,7 @@ impl Renderer {
                         })
                         .collect();
 
-                    return Section {
+                    let mut section = Section {
                         level: "#".repeat(depth),
                         title: key.into(),
                         instance_type,
@@ -461,12 +453,16 @@ impl Renderer {
                             .unwrap_or_default(),
                         sections,
                     };
+                    Self::prepend_description(ref_schema, &mut section);
+                    return section;
                 }
             }
 
             let subsections = self.render_sub_schema(depth, key, subschemas, schema);
             if !subsections.is_empty() {
-                return subsections.into_iter().next().unwrap();
+                let mut section = subsections.into_iter().next().unwrap();
+                Self::prepend_description(ref_schema, &mut section);
+                return section;
             }
         }
 
@@ -520,7 +516,7 @@ impl Renderer {
             (instance_type, sections)
         };
 
-        Section {
+        let mut section = Section {
             level: "#".repeat(depth),
             title: key.into(),
             instance_type,
@@ -532,7 +528,25 @@ impl Renderer {
                 .or_else(|| ref_schema.metadata.as_ref().and_then(|m| m.description.clone()))
                 .unwrap_or_default(),
             sections,
+        };
+        Self::prepend_description(ref_schema, &mut section);
+        section
+    }
+
+    fn prepend_description(schema: &SchemaObject, section: &mut Section) {
+        let Some(description) = schema.metadata.as_ref().and_then(|m| m.description.as_ref())
+        else {
+            return;
+        };
+        if description == &section.description {
+            return;
         }
+
+        section.description = if section.description.is_empty() {
+            description.clone()
+        } else {
+            format!("{description}\n\n{}", section.description)
+        };
     }
 
     fn render_default(schema: &SchemaObject) -> Option<String> {
