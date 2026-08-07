@@ -22,7 +22,7 @@ pub use boolean::*;
 
 // Built-in Error constructors
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
-pub const BUILT_IN_ERRORS: [&str; 9] = [
+pub const BUILT_IN_ERRORS: [&str; 10] = [
     "Error",
     "EvalError",
     "RangeError",
@@ -32,6 +32,7 @@ pub const BUILT_IN_ERRORS: [&str; 9] = [
     "URIError",
     "InternalError",
     "AggregateError",
+    "SuppressedError",
 ];
 
 /// Returns `true` when `ident` resolves to any import binding from `module_name`.
