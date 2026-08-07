@@ -106,7 +106,7 @@ catch(e) {
 ----------
 try {
 	something();
-} 
+}
 /* istanbul ignore next */
 catch (e) {}
 
