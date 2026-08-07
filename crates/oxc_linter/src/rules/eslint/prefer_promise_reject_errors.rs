@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
-    ast_util::{could_be_error, is_method_call},
+    ast_util::{could_be_error, is_method_call, outermost_paren_parent},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -194,7 +194,9 @@ fn check_reject_in_function(
             continue;
         }
 
-        if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(parent.id()) {
+        let Some(parent) = outermost_paren_parent(parent, ctx) else { continue };
+
+        if let AstKind::CallExpression(call_expr) = parent.kind() {
             check_reject_call(call_expr, ctx, allow_empty_reject);
         }
     }
@@ -256,8 +258,6 @@ fn test() {
         ("new Promise(function (...rest) { rest[1](new Error('')); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
-        // TODO: This currently passes, as we only look at the immediate parent of the member expression
-        ("new Promise(function (...rest) { (rest[1])(5); });", None),
     ];
 
     let fail = vec![
@@ -318,6 +318,8 @@ fn test() {
         ("Promise.reject(foo &&= 5)", None),
         ("new Promise(function (resolve, ...rest) { rest[0](5); });", None),
         ("new Promise(function (...rest) { rest[1](5); });", None),
+        ("new Promise(function (...rest) { (rest[1])(5); });", None),
+        ("new Promise(function (...rest) { ((rest[1]))(5); });", None),
     ];
 
     Tester::new(PreferPromiseRejectErrors::NAME, PreferPromiseRejectErrors::PLUGIN, pass, fail)
