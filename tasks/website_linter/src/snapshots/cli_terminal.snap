@@ -61,7 +61,7 @@ Ignore Files
         --ignore-path=PATH    Specify the file to use as your `.eslintignore`
         --ignore-pattern=PAT  Specify patterns of files to ignore (in addition to those in
                               `.eslintignore`)
-        --no-ignore           Disable ignore sources; without a value, disables `cli`. Takes an
+        --no-ignore           Disable ignore sources; without a value, disables `all`. Takes an
                               optional comma-separated list of kinds attached with `=`, e.g.
                               `--no-ignore=vcs,config`:
                                * `vcs` - `.gitignore` files and `.git/info/exclude`
