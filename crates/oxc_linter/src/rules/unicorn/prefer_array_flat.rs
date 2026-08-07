@@ -373,9 +373,10 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
                 && array.name != "arguments"
             {
                 let replacement = format!("{}.flat()", ctx.source_range(array.span));
-                ctx.diagnostic_with_fix(prefer_array_flat_diagnostic(call_expr.span), |fixer| {
-                    fixer.replace(call_expr.span, replacement)
-                });
+                ctx.diagnostic_with_dangerous_fix(
+                    prefer_array_flat_diagnostic(call_expr.span),
+                    |fixer| fixer.replace(call_expr.span, replacement),
+                );
             } else {
                 ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
             }
@@ -385,7 +386,7 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "array.flatMap",
@@ -636,16 +637,28 @@ fn test() {
     ];
 
     let fix = vec![
-        ("array.flatMap(x => x)", "array.flat()"),
-        ("array.reduce((a, b) => a.concat(b), [])", "array.flat()"),
-        ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()"),
-        ("Foo.bar.flatMap(x => x)", "Foo.bar.flat()"),
+        ("array.flatMap(x => x)", "array.flat()", None, FixKind::SafeFix),
+        ("array.reduce((a, b) => a.concat(b), [])", "array.flat()", None, FixKind::SafeFix),
+        ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()", None, FixKind::SafeFix),
+        ("Foo.bar.flatMap(x => x)", "Foo.bar.flat()", None, FixKind::SafeFix),
         (
             "const values = getValues(); values.flatMap(x => x);",
             "const values = getValues(); values.flat();",
+            None,
+            FixKind::SafeFix,
         ),
-        ("const values = []; values.flatMap(x => x);", "const values = []; values.flat();"),
-        ("const Items = []; Items.flatMap(x => x);", "const Items = []; Items.flat();"),
+        (
+            "const values = []; values.flatMap(x => x);",
+            "const values = []; values.flat();",
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            "const Items = []; Items.flatMap(x => x);",
+            "const Items = []; Items.flat();",
+            None,
+            FixKind::SafeFix,
+        ),
         (
             "for (const value of values) {
                 value.flatMap(x => x);
@@ -653,13 +666,17 @@ fn test() {
             "for (const value of values) {
                 value.flat();
             }",
+            None,
+            FixKind::SafeFix,
         ),
         (
             "const Items = [] as unknown[]; Items.flatMap(x => x);",
             "const Items = [] as unknown[]; Items.flat();",
+            None,
+            FixKind::SafeFix,
         ),
-        ("/**/[].concat.apply([], array)", "/**/array.flat()"),
-        ("Array.prototype.concat.apply([], array)", "array.flat()"),
+        ("/**/[].concat.apply([], array)", "/**/array.flat()", None, FixKind::DangerousFix),
+        ("Array.prototype.concat.apply([], array)", "array.flat()", None, FixKind::DangerousFix),
     ];
 
     Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)
