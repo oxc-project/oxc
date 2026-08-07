@@ -699,7 +699,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.context(
                 Context::In | Context::NewTarget,
                 Context::Yield | Context::Await,
-                Self::parse_expr,
+                Self::parse_assignment_expression_or_higher,
             )
         });
 
