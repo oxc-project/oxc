@@ -1303,8 +1303,8 @@ impl<'a> VisitJsMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 
         // `class Inner extends super() {}`
         //                      ^^^^^^^
-        if let Some(super_class) = &mut class.super_class {
-            self.visit_expression(super_class);
+        if let Some(heritage) = &mut class.heritage {
+            self.visit_expression(&mut heritage.expression);
         }
 
         for element in &mut class.body.body {

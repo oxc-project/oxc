@@ -225,7 +225,7 @@ impl<'a> TypeScript<'a> {
             );
             let ctor = create_class_constructor(
                 property_assignments,
-                class.super_class.is_some(),
+                class.heritage.is_some(),
                 scope_id,
                 ctx,
             );

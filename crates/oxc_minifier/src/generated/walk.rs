@@ -2607,16 +2607,10 @@ unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) =
-        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_CLASS) as *mut Option<Expression>)
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_HERITAGE) as *mut Option<ClassHeritage>)
     {
-        ctx.retag_stack(AncestorType::ClassSuperClass);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
-        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
-    {
-        ctx.retag_stack(AncestorType::ClassSuperTypeArguments);
-        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+        ctx.retag_stack(AncestorType::ClassHeritage);
+        walk_class_heritage(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ClassImplements);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
@@ -2634,6 +2628,31 @@ unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_class(&mut *node, ctx);
+}
+
+unsafe fn walk_class_heritage<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassHeritage<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_heritage(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ClassHeritageExpression(
+        ancestor::ClassHeritageWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CLASS_HERITAGE_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_CLASS_HERITAGE_TYPE_ARGUMENTS)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::ClassHeritageTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_class_heritage(&mut *node, ctx);
 }
 
 unsafe fn walk_class_body<'a, Tr: Traverse<'a>>(
@@ -5044,12 +5063,12 @@ unsafe fn walk_ts_interface_heritage<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_heritage(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageExpression(
-        ancestor::TSInterfaceHeritageWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageTypeName(
+        ancestor::TSInterfaceHeritageWithoutTypeName(node, PhantomData),
     ));
-    walk_expression(
+    walk_ts_type_name(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION) as *mut Expression,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_TYPE_NAME) as *mut TSTypeName,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)

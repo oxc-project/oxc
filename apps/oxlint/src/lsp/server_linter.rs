@@ -834,17 +834,15 @@ impl ServerLinter {
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
+        // Take directives once to avoid separate get/remove lock acquisitions.
+        let directives = self.runner.directives_coordinator().take(path);
+
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
-            && let Some(directives) = self.runner.directives_coordinator().get(path)
+            && let Some(directives) = directives
         {
             messages.extend(create_unused_directives_report(&directives, severity, source_text));
         }
-
-        // Clear any stale directives because they are no longer needed.
-        // This prevents using outdated directive spans if the new linting run fails.
-        self.runner.directives_coordinator().remove(path);
-
         Ok(messages)
     }
 

@@ -2599,6 +2599,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Class<'a>> {
     }
 }
 
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassHeritage<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);

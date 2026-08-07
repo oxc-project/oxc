@@ -1464,13 +1464,25 @@ impl ESTree for Class<'_> {
         state.serialize_field("decorators", &self.decorators);
         state.serialize_field("id", &self.id);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
-        state.serialize_field("superClass", &self.super_class);
-        state.serialize_ts_field("superTypeArguments", &self.super_type_arguments);
+        state.serialize_field("superClass", &crate::serialize::js::ClassSuperClass(self));
+        state.serialize_ts_field(
+            "superTypeArguments",
+            &crate::serialize::js::ClassSuperTypeArguments(self),
+        );
         state.serialize_ts_field("implements", &self.implements);
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
         state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for ClassHeritage<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("expression", &self.expression);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2973,7 +2985,10 @@ impl ESTree for TSInterfaceHeritage<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceHeritage"));
-        state.serialize_field("expression", &self.expression);
+        state.serialize_field(
+            "expression",
+            &crate::serialize::ts::TSInterfaceHeritageExpression(self),
+        );
         state.serialize_field("typeArguments", &self.type_arguments);
         state.serialize_span(self.span);
         state.end();
