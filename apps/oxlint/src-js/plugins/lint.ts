@@ -24,6 +24,7 @@ import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { VisitFn, EnterExit } from "./visitor.ts";
 import type { AfterHook, BufferWithArrays } from "./types.ts";
+import type { VisitorObject } from "../generated/visitor.d.ts";
 
 // Buffers cache.
 //
@@ -39,6 +40,18 @@ const afterHooks: AfterHook[] = [];
 // `value` is updated before each call. Other attributes are omitted to retain existing values.
 const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
 
+interface RuleTiming {
+  ruleIndex: number;
+  duration: bigint;
+  calls: number;
+}
+
+interface SerializedRuleTiming {
+  ruleIndex: number;
+  duration: number;
+  calls: number;
+}
+
 /**
  * Lint a file.
  *
@@ -52,6 +65,7 @@ const OPTIONS_DESCRIPTOR: PropertyDescriptor = { value: null };
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
+ * @param timings - Whether to collect per-rule timings
  * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
@@ -63,8 +77,13 @@ export function lintFile(
   settingsJSON: string,
   globalsJSON: string,
   workspaceUri: string | null,
+  timings: boolean,
 ): string | null {
   try {
+    const ruleTimings: RuleTiming[] | null = timings
+      ? ruleIds.map((_ruleId, ruleIndex) => ({ ruleIndex, duration: 0n, calls: 0 }))
+      : null;
+
     lintFileImpl(
       filePath,
       bufferId,
@@ -74,12 +93,25 @@ export function lintFile(
       settingsJSON,
       globalsJSON,
       workspaceUri,
+      ruleTimings,
     );
 
     let ret: string | null = null;
 
-    // Avoid JSON serialization in common case that there are no diagnostics to report
-    if (diagnostics.length !== 0) {
+    if (ruleTimings !== null) {
+      const serializedTimings: SerializedRuleTiming[] = ruleTimings.map(
+        ({ ruleIndex, duration, calls }) => ({
+          ruleIndex,
+          duration: Number(duration),
+          calls,
+        }),
+      );
+      ret = JSON.stringify({
+        SuccessWithTimings: { diagnostics, timings: serializedTimings },
+      });
+      diagnostics.length = 0;
+    } else if (diagnostics.length !== 0) {
+      // Avoid JSON serialization in common case that there are no diagnostics to report
       // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
       // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
       ret = JSON.stringify({ Success: diagnostics });
@@ -109,6 +141,7 @@ export function lintFile(
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
  * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
+ * @param ruleTimings - Per-rule timing accumulators, or `null` if timings are disabled
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
@@ -121,6 +154,7 @@ export function lintFileImpl(
   settingsJSON: string,
   globalsJSON: string,
   workspaceUri: string | null,
+  ruleTimings: RuleTiming[] | null = null,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
@@ -228,7 +262,11 @@ export function lintFileImpl(
       if (afterHook !== null) afterHooks.push(afterHook);
     }
 
-    addVisitorToCompiled(visitor);
+    if (ruleTimings === null) {
+      addVisitorToCompiled(visitor);
+    } else {
+      addVisitorToCompiledWithTiming(visitor, ruleTimings[ruleDetails.ruleIndex]);
+    }
   }
 
   const visitorState = finalizeCompiledVisitor();
@@ -257,6 +295,31 @@ export function lintFileImpl(
 
   // Run any `after` hooks
   runAfterHooks(true);
+}
+
+/**
+ * Wrap all listeners in a visitor with timing instrumentation before compiling it.
+ *
+ * Complex selector filtering is added by `addVisitorToCompiled` outside these wrappers,
+ * so callbacks are only counted and timed when their selector matches.
+ */
+function addVisitorToCompiledWithTiming(visitor: VisitorObject, timing: RuleTiming): void {
+  const timedVisitor = Object.create(null) as VisitorObject;
+
+  for (const name of Object.keys(visitor)) {
+    const listener = visitor[name]!;
+    timedVisitor[name] = ((...args: unknown[]) => {
+      const start = process.hrtime.bigint();
+      try {
+        Reflect.apply(listener, undefined, args);
+      } finally {
+        timing.duration += process.hrtime.bigint() - start;
+        timing.calls++;
+      }
+    }) as typeof listener;
+  }
+
+  addVisitorToCompiled(timedVisitor);
 }
 
 /**
