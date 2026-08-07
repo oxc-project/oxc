@@ -1,0 +1,21 @@
+crates/oxc_formatter/src/print/class.rs
+  s_aa3067c8f5ecd1::t_4e4df5d2d39df8 493,501,503,515,517
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_aa3067c8f5ecd1::t_9cec05be90aa9d 8,19,41,43,74,76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "862978fb9fad47cf74cb8faa41fb2d7d0d7147e3",
+  "prompts": {},
+  "sessions": {
+    "s_aa3067c8f5ecd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdba8-20bb-79c3-bc32-395e28a32e34",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
