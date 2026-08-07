@@ -10467,7 +10467,7 @@ export class TSInterfaceHeritage {
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 16, internal.ast);
+    return constructTSTypeName(internal.pos + 16, internal.ast);
   }
 
   get typeArguments() {
