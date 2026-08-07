@@ -284,12 +284,11 @@ fn test_for_continue_optimization() {
 }
 
 #[test]
-#[ignore = "TODO: Code motion with function hoisting not yet implemented"]
 fn test_code_motion_doesnt_break_function_hoisting() {
-    test(
-        "function f() { if (x) return; foo(); function foo() {} }",
-        "function f() { if (x); else { function foo() {} foo(); } }",
-    );
+    test_same("function f() { if (x) return; foo(); function foo() {} }");
+    test_same("function f() { if (x) return; foo(); label: function foo() {} }");
+    test_same("function a() { if (typeof f == 'function') return; function f() {} }");
+    test_same("function a() { if (typeof f == 'function') return; label: function f() {} }");
 }
 
 #[test]
