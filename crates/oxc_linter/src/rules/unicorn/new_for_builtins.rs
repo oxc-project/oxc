@@ -25,7 +25,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Enforces the use of `new` for the following builtins: `Object`, `Array`, `ArrayBuffer`, `BigInt64Array`,
-    /// `BigUint64Array`, `DataView`, `Date`, `Error`, `Float32Array`, `Float64Array`, `Function`, `Int8Array`,
+    /// `BigUint64Array`, `DataView`, `Date`, `Error`, `Float16Array`, `Float32Array`, `Float64Array`, `Function`, `Int8Array`,
     /// `Int16Array`, `Int32Array`, `Map`, `WeakMap`, `Set`, `WeakSet`, `Promise`, `RegExp`, `Uint8Array`,
     /// `Uint16Array`, `Uint32Array`, `Uint8ClampedArray`, `SharedArrayBuffer`, `Proxy`, `WeakRef`, `FinalizationRegistry`.
     ///
@@ -139,6 +139,7 @@ const ENFORCE_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf::phf_set![
     "Date",
     "Error",
     "FinalizationRegistry",
+    "Float16Array",
     "Float32Array",
     "Float64Array",
     "Function",
@@ -294,7 +295,7 @@ fn test() {
         "const foo = DataView()",
         "const foo = Error()",
         "const foo = Error('Foo bar')",
-        // "const foo = Float16Array()",
+        "const foo = Float16Array()",
         "const foo = Float32Array()",
         "const foo = Float64Array()",
         "const foo = Function()",
