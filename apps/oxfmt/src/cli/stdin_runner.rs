@@ -82,16 +82,26 @@ impl StdinRunner {
         // Resolve filepath to absolute for nested config resolution and ignore check
         let filepath = utils::normalize_relative_path(&cwd, &filepath);
 
-        // Check if the file is ignored by tool-ignores.
+        // Check if the file is ignored by tool-ignores, unless `--no-ignore` disables the `cli` kind.
         // `.gitignore` is deliberately not consulted, stdin is an explicitly requested document.
         // Checked before resolving the scope, so configs under ignored dirs are never loaded.
-        let global_matchers = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
-            .and_then(|paths| build_global_ignore_matchers(&cwd, &[], &paths))
-        {
-            Ok(matchers) => matchers,
-            Err(err) => {
-                utils::print_and_flush(stderr, &format!("{err}\n"));
-                return CliRunResult::InvalidOptionConfig;
+        let global_matchers = if ignore_options.no_ignore.cli {
+            vec![]
+        } else {
+            match resolve_ignore_paths(&cwd, &ignore_options.ignore_path)
+                .and_then(|paths| build_global_ignore_matchers(&cwd, &[], &paths))
+            {
+                Ok(matchers) => matchers,
+                Err(err) => {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!(
+                            "{err}
+"
+                        ),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
         };
         if is_ignored(&global_matchers, &filepath, false, true) {
@@ -109,8 +119,8 @@ impl StdinRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        // Then config's `ignorePatterns`
-        if config_resolver.is_path_ignored(&filepath, false) {
+        // Then config's `ignorePatterns`, unless `--no-ignore` disables the `config` kind
+        if !ignore_options.no_ignore.config && config_resolver.is_path_ignored(&filepath, false) {
             utils::print_and_flush(stdout, &source_text);
             return CliRunResult::FormatSucceeded;
         }
