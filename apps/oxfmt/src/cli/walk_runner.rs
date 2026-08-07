@@ -120,15 +120,21 @@ impl WalkRunner {
             return CliRunResult::InvalidOptionConfig;
         }
 
-        // Resolve ignore paths early to validate before walk starts
-        let resolved_ignore_paths = match resolve_ignore_paths(&cwd, &ignore_options.ignore_path) {
-            Ok(paths) => paths,
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
+        // Resolve ignore paths early to validate before walk starts.
+        // `--no-ignore` with the `cli` kind disables this layer entirely,
+        // including `--ignore-path` validation.
+        let resolved_ignore_paths = if ignore_options.no_ignore.cli {
+            vec![]
+        } else {
+            match resolve_ignore_paths(&cwd, &ignore_options.ignore_path) {
+                Ok(paths) => paths,
+                Err(err) => {
+                    utils::print_and_flush(
+                        stderr,
+                        &format!("Failed to parse target paths or ignore settings.\n{err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionConfig;
+                }
             }
         };
 
@@ -175,6 +181,7 @@ impl WalkRunner {
         let any_config_found = match walker.run(
             root_config_resolver,
             &resolved_ignore_paths,
+            ignore_options.no_ignore,
             ignore_options.with_node_modules,
             config_options.config.is_none() && !config_options.disable_nested_config,
             editorconfig_path.as_deref(),
