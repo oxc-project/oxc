@@ -1,4 +1,3 @@
-use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -42,15 +41,23 @@ declare_oxc_lint!(
     short_description = "This rule disallows `tslint:<rule-flag>` comments.",
 );
 
-static ENABLE_DISABLE_REGEX: Lazy<Regex> =
-    lazy_regex!(r"^\s*tslint:(enable|disable)(?:-(line|next-line))?(:|\s|$)");
+/// `^\s*tslint:(enable|disable)(?:-(line|next-line))?(:|\s|$)`
+fn is_tslint_enable_disable_comment(raw: &str) -> bool {
+    let Some(rest) = raw.trim_start().strip_prefix("tslint:") else { return false };
+    let Some(rest) = rest.strip_prefix("enable").or_else(|| rest.strip_prefix("disable")) else {
+        return false;
+    };
+    let rest =
+        rest.strip_prefix("-line").or_else(|| rest.strip_prefix("-next-line")).unwrap_or(rest);
+    rest.is_empty() || rest.starts_with(':') || rest.starts_with(char::is_whitespace)
+}
 
 impl Rule for BanTslintComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.comments();
         for comment in comments {
             let raw = ctx.source_range(comment.content_span());
-            if ENABLE_DISABLE_REGEX.is_match(raw) {
+            if is_tslint_enable_disable_comment(raw) {
                 let comment_span = get_full_comment(ctx, comment.span);
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),
@@ -86,6 +93,8 @@ fn test() {
         "// TODO: this is a comment that mentions tslint",
         "/* another comment that mentions tslint */",
         "someCode(); // This is a comment that just happens to mention tslint",
+        "// tslint:disabled",
+        "// TSLint:disable",
     ];
 
     let fail = vec![

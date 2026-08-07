@@ -160,7 +160,13 @@ impl Gen for Statement<'_> {
             Self::WithStatement(stmt) => stmt.print(p, ctx),
             Self::DebuggerStatement(stmt) => stmt.print(p, ctx),
             // TypeScript-specific (less common)
-            Self::TSModuleDeclaration(decl) => {
+            Self::TSExternalModuleDeclaration(decl) => {
+                p.print_comments_at(decl.span.start);
+                p.print_indent();
+                decl.print(p, ctx);
+                p.print_soft_newline();
+            }
+            Self::TSNamespaceDeclaration(decl) => {
                 p.print_comments_at(decl.span.start);
                 p.print_indent();
                 decl.print(p, ctx);
@@ -1070,7 +1076,8 @@ impl Gen for ExportDeclaration<'_> {
             Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
             Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
             Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
-            Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSExternalModuleDeclaration(decl) => decl.print(p, ctx),
+            Declaration::TSNamespaceDeclaration(decl) => decl.print(p, ctx),
             Declaration::TSGlobalDeclaration(decl) => decl.print(p, ctx),
             Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
             Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
@@ -3966,7 +3973,26 @@ impl Gen for TSNamedTupleMember<'_> {
     }
 }
 
-impl Gen for TSModuleDeclaration<'_> {
+impl Gen for TSExternalModuleDeclaration<'_> {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.declare {
+            p.print_str("declare ");
+        }
+        p.print_str("module");
+        p.print_space_before_identifier();
+        p.print_string_literal(&self.id, false);
+
+        if let Some(body) = &self.body {
+            p.print_soft_space();
+            body.print(p, ctx);
+        } else {
+            p.print_semicolon();
+        }
+        p.needs_semicolon = false;
+    }
+}
+
+impl Gen for TSNamespaceDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
             p.print_str("declare ");
@@ -3975,39 +4001,22 @@ impl Gen for TSModuleDeclaration<'_> {
         p.print_space_before_identifier();
         self.id.print(p, ctx);
 
-        if let Some(body) = &self.body {
-            let mut body = body;
-            loop {
-                match body {
-                    TSModuleDeclarationBody::TSModuleDeclaration(b) => {
-                        p.print_ascii_byte(b'.');
-                        b.id.print(p, ctx);
-                        if let Some(b) = &b.body {
-                            body = b;
-                        } else {
-                            break;
-                        }
-                    }
-                    TSModuleDeclarationBody::TSModuleBlock(body) => {
-                        p.print_soft_space();
-                        body.print(p, ctx);
-                        break;
-                    }
+        let mut body = &self.body;
+        loop {
+            match body {
+                TSNamespaceDeclarationBody::TSNamespaceDeclaration(namespace) => {
+                    p.print_ascii_byte(b'.');
+                    namespace.id.print(p, ctx);
+                    body = &namespace.body;
+                }
+                TSNamespaceDeclarationBody::TSModuleBlock(body) => {
+                    p.print_soft_space();
+                    body.print(p, ctx);
+                    break;
                 }
             }
-        } else {
-            p.print_semicolon();
         }
         p.needs_semicolon = false;
-    }
-}
-
-impl Gen for TSModuleDeclarationName<'_> {
-    fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        match self {
-            Self::Identifier(ident) => ident.print(p, ctx),
-            Self::StringLiteral(s) => p.print_string_literal(s, false),
-        }
     }
 }
 

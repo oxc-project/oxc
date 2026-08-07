@@ -227,10 +227,11 @@ impl Rule for NoUselessUndefined {
                     AstKind::VariableDeclarator(variable_declarator) => {
                         let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
-                        let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
+                        let AstKind::VariableDeclaration(declaration) = grand_parent_node_kind
+                        else {
                             return;
                         };
-                        if variable_declarator.kind == VariableDeclarationKind::Const {
+                        if declaration.kind == VariableDeclarationKind::Const {
                             return;
                         }
                         if is_has_function_return_type(parent_node, ctx) {

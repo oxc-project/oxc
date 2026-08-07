@@ -1535,12 +1535,45 @@ mod test {
     }
 
     #[test]
+    fn test_rules_customization_severity_with_eslint_prefix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/severity",
+            json!({
+                "rulesCustomization": {
+                    "eslint/no-debugger": {
+                        "severity": "warn"
+                    },
+                    "eslint/no-console": {
+                        "severity": "off"
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
     fn test_rules_customization_autofix() {
         let tester = Tester::new(
             "fixtures/lsp/rules_customization/autofix",
             json!({
                 "rulesCustomization": {
                     "no-debugger": {
+                        "autofix": false
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_rules_customization_autofix_with_eslint_prefix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/autofix",
+            json!({
+                "rulesCustomization": {
+                    "eslint/no-debugger": {
                         "autofix": false
                     }
                 }

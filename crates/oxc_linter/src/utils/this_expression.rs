@@ -9,7 +9,10 @@ use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 
-use crate::{ast_util::get_declaration_from_reference_id, context::LintContext};
+use crate::{
+    ast_util::get_declaration_from_reference_id, ast_util::variable_declaration_kind,
+    context::LintContext,
+};
 
 /// Finds `this` expressions without traversing into nested functions.
 pub struct ThisExpressionFinder {
@@ -73,7 +76,7 @@ pub fn is_this_alias(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool
             _ => None,
         })
         .filter(|var| {
-            var.kind == VariableDeclarationKind::Const
+            variable_declaration_kind(var, ctx) == VariableDeclarationKind::Const
                 && matches!(&var.id, BindingPattern::BindingIdentifier(_))
         })
         .and_then(|var| var.init.as_ref())

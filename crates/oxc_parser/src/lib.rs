@@ -936,7 +936,9 @@ impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::ast::{CommentKind, Expression, Statement};
+    use oxc_ast::ast::{
+        CommentKind, Expression, Statement, TSNamespaceDeclarationBody, TSNamespaceDeclarationKind,
+    };
     use oxc_span::GetSpan;
 
     use super::*;
@@ -987,9 +989,40 @@ mod test {
     fn ts_module_declaration() {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
-        let source = "declare module 'test'\n";
+        let source =
+            "declare module 'test'; namespace Foo.Bar {} module Baz {} declare module 'raw' {}";
         let ret = Parser::new(&allocator, source, source_type).parse();
-        assert_eq!(ret.diagnostics.len(), 0);
+        assert!(ret.diagnostics.is_empty());
+
+        let Statement::TSExternalModuleDeclaration(external) = &ret.program.body[0] else {
+            panic!("expected external module declaration");
+        };
+        assert_eq!(external.id.value, "test");
+        assert!(external.body.is_none());
+        assert!(external.declare);
+
+        let Statement::TSNamespaceDeclaration(namespace) = &ret.program.body[1] else {
+            panic!("expected namespace declaration");
+        };
+        assert_eq!(namespace.id.name, "Foo");
+        assert_eq!(namespace.kind, TSNamespaceDeclarationKind::Namespace);
+        let TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner) = &namespace.body else {
+            panic!("expected dotted namespace declaration");
+        };
+        assert_eq!(inner.id.name, "Bar");
+
+        let Statement::TSNamespaceDeclaration(module) = &ret.program.body[2] else {
+            panic!("expected identifier module declaration");
+        };
+        assert_eq!(module.id.name, "Baz");
+        assert_eq!(module.kind, TSNamespaceDeclarationKind::Module);
+
+        let Statement::TSExternalModuleDeclaration(external) = &ret.program.body[3] else {
+            panic!("expected external module declaration");
+        };
+        assert_eq!(external.id.value, "raw");
+        assert!(external.body.is_some());
+        assert!(external.declare);
     }
 
     #[test]

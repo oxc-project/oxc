@@ -140,8 +140,8 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
     }
 
     if call_expr.arguments.is_empty()
-        || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(ctx, e))
-        || is_undefined(&call_expr.arguments[0])
+        || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(e))
+        || is_undefined(&call_expr.arguments[0], ctx)
     {
         ctx.diagnostic(prefer_promise_reject_errors_diagnostic(call_expr.span));
     }
@@ -200,9 +200,11 @@ fn check_reject_in_function(
     }
 }
 
-fn is_undefined(arg: &Argument) -> bool {
+fn is_undefined(arg: &Argument, ctx: &LintContext) -> bool {
     match arg.as_expression().map(Expression::get_inner_expression) {
-        Some(Expression::Identifier(ident)) => ident.name == "undefined",
+        Some(Expression::Identifier(ident)) => {
+            ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
+        }
         _ => false,
     }
 }
@@ -220,6 +222,7 @@ fn test() {
         ("Promise.reject(new Error())", None),
         ("Promise.reject(new TypeError)", None),
         ("Promise.reject(new Error('foo'))", None),
+        ("function foo(undefined) { Promise.reject(undefined); }", None),
         (
             "declare const error: Error | undefined; new Promise((_, reject) => { if (error) reject(error); });",
             None,

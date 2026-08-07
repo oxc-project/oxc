@@ -825,7 +825,8 @@ impl ESTree for Statement<'_> {
             | Self::TSTypeAliasDeclaration(_)
             | Self::TSInterfaceDeclaration(_)
             | Self::TSEnumDeclaration(_)
-            | Self::TSModuleDeclaration(_)
+            | Self::TSExternalModuleDeclaration(_)
+            | Self::TSNamespaceDeclaration(_)
             | Self::TSGlobalDeclaration(_)
             | Self::TSImportEqualsDeclaration(_) => self.to_declaration().serialize(serializer),
             Self::ImportDeclaration(_)
@@ -882,7 +883,8 @@ impl ESTree for Declaration<'_> {
             Self::TSTypeAliasDeclaration(it) => it.serialize(serializer),
             Self::TSInterfaceDeclaration(it) => it.serialize(serializer),
             Self::TSEnumDeclaration(it) => it.serialize(serializer),
-            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSExternalModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSNamespaceDeclaration(it) => it.serialize(serializer),
             Self::TSGlobalDeclaration(it) => it.serialize(serializer),
             Self::TSImportEqualsDeclaration(it) => it.serialize(serializer),
         }
@@ -2999,13 +3001,19 @@ impl ESTree for TSTypePredicateName<'_> {
     }
 }
 
-impl ESTree for TSModuleDeclaration<'_> {
+impl ESTree for TSExternalModuleDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::ts::TSModuleDeclarationConverter(self).serialize(serializer)
+        crate::serialize::ts::TSExternalModuleDeclarationConverter(self).serialize(serializer)
     }
 }
 
-impl ESTree for TSModuleDeclarationKind {
+impl ESTree for TSNamespaceDeclaration<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        crate::serialize::ts::TSNamespaceDeclarationConverter(self).serialize(serializer)
+    }
+}
+
+impl ESTree for TSNamespaceDeclarationKind {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Module => JsonSafeString("module").serialize(serializer),
@@ -3014,19 +3022,10 @@ impl ESTree for TSModuleDeclarationKind {
     }
 }
 
-impl ESTree for TSModuleDeclarationName<'_> {
+impl ESTree for TSNamespaceDeclarationBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
-            Self::Identifier(it) => it.serialize(serializer),
-            Self::StringLiteral(it) => it.serialize(serializer),
-        }
-    }
-}
-
-impl ESTree for TSModuleDeclarationBody<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        match self {
-            Self::TSModuleDeclaration(it) => it.serialize(serializer),
+            Self::TSNamespaceDeclaration(it) => it.serialize(serializer),
             Self::TSModuleBlock(it) => it.serialize(serializer),
         }
     }

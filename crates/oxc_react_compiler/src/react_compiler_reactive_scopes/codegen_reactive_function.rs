@@ -127,7 +127,6 @@ pub fn codegen_function<'a>(
         );
         let declarator = oxc_ast::ast::VariableDeclarator::new(
             SPAN,
-            oxc_ast::ast::VariableDeclarationKind::Const,
             oxc_ast::ast::BindingPattern::new_binding_identifier(
                 SPAN,
                 ox_str(ast, &cache_name),
@@ -720,7 +719,6 @@ fn ox_codegen_reactive_scope<'a>(
         if !cx.has_declared(decl.identifier) {
             let declarator = oxc_ast::ast::VariableDeclarator::new(
                 SPAN,
-                oxc::VariableDeclarationKind::Let,
                 oxc_ast::ast::BindingPattern::new_binding_identifier(
                     SPAN,
                     ox_str(&cx.ast, &name),
@@ -1073,15 +1071,7 @@ fn ox_codegen_for_in<'a>(
     let right = ox_codegen_instruction_value_to_expression(cx, &iterable_collection.value)?;
     let body = ox_codegen_block_statement(cx, loop_block)?;
     let body = oxc::Statement::BlockStatement(body);
-    let declarator = oxc_ast::ast::VariableDeclarator::new(
-        SPAN,
-        var_decl_kind,
-        lval,
-        None,
-        None,
-        false,
-        &cx.ast,
-    );
+    let declarator = oxc_ast::ast::VariableDeclarator::new(SPAN, lval, None, None, false, &cx.ast);
     let decl =
         oxc_ast::ast::VariableDeclaration::boxed(SPAN, var_decl_kind, [declarator], false, &cx.ast);
     let left = oxc::ForStatementLeft::VariableDeclaration(decl);
@@ -1125,15 +1115,7 @@ fn ox_codegen_for_of<'a>(
     let right = ox_codegen_place_to_expression(cx, collection)?;
     let body = ox_codegen_block_statement(cx, loop_block)?;
     let body = oxc::Statement::BlockStatement(body);
-    let declarator = oxc_ast::ast::VariableDeclarator::new(
-        SPAN,
-        var_decl_kind,
-        lval,
-        None,
-        None,
-        false,
-        &cx.ast,
-    );
+    let declarator = oxc_ast::ast::VariableDeclarator::new(SPAN, lval, None, None, false, &cx.ast);
     let decl =
         oxc_ast::ast::VariableDeclaration::boxed(SPAN, var_decl_kind, [declarator], false, &cx.ast);
     let left = oxc::ForStatementLeft::VariableDeclaration(decl);
@@ -1484,8 +1466,7 @@ fn ox_make_var_decl<'a>(
     id: oxc::BindingPattern<'a>,
     init: Option<oxc::Expression<'a>>,
 ) -> oxc::Statement<'a> {
-    let declarator =
-        oxc_ast::ast::VariableDeclarator::new(SPAN, kind, id, None, init, false, &cx.ast);
+    let declarator = oxc_ast::ast::VariableDeclarator::new(SPAN, id, None, init, false, &cx.ast);
     oxc::Statement::VariableDeclaration(oxc_ast::ast::VariableDeclaration::boxed(
         SPAN,
         kind,

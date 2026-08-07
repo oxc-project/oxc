@@ -2678,10 +2678,12 @@ function constructStatement(pos, ast) {
     case 37:
       return constructBoxTSEnumDeclaration(pos + 8, ast);
     case 38:
-      return constructBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSExternalModuleDeclaration(pos + 8, ast);
     case 39:
-      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+      return constructBoxTSNamespaceDeclaration(pos + 8, ast);
     case 40:
+      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+    case 41:
       return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     case 64:
       return constructBoxImportDeclaration(pos + 8, ast);
@@ -2869,10 +2871,12 @@ function constructDeclaration(pos, ast) {
     case 37:
       return constructBoxTSEnumDeclaration(pos + 8, ast);
     case 38:
-      return constructBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSExternalModuleDeclaration(pos + 8, ast);
     case 39:
-      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+      return constructBoxTSNamespaceDeclaration(pos + 8, ast);
     case 40:
+      return constructBoxTSGlobalDeclaration(pos + 8, ast);
+    case 41:
       return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Declaration`);
@@ -2996,7 +3000,7 @@ export class VariableDeclarator {
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 13, internal.ast);
+    return constructBool(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -10557,8 +10561,8 @@ function constructTSTypePredicateName(pos, ast) {
   }
 }
 
-export class TSModuleDeclaration {
-  type = "TSModuleDeclaration";
+export class TSExternalModuleDeclaration {
+  type = "TSExternalModuleDeclaration";
   #internal;
 
   constructor(pos, ast) {
@@ -10584,27 +10588,85 @@ export class TSModuleDeclaration {
 
   get id() {
     const internal = this.#internal;
-    return constructTSModuleDeclarationName(internal.pos + 16, internal.ast);
+    return new StringLiteral(internal.pos + 16, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructOptionTSModuleDeclarationBody(internal.pos + 72, internal.ast);
-  }
-
-  get kind() {
-    const internal = this.#internal;
-    return constructTSModuleDeclarationKind(internal.pos + 88, internal.ast);
+    return constructOptionBoxTSModuleBlock(internal.pos + 64, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 89, internal.ast);
+    return constructBool(internal.pos + 72, internal.ast);
   }
 
   toJSON() {
     return {
-      type: "TSModuleDeclaration",
+      type: "TSExternalModuleDeclaration",
+      start: this.start,
+      end: this.end,
+      id: this.id,
+      body: this.body,
+      declare: this.declare,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSExternalModuleDeclaration.prototype);
+  }
+}
+
+const DebugTSExternalModuleDeclaration = class TSExternalModuleDeclaration {};
+
+export class TSNamespaceDeclaration {
+  type = "TSNamespaceDeclaration";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructI32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructI32(internal.pos + 4, internal.ast);
+  }
+
+  get id() {
+    const internal = this.#internal;
+    return new BindingIdentifier(internal.pos + 16, internal.ast);
+  }
+
+  get body() {
+    const internal = this.#internal;
+    return constructTSNamespaceDeclarationBody(internal.pos + 48, internal.ast);
+  }
+
+  get kind() {
+    const internal = this.#internal;
+    return constructTSNamespaceDeclarationKind(internal.pos + 64, internal.ast);
+  }
+
+  get declare() {
+    const internal = this.#internal;
+    return constructBool(internal.pos + 65, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "TSNamespaceDeclaration",
       start: this.start,
       end: this.end,
       id: this.id,
@@ -10615,42 +10677,31 @@ export class TSModuleDeclaration {
   }
 
   [inspectSymbol]() {
-    return Object.setPrototypeOf(this.toJSON(), DebugTSModuleDeclaration.prototype);
+    return Object.setPrototypeOf(this.toJSON(), DebugTSNamespaceDeclaration.prototype);
   }
 }
 
-const DebugTSModuleDeclaration = class TSModuleDeclaration {};
+const DebugTSNamespaceDeclaration = class TSNamespaceDeclaration {};
 
-function constructTSModuleDeclarationKind(pos, ast) {
+function constructTSNamespaceDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return "module";
     case 1:
       return "namespace";
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationKind`);
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSNamespaceDeclarationKind`);
   }
 }
 
-function constructTSModuleDeclarationName(pos, ast) {
+function constructTSNamespaceDeclarationBody(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return new BindingIdentifier(pos + 8, ast);
-    case 1:
-      return new StringLiteral(pos + 8, ast);
-    default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationName`);
-  }
-}
-
-function constructTSModuleDeclarationBody(pos, ast) {
-  switch (ast.buffer[pos]) {
-    case 0:
-      return constructBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSNamespaceDeclaration(pos + 8, ast);
     case 1:
       return constructBoxTSModuleBlock(pos + 8, ast);
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationBody`);
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSNamespaceDeclarationBody`);
   }
 }
 
@@ -13318,8 +13369,12 @@ function constructBoxTSEnumDeclaration(pos, ast) {
   return new TSEnumDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
-function constructBoxTSModuleDeclaration(pos, ast) {
-  return new TSModuleDeclaration(ast.buffer.int32[pos >> 2], ast);
+function constructBoxTSExternalModuleDeclaration(pos, ast) {
+  return new TSExternalModuleDeclaration(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructBoxTSNamespaceDeclaration(pos, ast) {
+  return new TSNamespaceDeclaration(ast.buffer.int32[pos >> 2], ast);
 }
 
 function constructBoxTSGlobalDeclaration(pos, ast) {
@@ -13956,13 +14011,13 @@ function constructBoxTSMethodSignature(pos, ast) {
   return new TSMethodSignature(ast.buffer.int32[pos >> 2], ast);
 }
 
-function constructOptionTSModuleDeclarationBody(pos, ast) {
-  if (ast.buffer[pos] === 2) return null;
-  return constructTSModuleDeclarationBody(pos, ast);
-}
-
 function constructBoxTSModuleBlock(pos, ast) {
   return new TSModuleBlock(ast.buffer.int32[pos >> 2], ast);
+}
+
+function constructOptionBoxTSModuleBlock(pos, ast) {
+  if (ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0) return null;
+  return constructBoxTSModuleBlock(pos, ast);
 }
 
 function constructBoxTSTypeParameter(pos, ast) {

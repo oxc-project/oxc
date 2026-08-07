@@ -328,6 +328,10 @@ parser_diagnostics! {
             .with_label(span)
     };
 
+    quoted_module_name_only_allowed_in_ambient_module(span: Span) => {
+        ts_error("1035", "Only ambient modules can use quoted names.").with_label(span)
+    };
+
     declaration_single_statement(span: Span) => {
         OxcDiagnostic::error("Declaration cannot appear in a single-statement context")
             .with_help("Wrap this declaration in a block statement")

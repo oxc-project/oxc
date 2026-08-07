@@ -193,7 +193,8 @@ pub enum AstNodes<'a> {
     TSIndexSignatureName(&'a AstNode<'a, TSIndexSignatureName<'a>>),
     TSInterfaceHeritage(&'a AstNode<'a, TSInterfaceHeritage<'a>>),
     TSTypePredicate(&'a AstNode<'a, TSTypePredicate<'a>>),
-    TSModuleDeclaration(&'a AstNode<'a, TSModuleDeclaration<'a>>),
+    TSExternalModuleDeclaration(&'a AstNode<'a, TSExternalModuleDeclaration<'a>>),
+    TSNamespaceDeclaration(&'a AstNode<'a, TSNamespaceDeclaration<'a>>),
     TSGlobalDeclaration(&'a AstNode<'a, TSGlobalDeclaration<'a>>),
     TSModuleBlock(&'a AstNode<'a, TSModuleBlock<'a>>),
     TSTypeLiteral(&'a AstNode<'a, TSTypeLiteral<'a>>),
@@ -395,7 +396,8 @@ impl AstNodes<'_> {
             Self::TSIndexSignatureName(n) => n.span(),
             Self::TSInterfaceHeritage(n) => n.span(),
             Self::TSTypePredicate(n) => n.span(),
-            Self::TSModuleDeclaration(n) => n.span(),
+            Self::TSExternalModuleDeclaration(n) => n.span(),
+            Self::TSNamespaceDeclaration(n) => n.span(),
             Self::TSGlobalDeclaration(n) => n.span(),
             Self::TSModuleBlock(n) => n.span(),
             Self::TSTypeLiteral(n) => n.span(),
@@ -597,7 +599,8 @@ impl AstNodes<'_> {
             Self::TSIndexSignatureName(n) => n.parent(),
             Self::TSInterfaceHeritage(n) => n.parent(),
             Self::TSTypePredicate(n) => n.parent(),
-            Self::TSModuleDeclaration(n) => n.parent(),
+            Self::TSExternalModuleDeclaration(n) => n.parent(),
+            Self::TSNamespaceDeclaration(n) => n.parent(),
             Self::TSGlobalDeclaration(n) => n.parent(),
             Self::TSModuleBlock(n) => n.parent(),
             Self::TSTypeLiteral(n) => n.parent(),
@@ -794,7 +797,8 @@ impl AstNodes<'_> {
             Self::TSIndexSignatureName(_) => "TSIndexSignatureName",
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage",
             Self::TSTypePredicate(_) => "TSTypePredicate",
-            Self::TSModuleDeclaration(_) => "TSModuleDeclaration",
+            Self::TSExternalModuleDeclaration(_) => "TSExternalModuleDeclaration",
+            Self::TSNamespaceDeclaration(_) => "TSNamespaceDeclaration",
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration",
             Self::TSModuleBlock(_) => "TSModuleBlock",
             Self::TSTypeLiteral(_) => "TSTypeLiteral",
@@ -3242,8 +3246,16 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            Declaration::TSModuleDeclaration(s) => {
-                AstNodes::TSModuleDeclaration(self.allocator.alloc(AstNode {
+            Declaration::TSExternalModuleDeclaration(s) => {
+                AstNodes::TSExternalModuleDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            Declaration::TSNamespaceDeclaration(s) => {
+                AstNodes::TSNamespaceDeclaration(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
@@ -3312,11 +3324,6 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn kind(&self) -> VariableDeclarationKind {
-        self.inner.kind
     }
 
     #[inline]
@@ -9515,38 +9522,81 @@ impl<'a> AstNode<'a, TSTypePredicateName<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
+impl<'a> AstNode<'a, TSExternalModuleDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, TSModuleDeclarationName<'a>> {
-        let following_span_start = self.inner.body.as_ref().map_or(0, |n| n.span().start);
+    pub fn id(&self) -> &AstNode<'a, StringLiteral<'a>> {
+        let following_span_start = self.inner.body.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: AstNodes::TSModuleDeclaration(transmute_self(self)),
+            parent: AstNodes::TSExternalModuleDeclaration(transmute_self(self)),
             following_span_start,
         })
     }
 
     #[inline]
-    pub fn body(&self) -> Option<&AstNode<'a, TSModuleDeclarationBody<'a>>> {
+    pub fn body(&self) -> Option<&AstNode<'a, TSModuleBlock<'a>>> {
         let following_span_start = 0;
         self.allocator
             .alloc(self.inner.body.as_ref().map(|inner| AstNode {
-                inner,
+                inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: AstNodes::TSModuleDeclaration(transmute_self(self)),
+                parent: AstNodes::TSExternalModuleDeclaration(transmute_self(self)),
                 following_span_start,
             }))
             .as_ref()
     }
 
     #[inline]
-    pub fn kind(&self) -> TSModuleDeclarationKind {
+    pub fn declare(&self) -> bool {
+        self.inner.declare
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, TSNamespaceDeclaration<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_span_start = self.inner.body.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.id,
+            allocator: self.allocator,
+            parent: AstNodes::TSNamespaceDeclaration(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn body(&self) -> &AstNode<'a, TSNamespaceDeclarationBody<'a>> {
+        let following_span_start = 0;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.body,
+            allocator: self.allocator,
+            parent: AstNodes::TSNamespaceDeclaration(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn kind(&self) -> TSNamespaceDeclarationKind {
         self.inner.kind
     }
 
@@ -9565,46 +9615,20 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSModuleDeclarationName<'a>> {
+impl<'a> AstNode<'a, TSNamespaceDeclarationBody<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
         let parent = self.parent;
         let node = match self.inner {
-            TSModuleDeclarationName::Identifier(s) => {
-                AstNodes::BindingIdentifier(self.allocator.alloc(AstNode {
-                    inner: s,
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSModuleDeclarationName::StringLiteral(s) => {
-                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s,
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
-    }
-}
-
-impl<'a> AstNode<'a, TSModuleDeclarationBody<'a>> {
-    #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.parent;
-        let node = match self.inner {
-            TSModuleDeclarationBody::TSModuleDeclaration(s) => {
-                AstNodes::TSModuleDeclaration(self.allocator.alloc(AstNode {
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(s) => {
+                AstNodes::TSNamespaceDeclaration(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
                     following_span_start: self.following_span_start,
                 }))
             }
-            TSModuleDeclarationBody::TSModuleBlock(s) => {
+            TSNamespaceDeclarationBody::TSModuleBlock(s) => {
                 AstNodes::TSModuleBlock(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,

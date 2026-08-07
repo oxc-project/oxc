@@ -170,7 +170,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         for declarator in &mut decl.declarations {
-            Self::compress_variable_declarator(declarator, ctx);
+            Self::compress_variable_declarator(declarator, decl.kind, ctx);
         }
     }
 
@@ -995,8 +995,7 @@ impl<'a> PeepholeOptimizations {
                 base_arr
             };
 
-            let new_decl =
-                VariableDeclarator::new(SPAN, var_init.kind, r_id_pat, None, Some(arr), false, ctx);
+            let new_decl = VariableDeclarator::new(SPAN, r_id_pat, None, Some(arr), false, ctx);
             // The old declarators (`e`, `a`, and `r`'s original init) are
             // replaced wholesale — walk them so refs inside (e.g. `e` in
             // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
@@ -1055,10 +1054,14 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn compress_variable_declarator(decl: &mut VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn compress_variable_declarator(
+        decl: &mut VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         // Destructuring Pattern has error throwing side effect.
         if matches!(
-            decl.kind,
+            kind,
             VariableDeclarationKind::Const
                 | VariableDeclarationKind::Using
                 | VariableDeclarationKind::AwaitUsing
@@ -1066,7 +1069,7 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        if !decl.kind.is_var()
+        if !kind.is_var()
             && decl.init.as_ref().is_some_and(|init| ctx.is_expression_undefined(init))
             && let Some(old) = decl.init.take()
         {
@@ -1880,7 +1883,10 @@ impl<'a> PeepholeOptimizations {
                     return false;
                 }
                 // `using` runs `[Symbol.dispose]` at scope exit.
-                if decl.kind().is_using() {
+                let Ancestor::VariableDeclarationDeclarations(declaration) = ctx.ancestor(1) else {
+                    unreachable!();
+                };
+                if declaration.kind().is_using() {
                     return false;
                 }
                 let BindingPattern::BindingIdentifier(ident) = decl.id() else {

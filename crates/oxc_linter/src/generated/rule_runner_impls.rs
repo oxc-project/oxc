@@ -1313,6 +1313,11 @@ impl RuleRunner for crate::rules::eslint::object_shorthand::ObjectShorthand {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::eslint::one_var::OneVar {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner for crate::rules::eslint::operator_assignment::OperatorAssignment {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::AssignmentExpression]));
@@ -1803,7 +1808,7 @@ impl RuleRunner for crate::rules::typescript::no_mixed_enums::NoMixedEnums {
 
 impl RuleRunner for crate::rules::typescript::no_namespace::NoNamespace {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::TSModuleDeclaration]));
+        Some(&AstTypesBitset::from_types(&[AstType::TSNamespaceDeclaration]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -2082,7 +2087,7 @@ impl RuleRunner for crate::rules::typescript::prefer_literal_enum_member::Prefer
 
 impl RuleRunner for crate::rules::typescript::prefer_namespace_keyword::PreferNamespaceKeyword {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::TSModuleDeclaration]));
+        Some(&AstTypesBitset::from_types(&[AstType::TSNamespaceDeclaration]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -4456,6 +4461,11 @@ impl RuleRunner for crate::rules::jsdoc::implements_on_classes::ImplementsOnClas
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::jsdoc::no_blank_blocks::NoBlankBlocks {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner for crate::rules::jsdoc::no_defaults::NoDefaults {

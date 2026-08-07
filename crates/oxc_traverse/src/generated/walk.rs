@@ -1374,7 +1374,8 @@ unsafe fn walk_statement<'a, State, Tr: Traverse<'a, State>>(
         | Statement::TSTypeAliasDeclaration(_)
         | Statement::TSInterfaceDeclaration(_)
         | Statement::TSEnumDeclaration(_)
-        | Statement::TSModuleDeclaration(_)
+        | Statement::TSExternalModuleDeclaration(_)
+        | Statement::TSNamespaceDeclaration(_)
         | Statement::TSGlobalDeclaration(_)
         | Statement::TSImportEqualsDeclaration(_) => {
             walk_declaration(traverser, node as *mut _, ctx)
@@ -1471,8 +1472,11 @@ unsafe fn walk_declaration<'a, State, Tr: Traverse<'a, State>>(
         Declaration::TSEnumDeclaration(node) => {
             walk_ts_enum_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        Declaration::TSModuleDeclaration(node) => {
-            walk_ts_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        Declaration::TSExternalModuleDeclaration(node) => {
+            walk_ts_external_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSNamespaceDeclaration(node) => {
+            walk_ts_namespace_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
         Declaration::TSGlobalDeclaration(node) => {
             walk_ts_global_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -5102,77 +5106,101 @@ unsafe fn walk_ts_type_predicate_name<'a, State, Tr: Traverse<'a, State>>(
     traverser.exit_ts_type_predicate_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration<'a, State, Tr: Traverse<'a, State>>(
+unsafe fn walk_ts_external_module_declaration<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
-    node: *mut TSModuleDeclaration<'a>,
+    node: *mut TSExternalModuleDeclaration<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
-    traverser.enter_ts_module_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSModuleDeclarationId(
-        ancestor::TSModuleDeclarationWithoutId(node, PhantomData),
+    traverser.enter_ts_external_module_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSExternalModuleDeclarationId(
+        ancestor::TSExternalModuleDeclarationWithoutId(node, PhantomData),
     ));
-    walk_ts_module_declaration_name(
+    walk_string_literal(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_ID)
-            as *mut TSModuleDeclarationName,
+        (node as *mut u8).add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ID)
+            as *mut StringLiteral,
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    let current_scope_id =
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
     ctx.set_current_scope_id(current_scope_id);
     let previous_hoist_scope_id = ctx.current_hoist_scope_id();
     ctx.set_current_hoist_scope_id(current_scope_id);
     let previous_block_scope_id = ctx.current_block_scope_id();
     ctx.set_current_block_scope_id(current_scope_id);
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_BODY)
-        as *mut Option<TSModuleDeclarationBody>)
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_BODY)
+        as *mut Option<ArenaBox<TSModuleBlock>>)
     {
-        ctx.retag_stack(AncestorType::TSModuleDeclarationBody);
-        walk_ts_module_declaration_body(traverser, field as *mut _, ctx);
+        ctx.retag_stack(AncestorType::TSExternalModuleDeclarationBody);
+        walk_ts_module_block(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     ctx.set_current_block_scope_id(previous_block_scope_id);
-    traverser.exit_ts_module_declaration(&mut *node, ctx);
+    traverser.exit_ts_external_module_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration_name<'a, State, Tr: Traverse<'a, State>>(
+unsafe fn walk_ts_namespace_declaration<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
-    node: *mut TSModuleDeclarationName<'a>,
+    node: *mut TSNamespaceDeclaration<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
-    traverser.enter_ts_module_declaration_name(&mut *node, ctx);
-    match &mut *node {
-        TSModuleDeclarationName::Identifier(node) => {
-            walk_binding_identifier(traverser, node as *mut _, ctx)
-        }
-        TSModuleDeclarationName::StringLiteral(node) => {
-            walk_string_literal(traverser, node as *mut _, ctx)
-        }
-    }
-    traverser.exit_ts_module_declaration_name(&mut *node, ctx);
+    traverser.enter_ts_namespace_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSNamespaceDeclarationId(
+        ancestor::TSNamespaceDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMESPACE_DECLARATION_ID)
+            as *mut BindingIdentifier,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_NAMESPACE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    ctx.retag_stack(AncestorType::TSNamespaceDeclarationBody);
+    walk_ts_namespace_declaration_body(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMESPACE_DECLARATION_BODY)
+            as *mut TSNamespaceDeclarationBody,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_ts_namespace_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration_body<'a, State, Tr: Traverse<'a, State>>(
+unsafe fn walk_ts_namespace_declaration_body<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
-    node: *mut TSModuleDeclarationBody<'a>,
+    node: *mut TSNamespaceDeclarationBody<'a>,
     ctx: &mut TraverseCtx<'a, State>,
 ) {
-    traverser.enter_ts_module_declaration_body(&mut *node, ctx);
+    traverser.enter_ts_namespace_declaration_body(&mut *node, ctx);
     match &mut *node {
-        TSModuleDeclarationBody::TSModuleDeclaration(node) => {
-            walk_ts_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(node) => {
+            walk_ts_namespace_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSModuleDeclarationBody::TSModuleBlock(node) => {
+        TSNamespaceDeclarationBody::TSModuleBlock(node) => {
             walk_ts_module_block(traverser, (&mut **node) as *mut _, ctx)
         }
     }
-    traverser.exit_ts_module_declaration_body(&mut *node, ctx);
+    traverser.exit_ts_namespace_declaration_body(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_global_declaration<'a, State, Tr: Traverse<'a, State>>(
