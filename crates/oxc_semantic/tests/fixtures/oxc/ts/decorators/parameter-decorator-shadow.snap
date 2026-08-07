@@ -88,14 +88,14 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decor
             "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "foo",
-            "node_id": 31,
+            "node_id": 30,
             "scope_id": 2
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "foo",
-            "node_id": 54,
+            "node_id": 52,
             "scope_id": 4
           }
         ]
@@ -110,14 +110,14 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decor
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "Inject",
-            "node_id": 29,
+            "node_id": 28,
             "scope_id": 2
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "Inject",
-            "node_id": 52,
+            "node_id": 50,
             "scope_id": 4
           }
         ]

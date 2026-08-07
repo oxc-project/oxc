@@ -225,6 +225,36 @@ impl<'a> IsolatedDeclarations<'a> {
         )
     }
 
+    fn transform_class_constructor_definition(
+        &self,
+        definition: &ClassConstructor<'a>,
+        params: ArenaBox<'a, FormalParameters<'a>>,
+    ) -> ClassElement<'a> {
+        let function = &definition.value;
+        let value = Function::boxed(
+            function.span,
+            FunctionType::TSEmptyBodyFunctionExpression,
+            function.id.clone_in(self.allocator()),
+            false,
+            false,
+            false,
+            function.type_parameters.clone_in(self.allocator()),
+            function.this_param.clone_in(self.allocator()),
+            params,
+            None,
+            None,
+            self,
+        );
+
+        ClassElement::new_constructor(
+            definition.span,
+            definition.key.clone_in(self.allocator()),
+            Self::transform_accessibility(definition.accessibility),
+            value,
+            self,
+        )
+    }
+
     fn create_class_property(
         &self,
         r#type: PropertyDefinitionType,
@@ -302,7 +332,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     Self::transform_accessibility(method.accessibility),
                 )
             }
-            MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
+            MethodDefinitionKind::Get => {
                 let params =
                     FormalParameters::boxed(SPAN, FormalParameterKind::Signature, [], None, self);
                 self.transform_class_method_definition(method, params, None)
@@ -314,6 +344,20 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.transform_class_method_definition(method, params, None)
             }
         }
+    }
+
+    fn transform_private_modifier_constructor(
+        &self,
+        constructor: &ClassConstructor<'a>,
+    ) -> ClassElement<'a> {
+        let params = FormalParameters::boxed(
+            SPAN,
+            FormalParameterKind::Signature,
+            ArenaVec::new_in(self),
+            None,
+            self,
+        );
+        self.transform_class_constructor_definition(constructor, params)
     }
 
     /// Transform constructor parameters to class properties.
@@ -437,7 +481,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                         }
                     }
-                    _ => {}
+                    MethodDefinitionKind::Method => {}
                 }
             }
         }
@@ -484,6 +528,35 @@ impl<'a> IsolatedDeclarations<'a> {
         for element in &decl.body.body {
             match element {
                 ClassElement::StaticBlock(_) => {}
+                ClassElement::Constructor(constructor) => {
+                    if self.has_internal_annotation(constructor.span) {
+                        continue;
+                    }
+                    let function = &constructor.value;
+                    if function.body.is_none() {
+                        is_function_overloads = true;
+                    }
+
+                    let is_private =
+                        constructor.accessibility.is_some_and(TSAccessibility::is_private);
+                    let params = self.transform_formal_parameters(&function.params, is_private);
+                    elements.splice(
+                        0..0,
+                        self.transform_constructor_parameter_properties(function, &params),
+                    );
+
+                    if function.body.is_some() && is_function_overloads {
+                        is_function_overloads = false;
+                        continue;
+                    }
+
+                    if is_private {
+                        elements.push(self.transform_private_modifier_constructor(constructor));
+                    } else {
+                        elements
+                            .push(self.transform_class_constructor_definition(constructor, params));
+                    }
+                }
                 ClassElement::MethodDefinition(method) => {
                     if self.has_internal_annotation(method.span) {
                         continue;
@@ -496,7 +569,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     ) && method.value.body.is_none()
                     {
                         is_function_overloads = true;
-                    } else if is_function_overloads && !method.kind.is_constructor() {
+                    } else if is_function_overloads {
                         // Skip implementation of function overloads
                         is_function_overloads = false;
                         continue;
@@ -548,30 +621,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 params
                             }
                         }
-                        MethodDefinitionKind::Constructor => {
-                            let is_private =
-                                method.accessibility.is_some_and(TSAccessibility::is_private);
-
-                            let params =
-                                self.transform_formal_parameters(&function.params, is_private);
-                            elements.splice(
-                                0..0,
-                                self.transform_constructor_parameter_properties(function, &params),
-                            );
-
-                            if is_function_overloads && function.body.is_some() {
-                                is_function_overloads = false;
-                                continue;
-                            }
-
-                            if is_private {
-                                elements.push(self.transform_private_modifier_method(method));
-                                continue;
-                            }
-
-                            params
-                        }
-                        _ => {
+                        MethodDefinitionKind::Method | MethodDefinitionKind::Get => {
                             let is_private =
                                 method.accessibility.is_some_and(TSAccessibility::is_private);
                             if is_private {
@@ -617,7 +667,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                             rt
                         }
-                        MethodDefinitionKind::Set | MethodDefinitionKind::Constructor => None,
+                        MethodDefinitionKind::Set => None,
                     };
                     let new_element =
                         self.transform_class_method_definition(method, params, return_type);

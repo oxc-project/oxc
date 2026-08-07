@@ -6,8 +6,8 @@ use serde::Deserialize;
 use oxc_ast::{
     AstKind,
     ast::{
-        AccessorProperty, Decorator, FormalParameter, MethodDefinition, MethodDefinitionKind,
-        PropertyDefinition, TSAccessibility,
+        AccessorProperty, ClassConstructor, Decorator, FormalParameter, MethodDefinition,
+        MethodDefinitionKind, PropertyDefinition, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -210,6 +210,7 @@ impl Rule for ExplicitMemberAccessibility {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
+            AstKind::ClassConstructor(constructor) => self.check_constructor(constructor, ctx),
             AstKind::MethodDefinition(method) => self.check_method(method, ctx),
             AstKind::PropertyDefinition(prop) => self.check_property(prop, ctx),
             AstKind::AccessorProperty(prop) => self.check_accessor_property(prop, ctx),
@@ -230,7 +231,6 @@ impl ExplicitMemberAccessibility {
         }
 
         let check = match method.kind {
-            MethodDefinitionKind::Constructor => self.overrides.constructors,
             MethodDefinitionKind::Get | MethodDefinitionKind::Set => self.overrides.accessors,
             MethodDefinitionKind::Method => self.overrides.methods,
         };
@@ -253,6 +253,26 @@ impl ExplicitMemberAccessibility {
             method.span,
             method.key.span(),
             &method.decorators,
+            ctx,
+        );
+    }
+
+    fn check_constructor<'a>(&self, constructor: &ClassConstructor<'a>, ctx: &LintContext<'a>) {
+        let check = self.overrides.constructors.unwrap_or(self.accessibility);
+        if check == AccessibilityLevel::Off
+            || self.ignored_method_names.iter().any(|name| name == "constructor")
+        {
+            return;
+        }
+
+        Self::check_member_accessibility(
+            check,
+            constructor.accessibility,
+            "method definition",
+            "constructor",
+            constructor.span,
+            constructor.key.span(),
+            &[],
             ctx,
         );
     }
@@ -418,7 +438,7 @@ fn skip_ascii_whitespace(source: &str, start: u32) -> u32 {
 
 fn method_definition_kind_to_str(kind: MethodDefinitionKind) -> &'static str {
     match kind {
-        MethodDefinitionKind::Method | MethodDefinitionKind::Constructor => "method definition",
+        MethodDefinitionKind::Method => "method definition",
         MethodDefinitionKind::Get => "get property accessor",
         MethodDefinitionKind::Set => "set property accessor",
     }

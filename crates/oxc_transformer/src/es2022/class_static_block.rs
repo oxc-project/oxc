@@ -79,7 +79,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock {
                 ClassElement::MethodDefinition(def) => &def.key,
                 ClassElement::PropertyDefinition(def) => &def.key,
                 ClassElement::AccessorProperty(def) => &def.key,
-                ClassElement::TSIndexSignature(_) => continue,
+                ClassElement::Constructor(_) | ClassElement::TSIndexSignature(_) => continue,
             };
 
             if let PropertyKey::PrivateIdentifier(id) = key {

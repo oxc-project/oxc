@@ -216,18 +216,34 @@ impl UnifiedSignatures {
         let source_text = ctx.source_text();
 
         for element in &class.body.body {
-            let ClassElement::MethodDefinition(method) = element else {
-                continue;
-            };
-            if method.value.body.is_some() || is_getter_or_setter_method(method.kind) {
-                continue;
+            match element {
+                ClassElement::Constructor(constructor) if constructor.value.body.is_none() => {
+                    let key = format!(
+                        "{}{}identifier_constructor",
+                        overload_key_bit(false),
+                        overload_key_bit(false)
+                    );
+                    overloads.entry(key).or_default().push(OverloadCandidate {
+                        signature: SignatureDefinition::Function(&constructor.value),
+                        comment_target_start: constructor.span.start,
+                    });
+                }
+                ClassElement::MethodDefinition(method)
+                    if method.value.body.is_none() && !is_getter_or_setter_method(method.kind) =>
+                {
+                    let key = get_overload_key(
+                        method.computed,
+                        method.r#static,
+                        &method.key,
+                        source_text,
+                    );
+                    overloads.entry(key).or_default().push(OverloadCandidate {
+                        signature: SignatureDefinition::MethodDefinition(method),
+                        comment_target_start: method.span.start,
+                    });
+                }
+                _ => {}
             }
-
-            let key = get_overload_key(method.computed, method.r#static, &method.key, source_text);
-            overloads.entry(key).or_default().push(OverloadCandidate {
-                signature: SignatureDefinition::MethodDefinition(method),
-                comment_target_start: method.span.start,
-            });
         }
 
         self.check_overloads(&overloads, class.type_parameters.as_deref(), ctx);

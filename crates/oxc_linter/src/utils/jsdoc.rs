@@ -88,6 +88,7 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
             AstKind::ObjectExpression(_) |
             AstKind::Program(_) => return None,
             AstKind::VariableDeclaration(_)
+            | AstKind::ClassConstructor(_)
             | AstKind::MethodDefinition(_)
             | AstKind::PropertyDefinition(_)
             // /** This JSDoc should NOT found for `ArrowFunctionExpression` callback */

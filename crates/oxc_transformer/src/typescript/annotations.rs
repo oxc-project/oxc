@@ -240,6 +240,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
         // Remove type only members
         class.body.body.retain(|elem| match elem {
+            ClassElement::Constructor(constructor) => !constructor.value.is_typescript_syntax(),
             ClassElement::MethodDefinition(method) => {
                 matches!(method.r#type, MethodDefinitionType::MethodDefinition)
                     && !method.value.is_typescript_syntax()

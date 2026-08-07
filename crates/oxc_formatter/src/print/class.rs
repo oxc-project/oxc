@@ -81,6 +81,37 @@ impl<'a> Format<'a, JsFormatContext<'a>>
     }
 }
 
+impl<'a> FormatWrite<'a> for AstNode<'a, ClassConstructor<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if let Some(accessibility) = &self.accessibility {
+            write!(f, [accessibility.as_str(), space()]);
+        }
+
+        match &self.key {
+            ClassConstructorKey::Identifier(_) => write!(f, "constructor"),
+            ClassConstructorKey::StringLiteral(_) => {
+                let quote = f.options().quote_style.as_str();
+                write!(f, [quote, "constructor", quote]);
+            }
+        }
+
+        let value = self.value();
+        format_grouped_parameters_with_return_type_for_method(
+            value.type_parameters(),
+            value.this_param.as_deref(),
+            value.params(),
+            value.return_type(),
+            f,
+        );
+
+        if let Some(body) = &value.body() {
+            write!(f, body);
+        } else {
+            write!(f, OptionalSemicolon);
+        }
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.decorators()]);
@@ -98,7 +129,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
             write!(f, ["override", space()]);
         }
         match &self.kind {
-            MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
+            MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
                 write!(f, ["get", space()]);
             }
