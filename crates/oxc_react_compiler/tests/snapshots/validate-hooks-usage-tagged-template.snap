@@ -1,0 +1,32 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/validate-hooks-usage-tagged-template.js
+---
+import { c as _c } from "react/compiler-runtime";
+// Regression test: a hook used as a tagged template tag is a *call*, not a
+// value reference, so it must not trigger "Hooks may not be referenced as
+// normal values". Idiomatic framer-motion `useMotionTemplate` usage.
+// https://github.com/oxc-project/oxc/issues/24473
+import { useMotionValue, useMotionTemplate } from "framer-motion";
+function Transform() {
+	const $ = _c(4);
+	const x = useMotionValue(100);
+	let t0;
+	if ($[0] !== x) {
+		t0 = useMotionTemplate`transform(${x}px)`;
+		$[0] = x;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	const transform = t0;
+	let t1;
+	if ($[2] !== transform) {
+		t1 = <div style={{ transform }} />;
+		$[2] = transform;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	return t1;
+}
