@@ -423,6 +423,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Statement::ImportDeclaration(_) => {
                     Self::remove_unused_import_specifiers(stmt, ctx);
                 }
+                Statement::BreakStatement(_) | Statement::ContinueStatement(_) => {
+                    Self::try_remove_jump_statement(stmt, ctx);
+                }
                 _ => {}
             }
         } else {
@@ -436,6 +439,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     {
                         ctx.replace_statement(stmt, folded_stmt);
                     }
+                    Self::try_unfold_if_else(stmt, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
@@ -460,6 +464,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::remove_unused_class_declaration(stmt, ctx);
                 }
                 Statement::ImportDeclaration(_) => Self::remove_unused_import_specifiers(stmt, ctx),
+                Statement::BreakStatement(_) | Statement::ContinueStatement(_) => {
+                    Self::try_remove_jump_statement(stmt, ctx);
+                }
                 _ => {}
             }
             Self::try_fold_expression_stmt(stmt, ctx);
