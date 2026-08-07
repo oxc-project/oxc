@@ -186,7 +186,9 @@ impl RequireAwait {
 
 fn get_delete_span(ctx: &LintContext, start: u32, end: u32) -> Span {
     // Find the position of "async" keyword from the start position
-    let async_pos = ctx.find_next_token_within(start, end, "async").unwrap_or(0);
+    let async_pos = ctx
+        .find_next_token_within(start, end, "async")
+        .expect("async function span must contain the `async` keyword");
     let async_start = start + async_pos;
     let async_end = async_start + 5;
     let async_key_span = Span::new(async_start, async_end);

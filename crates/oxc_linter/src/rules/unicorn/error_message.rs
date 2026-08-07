@@ -4,6 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::BUILT_IN_ERRORS};
@@ -87,13 +88,26 @@ impl Rule for ErrorMessage {
             return;
         }
 
-        // If there is `SpreadElement` before message
-        if matches!(args.first(), Some(Argument::SpreadElement(_))) {
+        if !callee.is_global_reference(ctx.scoping()) {
             return;
         }
 
         let constructor_name = &callee.name;
-        let message_argument_idx = usize::from(callee.name == "AggregateError");
+        let message_argument_idx = match callee.name.as_str() {
+            "AggregateError" => 1,
+            "SuppressedError" => 2,
+            _ => 0,
+        };
+
+        // A spread at or before the message position makes the argument order unknown.
+        if args
+            .iter()
+            .take(message_argument_idx + 1)
+            .any(|arg| matches!(arg, Argument::SpreadElement(_)))
+        {
+            return;
+        }
+
         let message_argument = args.get(message_argument_idx);
 
         let Some(arg) = message_argument else {
@@ -144,11 +158,10 @@ fn test() {
         "/* global x */
             const a = x;
             throw x;",
-        // TODO: Get this passing.
-        // "const Error = function () {};
-        //     const err = new Error({
-        //         name: 'Unauthorized',
-        //     });",
+        "const Error = function () {};
+            const err = new Error({
+                name: 'Unauthorized',
+            });",
         r#"new AggregateError(errors, "message")"#,
         "new NotAggregateError(errors)",
         "new AggregateError(...foo)",
@@ -161,8 +174,11 @@ fn test() {
         "new SuppressedError(...foo)",
         r#"new SuppressedError(...foo, "")"#,
         "new SuppressedError(error, suppressed, ...foo)",
+        r#"new SuppressedError(error, ...foo, "")"#,
         r#"new SuppressedError(error, suppressed, message, "")"#,
         r#"new SuppressedError("", "", message, "")"#,
+        "const SuppressedError = function () {};
+            new SuppressedError(error, suppressed);",
     ];
 
     let fail = vec![
@@ -180,7 +196,7 @@ fn test() {
             throw err;",
         "const foo = new TypeError()",
         "const foo = new SyntaxError()",
-        // TODO: Get all of the comments tests here passing.
+        // These require general static-value evaluation, which the linter does not expose yet.
         // "const errorMessage = Object.freeze({errorMessage: 1}).errorMessage;
         //     throw new Error(errorMessage)",
         "throw new Error([])",
@@ -207,26 +223,26 @@ fn test() {
         // "new AggregateError(errors, {foo: 0}.foo)",
         // "new AggregateError(errors, lineNumber=2)",
         "const error = new AggregateError;",
-        // TODO: Update the rule to get these tests working.
-        // "new SuppressedError(error, suppressed,)",
-        // "new SuppressedError(error,)",
-        // "new SuppressedError()",
-        // "SuppressedError(error, suppressed,)",
-        // "SuppressedError(error,)",
-        // "SuppressedError()",
-        // r#"new SuppressedError(error, suppressed, "")"#,
-        // "new SuppressedError(error, suppressed, ``)",
-        // r#"new SuppressedError(error, suppressed, "", options)"#,
+        "new SuppressedError(error, suppressed,)",
+        "new SuppressedError(error,)",
+        "new SuppressedError()",
+        "SuppressedError(error, suppressed,)",
+        "SuppressedError(error,)",
+        "SuppressedError()",
+        r#"new SuppressedError(error, suppressed, "")"#,
+        "new SuppressedError(error, suppressed, ``)",
+        r#"new SuppressedError(error, suppressed, "", options)"#,
+        // These require general static-value evaluation, which the linter does not expose yet.
         // "const errorMessage = Object.freeze({errorMessage: 1}).errorMessage;
         //     throw new SuppressedError(error, suppressed, errorMessage)",
-        // "new SuppressedError(error, suppressed, [])",
-        // "new SuppressedError(error, suppressed, [foo])",
+        "new SuppressedError(error, suppressed, [])",
+        "new SuppressedError(error, suppressed, [foo])",
         // "new SuppressedError(error, suppressed, [0][0])",
-        // "new SuppressedError(error, suppressed, {})",
-        // "new SuppressedError(error, suppressed, {foo})",
+        "new SuppressedError(error, suppressed, {})",
+        "new SuppressedError(error, suppressed, {foo})",
         // "new SuppressedError(error, suppressed, {foo: 0}.foo)",
         // "new SuppressedError(error, suppressed, lineNumber=2)",
-        // "const error = new SuppressedError;",
+        "const error = new SuppressedError;",
     ];
 
     Tester::new(ErrorMessage::NAME, ErrorMessage::PLUGIN, pass, fail).test_and_snapshot();

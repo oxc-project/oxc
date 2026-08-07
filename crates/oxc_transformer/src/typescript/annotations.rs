@@ -232,7 +232,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // Remove TypeScript annotations from class declarations
         // Note: declare flag is preserved for exit_statements to handle declaration removal
         class.type_parameters = None;
-        class.super_type_arguments = None;
+        if let Some(heritage) = &mut class.heritage {
+            heritage.type_arguments = None;
+        }
         class.implements.clear();
         class.r#abstract = false;
 

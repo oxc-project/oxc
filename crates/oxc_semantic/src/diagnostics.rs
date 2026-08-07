@@ -261,14 +261,6 @@ pub fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic 
 }
 
 #[cold]
-pub fn multiple_declaration_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "Only a single declaration is allowed in a `for...{x0}` statement"
-    ))
-    .with_label(span1)
-}
-
-#[cold]
 pub fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("{x0} loop variable declaration may not have an initializer"))
         .with_label(span1)

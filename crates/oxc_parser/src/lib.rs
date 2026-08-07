@@ -407,7 +407,7 @@ mod parser_parse {
         /// use oxc_parser::Parser;
         /// use oxc_span::SourceType;
         ///
-        /// let src = "let x = 1 + 2;";
+        /// let src = "1 + 2";
         /// let allocator = Allocator::new();
         /// let source_type = SourceType::default();
         ///
@@ -774,6 +774,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
+        if !self.at(Kind::Eof) {
+            self.set_unexpected();
+        }
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
             return Err(error.into_diagnostic().into());
         }
@@ -961,6 +964,15 @@ mod test {
         let source = "a";
         let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
         assert!(matches!(expr, Expression::Identifier(_)));
+    }
+
+    #[test]
+    fn parse_expression_rejects_trailing_tokens() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        for source in ["a b", "a;", "let x = 1"] {
+            assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
+        }
     }
 
     #[test]

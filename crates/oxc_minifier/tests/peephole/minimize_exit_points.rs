@@ -155,7 +155,7 @@ fn test_while_continue_optimization() {
         "for(;;)try{if(a())continue;continue}catch{}",
     ); // for(;;)try{a()}catch{}
 
-    test("while(true){g:continue}", "for(;;)g:continue;"); // for(;;);
+    test("while(true){g:continue}", "for(;;);"); // for(;;);
     test("while(true){g:{continue}}", "for(;;)g:continue;"); // for(;;);
     // This case could be improved.
     test(
@@ -196,12 +196,9 @@ fn test_do_continue_optimization() {
         "do try{if(a())continue;continue}catch{}while(!0);",
     ); // do try{a()}catch{}while(!0);
 
-    test("do{g:continue}while(true)", "do g:continue;while(!0);"); // do;while(!0);
+    test("do{g:continue}while(true)", "do;while(!0);");
     // This case could be improved.
-    test(
-        "do{g:if(a()){continue;}else{continue;} continue;}while(true)",
-        "do g:if(a())continue;else continue;while(!0);",
-    );
+    test("do{g:if(a()){continue;}else{continue;} continue;}while(true)", "do g:a();while(!0);");
 
     test("do { foo(); continue; } while(false)", "do foo();while(!1)");
     test("do { foo(); break; } while(false)", "do foo();while(!1)");
@@ -281,8 +278,8 @@ fn test_for_continue_optimization() {
         "for(x=0;x<y;x++)try{if(a())continue;continue}catch{}",
     ); // for(x=0;x<y;x++)try{a()}catch{}
 
-    test("for(x=0;x<y;x++){g:continue}", "for(x=0;x<y;x++)g:continue;"); // for(x=0;x<y;x++);
-    test("for(x=0;x<y;x++){g:{continue}}", "for(x=0;x<y;x++)g:continue;"); // for(x=0;x<y;x++);
+    test("for(x=0;x<y;x++){g:continue}", "for(x=0;x<y;x++);"); // for(x=0;x<y;x++);
+    test("for(x=0;x<y;x++){g:{continue}}", "for(x=0;x<y;x++);"); // for(x=0;x<y;x++);
     test(
         "for(x=0;x<y;x++){g:if(a()){continue;}else{continue;} continue;}",
         "for(x=0;x<y;x++)g:if(a())continue;else continue;",
@@ -298,12 +295,11 @@ fn test_for_continue_optimization() {
 }
 
 #[test]
-#[ignore = "TODO: Code motion with function hoisting not yet implemented"]
 fn test_code_motion_doesnt_break_function_hoisting() {
-    test(
-        "function f() { if (x) return; foo(); function foo() {} }",
-        "function f() { if (x); else { function foo() {} foo(); } }",
-    );
+    test_same("function f() { if (x) return; foo(); function foo() {} }");
+    test_same("function f() { if (x) return; foo(); label: function foo() {} }");
+    test_same("function a() { if (typeof f == 'function') return; function f() {} }");
+    test_same("function a() { if (typeof f == 'function') return; label: function f() {} }");
 }
 
 #[test]

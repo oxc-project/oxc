@@ -464,7 +464,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &Class<'a>,
         declare: Option<bool>,
     ) -> ArenaBox<'a, Class<'a>> {
-        if let Some(super_class) = &decl.super_class {
+        if let Some(super_class) = decl.heritage_expression() {
             let is_not_allowed = match super_class {
                 Expression::Identifier(_) => false,
                 Expression::StaticMemberExpression(expr) => {
@@ -719,8 +719,7 @@ impl<'a> IsolatedDeclarations<'a> {
             [],
             decl.id.clone_in(self.allocator()),
             decl.type_parameters.clone_in(self.allocator()),
-            decl.super_class.clone_in(self.allocator()),
-            decl.super_type_arguments.clone_in(self.allocator()),
+            decl.heritage.clone_in(self.allocator()),
             decl.implements.clone_in(self.allocator()),
             body,
             decl.r#abstract,

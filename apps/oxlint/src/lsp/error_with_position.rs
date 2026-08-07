@@ -169,7 +169,8 @@ pub fn message_to_lsp_diagnostic(
         data: None,
     };
 
-    let mut fixed_content = vec![];
+    let mut fixed_content = Vec::with_capacity(message.fixes.len());
+
     // Convert PossibleFixes directly to PossibleFixContent
     match message.fixes {
         PossibleFixes::None => {}

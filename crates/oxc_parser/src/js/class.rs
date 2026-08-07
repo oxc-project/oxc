@@ -91,15 +91,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let type_parameters =
             if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
-        let (extends, implements) = self.parse_heritage_clause(Self::parse_class_extends_clause);
-        let mut super_class = None;
-        let mut super_type_parameters = None;
+        let (extends, implements) = self.parse_class_heritage_clause();
+        let mut heritage = None;
         if let Some(mut extends) = extends
             && !extends.is_empty()
         {
             let (expression, type_arguments) = extends.remove(0);
-            super_class = Some(expression);
-            super_type_parameters = type_arguments;
+            heritage = Some(ClassHeritage::new(expression, type_arguments, self));
             for (expression, type_arguments) in extends {
                 let expression_span = expression.span();
                 let span = type_arguments.map_or(expression_span, |type_arguments| {
@@ -123,8 +121,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_parameters,
+            heritage,
             implements.map_or_else(|| ArenaVec::new_in(self), |(_, implements)| implements),
             body,
             modifiers.contains_abstract(),
@@ -146,7 +143,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         loop {
             match self.cur_kind() {
                 Kind::Extends => {
-                    if extends.is_some() {
+                    let duplicate_extends = extends.is_some();
+                    if duplicate_extends {
                         self.error(diagnostics::extends_clause_already_seen(
                             self.cur_token().span(),
                         ));
@@ -156,7 +154,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             implements_span,
                         ));
                     }
-                    extends = Some(parse_extends_clause(self));
+                    let parsed_extends = parse_extends_clause(self);
+                    if !duplicate_extends {
+                        extends = Some(parsed_extends);
+                    }
                 }
                 Kind::Implements => {
                     if let Some((implements_span, _)) = implements {
@@ -180,6 +181,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         (extends, implements)
+    }
+
+    #[expect(clippy::type_complexity)]
+    fn parse_class_heritage_clause(
+        &mut self,
+    ) -> (
+        Option<
+            ArenaVec<'a, (Expression<'a>, Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>)>,
+        >,
+        Option<ImplementsWithKeywordSpan<'a>>,
+    ) {
+        self.parse_heritage_clause(Self::parse_class_extends_clause)
     }
 
     /// `ClassHeritage`

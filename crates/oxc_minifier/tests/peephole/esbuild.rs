@@ -2277,7 +2277,7 @@ fn test_remove_dead_expr_other() {
     test("if (1) a(); else { let b }", "a();");
     test("if (1) a(); else { throw b }", "a();");
     test("if (1) a(); else { return b }", "a();");
-    test("b: { if (x) a(); else { break b } }", "b: if (x) a(); else break b;");
+    test("b: { if (x) a(); else { break b } }", "b: x && a();");
     // test("b: { if (1) a(); else { break b } }", "a();");
     test("b: { if (0) a(); else { break b } }", "");
     test(
