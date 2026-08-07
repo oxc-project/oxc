@@ -7,6 +7,7 @@ eslint/block-scoped-var                                    |  31363
 eslint/capitalized-comments                                |      7
 eslint/class-methods-use-this                              |   2676
 eslint/complexity                                          |  17572
+eslint/consistent-this                                     |  64794
 eslint/constructor-super                                   |    300
 eslint/curly                                               |  14797
 eslint/default-case                                        |    284
