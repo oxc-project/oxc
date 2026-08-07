@@ -11,7 +11,10 @@ use oxc_config::GlobSet;
 
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
-use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
+use super::{
+    external_plugins::{ExternalPluginEntry, external_plugins_schema},
+    settings::OxlintSettings,
+};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -118,6 +121,10 @@ pub struct OxlintOverride {
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
 
+    /// Shared settings for plugins. When provided, these settings are
+    /// deep-merged with top-level settings for files matching this override.
+    pub settings: Option<OxlintSettings>,
+
     #[serde(default)]
     pub rules: OxlintRules,
 }
@@ -203,5 +210,29 @@ mod test {
         let env = &config.env.unwrap();
         assert!(env.contains("es2022"));
         assert!(!env.contains("es2023"));
+    }
+
+    #[test]
+    fn test_parsing_settings() {
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+        }))
+        .unwrap();
+        assert!(config.settings.is_none());
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["*.tsx"],
+            "settings": {
+                "react": {
+                    "version": "18.2.0"
+                }
+            },
+        }))
+        .unwrap();
+
+        let settings = config.settings.unwrap();
+        let version = settings.react.version.unwrap();
+        assert_eq!(version.major(), 18);
+        assert_eq!(version.minor(), 2);
     }
 }
