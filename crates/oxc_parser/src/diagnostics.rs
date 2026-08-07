@@ -751,6 +751,14 @@ parser_diagnostics! {
         .with_help("Did you mean to use a for...of statement?")
     };
 
+    multiple_declarations_in_for_loop_head(is_for_in: bool, span: Span) => {
+        OxcDiagnostic::error(format!(
+            "Only a single declaration is allowed in a `for...{}` statement",
+            if is_for_in { "in" } else { "of" },
+        ))
+        .with_label(span)
+    };
+
     using_declarations_must_be_initialized(span: Span) => {
         OxcDiagnostic::error("Using declarations must have an initializer.")
             .with_label(span)

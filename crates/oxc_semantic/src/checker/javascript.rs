@@ -914,10 +914,7 @@ pub fn check_for_statement_left(
 
     // initializer is not allowed for for-in / for-of
     if decl.declarations.len() > 1 {
-        return ctx.error(diagnostics::multiple_declaration_in_for_loop_head(
-            if is_for_in { "in" } else { "of" },
-            decl.span,
-        ));
+        return;
     }
 
     let strict_mode = ctx.strict_mode();
