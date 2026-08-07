@@ -1,0 +1,21 @@
+tasks/website_common/src/schema_markdown.rs
+  s_8e88d9100fcafe::t_6c4086594df875 231,440,456-457,463-465,519,531-542,544-549
+tasks/website_linter/src/rules/mod.rs
+  s_8e88d9100fcafe::t_6361b762d03f62 177-194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ccc29e65058b6b737d0eb9105476e6863f495214",
+  "prompts": {},
+  "sessions": {
+    "s_8e88d9100fcafe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb276-8c56-7623-a5ad-d09ab9b3f40d",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
