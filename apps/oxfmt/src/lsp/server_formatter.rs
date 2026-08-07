@@ -8,8 +8,8 @@ use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, U
 use tracing::{debug, error, warn};
 
 use oxc_language_server::{
-    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
-    offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
+    Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder,
+    ToolRestartChanges, offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
@@ -41,9 +41,17 @@ impl ServerFormatterBuilder {
         }
     }
 
+    /// Creates a new `ServerFormatter` instance based on the provided root URI and options.
+    /// Returns a tuple containing the `ServerFormatter` instance and an optional message to be sent to the client.
+    /// This message will be used to inform about misconfiguration.
+    ///
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
+    pub fn build(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> (ServerFormatter, Option<ClientMessage>) {
         let options = deserialize_lsp_options(options);
 
         let root_path = root_uri.to_file_path().unwrap();
@@ -74,13 +82,16 @@ impl ServerFormatterBuilder {
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
-        ServerFormatter::new(
-            root_path.to_path_buf(),
-            source_formatter,
-            JsConfigLoaderCb::clone(&self.js_config_loader),
-            prettierignore_glob,
-            explicit_config_path,
-            use_nested_config,
+        (
+            ServerFormatter::new(
+                root_path.to_path_buf(),
+                source_formatter,
+                JsConfigLoaderCb::clone(&self.js_config_loader),
+                prettierignore_glob,
+                explicit_config_path,
+                use_nested_config,
+            ),
+            None,
         )
     }
 }
@@ -95,8 +106,9 @@ impl ToolBuilder for ServerFormatterBuilder {
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
     }
 
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(self.build(root_uri, options))
+    fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
+        let (tool, client_message) = self.build(root_uri, options);
+        ToolBuildResult { tool: Box::new(tool), client_message }
     }
 }
 
@@ -160,13 +172,18 @@ impl Tool for ServerFormatter {
         let new_option = deserialize_lsp_options(new_options_json.clone());
 
         if old_option == new_option {
-            return ToolRestartChanges { tool: None, watch_patterns: None };
+            return ToolRestartChanges { tool: None, watch_patterns: None, client_message: None };
         }
 
         builder.shutdown(root_uri);
-        let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
-        let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
-        ToolRestartChanges { tool: Some(new_formatter), watch_patterns: Some(watch_patterns) }
+        let ToolBuildResult { tool, client_message } =
+            builder.build(root_uri, new_options_json.clone());
+        let watch_patterns = tool.get_watcher_patterns(new_options_json);
+        ToolRestartChanges {
+            tool: Some(tool),
+            watch_patterns: Some(watch_patterns),
+            client_message,
+        }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
@@ -210,7 +227,7 @@ impl Tool for ServerFormatter {
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
     }
 
     fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {

@@ -17,7 +17,7 @@ use crate::{
     CodeActionParams, TextDocument, ToolRestartChanges,
     capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
-    tool::{DiagnosticResult, Tool, ToolBuilder},
+    tool::{ClientMessage, DiagnosticResult, Tool, ToolBuilder},
 };
 
 /// A worker that manages the individual tool for a specific workspace
@@ -65,10 +65,15 @@ impl WorkspaceWorker {
 
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
-    pub async fn start_worker(&self, options: serde_json::Value) {
-        *self.tool.write().await = Some(self.builder.build_boxed(&self.root_uri, options.clone()));
+    ///
+    /// Returns an optional message to be sent to the client.
+    pub async fn start_worker(&self, options: serde_json::Value) -> Option<ClientMessage> {
+        let result = self.builder.build(&self.root_uri, options.clone());
+        *self.tool.write().await = Some(result.tool);
 
         *self.options.lock().await = Some(options);
+
+        result.client_message
     }
 
     /// Initialize file system watchers for the workspace.
