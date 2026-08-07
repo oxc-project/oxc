@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.77.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 1fb3d70 oxlint: Show file:line:col in github format annotation messages (#25020) (Faris Tristan Fabian)
+
+### 🐛 Bug Fixes
+
+- 9d4592c linter: Reject duplicate JS plugin names (#25243) (camc314)
+- 20f68e7 oxlint,oxfmt: Respect `.gitignore` for walk targets and explicit paths (#25133) (leaysgur)
+- 5c0fa61 linter/eslint/no-warning-comments: Unify config structs and remove manual options docs (#25151) (Mikhail Baev)
+- 2b02711 oxlint: Correct --warn flag help text (#25059) (Faris Tristan Fabian)
+
+### 📚 Documentation
+
+- 9dc7756 linter/typescript/no-unnecessary-condition: Clarify options (#25110) (camc314)
+
 ## [1.76.0] - 2026-07-27
 
 ### 🚀 Features

@@ -11,6 +11,10 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Ancestor::VariableDeclarationDeclarations(declaration) = ctx.parent() else {
+            unreachable!();
+        };
+        let declaration_kind = *declaration.kind();
         let BindingPattern::BindingIdentifier(ident) = &decl.id else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
         // Evaluate the initializer's constant once; reuse it for the value-context
@@ -23,11 +27,11 @@ impl<'a> PeepholeOptimizations {
         // `SymbolValue::boolean_falsy`).
         let falsy_init = init_constant.as_ref().is_some_and(Self::is_falsy_constant);
         let declaration_in_body_statement_list =
-            !decl.kind.is_var() || Self::is_declaration_in_body_statement_list(ctx);
+            !declaration_kind.is_var() || Self::is_declaration_in_body_statement_list(ctx);
         let value = if Self::is_for_statement_init(ctx) {
             // for-statement initializers have their value set by the for statement itself.
             None
-        } else if decl.kind.is_var()
+        } else if declaration_kind.is_var()
             && !Self::is_hoisted_var_inlineable(
                 decl,
                 symbol_id,
@@ -72,7 +76,7 @@ impl<'a> PeepholeOptimizations {
         for ancestor in ctx.ancestors() {
             match ancestor {
                 Ancestor::VariableDeclarationDeclarations(_)
-                | Ancestor::ExportNamedDeclarationDeclaration(_) => {}
+                | Ancestor::ExportDeclarationDeclaration(_) => {}
                 Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_) => return true,
                 _ => return false,
             }
@@ -183,7 +187,7 @@ impl<'a> PeepholeOptimizations {
         // Classes with `extends` may inherit static setters from the parent.
         // We can't statically determine the parent's static setters,
         // so conservatively mark as non-fresh.
-        if class.super_class.is_some() {
+        if class.heritage.is_some() {
             return true;
         }
         // Class-level decorators run arbitrary code during class creation and can

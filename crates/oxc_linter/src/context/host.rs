@@ -15,7 +15,10 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
-    config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
+    config::{
+        LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings,
+        plugins::plugin_display_name,
+    },
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::FrameworkOptions,
@@ -27,7 +30,7 @@ use crate::{
 #[cfg(not(test))]
 use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
-use super::{LintContext, plugin_display_name};
+use super::LintContext;
 
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {

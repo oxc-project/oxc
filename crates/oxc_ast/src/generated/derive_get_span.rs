@@ -5,6 +5,7 @@
 
 use oxc_span::{GetSpan, Span};
 
+use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
@@ -618,13 +619,16 @@ impl GetSpan for Statement<'_> {
             Self::TSTypeAliasDeclaration(it) => GetSpan::span(&**it),
             Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
-            Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSExternalModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSNamespaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSGlobalDeclaration(it) => GetSpan::span(&**it),
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
             Self::ImportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
             Self::ExportDefaultDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportNamedDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportFromDeclaration(it) => GetSpan::span(&**it),
             Self::TSExportAssignment(it) => GetSpan::span(&**it),
             Self::TSNamespaceExportDeclaration(it) => GetSpan::span(&**it),
         }
@@ -661,7 +665,8 @@ impl GetSpan for Declaration<'_> {
             Self::TSTypeAliasDeclaration(it) => GetSpan::span(&**it),
             Self::TSInterfaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSEnumDeclaration(it) => GetSpan::span(&**it),
-            Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSExternalModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSNamespaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSGlobalDeclaration(it) => GetSpan::span(&**it),
             Self::TSImportEqualsDeclaration(it) => GetSpan::span(&**it),
         }
@@ -1099,7 +1104,9 @@ impl GetSpan for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportAllDeclaration(it) => GetSpan::span(&**it),
             Self::ExportDefaultDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportDeclaration(it) => GetSpan::span(&**it),
             Self::ExportNamedDeclaration(it) => GetSpan::span(&**it),
+            Self::ExportFromDeclaration(it) => GetSpan::span(&**it),
             Self::TSExportAssignment(it) => GetSpan::span(&**it),
             Self::TSNamespaceExportDeclaration(it) => GetSpan::span(&**it),
         }
@@ -1181,7 +1188,21 @@ impl GetSpan for ImportAttributeKey<'_> {
     }
 }
 
+impl GetSpan for ExportDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for ExportNamedDeclaration<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for ExportFromDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -2023,26 +2044,24 @@ impl GetSpan for TSTypePredicateName<'_> {
     }
 }
 
-impl GetSpan for TSModuleDeclaration<'_> {
+impl GetSpan for TSExternalModuleDeclaration<'_> {
     #[inline]
     fn span(&self) -> Span {
         self.span
     }
 }
 
-impl GetSpan for TSModuleDeclarationName<'_> {
+impl GetSpan for TSNamespaceDeclaration<'_> {
+    #[inline]
     fn span(&self) -> Span {
-        match self {
-            Self::Identifier(it) => GetSpan::span(it),
-            Self::StringLiteral(it) => GetSpan::span(it),
-        }
+        self.span
     }
 }
 
-impl GetSpan for TSModuleDeclarationBody<'_> {
+impl GetSpan for TSNamespaceDeclarationBody<'_> {
     fn span(&self) -> Span {
         match self {
-            Self::TSModuleDeclaration(it) => GetSpan::span(&**it),
+            Self::TSNamespaceDeclaration(it) => GetSpan::span(&**it),
             Self::TSModuleBlock(it) => GetSpan::span(&**it),
         }
     }
@@ -2240,6 +2259,13 @@ impl GetSpan for JSDocNonNullableType<'_> {
 }
 
 impl GetSpan for JSDocUnknownType {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for Comment {
     #[inline]
     fn span(&self) -> Span {
         self.span

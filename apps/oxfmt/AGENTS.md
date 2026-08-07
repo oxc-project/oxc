@@ -1,19 +1,21 @@
 # Coding agent guides for `apps/oxfmt`
 
+Oxfmt is the integration layer that dispatches between the Rust formatters built on `oxc_formatter_core` and Prettier.
+
 ## Overview
 
 The `oxfmt` implemented under this directory serves several purposes.
 
-- Pure Rust CLI
-  - Minimum feature set, CLI usage only, no LSP, no Stdin support
-  - Formats JS/TS, JSON, CSS, GraphQL, YAML and TOML files, no xxx-in-js support
-  - Entry point: `main()` in `src/main.rs`
-  - Build with `cargo build --no-default-features`
 - JS/Rust hybrid CLI using `napi-rs`
   - Full feature set like CLI, Stdin, LSP, and more
-  - Format many file types with embedded language formatting support like Prettier
+  - Format many languages with embedded language formatting support like Prettier
   - Entry point: `src-js/cli.ts` which uses `run_cli()` from `src/main_napi.rs`
   - Build with `pnpm build`
+- Pure Rust CLI
+  - Limited feature set, CLI usage only, no LSP, no Stdin support
+  - Formats only languages which we rewrite formatter in Rust
+  - Entry point: `main()` in `src/main.rs`
+  - Build with `cargo build --no-default-features`
 - Node.js API using napi-rs
   - Entry point: `src-js/index.ts` which uses `format()` from `src/main_napi.rs`
   - Build with `pnpm build`
@@ -38,14 +40,9 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 - Tier 1: Rust implementations using `oxc_formatter`, `oxc_formatter_json`, etc found in this repository
 - Tier 2: Rust implementations using external libraries like `oxc_toml`
 - Tier 3: Delegations to Prettier via NAPI-JS calls (e.g., for Vue or Markdown)
-- Tier 4: Delegations to Prettier that require additional plugins (e.g., for Svelte)
+- Tier 4: Delegations to Prettier that require additional Prettier plugins (e.g., for Svelte)
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
-
-`oxc_formatter_css` (uses `oxc-css-parser`, a `raffia` fork) and `oxc_formatter_graphql` (uses `oxc-graphql-parser`, an `apollo-parser` fork) both should cover everything the bundled Prettier can parse for their language.
-
-However, parse errors may be reported as diagnostics, what the forks reject.
-This is genuinely broken input or, for CSS, the tail of postcss's error tolerance (e.g. IE star hacks, some postcss-plugin specific syntax).
 
 Embedded languages (e.g. css-in-js) go through `src/core/external_formatter.rs`, which assembles a `FormatDispatcher` (defined in `oxc_formatter_core`) that maps each language to a Rust formatter where implemented and to the Prettier Doc→IR path otherwise.
 
@@ -109,7 +106,7 @@ pnpm build-test
 
 # Show help
 node ./dist/cli.js --help
-# Stdin (`npx prettier --config=<cfg> <file>` equivalent)
+# Stdin (Prettier's `--config=<cfg> <file>` equivalent)
 cat <file> | node ./dist/cli.js --config=<cfg> --stdin-filepath=<file>
 # With log
 OXC_LOG=debug node ./dist/cli.js --threads=1 <file>
@@ -123,7 +120,7 @@ To compare formatting output with Prettier:
 # Use a shared config file (e.g., fmt.json) because Oxfmt and Prettier have different default printWidth.
 # Example fmt.json: { "printWidth": 80 }
 cat <file> | node ./dist/cli.js --config=fmt.json --stdin-filepath=<file>
-npx prettier --config=fmt.json <file>
+node ./node_modules/prettier/bin/prettier.cjs --config=fmt.json <file>
 ```
 
 ## Test organization (`test/` directory)

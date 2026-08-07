@@ -101,7 +101,7 @@ fn ts() {
         "class A {private static readonly prop: string}",
         "interface A { a: string, 'b': number, 'c'(): void }",
         "enum A { a, 'b' }",
-        "module 'a'",
+        "module a {}",
         "declare module 'a'",
         "a = x!;",
         "b = (x as y);",

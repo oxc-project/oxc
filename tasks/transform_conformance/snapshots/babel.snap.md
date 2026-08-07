@@ -1,6 +1,6 @@
-commit: c86e9e4b
+commit: 06b6eae3
 
-Passed: 771/1164
+Passed: 769/1162
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1055,7 +1055,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (115/157)
+# babel-plugin-transform-typescript (113/155)
 * class/accessor-allowDeclareFields-false/input.ts
 
   x TS(18010): An accessibility modifier cannot be used with a private

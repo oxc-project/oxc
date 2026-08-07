@@ -927,6 +927,9 @@ fn test_fold_bit_shifts() {
 #[test]
 fn test_string_add() {
     fold("x = 'a' + 'bc'", "x = 'abc'");
+    // Lone surrogates are stored escaped in the string value; folding would
+    // materialize the escape encoding as literal text.
+    fold_same("x = '\\ud800' + 'y'");
     fold("x = 'a' + 5", "x = 'a5'");
     fold("x = 5 + 'a'", "x = '5a'");
     fold("x = 'a' + 5n", "x = 'a5'");
@@ -1062,7 +1065,12 @@ fn test_fold_multiply() {
 fn test_fold_division() {
     fold("x = Infinity / Infinity", "x = NaN");
     fold("x = Infinity / 0", "x = Infinity");
-    fold("x = 1 / 0", "x = Infinity");
+    // `1 / 0` is the canonical printed spelling of Infinity and is kept as-is.
+    fold_same("x = 1 / 0");
+    fold_same("x = -1 / 0");
+    // A negative-zero divisor is not canonical and can still be folded.
+    fold("x = 1 / -0", "x = -Infinity");
+    fold("x = -1 / -0", "x = Infinity");
     fold("x = 0 / 0", "x = NaN");
     fold("x = 360 / 360", "x = 1");
     fold("x = 10.5 / 0.75", "x = 14");

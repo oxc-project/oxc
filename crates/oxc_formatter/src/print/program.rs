@@ -81,8 +81,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
             let span = match stmt.as_ref() {
                 // `@decorator export class A {}`
                 // Get the span of the decorator.
-                Statement::ExportNamedDeclaration(export) => {
-                    if let Some(Declaration::ClassDeclaration(decl)) = &export.declaration
+                Statement::ExportDeclaration(export) => {
+                    if let Declaration::ClassDeclaration(decl) = &export.declaration
                         && let Some(decorator) = decl.decorators.first()
                         && decorator.span().start < export.span.start
                     {

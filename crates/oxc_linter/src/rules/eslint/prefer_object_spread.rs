@@ -154,9 +154,15 @@ impl Rule for PreferObjectSpread {
                         | AstKind::AssignmentExpression(_)
                 );
 
-                let Some(callee_left_paren_span) = find_char_span(ctx, call_expr, b'(') else {
+                let Some(paren_offset) = ctx.find_next_token_within(
+                    call_expr.callee.span().end,
+                    call_expr.span.end,
+                    "(",
+                ) else {
                     return fixer.noop();
                 };
+                let callee_left_paren_span =
+                    Span::sized(call_expr.callee.span().end + paren_offset, 1);
 
                 let (left, right) = if needs_paren { ("({", "})") } else { ("{", "}") };
 
@@ -226,26 +232,6 @@ fn has_get_or_set_property(obj_expr: &ObjectExpression) -> bool {
 
         p.kind == PropertyKind::Get || p.kind == PropertyKind::Set
     })
-}
-
-/**
- * Find the span of the first character matches with target_char in the expression
- */
-fn find_char_span(ctx: &LintContext, expr: &dyn GetSpan, target_char: u8) -> Option<Span> {
-    let span = expr.span();
-    for idx in memchr::memchr_iter(target_char, ctx.source_range(span).as_bytes()) {
-        let idx = u32::try_from(idx).unwrap();
-
-        let current_span = Span::sized(span.start + idx, 1);
-
-        if ctx.comments().iter().any(|comment| comment.span.contains_inclusive(current_span)) {
-            continue;
-        }
-
-        return Some(current_span);
-    }
-
-    None
 }
 
 /**

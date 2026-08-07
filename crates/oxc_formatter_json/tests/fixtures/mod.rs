@@ -1,9 +1,8 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{
-    IndentStyle, IndentWidth, LineEnding, LineWidth,
-    test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
+use oxc_formatter_core::test_support::{
+    FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
 };
 use oxc_formatter_json::{
     BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas, format,
@@ -16,39 +15,10 @@ impl FixtureFormatter for JsonHarness {
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = JsonFormatOptions::default();
+        apply_core_options(&mut options, json);
 
         for (key, value) in json {
             match key.as_str() {
-                "printWidth" => {
-                    if let Some(n) = value.as_u64()
-                        && let Ok(width) = LineWidth::try_from(u16::try_from(n).unwrap())
-                    {
-                        options.line_width = width;
-                    }
-                }
-                "tabWidth" => {
-                    if let Some(n) = value.as_u64()
-                        && let Ok(width) = IndentWidth::try_from(u8::try_from(n).unwrap())
-                    {
-                        options.indent_width = width;
-                    }
-                }
-                "useTabs" => {
-                    if let Some(b) = value.as_bool() {
-                        options.indent_style =
-                            if b { IndentStyle::Tab } else { IndentStyle::Space };
-                    }
-                }
-                "endOfLine" => {
-                    if let Some(s) = value.as_str() {
-                        options.line_ending = match s {
-                            "lf" => LineEnding::Lf,
-                            "crlf" => LineEnding::Crlf,
-                            "cr" => LineEnding::Cr,
-                            _ => LineEnding::default(),
-                        };
-                    }
-                }
                 "variant" => {
                     if let Some(s) = value.as_str() {
                         options.variant = match s {

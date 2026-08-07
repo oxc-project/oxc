@@ -439,7 +439,9 @@ where
             | AstKind::ArrowFunctionExpression(_)
             | AstKind::CatchClause(_)
             | AstKind::ImportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_) => break,
+            | AstKind::ExportDeclaration(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportFromDeclaration(_) => break,
             _ => {}
         }
     }

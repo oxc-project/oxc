@@ -21,11 +21,13 @@ pub struct ParserCheckpoint<'a> {
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
+    /// Get current token's span start.
     #[inline]
-    pub(crate) fn start_span(&self) -> u32 {
+    pub(crate) fn cur_start(&self) -> u32 {
         self.token.start()
     }
 
+    /// Create a [`Span`] from provided `start` to end of previous token.
     #[inline]
     pub(crate) fn end_span(&self, start: u32) -> Span {
         Span::new(start, self.prev_token_end)

@@ -184,7 +184,7 @@ fn has_vue_component_annotation(node: &AstNode, ctx: &LintContext) -> bool {
         if matches!(
             ancestor.kind(),
             AstKind::ExportDefaultDeclaration(_)
-                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportDeclaration(_)
                 | AstKind::ExpressionStatement(_)
                 | AstKind::VariableDeclaration(_)
         ) {

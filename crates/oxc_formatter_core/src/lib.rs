@@ -28,10 +28,9 @@ mod macros;
 mod options;
 pub mod printer;
 mod simple_context;
-mod source_text;
+mod source;
 pub mod spec;
 mod state;
-mod text_range;
 mod traits;
 
 #[cfg(feature = "test_harness")]
@@ -61,14 +60,13 @@ pub use formatted::Formatted;
 pub use formatter::{Formatter, arena_cow_str};
 pub use group_id::{GroupId, UniqueGroupIdBuilder};
 pub use options::{
-    IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
+    CoreFormatOptions, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
     LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
 pub(crate) use simple_context::SimpleFormatContext;
-pub use source_text::SourceText;
+pub use source::{SourceText, SpanCursor};
 pub use state::FormatState;
-pub use text_range::TextRange;
 pub use traits::{FormatContext, FormatOptions};
 
 /// Public return type of the formatter

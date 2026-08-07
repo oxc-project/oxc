@@ -61,11 +61,9 @@ impl Rule for NoRelativeParentImports {
                 ctx.diagnostic(no_relative_parent_imports_diagnostic(import_decl.source.span));
             }
             // ESM export { } from '...'
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if let Some(source) = &export_decl.source
-                    && is_parent_import(source.value.as_str())
-                {
-                    ctx.diagnostic(no_relative_parent_imports_diagnostic(source.span));
+            AstKind::ExportFromDeclaration(export_decl) => {
+                if is_parent_import(export_decl.source.value.as_str()) {
+                    ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
                 }
             }
             // ESM export * from '...'

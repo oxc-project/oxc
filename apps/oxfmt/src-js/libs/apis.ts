@@ -92,7 +92,37 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   // This plugin overrides `babel(-ts)` and `typescript` parsers to use `oxc_formatter` instead of built-in parsers
   if ("_oxfmtPluginOptionsJson" in options) await setupOxfmtPlugin(options);
 
+  // This is needed to detect tsx-in-vue properly, see `prettier-plugin-oxfmt` for details.
+  // All `<script>` blocks in one SFC must share the same `lang` (Vue compiler restriction),
+  // so a single per-file flag is enough.
+  if (options.parser === "vue" && hasTsxScriptBlock(code)) {
+    options._oxfmtVueScriptLang = "tsx";
+  }
+
   return prettier.format(code, options);
+}
+
+// `<script` + a tag boundary (so `<scripts` does not match) + attributes + the tag-closing `>`.
+// Quoted attribute values may contain `>` (e.g. `generic="T extends Record<string, string>"`),
+// so they are consumed as whole quoted chunks before `>` can terminate the tag.
+const SCRIPT_OPEN_TAG_RE = /<script(?=[\s>])((?:"[^"]*"|'[^']*'|[^"'>])*)>/gv;
+// Standalone `lang` attribute (not e.g. `data-lang`) whose whole value is "tsx", quoted or unquoted
+const LANG_TSX_ATTR_RE = /(?:^|\s)lang\s*=\s*(?:"tsx"|'tsx'|tsx(?=[\s\/]|$))/v;
+
+/**
+ * Whether any `<script ...>` open tag in `sourceText` carries `lang="tsx"`.
+ *
+ * A plain-text scan may have a false positive.
+ * (e.g. the literal tag inside a template string or comment),
+ * the block parses as `tsx`, worst case the lone generic comma is kept or,
+ * if the block uses ts-only syntax, it is left unformatted.
+ * Never destructive, so leniency is acceptable trade-off here.
+ */
+function hasTsxScriptBlock(sourceText: string): boolean {
+  for (const [, attrs] of sourceText.matchAll(SCRIPT_OPEN_TAG_RE)) {
+    if (LANG_TSX_ATTR_RE.test(attrs)) return true;
+  }
+  return false;
 }
 
 // ---

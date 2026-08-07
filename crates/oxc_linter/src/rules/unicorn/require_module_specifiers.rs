@@ -67,9 +67,7 @@ impl Rule for RequireModuleSpecifiers {
                     |fixer| fix_import(fixer, import_decl),
                 );
             }
-            AstKind::ExportNamedDeclaration(export_decl)
-                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() =>
-            {
+            AstKind::ExportNamedDeclaration(export_decl) if export_decl.specifiers.is_empty() => {
                 let span =
                     find_empty_braces_in_export(ctx, export_decl).unwrap_or(export_decl.span);
                 ctx.diagnostic_with_fix(
@@ -77,25 +75,27 @@ impl Rule for RequireModuleSpecifiers {
                     |fixer| fix_export(fixer, export_decl),
                 );
             }
+            AstKind::ExportFromDeclaration(export_decl) if export_decl.specifiers.is_empty() => {
+                let span =
+                    find_empty_braces_in_span(ctx, export_decl.span).unwrap_or(export_decl.span);
+                ctx.diagnostic(require_module_specifiers_diagnostic(span, "export"));
+            }
             _ => {}
         }
     }
 }
 
-/// Finds empty braces `{}` in the given text and returns their span
-fn find_empty_braces_in_text(text: &str, base_span: Span) -> Option<Span> {
-    let open_brace = text.find('{')?;
-    let close_brace = text[open_brace + 1..].find('}')?;
+/// Finds empty braces `{}` within `span` and returns their span
+fn find_empty_braces_in_span(ctx: &LintContext<'_>, span: Span) -> Option<Span> {
+    let open_brace = span.start + ctx.find_next_token_within(span.start, span.end, "{")?;
+    let close_brace = open_brace + 1 + ctx.find_next_token_within(open_brace + 1, span.end, "}")?;
 
     // Check if braces contain only whitespace
-    if !text[open_brace + 1..open_brace + 1 + close_brace].trim().is_empty() {
+    if !ctx.source_range(Span::new(open_brace + 1, close_brace)).trim().is_empty() {
         return None;
     }
 
-    // Calculate absolute positions
-    let start = base_span.start + u32::try_from(open_brace).ok()?;
-    let end = start + u32::try_from(close_brace + 2).ok()?; // +2 to span from '{' to position after '}'
-    Some(Span::new(start, end))
+    Some(Span::new(open_brace, close_brace + 1))
 }
 
 fn find_empty_braces_in_import(
@@ -115,39 +115,35 @@ fn find_empty_braces_in_import(
         return None;
     }
 
-    let import_text = ctx.source_range(import_decl.span);
-    find_empty_braces_in_text(import_text, import_decl.span)
+    find_empty_braces_in_span(ctx, import_decl.span)
 }
 
 fn find_empty_braces_in_export(
     ctx: &LintContext<'_>,
     export_decl: &ExportNamedDeclaration<'_>,
 ) -> Option<Span> {
-    let export_text = ctx.source_range(export_decl.span);
-    find_empty_braces_in_text(export_text, export_decl.span)
+    find_empty_braces_in_span(ctx, export_decl.span)
 }
 
 fn fix_import<'a>(fixer: RuleFixer<'_, 'a>, import_decl: &ImportDeclaration<'a>) -> RuleFix {
-    let import_text = fixer.source_range(import_decl.span);
+    let span = import_decl.span;
 
-    let Some(comma_pos) = import_text.find(',') else {
+    let Some(comma) = fixer.find_next_token_within(span.start, span.end, ",") else {
         return fixer.noop();
     };
-    let Some(from_pos) = import_text[comma_pos..].find("from") else {
+    let comma = span.start + comma;
+    let Some(from) = fixer.find_next_token_within(comma, span.end, "from") else {
         return fixer.noop();
     };
+    let from = comma + from;
 
     // Remove empty braces: "import foo, {} from 'bar'" -> "import foo from 'bar'"
-    let default_part = &import_text[..comma_pos];
-    let from_part = &import_text[comma_pos + from_pos..];
-    fixer.replace(import_decl.span, format!("{default_part} {from_part}"))
+    let default_part = fixer.source_range(Span::new(span.start, comma));
+    let from_part = fixer.source_range(Span::new(from, span.end));
+    fixer.replace(span, format!("{default_part} {from_part}"))
 }
 
 fn fix_export<'a>(fixer: RuleFixer<'_, 'a>, export_decl: &ExportNamedDeclaration<'a>) -> RuleFix {
-    if export_decl.source.is_some() {
-        return fixer.noop();
-    }
-
     // Remove the entire `export {}` statement
     fixer.delete(&export_decl.span)
 }
@@ -190,6 +186,8 @@ fn test() {
         r#"import foo, {
 			} from "foo";"#,
         r#"import foo,{}/* comment */from "foo";"#,
+        // the `{` inside the comment is not the specifier list; this used to go unreported
+        r#"import foo, /* { */ {} from "foo";"#,
         r#"import type {} from "foo""#,
         r#"import type{}from"foo""#,
         // Invalid TS (1363)
@@ -206,6 +204,10 @@ fn test() {
     ];
 
     let fix = vec![
+        // neither the `,` nor the `from` inside a comment is the real token
+        (r#"import /* , */ foo, {} from "foo";"#, r#"import /* , */ foo from "foo";"#),
+        // the comment sits in the removed `, {} ` region, so it goes with it
+        (r#"import foo, {} /* from */ from "foo";"#, r#"import foo from "foo";"#),
         (r#"import foo, {} from "foo";"#, r#"import foo from "foo";"#),
         (r#"import foo,{} from "foo";"#, r#"import foo from "foo";"#),
         ("export {}", ""),

@@ -5,11 +5,11 @@ mod markdown;
 
 use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
-use oxc_formatter_core::IndentWidth;
+use oxc_formatter_core::{FormatElement, IndentWidth, format_element::TextWidth};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatElement, format_element::TextWidth, prelude::*},
+    formatter::prelude::*,
     write,
 };
 

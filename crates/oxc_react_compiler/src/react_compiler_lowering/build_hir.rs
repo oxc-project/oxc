@@ -6298,7 +6298,9 @@ fn lower_statement<'a>(
             )?;
         }
         oxc::Statement::ImportDeclaration(_)
+        | oxc::Statement::ExportDeclaration(_)
         | oxc::Statement::ExportNamedDeclaration(_)
+        | oxc::Statement::ExportFromDeclaration(_)
         | oxc::Statement::ExportDefaultDeclaration(_)
         | oxc::Statement::ExportAllDeclaration(_) => {
             builder.record_error(

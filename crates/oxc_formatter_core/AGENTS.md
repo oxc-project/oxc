@@ -2,10 +2,10 @@
 
 ## Overview
 
-Language-agnostic formatting infrastructure, ported from [Biome](https://github.com/biomejs/biome)'s `biome_formatter` crate.
+Language-agnostic formatting infrastructure.
 
-Every language-specific formatter in the oxc ecosystem (`oxc_formatter` for JS/TS, `oxc_formatter_json`, and future CSS/GraphQL/etc.) builds on this crate.
-It owns the IR and the printing pipeline; it knows nothing about any concrete language (no comments, no quote rules, those live in the consumer crates).
+Every language-specific formatter in the oxc ecosystem builds on this crate.
+It owns the IR and the printing pipeline; it knows nothing about any concrete language (no comment placement rules, no quote rules, those live in the consumer crates).
 
 ### The IR ("Document") and pipeline
 
@@ -19,16 +19,25 @@ Key IR pieces are all exported from the crate root.
 The semantics of each building block live in the `builders.rs` rustdocs.
 e.g. the mechanisms for verbatim multi-line content (`exact_line_breaks()` for blank runs exempt from newline collapsing, `literal_line_break()`, multiline `text()`, `text(..).without_expand_parent()`, and `mark_as_root` / `dedent_to_root`), with the non-obvious behaviors pinned by printer tests verified against Prettier's `printDocToString`.
 
-Prettier doc primitives are ported on demand; still missing:
+Prettier doc primitives are ported on demand; still missing: the `trim`.
 
-- `hardlineWithoutBreakParent` (markdown tables)
-- and the `trim` doc
+Composite primitives translate rather than port 1:1:
+
+- `hardlineWithoutBreakParent` is `hard_line_break().without_expand_parent()`
+- `conditionalGroup` is `best_fitting!`: same expansion boundary, same flat-first variant trial.
+  Prettier's own doesn't switch variants on inner breaks either ("the user is expected to manually handle what breaks");
+  that manual wiring is `ifBreak({groupId})` there and `if_group_breaks(..).with_group_id(..)` here
+  See `oxc_formatter_yaml`'s `mapping_item.rs` for the full pattern.
+  Only the Doc→IR mechanical conversion has no mapping (oxfmt's `prettier_compat` rejects `expandedStates`).
 
 ### The printer never trims
 
 Unlike Prettier's `printDocToString`, this printer emits exactly what was written:
 end-of-line whitespace never appearing in the output is guaranteed by construction (pending space/indention, no indention on blank lines), not by a trimming pass.
 Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
+
+NOTE: The printer's runtime optimizations (pending-space dedup, consecutive-hardline merging, this no-trim rule, ...) are mirrored downstream by `apps/oxfmt`'s `prettier_compat` (IR ↔ Prettier Doc interop; kept there because core never learns Prettier-as-a-system).
+When changing printer runtime behavior, update that mirror in the same PR; oxfmt's embedded/E2E conformance is the backstop that catches drift.
 
 ### Choosing a staging buffer
 
@@ -55,40 +64,42 @@ The core is parameterized over a consumer-supplied context so it stays language-
 - `FormatContext` trait: no lifetime parameter
   - (avoids `oxc_allocator`'s `'ast` propagating through struct bounds and blocking anonymous lifetimes)
   - The allocator lives on `FormatState`, not the context
-- `FormatOptions` trait: `indent_style()`, `indent_width()`, `line_width()`, `line_ending()`, `as_print_options() -> PrinterOptions`
+- `FormatOptions` trait:
+  - `as_print_options() -> PrinterOptions` is provided from the getters
   - Core option types: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding` (exactly the `PrinterOptions` inputs; see the boundary section below)
+  - `CoreFormatOptions`: the four bundled, for handing them across a host boundary (config resolver → language options) in one piece;
+    - `apply_core` is the write half of the trait's read-only getters
 - `Format<'ast, C>` trait + `FormatState<'ast, C>`, `Formatted<'ast, C>`, `Formatter<'buf, 'ast, C>`, `Buffer<'ast, C>`
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
 
 ### Embedded-language infrastructure (`embedded.rs`)
 
-`EmbeddedContext` / `FormatDispatcher` / `DispatchResult` / `TailwindCollector` let one
-formatter's IR be built inside another's document (e.g. graphql-in-js):
+`EmbeddedContext` / `FormatDispatcher` / `DispatchResult` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
-- The orchestrator (oxfmt) assembles the dispatcher, mapping language names to
-  formatter implementations (or a Prettier fallback); formatter crates only invoke it
+- The orchestrator (oxfmt) assembles the dispatcher, mapping language names to formatter implementations (or a Prettier fallback)
+  - Formatter crates only invoke it
 - Parent and child share one arena and one `GroupId` space through `EmbeddedContext`
-- A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort
-  Tailwind classes) — one shape for every child language, no per-crate tuples
-- Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`);
-  only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`),
-  core never learns concrete languages
-- Consumers access `DispatchResult.docs` directly
-  (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`);
-  call `DispatchResult::remap_tailwind_into` first when the child may carry classes,
-  the printer's `debug_assert` catches a forgotten merge
+- A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort Tailwind classes), one shape for every child language, no per-crate tuples
+- Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`)
+  - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
+- Consumers access `DispatchResult.docs` directly (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`)
+  - Call `DispatchResult::remap_tailwind_into` first when the child may carry classes, the printer's `debug_assert` catches a forgotten merge
 
-### What belongs in core (the boundary)
+## What belongs in core (the boundary)
 
-Two layers, two admission rules. A type/fn that fits neither belongs in a consumer crate.
+Three layers, three admission rules. A type/fn that fits none of them belongs in a consumer crate.
 
 - (1) engine: The IR + Printer + the option types the `Printer` actually consumes
   - `PrinterOptions`: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`
 
-Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own
+Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own.
 
-- (2) `spec/`: Shared formatter behaviors reused across language formatters
+- (2) `source/`: Source-side access mechanics (`SourceText`, `SpanCursor`)
+
+Admission: the structure makes no output decision by itself; language differences arrive as data (offsets, the item type), never as parameters encoding grammar or policy.
+
+- (3) `spec/`: Shared formatter behaviors reused across language formatters
 
 Output targets Prettier compatibility, but the layer is defined by what it is, not by Prettier.
 
@@ -112,7 +123,17 @@ Parameterizing language differences (sharpened gate 2), when a shared helper nee
 
 `SourceText` follows this line. Core owns mechanical, offset-keyed access only (slicing, raw-byte lookups).
 Lexical-semantic scanning whose answer is language-defined, what counts as a newline (U+2028/U+2029), a comment, or ASI/parens trivia lives in the consumer (`oxc_formatter`'s `SourceTextExt`), not here.
-Even raw newline detection proved to be consumer-owned (every consumer needs the LS/PS-aware variant in addition to `\r|\n`), so core keeps no newline helpers.
+
+Newline-adjacent helpers split along the same line:
+
+- `spec/gap.rs` is the shared gap classifier for the CR, LF and CRLF terminator family
+  - It takes a raw `&[u8]` slice, never offsets (`SourceText` addresses), `spec/` interprets, consumers compose the two at the call site
+- Precedent for gate 2: json/js measure gaps under ECMAScript lexis (LS/PS terminators, blanks before a separator comma ignored)
+  - So they keep their own helpers instead of a parameter here
+
+`SpanCursor<T: GetSpan>` follows the same split from the position side:
+core owns the span-ordered cursor mechanics; what the items mean (comments) and where they are placed stay consumer-owned.
+
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 
 ## Cargo features
@@ -122,11 +143,11 @@ Consumers still need their own `insta` dev-dep so the recorded `source:` header 
 
 ## Verification
 
+Feature configs to check:
+
 ```sh
 cargo c -p oxc_formatter_core
 cargo c -p oxc_formatter_core --features test_harness
 ```
-
-Run `clippy` for both configurations and resolve all warnings.
 
 This crate has basic tests only of its own, it is exercised through the conformance/snapshot tests of its consumers.

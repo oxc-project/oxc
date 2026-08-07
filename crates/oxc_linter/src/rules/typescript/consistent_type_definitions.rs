@@ -108,7 +108,7 @@ impl Rule for ConsistentTypeDefinitions {
                         let start = if decl.declare {
                             let base_start = decl.span.start + 7;
 
-                            ctx.find_next_token_from(base_start, "type")
+                            ctx.find_next_token_within(base_start, decl.span.end, "type")
                                 .map_or(base_start + 1, |v| v + base_start)
                         } else {
                             decl.span.start
@@ -195,7 +195,7 @@ impl Rule for ConsistentTypeDefinitions {
                 let start = if decl.declare {
                     let base_start = decl.span.start + 7;
 
-                    ctx.find_next_token_from(base_start, "interface")
+                    ctx.find_next_token_within(base_start, decl.span.end, "interface")
                         .map_or(base_start + 1, |v| v + base_start)
                 } else {
                     decl.span.start

@@ -65,7 +65,8 @@ impl Rule for NoVar {
             }
 
             let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-            let var_offset = ctx.find_next_token_from(dec.span.start, "var").unwrap();
+            let var_offset =
+                ctx.find_next_token_within(dec.span.start, dec.span.end, "var").unwrap();
             let var_start = dec.span.start + var_offset;
             let var_keyword_span = Span::sized(var_start, 3);
             ctx.diagnostic_with_fix(no_var_diagnostic(var_keyword_span), |fixer| {

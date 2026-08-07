@@ -32,7 +32,7 @@ jobs:
           cache-key: warm
           tools: cargo-release-oxc
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
       - name: Generate version and changelog
         id: run

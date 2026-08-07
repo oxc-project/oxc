@@ -6,17 +6,17 @@ use std::cmp;
 
 use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::IndentWidth;
+use oxc_formatter_core::{
+    Format, FormatElement, IndentWidth, RemoveSoftLinesBuffer, VecBuffer, printer::Printer,
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
-        Format, FormatElement, TailwindContextEntry, VecBuffer,
-        buffer::RemoveSoftLinesBuffer,
+        TailwindContextEntry,
         prelude::{document::Document, *},
-        printer::Printer,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     utils::{

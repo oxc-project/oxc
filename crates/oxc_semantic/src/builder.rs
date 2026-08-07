@@ -976,15 +976,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(type_parameters) = &class.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_class) = &class.super_class {
+        if let Some(heritage) = &class.heritage {
             if self.in_ambient_context() {
                 self.current_reference_flags = ReferenceFlags::ValueAsType;
             }
-            self.visit_expression(super_class);
+            self.visit_expression(&heritage.expression);
             self.current_reference_flags = ReferenceFlags::empty();
-        }
-        if let Some(super_type_parameters) = &class.super_type_arguments {
-            self.visit_ts_type_parameter_instantiation(super_type_parameters);
+            if let Some(super_type_parameters) = &heritage.type_arguments {
+                self.visit_ts_type_parameter_instantiation(super_type_parameters);
+            }
         }
         self.visit_ts_class_implements_list(&class.implements);
         self.visit_class_body(&class.body);
@@ -2344,31 +2344,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ExportNamedDeclaration(self.alloc(it));
         self.enter_node(kind);
         self.visit_span(&it.span);
-        if let Some(declaration) = &it.declaration {
-            self.visit_declaration(declaration);
-        }
-
-        if let Some(source) = &it.source {
-            self.visit_string_literal(source);
-            self.visit_export_specifiers(&it.specifiers);
-        } else {
-            for specifier in &it.specifiers {
-                // `export type { a }` or `export { type a }` -> `a` is a type reference
-                if it.export_kind.is_type() || specifier.export_kind.is_type() {
-                    self.current_reference_flags = ReferenceFlags::Type;
-                } else {
-                    // If the export specifier is not a explicit type export, we consider it as a potential
-                    // type and value reference. If it references to a value in the end, we would delete the
-                    // `ReferenceFlags::Type` flag in `fn try_resolve_reference`.
-                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
-                }
-                self.visit_export_specifier(specifier);
+        for specifier in &it.specifiers {
+            // `export type { a }` or `export { type a }` -> `a` is a type reference
+            if it.export_kind.is_type() || specifier.export_kind.is_type() {
+                self.current_reference_flags = ReferenceFlags::Type;
+            } else {
+                // If the export specifier is not an explicit type export, consider it as a potential
+                // type and value reference. Value references lose the type flag during resolution.
+                self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
             }
+            self.visit_export_specifier(specifier);
         }
-        if let Some(with_clause) = &it.with_clause {
-            self.visit_with_clause(with_clause);
-        }
-
         self.leave_node(kind);
     }
 
@@ -2653,18 +2639,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
-        let kind = AstKind::TSModuleDeclaration(self.alloc(decl));
+    fn visit_ts_external_module_declaration(&mut self, decl: &TSExternalModuleDeclaration<'a>) {
+        let kind = AstKind::TSExternalModuleDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.enter_ambient_context(decl.declare);
-        decl.bind(self);
         self.visit_span(&decl.span);
-        self.visit_ts_module_declaration_name(&decl.id);
+        self.visit_string_literal(&decl.id);
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
-                if decl.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive)
-                {
+                if decl.has_use_strict_directive() {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags
@@ -2672,8 +2656,31 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             &decl.scope_id,
         );
         if let Some(body) = &decl.body {
-            self.visit_ts_module_declaration_body(body);
+            self.visit_ts_module_block(body);
         }
+        self.leave_scope();
+        self.leave_node(kind);
+        self.leave_ambient_context(decl.declare);
+    }
+
+    fn visit_ts_namespace_declaration(&mut self, decl: &TSNamespaceDeclaration<'a>) {
+        let kind = AstKind::TSNamespaceDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.enter_ambient_context(decl.declare);
+        decl.bind(self);
+        self.visit_span(&decl.span);
+        self.visit_binding_identifier(&decl.id);
+        self.enter_scope(
+            {
+                let mut flags = ScopeFlags::TsModuleBlock;
+                if decl.has_use_strict_directive() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &decl.scope_id,
+        );
+        self.visit_ts_namespace_declaration_body(&decl.body);
         self.leave_scope();
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);
@@ -2834,7 +2841,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         //             ^^^^^^^^^
         self.current_reference_flags = ReferenceFlags::Type;
         self.visit_span(&heritage.span);
-        self.visit_expression(&heritage.expression);
+        self.visit_ts_type_name(&heritage.type_name);
         if let Some(type_arguments) = &heritage.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }

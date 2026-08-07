@@ -29,14 +29,18 @@ describe("transformSync", () => {
   });
 
   it("forwards React Compiler options", () => {
-    const target = transformSync("Component.tsx", fixture, { target: "18" });
+    const target = transformSync("Component.tsx", fixture, {
+      reactCompiler: { target: "18" },
+    });
     expect(target.errors).toEqual([]);
     expect(target.code).toContain("react-compiler-runtime");
 
     const gated = transformSync("Component.tsx", fixture, {
-      gating: {
-        source: "feature-flags",
-        importSpecifierName: "isCompilerEnabled",
+      reactCompiler: {
+        gating: {
+          source: "feature-flags",
+          importSpecifierName: "isCompilerEnabled",
+        },
       },
     });
     expect(gated.errors).toEqual([]);
@@ -52,7 +56,9 @@ describe("transformSync", () => {
         return <div>{props.text}</div>;
       }`,
       {
-        dynamicGating: { source: "dynamic-feature-flags" },
+        reactCompiler: {
+          dynamicGating: { source: "dynamic-feature-flags" },
+        },
       },
     );
     expect(dynamic.errors).toEqual([]);
@@ -60,9 +66,11 @@ describe("transformSync", () => {
     expect(dynamic.code).toContain("isCompilerEnabled");
 
     const meta = transformSync("Component.tsx", fixture, {
-      target: {
-        kind: "donotuse_meta_internal",
-        runtimeModule: "custom-react-runtime",
+      reactCompiler: {
+        target: {
+          kind: "donotuse_meta_internal",
+          runtimeModule: "custom-react-runtime",
+        },
       },
     });
     expect(meta.errors).toEqual([]);
@@ -80,7 +88,7 @@ describe("transformSync", () => {
     expect(optedOut.code).not.toContain("_c(");
 
     const compiled = transformSync("Component.jsx", source, {
-      ignoreUseNoForget: true,
+      reactCompiler: { ignoreUseNoForget: true },
     });
     expect(compiled.errors).toEqual([]);
     expect(compiled.code).toContain("_c(");
@@ -100,7 +108,9 @@ describe("transformSync", () => {
       },
     ],
   ])("reports an invalid %s option without emitting code", (option, options) => {
-    const result = transformSync("Component.tsx", fixture, options as never);
+    const result = transformSync("Component.tsx", fixture, {
+      reactCompiler: options,
+    } as never);
     expect(result.fatal).toBe(true);
     expect(result.code).toBe("");
     expect(result.errors).toHaveLength(1);
@@ -131,7 +141,7 @@ describe("transformSync", () => {
 
   it("can filter files with sources", () => {
     const result = transformSync("vendor/Component.tsx", fixture, {
-      sources: ["src/"],
+      reactCompiler: { sources: ["src/"] },
     });
 
     expect(result.errors).toEqual([]);
@@ -180,8 +190,10 @@ describe("transformSync", () => {
         return <div>{doubled}</div>;
       }`,
       {
-        environment: {
-          validateExhaustiveMemoizationDependencies: false,
+        reactCompiler: {
+          environment: {
+            validateExhaustiveMemoizationDependencies: false,
+          },
         },
       },
     );
@@ -235,8 +247,10 @@ describe("transformSync", () => {
         return <span>{props.text}</span>;
       }`,
       {
-        environment: {
-          validateExhaustiveMemoizationDependencies: false,
+        reactCompiler: {
+          environment: {
+            validateExhaustiveMemoizationDependencies: false,
+          },
         },
       },
     );
@@ -260,9 +274,11 @@ describe("transformSync", () => {
           return <div>{doubled}</div>;
         }`,
         {
-          panicThreshold,
-          environment: {
-            validateExhaustiveMemoizationDependencies: false,
+          reactCompiler: {
+            panicThreshold,
+            environment: {
+              validateExhaustiveMemoizationDependencies: false,
+            },
           },
         },
       );
@@ -282,7 +298,7 @@ describe("transformSync", () => {
         const table = useReactTable({});
         return <div>{table}</div>;
       }`,
-      { panicThreshold: "all_errors" },
+      { reactCompiler: { panicThreshold: "all_errors" } },
     );
 
     expect(result.fatal).toBe(true);
@@ -292,6 +308,61 @@ describe("transformSync", () => {
       severity: "Warning",
       message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library",
     });
+  });
+
+  it("can disable and explicitly enable React Compiler", () => {
+    const disabled = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+    });
+    expect(disabled.errors).toEqual([]);
+    expect(disabled.code).not.toContain("react/compiler-runtime");
+    expect(disabled.code).not.toContain("interface Props");
+    expect(disabled.code).not.toContain("<button");
+
+    const enabled = transformSync("Component.tsx", fixture, {
+      reactCompiler: true,
+    });
+    expect(enabled.errors).toEqual([]);
+    expect(enabled.code).toContain("react/compiler-runtime");
+  });
+
+  it("configures and preserves JSX independently of React Compiler", () => {
+    const configured = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+      jsx: { importSource: "custom-jsx" },
+    });
+    expect(configured.errors).toEqual([]);
+    expect(configured.code).toContain('from "custom-jsx/jsx-runtime"');
+    expect(configured.code).not.toContain("<button");
+
+    const preserved = transformSync("Component.tsx", fixture, {
+      jsx: "preserve",
+    });
+    expect(preserved.errors).toEqual([]);
+    expect(preserved.code).toContain("react/compiler-runtime");
+    expect(preserved.code).not.toContain("interface Props");
+    expect(preserved.code).toContain("<button");
+  });
+
+  it("reports invalid JSX modes without emitting code", () => {
+    const result = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+      jsx: "invalid",
+    } as never);
+    expect(result.fatal).toBe(true);
+    expect(result.code).toBe("");
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toContain("Invalid `jsx` option");
+  });
+
+  it("supports React Fast Refresh through JSX options", () => {
+    const result = transformSync("Component.tsx", fixture, {
+      reactCompiler: false,
+      jsx: { refresh: true },
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("$RefreshSig$");
+    expect(result.code).toContain("$RefreshReg$");
   });
 });
 

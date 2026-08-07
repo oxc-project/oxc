@@ -697,7 +697,10 @@ impl ContentEq for Statement<'_> {
             (Self::TSTypeAliasDeclaration(a), Self::TSTypeAliasDeclaration(b)) => a.content_eq(b),
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
-            (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSExternalModuleDeclaration(a), Self::TSExternalModuleDeclaration(b)) => {
+                a.content_eq(b)
+            }
+            (Self::TSNamespaceDeclaration(a), Self::TSNamespaceDeclaration(b)) => a.content_eq(b),
             (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
@@ -707,7 +710,9 @@ impl ContentEq for Statement<'_> {
             (Self::ExportDefaultDeclaration(a), Self::ExportDefaultDeclaration(b)) => {
                 a.content_eq(b)
             }
+            (Self::ExportDeclaration(a), Self::ExportDeclaration(b)) => a.content_eq(b),
             (Self::ExportNamedDeclaration(a), Self::ExportNamedDeclaration(b)) => a.content_eq(b),
+            (Self::ExportFromDeclaration(a), Self::ExportFromDeclaration(b)) => a.content_eq(b),
             (Self::TSExportAssignment(a), Self::TSExportAssignment(b)) => a.content_eq(b),
             (Self::TSNamespaceExportDeclaration(a), Self::TSNamespaceExportDeclaration(b)) => {
                 a.content_eq(b)
@@ -745,7 +750,10 @@ impl ContentEq for Declaration<'_> {
             (Self::TSTypeAliasDeclaration(a), Self::TSTypeAliasDeclaration(b)) => a.content_eq(b),
             (Self::TSInterfaceDeclaration(a), Self::TSInterfaceDeclaration(b)) => a.content_eq(b),
             (Self::TSEnumDeclaration(a), Self::TSEnumDeclaration(b)) => a.content_eq(b),
-            (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSExternalModuleDeclaration(a), Self::TSExternalModuleDeclaration(b)) => {
+                a.content_eq(b)
+            }
+            (Self::TSNamespaceDeclaration(a), Self::TSNamespaceDeclaration(b)) => a.content_eq(b),
             (Self::TSGlobalDeclaration(a), Self::TSGlobalDeclaration(b)) => a.content_eq(b),
             (Self::TSImportEqualsDeclaration(a), Self::TSImportEqualsDeclaration(b)) => {
                 a.content_eq(b)
@@ -771,8 +779,7 @@ impl ContentEq for VariableDeclarationKind {
 
 impl ContentEq for VariableDeclarator<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.kind, &other.kind)
-            && ContentEq::content_eq(&self.id, &other.id)
+        ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.init, &other.init)
             && ContentEq::content_eq(&self.definite, &other.definite)
@@ -1198,12 +1205,18 @@ impl ContentEq for Class<'_> {
             && ContentEq::content_eq(&self.decorators, &other.decorators)
             && ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
-            && ContentEq::content_eq(&self.super_class, &other.super_class)
-            && ContentEq::content_eq(&self.super_type_arguments, &other.super_type_arguments)
+            && ContentEq::content_eq(&self.heritage, &other.heritage)
             && ContentEq::content_eq(&self.implements, &other.implements)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#abstract, &other.r#abstract)
             && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
+impl ContentEq for ClassHeritage<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.expression, &other.expression)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -1303,7 +1316,9 @@ impl ContentEq for ModuleDeclaration<'_> {
             (Self::ExportDefaultDeclaration(a), Self::ExportDefaultDeclaration(b)) => {
                 a.content_eq(b)
             }
+            (Self::ExportDeclaration(a), Self::ExportDeclaration(b)) => a.content_eq(b),
             (Self::ExportNamedDeclaration(a), Self::ExportNamedDeclaration(b)) => a.content_eq(b),
+            (Self::ExportFromDeclaration(a), Self::ExportFromDeclaration(b)) => a.content_eq(b),
             (Self::TSExportAssignment(a), Self::TSExportAssignment(b)) => a.content_eq(b),
             (Self::TSNamespaceExportDeclaration(a), Self::TSNamespaceExportDeclaration(b)) => {
                 a.content_eq(b)
@@ -1421,10 +1436,22 @@ impl ContentEq for ImportAttributeKey<'_> {
     }
 }
 
-impl ContentEq for ExportNamedDeclaration<'_> {
+impl ContentEq for ExportDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.declaration, &other.declaration)
-            && ContentEq::content_eq(&self.specifiers, &other.specifiers)
+    }
+}
+
+impl ContentEq for ExportNamedDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.specifiers, &other.specifiers)
+            && ContentEq::content_eq(&self.export_kind, &other.export_kind)
+    }
+}
+
+impl ContentEq for ExportFromDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.specifiers, &other.specifiers)
             && ContentEq::content_eq(&self.source, &other.source)
             && ContentEq::content_eq(&self.export_kind, &other.export_kind)
             && ContentEq::content_eq(&self.with_clause, &other.with_clause)
@@ -2247,7 +2274,7 @@ impl ContentEq for TSSignature<'_> {
 
 impl ContentEq for TSIndexSignature<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.parameters, &other.parameters)
+        ContentEq::content_eq(&self.parameter, &other.parameter)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
@@ -2299,7 +2326,7 @@ impl ContentEq for TSIndexSignatureName<'_> {
 
 impl ContentEq for TSInterfaceHeritage<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
+        ContentEq::content_eq(&self.type_name, &other.type_name)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
@@ -2322,7 +2349,15 @@ impl ContentEq for TSTypePredicateName<'_> {
     }
 }
 
-impl ContentEq for TSModuleDeclaration<'_> {
+impl ContentEq for TSExternalModuleDeclaration<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.id, &other.id)
+            && ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
+impl ContentEq for TSNamespaceDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
             && ContentEq::content_eq(&self.body, &other.body)
@@ -2331,26 +2366,16 @@ impl ContentEq for TSModuleDeclaration<'_> {
     }
 }
 
-impl ContentEq for TSModuleDeclarationKind {
+impl ContentEq for TSNamespaceDeclarationKind {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }
 }
 
-impl ContentEq for TSModuleDeclarationName<'_> {
+impl ContentEq for TSNamespaceDeclarationBody<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
-            (Self::StringLiteral(a), Self::StringLiteral(b)) => a.content_eq(b),
-            _ => false,
-        }
-    }
-}
-
-impl ContentEq for TSModuleDeclarationBody<'_> {
-    fn content_eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::TSModuleDeclaration(a), Self::TSModuleDeclaration(b)) => a.content_eq(b),
+            (Self::TSNamespaceDeclaration(a), Self::TSNamespaceDeclaration(b)) => a.content_eq(b),
             (Self::TSModuleBlock(a), Self::TSModuleBlock(b)) => a.content_eq(b),
             _ => false,
         }

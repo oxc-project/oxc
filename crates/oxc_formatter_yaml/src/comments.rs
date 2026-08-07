@@ -1,12 +1,10 @@
-use std::cell::Cell;
-
 use oxc_formatter_core::{
-    Buffer, SourceText,
+    Buffer, SourceText, SpanCursor,
     builders::{align, empty_line, expand_parent, hard_line_break, line_suffix, space, text},
     spec::is_suppression_marker,
     write,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::print::{YamlFormatter, format_with};
 
@@ -20,118 +18,31 @@ pub struct SourceComment {
     pub own_line_column: Option<u32>,
 }
 
-/// Cursor over a sorted comment list that hands out unprinted slices in span order.
+impl GetSpan for SourceComment {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+/// Cursor over the sorted comment list.
 ///
 /// YAML comments are always single-line (`# ...` to end of line);
 /// the parser collects them into a flat, source-ordered list and `format()` bridges them to [`SourceComment`]s.
 /// Comment placement (leading / trailing / end) is decided positionally at print sites.
+pub type Comments<'a> = SpanCursor<'a, SourceComment>;
+
+/// `anchor`, moved past the most recently consumed comment when that lies beyond it.
 ///
-/// `cursor` is a [`Cell`] so the API works through `&self`.
-pub struct Comments<'a> {
-    inner: &'a [SourceComment],
-    cursor: Cell<usize>,
+/// A nested container's end-comment flush consumes comments PAST the outer caller's anchor
+/// (a deeper-indented run belongs to the inner container),
+/// reproducing the vertical spacing in front of them as it prints.
+/// Gap measurement resuming from the unmoved anchor would observe that same spacing again
+/// and emit a second blank line.
+pub fn gap_anchor_after_consumed(anchor: u32, f: &YamlFormatter<'_, '_>) -> u32 {
+    f.context().comments().last_consumed().map_or(anchor, |c| anchor.max(c.span.end))
 }
 
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [SourceComment]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns the next unprinted comment without consuming it.
-    pub fn peek(&self) -> Option<SourceComment> {
-        self.inner.get(self.cursor.get()).copied()
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [SourceComment] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [SourceComment] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = SourceComment> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |c| c.span.end <= upper_bound)
-    }
-
-    /// `anchor`, moved past the most recently consumed comment when that lies beyond it.
-    ///
-    /// A nested container's end-comment flush consumes comments PAST the outer caller's anchor
-    /// (a deeper-indented run belongs to the inner container),
-    /// reproducing the vertical spacing in front of them as it prints.
-    /// Gap measurement resuming from the unmoved anchor would observe that same spacing again
-    /// and emit a second blank line.
-    pub fn gap_anchor_after_consumed(&self, anchor: u32) -> u32 {
-        let last_consumed_end = self.cursor.get().checked_sub(1).map(|i| self.inner[i].span.end);
-        last_consumed_end.map_or(anchor, |end| anchor.max(end))
-    }
-}
-
-/// Vertical spacing implied by an inter-token source gap.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Gap {
-    /// Same line (no line terminator).
-    None,
-    /// One or more line breaks, but no blank line.
-    Line,
-    /// At least one blank line.
-    Blank,
-}
-
-/// Classifies the gap `slice` between two source positions.
-///
-/// A blank line is a line strictly inside the gap consisting solely of whitespace.
-/// Tokens in the gap make their line non-blank,
-/// so newline counting alone would over-report blank lines (e.g. an indicator such as `-` sitting on its own line).
-///
-/// The source is normalized to `\n` before parsing (see `format()`),
-/// but the CR-handling is kept so the helper stays correct on raw slices in tests.
-pub fn classify_gap(slice: &[u8]) -> Gap {
-    let mut newline_count = 0;
-    let mut line_has_content = false;
-    let mut blank = false;
-    let mut i = 0;
-    while i < slice.len() {
-        match slice[i] {
-            b'\r' | b'\n' => {
-                // A line strictly between two terminators with no content is blank.
-                if newline_count > 0 && !line_has_content {
-                    blank = true;
-                }
-                newline_count += 1;
-                line_has_content = false;
-                // Collapse `\r\n` into one break.
-                if slice[i] == b'\r' && slice.get(i + 1) == Some(&b'\n') {
-                    i += 1;
-                }
-            }
-            b' ' | b'\t' => {}
-            _ => line_has_content = true,
-        }
-        i += 1;
-    }
-    if blank {
-        Gap::Blank
-    } else if newline_count > 0 {
-        Gap::Line
-    } else {
-        Gap::None
-    }
-}
+pub use oxc_formatter_core::spec::{Gap, classify_gap};
 
 /// `true` when the source between `from` and `to` holds nothing but whitespace and comments
 /// (every line blank or `#`-only after indentation).
@@ -148,7 +59,7 @@ pub fn write_blank_preserving_break(
     upper_bound: u32,
     f: &mut YamlFormatter<'_, '_>,
 ) {
-    let prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
+    let prev_end = gap_anchor_after_consumed(prev_end, f);
     if prev_end < upper_bound
         && classify_gap(f.context().source_text().bytes_range(prev_end, upper_bound)) == Gap::Blank
     {
@@ -329,7 +240,7 @@ pub fn flush_container_end_comments(
     f: &mut YamlFormatter<'_, '_>,
 ) -> u32 {
     let source = f.context().source_text();
-    let mut prev_end = f.context().comments().gap_anchor_after_consumed(prev_end);
+    let mut prev_end = gap_anchor_after_consumed(prev_end, f);
     loop {
         let Some(comment) = f.context().comments().peek() else { return prev_end };
         let span = comment.span;
@@ -355,28 +266,5 @@ pub fn flush_container_end_comments(
         });
         write!(f, align(align_width, &inner));
         prev_end = span.end;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Gap, classify_gap};
-
-    #[test]
-    fn classify_gap_counts_line_terminators() {
-        assert_eq!(classify_gap(b" \t "), Gap::None);
-        assert_eq!(classify_gap(b"a"), Gap::None);
-        assert_eq!(classify_gap(b"\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\n  \n"), Gap::Blank);
-        assert_eq!(classify_gap(b"\r\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\n\r\n"), Gap::Blank);
-    }
-
-    #[test]
-    fn classify_gap_treats_tokens_as_content() {
-        // An indicator on its own line (e.g. `-` of a sequence item) is not a blank line.
-        assert_eq!(classify_gap(b"\n-\n"), Gap::Line);
-        // Content on the tail of the first or last line is not "inside" the gap.
-        assert_eq!(classify_gap(b"-\n  "), Gap::Line);
     }
 }

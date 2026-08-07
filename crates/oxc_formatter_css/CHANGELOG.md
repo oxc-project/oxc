@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.62.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- 68146bd formatter_css: Preserve glued plugin words in grid values (#25225) (leaysgur)
+- dd28596 formatter_css: Bump oxc-css-parser for substituted at-rule preludes (#25104) (leaysgur)
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+
+### ⚡ Performance
+
+- b91d5a8 formatter_css,formatter_graphql,formatter_yaml,formatter_json: Pre alloc IR buffers (#25234) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+
 ## [0.61.0] - 2026-07-27
 
 ### 🐛 Bug Fixes

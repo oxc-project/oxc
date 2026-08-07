@@ -618,13 +618,16 @@ impl GetSpanMut for Statement<'_> {
             Self::TSTypeAliasDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSEnumDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSExternalModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSNamespaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSGlobalDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportDefaultDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportNamedDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportFromDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSExportAssignment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNamespaceExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
@@ -661,7 +664,8 @@ impl GetSpanMut for Declaration<'_> {
             Self::TSTypeAliasDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSInterfaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSEnumDeclaration(it) => GetSpanMut::span_mut(&mut **it),
-            Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSExternalModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSNamespaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSGlobalDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSImportEqualsDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
@@ -1099,7 +1103,9 @@ impl GetSpanMut for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportAllDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportDefaultDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::ExportNamedDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ExportFromDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSExportAssignment(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSNamespaceExportDeclaration(it) => GetSpanMut::span_mut(&mut **it),
         }
@@ -1181,7 +1187,21 @@ impl GetSpanMut for ImportAttributeKey<'_> {
     }
 }
 
+impl GetSpanMut for ExportDeclaration<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for ExportNamedDeclaration<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for ExportFromDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -2023,26 +2043,24 @@ impl GetSpanMut for TSTypePredicateName<'_> {
     }
 }
 
-impl GetSpanMut for TSModuleDeclaration<'_> {
+impl GetSpanMut for TSExternalModuleDeclaration<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
     }
 }
 
-impl GetSpanMut for TSModuleDeclarationName<'_> {
+impl GetSpanMut for TSNamespaceDeclaration<'_> {
+    #[inline]
     fn span_mut(&mut self) -> &mut Span {
-        match self {
-            Self::Identifier(it) => GetSpanMut::span_mut(it),
-            Self::StringLiteral(it) => GetSpanMut::span_mut(it),
-        }
+        &mut self.span
     }
 }
 
-impl GetSpanMut for TSModuleDeclarationBody<'_> {
+impl GetSpanMut for TSNamespaceDeclarationBody<'_> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::TSModuleDeclaration(it) => GetSpanMut::span_mut(&mut **it),
+            Self::TSNamespaceDeclaration(it) => GetSpanMut::span_mut(&mut **it),
             Self::TSModuleBlock(it) => GetSpanMut::span_mut(&mut **it),
         }
     }

@@ -5,15 +5,16 @@
 //! the JS-specific operations are exposed via the [`JsFormatter`] type alias and an
 //! extension trait that is blanket-implemented for the alias.
 
+use oxc_formatter_core::{
+    Buffer, Format, FormatElements, Formatter, GroupId, SourceText, UniqueGroupIdBuilder,
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::source_text::SourceTextExt as _;
 
 use crate::formatter::{
-    Buffer, Comments, Format, Formatter, GroupId, JsFormatContext, SourceText,
-    UniqueGroupIdBuilder,
+    Comments, JsFormatContext,
     builders::{JoinNodesBuilder, Line, Space},
-    format_element::FormatElements,
     prelude::{hard_line_break, soft_line_break_or_space, space, token},
 };
 

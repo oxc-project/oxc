@@ -1,5 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter_graphql`
 
+Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the GraphQL-specific rules and translations.
+
 ## Overview
 
 Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc_formatter_core` APIs.
@@ -8,12 +10,7 @@ Prettier compatible GraphQL formatter (`oxfmt`'s Tier 1 backend), using the `oxc
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
 - Two entry points:
   - `format()`: standalone files (returns a printable `Formatted`)
-  - `format_to_ir()`: embedded use via the dispatcher (e.g. graphql-in-js);
-    allocates from the shared `EmbeddedContext` arena, emits no BOM / trailing newline,
-    and leaves `propagate_expand()` to the parent document
-- The canonical reference is Prettier's OUTPUT (the conformance snapshots); its source is an analysis aid, not a porting target
-  - match its layout decisions, do not invent new ones
-  - never mirror its internal logic 1:1: pin behavior with fixtures, and keep implementation details of Prettier's code out of comments
+  - `format_to_ir()`: embedded use via the dispatcher (e.g. graphql-in-js)
 
 ### Forked parser
 
@@ -31,12 +28,10 @@ The fork aligns with graphql-js v17.x, which Prettier 3.9 targets:
 
 ### Error semantics
 
-`format()` / `format_to_ir()` return `Err` whenever they cannot produce output they can stand behind:
+The shared policy applies; GraphQL specifics:
 
-- `oxc-graphql-parser` is error-tolerant (returns an AST even for invalid input), but any parse error bails out; never format a broken AST.
+- `oxc-graphql-parser` is error-tolerant (returns an AST even for invalid input), but any parse error still bails out
   - Several printer shortcuts (e.g. `close_delim_start`) are sound only under this guarantee
-- The caller (oxfmt) decides what happens next
-  - Diagnostics for standalone files, template-as-is for embedded
 
 ### Comments
 
@@ -46,7 +41,7 @@ Prettier collects them from the token stream and attaches leading/trailing/dangl
 This crate instead collects comment spans into a positional cursor, drained in source order by claim points spread through the printers
 (the `flush_*` helpers in `src/comments.rs`; behavior pinned by `tests/fixtures/graphql/comments-inside-node-spans.graphql`).
 
-Placement invariant (same as `oxc_formatter`'s): a comment stays between the source tokens it sat between, and a same-line trailing comment stays on its line.
+The shared placement invariants apply: a comment stays between the source tokens it sat between, and a same-line trailing comment stays on its line.
 
 Two bounded exceptions:
 
@@ -89,8 +84,8 @@ Blank-line runs inside block strings are part of the string VALUE and are emitte
 
 ## Known divergences
 
-Deliberate divergences from Prettier, all one class: Prettier relocates a comment (an attachment artifact of `graphql-js` node boundaries, not a layout rule),
-we keep it between its source tokens on its source line.
+Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
+All current entries are one class: Prettier relocates a comment (an attachment artifact of `graphql-js` node boundaries, not a layout rule), we keep it between its source tokens on its source line.
 
 - `"desc" type # c`: Prettier pulls the comment backwards across the keyword onto the description's line
 - `"""d"""` + break + `# c` + break + `type A`: Prettier pushes the comment forward across the keyword (`type # c` + break + `A`)
@@ -100,65 +95,17 @@ we keep it between its source tokens on its source line.
 
 ## Verification
 
-```sh
-cargo c -p oxc_formatter_graphql
-```
-
-Run `clippy` and resolve all warnings.
-
-### Fixtures tests
-
-Snapshot tests driven by fixture files under `tests/fixtures/graphql/`,
-covering what the Prettier conformance suite does not (suppression, string re-encoding, comment positions, extensions, ... — see the file names).
-`build.rs` auto-generates a test case from every `.graphql` file using the core `test_support` harness.
-Unit tests in `tests/fixtures/mod.rs` cover parse-error `Err` semantics and BOM preservation;
-`src/comments.rs` has `classify_gap` tests (CR / CRLF endings, which `.gitattributes` keeps out of fixture files).
-
-```sh
-cargo test -p oxc_formatter_graphql
-# Review / accept snapshots after intentional changes
-cargo insta review -p oxc_formatter_graphql
-```
-
-Add a case by dropping a new `.graphql` file into the directory, the build script picks it up.
-
-### Prettier conformance
-
-Compares output against Prettier's snapshots and tracks failures (not passes);
-results live in `tasks/prettier_conformance/snapshots/prettier.graphql.snap.md`.
-The `graphql` language is part of the shared conformance binary.
-
-```sh
-cargo run -p oxc_prettier_conformance
-# Debug a specific test
-cargo run -p oxc_prettier_conformance -- --filter graphql/<dir>/<file>
-```
-
-### Embedded conformance (`apps/oxfmt`)
-
-The embedded-language features (gql-in-js) are validated end-to-end through the Oxfmt.
-
-Requires a dev build first.
-
-```sh
-pnpm --dir apps/oxfmt build-dev
-pnpm --dir apps/oxfmt conformance
-```
-
-### Manual checks
+Manual checks:
 
 ```sh
 cargo run -p oxc_formatter_graphql --example graphql_formatter [filename]
-# Compare with Prettier
-npx prettier --parser=graphql [filename]
 ```
 
 A good large real-world stress input is GitHub's public GraphQL schema (~72k lines).
-It is too large and third-party to commit as a fixture,
-bug-catching shapes are distilled into `tests/fixtures/graphql/implements-width.graphql`):
+It is too large and third-party to commit as a fixture, bug-catching shapes are distilled into `tests/fixtures/graphql/implements-width.graphql`):
 
 ```sh
 curl -sL https://docs.github.com/public/fpt/schema.docs.graphql -o /tmp/github-schema.graphql
-diff <(npx prettier --parser=graphql /tmp/github-schema.graphql) \
+diff <(node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser=graphql /tmp/github-schema.graphql) \
   <(cargo run -q -p oxc_formatter_graphql --example graphql_formatter /tmp/github-schema.graphql)
 ```

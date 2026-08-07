@@ -116,6 +116,8 @@ pub enum LineMode {
     Soft,
     /// See [crate::builders::hard_line_break] for documentation.
     Hard,
+    /// See [crate::builders::Line::without_expand_parent] for documentation.
+    HardWithoutExpand,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
     /// See [crate::builders::exact_line_breaks] for documentation.
@@ -125,15 +127,29 @@ pub enum LineMode {
 }
 
 impl LineMode {
+    /// Exactly [Self::Hard], excludes [Self::HardWithoutExpand];
+    /// ask [Self::will_break] for "does this always print a newline".
     pub const fn is_hard(self) -> bool {
         matches!(self, LineMode::Hard)
     }
 
+    /// The line always prints as a line break, regardless of print mode.
     pub const fn will_break(self) -> bool {
         matches!(
             self,
-            LineMode::Hard | LineMode::Empty | LineMode::ExactLineBreaks(_) | LineMode::Literal
+            LineMode::Hard
+                | LineMode::HardWithoutExpand
+                | LineMode::Empty
+                | LineMode::ExactLineBreaks(_)
+                | LineMode::Literal
         )
+    }
+
+    /// The line forces enclosing groups to expand at build time.
+    /// See [crate::Document::propagate_expand]:
+    /// every always-breaking mode except [Self::HardWithoutExpand].
+    pub const fn propagates_expand(self) -> bool {
+        self.will_break() && !matches!(self, LineMode::HardWithoutExpand)
     }
 }
 
@@ -267,6 +283,9 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
+            // NOTE: intentionally `propagates_expand`, not a will-break analogue:
+            // a `without_expand_parent` text's embedded newlines don't count as breaking here,
+            // while a `HardWithoutExpand` LINE does (the line above)
             FormatElement::Text { text: _, width } => width.propagates_expand(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even

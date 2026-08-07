@@ -49,6 +49,10 @@ fn test_function_return_optimization() {
         "function f(){if(a()){if(b()){d();return;}else{return;}}else{return;} c();}",
         "function f(){if(a()){if(b()){d();return}return}}",
     ); // function f(){a()&&b()&&d()}
+    test(
+        "function f(a,b,c){if(a){}else if(b){x();return}else if(c){y();return}z()}",
+        "function f(a,b,c){if(!a){if(b){x();return}if(c){y();return}}z()}",
+    );
     test("function f(){if(a()){b();return;}else;}", "function f(){if(a()){b();return}}"); // function f(){a()&&b()}
     test("function f(){if(a()){return;}else{return;} return;}", "function f(){a();}");
     test("function f(){if(a()){return;}else{return;} b();}", "function f(){a()}");
@@ -83,6 +87,10 @@ fn test_function_return_optimization() {
         "function f(){try{g:if(a()){throw 9;} return;}finally{return}}",
         "function f(){try{g:if(a())throw 9; return}finally{return}}",
     ); // function f(){try{g:if(a())throw 9}finally{}}
+    test(
+        "function g(a,b){if(a){}else if(b){return()=>typeof f}else function f(){}}",
+        "function g(a,b){if(!a){if(b)return()=>typeof f;else function f(){}}}",
+    );
 }
 
 #[test]
@@ -276,12 +284,11 @@ fn test_for_continue_optimization() {
 }
 
 #[test]
-#[ignore = "TODO: Code motion with function hoisting not yet implemented"]
 fn test_code_motion_doesnt_break_function_hoisting() {
-    test(
-        "function f() { if (x) return; foo(); function foo() {} }",
-        "function f() { if (x); else { function foo() {} foo(); } }",
-    );
+    test_same("function f() { if (x) return; foo(); function foo() {} }");
+    test_same("function f() { if (x) return; foo(); label: function foo() {} }");
+    test_same("function a() { if (typeof f == 'function') return; function f() {} }");
+    test_same("function a() { if (typeof f == 'function') return; label: function f() {} }");
 }
 
 #[test]

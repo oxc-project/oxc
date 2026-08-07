@@ -1,6 +1,6 @@
 # externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue
 
-> `<T = any,>() => {}` comma in generic param is removed even in .ts(x) file
+> `<T = any,>() => {}` comma removed in ts-in-vue as like plain `.ts`, intentional divergence: Prettier keeps in ts-in-xxx, but not in ts-in-md and also plain `.ts`. It is only required for `.tsx` and `.mts|cts`
 
 ## Option 1
 

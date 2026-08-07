@@ -4,6 +4,65 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.77.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 4120da0 semantic: [**BREAKING**] Return borrowed JSDoc so the parse cache works (#25186) (Connor Shea)
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 0b9f83c linter/oxc/bad-char-at-comparison: Expand coverage (#25001) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 9d4592c linter: Reject duplicate JS plugin names (#25243) (camc314)
+- 3213e7a linter: Ignore unsigned shifts in prefer-math-trunc (#25240) (camc314)
+- 06579da linter/eslint/prefer-promise-reject-errors: Handle ambient error variables (#25238) (camc314)
+- 6a7cd90 linter/oxc/no-async-await: Bound token lookup (#25222) (camc314)
+- d8e390a linter/oxc/bad-bitwise-operator: Bound token lookups (#25220) (camc314)
+- 351a777 linter/import/no-duplicates: Bound token lookup (#25219) (camc314)
+- 4f70fb6 linter/import/consistent-type-specifier-style: Bound token lookup (#25218) (camc314)
+- b89113c linter/eslint/yoda: Bound token lookup (#25202) (camc314)
+- 7c7cda7 linter/oxc/no-map-spread: Avoid recursive declaration traversal (#25200) (camc314)
+- 99efb30 linter/eslint/prefer-promise-reject-errors: Move category to `pedantic` (#25201) (camc314)
+- 8edad2a linter/eslint/require-await: Bound token lookup (#25199) (camc314)
+- 5aaec85 linter/eslint/prefer-template: Bound token lookup (#25197) (camc314)
+- 0ea1af4 linter/unicorn/new-for-builtins: Align Date() diagnostic message with upstream (#25166) (tanakalucky)
+- f6c8575 linter/eslint/prefer-object-spread: Bound token lookup (#25195) (camc314)
+- b83993b linter/eslint/prefer-const: Bound token lookup (#25194) (camc314)
+- aeabf63 linter/eslint/object-shorthand: Bound token lookups (#25193) (camc314)
+- 48f302c linter/eslint/no-var: Bound token lookup (#25192) (camc314)
+- 1f595de linter/eslint/no-unused-vars: Bound token lookups (#25191) (camc314)
+- e52f4c4 linter/eslint/no-unexpected-multiline: Use bounded token lookup (#25190) (camc314)
+- ca80338 linter/eslint/eqeqeq: Use bounded token lookup (#25189) (camc314)
+- df91684 linter: Make the remaining token lookups comment-aware (#25182) (connorshea)
+- 2401bb8 linter/eslint/prefer-const: Skip Svelte and Vue files (#25148) (Pitiș Radu)
+- b870897 linter: Don't match tokens inside comments when locating spans (#25181) (connorshea)
+- b474da1 linter/typescript/consistent-type-imports: Make token lookups comment-aware (#25180) (connorshea)
+- 81f82db linter: Don't insert an ASI semicolon into an unbraced statement body (#25160) (Vladexy88x)
+- 31333be linter/no-magic-array-flat-depth: Scan for `(` by byte offset instead of character count (#25130) (connorshea)
+- 56e9c83 linter: Index source text by byte offset instead of char count (#25131) (connorshea)
+- 5c0fa61 linter/eslint/no-warning-comments: Unify config structs and remove manual options docs (#25151) (Mikhail Baev)
+- a922355 docs: Incorrect quotations in `role_supports_aria_props.rs` (#25077) (Maximilian Franzke)
+- e8c4c05 linter/eslint/no-unreachable-loop: Handle caught errors correctly (#25071) (camc314)
+- 97f084f linter/eslint/no-control-regex: Allow null escape (#25070) (camc314)
+
+### ⚡ Performance
+
+- 224c21a linter/vue/no-side-effects-in-computed-properties: Borrow property names in the mutation walk (#25212) (connorshea)
+- d36e9c9 linter/unicorn/prefer-export-from: Skip non-violating imports early (#25183) (connorshea)
+- 6f2b933 linter/import/no-cycle: Drop two Vec allocations per graph edge (#25004) (Connor Shea)
+- 79ddb18 linter/import/no-cycle: Skip the graph walk for acyclic modules (#25003) (Connor Shea)
+
+### 📚 Documentation
+
+- f8392cd linter/eslint/prefer-promise-reject-errors: Recommend type aware rule (#25241) (camc314)
+- 9dc7756 linter/typescript/no-unnecessary-condition: Clarify options (#25110) (camc314)
+
 ## [1.76.0] - 2026-07-27
 
 ### 🚀 Features

@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
       - uses: ./.github/actions/check-version
         id: oxfmt
@@ -150,7 +150,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7572810d7dd469b651bb7793945692cf78da5dd7 # v2.85.0
+        uses: taiki-e/install-action@6a1bd70eaac3c8bdf093356838d7ee09fda951cf # v2.85.5
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -159,7 +159,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -314,7 +314,7 @@ jobs:
           path: artifacts
           pattern: oxlint-bindings-*
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
       - name: Generate oxlint JS build
         working-directory: apps/oxlint
@@ -456,7 +456,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - name: Install cross
-        uses: taiki-e/install-action@7572810d7dd469b651bb7793945692cf78da5dd7 # v2.85.0
+        uses: taiki-e/install-action@6a1bd70eaac3c8bdf093356838d7ee09fda951cf # v2.85.5
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -465,7 +465,7 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
       # For cargo-zigbuild in musl builds.
       - uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
@@ -607,7 +607,7 @@ jobs:
           path: artifacts
           pattern: oxfmt-bindings-*
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt

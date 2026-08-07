@@ -970,17 +970,15 @@ impl ServerLinter {
             }
         }
 
+        // Take directives once to avoid separate get/remove lock acquisitions.
+        let directives = self.runner.directives_coordinator().take(path);
+
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
-            && let Some(directives) = self.runner.directives_coordinator().get(path)
+            && let Some(directives) = directives
         {
             messages.extend(create_unused_directives_report(&directives, severity, source_text));
         }
-
-        // Clear any stale directives because they are no longer needed.
-        // This prevents using outdated directive spans if the new linting run fails.
-        self.runner.directives_coordinator().remove(path);
-
         Ok(messages)
     }
 
@@ -1685,12 +1683,45 @@ mod test {
     }
 
     #[test]
+    fn test_rules_customization_severity_with_eslint_prefix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/severity",
+            json!({
+                "rulesCustomization": {
+                    "eslint/no-debugger": {
+                        "severity": "warn"
+                    },
+                    "eslint/no-console": {
+                        "severity": "off"
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
     fn test_rules_customization_autofix() {
         let tester = Tester::new(
             "fixtures/lsp/rules_customization/autofix",
             json!({
                 "rulesCustomization": {
                     "no-debugger": {
+                        "autofix": false
+                    }
+                }
+            }),
+        );
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    fn test_rules_customization_autofix_with_eslint_prefix() {
+        let tester = Tester::new(
+            "fixtures/lsp/rules_customization/autofix",
+            json!({
+                "rulesCustomization": {
+                    "eslint/no-debugger": {
                         "autofix": false
                     }
                 }

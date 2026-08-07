@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.77.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- 5c0fa61 linter/eslint/no-warning-comments: Unify config structs and remove manual options docs (#25151) (Mikhail Baev)
+
+### 📚 Documentation
+
+- 9dc7756 linter/typescript/no-unnecessary-condition: Clarify options (#25110) (camc314)
+
 ## [1.76.0] - 2026-07-27
 
 ### 🚀 Features

@@ -149,8 +149,8 @@ fn error_result(filename: &str, source_text: &str, diagnostics: Diagnostics) -> 
 
 /// Compile a JavaScript or TypeScript React module synchronously.
 ///
-/// The React Compiler runs first on the pristine AST. TypeScript and JSX are
-/// lowered afterwards, matching the transform pipeline used by `oxc-transform`.
+/// The React Compiler runs first on the pristine AST. TypeScript syntax is
+/// removed and configured JSX transforms run afterwards.
 #[napi]
 pub fn transform_sync(
     filename: String,

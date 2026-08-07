@@ -17,10 +17,67 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::LineWidth;
+use crate::{CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth};
 
 /// A single `options.json` entry: a JSON object of per-test format options.
 pub type OptionSet = serde_json::Map<String, serde_json::Value>;
+
+/// Applies the four core options from a fixture `OptionSet` onto `options`.
+///
+/// Covers `printWidth` / `tabWidth` / `useTabs` / `endOfLine`;
+/// language-specific keys are the caller's [`FixtureFormatter::parse_options`].
+/// Fixture files are hand-authored, so parsing is lenient: unknown or invalid
+/// values are ignored. Values already set on `options` survive when the
+/// `OptionSet` doesn't mention their key (the current values seed the bundle).
+pub fn apply_core_options<O: FormatOptions>(options: &mut O, json: &OptionSet) {
+    let mut core = CoreFormatOptions {
+        indent_style: options.indent_style(),
+        indent_width: options.indent_width(),
+        line_width: options.line_width(),
+        line_ending: options.line_ending(),
+    };
+
+    for (key, value) in json {
+        match key.as_str() {
+            "printWidth" => {
+                if let Some(width) = value
+                    .as_u64()
+                    .and_then(|n| u16::try_from(n).ok())
+                    .and_then(|n| LineWidth::try_from(n).ok())
+                {
+                    core.line_width = width;
+                }
+            }
+            "tabWidth" => {
+                if let Some(width) = value
+                    .as_u64()
+                    .and_then(|n| u8::try_from(n).ok())
+                    .and_then(|n| IndentWidth::try_from(n).ok())
+                {
+                    core.indent_width = width;
+                }
+            }
+            "useTabs" => {
+                if let Some(b) = value.as_bool() {
+                    core.indent_style = if b { IndentStyle::Tab } else { IndentStyle::Space };
+                }
+            }
+            "endOfLine" => {
+                if let Some(s) = value.as_str() {
+                    core.line_ending = match s {
+                        "lf" => LineEnding::Lf,
+                        "crlf" => LineEnding::Crlf,
+                        "cr" => LineEnding::Cr,
+                        _ => LineEnding::default(),
+                    };
+                }
+            }
+            _ => {}
+        }
+    }
+
+    options.apply_core(core);
+}
 
 /// Per-language hook for the fixture harness.
 pub trait FixtureFormatter {

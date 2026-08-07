@@ -295,3 +295,40 @@ impl From<LineWidth> for u16 {
         value.0
     }
 }
+
+/// The language-neutral core of every language's format options:
+/// the four fields shared by all formatters, i.e. exactly the getters of [`crate::FormatOptions`].
+///
+/// Lets a host hand the shared options across an options boundary in one piece
+/// (see [`crate::FormatOptions::apply_core`]) instead of fanning the four fields out by hand.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
+pub struct CoreFormatOptions {
+    pub indent_style: IndentStyle,
+    pub indent_width: IndentWidth,
+    pub line_width: LineWidth,
+    pub line_ending: LineEnding,
+}
+
+/// The bundle is also the minimal `FormatOptions` on its own
+/// (used by `SimpleFormatContext` for tests and debug rendering).
+impl crate::FormatOptions for CoreFormatOptions {
+    fn indent_style(&self) -> IndentStyle {
+        self.indent_style
+    }
+
+    fn indent_width(&self) -> IndentWidth {
+        self.indent_width
+    }
+
+    fn line_width(&self) -> LineWidth {
+        self.line_width
+    }
+
+    fn line_ending(&self) -> LineEnding {
+        self.line_ending
+    }
+
+    fn apply_core(&mut self, core: CoreFormatOptions) {
+        *self = core;
+    }
+}

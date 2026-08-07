@@ -233,6 +233,20 @@ fn test() {
                         ;[a, b].join('') !== c
                     ",
         ),
+        // An unbraced statement body is never an ASI hazard: the token before it
+        // closes the statement head, so a leading `;` would empty the body instead.
+        ("if (x) ![a, b].join('') === c", "if (x) [a, b].join('') !== c"),
+        ("if (x) y; else ![a, b].join('') === c", "if (x) y; else [a, b].join('') !== c"),
+        ("while (x) ![a, b].join('') === c", "while (x) [a, b].join('') !== c"),
+        ("do ![a, b].join('') === c; while (x)", "do [a, b].join('') !== c; while (x)"),
+        ("for (;;) ![a, b].join('') === c", "for (;;) [a, b].join('') !== c"),
+        ("for (k in o) ![a, b].join('') === c", "for (k in o) [a, b].join('') !== c"),
+        ("for (k of o) ![a, b].join('') === c", "for (k of o) [a, b].join('') !== c"),
+        ("with (x) ![a, b].join('') === c", "with (x) [a, b].join('') !== c"),
+        // Not a regression case: `:` is not in the hazard set, so this already
+        // returned `false`. Kept as a guard so labeled bodies stay correct if
+        // that set ever grows.
+        ("lbl: ![a, b].join('') === c", "lbl: [a, b].join('') !== c"),
     ];
 
     Tester::new(NoNegationInEqualityCheck::NAME, NoNegationInEqualityCheck::PLUGIN, pass, fail)

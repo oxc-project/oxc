@@ -11,6 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     ast_util::{get_symbol_id_of_variable, is_method_call},
     context::LintContext,
     rule::Rule,
@@ -160,7 +161,7 @@ fn const_variable_initializer_kind(
     let AstKind::VariableDeclarator(declarator) = node.kind() else {
         return None;
     };
-    if !declarator.kind.is_const() {
+    if !variable_declaration_kind(declarator, ctx).is_const() {
         return None;
     }
     let init = declarator.init.as_ref()?.get_inner_expression();

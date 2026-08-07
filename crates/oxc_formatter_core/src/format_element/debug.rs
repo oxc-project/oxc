@@ -167,6 +167,9 @@ where
                     LineMode::Hard => {
                         w!(f, [token("hard_line_break")]);
                     }
+                    LineMode::HardWithoutExpand => {
+                        w!(f, [token("hard_line_break_without_expand_parent")]);
+                    }
                     LineMode::Empty => {
                         w!(f, [token("empty_line")]);
                     }

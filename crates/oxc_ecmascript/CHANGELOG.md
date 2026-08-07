@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 5acdae2 ecmascript: Skip transparent TS expressions (#25072) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8a47ff3 ecmascript: Do not treat lone-surrogate strings as constants (#25084) (Dunqing)
+- fbe8d31 minifier: Respect targets when folding RegExp source (#24790) (Dunqing)
+
 ## [0.142.0] - 2026-07-27
 
 ### 🐛 Bug Fixes

@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{DispatchResult, EmbeddedContext, FormatDispatcher};
-
-use super::formatter::UniqueGroupIdBuilder;
+use oxc_formatter_core::{DispatchResult, EmbeddedContext, FormatDispatcher, UniqueGroupIdBuilder};
 
 /// Callback function type for formatting embedded code.
 /// Takes (tag_name, code) and returns formatted code or an error.

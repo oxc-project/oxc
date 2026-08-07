@@ -1,14 +1,13 @@
 use std::mem;
 
 use oxc_ast::Comment;
+use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{
-    external_formatter::ExternalCallbacks, formatter::FormatElement, options::JsFormatOptions,
-};
+use crate::{external_formatter::ExternalCallbacks, options::JsFormatOptions};
 
-use super::{Comments, SourceText};
+use super::Comments;
 
 /// Entry in the Tailwind context stack, tracking whether we're inside a Tailwind class context.
 #[derive(Clone, Copy, Debug)]

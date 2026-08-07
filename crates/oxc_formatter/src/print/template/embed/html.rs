@@ -2,13 +2,14 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
+use oxc_formatter_core::FormatElement;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
     external_formatter::HtmlEmbedMeta,
     format_args,
-    formatter::{FormatElement, prelude::*},
+    formatter::prelude::*,
     print::template::{
         FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
     },

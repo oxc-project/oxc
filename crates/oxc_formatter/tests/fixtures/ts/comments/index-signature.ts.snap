@@ -1,0 +1,96 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// issue #25286: a leading comment on the index signature parameter breaks the
+// bracket group, keeping `[` on its own line with the comment indented below it
+type Config = {
+  [
+    // The key name must match the name of the widgets/ subdirectory
+    // containing the widget on disk, e.g. 'widgets/foo' should be
+    // called 'foo' here.
+    widgetName: string
+  ]: WidgetConfig;
+};
+
+// block comment fits on one line, group stays flat
+interface D {
+  [/* inline */ k: string]: number;
+}
+
+// no break-forcing comment: collapses back to one line
+type E = {
+  [
+    k: string
+  ]: number;
+};
+
+// no comment, but the parameter overflows printWidth: same bracket break
+type F = {
+  [veryLongParameterNameThatGoesOnAndOnForever: SomeVeryLongKeyTypeNameHereToo]: SomeVeryLongValueTypeName;
+};
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// issue #25286: a leading comment on the index signature parameter breaks the
+// bracket group, keeping `[` on its own line with the comment indented below it
+type Config = {
+  [
+    // The key name must match the name of the widgets/ subdirectory
+    // containing the widget on disk, e.g. 'widgets/foo' should be
+    // called 'foo' here.
+    widgetName: string
+  ]: WidgetConfig;
+};
+
+// block comment fits on one line, group stays flat
+interface D {
+  [/* inline */ k: string]: number;
+}
+
+// no break-forcing comment: collapses back to one line
+type E = {
+  [k: string]: number;
+};
+
+// no comment, but the parameter overflows printWidth: same bracket break
+type F = {
+  [
+    veryLongParameterNameThatGoesOnAndOnForever: SomeVeryLongKeyTypeNameHereToo
+  ]: SomeVeryLongValueTypeName;
+};
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// issue #25286: a leading comment on the index signature parameter breaks the
+// bracket group, keeping `[` on its own line with the comment indented below it
+type Config = {
+  [
+    // The key name must match the name of the widgets/ subdirectory
+    // containing the widget on disk, e.g. 'widgets/foo' should be
+    // called 'foo' here.
+    widgetName: string
+  ]: WidgetConfig;
+};
+
+// block comment fits on one line, group stays flat
+interface D {
+  [/* inline */ k: string]: number;
+}
+
+// no break-forcing comment: collapses back to one line
+type E = {
+  [k: string]: number;
+};
+
+// no comment, but the parameter overflows printWidth: same bracket break
+type F = {
+  [
+    veryLongParameterNameThatGoesOnAndOnForever: SomeVeryLongKeyTypeNameHereToo
+  ]: SomeVeryLongValueTypeName;
+};
+
+===================== End =====================

@@ -168,6 +168,7 @@ pub use crate::rules::eslint::no_void::NoVoid as EslintNoVoid;
 pub use crate::rules::eslint::no_warning_comments::NoWarningComments as EslintNoWarningComments;
 pub use crate::rules::eslint::no_with::NoWith as EslintNoWith;
 pub use crate::rules::eslint::object_shorthand::ObjectShorthand as EslintObjectShorthand;
+pub use crate::rules::eslint::one_var::OneVar as EslintOneVar;
 pub use crate::rules::eslint::operator_assignment::OperatorAssignment as EslintOperatorAssignment;
 pub use crate::rules::eslint::prefer_arrow_callback::PreferArrowCallback as EslintPreferArrowCallback;
 pub use crate::rules::eslint::prefer_const::PreferConst as EslintPreferConst;
@@ -294,6 +295,7 @@ pub use crate::rules::jsdoc::check_property_names::CheckPropertyNames as JsdocCh
 pub use crate::rules::jsdoc::check_tag_names::CheckTagNames as JsdocCheckTagNames;
 pub use crate::rules::jsdoc::empty_tags::EmptyTags as JsdocEmptyTags;
 pub use crate::rules::jsdoc::implements_on_classes::ImplementsOnClasses as JsdocImplementsOnClasses;
+pub use crate::rules::jsdoc::no_blank_blocks::NoBlankBlocks as JsdocNoBlankBlocks;
 pub use crate::rules::jsdoc::no_defaults::NoDefaults as JsdocNoDefaults;
 pub use crate::rules::jsdoc::require_param::RequireParam as JsdocRequireParam;
 pub use crate::rules::jsdoc::require_param_description::RequireParamDescription as JsdocRequireParamDescription;
@@ -1058,6 +1060,7 @@ pub enum RuleEnum {
     EslintNoWarningComments(EslintNoWarningComments),
     EslintNoWith(EslintNoWith),
     EslintObjectShorthand(EslintObjectShorthand),
+    EslintOneVar(EslintOneVar),
     EslintOperatorAssignment(EslintOperatorAssignment),
     EslintPreferArrowCallback(EslintPreferArrowCallback),
     EslintPreferConst(EslintPreferConst),
@@ -1557,6 +1560,7 @@ pub enum RuleEnum {
     JsdocCheckTagNames(JsdocCheckTagNames),
     JsdocEmptyTags(JsdocEmptyTags),
     JsdocImplementsOnClasses(JsdocImplementsOnClasses),
+    JsdocNoBlankBlocks(JsdocNoBlankBlocks),
     JsdocNoDefaults(JsdocNoDefaults),
     JsdocRequireParam(JsdocRequireParam),
     JsdocRequireParamDescription(JsdocRequireParamDescription),
@@ -1914,7 +1918,8 @@ const ESLINT_NO_VOID_ID: usize = ESLINT_NO_VAR_ID + 1usize;
 const ESLINT_NO_WARNING_COMMENTS_ID: usize = ESLINT_NO_VOID_ID + 1usize;
 const ESLINT_NO_WITH_ID: usize = ESLINT_NO_WARNING_COMMENTS_ID + 1usize;
 const ESLINT_OBJECT_SHORTHAND_ID: usize = ESLINT_NO_WITH_ID + 1usize;
-const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_OBJECT_SHORTHAND_ID + 1usize;
+const ESLINT_ONE_VAR_ID: usize = ESLINT_OBJECT_SHORTHAND_ID + 1usize;
+const ESLINT_OPERATOR_ASSIGNMENT_ID: usize = ESLINT_ONE_VAR_ID + 1usize;
 const ESLINT_PREFER_ARROW_CALLBACK_ID: usize = ESLINT_OPERATOR_ASSIGNMENT_ID + 1usize;
 const ESLINT_PREFER_CONST_ID: usize = ESLINT_PREFER_ARROW_CALLBACK_ID + 1usize;
 const ESLINT_PREFER_DESTRUCTURING_ID: usize = ESLINT_PREFER_CONST_ID + 1usize;
@@ -2500,7 +2505,8 @@ const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = JSDOC_CHECK_ACCESS_ID + 1usize;
 const JSDOC_CHECK_TAG_NAMES_ID: usize = JSDOC_CHECK_PROPERTY_NAMES_ID + 1usize;
 const JSDOC_EMPTY_TAGS_ID: usize = JSDOC_CHECK_TAG_NAMES_ID + 1usize;
 const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = JSDOC_EMPTY_TAGS_ID + 1usize;
-const JSDOC_NO_DEFAULTS_ID: usize = JSDOC_IMPLEMENTS_ON_CLASSES_ID + 1usize;
+const JSDOC_NO_BLANK_BLOCKS_ID: usize = JSDOC_IMPLEMENTS_ON_CLASSES_ID + 1usize;
+const JSDOC_NO_DEFAULTS_ID: usize = JSDOC_NO_BLANK_BLOCKS_ID + 1usize;
 const JSDOC_REQUIRE_PARAM_ID: usize = JSDOC_NO_DEFAULTS_ID + 1usize;
 const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = JSDOC_REQUIRE_PARAM_ID + 1usize;
 const JSDOC_REQUIRE_PARAM_NAME_ID: usize = JSDOC_REQUIRE_PARAM_DESCRIPTION_ID + 1usize;
@@ -2875,6 +2881,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => ESLINT_NO_WARNING_COMMENTS_ID,
             Self::EslintNoWith(_) => ESLINT_NO_WITH_ID,
             Self::EslintObjectShorthand(_) => ESLINT_OBJECT_SHORTHAND_ID,
+            Self::EslintOneVar(_) => ESLINT_ONE_VAR_ID,
             Self::EslintOperatorAssignment(_) => ESLINT_OPERATOR_ASSIGNMENT_ID,
             Self::EslintPreferArrowCallback(_) => ESLINT_PREFER_ARROW_CALLBACK_ID,
             Self::EslintPreferConst(_) => ESLINT_PREFER_CONST_ID,
@@ -3484,6 +3491,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JSDOC_CHECK_TAG_NAMES_ID,
             Self::JsdocEmptyTags(_) => JSDOC_EMPTY_TAGS_ID,
             Self::JsdocImplementsOnClasses(_) => JSDOC_IMPLEMENTS_ON_CLASSES_ID,
+            Self::JsdocNoBlankBlocks(_) => JSDOC_NO_BLANK_BLOCKS_ID,
             Self::JsdocNoDefaults(_) => JSDOC_NO_DEFAULTS_ID,
             Self::JsdocRequireParam(_) => JSDOC_REQUIRE_PARAM_ID,
             Self::JsdocRequireParamDescription(_) => JSDOC_REQUIRE_PARAM_DESCRIPTION_ID,
@@ -3854,6 +3862,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::NAME,
             Self::EslintNoWith(_) => EslintNoWith::NAME,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::NAME,
+            Self::EslintOneVar(_) => EslintOneVar::NAME,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::NAME,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::NAME,
             Self::EslintPreferConst(_) => EslintPreferConst::NAME,
@@ -4453,6 +4462,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::NAME,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::NAME,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::NAME,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::NAME,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::NAME,
             Self::JsdocRequireParam(_) => JsdocRequireParam::NAME,
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::NAME,
@@ -4823,6 +4833,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::CATEGORY,
             Self::EslintNoWith(_) => EslintNoWith::CATEGORY,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::CATEGORY,
+            Self::EslintOneVar(_) => EslintOneVar::CATEGORY,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::CATEGORY,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::CATEGORY,
             Self::EslintPreferConst(_) => EslintPreferConst::CATEGORY,
@@ -5462,6 +5473,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::CATEGORY,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::CATEGORY,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::CATEGORY,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::CATEGORY,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::CATEGORY,
             Self::JsdocRequireParam(_) => JsdocRequireParam::CATEGORY,
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::CATEGORY,
@@ -5843,6 +5855,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::FIX,
             Self::EslintNoWith(_) => EslintNoWith::FIX,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::FIX,
+            Self::EslintOneVar(_) => EslintOneVar::FIX,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::FIX,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::FIX,
             Self::EslintPreferConst(_) => EslintPreferConst::FIX,
@@ -6442,6 +6455,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::FIX,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::FIX,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::FIX,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::FIX,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::FIX,
             Self::JsdocRequireParam(_) => JsdocRequireParam::FIX,
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::FIX,
@@ -6837,6 +6851,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::documentation(),
             Self::EslintNoWith(_) => EslintNoWith::documentation(),
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::documentation(),
+            Self::EslintOneVar(_) => EslintOneVar::documentation(),
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::documentation(),
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::documentation(),
             Self::EslintPreferConst(_) => EslintPreferConst::documentation(),
@@ -7620,6 +7635,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::documentation(),
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::documentation(),
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::documentation(),
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::documentation(),
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::documentation(),
             Self::JsdocRequireParam(_) => JsdocRequireParam::documentation(),
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::documentation(),
@@ -8336,6 +8352,9 @@ impl RuleEnum {
             }
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::config_schema(generator)
                 .or_else(|| EslintObjectShorthand::schema(generator)),
+            Self::EslintOneVar(_) => {
+                EslintOneVar::config_schema(generator).or_else(|| EslintOneVar::schema(generator))
+            }
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::config_schema(generator)
                 .or_else(|| EslintOperatorAssignment::schema(generator)),
             Self::EslintPreferArrowCallback(_) => {
@@ -9832,6 +9851,8 @@ impl RuleEnum {
                 .or_else(|| JsdocEmptyTags::schema(generator)),
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::config_schema(generator)
                 .or_else(|| JsdocImplementsOnClasses::schema(generator)),
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::config_schema(generator)
+                .or_else(|| JsdocNoBlankBlocks::schema(generator)),
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::config_schema(generator)
                 .or_else(|| JsdocNoDefaults::schema(generator)),
             Self::JsdocRequireParam(_) => JsdocRequireParam::config_schema(generator)
@@ -10481,6 +10502,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => "eslint",
             Self::EslintNoWith(_) => "eslint",
             Self::EslintObjectShorthand(_) => "eslint",
+            Self::EslintOneVar(_) => "eslint",
             Self::EslintOperatorAssignment(_) => "eslint",
             Self::EslintPreferArrowCallback(_) => "eslint",
             Self::EslintPreferConst(_) => "eslint",
@@ -10974,6 +10996,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => "jsdoc",
             Self::JsdocEmptyTags(_) => "jsdoc",
             Self::JsdocImplementsOnClasses(_) => "jsdoc",
+            Self::JsdocNoBlankBlocks(_) => "jsdoc",
             Self::JsdocNoDefaults(_) => "jsdoc",
             Self::JsdocRequireParam(_) => "jsdoc",
             Self::JsdocRequireParamDescription(_) => "jsdoc",
@@ -11714,6 +11737,9 @@ impl RuleEnum {
             }
             Self::EslintObjectShorthand(_) => {
                 Ok(Self::EslintObjectShorthand(EslintObjectShorthand::from_configuration(value)?))
+            }
+            Self::EslintOneVar(_) => {
+                Ok(Self::EslintOneVar(EslintOneVar::from_configuration(value)?))
             }
             Self::EslintOperatorAssignment(_) => Ok(Self::EslintOperatorAssignment(
                 EslintOperatorAssignment::from_configuration(value)?,
@@ -13356,6 +13382,9 @@ impl RuleEnum {
             Self::JsdocImplementsOnClasses(_) => Ok(Self::JsdocImplementsOnClasses(
                 JsdocImplementsOnClasses::from_configuration(value)?,
             )),
+            Self::JsdocNoBlankBlocks(_) => {
+                Ok(Self::JsdocNoBlankBlocks(JsdocNoBlankBlocks::from_configuration(value)?))
+            }
             Self::JsdocNoDefaults(_) => {
                 Ok(Self::JsdocNoDefaults(JsdocNoDefaults::from_configuration(value)?))
             }
@@ -14066,6 +14095,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.to_configuration(),
             Self::EslintNoWith(rule) => rule.to_configuration(),
             Self::EslintObjectShorthand(rule) => rule.to_configuration(),
+            Self::EslintOneVar(rule) => rule.to_configuration(),
             Self::EslintOperatorAssignment(rule) => rule.to_configuration(),
             Self::EslintPreferArrowCallback(rule) => rule.to_configuration(),
             Self::EslintPreferConst(rule) => rule.to_configuration(),
@@ -14561,6 +14591,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.to_configuration(),
             Self::JsdocEmptyTags(rule) => rule.to_configuration(),
             Self::JsdocImplementsOnClasses(rule) => rule.to_configuration(),
+            Self::JsdocNoBlankBlocks(rule) => rule.to_configuration(),
             Self::JsdocNoDefaults(rule) => rule.to_configuration(),
             Self::JsdocRequireParam(rule) => rule.to_configuration(),
             Self::JsdocRequireParamDescription(rule) => rule.to_configuration(),
@@ -14922,6 +14953,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run(node, ctx),
             Self::EslintNoWith(rule) => rule.run(node, ctx),
             Self::EslintObjectShorthand(rule) => rule.run(node, ctx),
+            Self::EslintOneVar(rule) => rule.run(node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run(node, ctx),
             Self::EslintPreferArrowCallback(rule) => rule.run(node, ctx),
             Self::EslintPreferConst(rule) => rule.run(node, ctx),
@@ -15415,6 +15447,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run(node, ctx),
             Self::JsdocEmptyTags(rule) => rule.run(node, ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.run(node, ctx),
+            Self::JsdocNoBlankBlocks(rule) => rule.run(node, ctx),
             Self::JsdocNoDefaults(rule) => rule.run(node, ctx),
             Self::JsdocRequireParam(rule) => rule.run(node, ctx),
             Self::JsdocRequireParamDescription(rule) => rule.run(node, ctx),
@@ -15786,6 +15819,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run_once(ctx),
             Self::EslintNoWith(rule) => rule.run_once(ctx),
             Self::EslintObjectShorthand(rule) => rule.run_once(ctx),
+            Self::EslintOneVar(rule) => rule.run_once(ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_once(ctx),
             Self::EslintPreferArrowCallback(rule) => rule.run_once(ctx),
             Self::EslintPreferConst(rule) => rule.run_once(ctx),
@@ -16279,6 +16313,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run_once(ctx),
             Self::JsdocEmptyTags(rule) => rule.run_once(ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.run_once(ctx),
+            Self::JsdocNoBlankBlocks(rule) => rule.run_once(ctx),
             Self::JsdocNoDefaults(rule) => rule.run_once(ctx),
             Self::JsdocRequireParam(rule) => rule.run_once(ctx),
             Self::JsdocRequireParamDescription(rule) => rule.run_once(ctx),
@@ -16653,6 +16688,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintObjectShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintOneVar(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintOperatorAssignment(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferArrowCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintPreferConst(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17252,6 +17288,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocEmptyTags(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JsdocNoBlankBlocks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocNoDefaults(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocRequireParam(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JsdocRequireParamDescription(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -17632,6 +17669,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.should_run(ctx),
             Self::EslintNoWith(rule) => rule.should_run(ctx),
             Self::EslintObjectShorthand(rule) => rule.should_run(ctx),
+            Self::EslintOneVar(rule) => rule.should_run(ctx),
             Self::EslintOperatorAssignment(rule) => rule.should_run(ctx),
             Self::EslintPreferArrowCallback(rule) => rule.should_run(ctx),
             Self::EslintPreferConst(rule) => rule.should_run(ctx),
@@ -18125,6 +18163,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.should_run(ctx),
             Self::JsdocEmptyTags(rule) => rule.should_run(ctx),
             Self::JsdocImplementsOnClasses(rule) => rule.should_run(ctx),
+            Self::JsdocNoBlankBlocks(rule) => rule.should_run(ctx),
             Self::JsdocNoDefaults(rule) => rule.should_run(ctx),
             Self::JsdocRequireParam(rule) => rule.should_run(ctx),
             Self::JsdocRequireParamDescription(rule) => rule.should_run(ctx),
@@ -18511,6 +18550,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::IS_TSGOLINT_RULE,
             Self::EslintNoWith(_) => EslintNoWith::IS_TSGOLINT_RULE,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::IS_TSGOLINT_RULE,
+            Self::EslintOneVar(_) => EslintOneVar::IS_TSGOLINT_RULE,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::IS_TSGOLINT_RULE,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::IS_TSGOLINT_RULE,
             Self::EslintPreferConst(_) => EslintPreferConst::IS_TSGOLINT_RULE,
@@ -19294,6 +19334,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::IS_TSGOLINT_RULE,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::IS_TSGOLINT_RULE,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::IS_TSGOLINT_RULE,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::IS_TSGOLINT_RULE,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::IS_TSGOLINT_RULE,
             Self::JsdocRequireParam(_) => JsdocRequireParam::IS_TSGOLINT_RULE,
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::IS_TSGOLINT_RULE,
@@ -19722,6 +19763,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::VERSION,
             Self::EslintNoWith(_) => EslintNoWith::VERSION,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::VERSION,
+            Self::EslintOneVar(_) => EslintOneVar::VERSION,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::VERSION,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::VERSION,
             Self::EslintPreferConst(_) => EslintPreferConst::VERSION,
@@ -20361,6 +20403,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::VERSION,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::VERSION,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::VERSION,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::VERSION,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::VERSION,
             Self::JsdocRequireParam(_) => JsdocRequireParam::VERSION,
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::VERSION,
@@ -20752,6 +20795,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::HAS_CONFIG,
             Self::EslintNoWith(_) => EslintNoWith::HAS_CONFIG,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::HAS_CONFIG,
+            Self::EslintOneVar(_) => EslintOneVar::HAS_CONFIG,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::HAS_CONFIG,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::HAS_CONFIG,
             Self::EslintPreferConst(_) => EslintPreferConst::HAS_CONFIG,
@@ -21417,6 +21461,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::HAS_CONFIG,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::HAS_CONFIG,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::HAS_CONFIG,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::HAS_CONFIG,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::HAS_CONFIG,
             Self::JsdocRequireParam(_) => JsdocRequireParam::HAS_CONFIG,
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::HAS_CONFIG,
@@ -21807,6 +21852,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(_) => EslintNoWarningComments::INFO,
             Self::EslintNoWith(_) => EslintNoWith::INFO,
             Self::EslintObjectShorthand(_) => EslintObjectShorthand::INFO,
+            Self::EslintOneVar(_) => EslintOneVar::INFO,
             Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::INFO,
             Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::INFO,
             Self::EslintPreferConst(_) => EslintPreferConst::INFO,
@@ -22406,6 +22452,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::INFO,
             Self::JsdocEmptyTags(_) => JsdocEmptyTags::INFO,
             Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::INFO,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::INFO,
             Self::JsdocNoDefaults(_) => JsdocNoDefaults::INFO,
             Self::JsdocRequireParam(_) => JsdocRequireParam::INFO,
             Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::INFO,
@@ -22777,6 +22824,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.types_info(),
             Self::EslintNoWith(rule) => rule.types_info(),
             Self::EslintObjectShorthand(rule) => rule.types_info(),
+            Self::EslintOneVar(rule) => rule.types_info(),
             Self::EslintOperatorAssignment(rule) => rule.types_info(),
             Self::EslintPreferArrowCallback(rule) => rule.types_info(),
             Self::EslintPreferConst(rule) => rule.types_info(),
@@ -23270,6 +23318,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.types_info(),
             Self::JsdocEmptyTags(rule) => rule.types_info(),
             Self::JsdocImplementsOnClasses(rule) => rule.types_info(),
+            Self::JsdocNoBlankBlocks(rule) => rule.types_info(),
             Self::JsdocNoDefaults(rule) => rule.types_info(),
             Self::JsdocRequireParam(rule) => rule.types_info(),
             Self::JsdocRequireParamDescription(rule) => rule.types_info(),
@@ -23628,6 +23677,7 @@ impl RuleEnum {
             Self::EslintNoWarningComments(rule) => rule.run_info(),
             Self::EslintNoWith(rule) => rule.run_info(),
             Self::EslintObjectShorthand(rule) => rule.run_info(),
+            Self::EslintOneVar(rule) => rule.run_info(),
             Self::EslintOperatorAssignment(rule) => rule.run_info(),
             Self::EslintPreferArrowCallback(rule) => rule.run_info(),
             Self::EslintPreferConst(rule) => rule.run_info(),
@@ -24121,6 +24171,7 @@ impl RuleEnum {
             Self::JsdocCheckTagNames(rule) => rule.run_info(),
             Self::JsdocEmptyTags(rule) => rule.run_info(),
             Self::JsdocImplementsOnClasses(rule) => rule.run_info(),
+            Self::JsdocNoBlankBlocks(rule) => rule.run_info(),
             Self::JsdocNoDefaults(rule) => rule.run_info(),
             Self::JsdocRequireParam(rule) => rule.run_info(),
             Self::JsdocRequireParamDescription(rule) => rule.run_info(),
@@ -24501,6 +24552,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoWarningComments(EslintNoWarningComments::default()),
         RuleEnum::EslintNoWith(EslintNoWith::default()),
         RuleEnum::EslintObjectShorthand(EslintObjectShorthand::default()),
+        RuleEnum::EslintOneVar(EslintOneVar::default()),
         RuleEnum::EslintOperatorAssignment(EslintOperatorAssignment::default()),
         RuleEnum::EslintPreferArrowCallback(EslintPreferArrowCallback::default()),
         RuleEnum::EslintPreferConst(EslintPreferConst::default()),
@@ -25100,6 +25152,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JsdocCheckTagNames(JsdocCheckTagNames::default()),
         RuleEnum::JsdocEmptyTags(JsdocEmptyTags::default()),
         RuleEnum::JsdocImplementsOnClasses(JsdocImplementsOnClasses::default()),
+        RuleEnum::JsdocNoBlankBlocks(JsdocNoBlankBlocks::default()),
         RuleEnum::JsdocNoDefaults(JsdocNoDefaults::default()),
         RuleEnum::JsdocRequireParam(JsdocRequireParam::default()),
         RuleEnum::JsdocRequireParamDescription(JsdocRequireParamDescription::default()),

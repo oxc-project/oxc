@@ -122,8 +122,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a> {
                     None
                 }
             }
-            Statement::ExportNamedDeclaration(decl) => {
-                if let Some(Declaration::FunctionDeclaration(func)) = &mut decl.declaration {
+            Statement::ExportDeclaration(decl) => {
+                if let Declaration::FunctionDeclaration(func) = &mut decl.declaration {
                     Some(func)
                 } else {
                     None
@@ -798,7 +798,6 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         let declarations = ArenaVec::from_value_in(
             VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 bound_ident.create_binding_pattern(ctx),
                 None,
                 Some(init),

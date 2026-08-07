@@ -149,9 +149,19 @@ impl<'a> ModuleRunnerTransform<'a> {
                     );
                 }
                 Statement::ExportNamedDeclaration(export) => {
-                    self.transform_export_named_declaration(
-                        &mut new_stmts,
+                    self.transform_export_named_declaration(&mut hoist_exports, export, ctx);
+                }
+                Statement::ExportFromDeclaration(export) => {
+                    self.transform_export_from_declaration(
                         &mut hoist_imports,
+                        &mut hoist_exports,
+                        export,
+                        ctx,
+                    );
+                }
+                Statement::ExportDeclaration(export) => {
+                    Self::transform_export_declaration(
+                        &mut new_stmts,
                         &mut hoist_exports,
                         export,
                         ctx,
@@ -382,97 +392,119 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// // to
     /// Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get() { return foo; }});
     /// ```
+    fn transform_export_declaration(
+        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
+        export: ArenaBox<'a, ExportDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let ExportDeclaration { span, declaration, .. } = export.unbox();
+        let export_expression = match &declaration {
+            // `export const [foo, bar] = [1, 2];`
+            Declaration::VariableDeclaration(variable) => {
+                let new_stmts_index = new_stmts.len();
+                variable.bound_names(&mut |ident| {
+                    let binding = BoundIdentifier::from_binding_ident(ident);
+                    let ident = binding.create_read_expression(ctx);
+                    hoist_exports.push(Self::create_export(span, ident, binding.name, ctx));
+                });
+                new_stmts.insert(new_stmts_index, Statement::from(declaration));
+                return;
+            }
+            Declaration::FunctionDeclaration(func) => {
+                let binding = BoundIdentifier::from_binding_ident(func.id.as_ref().unwrap());
+                let ident = binding.create_read_expression(ctx);
+                Self::create_export(span, ident, binding.name, ctx)
+            }
+            Declaration::ClassDeclaration(class) => {
+                let binding = BoundIdentifier::from_binding_ident(class.id.as_ref().unwrap());
+                let ident = binding.create_read_expression(ctx);
+                Self::create_export(span, ident, binding.name, ctx)
+            }
+            _ => unreachable!("Unsupported TypeScript declaration in exported declaration"),
+        };
+        new_stmts.push(Statement::from(declaration));
+        hoist_exports.push(export_expression);
+    }
+
     fn transform_export_named_declaration(
         &mut self,
-        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
-        hoist_imports: &mut Vec<Statement<'a>>,
         hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportNamedDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ExportNamedDeclaration { span, source, specifiers, declaration, .. } = export.unbox();
+        let ExportNamedDeclaration { specifiers, .. } = export.unbox();
+        let mut no_imports = vec![];
+        self.transform_export_specifiers(None, specifiers, &mut no_imports, hoist_exports, ctx);
+    }
 
-        if let Some(declaration) = declaration {
-            let export_expression = match &declaration {
-                // `export const [foo, bar] = [1, 2];`
-                Declaration::VariableDeclaration(variable) => {
-                    let new_stmts_index = new_stmts.len();
-                    variable.bound_names(&mut |ident| {
-                        let binding = BoundIdentifier::from_binding_ident(ident);
-                        let ident = binding.create_read_expression(ctx);
-                        hoist_exports.push(Self::create_export(span, ident, binding.name, ctx));
-                    });
-                    // Should be inserted before the exports
-                    new_stmts.insert(new_stmts_index, Statement::from(declaration));
-                    return;
-                }
-                // `export function foo() {}`
-                Declaration::FunctionDeclaration(func) => {
-                    let binding = BoundIdentifier::from_binding_ident(func.id.as_ref().unwrap());
-                    let ident = binding.create_read_expression(ctx);
-                    Self::create_export(span, ident, binding.name, ctx)
-                }
-                // `export class Foo {}`
-                Declaration::ClassDeclaration(class) => {
-                    let binding = BoundIdentifier::from_binding_ident(class.id.as_ref().unwrap());
-                    let ident = binding.create_read_expression(ctx);
-                    Self::create_export(span, ident, binding.name, ctx)
-                }
-                _ => {
-                    unreachable!(
-                        "Unsupported for transforming typescript declaration in named export"
-                    );
-                }
-            };
-            new_stmts.push(Statement::from(declaration));
-            hoist_exports.push(export_expression);
-        } else {
-            // If the source is Some, then we need to import the module first and then export them.
-            let import_binding = source.map(|source| {
-                self.deps.insert(source.value.to_string());
-                let binding = self.generate_import_binding(ctx);
-                let pattern = binding.create_binding_pattern(ctx);
-                let imported_names = ArenaVec::from_iter_in(
-                    specifiers.iter().map(|specifier| {
-                        let local_name = specifier.local.name();
-                        let local_name_expr =
-                            Expression::new_string_literal(SPAN, local_name, None, ctx);
-                        ArrayExpressionElement::from(local_name_expr)
-                    }),
-                    ctx,
-                );
-                let arguments = ArenaVec::from_array_in(
-                    [
-                        Argument::StringLiteral(ArenaBox::new_in(source, ctx)),
-                        Self::create_imported_names_object(imported_names, ctx),
-                    ],
-                    ctx,
-                );
-                hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
-                binding
-            });
+    fn transform_export_from_declaration(
+        &mut self,
+        hoist_imports: &mut Vec<Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
+        export: ArenaBox<'a, ExportFromDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let ExportFromDeclaration { source, specifiers, .. } = export.unbox();
+        self.transform_export_specifiers(
+            Some(source),
+            specifiers,
+            hoist_imports,
+            hoist_exports,
+            ctx,
+        );
+    }
 
-            hoist_exports.extend(specifiers.into_iter().map(|specifier| {
-                let ExportSpecifier { span, exported, local, .. } = specifier;
-                let expr = if let Some(import_binding) = &import_binding {
-                    let object = import_binding.create_read_expression(ctx);
-                    let property = local.name();
-                    // TODO(improvement): It looks like here could always return a computed member expression,
-                    //                    so that we don't need to check if it's an identifier name.
-                    if is_identifier_name(&property) {
-                        create_property_access(SPAN, object, &property, ctx)
-                    } else {
-                        create_compute_property_access(SPAN, object, &property, ctx)
-                    }
+    fn transform_export_specifiers(
+        &mut self,
+        source: Option<StringLiteral<'a>>,
+        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        hoist_imports: &mut Vec<Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let import_binding = source.map(|source| {
+            self.deps.insert(source.value.to_string());
+            let binding = self.generate_import_binding(ctx);
+            let pattern = binding.create_binding_pattern(ctx);
+            let imported_names = ArenaVec::from_iter_in(
+                specifiers.iter().map(|specifier| {
+                    let local_name = specifier.local.name();
+                    let local_name_expr =
+                        Expression::new_string_literal(SPAN, local_name, None, ctx);
+                    ArrayExpressionElement::from(local_name_expr)
+                }),
+                ctx,
+            );
+            let arguments = ArenaVec::from_array_in(
+                [
+                    Argument::StringLiteral(ArenaBox::new_in(source, ctx)),
+                    Self::create_imported_names_object(imported_names, ctx),
+                ],
+                ctx,
+            );
+            hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
+            binding
+        });
+
+        hoist_exports.extend(specifiers.into_iter().map(|specifier| {
+            let ExportSpecifier { span, exported, local, .. } = specifier;
+            let expr = if let Some(import_binding) = &import_binding {
+                let object = import_binding.create_read_expression(ctx);
+                let property = local.name();
+                // TODO(improvement): It looks like here could always return a computed member expression,
+                //                    so that we don't need to check if it's an identifier name.
+                if is_identifier_name(&property) {
+                    create_property_access(SPAN, object, &property, ctx)
                 } else {
-                    let ModuleExportName::IdentifierReference(ident) = local else {
-                        unreachable!()
-                    };
-                    Expression::Identifier(ArenaBox::new_in(ident, ctx))
-                };
-                Self::create_export(span, expr, exported.name().into(), ctx)
-            }));
-        }
+                    create_compute_property_access(SPAN, object, &property, ctx)
+                }
+            } else {
+                let ModuleExportName::IdentifierReference(ident) = local else { unreachable!() };
+                Expression::Identifier(ArenaBox::new_in(ident, ctx))
+            };
+            Self::create_export(span, expr, exported.name().into(), ctx)
+        }));
     }
 
     /// Transform export all declaration (`export * from 'vue'`).
@@ -673,7 +705,9 @@ impl<'a> ModuleRunnerTransform<'a> {
             statement,
             Statement::ImportDeclaration(_)
                 | Statement::ExportAllDeclaration(_)
+                | Statement::ExportDeclaration(_)
                 | Statement::ExportNamedDeclaration(_)
+                | Statement::ExportFromDeclaration(_)
                 | Statement::ExportDefaultDeclaration(_)
         )
     }
@@ -729,7 +763,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let init = Expression::new_await_expression(SPAN, call, ctx);
 
         let kind = VariableDeclarationKind::Const;
-        let declarator = VariableDeclarator::new(SPAN, kind, pattern, None, Some(init), false, ctx);
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(init), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
@@ -854,8 +888,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         );
         let pattern = binding.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Const;
-        let declarator =
-            VariableDeclarator::new(SPAN, kind, pattern, None, Some(right), false, ctx);
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(right), false, ctx);
         let declaration =
             Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)

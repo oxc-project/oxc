@@ -1,12 +1,13 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format, GroupId};
 use oxc_span::GetSpan;
 
 use crate::{
     FormatTrailingCommas,
     ast_nodes::AstNode,
     formatter::{
-        Buffer, Format, GroupId, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::*,
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, FormatDanglingComments},

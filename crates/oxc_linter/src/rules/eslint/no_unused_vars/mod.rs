@@ -302,7 +302,7 @@ impl NoUnusedVars {
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if self.is_allowed_variable_declaration(symbol, decl) {
+                if self.is_allowed_variable_declaration(symbol, decl, ctx) {
                     return;
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
@@ -366,7 +366,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::TSModuleDeclaration(namespace) => {
+            AstKind::TSNamespaceDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
@@ -466,9 +466,12 @@ fn remove_unused_catch_parameter<'a>(
 ) -> crate::fixer::RuleFix {
     let Span { start, end, .. } = catch.span();
 
-    let (Some(paren_start), Some(paren_end_offset)) =
-        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
-    else {
+    #[expect(clippy::cast_possible_truncation)]
+    let source_end = ctx.source_text().len() as u32;
+    let (Some(paren_start), Some(paren_end_offset)) = (
+        ctx.find_prev_token_within(0, start, "("),
+        ctx.find_next_token_within(end, source_end, ")"),
+    ) else {
         return fixer.noop();
     };
 

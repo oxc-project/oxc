@@ -1,10 +1,6 @@
-// use biome_console::fmt::Formatter;
-// use biome_console::markup;
-// use biome_diagnostics::{Category, Diagnostic, DiagnosticTags, Location, Severity, category};
-// use biome_rowan::{SyntaxError, TextRange};
 use std::error::Error;
 
-use crate::{TagKind, TextRange};
+use crate::TagKind;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 /// Series of errors encountered during formatting
@@ -12,9 +8,6 @@ pub enum FormatError {
     /// In case a node can't be formatted because it either misses a require child element or
     /// a child is present that should not (e.g. a trailing comma after a rest element).
     SyntaxError,
-    /// In case range formatting failed because the provided range was larger
-    /// than the formatted syntax tree
-    RangeError { input: TextRange, tree: TextRange },
 
     /// In case printing the document failed because it has an invalid structure.
     InvalidDocument(InvalidDocumentError),
@@ -33,9 +26,6 @@ impl std::fmt::Display for FormatError {
         match self {
             FormatError::SyntaxError => {
                 fmt.write_str("Can't format code because it contains syntax errors")
-            }
-            FormatError::RangeError { input, tree } => {
-                std::write!(fmt, "Formatting range {input:?} is larger than syntax tree {tree:?}")
             }
             FormatError::InvalidDocument(error) => std::write!(
                 fmt,

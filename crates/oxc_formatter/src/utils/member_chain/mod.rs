@@ -8,7 +8,7 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Comments, Format, JsFormatter, prelude::*},
+    formatter::{Comments, JsFormatter, prelude::*},
     parentheses::NeedsParentheses,
     utils::{
         is_long_curried_call,
@@ -21,6 +21,7 @@ use crate::{
     write,
 };
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
 use super::typecast::classify_type_cast;

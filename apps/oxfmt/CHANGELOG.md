@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.62.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 0c16cb5 oxfmt: [**BREAKING**] Format parser:yaml files by oxc_formatter_yaml (#24890) (leaysgur)
+
+### 🚀 Features
+
+- 1b57f78 oxfmt: Support tsx-in-vue (#25063) (leaysgur)
+- be7f6da oxfmt: Colorize diff file list in check mode (#25061) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 20f68e7 oxlint,oxfmt: Respect `.gitignore` for walk targets and explicit paths (#25133) (leaysgur)
+- a9e76e9 oxfmt: Rework tsx-in-vue support (#25106) (leaysgur)
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+- 22fdda4 oxfmt/conformance: Fix typo (#25053) (leaysgur)
+- e6e584b oxfmt: Type jsdoc. enum options (#25008) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+
 ## [0.61.0] - 2026-07-27
 
 ### 🚀 Features

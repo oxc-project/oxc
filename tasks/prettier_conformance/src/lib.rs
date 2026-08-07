@@ -5,6 +5,10 @@ pub mod jsdoc;
 pub mod options;
 mod spec;
 
+/// Prettier's default `printWidth` (oxfmt defaults to 100);
+/// every runner in this crate formats at Prettier's default so outputs are comparable.
+pub(crate) const PRETTIER_DEFAULT_LINE_WIDTH: u16 = 80;
+
 use std::{
     fmt::Write,
     path::{Path, PathBuf},

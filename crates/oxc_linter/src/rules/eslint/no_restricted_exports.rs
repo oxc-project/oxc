@@ -7,7 +7,10 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Declaration, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration},
+    ast::{
+        Declaration, ExportAllDeclaration, ExportDeclaration, ExportDefaultDeclaration,
+        ExportFromDeclaration, ExportNamedDeclaration, ExportSpecifier,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -210,7 +213,9 @@ impl Rule for NoRestrictedExports {
         match node.kind() {
             AstKind::ExportAllDeclaration(export) => self.check_export_all(export, ctx),
             AstKind::ExportDefaultDeclaration(export) => self.check_export_default(export, ctx),
+            AstKind::ExportDeclaration(export) => self.check_export_declaration(export, ctx),
             AstKind::ExportNamedDeclaration(export) => self.check_export_named(export, ctx),
+            AstKind::ExportFromDeclaration(export) => self.check_export_from(export, ctx),
             _ => {}
         }
     }
@@ -243,7 +248,21 @@ impl NoRestrictedExports {
     }
 
     fn check_export_named(&self, export: &ExportNamedDeclaration, ctx: &LintContext) {
-        let (named_exports, has_default_exports, local_specifiers) = export.specifiers.iter().fold(
+        self.check_export_specifiers(export.span, &export.specifiers, false, ctx);
+    }
+
+    fn check_export_from(&self, export: &ExportFromDeclaration, ctx: &LintContext) {
+        self.check_export_specifiers(export.span, &export.specifiers, true, ctx);
+    }
+
+    fn check_export_specifiers(
+        &self,
+        span: Span,
+        specifiers: &[ExportSpecifier<'_>],
+        has_source: bool,
+        ctx: &LintContext,
+    ) {
+        let (named_exports, has_default_exports, local_specifiers) = specifiers.iter().fold(
             (Vec::new(), false, Vec::new()),
             |(mut names, mut has_default, mut specifiers), spec| {
                 names.push(spec.exported.name().into_string());
@@ -261,41 +280,34 @@ impl NoRestrictedExports {
             },
         );
 
-        self.check_no_restricted_named_exports(ctx, export.span, named_exports);
+        self.check_no_restricted_named_exports(ctx, span, named_exports);
 
         if has_default_exports {
-            self.check_no_restricted_named_default_exports(
-                ctx,
-                export.span,
-                export.source.is_some(),
-                local_specifiers,
-            );
+            self.check_no_restricted_named_default_exports(ctx, span, has_source, local_specifiers);
         }
+    }
 
-        if let Some(declaration) = export.declaration.as_ref() {
-            match declaration {
-                Declaration::FunctionDeclaration(_) | Declaration::ClassDeclaration(_) => {
-                    if let Some(id) = declaration.id() {
-                        self.check_no_restricted_named_exports(
-                            ctx,
-                            export.span,
-                            std::iter::once(id.name.into_string()),
-                        );
-                    }
-                }
-                Declaration::VariableDeclaration(variable) => {
+    fn check_export_declaration(&self, export: &ExportDeclaration, ctx: &LintContext) {
+        match &export.declaration {
+            Declaration::FunctionDeclaration(_) | Declaration::ClassDeclaration(_) => {
+                if let Some(id) = export.declaration.id() {
                     self.check_no_restricted_named_exports(
                         ctx,
                         export.span,
-                        variable.declarations.iter().flat_map(|d| {
-                            d.id.get_binding_identifiers()
-                                .into_iter()
-                                .map(|id| id.name.into_string())
-                        }),
+                        std::iter::once(id.name.into_string()),
                     );
                 }
-                _ => {}
             }
+            Declaration::VariableDeclaration(variable) => {
+                self.check_no_restricted_named_exports(
+                    ctx,
+                    export.span,
+                    variable.declarations.iter().flat_map(|d| {
+                        d.id.get_binding_identifiers().into_iter().map(|id| id.name.into_string())
+                    }),
+                );
+            }
+            _ => {}
         }
     }
 

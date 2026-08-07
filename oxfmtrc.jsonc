@@ -32,6 +32,7 @@
     "napi/{transform,transform-react,minify,playground}/index.js",
     "napi/{transform,transform-react,minify,playground}/index.d.ts",
     "napi/{parser,transform,transform-react,minify,playground}/**/index.d.ts",
+    "napi/{parser,transform,transform-react,minify,playground}/**/*.wasi.d.cts",
     "napi/{parser,transform,transform-react,minify,playground}/**/*.wasi-browser.js",
     "napi/{parser,transform,transform-react,minify,playground}/**/*.wasi.cjs",
     "napi/{parser,transform,transform-react,minify,playground}/**/wasi-worker-browser.mjs",

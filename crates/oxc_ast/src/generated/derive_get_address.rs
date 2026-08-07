@@ -315,13 +315,16 @@ impl GetAddress for Statement<'_> {
             Self::TSTypeAliasDeclaration(it) => GetAddress::address(it),
             Self::TSInterfaceDeclaration(it) => GetAddress::address(it),
             Self::TSEnumDeclaration(it) => GetAddress::address(it),
-            Self::TSModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSExternalModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSNamespaceDeclaration(it) => GetAddress::address(it),
             Self::TSGlobalDeclaration(it) => GetAddress::address(it),
             Self::TSImportEqualsDeclaration(it) => GetAddress::address(it),
             Self::ImportDeclaration(it) => GetAddress::address(it),
             Self::ExportAllDeclaration(it) => GetAddress::address(it),
             Self::ExportDefaultDeclaration(it) => GetAddress::address(it),
+            Self::ExportDeclaration(it) => GetAddress::address(it),
             Self::ExportNamedDeclaration(it) => GetAddress::address(it),
+            Self::ExportFromDeclaration(it) => GetAddress::address(it),
             Self::TSExportAssignment(it) => GetAddress::address(it),
             Self::TSNamespaceExportDeclaration(it) => GetAddress::address(it),
         }
@@ -339,7 +342,8 @@ impl GetAddress for Declaration<'_> {
             Self::TSTypeAliasDeclaration(it) => GetAddress::address(it),
             Self::TSInterfaceDeclaration(it) => GetAddress::address(it),
             Self::TSEnumDeclaration(it) => GetAddress::address(it),
-            Self::TSModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSExternalModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSNamespaceDeclaration(it) => GetAddress::address(it),
             Self::TSGlobalDeclaration(it) => GetAddress::address(it),
             Self::TSImportEqualsDeclaration(it) => GetAddress::address(it),
         }
@@ -509,7 +513,9 @@ impl GetAddress for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => GetAddress::address(it),
             Self::ExportAllDeclaration(it) => GetAddress::address(it),
             Self::ExportDefaultDeclaration(it) => GetAddress::address(it),
+            Self::ExportDeclaration(it) => GetAddress::address(it),
             Self::ExportNamedDeclaration(it) => GetAddress::address(it),
+            Self::ExportFromDeclaration(it) => GetAddress::address(it),
             Self::TSExportAssignment(it) => GetAddress::address(it),
             Self::TSNamespaceExportDeclaration(it) => GetAddress::address(it),
         }
@@ -807,12 +813,12 @@ impl GetAddress for TSSignature<'_> {
     }
 }
 
-impl GetAddress for TSModuleDeclarationBody<'_> {
+impl GetAddress for TSNamespaceDeclarationBody<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
         match self {
-            Self::TSModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSNamespaceDeclaration(it) => GetAddress::address(it),
             Self::TSModuleBlock(it) => GetAddress::address(it),
         }
     }

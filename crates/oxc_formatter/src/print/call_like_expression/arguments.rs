@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, SourceText, format_element};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -7,10 +8,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Comments, FormatElement, JoinBuilderJsExt as _, JsFormatContext, JsFormatter,
-        JsFormatterExt as _, SourceText,
-        buffer::RemoveSoftLinesBuffer,
-        format_element,
+        Comments, JoinBuilderJsExt as _, JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{
             FormatElements, best_fitting_variant, empty_line, expand_parent, format_once,
             format_with, group, soft_block_indent, soft_line_break_or_space, space,

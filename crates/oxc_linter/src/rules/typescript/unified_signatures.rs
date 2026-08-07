@@ -364,8 +364,8 @@ fn get_statement_overload<'a>(
 
     let module_declaration = statement.as_module_declaration()?;
     match module_declaration {
-        oxc_ast::ast::ModuleDeclaration::ExportNamedDeclaration(export_named) => {
-            let Some(Declaration::FunctionDeclaration(function)) = &export_named.declaration else {
+        oxc_ast::ast::ModuleDeclaration::ExportDeclaration(export_decl) => {
+            let Declaration::FunctionDeclaration(function) = &export_decl.declaration else {
                 return None;
             };
             if function.r#type != FunctionType::TSDeclareFunction {
@@ -377,7 +377,7 @@ fn get_statement_overload<'a>(
                 key,
                 OverloadCandidate {
                     signature: SignatureDefinition::Function(function),
-                    comment_target_start: export_named.span.start,
+                    comment_target_start: export_decl.span.start,
                 },
             ))
         }

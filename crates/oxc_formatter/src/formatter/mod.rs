@@ -27,37 +27,13 @@ pub mod separated;
 pub mod token;
 pub mod trivia;
 
-/// Re-export of the core printer module so it can still be reached
-/// via `crate::formatter::printer` from existing call-sites.
-pub mod printer {
-    pub use oxc_formatter_core::printer::*;
-}
-
-/// Re-export of the core format element module so it can still be reached
-/// via `crate::formatter::format_element` from existing call-sites.
-pub mod format_element {
-    pub use oxc_formatter_core::format_element::*;
-}
-
-/// Re-export of the core buffer module so it can still be reached
-/// via `crate::formatter::buffer` from existing call-sites.
-pub mod buffer {
-    pub use oxc_formatter_core::buffer::*;
-}
-
-pub use oxc_formatter_core::{
-    Argument, Arguments, Buffer, BufferExtensions, Format, FormatElement, FormatOptions,
-    FormatState, Formatted, Formatter, GroupId, MemoizeFormat, Memoized, ScratchBuffer, SourceText,
-    UniqueGroupIdBuilder, VecBuffer,
-};
-
 pub use self::builders::JoinBuilderJsExt;
 pub use self::comments::Comments;
 pub use self::{
     context::{JsFormatContext, TailwindContextEntry},
     formatter_js::{JsFormatter, JsFormatterExt},
 };
-use oxc_formatter_core::Document;
+use oxc_formatter_core::{Arguments, Buffer as _, Document, FormatState, Formatted, VecBuffer};
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
 ///
@@ -69,8 +45,7 @@ pub fn format<'ast>(
 ) -> Formatted<'ast, JsFormatContext<'ast>> {
     // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
     // Analysis of 4,891 VSCode files shows FormatElement buffer length is typically 19% of source (median),
-    // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids
-    // reallocation for 95%+ of files.
+    // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids reallocation for 95%+ of files.
     let capacity = (context.source_text().len() * 2) / 5;
 
     let mut state = FormatState::new(context, allocator);

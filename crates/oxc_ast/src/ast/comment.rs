@@ -3,7 +3,7 @@ use bitflags::bitflags;
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{ContentEq, Span};
+use oxc_span::{ContentEq, GetSpan, Span};
 
 /// Indicates a line or block comment.
 #[ast]
@@ -144,7 +144,7 @@ impl<'alloc> CloneIn<'alloc> for CommentNewlines {
 
 /// A comment in source code.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree, GetSpan)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[estree(add_fields(value = CommentValue), no_ts_def, no_parent)]
 pub struct Comment {
