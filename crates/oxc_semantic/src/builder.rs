@@ -976,15 +976,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(type_parameters) = &class.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_class) = &class.super_class {
+        if let Some(heritage) = &class.heritage {
             if self.in_ambient_context() {
                 self.current_reference_flags = ReferenceFlags::ValueAsType;
             }
-            self.visit_expression(super_class);
+            self.visit_expression(&heritage.expression);
             self.current_reference_flags = ReferenceFlags::empty();
-        }
-        if let Some(super_type_parameters) = &class.super_type_arguments {
-            self.visit_ts_type_parameter_instantiation(super_type_parameters);
+            if let Some(super_type_parameters) = &heritage.type_arguments {
+                self.visit_ts_type_parameter_instantiation(super_type_parameters);
+            }
         }
         self.visit_ts_class_implements_list(&class.implements);
         self.visit_class_body(&class.body);
@@ -2841,7 +2841,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         //             ^^^^^^^^^
         self.current_reference_flags = ReferenceFlags::Type;
         self.visit_span(&heritage.span);
-        self.visit_expression(&heritage.expression);
+        self.visit_ts_type_name(&heritage.type_name);
         if let Some(type_arguments) = &heritage.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }

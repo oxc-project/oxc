@@ -131,7 +131,7 @@ impl NoCondAssign {
         let mut operator_span = Span::new(expr.left.span().end, expr.right.span().start);
         let start = ctx
             .find_next_token_within(operator_span.start, operator_span.end, operator)
-            .unwrap_or(0);
+            .expect("assignment expression operands must contain the assignment operator token");
         operator_span.start += start;
         operator_span.end = operator_span.start + operator.len() as u32;
 

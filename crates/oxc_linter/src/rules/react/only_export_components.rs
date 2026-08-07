@@ -625,7 +625,7 @@ impl OnlyExportComponents {
     }
 
     fn extends_react_component(class: &Class) -> bool {
-        class.super_class.as_ref().is_some_and(|super_class| {
+        class.heritage_expression().is_some_and(|super_class| {
             if let Some(member_expr) = super_class.as_member_expression()
                 && let Expression::Identifier(ident) = member_expr.object()
                 && ident.name == "React"

@@ -165,7 +165,7 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
         if let Some(type_parameters) = &it.type_parameters {
             self.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_type_arguments) = &it.super_type_arguments {
+        if let Some(super_type_arguments) = it.heritage_type_arguments() {
             self.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
         self.type_depth += 1;

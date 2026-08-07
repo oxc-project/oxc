@@ -947,7 +947,9 @@ impl PreferExportFrom {
         } else {
             // the new specifiers go just after the `{` of `export {} from '...'`
             let span = re_export.span();
-            let offset = fixer.find_next_token_within(span.start, span.end, "{").unwrap_or(0);
+            let offset = fixer
+                .find_next_token_within(span.start, span.end, "{")
+                .expect("export-from declaration span must contain an opening brace");
             Span::new(span.start, span.start + offset + 1)
         }
     }

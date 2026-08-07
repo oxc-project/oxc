@@ -84,28 +84,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn is_start_of_function_type_or_constructor_type(&mut self) -> bool {
-        if self.at(Kind::LAngle) {
-            return true;
-        }
-        let kind = self.cur_kind();
-        if kind == Kind::New {
-            return true;
-        }
-        if kind != Kind::LParen && kind != Kind::Abstract {
-            return false;
-        }
-        let checkpoint = self.checkpoint();
-        self.bump_any();
-
-        match kind {
-            Kind::Abstract => {
-                // `abstract new ...`
-                if self.at(Kind::New) {
-                    self.rewind(checkpoint);
-                    return true;
-                }
-            }
+        match self.cur_kind() {
+            Kind::LAngle | Kind::New => true,
+            Kind::Abstract => self.lexer.peek_token().kind() == Kind::New,
             Kind::LParen => {
+                let checkpoint = self.checkpoint();
+                self.bump_any();
+
                 // `( ...`
                 if matches!(self.cur_kind(), Kind::RParen | Kind::Dot3) {
                     self.rewind(checkpoint);
@@ -129,12 +114,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return true;
                     }
                 }
-            }
-            _ => unreachable!(),
-        }
 
-        self.rewind(checkpoint);
-        false
+                self.rewind(checkpoint);
+                false
+            }
+            _ => false,
+        }
     }
 
     fn skip_parameter_start(&mut self) -> bool {

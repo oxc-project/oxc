@@ -740,6 +740,10 @@ mod test {
             &[Function, ArrowFunctionExpression],
         );
         assert_rule_runs_on_node_types(
+            &vue::max_props::MaxProps::default(),
+            &[CallExpression, ExportDefaultDeclaration],
+        );
+        assert_rule_runs_on_node_types(
             &eslint::prefer_named_capture_group::PreferNamedCaptureGroup,
             &[RegExpLiteral, CallExpression, NewExpression],
         );

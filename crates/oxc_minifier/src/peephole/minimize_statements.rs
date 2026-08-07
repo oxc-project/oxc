@@ -859,17 +859,11 @@ impl<'a> PeepholeOptimizations {
                     //   if (a(() => b)) return; let b;
                     //   if (a(() => b)) { let b; }
                     //
-                    let mut can_move_branch_condition_outside_scope =
-                        !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope);
-
-                    if let Some(stmts) = stmts.get(i + 1..) {
-                        for stmt in stmts {
-                            if Self::statement_cares_about_scope(stmt) {
-                                can_move_branch_condition_outside_scope = false;
-                                break;
-                            }
-                        }
-                    }
+                    let can_move_branch_condition_outside_scope =
+                        !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
+                            && !stmts.get(i + 1..).is_some_and(|stmts| {
+                                stmts.iter().any(Self::statement_cares_about_scope)
+                            });
 
                     if can_move_branch_condition_outside_scope {
                         let drained_stmts = stmts.drain(i + 1..);
@@ -1271,7 +1265,7 @@ impl<'a> PeepholeOptimizations {
         result.push(Statement::LabeledStatement(labeled_stmt));
     }
 
-    /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
+    /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9839>
     fn handle_block(
         result: &mut ArenaVec<'a, Statement<'a>>,
         block_stmt: ArenaBox<'a, BlockStatement<'a>>,
@@ -1286,7 +1280,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9767>
+    /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9754-L9768>
     pub fn statement_cares_about_scope(stmt: &Statement<'a>) -> bool {
         match stmt {
             Statement::BlockStatement(_)
@@ -1305,8 +1299,8 @@ impl<'a> PeepholeOptimizations {
             | Statement::ReturnStatement(_)
             | Statement::ThrowStatement(_)
             | Statement::BreakStatement(_)
-            | Statement::ContinueStatement(_)
-            | Statement::LabeledStatement(_) => false,
+            | Statement::ContinueStatement(_) => false,
+            Statement::LabeledStatement(label) => Self::statement_cares_about_scope(&label.body),
             Statement::VariableDeclaration(decl) => !decl.kind.is_var(),
             _ => true,
         }

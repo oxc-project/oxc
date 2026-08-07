@@ -988,7 +988,8 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
             return computed.object.span() == binary_like.span();
         }
         AstNodes::Class(class) => {
-            return class.super_class.as_ref().is_some_and(|super_class| {
+            return class.heritage().is_some_and(|heritage| {
+                let super_class = heritage.expression();
                 super_class.span().contains_inclusive(binary_like.span())
             });
         }
@@ -1242,7 +1243,7 @@ fn ts_as_or_satisfies_needs_parens(
 
 fn is_class_extends(span: Span, parent: &AstNodes<'_>) -> bool {
     if let AstNodes::Class(c) = parent {
-        return c.super_class.as_ref().is_some_and(|c| c.span() == span);
+        return c.heritage().is_some_and(|heritage| heritage.expression().span() == span);
     }
     false
 }

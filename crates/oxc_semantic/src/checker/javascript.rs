@@ -914,10 +914,7 @@ pub fn check_for_statement_left(
 
     // initializer is not allowed for for-in / for-of
     if decl.declarations.len() > 1 {
-        return ctx.error(diagnostics::multiple_declaration_in_for_loop_head(
-            if is_for_in { "in" } else { "of" },
-            decl.span,
-        ));
+        return;
     }
 
     let strict_mode = ctx.strict_mode();
@@ -1207,7 +1204,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                         let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
                         let class =
                             ctx.ancestry().find_kind_by_node_id(class_node_id).as_class().unwrap();
-                        if class.super_class.is_none() {
+                        if class.heritage.is_none() {
                             ctx.error(diagnostics::super_without_derived_class(
                                 sup.span, class.span,
                             ));
