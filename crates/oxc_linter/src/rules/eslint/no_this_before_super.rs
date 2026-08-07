@@ -160,7 +160,7 @@ impl NoThisBeforeSuper {
             let parent_3 = ctx.nodes().parent_node(parent_2.id());
 
             let class = parent_3.kind().as_class()?;
-            let super_class = class.super_class.as_ref()?;
+            let super_class = class.heritage_expression()?;
             return Some(!matches!(super_class, Expression::NullLiteral(_)));
         }
 

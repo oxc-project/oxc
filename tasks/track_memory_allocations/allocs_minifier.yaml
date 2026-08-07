@@ -73,4 +73,4 @@ kitchen-sink.tsx:
   sys peak growth: 3707425 # 3.71 MB
   arena allocs: 66806
   arena reallocs: 12252
-  arena size: 9424640 # 9.42 MB
+  arena size: 9424360 # 9.42 MB

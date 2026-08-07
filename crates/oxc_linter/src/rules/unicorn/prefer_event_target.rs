@@ -58,7 +58,7 @@ impl Rule for PreferEventTarget {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let ident = match node.kind() {
             AstKind::Class(class) => {
-                let Some(Expression::Identifier(ident)) = &class.super_class else {
+                let Some(Expression::Identifier(ident)) = class.heritage_expression() else {
                     return;
                 };
                 ident

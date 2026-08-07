@@ -2163,24 +2163,28 @@ function deserializeYieldExpression(pos) {
 
 function deserializeClass(pos) {
   let node = {
-    type: deserializeClassType(pos + 136),
-    decorators: null,
-    id: null,
-    typeParameters: null,
-    superClass: null,
-    superTypeArguments: null,
-    implements: null,
-    body: null,
-    abstract: deserializeBool(pos + 137),
-    declare: deserializeBool(pos + 138),
-    start: deserializeI32(pos),
-    end: deserializeI32(pos + 4),
-  };
+      type: deserializeClassType(pos + 136),
+      decorators: null,
+      id: null,
+      typeParameters: null,
+      superClass: null,
+      superTypeArguments: null,
+      implements: null,
+      body: null,
+      abstract: deserializeBool(pos + 137),
+      declare: deserializeBool(pos + 138),
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 72);
-  node.superClass = deserializeOptionExpression(pos + 80);
-  node.superTypeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 96);
+  node.superClass = superClass;
+  node.superTypeArguments =
+    superClass === null
+      ? null
+      : deserializeOptionBoxTSTypeParameterInstantiation(pos + 80 + (pos + 16 - pos));
   node.implements = deserializeVecTSClassImplements(pos + 104);
   node.body = deserializeBoxClassBody(pos + 128);
   return node;

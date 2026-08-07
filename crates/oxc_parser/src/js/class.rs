@@ -92,14 +92,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let type_parameters =
             if self.is_ts { self.parse_ts_type_parameters_with_variance() } else { None };
         let (extends, implements) = self.parse_class_heritage_clause();
-        let mut super_class = None;
-        let mut super_type_parameters = None;
+        let mut heritage = None;
         if let Some(mut extends) = extends
             && !extends.is_empty()
         {
             let (expression, type_arguments) = extends.remove(0);
-            super_class = Some(expression);
-            super_type_parameters = type_arguments;
+            heritage = Some(ClassHeritage::new(expression, type_arguments, self));
             for (expression, type_arguments) in extends {
                 let expression_span = expression.span();
                 let span = type_arguments.map_or(expression_span, |type_arguments| {
@@ -123,8 +121,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_parameters,
+            heritage,
             implements.map_or_else(|| ArenaVec::new_in(self), |(_, implements)| implements),
             body,
             modifiers.contains_abstract(),

@@ -202,6 +202,8 @@ impl<'a> TakeIn<'a> for YieldExpression<'a> {}
 
 impl<'a> TakeIn<'a> for Class<'a> {}
 
+impl<'a> TakeIn<'a> for ClassHeritage<'a> {}
+
 impl<'a> TakeIn<'a> for ClassBody<'a> {}
 
 impl<'a> TakeIn<'a> for ClassElement<'a> {}

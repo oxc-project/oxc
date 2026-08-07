@@ -187,7 +187,7 @@ impl<'a> PeepholeOptimizations {
         // Classes with `extends` may inherit static setters from the parent.
         // We can't statically determine the parent's static setters,
         // so conservatively mark as non-fresh.
-        if class.super_class.is_some() {
+        if class.heritage.is_some() {
             return true;
         }
         // Class-level decorators run arbitrary code during class creation and can

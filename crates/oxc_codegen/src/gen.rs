@@ -2545,12 +2545,12 @@ impl Gen for Class<'_> {
             if let Some(type_parameters) = self.type_parameters.as_ref() {
                 type_parameters.print(p, ctx);
             }
-            if let Some(super_class) = self.super_class.as_ref() {
+            if let Some(heritage) = &self.heritage {
                 p.print_soft_space();
                 p.print_space_before_identifier();
                 p.print_str("extends ");
-                super_class.print_expr(p, Precedence::Postfix, Context::empty());
-                if let Some(super_type_parameters) = &self.super_type_arguments {
+                heritage.expression.print_expr(p, Precedence::Postfix, Context::empty());
+                if let Some(super_type_parameters) = &heritage.type_arguments {
                     super_type_parameters.print(p, ctx);
                 }
             }

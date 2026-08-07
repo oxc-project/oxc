@@ -2190,10 +2190,11 @@ function deserializeClass(pos) {
       start: (start = deserializeI32(pos)),
       end: (end = deserializeI32(pos + 4)),
       range: [start, end],
-    };
+    },
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
-  node.superClass = deserializeOptionExpression(pos + 80);
+  node.superClass = superClass;
   node.body = deserializeBoxClassBody(pos + 128);
   return node;
 }

@@ -5003,16 +5003,6 @@ export class Class {
     return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 72, internal.ast);
   }
 
-  get superClass() {
-    const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 80, internal.ast);
-  }
-
-  get superTypeArguments() {
-    const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 96, internal.ast);
-  }
-
   get implements() {
     const internal = this.#internal,
       cached = internal.$implements;
@@ -5043,8 +5033,6 @@ export class Class {
       decorators: this.decorators,
       id: this.id,
       typeParameters: this.typeParameters,
-      superClass: this.superClass,
-      superTypeArguments: this.superTypeArguments,
       implements: this.implements,
       body: this.body,
       abstract: this.abstract,

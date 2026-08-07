@@ -2184,10 +2184,11 @@ function deserializeClass(pos) {
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
       parent,
-    });
+    }),
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
-  node.superClass = deserializeOptionExpression(pos + 80);
+  node.superClass = superClass;
   node.body = deserializeBoxClassBody(pos + 128);
   parent = previousParent;
   return node;

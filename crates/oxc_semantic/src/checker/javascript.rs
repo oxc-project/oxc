@@ -1204,7 +1204,7 @@ pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
                         let class_node_id = ctx.class_table_builder.classes.get_node_id(class_id);
                         let class =
                             ctx.ancestry().find_kind_by_node_id(class_node_id).as_class().unwrap();
-                        if class.super_class.is_none() {
+                        if class.heritage.is_none() {
                             ctx.error(diagnostics::super_without_derived_class(
                                 sup.span, class.span,
                             ));

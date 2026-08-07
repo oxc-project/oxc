@@ -1964,17 +1964,18 @@ function deserializeYieldExpression(pos) {
 
 function deserializeClass(pos) {
   let node = {
-    type: deserializeClassType(pos + 136),
-    decorators: null,
-    id: null,
-    superClass: null,
-    body: null,
-    start: deserializeI32(pos),
-    end: deserializeI32(pos + 4),
-  };
+      type: deserializeClassType(pos + 136),
+      decorators: null,
+      id: null,
+      superClass: null,
+      body: null,
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
-  node.superClass = deserializeOptionExpression(pos + 80);
+  node.superClass = superClass;
   node.body = deserializeBoxClassBody(pos + 128);
   return node;
 }

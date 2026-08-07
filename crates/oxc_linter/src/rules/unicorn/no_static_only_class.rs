@@ -66,7 +66,7 @@ impl Rule for NoStaticOnlyClass {
             return;
         };
 
-        if class.super_class.is_some() {
+        if class.heritage.is_some() {
             return;
         }
         if !class.decorators.is_empty() {

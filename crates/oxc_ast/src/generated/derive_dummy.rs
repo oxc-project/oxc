@@ -1315,14 +1315,22 @@ impl<'a> Dummy<'a> for Class<'a> {
             decorators: Dummy::dummy(allocator),
             id: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
-            super_class: Dummy::dummy(allocator),
-            super_type_arguments: Dummy::dummy(allocator),
+            heritage: Dummy::dummy(allocator),
             implements: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
             r#abstract: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
             scope_id: Dummy::dummy(allocator),
         }
+    }
+}
+
+impl<'a> Dummy<'a> for ClassHeritage<'a> {
+    /// Create a dummy [`ClassHeritage`].
+    ///
+    /// Has cost of making 1 allocation (16 bytes).
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self { expression: Dummy::dummy(allocator), type_arguments: Dummy::dummy(allocator) }
     }
 }
 

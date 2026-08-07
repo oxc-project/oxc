@@ -200,6 +200,8 @@ impl<'a> ReplaceWith<'a> for YieldExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for Class<'a> {}
 
+impl<'a> ReplaceWith<'a> for ClassHeritage<'a> {}
+
 impl<'a> ReplaceWith<'a> for ClassBody<'a> {}
 
 impl<'a> ReplaceWith<'a> for ClassElement<'a> {}
