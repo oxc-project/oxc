@@ -98,7 +98,7 @@ impl Walk {
             }
         }
 
-        if !options.no_ignore {
+        if !options.no_ignore.cli {
             inner.add_custom_ignore_filename(&options.ignore_path);
 
             if let Some(override_builder) = override_builder {
@@ -106,8 +106,10 @@ impl Walk {
             }
         }
 
-        let has_vcs_boundary = all_paths_have_vcs_boundary(paths, cwd);
-        let inner = configure_walk_builder(&mut inner, has_vcs_boundary)
+        let respect_gitignore = !options.no_ignore.vcs;
+        // `require_git` is inert once the git layer is off, so skip the boundary stats.
+        let has_vcs_boundary = respect_gitignore && all_paths_have_vcs_boundary(paths, cwd);
+        let inner = configure_walk_builder(&mut inner, has_vcs_boundary, respect_gitignore)
             .follow_links(true)
             // Use the same thread count as rayon (controlled by `--threads`)
             .threads(rayon::current_num_threads())
@@ -153,7 +155,7 @@ mod test {
     use ignore::overrides::OverrideBuilder;
 
     use super::{Extensions, Walk};
-    use crate::cli::IgnoreOptions;
+    use crate::cli::{IgnoreOptions, NoIgnoreKinds};
 
     fn collect_js_paths(root: &Path, ignore_options: &IgnoreOptions) -> Vec<String> {
         let override_builder = OverrideBuilder::new(root).build().unwrap();
@@ -176,7 +178,7 @@ mod test {
 
     fn empty_ignore_options() -> IgnoreOptions {
         IgnoreOptions {
-            no_ignore: false,
+            no_ignore: NoIgnoreKinds::NONE,
             ignore_path: OsString::from(".eslintignore"),
             ignore_pattern: vec![],
         }
@@ -187,7 +189,7 @@ mod test {
         let fixture = env::current_dir().unwrap().join("fixtures/cli/walk_dir");
         let fixtures = vec![fixture.clone()];
         let ignore_options = IgnoreOptions {
-            no_ignore: false,
+            no_ignore: NoIgnoreKinds::NONE,
             ignore_path: OsString::from(".gitignore"),
             ignore_pattern: vec![],
         };

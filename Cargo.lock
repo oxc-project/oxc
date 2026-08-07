@@ -1941,6 +1941,7 @@ dependencies = [
 name = "oxc_config"
 version = "0.0.0"
 dependencies = [
+ "bpaf",
  "fast-glob",
  "ignore",
  "oxc-schemars",
