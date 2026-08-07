@@ -368,7 +368,10 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
             && (is_call_call
                 || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))
         {
-            if is_apply_call && let Some(Argument::Identifier(array)) = call_expr.arguments.get(1) {
+            if is_apply_call
+                && let Some(Argument::Identifier(array)) = call_expr.arguments.get(1)
+                && array.name != "arguments"
+            {
                 let replacement = format!("{}.flat()", ctx.source_range(array.span));
                 ctx.diagnostic_with_fix(prefer_array_flat_diagnostic(call_expr.span), |fixer| {
                     fixer.replace(call_expr.span, replacement)
@@ -565,6 +568,7 @@ fn test() {
         "[].concat.apply([], ((array)))",
         "[].concat.apply([], [foo])",
         "[].concat.apply([], [[foo]])",
+        "function flatten() { return [].concat.apply([], arguments); }",
         "[].concat.call([], maybeArray)",
         "[].concat.call([], ((0, maybeArray)))",
         "[].concat.call([], ((maybeArray)))",
@@ -581,6 +585,7 @@ fn test() {
         "Array.prototype.concat.apply([], ((array)))",
         "Array.prototype.concat.apply([], [foo])",
         "Array.prototype.concat.apply([], [[foo]])",
+        "function flatten() { return Array.prototype.concat.apply([], arguments); }",
         "Array.prototype.concat.call([], maybeArray)",
         "Array.prototype.concat.call([], ((0, maybeArray)))",
         "Array.prototype.concat.call([], ((maybeArray)))",
