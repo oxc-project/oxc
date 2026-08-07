@@ -1,0 +1,23 @@
+crates/oxc_linter/src/rules/unicorn/no_useless_undefined.rs
+  s_5e46d8e90dfd53::t_a1ec3b59dba545 230-231,234
+crates/oxc_linter/src/rules/eslint/init_declarations.rs
+  s_5e46d8e90dfd53::t_5b25e1c64853ee 142,170
+crates/oxc_linter/src/rules/eslint/no_unassigned_vars.rs
+  s_5e46d8e90dfd53::t_55e78827b7ea67 6,62,69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "267faabf51c99823a1a3b3c74c40ad4256ef4d20",
+  "prompts": {},
+  "sessions": {
+    "s_5e46d8e90dfd53": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd2a5-274f-79a3-bb97-9145f2189810",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

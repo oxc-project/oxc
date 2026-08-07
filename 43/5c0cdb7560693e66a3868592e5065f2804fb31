@@ -1,0 +1,101 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_ebddea38a953bc::t_40f9f25181b6f0 1653
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_ebddea38a953bc::t_5f4f3fe3577e25 415,420,2252,2257
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_ebddea38a953bc::t_8af14b051ca9d7 782
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_ebddea38a953bc::t_c5f771a496aee0 250
+crates/oxc_isolated_declarations/src/declaration.rs
+  s_ebddea38a953bc::t_6955854c88dc5c 30,49,73,80,103
+crates/oxc_isolated_declarations/src/lib.rs
+  s_8eed05f40e9529::t_f2edea4cc12c89 351
+crates/oxc_isolated_declarations/src/module.rs
+  s_ebddea38a953bc::t_2bce15578e727d 128
+crates/oxc_linter/src/ast_util.rs
+  s_ebddea38a953bc::t_48bc49df8eeb35 25-36
+crates/oxc_minifier/src/keep_var.rs
+  s_ebddea38a953bc::t_27253fd9d6a121 83
+crates/oxc_minifier/src/peephole/minimize_statements.rs
+  s_ebddea38a953bc::t_5df31f442cbd8e 439-442,455,601,608,630,1021,1025,1047,1050-1054
+crates/oxc_minifier/src/peephole/substitute_alternate_syntax.rs
+  s_ebddea38a953bc::t_c49410a13ba2be 173,998,1057-1061,1064,1072,1886-1889
+crates/oxc_parser/src/js/declaration.rs
+  s_8eed05f40e9529::t_e9985baeb695e9 145-146,151,166-170,174,177
+crates/oxc_parser/src/js/statement.rs
+  s_8eed05f40e9529::t_ef5dbd14ddd4e3 594
+crates/oxc_react_compiler/src/react_compiler/entrypoint/program.rs
+  s_ebddea38a953bc::t_b370a58ca07cb3 2808-2809
+crates/oxc_react_compiler/src/react_compiler_reactive_scopes/codegen_reactive_function.rs
+  s_ebddea38a953bc::t_dfb251fedeafbc 1074,1118,1469
+crates/oxc_semantic/src/binder.rs
+  s_8eed05f40e9529::t_a19030374ed887 20-24,26,45
+crates/oxc_semantic/src/checker/javascript.rs
+  s_8eed05f40e9529::t_e319af522c1fbf 257,619-622
+crates/oxc_semantic/src/lib.rs
+  s_8600636378561a::t_8f05116daaea67 323-331
+crates/oxc_transformer/src/common/module_imports.rs
+  s_ebddea38a953bc::t_e44530d5a10fad 195
+crates/oxc_transformer/src/common/var_declarations.rs
+  s_ebddea38a953bc::t_ae98f420b85da2 149,161
+crates/oxc_transformer/src/es2018/async_generator_functions/for_await.rs
+  s_ebddea38a953bc::t_b8ea7a6719ffde 125,128
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_ebddea38a953bc::t_1f095c47c76446 219,460,638,676-677,799,819,836,846,854,919-920,981,983,1049
+crates/oxc_transformer/src/jsx/jsx_source.rs
+  s_ebddea38a953bc::t_ebb1fe33104272 198
+crates/oxc_transformer/src/typescript/enum.rs
+  s_ebddea38a953bc::t_ef6961210cc99f 298-299
+crates/oxc_transformer/src/typescript/module.rs
+  s_ebddea38a953bc::t_991557417751f1 180
+crates/oxc_transformer_plugins/src/module_runner_transform.rs
+  s_ebddea38a953bc::t_59d65a6b018387 766,891
+napi/parser/src-js/generated/deserialize/ts.js
+  s_ebddea38a953bc::t_a77fcd8f4c6ff0 1368
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_ebddea38a953bc::t_4ed7b20cb7d883 1491
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_ebddea38a953bc::t_18d40beabd4151 1496
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_ebddea38a953bc::t_938b5921d3c766 1618
+napi/parser/src-js/generated/lazy/constructors.js
+  s_ebddea38a953bc::t_27be959f1bd7f1 3003
+crates/oxc_minifier/src/peephole/inline.rs
+  s_ebddea38a953bc::t_ab056cb6678ad8 14-17,30,34
+crates/oxc_minifier/src/peephole/remove_unused_declaration.rs
+  s_ebddea38a953bc::t_2e26d8324aae67 89,96,147,154
+crates/oxc_transformer/src/typescript/namespace.rs
+  s_ebddea38a953bc::t_838a94745f18fb 257-258,260-261,341
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "435c0cdb7560693e66a3868592e5065f2804fb31",
+  "prompts": {},
+  "sessions": {
+    "s_8600636378561a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd283-8e8d-71e3-b20b-5794ee0ec75e",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_8eed05f40e9529": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd260-f14f-7212-a31d-9f7b0153f714",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_ebddea38a953bc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd26b-fa7f-7842-8c50-8fa63e648517",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

@@ -1,0 +1,63 @@
+crates/oxc_linter/src/rules/eslint/no_const_assign.rs
+  s_ebddea38a953bc::t_d4c6360f5dfc52 63-66
+crates/oxc_linter/src/rules/eslint/no_magic_numbers.rs
+  s_ebddea38a953bc::t_31415d0588bbf3 328,520-521,525-528
+crates/oxc_linter/src/rules/eslint/no_unassigned_vars.rs
+  s_ebddea38a953bc::t_9fd9aa55bcb7b1 62-64
+crates/oxc_linter/src/rules/eslint/no_underscore_dangle.rs
+  s_ebddea38a953bc::t_dfec9c2c9e06fe 246
+crates/oxc_linter/src/rules/eslint/no_unused_vars/allowed.rs
+  s_ebddea38a953bc::t_5e8a987e7181c0 8,168,170-173,182-184
+crates/oxc_linter/src/rules/eslint/require_unicode_regexp.rs
+  s_ebddea38a953bc::t_25f0cbdc967783 329-331
+crates/oxc_linter/src/rules/oxc/bad_char_at_comparison.rs
+  s_ebddea38a953bc::t_78acf57b0abc39 143-145,151,160-162
+crates/oxc_linter/src/rules/react/exhaustive_deps.rs
+  s_ebddea38a953bc::t_ce8ac2e9d9648a 1133-1134
+crates/oxc_linter/src/rules/unicorn/consistent_existence_index_check.rs
+  s_ebddea38a953bc::t_54b99c8f291b48 100-102
+crates/oxc_linter/src/rules/unicorn/no_array_fill_with_reference_type.rs
+  s_ebddea38a953bc::t_b612ffe8244244 136-138
+crates/oxc_linter/src/rules/unicorn/no_useless_undefined.rs
+  s_ebddea38a953bc::t_72a0db56898252 233-235
+crates/oxc_linter/src/rules/unicorn/prefer_array_flat.rs
+  s_ebddea38a953bc::t_4c2963b5312abd 163
+crates/oxc_linter/src/rules/unicorn/prefer_at.rs
+  s_ebddea38a953bc::t_5dcab8f20e0032 586-587
+crates/oxc_linter/src/rules/unicorn/prefer_import_meta_properties.rs
+  s_ebddea38a953bc::t_90f6122ce2caee 332,395-397
+crates/oxc_linter/src/rules/unicorn/prefer_set_has.rs
+  s_ebddea38a953bc::t_854c198c538bb0 136-138
+crates/oxc_linter/src/rules/unicorn/prefer_set_size.rs
+  s_ebddea38a953bc::t_1ebc4e09901948 152
+crates/oxc_linter/src/rules/unicorn/prefer_top_level_await.rs
+  s_ebddea38a953bc::t_8b78ea1a9e2f88 162-163
+crates/oxc_linter/src/rules/vue/no_multiple_slot_args.rs
+  s_ebddea38a953bc::t_a51c78a2ddd23c 168-169
+crates/oxc_linter/src/rules/vue/valid_define_options.rs
+  s_ebddea38a953bc::t_69da3c52616758 208
+crates/oxc_linter/src/utils/this_expression.rs
+  s_ebddea38a953bc::t_19c5ee1944d01e 76
+crates/oxc_linter/src/rules/eslint/init_declarations.rs
+  s_ebddea38a953bc::t_2f8b5dae38f8e8 169-172
+crates/oxc_linter/src/rules/eslint/no_unused_vars/mod.rs
+  s_ebddea38a953bc::t_b840b2a82dfe20 305
+crates/oxc_linter/src/rules/eslint/prefer_destructuring.rs
+  s_ebddea38a953bc::t_3b5ebb7b9639e8 258
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8b1671c8974d6e0ac15d72d30c38f1bcc4a1a19e",
+  "prompts": {},
+  "sessions": {
+    "s_ebddea38a953bc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd26b-fa7f-7842-8c50-8fa63e648517",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

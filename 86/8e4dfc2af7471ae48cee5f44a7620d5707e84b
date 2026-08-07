@@ -1,0 +1,455 @@
+Cargo.lock
+  s_eead231a6741d5::t_09950e1c44b9ff 277,699,1526,1692,1694,3323,3450,3745,4232
+Cargo.toml
+  s_eead231a6741d5::t_1028fa4151b7d4 241
+apps/oxfmt/src-js/cli/worker-proxy.ts
+  s_eead231a6741d5::t_df849816f84c54 13,18-19,21-30,32,34-35,44,50,60-62,73-77,86-90,99-103
+apps/oxlint/src-js/generated/deserialize.js
+  s_eead231a6741d5::t_2bbc3540a79957 1515,1517,1519-1520,1595,1597,1599-1600,1653,5201-5202,5204,5206-5207,5211-5212,5219-5233,5245-5257,5262-5264,5266-5278,5280-5294,5296-5298,5304,5311,5315,5318,5322,6510-6515,7224-7229
+apps/oxlint/src-js/generated/types.d.ts
+  s_eead231a6741d5::t_cfb61cbe74fbfa 1487-1488
+apps/oxlint/src-js/package/config.generated.ts
+  s_eead231a6741d5::t_6abb5bdb825eab 192-203,253,1038,1058,1269,2579-2584,2727-2732,4246-4285,5282-5284
+apps/oxlint/src/lsp/options.rs
+  s_eead231a6741d5::t_5ca74a8221cbd0 6,133,305-319
+apps/oxlint/src/lsp/server_linter.rs
+  s_eead231a6741d5::t_b7d040b5ba0255 1537-1554,1570-1584
+apps/oxlint/src/output_formatter/agent.rs
+  s_eead231a6741d5::t_b649ef23dc4391 1-2,38,53-56,67-74,81-97,102-103,107-152
+apps/oxlint/src/output_formatter/json.rs
+  s_eead231a6741d5::t_e7e14e47b2c654 142-150
+apps/oxlint/src/output_formatter/junit.rs
+  s_eead231a6741d5::t_9986cf4f88beca 1-2,37-39,41-43,46-47,51,53-54,59-61,63,72-77,80-88,91-94,134-159
+apps/oxlint/src/output_formatter/stylish.rs
+  s_eead231a6741d5::t_282c675e6e4829 70-71,75
+apps/oxlint/src/output_formatter/xml_utils.rs
+  s_eead231a6741d5::t_1e6baf5d91821d 53-76
+crates/oxc_allocator/src/vec2/mod.rs
+  s_eead231a6741d5::t_533f9109a82b9d 1464,1483,1498-1541,1549-1550,1569,1601-1667,3032-3141
+crates/oxc_ast/src/ast/js.rs
+  s_eead231a6741d5::t_8dda5ca89e4ec8 1170-1173
+crates/oxc_ast/src/ast/ts.rs
+  s_eead231a6741d5::t_1cf7f5d0729acb 1213,1218,1220-1256,1258,1260-1262,1267,1272-1277,1280,1282-1283,1291-1293,1304-1305,1344-1345
+crates/oxc_ast/src/ast_impl/js.rs
+  s_eead231a6741d5::t_fd98cc200fc405 1132-1135,1147-1148
+crates/oxc_ast/src/ast_impl/ts.rs
+  s_eead231a6741d5::t_b13e9de454def2 171,173-179,181-182,190,194,205,208-209,223-226,236-238
+crates/oxc_ast/src/ast_kind_impl.rs
+  s_eead231a6741d5::t_87d8719969008d 47-48,593-596
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_eead231a6741d5::t_a00ef8df676589 415,420,1582-1590,1592-1607,2252,2257,3419-3428,3430-3444
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_eead231a6741d5::t_aa444060246002 8858,8860,8864-8890,8893,8895,8897-8898,8900,8903-8932,8942,8944,8948,8950,8954,8956-8958,8963,9753-9779,9781,9785,9788,9790,9792-9793,9795,9798-9827,9837,9839,9843,9845,9849,9851-9853,9858,25483-25484,25487,25491,25497-25498,25503,25513,25516,25520,25526-25527,25532,25535,25538,25542,25549-25550,25556,25566,25569,25573,25580-25581,25588,25594-25598,25602-25605,25607,25609-25612,25615-25624,25627-25630,25634-25637,25639,25641-25644,25646-25648,25651-25654,25657-25662,25664,25666-25670,25673-25682,25685-25688,25691-25696,25698,25700-25704,25706-25711,25715-25716,25718,25722,25724,25727,25729-25731,25735,25745,25747,25751,25753,25757,25759-25761,25766,25777
+crates/oxc_ast/src/generated/ast_kind.rs
+  s_eead231a6741d5::t_5712664392b082 11,182-207,393-395,599-600,799-800,1001-1002,1204-1205,2074-2080
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_eead231a6741d5::t_45f67f27d5c2a8 1407-1408,1515-1518,5082-5083,5090,5104-5105,5109,5112-5123,5127-5128,5130,5133,5136,5140-5141,5149,5152
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_eead231a6741d5::t_9515672191b6bc 700-703,753-756,782,2346,2354,2356-2359,2363,2365,2369,2372
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_eead231a6741d5::t_66ec1be55dc4a8 2837-2838,2853-2854,2856,2858-2866,2870-2871,2874,2876,2880-2881
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_eead231a6741d5::t_0a1705ae729789 828-829,886-887,3004,3006,3010,3012,3016,3019-3020,3025,3028
+crates/oxc_ast/src/generated/derive_get_address.rs
+  s_eead231a6741d5::t_c8b0e80c5e24cd 318-319,345-346,816,821
+crates/oxc_ast/src/generated/derive_get_span.rs
+  s_eead231a6741d5::t_0ee31f3ea2a286 622-623,668-669,2047,2054-2055,2057,2061,2064
+crates/oxc_ast/src/generated/derive_get_span_mut.rs
+  s_eead231a6741d5::t_2451cd2826fee8 621-622,667-668,2046,2053-2054,2056,2060,2063
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_eead231a6741d5::t_f14d2f8a51e83c 425,427,429
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_eead231a6741d5::t_927ba8a092837c 427,429,431
+crates/oxc_ast/src/generated/derive_unstable_address.rs
+  s_eead231a6741d5::t_d81db392dc0860 343-345
+crates/oxc_ast/src/generated/get_id.rs
+  s_eead231a6741d5::t_184c3da09ff7d9 3023-3024,3032,3038,3049-3082,3915-3916,3943-3944,4526-4527,4532
+crates/oxc_ast/src/generated/inherit_variants.rs
+  s_eead231a6741d5::t_32eeac83727c11 2629-2630,2731-2734,2757-2760,5614-5615
+crates/oxc_ast/src/serialize/ts.rs
+  s_eead231a6741d5::t_2d9801a9e6d6ce 49-100,102-104,107,113-130,132-144,146-156,158-159,162-173,175-178,185,187,189,194-197,199,201-202,204-207,209-211,217-218,223-224,226
+crates/oxc_ast_macros/src/generated/enums.rs
+  s_eead231a6741d5::t_d5edc32f4fcd1a 11,13-15,18-20,22-26,29-31,33-39,42,44-54,56-58,60-66,68-69,71-83,85-90,92-94,96-97,99-105,107-109,112-122,124,126,682-683,688-694,700,707
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_eead231a6741d5::t_1032bf057652bf 12-14,16-21,23-26,29,32-35,37-40,42,44,46-61,63-69,71-72,74,76-80,82,84,86-90,94,96,102,110,118,122,130-131,133,135,143,145,151,159,161,167,169,175,177,183,185,191-192,195-199,201,207,211,215-216,219,227,230,232,234,240,242,248-253,256,258,263,265,273-278,281,283,289-294,297,299,305,307,313,315-316,321,325,327,332,334,336,342-346,348,354-358,374-379,382-383,386,390-395,402,404,410-411,414,416,422-426,428,434,436,442-443,445,447-448,451,453,459,467-475,483,485-486,491,493,499,503,506,508,510-511,516,518,524,528,530,535-539,541-542,545,547,553-565,567,581-582,585-586,589,591,597,601,603,608,610,618-619,621,623-624,627-631,633-634,639,641,647,651,653,659-660,663,665,671,673,687,695-696,699-700,703,705,711,713-714,719-724,727,735-736,739,741,747-767,775,777,783,785,791,795,803-807,815-816,819-831,833,839-843,845,851,853,859,863,865,871-876,879-880,883-884,887-888,891-892,895-896,898,900,902,908,916,918,924,928-929,932-933,936,938,944-948,950,956-957,960,962,968-976,978,984-988,990,996-997,1000-1001,1004,1008-1016,1018,1024-1025,1028,1030,1036,1038,1044-1049,1051,1053-1057,1059,1065-1069,1071,1077-1085,1087,1093,1096,1098-1099,1102,1104,1110,1112,1118,1122,1124,1130,1132-1133,1138,1146,1148,1154,1158,1160,1166,1174,1182,1186,1188,1194,1196,1202-1203,1206,1208,1214,1216,1222,1224,1230-1231,1234,1241,1243,1247-1251,1253,1259,1261,1267,1269,1274,1276,1278,1284,1288,1292-1293,1296,1300,1302,1308,1315,1317,1325,1329,1333-1334,1337,1341-1346,1348,1354,1356-1357,1362,1369,1371,1373,1379-1384,1387,1389,1395,1397,1403,1405,1411,1413,1419,1423,1431-1436,1439,1441,1447,1451,1455,1457,1463,1465,1471-1475,1477-1478,1483-1492,1494
+crates/oxc_ast_visit/src/generated/utf8_to_utf16_converter.rs
+  s_eead231a6741d5::t_2a8a559b2bab6f 1001,1003-1009
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_eead231a6741d5::t_cc55c2ddfd2414 1073-1074,1078-1079,1083-1084,2095-2098,3906,3908,3910,3913,3917,3925,3932,3934,3936-3952,3956,3958,3962-3963,3965
+crates/oxc_ast_visit/src/generated/visit_js.rs
+  s_eead231a6741d5::t_b1d9cbb0e90d7a 852-853,857-858,862-863,1764-1767,2985,2987,2989,2992,2996,3004,3011,3013,3015-3031,3035,3037,3041-3042,3044
+crates/oxc_ast_visit/src/generated/visit_js_mut.rs
+  s_eead231a6741d5::t_64ae6349879c31 844-845,849-850,854-855,1807-1810,3138,3140,3142,3145,3149,3157,3164,3166,3168-3184,3188,3190,3194-3195,3197
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_eead231a6741d5::t_4c41b4b33f5e8c 1065-1066,1070-1071,1075-1076,2132-2135,4123,4125,4127,4130,4134,4142,4149,4151,4153-4169,4173,4175,4179-4180,4182
+crates/oxc_codegen/src/gen.rs
+  s_eead231a6741d5::t_a9344aa7e97ad2 163-169,1079-1080,3976,3981,3983,3986-3987,3995,3997-4017,4019
+crates/oxc_codegen/tests/integration/snapshots/minify.snap
+  s_eead231a6741d5::t_0a3ca4b5bdb1ff 115,117
+crates/oxc_codegen/tests/integration/snapshots/ts.snap
+  s_eead231a6741d5::t_f234be84c34ed7 176,178
+crates/oxc_codegen/tests/integration/ts.rs
+  s_eead231a6741d5::t_c689193ca24d1f 104
+crates/oxc_ecmascript/src/side_effects/statements.rs
+  s_eead231a6741d5::t_e06e031c43b16c 95-96
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_eead231a6741d5::t_809a3fac47d9fc 196-197,399-400,602-603,800-801,3249-3258,9525,9532-9533,9537,9543,9547,9549,9570,9572-9614,9618,9623-9624,9631
+crates/oxc_formatter/src/ast_nodes/generated/format.rs
+  s_eead231a6741d5::t_a983188a7b3427 1888,1890-1900,5135,5148,5150-5155,5157,5161,5167,5169,5177
+crates/oxc_formatter/src/print/block_statement.rs
+  s_eead231a6741d5::t_25395c39f81403 83-84
+crates/oxc_formatter/src/print/class.rs
+  s_eead231a6741d5::t_f108267d018eb8 207
+crates/oxc_formatter/src/print/mapped_type.rs
+  s_eead231a6741d5::t_38c91671492c50 5-9,39-55,57-74,86-87,94-104
+crates/oxc_formatter/src/print/mod.rs
+  s_eead231a6741d5::t_784034c8d92a22 1944-1960,1970-1982
+crates/oxc_formatter/tests/fixtures/js/jsx/issue-16199.jsx.snap
+  s_eead231a6741d5::t_70ed1af924f15e 41
+crates/oxc_formatter/tests/fixtures/js/jsx/issue-21916.jsx
+  s_eead231a6741d5::t_ed364464a70b80 1-38
+crates/oxc_formatter/tests/fixtures/js/jsx/issue-21916.jsx.snap
+  s_eead231a6741d5::t_103ebaa17ec6e8 1-127
+crates/oxc_formatter/tests/fixtures/ts/comments/index-signature.ts
+  s_eead231a6741d5::t_df303c5c0d1a87 1-27
+crates/oxc_formatter/tests/fixtures/ts/comments/index-signature.ts.snap
+  s_eead231a6741d5::t_dc22a9ff8b88fd 1-96
+crates/oxc_formatter/tests/fixtures/ts/comments/mapped-type.ts
+  s_eead231a6741d5::t_5435d056a2ad38 7-29
+crates/oxc_formatter/tests/fixtures/ts/comments/mapped-type.ts.snap
+  s_eead231a6741d5::t_65105ba713deaa 12-34,46-68,79-101
+crates/oxc_formatter/tests/fixtures/ts/mapped-type/bracket-break.ts
+  s_eead231a6741d5::t_e24e10be023127 1-9
+crates/oxc_formatter/tests/fixtures/ts/mapped-type/bracket-break.ts.snap
+  s_eead231a6741d5::t_c218231ad0219f 1-80
+crates/oxc_formatter_core/src/printer/mod.rs
+  s_eead231a6741d5::t_b50ff64f4ee625 530-534,590,615-620,622-628,630,633-635,647-648,657-668,675,677-680,863-872,1015-1022,1034-1036,1075-1076,1083-1084,1351-1382,1386
+crates/oxc_formatter_css/tests/fixtures/format/scss/unknown-at-rule-key-value-interpolation.scss
+  s_eead231a6741d5::t_936b50ce877b36 1-16
+crates/oxc_formatter_css/tests/fixtures/format/scss/unknown-at-rule-key-value-interpolation.scss.snap
+  s_eead231a6741d5::t_c50a1f5c1278cf 1-63
+crates/oxc_isolated_declarations/src/declaration.rs
+  s_eead231a6741d5::t_3607e07044ccee 30,49,73,80,103,118,120-121,126-140,142,145-149,152,158,160,163,218-230
+crates/oxc_isolated_declarations/src/lib.rs
+  s_eead231a6741d5::t_65e5fdfa81068b 221,224-228,230-231,233-234,351,523,526,529-530,594,630
+crates/oxc_isolated_declarations/src/module.rs
+  s_eead231a6741d5::t_a6b217dd3e3d43 128
+crates/oxc_isolated_declarations/src/scope.rs
+  s_eead231a6741d5::t_3e2b0bf5cb1dda 202-206
+crates/oxc_linter/src/config/mod.rs
+  s_eead231a6741d5::t_3d00fc2ed2e30e 23
+crates/oxc_linter/src/config/plugins.rs
+  s_eead231a6741d5::t_cf6ac360e304eb 65-75
+crates/oxc_linter/src/config/rules.rs
+  s_eead231a6741d5::t_bc3e9b11d8eaaf 662-671,674,676-684,687,1013-1031
+crates/oxc_linter/src/context/host.rs
+  s_eead231a6741d5::t_3daedceed913da 18-21,33
+crates/oxc_linter/src/generated/rule_runner_impls.rs
+  s_eead231a6741d5::t_88c27e9dbbf820 1316-1320,1811,2090,4466-4470
+crates/oxc_linter/src/generated/rules_enum.rs
+  s_eead231a6741d5::t_dd5ac97181a899 171,298,1063,1563,1921-1922,2508-2509,2884,3494,3865,4465,4836,5476,5858,6458,6854,7638,8355-8357,9854-9855,10505,10999,11741-11743,13385-13387,14098,14594,14956,15450,15822,16316,16691,17291,17672,18166,18553,19337,19766,20406,20798,21464,21855,22455,22827,23321,23680,24174,24555,25155
+crates/oxc_linter/src/lib.rs
+  s_eead231a6741d5::t_2df8b0cf77a83e 66
+crates/oxc_linter/src/rules.rs
+  s_eead231a6741d5::t_bd341e85110d45 203,732
+crates/oxc_linter/src/rules/eslint/init_declarations.rs
+  s_eead231a6741d5::t_2bd01a1852bbb6 142,170
+crates/oxc_linter/src/rules/eslint/no_const_assign.rs
+  s_eead231a6741d5::t_1c5a44a4564342 8,63-66
+crates/oxc_linter/src/rules/eslint/no_magic_numbers.rs
+  s_eead231a6741d5::t_acca3be9d81d82 13,328,520-521,525-527
+crates/oxc_linter/src/rules/eslint/no_shadow/mod.rs
+  s_eead231a6741d5::t_d35468106b3915 12,389-392,407-408,472,475
+crates/oxc_linter/src/rules/eslint/no_unassigned_vars.rs
+  s_eead231a6741d5::t_1181b298db741b 62,69,82-84
+crates/oxc_linter/src/rules/eslint/no_underscore_dangle.rs
+  s_eead231a6741d5::t_c0e14d775d9e07 18,247
+crates/oxc_linter/src/rules/eslint/no_unused_vars/allowed.rs
+  s_eead231a6741d5::t_babcbcc4da4bc4 8-9,79-82,93-95,97-105,110-112,114,116-127,149,155-156,159,169,171-172,181,225-228
+crates/oxc_linter/src/rules/eslint/no_unused_vars/ignored.rs
+  s_eead231a6741d5::t_8a5d42f95eb1a9 153
+crates/oxc_linter/src/rules/eslint/no_unused_vars/mod.rs
+  s_eead231a6741d5::t_604ebbbe4bd83c 305,369
+crates/oxc_linter/src/rules/eslint/no_unused_vars/usage.rs
+  s_eead231a6741d5::t_3795e1665097bc 317-318
+crates/oxc_linter/src/rules/eslint/one_var.rs
+  s_eead231a6741d5::t_df7ab099a069e7 1-1976
+crates/oxc_linter/src/rules/eslint/prefer_destructuring.rs
+  s_eead231a6741d5::t_7adb9c2450f4b2 15,259
+crates/oxc_linter/src/rules/eslint/require_unicode_regexp.rs
+  s_eead231a6741d5::t_c817938c8aec84 17,330
+crates/oxc_linter/src/rules/jest/prefer_to_have_been_called.rs
+  s_eead231a6741d5::t_b236f06552ac56 105-106
+crates/oxc_linter/src/rules/jsdoc/no_blank_blocks.rs
+  s_eead231a6741d5::t_dde4366b8ae343 1-261
+crates/oxc_linter/src/rules/jsx_a11y/anchor_has_content.rs
+  s_eead231a6741d5::t_bf570d979d1ef1 1-3,11,17,30-46,80,87-90,95,151-156,167-171,204-205
+crates/oxc_linter/src/rules/oxc/bad_char_at_comparison.rs
+  s_eead231a6741d5::t_75fe640fd2a2e3 9-12,146-148,154,163-165
+crates/oxc_linter/src/rules/react/exhaustive_deps.rs
+  s_eead231a6741d5::t_5a1024f0be70f0 34,1134
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_called_with.rs
+  s_eead231a6741d5::t_8e0b2277514359 64
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_comparison_matcher.rs
+  s_eead231a6741d5::t_3d059f645cb219 12,91,116,155,160,165
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_equality_matcher.rs
+  s_eead231a6741d5::t_f807a04cdefe5a 12,101,119,134,140,145
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_to_be.rs
+  s_eead231a6741d5::t_af4b9fa19af540 112,226,230,280-281,299
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_to_contain.rs
+  s_eead231a6741d5::t_ede5fc36a83e5b 114-115
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_to_have_been_called_times.rs
+  s_eead231a6741d5::t_7e730184303b41 126
+crates/oxc_linter/src/rules/shared/jest_vitest/require_to_throw_message.rs
+  s_eead231a6741d5::t_7f05e961e54555 72
+crates/oxc_linter/src/rules/shared/jest_vitest/valid_expect.rs
+  s_eead231a6741d5::t_18f094160bef05 208
+crates/oxc_linter/src/rules/typescript/ban_ts_comment.rs
+  s_eead231a6741d5::t_a26383dcf668b6 7,11-12,50,53,127,137-158,160-165,200,291-292,295,1036-1047
+crates/oxc_linter/src/rules/typescript/ban_tslint_comment.rs
+  s_eead231a6741d5::t_6117fb890ade8f 44-53,60,96-97
+crates/oxc_linter/src/rules/typescript/consistent_generic_constructors.rs
+  s_eead231a6741d5::t_1ceff9ac84cb99 396-397,406-407
+crates/oxc_linter/src/rules/typescript/consistent_type_definitions.rs
+  s_eead231a6741d5::t_8dcdac38f1535f 111,198
+crates/oxc_linter/src/rules/typescript/no_namespace.rs
+  s_eead231a6741d5::t_fc0cc87e7785c0 1,127,131-133,145-146
+crates/oxc_linter/src/rules/typescript/prefer_namespace_keyword.rs
+  s_eead231a6741d5::t_6faf3e33888a28 1,68,70,74-76,82-83
+crates/oxc_linter/src/rules/unicorn/consistent_existence_index_check.rs
+  s_eead231a6741d5::t_7634541f3a0546 10,100-102,134-147
+crates/oxc_linter/src/rules/unicorn/no_array_fill_with_reference_type.rs
+  s_eead231a6741d5::t_54e679c87c70b0 11,137-139
+crates/oxc_linter/src/rules/unicorn/no_useless_undefined.rs
+  s_eead231a6741d5::t_45ee1272b285dc 230-231,234
+crates/oxc_linter/src/rules/unicorn/prefer_array_flat.rs
+  s_eead231a6741d5::t_bea90e3563e96f 14,164
+crates/oxc_linter/src/rules/unicorn/prefer_at.rs
+  s_eead231a6741d5::t_9162c9e68473a5 20,587
+crates/oxc_linter/src/rules/unicorn/prefer_import_meta_properties.rs
+  s_eead231a6741d5::t_ba01dfe65bb0be 14,332,395-397
+crates/oxc_linter/src/rules/unicorn/prefer_set_has.rs
+  s_eead231a6741d5::t_05b15279b4842a 11-14,139
+crates/oxc_linter/src/rules/unicorn/prefer_set_size.rs
+  s_eead231a6741d5::t_c8f9587a680041 11,153
+crates/oxc_linter/src/rules/unicorn/prefer_top_level_await.rs
+  s_eead231a6741d5::t_99c44bdd58ab23 9-12,165
+crates/oxc_linter/src/rules/vitest/prefer_called_times.rs
+  s_eead231a6741d5::t_a6968891dd8959 106
+crates/oxc_linter/src/rules/vitest/prefer_expect_type_of.rs
+  s_eead231a6741d5::t_1d9e8ceb8c63aa 123-128,130-136
+crates/oxc_linter/src/rules/vue/no_multiple_slot_args.rs
+  s_eead231a6741d5::t_442f112b639c93 12-15,171
+crates/oxc_linter/src/rules/vue/valid_define_options.rs
+  s_eead231a6741d5::t_d0e16ba44fe26b 10-13,211
+crates/oxc_linter/src/snapshots/eslint_one_var.snap
+  s_eead231a6741d5::t_d5a3ab61a0f10a 1-1181
+crates/oxc_linter/src/snapshots/jsdoc_no_blank_blocks.snap
+  s_eead231a6741d5::t_adbf88492558dc 1-71
+crates/oxc_linter/src/snapshots/jsx_a11y_anchor_has_content.snap
+  s_eead231a6741d5::t_515f882619b412 47-60
+crates/oxc_linter/src/utils/jest.rs
+  s_eead231a6741d5::t_273f00bbb76843 3,239-241,282-283
+crates/oxc_linter/src/utils/jest/parse_jest_fn.rs
+  s_eead231a6741d5::t_355ec6aa3af119 468-470
+crates/oxc_linter/src/utils/this_expression.rs
+  s_eead231a6741d5::t_8aa6c15f706ff4 12-15,79
+crates/oxc_linter/src/utils/typescript.rs
+  s_eead231a6741d5::t_44756f7fbde752 120-121
+crates/oxc_linter/src/utils/unicorn.rs
+  s_eead231a6741d5::t_c684348d12dec5 1-2,444-445
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_eead231a6741d5::t_a4e2825afc72a4 280-326,822-829,1757-1766,2247-2248,2529-2532,16234-16369,16373-16374,16378,16382,16389-16391,16395,16397-16398,16403,16405-16406,16413,16420,16426,16435-16436,16440,16444,16451-16453,16457,16459-16460,16465,16467-16468,16475,16482,16488
+crates/oxc_minifier/src/generated/traverse.rs
+  s_eead231a6741d5::t_f7334efb6f9d49 2177,2179,2184,2186,2192,2194,2199,2201,2207,2209,2214,2216
+crates/oxc_minifier/src/generated/walk.rs
+  s_eead231a6741d5::t_7fb094474a472f 1377-1378,1475-1479,5109,5111,5114-5116,5118,5120-5121,5125-5129,5135-5137,5139-5140,5146,5149,5151,5154-5186,5189,5191,5194,5196-5197,5199,5203
+crates/oxc_minifier/src/keep_var.rs
+  s_eead231a6741d5::t_05c193eb075796 83
+crates/oxc_minifier/src/peephole/inline.rs
+  s_eead231a6741d5::t_cd172c8ca60e36 14-17,30,34
+crates/oxc_minifier/src/peephole/minimize_statements.rs
+  s_eead231a6741d5::t_73f59bb52be1b1 439-442,455,601,608,630,1021,1025,1047,1050-1054,1143-1154,1156,1161,1163-1164,1166
+crates/oxc_minifier/src/peephole/remove_unused_declaration.rs
+  s_eead231a6741d5::t_01791849edb627 89,96,147,154
+crates/oxc_minifier/src/peephole/substitute_alternate_syntax.rs
+  s_eead231a6741d5::t_502a8f4b4d8764 173,998,1057-1061,1064,1072,1886-1889
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_eead231a6741d5::t_0688f1e58984e3 626-629,676-679,1957,1961-1963
+crates/oxc_parser/src/diagnostics.rs
+  s_eead231a6741d5::t_1666b1c13f2087 331-334
+crates/oxc_parser/src/js/declaration.rs
+  s_eead231a6741d5::t_76f570a5d6fe77 145-146,151,166-170,174,177
+crates/oxc_parser/src/js/statement.rs
+  s_eead231a6741d5::t_cb1256ba32af67 594
+crates/oxc_parser/src/lib.rs
+  s_eead231a6741d5::t_78639658d57a5d 939-941,992-993,995-1025
+crates/oxc_parser/src/ts/statement.rs
+  s_eead231a6741d5::t_0c4201bd41f9d9 393,395,399-401,403,405-407,414-418,421,432,509,511-512,516,521,529,532,663
+crates/oxc_react_compiler/fixtures/infer-functions-in-parameter-defaults.tsx
+  s_eead231a6741d5::t_6e1f110b8ca0ca 1-18
+crates/oxc_react_compiler/fixtures/infer-no-component-parenthesized-obj-return.js
+  s_eead231a6741d5::t_e4b7b9b9a954c2 1-4
+crates/oxc_react_compiler/src/react_compiler/entrypoint/program.rs
+  s_eead231a6741d5::t_f4293b98fb0d49 282-284,1354-1400,1613-1616,1654,1837,2808-2809
+crates/oxc_react_compiler/src/react_compiler_lowering/find_context_identifiers.rs
+  s_eead231a6741d5::t_9252911cd865fc 295-297
+crates/oxc_react_compiler/src/react_compiler_lowering/identifier_loc_index.rs
+  s_eead231a6741d5::t_9c44ebca0661ce 259-261
+crates/oxc_react_compiler/src/react_compiler_reactive_scopes/codegen_reactive_function.rs
+  s_eead231a6741d5::t_d98228a670e55d 1074,1118,1469
+crates/oxc_react_compiler/src/scope.rs
+  s_eead231a6741d5::t_0f4c01c0eba28d 5,239,320,596-598
+crates/oxc_react_compiler/tests/snapshots/infer-functions-in-parameter-defaults.snap
+  s_eead231a6741d5::t_796c40d9757f47 1-53
+crates/oxc_react_compiler/tests/snapshots/infer-no-component-parenthesized-obj-return.snap
+  s_eead231a6741d5::t_87749416dfd7f0 1-7
+crates/oxc_semantic/src/binder.rs
+  s_eead231a6741d5::t_40706d9f554335 20-24,26,45,451,453,490,498,510-511,528-529,537-570,607-611,632-636
+crates/oxc_semantic/src/builder.rs
+  s_eead231a6741d5::t_1196f60b8145a6 2642-2643,2647,2651,2659,2666-2688
+crates/oxc_semantic/src/checker/javascript.rs
+  s_eead231a6741d5::t_78379eef86eef9 257,619-622
+crates/oxc_semantic/src/checker/mod.rs
+  s_eead231a6741d5::t_267be592060cb0 108-113
+crates/oxc_semantic/src/checker/typescript.rs
+  s_eead231a6741d5::t_3540729bb923c5 101-114,116,135-136,145,151-183,294-295,298-300,302
+crates/oxc_semantic/src/diagnostics.rs
+  s_eead231a6741d5::t_f4e7894966f778 364-375
+crates/oxc_semantic/src/lib.rs
+  s_eead231a6741d5::t_f848b87f1226ef 323-331
+crates/oxc_semantic/tests/conformance/test_symbol_declaration.rs
+  s_eead231a6741d5::t_23caafb766ba87 3,105
+crates/oxc_semantic/tests/fixtures/oxc/ts/namespaces/value-module.snap
+  s_eead231a6741d5::t_69bfece5926448 20,54
+crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals-type.snap
+  s_eead231a6741d5::t_b8c6ef9f5c629c 12,21,27,33,47,62
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/declaration-merging/class-namespace.snap
+  s_eead231a6741d5::t_6e35cad43b4cc7 19
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/declaration-merging/function-namespace.snap
+  s_eead231a6741d5::t_e796927459e687 19
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/declaration-merging/namespace-variable.snap
+  s_eead231a6741d5::t_5ba328d83823d0 12,24
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/external-ref.snap
+  s_eead231a6741d5::t_002d5a54e3fd28 12,32
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/import.snap
+  s_eead231a6741d5::t_261149a6b29c7a 12
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/name-shadowed-in-body.snap
+  s_eead231a6741d5::t_05e2d27580ff06 12,32
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/namespace.snap
+  s_eead231a6741d5::t_4841622b68beda 12,32
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/scope.snap
+  s_eead231a6741d5::t_75904b7570e46e 12,32
+crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/self-ref.snap
+  s_eead231a6741d5::t_88f6f280dea9b9 12,32
+crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/interface-heritage2.snap
+  s_eead231a6741d5::t_642c9643b0bf65 27,61
+crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/qualified-name-shadowing-extends.snap
+  s_eead231a6741d5::t_30ec8ade61d748 36,79
+crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/qualified-name-shadowing-nested.snap
+  s_eead231a6741d5::t_e65949932e33d8 38,52,58,95
+crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/qualified-name-shadowing.snap
+  s_eead231a6741d5::t_ce02caf1a4eb69 36,79
+crates/oxc_semantic/tests/integration/modules.rs
+  s_eead231a6741d5::t_fa09aa26218f35 5-20
+crates/oxc_transformer/src/common/module_imports.rs
+  s_eead231a6741d5::t_688331eca017d1 195
+crates/oxc_transformer/src/common/var_declarations.rs
+  s_eead231a6741d5::t_e9c751ca014465 149,161
+crates/oxc_transformer/src/es2018/async_generator_functions/for_await.rs
+  s_eead231a6741d5::t_7c90ff1dddd8ae 125,128
+crates/oxc_transformer/src/es2018/object_rest_spread.rs
+  s_eead231a6741d5::t_a93f2a5daaca0c 219,460,638,676-677,799,819,836,846,854,919-920,981,983,1049
+crates/oxc_transformer/src/es2026/explicit_resource_management.rs
+  s_eead231a6741d5::t_2574eb02a4bf31 477-478
+crates/oxc_transformer/src/jsx/jsx_source.rs
+  s_eead231a6741d5::t_6aaa8d0d942eed 198
+crates/oxc_transformer/src/typescript/annotations.rs
+  s_eead231a6741d5::t_8ddb5b743bc284 521,524-525,534,537-542
+crates/oxc_transformer/src/typescript/enum.rs
+  s_eead231a6741d5::t_e26b705351c6b9 298-299
+crates/oxc_transformer/src/typescript/module.rs
+  s_eead231a6741d5::t_147b64a157cd36 180
+crates/oxc_transformer/src/typescript/namespace.rs
+  s_eead231a6741d5::t_19b956ccc582ac 47-55,74-75,78-97,112-117,121,131,180,189,198-199,211-214,219-220,257-258,260-261,266-269,341,562-564,566-570
+crates/oxc_transformer_plugins/src/module_runner_transform.rs
+  s_eead231a6741d5::t_096a46a134b07b 766,891
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_eead231a6741d5::t_f5a91c304efe23 280-326,822-829,1757-1766,2247-2248,2529-2532,16234-16369,16373-16374,16378,16382,16389-16391,16395,16397-16398,16403,16405-16406,16413,16420,16426,16435-16436,16440,16444,16451-16453,16457,16459-16460,16465,16467-16468,16475,16482,16488
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_eead231a6741d5::t_edd95a8ff54e4e 626-629,676-679,1957,1961-1963
+crates/oxc_traverse/src/generated/traverse.rs
+  s_eead231a6741d5::t_39604c7cc2456b 2728,2730,2735,2737,2743,2745,2750,2752,2758,2760,2765,2767
+crates/oxc_traverse/src/generated/walk.rs
+  s_eead231a6741d5::t_d66ff314658233 1377-1378,1475-1479,5109,5111,5114-5116,5118,5120-5121,5125-5129,5135-5137,5139-5140,5146,5149,5151,5154-5186,5189,5191,5194,5196-5197,5199,5203
+crates/oxc_type_checker/src/compiler/references.rs
+  s_eead231a6741d5::t_719cb8dc9f09d7 15,201-202,216
+napi/parser/src-js/generated/deserialize/js.js
+  s_eead231a6741d5::t_35ef31bd179cba 1175,1177,1179-1180,1250,1252,1254-1255,3817-3818,3820-3821,3825-3826,3832-3841,3851-3863,3865-3872,3874-3881,3883-3884,3889,3896,3900,3903,3907,5201-5206,5899-5904
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_eead231a6741d5::t_727390a7b0f498 1287,1289,1291-1292,1369,1371,1373-1374,4252-4253,4255,4257-4258,4261-4262,4268-4282,4292-4311,4313-4321,4323-4334,4336-4338,4344,4351,4355,4358,4362,5727-5732,6425-6430
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_eead231a6741d5::t_98a7214614915b 1290,1292,1294-1295,1373,1375,1377-1378,4269-4270,4272-4273,4277-4278,4285-4294,4305-4328,4330-4339,4341-4342,4347,4354,4358,4361,4365,5759-5764,6457-6462
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_eead231a6741d5::t_b81530b2276210 1401,1403,1405-1406,1491,1493,1495-1496,4702-4703,4705,4707-4708,4711-4712,4719-4733,4744-4756,4760-4762,4764-4776,4778-4791,4793-4795,4801,4808,4812,4815,4819,6284-6289,6982-6987
+napi/parser/src-js/generated/deserialize/ts.js
+  s_eead231a6741d5::t_f662b60955ce7c 1246,1248,1250-1251,1321,1323,1325-1326,1368,4111-4112,4114-4115,4119-4120,4126-4135,4145-4157,4159-4166,4168-4175,4177-4178,4183,4190,4194,4197,4201,5498-5503,6212-6217
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_eead231a6741d5::t_92d27f7884138e 1358,1360,1362-1363,1440,1442,1444-1445,1491,4576-4577,4579,4581-4582,4585-4586,4592-4606,4616-4635,4637-4645,4647-4658,4660-4662,4668,4675,4679,4682,4686,6054-6059,6768-6773
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_eead231a6741d5::t_368c2c55a37737 1361,1363,1365-1366,1444,1446,1448-1449,1496,4591-4592,4594-4595,4599-4600,4607-4616,4627-4650,4652-4661,4663-4664,4669,4676,4680,4683,4687,6084-6089,6798-6803
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_eead231a6741d5::t_b6664a6d2cfab0 1472,1474,1476-1477,1562,1564,1566-1567,1618,5054-5055,5057,5059-5060,5063-5064,5071-5085,5096-5108,5112-5114,5116-5128,5130-5143,5145-5147,5153,5160,5164,5167,5171,6639-6644,7353-7358
+napi/parser/src-js/generated/lazy/constructors.js
+  s_eead231a6741d5::t_2b8e192469b602 2681,2683,2685-2686,2874,2876,2878-2879,3003,10564-10565,10591,10596-10654,10659,10664,10669,10680,10684,10686,10693,10697,10700,10704,13372-13377,14018-14022
+napi/parser/src-js/generated/lazy/type_ids.js
+  s_eead231a6741d5::t_736cb7fc9998a0 167-191,194
+napi/parser/src-js/generated/lazy/walk.js
+  s_eead231a6741d5::t_342d2a13ac68c5 163-164,1516,1519,1522-1524,1598,1601,1604-1606,4443,4450,4454-4455,4460-4468,4470-4474,4477,4480,4486,4491,4507,4523,4539,4555,4591,4623,4640,4658,4676,4695,4712,4729,4746,4763,4796,4812,4828,4844,4860,4876,4893,4909,5343-5348,5991-5995
+npm/oxc-types/types.d.ts
+  s_eead231a6741d5::t_9a9b0b3ea4fc49 1480-1481
+npm/oxlint/configuration_schema.json
+  s_eead231a6741d5::t_834f752b50346b 675-689,2052-2060,2118,3584-3603,3798-3815,5908-5927,13793-13804,16674-16820
+pnpm-lock.yaml
+  s_eead231a6741d5::t_3d7835b2dbb5e3 46-47,53,65,68,120,206-207,222,240,306-307,388,397,2043-2044,2205-2206,2217-2218,2229-2230,2241-2242,2253-2254,2265-2266,2277-2278,2289-2290,2303-2304,2317-2318,2331-2332,2345-2346,2359-2360,2373-2374,2387-2388,2401-2402,2413-2414,2425-2426,2437-2438,2749-2750,2755-2756,2761-2762,2767-2768,2773-2774,2779-2780,2786-2787,2793-2794,2800-2801,2807-2808,2814-2815,2821-2822,2827-2828,2833-2834,3203-3204,3209,3260-3261,3266-3267,3272-3273,3279-3280,3286-3287,3293-3294,3300-3301,3306-3307,4763-4764,5017,5030-5031,5397-5398,6924,7005,7011,7017,7023,7029,7035,7041,7047,7053,7059,7065,7071,7077,7083,7089,7095,7101,7107,7113,7484,7487,7490,7493,7496,7499,7502,7505,7508,7511,7514,7517,7520,7523,7944,7946-7947,7955-7962,7970,7972-7973,7981-7988,7996,7998-7999,8007-8014,8022,8025,8028,8031,8034,8037,8040,8043,9424,9428-9446,9448,9450,9454-9472,9474,9476,9480-9498,9500,9502,9526,9537,9539-9557,9559,9561,9563-9581,9583,9585,9587-9605,9607,9610,9612-9630,9632,9634,9656,9797,9802,9811,9816,9825,9827,9830-9843,10130-10131,10158-10159,10254,10256,10267-10269,10274-10281,10313,10315,10326-10328,10333-10340,10372,10374,10385-10387,10392-10399,10432,10434,10445-10447,10452-10459
+pnpm-workspace.yaml
+  s_eead231a6741d5::t_2dee3c56c8d20d 23,25
+tasks/ast_tools/src/generators/traverse/walk.rs
+  s_eead231a6741d5::t_143d7602d6b75a 312-313
+tasks/ast_tools/src/generators/visit_js.rs
+  s_eead231a6741d5::t_53cd599757ade9 81-83
+tasks/coverage/snapshots/parser_babel.snap
+  s_eead231a6741d5::t_1a6a9871deef45 5,251-278
+tasks/coverage/snapshots/parser_typescript.snap
+  s_eead231a6741d5::t_e1d78e6da935c0 6,9332,9366,9400,10974-11015,11177-11276,11294-11300,14280-14287,14297-14304,26820-26826
+tasks/coverage/snapshots/semantic_babel.snap
+  s_eead231a6741d5::t_be77b3c87d3710 5,289-290,448-450
+tasks/lint_rules/src/unsupported-rules.json
+  s_eead231a6741d5::t_8026cfa77040bb 33-34
+tasks/prettier_conformance/snapshots/prettier.ts.snap.md
+  s_eead231a6741d5::t_45f0f873c3affa 1,58
+tasks/track_linter_timings/linter_timings.snap
+  s_eead231a6741d5::t_5358cc31ae0eae 158,285,505,524
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_eead231a6741d5::t_eee7ec20af0b17 6,8,10,21,32,43,74,76
+tasks/transform_conformance/snapshots/babel.snap.md
+  s_eead231a6741d5::t_b56b8b3ac0be7c 3,1058
+crates/oxc_linter/src/ast_util.rs
+  s_eead231a6741d5::t_3db0dbb8a38ecc 24-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "868e4dfc2af7471ae48cee5f44a7620d5707e84b",
+  "prompts": {},
+  "sessions": {
+    "s_eead231a6741d5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd742-5dfa-7731-ac9c-d5f446174692",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

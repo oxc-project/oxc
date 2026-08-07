@@ -1,0 +1,23 @@
+crates/oxc_linter/src/config/rules.rs
+  s_d6b486dc86f567::t_d76e8db886bab4 668,1024-1029
+crates/oxc_linter/src/config/plugins.rs
+  s_d6b486dc86f567::t_96058045070aed 65-75
+crates/oxc_linter/src/context/host.rs
+  s_d6b486dc86f567::t_e9a514be029420 18-21,33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c112107a9ee8ca434fdb44f522fe74b3dd01c93c",
+  "prompts": {},
+  "sessions": {
+    "s_d6b486dc86f567": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fd23a-8817-71a2-bb69-a7ebf8d0fa77",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
