@@ -418,9 +418,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         decorators: ArenaVec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
-        // `new.target` is allowed in a class accessor field initializer.
         let value = self.eat(Kind::Eq).then(|| {
-            self.context_add(Context::NewTarget, Self::parse_assignment_expression_or_higher)
+            self.context(
+                Context::In | Context::NewTarget,
+                Context::Yield | Context::Await,
+                Self::parse_assignment_expression_or_higher,
+            )
         });
         self.asi();
         let r#type = if modifiers.contains(ModifierKind::Abstract) {

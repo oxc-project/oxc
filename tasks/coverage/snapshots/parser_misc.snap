@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 75/75 (100.00%)
-Positive Passed: 75/75 (100.00%)
-Negative Passed: 156/156 (100.00%)
+AST Parsed     : 76/76 (100.00%)
+Positive Passed: 76/76 (100.00%)
+Negative Passed: 158/158 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -135,6 +135,24 @@ Negative Passed: 156/156 (100.00%)
  16 │ }
     ╰────
   note: Classes are always strict mode code
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = await 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[misc/fail/auto-accessor-initializer-yield.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = yield 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
 
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
