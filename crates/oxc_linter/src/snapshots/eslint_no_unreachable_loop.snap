@@ -5688,6 +5688,90 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
    ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ function f() { while (a) { try { if (b) return; else return; } finally { bar(); } } }
+   ·                ────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) { try { if (b) break; else break; } finally { bar(); } }
+   · ──────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ function f() { while (a) { try { if (b) return; else throw err; } finally { bar(); } } }
+   ·                ───────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ function f() { while (a) { try { switch (b) { case 1: return; default: return; } } finally { bar(); } } }
+   ·                ────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:34]
+ 1 │ function f() { while (a) { try { for (;;) { return; } } finally { bar(); } } }
+   ·                                  ────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ function f() { while (a) { try { foo(); } finally { return; } } }
+   ·                ────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) { try { foo(); } finally { break; } }
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ function f() { while (a) { try { return; } finally { bar(); } } }
+   ·                ────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) { try { break; } finally { bar(); } }
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:1]
+ 1 │ while (a) { try { throw err; } finally { bar(); } }
+   · ───────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ function f() { while (a) { try { foo(); } finally { bar(); } return; } }
+   ·                ───────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
+ 1 │ function f() { while (a) { try { return; } catch (e) { return; } finally { bar(); } } }
+   ·                ──────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Remove the loop or make at least one path continue to the next iteration.
+
+  ⚠ eslint(no-unreachable-loop): Invalid loop. Its body allows only one iteration.
+   ╭─[no_unreachable_loop.tsx:1:16]
  1 │ function f() { while (a) { try { ; return; } catch { continue; } } }
    ·                ───────────────────────────────────────────────────
    ╰────
