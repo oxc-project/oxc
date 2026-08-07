@@ -4404,7 +4404,7 @@ function walkTSInterfaceHeritage(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkTSTypeName(pos + 16, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);

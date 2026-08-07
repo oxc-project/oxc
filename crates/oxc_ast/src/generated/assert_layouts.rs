@@ -1564,7 +1564,7 @@ const _: () = {
     assert!(align_of::<TSInterfaceHeritage>() == 8);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, node_id) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, expression) == 16);
+    assert!(offset_of!(TSInterfaceHeritage, type_name) == 16);
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 32);
 
     // Padding: 3 bytes
@@ -3401,7 +3401,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<TSInterfaceHeritage>() == 4);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, node_id) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, expression) == 12);
+    assert!(offset_of!(TSInterfaceHeritage, type_name) == 12);
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 20);
 
     // Padding: 3 bytes

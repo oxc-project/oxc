@@ -1214,6 +1214,14 @@ parser_diagnostics! {
         .with_label(span)
     };
 
+    empty_extends_clause(span: Span) => {
+        ts_error("1097", "'extends' list cannot be empty.").with_label(span)
+    };
+
+    trailing_comma_not_allowed(span: Span) => {
+        ts_error("1009", "Trailing comma not allowed.").with_label(span)
+    };
+
     reg_exp_flag_u_and_v(span: Span) => {
         ts_error("1502", "The 'u' and 'v' regular expression flags cannot be enabled at the same time")
             .with_label(span)
