@@ -424,7 +424,7 @@ fn walk_and_stream(
 
     // Git-related settings come from the shared helper to align with Oxlint.
     // NOTE: Prettier only reads `.gitignore` in the cwd and does not respect `.git/info/exclude`.
-    configure_walk_builder(&mut inner, has_vcs_boundary)
+    configure_walk_builder(&mut inner, has_vcs_boundary, true)
         // Do not follow symlinks like Prettier does.
         // See https://github.com/prettier/prettier/pull/14627
         .follow_links(false)
