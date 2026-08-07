@@ -34,7 +34,7 @@ RadixUIAdoptionSection.jsx:
 pdf.mjs:
   file size: 567296 # 567.30 kB
   sys allocs: 2467
-  sys reallocs: 205
+  sys reallocs: 203
   sys deallocs: 2467
   sys alloc bytes: 5334247 # 5.33 MB
   sys peak growth: 3693355 # 3.69 MB
@@ -44,9 +44,9 @@ pdf.mjs:
 
 antd.js:
   file size: 6686316 # 6.69 MB
-  sys allocs: 1038
-  sys reallocs: 56
-  sys deallocs: 1038
+  sys allocs: 1037
+  sys reallocs: 54
+  sys deallocs: 1037
   sys alloc bytes: 29976031 # 29.98 MB
   sys peak growth: 19934725 # 19.93 MB
   arena allocs: 371736

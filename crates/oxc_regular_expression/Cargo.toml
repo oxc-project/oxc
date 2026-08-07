@@ -29,6 +29,7 @@ oxc_str = { workspace = true }
 bitflags = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
+smallvec = { workspace = true }
 unicode-id-start = { workspace = true }
 
 [dev-dependencies]

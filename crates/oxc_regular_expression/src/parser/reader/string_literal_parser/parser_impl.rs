@@ -1,5 +1,6 @@
 use oxc_diagnostics::Result;
 use oxc_span::Span;
+use smallvec::SmallVec;
 
 use crate::parser::reader::{
     CodePoint, Options,
@@ -20,8 +21,8 @@ pub fn parse_regexp_literal(
     source_text: &str,
     span_offset: u32,
     combine_surrogate_pair: bool,
-) -> Vec<CodePoint> {
-    let mut body = vec![];
+) -> SmallVec<[CodePoint; 8]> {
+    let mut body = SmallVec::new();
 
     let mut offset = 0;
     for ch in source_text.chars() {
@@ -50,8 +51,8 @@ pub struct Parser {
 
 impl Parser {
     // This is public because it is used in `parse_regexp_literal()`.
-    pub fn handle_code_point(
-        body: &mut Vec<CodePoint>,
+    pub fn handle_code_point<T: Extend<CodePoint>>(
+        body: &mut T,
         (offsets, cp, escape_kind): OffsetsAndCp,
         span_offset: u32,
         combine_surrogate_pair: bool,
@@ -60,13 +61,15 @@ impl Parser {
 
         if combine_surrogate_pair || (0..=0xffff).contains(&cp) {
             // If the code point is in the BMP or if forced, just push it
-            body.push(CodePoint { span, value: cp, escape_kind });
+            body.extend([CodePoint { span, value: cp, escape_kind }]);
         } else {
             // Otherwise, split the code point into a surrogate pair, sharing the same span
             let (lead, trail) =
                 (0xd800 + ((cp - 0x10000) >> 10), 0xdc00 + ((cp - 0x10000) & 0x3ff));
-            body.push(CodePoint { span, value: lead, escape_kind });
-            body.push(CodePoint { span, value: trail, escape_kind });
+            body.extend([
+                CodePoint { span, value: lead, escape_kind },
+                CodePoint { span, value: trail, escape_kind },
+            ]);
         }
     }
 

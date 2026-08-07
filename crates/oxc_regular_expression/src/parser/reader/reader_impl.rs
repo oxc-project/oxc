@@ -1,5 +1,6 @@
 use oxc_diagnostics::Result;
 use oxc_str::Str;
+use smallvec::SmallVec;
 
 use crate::parser::reader::{
     Options,
@@ -13,7 +14,7 @@ use crate::parser::reader::{
 #[derive(Debug)]
 pub struct Reader<'a> {
     source_text: &'a str,
-    units: Vec<CodePoint>,
+    units: SmallVec<[CodePoint; 8]>,
     index: usize,
     offset: u32,
 }
@@ -40,7 +41,7 @@ impl<'a> Reader<'a> {
                     },
                 )
                 .parse()?;
-                body
+                SmallVec::from_vec(body)
             } else {
                 let StringLiteralAst::StringLiteral { body, .. } = StringLiteralParser::new(
                     source_text,
@@ -51,7 +52,7 @@ impl<'a> Reader<'a> {
                     },
                 )
                 .parse()?;
-                body
+                SmallVec::from_vec(body)
             }
         } else {
             parse_regexp_literal(source_text, span_offset, unicode_mode)

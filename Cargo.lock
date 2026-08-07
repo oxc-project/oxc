@@ -2507,6 +2507,7 @@ dependencies = [
  "oxc_str",
  "phf",
  "rustc-hash",
+ "smallvec",
  "unicode-id-start",
 ]
 
