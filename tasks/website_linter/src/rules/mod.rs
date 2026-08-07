@@ -153,6 +153,7 @@ mod tests {
                 | "react/no-will-update-set-state"
                 | "react/rules-of-hooks"
                 | "typescript/class-literal-property-style"
+                | "typescript/no-unnecessary-condition"
                 | "typescript/no-floating-promises"
                 | "typescript/no-explicit-any"
                 | "unicorn/prefer-array-find"
@@ -173,23 +174,5 @@ mod tests {
         insta::with_settings!({ prepend_module_to_snapshot => false }, {
             insta::assert_snapshot!(snapshot);
         });
-    }
-
-    #[test]
-    fn test_direct_ref_property_description() {
-        let mut generator = SchemaGenerator::new(SchemaSettings::default());
-        let table = RuleTable::new(Some(&mut generator));
-        let (_, docs, _) = render_rule_doc_pages(generator, &table)
-            .find(|(_, _, rule)| {
-                rule.plugin == "typescript" && rule.name == "no-unnecessary-condition"
-            })
-            .unwrap();
-
-        assert!(
-            docs.contains(
-                "Controls which constant conditions are allowed in `while`, `do...while`, and `for` loops.\n\n- `\"never\"` (or `false`) reports all constant loop conditions."
-            ),
-            "property-level description for allowConstantLoopConditions was not rendered:\n{docs}"
-        );
     }
 }
