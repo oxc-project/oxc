@@ -4,6 +4,8 @@ use bpaf::{Bpaf, Parser};
 #[cfg(feature = "napi")]
 use cow_utils::CowUtils;
 
+use oxc_config::NoIgnoreKinds;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[expect(clippy::ptr_arg)]
@@ -151,16 +153,29 @@ pub struct ConfigOptions {
     pub disable_nested_config: bool,
 }
 
+/// What the `cli` kind covers in Oxfmt;
+/// the rest of the `--no-ignore` help text is assembled by [`oxc_config::no_ignore_kinds`].
+const CLI_KIND_HELP: &str = "`.prettierignore` files, `--ignore-path` flags and `!` prefixed exclude paths (those are ignored even when passed)";
+
+/// Tell `oxc_config` about Oxfmt specific `cli` kind, and also default kind for bare `--no-ignore`.
+/// Note that the hardcoded skips (VCS directories and `node_modules`) are kept;
+/// `node_modules` is opted in separately via `--with-node-modules`.
+fn no_ignore_kinds() -> impl Parser<NoIgnoreKinds> {
+    oxc_config::no_ignore_kinds(NoIgnoreKinds::ALL_NAME, CLI_KIND_HELP)
+}
+
 /// Ignore Options
 #[derive(Debug, Clone, Bpaf)]
 pub struct IgnoreOptions {
     /// Path to ignore file(s). Can be specified multiple times.
-    /// If not specified, .gitignore and .prettierignore in the current directory are used.
+    /// If not specified, `.prettierignore` in the current directory is used.
     #[bpaf(argument("PATH"), many, hide_usage)]
     pub ignore_path: Vec<PathBuf>,
     /// Format code in node_modules directory (skipped by default)
     #[bpaf(switch, hide_usage)]
     pub with_node_modules: bool,
+    #[bpaf(external(no_ignore_kinds), hide_usage)]
+    pub no_ignore: NoIgnoreKinds,
 }
 
 /// Runtime Options

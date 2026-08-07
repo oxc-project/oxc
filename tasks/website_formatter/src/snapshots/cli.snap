@@ -42,9 +42,15 @@ search: false
 
 ## Ignore Options
 - **`    --ignore-path`**=_`PATH`_ &mdash; 
-  Path to ignore file(s). Can be specified multiple times. If not specified, .gitignore and .prettierignore in the current directory are used.
+  Path to ignore file(s). Can be specified multiple times. If not specified, `.prettierignore` in the current directory is used.
 - **`    --with-node-modules`** &mdash; 
   Format code in node_modules directory (skipped by default)
+- **`    --no-ignore`** &mdash; 
+  Disable ignore sources; without a value, disables `all`. Takes an optional comma-separated list of kinds attached with `=`, e.g. `--no-ignore=vcs,config`:
+ * `vcs` - `.gitignore` files and `.git/info/exclude`
+ * `cli` - `.prettierignore` files, `--ignore-path` flags and `!` prefixed exclude paths (those are ignored even when passed)
+ * `config` - `ignorePatterns` in config files
+ * `all` - all of the above
 
 
 
