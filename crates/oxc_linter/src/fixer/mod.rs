@@ -413,8 +413,6 @@ impl<'a> Fixer<'a> {
 
         output.push_str(&source_text[last_pos as usize..]);
 
-        filtered_messages.sort_unstable_by_key(GetSpan::span);
-
         #[cfg(debug_assertions)]
         if fixed && let Some(source_type) = self.source_type {
             use oxc_allocator::Allocator;
@@ -495,14 +493,6 @@ mod test {
 
     fn no_fix(span: Span) -> OxcDiagnostic {
         OxcDiagnostic::warn("nofix").with_label(span)
-    }
-
-    fn no_fix_1(span: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix1").with_label(span)
-    }
-
-    fn no_fix_2(span: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix2").with_label(span)
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
@@ -764,20 +754,6 @@ mod test {
         assert_eq!(result.messages.len(), 1);
         assert_eq!(result.messages[0].error.to_string(), "nofix");
         assert!(!result.fixed);
-    }
-
-    #[test]
-    fn sort_no_fix_messages_correctly() {
-        let result = get_fix_result(vec![
-            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
-            Message::new(no_fix_2(Span::new(1, 7)), PossibleFixes::None),
-            Message::new(no_fix_1(Span::new(1, 3)), PossibleFixes::None),
-        ]);
-        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
-        assert_eq!(result.messages.len(), 2);
-        assert_eq!(result.messages[0].error.to_string(), "nofix1");
-        assert_eq!(result.messages[1].error.to_string(), "nofix2");
-        assert!(result.fixed);
     }
 
     fn assert_fixed_corrected(source_text: &str, expected: &str, composite_fix: CompositeFix) {
