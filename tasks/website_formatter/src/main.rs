@@ -12,7 +12,12 @@ fn main() {
 
     match task {
         "cli" => cli::print_cli(),
-        "schema-json" => json_schema::print_schema_json(),
+        "schema-json" => {
+            let root = project_root::get_project_root().expect("project root");
+            json_schema::write_schema_json(
+                root.join("npm/oxfmt/configuration_schema.json").to_str().expect("valid path"),
+            );
+        }
         "schema-markdown" => json_schema::print_schema_markdown(),
         _ => eprintln!("Missing task command."),
     }

@@ -12,7 +12,12 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
 
     match task {
-        "schema-json" => json_schema::print_schema_json(),
+        "schema-json" => {
+            let root = project_root::get_project_root().expect("project root");
+            json_schema::write_schema_json(
+                root.join("npm/oxlint/configuration_schema.json").to_str().expect("valid path"),
+            );
+        }
         "schema-markdown" => json_schema::print_schema_markdown(),
         "schema-markdown-lsp" => json_schema::print_schema_markdown_lsp(),
         "cli" => cli::print_cli(),

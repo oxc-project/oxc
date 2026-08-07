@@ -16,12 +16,12 @@ doctest = false
 bpaf = { workspace = true, features = ["docgen"] }
 oxfmt = { workspace = true }
 pico-args = { workspace = true }
+project-root = { workspace = true }
 schemars = { workspace = true }
 website_common = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-project-root = { workspace = true }
 
 [package.metadata.cargo-shear]
 ignored = ["bpaf"]
