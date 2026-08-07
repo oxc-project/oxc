@@ -2326,6 +2326,7 @@ function deserializeFormalParameters(pos) {
         range: [start, end],
         parent: previousParent,
       });
+    rest.decorators = deserializeVecDecorator(pos + 16);
     rest.argument = deserializeBindingPattern(pos + 56);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
     if (rest.typeAnnotation !== null) {
