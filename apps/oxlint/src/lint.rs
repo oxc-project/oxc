@@ -856,16 +856,19 @@ mod test {
         let (_, result) = run(&[]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
 
-        // Explicitly passed gitignored targets are skipped too;
-        // bare `--no-ignore` only disables the `cli` ignore sources, not git's.
+        // Explicitly passed gitignored targets are skipped too,
+        // and `--no-ignore=cli` (the historical bare behavior) keeps git's sources active.
         let (_, result) = run(&["index.ts"]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
-        let (_, result) = run(&["--no-ignore", "index.ts"]);
+        let (_, result) = run(&["--no-ignore=cli", "index.ts"]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
 
-        // `--no-ignore=vcs` disables the gitignore layer, both for explicit targets and for the walk.
+        // `--no-ignore=vcs` disables the gitignore layer, both for explicit targets and for the walk;
+        // bare `--no-ignore` now disables every ignore source.
         // https://github.com/oxc-project/oxc/issues/25259
         let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore=vcs", "index.ts"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore", "index.ts"]);
         assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
         let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore=all"]);
         assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
