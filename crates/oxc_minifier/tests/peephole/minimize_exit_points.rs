@@ -25,6 +25,8 @@ fn test_break_optimization() {
     test("f:g:{if(a()){break f;}else{break f;} break f;}", "f:g:{if(a())break f;break f}"); // f:g:a();
     test("function f() { a: break a; }", "function f() {}");
     test("function f() { a: { break a; } }", "function f() {}");
+    test("function f() { a: { b(); break a; } c(); }", "function f() {a: b();c();}");
+    test_same("function f() { a: { b(); return; } c(); }");
 }
 
 #[test]
@@ -155,13 +157,10 @@ fn test_while_continue_optimization() {
         "for(;;)try{if(a())continue;continue}catch{}",
     ); // for(;;)try{a()}catch{}
 
-    test("while(true){g:continue}", "for(;;);"); // for(;;);
-    test("while(true){g:{continue}}", "for(;;)g:continue;"); // for(;;);
+    test("while(true){g:continue}", "for(;;);");
+    test("while(true){g:{continue}}", "for(;;);");
     // This case could be improved.
-    test(
-        "while(true){g:if(a()){continue;}else{continue;} continue;}",
-        "for(;;)g:if(a())continue;else continue;",
-    );
+    test("while(true){g:if(a()){continue;}else{continue;} continue;}", "for(;;)g:a();");
     test("while(true){g:{if(a()){continue;}else{continue;} continue;}}", "for(;;)g:a();");
     test("while(true){g:{a();if(b()){continue;}else{continue;} continue;}}", "for(;;)g:a(),b();");
 }
@@ -282,7 +281,7 @@ fn test_for_continue_optimization() {
     test("for(x=0;x<y;x++){g:{continue}}", "for(x=0;x<y;x++);"); // for(x=0;x<y;x++);
     test(
         "for(x=0;x<y;x++){g:if(a()){continue;}else{continue;} continue;}",
-        "for(x=0;x<y;x++)g:if(a())continue;else continue;",
+        "for(x=0;x<y;x++)g:a();",
     );
     test(
         "for(x=0;x<y;x++){g:{if(a()){continue;}else{continue;} continue;}}",

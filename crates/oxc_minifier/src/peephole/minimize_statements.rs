@@ -2074,7 +2074,8 @@ impl<'a> PeepholeOptimizations {
                             return stmt.label.is_none()
                                 && do_while.test().get_side_free_boolean_value(ctx) == Some(false);
                         }
-                        Ancestor::BlockStatementBody(_) if index == 0 => {}
+                        Ancestor::BlockStatementBody(_)
+                            if skip_first_transparent_body && index == 0 => {}
                         Ancestor::LabeledStatementBody(label_stmt) => {
                             if let Some(label) = &stmt.label {
                                 return label.name == label_stmt.label().name;
