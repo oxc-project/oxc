@@ -1,0 +1,427 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
+---
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:5:19]
+ 4 │ 
+ 5 │                   count++ // error
+   ·                   ─────
+ 6 │                   console.log(count + 1) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:6:31]
+ 5 │                   count++ // error
+ 6 │                   console.log(count + 1) // error
+   ·                               ─────
+ 7 │                   console.log(1 + count) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:7:35]
+ 6 │                   console.log(count + 1) // error
+ 7 │                   console.log(1 + count) // error
+   ·                                   ─────
+ 8 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:8:25]
+ 7 │ 
+ 8 │                         count++ // error
+   ·                         ─────
+ 9 │                         console.log(count + 1) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:9:37]
+  8 │                         count++ // error
+  9 │                         console.log(count + 1) // error
+    ·                                     ─────
+ 10 │                         console.log(1 + count) // error
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:10:41]
+  9 │                         console.log(count + 1) // error
+ 10 │                         console.log(1 + count) // error
+    ·                                         ─────
+ 11 │                         return {
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:8:25]
+ 7 │ 
+ 8 │                         count++ // error
+   ·                         ─────
+ 9 │                         console.log(count + 1) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:9:37]
+  8 │                         count++ // error
+  9 │                         console.log(count + 1) // error
+    ·                                     ─────
+ 10 │                         console.log(1 + count) // error
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:10:41]
+  9 │                         console.log(count + 1) // error
+ 10 │                         console.log(1 + count) // error
+    ·                                         ─────
+ 11 │                         return {
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:4:23]
+ 3 │                   const foo = ref(true)
+ 4 │                   if (foo) {
+   ·                       ───
+ 5 │                     //
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:4:27]
+ 3 │                   const foo = ref(true)
+ 4 │                   switch (foo) {
+   ·                           ───
+ 5 │                     //
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:4:28]
+ 3 │                   const foo = ref(0)
+ 4 │                   var a = -foo
+   ·                            ───
+ 5 │                   var b = +foo
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:5:28]
+ 4 │                   var a = -foo
+ 5 │                   var b = +foo
+   ·                            ───
+ 6 │                   var c = !foo
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:6:28]
+ 5 │                   var b = +foo
+ 6 │                   var c = !foo
+   ·                            ───
+ 7 │                   var d = ~foo
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:7:28]
+ 6 │                   var c = !foo
+ 7 │                   var d = ~foo
+   ·                            ───
+ 8 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:4:19]
+ 3 │                   let foo = ref(0)
+ 4 │                   foo += 1
+   ·                   ───
+ 5 │                   foo -= 1
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:5:19]
+ 4 │                   foo += 1
+ 5 │                   foo -= 1
+   ·                   ───
+ 6 │                   baz += foo
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:6:26]
+ 5 │                   foo -= 1
+ 6 │                   baz += foo
+   ·                          ───
+ 7 │                   baz -= foo
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:7:26]
+ 6 │                   baz += foo
+ 7 │                   baz -= foo
+   ·                          ───
+ 8 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:4:27]
+ 3 │                   const foo = ref(true)
+ 4 │                   var a = foo || other
+   ·                           ───
+ 5 │                   var b = foo && other
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:5:27]
+ 4 │                   var a = foo || other
+ 5 │                   var b = foo && other
+   ·                           ───
+ 6 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:4:27]
+ 3 │                   let foo = ref(true)
+ 4 │                   var a = foo ? x : y
+   ·                           ───
+ 5 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:7:25]
+ 6 │                       setup() {
+ 7 │                         count++ // error
+   ·                         ─────
+ 8 │                         console.log(count + 1) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:8:37]
+ 7 │                         count++ // error
+ 8 │                         console.log(count + 1) // error
+   ·                                     ─────
+ 9 │                         console.log(1 + count) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:9:41]
+  8 │                         console.log(count + 1) // error
+  9 │                         console.log(1 + count) // error
+    ·                                         ─────
+ 10 │                         return {
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:33:21]
+ 32 │ 
+ 33 │                     count++ // error
+    ·                     ─────
+ 34 │                     cntcnt++ // error
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `computed()`.
+    ╭─[no_ref_as_operand.tsx:34:21]
+ 33 │                     count++ // error
+ 34 │                     cntcnt++ // error
+    ·                     ──────
+ 35 │ 
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `toRef()`.
+    ╭─[no_ref_as_operand.tsx:36:34]
+ 35 │ 
+ 36 │                     const s = `${fooRef} : ${cref}` // error x 2
+    ·                                  ──────
+ 37 │ 
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `customRef()`.
+    ╭─[no_ref_as_operand.tsx:36:46]
+ 35 │ 
+ 36 │                     const s = `${fooRef} : ${cref}` // error x 2
+    ·                                              ────
+ 37 │ 
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `shallowRef()`.
+    ╭─[no_ref_as_operand.tsx:38:31]
+ 37 │ 
+ 38 │                     const n = foo + 1 // error
+    ·                               ───
+ 39 │                   </script>
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `shallowRef()`.
+   ╭─[no_ref_as_operand.tsx:5:21]
+ 4 │                     const foo = shallowRef({})
+ 5 │                     foo.bar = 123
+   ·                     ───
+ 6 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:5:33]
+ 4 │                     const foo = ref(123)
+ 5 │                     const bar = foo?.bar
+   ·                                 ───
+ 6 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:10:19]
+  9 │                   let bar = foo;
+ 10 │                   bar = 4;
+    ·                   ───
+ 11 │                   </script>
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `defineModel()`.
+   ╭─[no_ref_as_operand.tsx:6:25]
+ 5 │                   function process() {
+ 6 │                     if (model) console.log('foo')
+   ·                         ─────
+ 7 │                   }
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `defineModel()`.
+    ╭─[no_ref_as_operand.tsx:9:21]
+  8 │                   function update(value) {
+  9 │                     model = value;
+    ·                     ─────
+ 10 │                   }
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `defineModel()`.
+   ╭─[no_ref_as_operand.tsx:6:25]
+ 5 │                   function process() {
+ 6 │                     if (model) console.log('foo')
+   ·                         ─────
+ 7 │                   }
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `defineModel()`.
+    ╭─[no_ref_as_operand.tsx:9:21]
+  8 │                   function update(value) {
+  9 │                     model = value;
+    ·                     ─────
+ 10 │                   }
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:8:35]
+ 7 │                   function update() {
+ 8 │                     emits('test', count)
+   ·                                   ─────
+ 9 │                   }
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:10:47]
+  9 │ 
+ 10 │                       ctx.emit('incremented', counter)
+    ·                                               ───────
+ 11 │ 
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:10:43]
+  9 │ 
+ 10 │                       emit('incremented', counter)
+    ·                                           ───────
+ 11 │ 
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+    ╭─[no_ref_as_operand.tsx:10:50]
+  9 │ 
+ 10 │                       emit('incremented', 'xxx', counter)
+    ·                                                  ───────
+ 11 │ 
+    ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:5:19]
+ 4 │ 
+ 5 │                   count++ // error
+   ·                   ─────
+ 6 │                   console.log(count + 1) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:6:31]
+ 5 │                   count++ // error
+ 6 │                   console.log(count + 1) // error
+   ·                               ─────
+ 7 │                   console.log(1 + count) // error
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:7:35]
+ 6 │                   console.log(count + 1) // error
+ 7 │                   console.log(1 + count) // error
+   ·                                   ─────
+ 8 │                   </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `toRefs()`.
+   ╭─[no_ref_as_operand.tsx:6:17]
+ 5 │                 const { count } = toRefs(state)
+ 6 │                 count++
+   ·                 ─────
+ 7 │                 </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:5:17]
+ 4 │                 const foo = ref(0)
+ 5 │                 foo['bar']
+   ·                 ───
+ 6 │                 </script>
+   ╰────
+  help: Insert `.value`
+
+  ⚠ vue(no-ref-as-operand): Must use `.value` to read or write the value wrapped by `ref()`.
+   ╭─[no_ref_as_operand.tsx:8:32]
+ 7 │                     const count = ref(0)
+ 8 │                     emit('e', (count))
+   ·                                ─────
+ 9 │                     return { count }
+   ╰────
+  help: Insert `.value`
