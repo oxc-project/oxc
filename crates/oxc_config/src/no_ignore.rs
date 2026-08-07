@@ -20,7 +20,6 @@ pub struct NoIgnoreKinds {
 
 impl NoIgnoreKinds {
     pub const NONE: Self = Self { vcs: false, cli: false, config: false };
-    /// Only the `cli` sources: the historical behavior of bare `oxlint --no-ignore`.
     pub const CLI: Self = Self { vcs: false, cli: true, config: false };
     pub const ALL: Self = Self { vcs: true, cli: true, config: true };
 

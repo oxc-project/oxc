@@ -9,12 +9,10 @@ pub use oxc_config::NoIgnoreKinds;
 const CLI_KIND_HELP: &str = "`.eslintignore` files, `--ignore-path` and `--ignore-pattern` flags (those flags are ignored even when passed)";
 
 /// Tell `oxc_config` about Oxlint specific `cli` kind, and also default kind for bare `--no-ignore`.
+/// Bare `--no-ignore` disables every ignore source, as the flag name promises;
+/// `--no-ignore=cli` is the escape hatch for the historical bare `--no-ignore` behavior.
 fn no_ignore_kinds() -> impl Parser<NoIgnoreKinds> {
-    // TODO: Change to `ALL_NAME` so that bare `--no-ignore` disables every ignore source,
-    // as the flag name promises.
-    // This is a breaking change; release notes should mention `--no-ignore=cli` as the escape hatch for the old behavior.
-    // See https://github.com/oxc-project/oxc/issues/25259
-    oxc_config::no_ignore_kinds(NoIgnoreKinds::CLI_NAME, CLI_KIND_HELP)
+    oxc_config::no_ignore_kinds(NoIgnoreKinds::ALL_NAME, CLI_KIND_HELP)
 }
 
 /// Ignore Files
@@ -82,6 +80,13 @@ mod ignore_options {
     #[test]
     fn no_ignore() {
         let options = get_ignore_options("--no-ignore foo.js");
+        assert_eq!(options.no_ignore, NoIgnoreKinds::ALL);
+    }
+
+    /// The escape hatch for the historical bare `--no-ignore` behavior.
+    #[test]
+    fn no_ignore_cli() {
+        let options = get_ignore_options("--no-ignore=cli foo.js");
         assert_eq!(options.no_ignore, NoIgnoreKinds::CLI);
     }
 
@@ -106,7 +111,7 @@ mod ignore_options {
     #[test]
     fn no_ignore_space_separated_value_is_a_path() {
         let options = get_ignore_options("--no-ignore vcs");
-        assert_eq!(options.no_ignore, NoIgnoreKinds::CLI);
+        assert_eq!(options.no_ignore, NoIgnoreKinds::ALL);
     }
 
     /// Named option parsing must respect the end-of-options separator.
