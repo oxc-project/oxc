@@ -187,10 +187,9 @@ impl CliRunner {
             paths.push(self.cwd.clone());
         }
 
-        // The walker never filters gitignored walk roots (including roots inside a gitignored directory).
-        // NOTE: Applied regardless of `--no-ignore`.
-        // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
-        // not git's. (Aligns with during walk filtering behavior)
+        // The walker never filters gitignored walk roots (including roots inside a gitignored directory),
+        // so filter them here, unless the `vcs` ignore source is disabled.
+        // (Aligns with during walk filtering behavior)
         if !ignore_options.no_ignore.vcs {
             let mut gitignore_checker = GitignoreChecker::new();
             paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
@@ -871,9 +870,16 @@ mod test {
         assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
         assert!(stdout.contains("on 1 file"), "{stdout}");
 
-        // `--no-ignore=vcs` disables the gitignore layer for the walk as well.
+        // `--no-ignore=cli` (the historical bare behavior) keeps git's sources active for the walk.
+        let (_, result) = run(&["--no-ignore=cli"]);
+        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // `--no-ignore=vcs` disables the gitignore layer for the walk as well;
+        // bare `--no-ignore` now disables every ignore source.
         // https://github.com/oxc-project/oxc/issues/25259
         let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore=vcs"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore"]);
         assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
         let (stdout, result) = run(&["-D", "no-debugger", "--no-ignore=all"]);
         assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
