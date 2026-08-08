@@ -47,6 +47,7 @@
 //! ```
 
 mod service;
+mod source_name;
 
 use std::{
     borrow::Cow,
@@ -57,6 +58,7 @@ use std::{
 pub mod reporter;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService};
+pub use crate::source_name::{file_url, with_file_url};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
