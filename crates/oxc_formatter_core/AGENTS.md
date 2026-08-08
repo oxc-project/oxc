@@ -89,6 +89,11 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the dispatcher, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
   - `FormatState` holds one (`new_with_session`; plain `new` wraps a dispatcher-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write.
   - `EmbeddedContext` remains as a migration adapter until every entry point is session-aware
+- A dispatch states its request as `DispatchRequest` (language, texts, `InputKind`, pair-specific context) and yields `Result<DispatchOutcome, String>`:
+  - `DispatchOutcome::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
+  - Optional-embed callers degrade the same way for both, but never conflate them at the source
+  - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
+    (the JS host's legacy `dispatch_embedded` adapter bypasses the guard until it migrates to sessions)
 
 ## What belongs in core (the boundary)
 

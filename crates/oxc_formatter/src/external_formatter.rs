@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{DispatchResult, EmbeddedContext, FormatDispatcher, UniqueGroupIdBuilder};
+use oxc_formatter_core::{
+    DispatchOutcome, DispatchRequest, EmbeddedContext, FormatDispatcher, InputKind,
+    UniqueGroupIdBuilder,
+};
 
 /// Callback function type for formatting embedded code.
 /// Takes (tag_name, code) and returns formatted code or an error.
@@ -97,23 +100,38 @@ impl ExternalCallbacks {
     /// * `texts` - The code texts to format (multiple quasis for GraphQL, single joined text for CSS/HTML)
     ///
     /// # Returns
-    /// * `Some(Ok(DispatchResult))` - The formatted IR(s) plus optional child→parent metadata
-    /// * `Some(Err(String))` - An error message if formatting failed
-    /// * `None` - No dispatcher is set
+    /// See [`DispatchOutcome`] for the outcome-vs-error contract;
+    /// "no dispatcher set" counts as the deliberate `PreserveOriginal`.
+    ///
+    /// # Errors
+    /// Operational failures only (transport / internal errors).
+    /// NOTE: unlike `FormatSession::dispatch`, this legacy adapter does NOT enforce the recursion limit;
+    /// the guard arrives when embed sites become session-aware.
     pub fn dispatch_embedded<'a>(
         &self,
         allocator: &'a Allocator,
         group_id_builder: &UniqueGroupIdBuilder,
         language: &str,
         texts: &[&str],
-    ) -> Option<Result<DispatchResult<'a>, String>> {
-        let dispatcher = self.dispatcher.as_ref()?;
+    ) -> Result<DispatchOutcome<'a>, String> {
+        let Some(dispatcher) = self.dispatcher.as_ref() else {
+            return Ok(DispatchOutcome::PreserveOriginal);
+        };
+
         let ctx = EmbeddedContext {
             allocator,
             group_id_builder,
             dispatcher: Some(Arc::clone(dispatcher)),
         };
-        Some(dispatcher(&ctx, language, texts, None))
+        // Every JS template embed is a grammar fragment; parser modes
+        // (e.g. css-in-js placeholder tolerance) travel separately.
+        let request = DispatchRequest {
+            language,
+            texts,
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        };
+        dispatcher(&ctx, request)
     }
 
     /// Sort Tailwind CSS classes.
