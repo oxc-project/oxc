@@ -129,9 +129,9 @@ fn test_handle_switch_statement() {
     test("switch (a()) {}", "a()");
     test("switch (a) { default: }", "a;");
     test("switch (a) { default: break;}", " a;");
-    test("switch (a) { default: var b; break;}", "a; var b;");
+    test("switch (a) { default: var b; break;}", "if (a, !0) var b;");
     test("switch (a) { default: b()}", "a, b();");
-    test("switch (a) { default: b(); return;}", "a, b(); return;");
+    test("switch (a) { default: b(); return;}", "if (a, !0) { b(); return; }");
 
     test("switch (a) { case 1: break;}", "a;");
     test("switch (a) { case 1: b();}", "a === 1 && b();");
@@ -196,7 +196,7 @@ fn test_handle_switch_statement() {
         "switch (a) { case 1: c(); default: b(); }",
     ); // a === 1 && c(); b();
     test("function f() { switch (a) { case 1: return;} }", "function f() { a; }");
-    test("switch (a()) { default: {let y;} }", "a(); { let y; }");
+    test("switch (a()) { default: {let y;} }", "if (a(), !0) { let y; }");
     test(
         "function f(){switch ('x') { case 'x': var x = 1;break; case 'y': break; }}",
         "function f(){ var x = 1; }",
@@ -265,7 +265,7 @@ fn test_handle_switch_statement() {
     );
     test(
         "if (a) { if (c) switch (b) { case 2: switch (a) { case 2: foo()}}; b() }",
-        "if (a) { if (c) switch (b) { case 2: a===2 && foo() } b() }",
+        "a && (c && b === 2 && a === 2 && foo(), b());",
     );
 
     // TODO: expected TDZ issue, when folding if without body https://github.com/oxc-project/oxc/issues/24589
