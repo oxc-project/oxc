@@ -647,6 +647,7 @@ impl Runtime {
                                     ContextSubHostOptions {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
+                                        actual_source_text: Some(dep.source_text),
                                         respect_eslint_disable_directives,
                                         ..Default::default()
                                     },
@@ -764,8 +765,7 @@ impl Runtime {
                 None,
                 |me, mut module_to_lint| {
                     module_to_lint.content.with_dependent_mut(
-                        |allocator_guard,
-                         ModuleContentDependent { source_text: _, section_contents }| {
+                        |allocator_guard, ModuleContentDependent { source_text, section_contents }| {
                             assert_eq!(
                                 module_to_lint.section_module_records.len(),
                                 section_contents.len()
@@ -785,6 +785,7 @@ impl Runtime {
                                         ContextSubHostOptions {
                                             framework_options: section.source.framework_options,
                                             parser_tokens: section.parser_tokens,
+                                            actual_source_text: Some(source_text),
                                             respect_eslint_disable_directives,
                                             ..Default::default()
                                         },
@@ -909,7 +910,7 @@ impl Runtime {
                 Some(tx_error),
                 |me, mut module| {
                     module.content.with_dependent_mut(|allocator_guard, ModuleContentDependent {
-                        source_text: _,
+                        source_text,
                         section_contents,
                     }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
@@ -928,6 +929,7 @@ impl Runtime {
                                     ContextSubHostOptions {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
+                                        actual_source_text: Some(source_text),
                                         respect_eslint_disable_directives,
                                         ..Default::default()
                                     },
@@ -1071,8 +1073,12 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
+        let section_sources = if self.linter.has_external_linter() {
+            PartialLoader::parse_for_external_linter(ext, source_text)
+        } else {
+            PartialLoader::parse(ext, source_text)
+        }
+        .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],

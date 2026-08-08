@@ -22,6 +22,15 @@ impl<'a> VuePartialLoader<'a> {
         self.parse_scripts()
     }
 
+    pub fn parse_for_external_linter(self) -> Vec<JavaScriptSource<'a>> {
+        let sources = self.parse_scripts();
+        if sources.is_empty() {
+            vec![JavaScriptSource::partial("", SourceType::mjs(), 0)]
+        } else {
+            sources
+        }
+    }
+
     /// Each *.vue file can contain at most
     ///  * one `<script>` block (excluding `<script setup>`).
     ///  * one `<script setup>` block (excluding normal `<script>`).
@@ -228,6 +237,18 @@ mod test {
 
         let sources = VuePartialLoader::new(source_text).parse();
         assert!(sources.is_empty());
+    }
+
+    #[test]
+    fn test_no_script_for_external_linter() {
+        let source_text = r"
+            <template></template>
+        ";
+
+        let sources = VuePartialLoader::new(source_text).parse_for_external_linter();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "");
+        assert_eq!(sources[0].start, 0);
     }
 
     #[test]
