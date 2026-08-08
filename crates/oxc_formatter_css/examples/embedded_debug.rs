@@ -30,7 +30,7 @@ fn main() {
         CssFormatOptions { variant: CssVariant::Scss, line_width, ..CssFormatOptions::default() };
 
     let allocator = Allocator::new();
-    let session = FormatSession::new(&allocator, InputKind::Fragment, None);
+    let session = FormatSession::new(&allocator, InputKind::Fragment);
 
     match format_to_ir(&session, &source_text, options, /* template_placeholders */ true) {
         Ok(embedded) => {

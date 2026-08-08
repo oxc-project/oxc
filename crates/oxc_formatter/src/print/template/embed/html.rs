@@ -7,7 +7,7 @@ use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::HtmlEmbedMeta,
+    embed_context::HtmlEmbedMeta,
     format_args,
     formatter::prelude::*,
     print::template::{
@@ -292,7 +292,7 @@ fn format_js_in_html_as_fallback<'a>(
     expressions: &[&AstNode<'a, Expression<'a>>],
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
-    let Some(Ok(formatted)) = f.context().external_callbacks().format_embedded("html", joined)
+    let Some(Ok(formatted)) = f.session().string_embedder().map(|embed| embed("html", joined))
     else {
         return false;
     };

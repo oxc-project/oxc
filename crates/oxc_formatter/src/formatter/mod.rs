@@ -59,8 +59,7 @@ pub fn format<'ast>(
     let mut context = state.into_context();
 
     let tailwind_classes = context.take_tailwind_classes();
-    let sorted_tailwind_classes =
-        context.external_callbacks().sort_tailwind_classes(tailwind_classes);
+    let sorted_tailwind_classes = session.sort_tailwind_classes(tailwind_classes);
 
     let ir = Document::new(elements, sorted_tailwind_classes);
 

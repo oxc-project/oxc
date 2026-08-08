@@ -142,11 +142,17 @@ impl ResolvedDispatchConfig {
         self.is_embedded_formatting_enabled().then(|| build_dispatcher(Arc::clone(self), fallback))
     }
 
-    /// The single off-predicate: [`Self::root_dispatcher`] and the string-out channel builders
-    /// (`fence::build_external_callbacks`, `ExternalFormatter::to_external_callbacks`) all consult it,
+    /// The single off-predicate: [`Self::root_dispatcher`] and the service builders
+    /// (`fence::session_services`, `ExternalFormatter::session_services`) all consult it,
     /// so the off-semantics can never diverge between channels or builds.
     pub fn is_embedded_formatting_enabled(&self) -> bool {
         self.config.is_embedded_formatting_enabled()
+    }
+
+    /// The single Tailwind predicate, same pattern as
+    /// [`Self::is_embedded_formatting_enabled`]: every sorter-assembly site consults it.
+    pub fn is_tailwind_enabled(&self) -> bool {
+        self.config.is_tailwind_enabled()
     }
 
     pub fn graphql_options(&self) -> GraphqlFormatOptions {
@@ -364,6 +370,7 @@ mod tests {
     use oxc_allocator::Allocator;
     use oxc_formatter_core::{
         CoreFormatOptions, DispatchOutcome, DispatchRequest, FormatSession, InputKind,
+        SessionServices,
     };
 
     use super::{ResolvedDispatchConfig, build_dispatcher};
@@ -382,10 +389,13 @@ mod tests {
     #[test]
     fn every_native_language_dispatches() {
         let allocator = Allocator::default();
-        let session = FormatSession::new(
+        let session = FormatSession::with_services(
             &allocator,
             InputKind::PhysicalFile,
-            Some(build_dispatcher(dispatch_config(), None)),
+            SessionServices {
+                dispatcher: Some(build_dispatcher(dispatch_config(), None)),
+                ..SessionServices::default()
+            },
         );
 
         for language in
@@ -415,10 +425,13 @@ mod tests {
     #[test]
     fn native_yaml_dispatch_works_without_fallback() {
         let allocator = Allocator::default();
-        let session = FormatSession::new(
+        let session = FormatSession::with_services(
             &allocator,
             InputKind::PhysicalFile,
-            Some(build_dispatcher(dispatch_config(), None)),
+            SessionServices {
+                dispatcher: Some(build_dispatcher(dispatch_config(), None)),
+                ..SessionServices::default()
+            },
         );
 
         let outcome = session.dispatch(DispatchRequest {
@@ -435,10 +448,13 @@ mod tests {
     #[test]
     fn unsupported_language_without_fallback_preserves_original() {
         let allocator = Allocator::default();
-        let session = FormatSession::new(
+        let session = FormatSession::with_services(
             &allocator,
             InputKind::PhysicalFile,
-            Some(build_dispatcher(dispatch_config(), None)),
+            SessionServices {
+                dispatcher: Some(build_dispatcher(dispatch_config(), None)),
+                ..SessionServices::default()
+            },
         );
 
         let outcome = session.dispatch(DispatchRequest {

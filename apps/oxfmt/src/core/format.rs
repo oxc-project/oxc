@@ -5,7 +5,7 @@ use tracing::instrument;
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::JsFormatOptions;
-use oxc_formatter_core::{CoreFormatOptions, FormatSession, InputKind};
+use oxc_formatter_core::{CoreFormatOptions, FormatSession, InputKind, SessionServices};
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
@@ -406,30 +406,19 @@ impl SourceFormatter {
         let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
 
         #[cfg(feature = "napi")]
-        let (external_callbacks, fallback) = {
-            let (callbacks, fallback) = self
-                .external_formatter
-                .as_ref()
-                .expect("`external_formatter` must exist when `napi` feature is enabled")
-                .to_external_callbacks(&format_options, &dispatch_config);
-            (Some(callbacks), Some(fallback))
-        };
-        // No Prettier fallback, but JSDoc native fences still format
-        // (the string-out channel's build-independent half).
+        let services = self
+            .external_formatter
+            .as_ref()
+            .expect("`external_formatter` must exist when `napi` feature is enabled")
+            .session_services(&dispatch_config);
+        // No Prettier fallback / Tailwind sorter, but native embeds
+        // (xxx-in-js and JSDoc fences) still format through the registry.
         #[cfg(not(feature = "napi"))]
-        let (external_callbacks, fallback) =
-            (Some(super::embed::fence::build_external_callbacks(&dispatch_config)), None);
+        let services = super::embed::fence::session_services(&dispatch_config);
 
-        let dispatcher = dispatch_config.root_dispatcher(fallback);
-
-        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, dispatcher);
-        let formatted = oxc_formatter::format_with_session(
-            &session,
-            source_text,
-            source_type,
-            format_options,
-            external_callbacks,
-        )?;
+        let session = FormatSession::with_services(&allocator, InputKind::PhysicalFile, services);
+        let formatted =
+            oxc_formatter::format_with_session(&session, source_text, source_type, format_options)?;
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -536,21 +525,26 @@ impl SourceFormatter {
         core: CoreFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
         let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
-        let dispatcher = dispatch_config.root_dispatcher(None);
-
-        #[cfg(feature = "napi")]
-        let sorter = self.tailwind_sorter(config, &dispatch_config);
-        #[cfg(not(feature = "napi"))]
-        let sorter: Option<fn(Vec<String>) -> Vec<String>> = None;
+        // Deliberately NOT the JS root's builder: the CSS root's dispatcher stays
+        // fallback-less in every build (native never falls back to Prettier),
+        // and CSS has no string-channel consumers.
+        let services = SessionServices {
+            dispatcher: dispatch_config.root_dispatcher(None),
+            string_embedder: None,
+            #[cfg(feature = "napi")]
+            tailwind_sorter: self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled")
+                .tailwind_sorter(&dispatch_config),
+            #[cfg(not(feature = "napi"))]
+            tailwind_sorter: None,
+        };
 
         let allocator = self.allocator_pool.get();
-        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, dispatcher);
-        let formatted = oxc_formatter_css::format_with_session(
-            &session,
-            source_text,
-            format_options,
-            sorter.as_ref().map(|s| s as &dyn Fn(Vec<String>) -> Vec<String>),
-        )?;
+        let session = FormatSession::with_services(&allocator, InputKind::PhysicalFile, services);
+        let formatted =
+            oxc_formatter_css::format_with_session(&session, source_text, format_options)?;
         let printed = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
                 "Failed to print formatted CSS: {}\n{err}",
@@ -618,26 +612,6 @@ impl SourceFormatter {
     ) -> Self {
         self.external_formatter = external_formatter;
         self
-    }
-
-    /// Build the JS-side Tailwind class sorter for `oxc_formatter_css`'s `@apply` collection,
-    /// or `None` when the config does not enable it.
-    /// The Prettier options JSON comes from the dispatch config's lazy cell,
-    /// so a file without `@apply` classes never pays for building it.
-    fn tailwind_sorter(
-        &self,
-        config: &FormatConfig,
-        dispatch_config: &Arc<ResolvedDispatchConfig>,
-    ) -> Option<impl Fn(Vec<String>) -> Vec<String>> {
-        config.is_tailwind_enabled().then(|| {
-            let external_formatter = self
-                .external_formatter
-                .as_ref()
-                .expect("`external_formatter` must exist when `napi` feature is enabled");
-            let sort = std::sync::Arc::clone(&external_formatter.sort_tailwindcss_classes);
-            let dispatch_config = Arc::clone(dispatch_config);
-            move |classes: Vec<String>| sort(dispatch_config.external_options(), classes)
-        })
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).

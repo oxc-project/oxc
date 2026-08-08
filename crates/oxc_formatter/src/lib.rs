@@ -4,7 +4,7 @@
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
-mod external_formatter;
+mod embed_context;
 mod formatter;
 mod ir_transform;
 mod options;
@@ -25,9 +25,7 @@ use oxc_span::SourceType;
 // External call-sites use the text-in `format`, `format_fragment`,
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
-pub use crate::external_formatter::{
-    CssInJsTemplate, EmbeddedFormatterCallback, ExternalCallbacks, HtmlEmbedMeta, TailwindCallback,
-};
+pub use crate::embed_context::{CssInJsTemplate, HtmlEmbedMeta};
 // `JsFormatContext` is public solely as the type parameter of the `Formatted`
 // returned by `format` / `format_fragment`.
 // Its methods are not part of the public contract.
@@ -82,23 +80,21 @@ pub fn format<'a>(
     source_text: &'a str,
     source_type: SourceType,
     options: JsFormatOptions,
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
-    // Compatibility wrapper: a dispatcher-less `PhysicalFile` session,
+    // Compatibility wrapper: a service-less `PhysicalFile` session,
     // so embedded languages stay as-is.
-    // Hosts that dispatch (oxfmt) use [`format_with_session`].
+    // Hosts that install services (oxfmt) use [`format_with_session`].
     format_with_session(
-        &FormatSession::new(allocator, InputKind::PhysicalFile, None),
+        &FormatSession::new(allocator, InputKind::PhysicalFile),
         source_text,
         source_type,
         options,
-        external_callbacks,
     )
 }
 
 /// Like [`format()`], but on a caller-supplied [`FormatSession`]:
-/// the root whose session carries the dispatcher for embedded languages
-/// (css-in-js, graphql-in-js, ...).
+/// the root whose session carries the host's `SessionServices`
+/// (embedded dispatch, string embedding, Tailwind sorting).
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -107,10 +103,9 @@ pub fn format_with_session<'a>(
     source_text: &'a str,
     source_type: SourceType,
     options: JsFormatOptions,
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
     let program = parse(session.allocator(), source_text, source_type)?;
-    Ok(format_program_with_session(session, program, options, external_callbacks))
+    Ok(format_program_with_session(session, program, options))
 }
 
 /// Format a pre-wrapped JS/TS-in-xxx fragment from source text.
@@ -141,7 +136,7 @@ pub fn format_fragment<'a>(
 
     // A js-in-xxx fragment never owns file envelopes (BOM / front matter)
     // and never dispatches embedded languages of its own.
-    let session = FormatSession::new(allocator, InputKind::Fragment, None);
+    let session = FormatSession::new(allocator, InputKind::Fragment);
 
     let formatted = match context {
         FragmentContext::FunctionParamsAsBindingLhs | FragmentContext::FunctionParamsAsBinding => {
@@ -163,7 +158,6 @@ pub fn format_fragment<'a>(
                 program.source_text,
                 source_type,
                 &program.comments,
-                None,
             )
         }
         FragmentContext::TypeParameters => {
@@ -184,7 +178,6 @@ pub fn format_fragment<'a>(
                 program.source_text,
                 source_type,
                 &program.comments,
-                None,
             )
         }
     };
@@ -205,13 +198,11 @@ pub fn format_program<'a>(
     allocator: &'a Allocator,
     program: &'a Program<'a>,
     options: JsFormatOptions,
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Formatted<'a, JsFormatContext<'a>> {
     format_program_with_session(
-        &FormatSession::new(allocator, InputKind::PhysicalFile, None),
+        &FormatSession::new(allocator, InputKind::PhysicalFile),
         program,
         options,
-        external_callbacks,
     )
 }
 
@@ -220,7 +211,6 @@ fn format_program_with_session<'a>(
     session: &FormatSession<'a>,
     program: &'a Program<'a>,
     options: JsFormatOptions,
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Formatted<'a, JsFormatContext<'a>> {
     let node = AstNode::new(program, AstNodes::Dummy(), session.allocator());
     format_node(
@@ -230,7 +220,6 @@ fn format_program_with_session<'a>(
         program.source_text,
         program.source_type,
         &program.comments,
-        external_callbacks,
     )
 }
 
@@ -293,10 +282,8 @@ fn format_node<'a, F: Format<'a, JsFormatContext<'a>>>(
     source_text: &'a str,
     source_type: SourceType,
     comments: &'a [Comment],
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let context =
-        JsFormatContext::new(source_text, source_type, comments, options, external_callbacks);
+    let context = JsFormatContext::new(source_text, source_type, comments, options);
     formatter::format(
         context,
         session,

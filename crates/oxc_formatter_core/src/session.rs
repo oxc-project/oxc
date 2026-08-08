@@ -10,6 +10,33 @@ use crate::{DispatchOutcome, DispatchRequest, FormatDispatcher, UniqueGroupIdBui
 /// exceeding it is an operational error, catching accidental A-in-B-in-A infinite recursion.
 pub const MAX_DISPATCH_DEPTH: u16 = 32;
 
+/// String-in/string-out embedded formatter: `(language, code)` to formatted code.
+///
+/// The string-out channel's session-carried contract,
+/// for consumers whose result must come back as TEXT
+/// (a JSDoc fence re-embedded line-by-line into a comment, the html-in-js temporary recovery path).
+/// `Err` means "keep the input verbatim".
+pub type StringEmbedder = Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
+
+/// Print-time batch sorter for the classes referenced by `FormatElement::TailwindClass(index)`;
+/// runs once when a root formatter finalizes its `Document`.
+pub type TailwindSorter = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync>;
+
+/// The three per-run services a host installs on a [`FormatSession`], one field per duty.
+///
+/// Core only transports them; consumers invoke via [`FormatSession::dispatch`] /
+/// [`FormatSession::string_embedder`] / [`FormatSession::sort_tailwind_classes`].
+/// `None` anywhere means "this run does not provide that service" and each consumer degrades gracefully.
+#[derive(Clone, Default)]
+pub struct SessionServices {
+    /// IR channel: embedded-language dispatch merging child IR into the parent's document.
+    pub dispatcher: Option<FormatDispatcher>,
+    /// String channel: string-in/string-out embedded formatting (see [`StringEmbedder`]).
+    pub string_embedder: Option<StringEmbedder>,
+    /// Print-time service: batch Tailwind class sorting (see [`TailwindSorter`]).
+    pub tailwind_sorter: Option<TailwindSorter>,
+}
+
 /// Document-envelope semantics of the input being formatted.
 ///
 /// This describes ONLY who owns file-level envelope concerns (front matter, BOM).
@@ -29,7 +56,7 @@ pub enum InputKind {
 }
 
 /// Execution unit threaded through a formatting run: one arena, one `GroupId` space,
-/// one dispatcher, plus the input's envelope semantics.
+/// the run's [`SessionServices`], plus the input's envelope semantics.
 ///
 /// The same type serves standalone roots and dispatched children,
 /// so any formatter (not just JS) can dispatch embedded languages.
@@ -39,37 +66,45 @@ pub enum InputKind {
 pub struct FormatSession<'a> {
     allocator: &'a Allocator,
     group_id_builder: Arc<UniqueGroupIdBuilder>,
-    dispatcher: Option<FormatDispatcher>,
+    services: SessionServices,
     input_kind: InputKind,
     dispatch_depth: u16,
 }
 
 impl<'a> FormatSession<'a> {
-    /// Creates a root session. Children must come from [`Self::derive_child`],
-    /// never be re-rooted, so the `GroupId` space stays shared.
-    pub fn new(
+    /// Creates a service-less root session
+    /// (standalone runs: embeds stay as-is, Tailwind classes print unsorted).
+    /// Hosts that install services use [`Self::with_services`].
+    /// Children must come from [`Self::derive_child`], never be re-rooted,
+    /// so the `GroupId` space stays shared.
+    pub fn new(allocator: &'a Allocator, input_kind: InputKind) -> Self {
+        Self::with_services(allocator, input_kind, SessionServices::default())
+    }
+
+    /// Like [`Self::new`], with the host's [`SessionServices`] installed.
+    pub fn with_services(
         allocator: &'a Allocator,
         input_kind: InputKind,
-        dispatcher: Option<FormatDispatcher>,
+        services: SessionServices,
     ) -> Self {
         Self {
             allocator,
             group_id_builder: Arc::new(UniqueGroupIdBuilder::default()),
-            dispatcher,
+            services,
             input_kind,
             dispatch_depth: 0,
         }
     }
 
     /// Derives the session for one embedded child: same arena, `GroupId` space,
-    /// and dispatcher; the child's envelope semantics and one more dispatch level.
+    /// and services; the child's envelope semantics and one more dispatch level.
     /// The recursion limit over `dispatch_depth` is enforced by the dispatch path, not here.
     #[must_use]
     pub fn derive_child(&self, input_kind: InputKind) -> Self {
         Self {
             allocator: self.allocator,
             group_id_builder: Arc::clone(&self.group_id_builder),
-            dispatcher: self.dispatcher.clone(),
+            services: self.services.clone(),
             input_kind,
             dispatch_depth: self.dispatch_depth + 1,
         }
@@ -92,7 +127,7 @@ impl<'a> FormatSession<'a> {
     /// # Errors
     /// Operational failures only (recursion limit, transport/internal errors).
     pub fn dispatch(&self, request: DispatchRequest<'_>) -> Result<DispatchOutcome<'a>, String> {
-        let Some(dispatcher) = &self.dispatcher else {
+        let Some(dispatcher) = &self.services.dispatcher else {
             return Ok(DispatchOutcome::PreserveOriginal);
         };
         if request.texts.iter().any(|text| text.starts_with('\u{feff}')) {
@@ -129,6 +164,22 @@ impl<'a> FormatSession<'a> {
     pub fn dispatch_depth(&self) -> u16 {
         self.dispatch_depth
     }
+
+    /// The string channel service ([`StringEmbedder`]), when this run installs one.
+    /// (A handle rather than an invoking method: the JSDoc serializer threads it
+    /// through session-less layers; see the alias for the `Err`-means-verbatim contract.)
+    pub fn string_embedder(&self) -> Option<&StringEmbedder> {
+        self.services.string_embedder.as_ref()
+    }
+
+    /// Sorts collected Tailwind classes through the print-time service ([`TailwindSorter`]),
+    /// or returns them unsorted when this run installs no sorter.
+    pub fn sort_tailwind_classes(&self, classes: Vec<String>) -> Vec<String> {
+        match &self.services.tailwind_sorter {
+            Some(sort) if !classes.is_empty() => sort(classes),
+            _ => classes,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -137,7 +188,7 @@ mod tests {
 
     use oxc_allocator::Allocator;
 
-    use super::{FormatSession, InputKind, MAX_DISPATCH_DEPTH};
+    use super::{FormatSession, InputKind, MAX_DISPATCH_DEPTH, SessionServices};
     use crate::{DispatchOutcome, DispatchRequest, DispatchResult, FormatDispatcher, FormatState};
 
     fn request<'r>() -> DispatchRequest<'r> {
@@ -152,7 +203,7 @@ mod tests {
     #[test]
     fn dispatch_without_dispatcher_preserves_original() {
         let allocator = Allocator::default();
-        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, None);
+        let session = FormatSession::new(&allocator, InputKind::PhysicalFile);
 
         assert!(matches!(session.dispatch(request()), Ok(DispatchOutcome::PreserveOriginal)));
     }
@@ -167,7 +218,11 @@ mod tests {
                 meta: None,
             }))
         });
-        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, Some(dispatcher));
+        let session = FormatSession::with_services(
+            &allocator,
+            InputKind::PhysicalFile,
+            SessionServices { dispatcher: Some(dispatcher), ..SessionServices::default() },
+        );
 
         let bom_request = DispatchRequest { texts: &["a: 1", "\u{feff}a: 1"], ..request() };
         assert!(matches!(session.dispatch(bom_request), Ok(DispatchOutcome::PreserveOriginal)));
@@ -186,7 +241,11 @@ mod tests {
                 meta: None,
             }))
         });
-        let mut session = FormatSession::new(&allocator, InputKind::PhysicalFile, Some(dispatcher));
+        let mut session = FormatSession::with_services(
+            &allocator,
+            InputKind::PhysicalFile,
+            SessionServices { dispatcher: Some(dispatcher), ..SessionServices::default() },
+        );
 
         assert!(matches!(session.dispatch(request()), Ok(DispatchOutcome::Formatted(_))));
         for _ in 0..MAX_DISPATCH_DEPTH {
@@ -199,7 +258,11 @@ mod tests {
     fn dispatch_propagates_operational_errors() {
         let allocator = Allocator::default();
         let dispatcher: FormatDispatcher = Arc::new(|_ctx, _request| Err("boom".to_string()));
-        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, Some(dispatcher));
+        let session = FormatSession::with_services(
+            &allocator,
+            InputKind::PhysicalFile,
+            SessionServices { dispatcher: Some(dispatcher), ..SessionServices::default() },
+        );
 
         assert_eq!(session.dispatch(request()).err().as_deref(), Some("boom"));
     }
@@ -207,7 +270,7 @@ mod tests {
     #[test]
     fn derived_child_shares_the_group_id_space() {
         let allocator = Allocator::default();
-        let parent = FormatSession::new(&allocator, InputKind::PhysicalFile, None);
+        let parent = FormatSession::new(&allocator, InputKind::PhysicalFile);
         let child = parent.derive_child(InputKind::Fragment);
 
         assert_eq!(child.input_kind(), InputKind::Fragment);
@@ -220,7 +283,7 @@ mod tests {
     #[test]
     fn states_built_from_one_session_share_the_group_id_space() {
         let allocator = Allocator::default();
-        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, None);
+        let session = FormatSession::new(&allocator, InputKind::PhysicalFile);
 
         let parent_state = FormatState::new_with_session((), session.clone());
         let child_state = FormatState::new_with_session((), session);

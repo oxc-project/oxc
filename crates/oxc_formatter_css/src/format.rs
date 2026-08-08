@@ -19,17 +19,7 @@ use crate::{
     print::{self, CssFormatter},
 };
 
-/// Host-supplied batch sorter for `@apply` Tailwind classes
-/// (one pre-sort string in, one sorted string out, index-aligned).
-///
-/// The sorter owns: ordering, dedup, whitespace collapse,
-/// and skipping `{{...}}` template interpolations (Vue/Angular templates).
-pub type TailwindSorter<'s> = &'s dyn Fn(Vec<String>) -> Vec<String>;
-
 /// Parse `source_text` as a stylesheet and build its formatter IR.
-///
-/// `sort_tailwind_classes` sorts the `@apply` classes collected
-/// when [`CssFormatOptions::sort_tailwindcss`] is on; `None` (or an unset option) prints them as-is.
 ///
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error, including recoverable ones.
@@ -39,16 +29,15 @@ pub fn format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
     options: CssFormatOptions,
-    sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
-    // NOTE: this wrapper labels the run `PhysicalFile` with NO dispatcher:
-    // front matter is detected but its body degrades to verbatim (`PreserveOriginal`).
-    // Hosts that want the block formatted use `format_with_session` with a dispatcher.
+    // NOTE: this wrapper labels the run `PhysicalFile` with NO services:
+    // front matter is detected but its body degrades to verbatim (`PreserveOriginal`),
+    // and `@apply` Tailwind classes print unsorted.
+    // Hosts that want them use `format_with_session` with the services installed.
     format_with_session(
-        &FormatSession::new(allocator, InputKind::PhysicalFile, None),
+        &FormatSession::new(allocator, InputKind::PhysicalFile),
         source_text,
         options,
-        sort_tailwind_classes,
     )
 }
 
@@ -56,7 +45,8 @@ pub fn format<'a>(
 ///
 /// The session's dispatcher formats this document's front matter body
 /// (YAML through oxfmt's native registry;
-/// see `write_front_matter` for the routing and every verbatim degradation).
+/// see `write_front_matter` for the routing and every verbatim degradation),
+/// and its Tailwind sorter orders the collected `@apply` classes at finalize.
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -64,7 +54,6 @@ pub fn format_with_session<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
     options: CssFormatOptions,
-    sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     // The envelope matrix has one decision input, the session's `InputKind`:
     // this entry is the physical-root half (owns BOM + front matter);
@@ -97,10 +86,7 @@ pub fn format_with_session<'a>(
     let mut context = state.into_context();
 
     let tailwind_classes = context.take_tailwind_classes();
-    let sorted_tailwind_classes = match sort_tailwind_classes {
-        Some(sorter) if !tailwind_classes.is_empty() => sorter(tailwind_classes),
-        _ => tailwind_classes,
-    };
+    let sorted_tailwind_classes = session.sort_tailwind_classes(tailwind_classes);
 
     let ir = Document::new(elements, sorted_tailwind_classes);
 

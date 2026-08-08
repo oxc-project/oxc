@@ -23,12 +23,8 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - Drives context-dependent decisions like forced parentheses / quote style
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
-- `format_with_session`: session-aware entry whose `FormatSession` carries the
-  host-supplied `FormatDispatcher` for embedded languages
-  (plain `format` / `format_program` wrap a dispatcher-less `PhysicalFile` session)
-- `ExternalCallbacks` (in `external_formatter.rs`): the string-based (JSDoc fences + html-in-js recovery)
-  and Tailwind callbacks delegated back to the host;
-  IR-channel dispatch is NOT here, it travels on the session
+- `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
+  - the dispatcher (IR channel), the string embedder (JSDoc fences + html-in-js temporary recovery), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
 
 ### Generated code
 
@@ -52,7 +48,7 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 
 - Backed by `prettier-plugin-tailwindcss`
 - Classes are collected during IR construction and sorted in one batch when the IR is stringified
-- Requires `ExternalCallbacks` (the sort itself is delegated to the host via `TailwindCallback`)
+- Requires the session's `TailwindSorter` service (the sort itself is delegated to the host)
 
 ### Embedded language formatting
 

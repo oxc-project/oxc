@@ -86,8 +86,9 @@ The core is parameterized over a consumer-supplied context so it stays language-
 - Consumers access `DispatchResult.docs` directly (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`)
   - Call `DispatchResult::remap_tailwind_into` first when the child may carry classes, the printer's `debug_assert` catches a forgotten merge
 - `FormatSession` (`session.rs`) is the execution unit:
-  - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the dispatcher, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
-  - `FormatState` holds one (`new_with_session`; plain `new` wraps a dispatcher-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write
+  - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
+  - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel; temporary while some languages only format via a string API), `tailwind_sorter` (print-time batch sort). Core only transports them
+  - `FormatState` holds one (`new_with_session`; plain `new` wraps a service-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write
 - A dispatch states its request as `DispatchRequest` (language, texts, `InputKind`, pair-specific context) and yields `Result<DispatchOutcome, String>`:
   - `DispatchOutcome::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
   - Optional-embed callers degrade the same way for both, but never conflate them at the source
@@ -95,7 +96,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ## What belongs in core (the boundary)
 
-Three layers, three admission rules. A type/fn that fits none of them belongs in a consumer crate.
+Four layers, four admission rules. A type/fn that fits none of them belongs in a consumer crate.
 
 - (1) engine: The IR + Printer + the option types the `Printer` actually consumes
   - `PrinterOptions`: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`
@@ -109,6 +110,12 @@ Admission: the structure makes no output decision by itself; language difference
 - (3) `spec/`: Shared formatter behaviors reused across language formatters
 
 Output targets Prettier compatibility, but the layer is defined by what it is, not by Prettier.
+
+- (4) `session.rs` / `embedded.rs`: per-run host services, transported opaquely (`SessionServices`: dispatcher / string embedder / Tailwind sorter)
+
+Admission: core stores the service and hands it back (or applies it mechanically at finalize);
+every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
+`string_embedder` additionally carries an exit criterion: it is removed when md/html/angular gain IR-capable formatters (until then it is the string-out channel's transport; see its rustdoc).
 
 Three gates, all required and note "shared across languages" describes what lives here but is not the admission test.
 The gates are:
