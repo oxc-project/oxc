@@ -114,6 +114,45 @@ fn test_fold_returns() {
 }
 
 #[test]
+fn test_fold_nested_terminated_returns_at_function_tail() {
+    test("function f(){if(a)if(x)return;else return 2-x}", "function f(){if(a&&!x)return 2-x}");
+    test("function f(){if(a)if(x)return 2-x;else return}", "function f(){if(a&&x)return 2-x}");
+
+    // A return cannot become fallthrough in a loop or before later work.
+    test(
+        "function f(){for(;;)if(a)if(x)return;else return 2-x}",
+        "function f(){for(;;)if(a)return x?void 0:2-x}",
+    );
+    test(
+        "function f(){if(a)if(x)return;else return 2-x;g()}",
+        "function f(){if(a)return x?void 0:2-x;g()}",
+    );
+    test(
+        "function f(){L:if(a)if(x)return;else return 2-x;g()}",
+        "function f(){L:if(a)return x?void 0:2-x;g()}",
+    );
+    test(
+        "function f(){L:{if(a)if(x)return;else return 2-x}g()}",
+        "function f(){L:if(a)return x?void 0:2-x;g()}",
+    );
+
+    // Preserve evaluation of an undefined-valued branch with side effects.
+    test("function f(){if(a)return x?void side():y}", "function f(){if(a)return x?void side():y}");
+    test("function f(){if(a)return x?undefined:y}", "function f(){if(a&&!x)return y}");
+    test("function f(){if(a)return x?void 0:y}", "function f(){if(a)return x?void 0:y}");
+
+    // Explicit `return undefined` is observable in async generators.
+    test(
+        "async function* f(){if(a)if(x)return;else return 2-x}",
+        "async function* f(){if(a)return x?void 0:2-x}",
+    );
+    test(
+        "async function* f(){if(a)if(x)return 2-x;else return}",
+        "async function* f(){if(a)return x?2-x:void 0}",
+    );
+}
+
+#[test]
 fn test_combine_ifs1() {
     test("function f() {if (x) return 1; if (y) return 1}", "function f() {if (x || y) return 1;}");
     // test(
