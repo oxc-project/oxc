@@ -26,6 +26,9 @@ struct CompressionConfig {
     source_type: SourceType,
     options: CompressOptions,
     mode: CompressionMode,
+    /// Cached [`oxc_compat::EngineTargets::feature_support_cache`] of `options.target`,
+    /// so per-node feature queries are a bit test instead of a hash lookup.
+    feature_support: oxc_compat::FeatureSupportCache,
 }
 
 /// Changes accumulated between two pass-completion boundaries. Live from
@@ -125,8 +128,9 @@ impl<'a> MinifierState<'a> {
         allocator: &'a Allocator,
     ) -> Self {
         let symbols = SymbolState::new(source_type, &options, scoping, allocator);
+        let feature_support = options.target.feature_support_cache();
         Self {
-            config: CompressionConfig { source_type, options, mode },
+            config: CompressionConfig { source_type, options, mode, feature_support },
             symbols,
             private_member_usage: PrivateMemberUsageStack::new(),
             body_frames: NonEmptyStack::new(BodyFrame {
@@ -153,6 +157,12 @@ impl<'a> MinifierState<'a> {
 
     pub(crate) fn options(&self) -> &CompressOptions {
         &self.config.options
+    }
+
+    /// Whether the target engines support `feature`, answered from the cached
+    /// [`CompressionConfig::feature_support`] bitset.
+    pub(crate) fn supports_feature(&self, feature: oxc_compat::ESFeature) -> bool {
+        !self.config.feature_support.has_feature(feature)
     }
 
     pub(crate) fn source_type(&self) -> SourceType {
