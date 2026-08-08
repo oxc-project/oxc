@@ -3,9 +3,14 @@ mod graphql;
 mod html;
 mod markdown;
 
-use oxc_allocator::{Allocator, ArenaStringBuilder};
+use std::any::Any;
+
+use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, IndentWidth, format_element::TextWidth};
+use oxc_formatter_core::{
+    DispatchOutcome, DispatchRequest, FormatElement, IndentWidth, InputKind,
+    format_element::TextWidth,
+};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -139,6 +144,28 @@ fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
 
 /// Try to format a template literal inside Angular @Component's template/styles property.
 /// Returns `true` if formatting was performed, `false` if not applicable.
+/// Dispatches one embedded fragment and consumes the result into the parent
+/// (`InputKind::Fragment` + the `into_doc` Tailwind merge in one place,
+/// so an embed site cannot re-derive the pair and skip the merge).
+/// `None` covers `PreserveOriginal` and operational errors alike,
+/// the caller keeps the template as-is (the html sites stay manual: they read `meta` first).
+pub(super) fn dispatch_fragment_ir<'a>(
+    f: &mut JsFormatter<'_, 'a>,
+    language: &str,
+    text: &str,
+    parent_context: Option<&dyn Any>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
+    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
+        language,
+        text,
+        input_kind: InputKind::Fragment,
+        parent_context,
+    }) else {
+        return None;
+    };
+    Some(result.into_doc(f.context_mut()))
+}
+
 pub(super) fn try_format_angular_component<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,

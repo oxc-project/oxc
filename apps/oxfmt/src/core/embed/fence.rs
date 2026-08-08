@@ -17,20 +17,14 @@ use oxc_formatter_core::{
     InputKind, SessionServices, TailwindSorter,
 };
 
-use super::dispatcher::{self, ResolvedDispatchConfig};
-
-/// Build the dispatcher a fence callback holds for its lifetime.
-/// Fence dispatchers never take the Prettier fallback (native fences never fall
-/// back), so one is invariant across the callback's lifetime: build it once, not per fence.
-pub fn build_fence_dispatcher(dispatch_config: &Arc<ResolvedDispatchConfig>) -> FormatDispatcher {
-    dispatcher::build_dispatcher(Arc::clone(dispatch_config), None)
-}
+use super::dispatcher::ResolvedDispatchConfig;
 
 /// The pure build's `SessionServices`: the fallback-less registry dispatcher plus
 /// the native-fence string embedder, both behind the shared off-predicate
 /// (the napi twin is `ExternalFormatter::session_services`).
-/// Non-native fences answer `Err` (the string channel's "keep verbatim"),
-/// since no Prettier exists in this build; no Tailwind sorter exists either.
+/// A non-native fence dispatches to the registry's `PreserveOriginal`,
+/// which the adapter answers as `Err` (the string channel's "keep verbatim");
+/// no Prettier exists in this build, and no Tailwind sorter either.
 #[cfg(not(feature = "napi"))]
 pub fn session_services(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
     // A fence dispatcher and this root's dispatcher are the same fallback-less registry,
@@ -40,9 +34,6 @@ pub fn session_services(dispatch_config: &Arc<ResolvedDispatchConfig>) -> Sessio
         let fence_dispatcher = Arc::clone(dispatcher);
         let dispatch_config = Arc::clone(dispatch_config);
         Arc::new(move |language: &str, code: &str| {
-            if !dispatcher::is_native_language(language) {
-                return Err(format!("Unsupported language: {language}"));
-            }
             format_native_fence(language, code, &fence_dispatcher, &dispatch_config, None)
         }) as oxc_formatter_core::StringEmbedder
     });
@@ -68,7 +59,7 @@ pub fn format_native_fence(
     dispatch_config: &ResolvedDispatchConfig,
     sort_tailwind: Option<&TailwindSorter>,
 ) -> Result<String, String> {
-    debug_span!("oxfmt::external::format_native_fence", language = language).in_scope(|| {
+    debug_span!("oxfmt::embed::format_native_fence", language = language).in_scope(|| {
         let allocator = Allocator::default();
         let session = FormatSession::with_services(
             &allocator,
@@ -81,7 +72,7 @@ pub fn format_native_fence(
         );
         let outcome = session.dispatch(DispatchRequest {
             language,
-            texts: &[code],
+            text: code,
             input_kind: InputKind::Fragment,
             parent_context: None,
         })?;
@@ -89,11 +80,9 @@ pub fn format_native_fence(
         let DispatchOutcome::Formatted(result) = outcome else {
             return Err(format!("Native formatter for '{language}' kept the input as-is"));
         };
-        let DispatchResult { mut docs, tailwind_classes, .. } = result;
-        if docs.len() != 1 {
-            return Err(format!("Expected exactly one IR, got {}", docs.len()));
-        }
-        let ir = docs.pop().unwrap();
+        // The parent-less consumer: no index space to remap into,
+        // so the classes sort locally instead of going through `into_doc`.
+        let DispatchResult { doc: ir, tailwind_classes, .. } = result;
 
         let tailwind_classes = session.sort_tailwind_classes(tailwind_classes);
 
