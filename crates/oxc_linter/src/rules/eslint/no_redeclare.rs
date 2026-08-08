@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -77,7 +77,15 @@ impl Rule for NoRedeclare {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let builtin_globals = if self.builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
+        // Identical to `no-implicit-globals`: ESM and CommonJS run in their own scope, so
+        // name clashes with host/env built-ins are not possible. Classic scripts share the
+        // global object, so those clashes still matter there.
+        // Redeclarations within the same scope must still be reported in every module kind
+        // (see https://github.com/oxc-project/oxc/issues/18253).
+        let check_builtin_globals = self.builtin_globals
+            && !ctx.source_type().is_module()
+            && !ctx.source_type().is_commonjs();
+        let builtin_globals = if check_builtin_globals { Some(&GLOBALS_BUILTIN) } else { None };
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);
@@ -126,11 +134,6 @@ impl Rule for NoRedeclare {
             }
         }
     }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ES modules run in their own scope, and don't conflict with existing globals
-        !ctx.source_type().is_module()
-    }
 }
 
 #[test]
@@ -167,6 +170,9 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/10396>
         ("export function foo(): void; export function foo() { }", None),
         ("function foo(arg: string): void; function foo(arg: number): any {}", None),
+        // Module/CJS: binding a built-in name is allowed (own scope). Overload +
+        // implementation of `undefined` is not a same-scope redeclare.
+        ("export function undefined(): void; export function undefined() { }", None),
     ];
 
     let fail = vec![
@@ -191,28 +197,54 @@ fn test() {
         ("function f(a, b = 1) { var a; var b;}", None),
         ("function f() { var a; if (test) { var a; } }", None),
         ("for (var a, a;;);", None),
+        // Classic script only: built-in global name without ESM/CJS scope wrap
+        ("function undefined() {}", None),
+        ("var undefined = 1;", None),
         // Issue: <https://github.com/oxc-project/oxc/issues/10396>
-        ("export function undefined(): void; export function undefined() { }", None),
         ("type foo = 1; export function foo(): void; export function foo() { }", None),
     ];
 
+    // TypeScript script (.ts, no import/export) so built-in global checks still run.
+    // `.cts` is CommonJS since #18089 and must not flag env built-in clashes.
     Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, fail)
-        .change_rule_path_extension(".cts")
+        .change_rule_path_extension("ts")
         .test_and_snapshot();
 
+    // Built-in / configured-global clashes only apply to classic scripts.
     let fail = vec![("var foo;", None, Some(serde_json::json!({ "globals": { "foo": false }})))];
 
     Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, vec![], fail)
-        .change_rule_path_extension(".cts")
+        .change_rule_path_extension("ts")
         .test();
 
-    let pass = vec![(
-        "import { performance } from 'node:perf_hooks'; (() => { performance })",
-        None,
-        Some(serde_json::json!({ "globals": { "performance": "readonly" }})),
-    )];
+    // Same-scope redeclarations must still fire in ESM (issue #18253).
+    let fail_module = vec![
+        ("var a = 3; var a = 10;", None),
+        ("export var a; var a;", None),
+        ("function a() {} function a() {}", None),
+    ];
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, vec![], fail_module)
+        .change_rule_path_extension("mjs")
+        .test();
 
-    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass, vec![])
-        .change_rule_path_extension(".ts")
+    // ESM/CJS: binding an env built-in name is fine (own scope); only true
+    // same-scope redeclares still report.
+    let pass_module = vec![
+        (
+            "import { performance } from 'node:perf_hooks'; (() => { performance })",
+            None,
+            Some(serde_json::json!({ "globals": { "performance": "readonly" }})),
+        ),
+        ("var Object = 0;", None, None),
+        ("var Object = 0;", None, Some(serde_json::json!({ "globals": { "Object": "readonly" }}))),
+    ];
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass_module, vec![])
+        .change_rule_path_extension("mjs")
+        .test();
+
+    let pass_cjs = vec![("var Object = 0;", None)];
+    let fail_cjs = vec![("var Object = 0; var Object = 1;", None)];
+    Tester::new(NoRedeclare::NAME, NoRedeclare::PLUGIN, pass_cjs, fail_cjs)
+        .change_rule_path_extension("cjs")
         .test();
 }

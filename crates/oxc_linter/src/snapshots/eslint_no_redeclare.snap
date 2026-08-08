@@ -1,9 +1,10 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 490
 ---
 
   ⚠ eslint(no-redeclare): 'b' is already defined.
-   ╭─[no_redeclare..cts:1:27]
+   ╭─[no_redeclare.ts:1:27]
  1 │ switch(foo) { case a: var b = 3;
    ·                           ┬
    ·                           ╰── 'b' is already defined.
@@ -14,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a = 3; var a = 10;
    ·     ┬          ┬
    ·     │          ╰── It can not be redeclared here.
@@ -23,7 +24,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a = {}; var a = [];
    ·     ┬           ┬
    ·     │           ╰── It can not be redeclared here.
@@ -32,7 +33,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   × Identifier `a` has already been declared
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a; function a() {}
    ·     ┬           ┬
    ·     │           ╰── It can not be redeclared here
@@ -40,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare.ts:1:10]
  1 │ function a() {} function a() {}
    ·          ┬               ┬
    ·          │               ╰── It can not be redeclared here.
@@ -49,7 +50,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a = function() { }; var a = function() { }
    ·     ┬                       ┬
    ·     │                       ╰── It can not be redeclared here.
@@ -58,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a = function() { }; var a = new Date();
    ·     ┬                       ┬
    ·     │                       ╰── It can not be redeclared here.
@@ -67,7 +68,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a = 3; var a = 10; var a = 15;
    ·     ┬          ┬
    ·     │          ╰── It can not be redeclared here.
@@ -76,7 +77,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:16]
+   ╭─[no_redeclare.ts:1:16]
  1 │ var a = 3; var a = 10; var a = 15;
    ·                ┬           ┬
    ·                │           ╰── It can not be redeclared here.
@@ -85,7 +86,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a; var a;
    ·     ┬      ┬
    ·     │      ╰── It can not be redeclared here.
@@ -94,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:12]
+   ╭─[no_redeclare.ts:1:12]
  1 │ export var a; var a;
    ·            ┬      ┬
    ·            │      ╰── It can not be redeclared here.
@@ -103,7 +104,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:24]
+   ╭─[no_redeclare.ts:1:24]
  1 │ class C { static { var a; var a; } }
    ·                        ┬      ┬
    ·                        │      ╰── It can not be redeclared here.
@@ -112,7 +113,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:24]
+   ╭─[no_redeclare.ts:1:24]
  1 │ class C { static { var a; { var a; } } }
    ·                        ┬        ┬
    ·                        │        ╰── It can not be redeclared here.
@@ -121,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:26]
+   ╭─[no_redeclare.ts:1:26]
  1 │ class C { static { { var a; } var a; } }
    ·                          ┬        ┬
    ·                          │        ╰── It can not be redeclared here.
@@ -130,7 +131,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:26]
+   ╭─[no_redeclare.ts:1:26]
  1 │ class C { static { { var a; } { var a; } } }
    ·                          ┬          ┬
    ·                          │          ╰── It can not be redeclared here.
@@ -139,28 +140,28 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var Object = 0; var Object = 0; var globalThis = 0;
    ·     ──────
    ╰────
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
-   ╭─[no_redeclare..cts:1:21]
+   ╭─[no_redeclare.ts:1:21]
  1 │ var Object = 0; var Object = 0; var globalThis = 0;
    ·                     ──────
    ╰────
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
-   ╭─[no_redeclare..cts:1:37]
+   ╭─[no_redeclare.ts:1:37]
  1 │ var Object = 0; var Object = 0; var globalThis = 0;
    ·                                     ──────────
    ╰────
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a; var {a = 0, b: Object = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclared here.
@@ -169,14 +170,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'Object' is already defined as a built-in global variable.
-   ╭─[no_redeclare..cts:1:23]
+   ╭─[no_redeclare.ts:1:23]
  1 │ var a; var {a = 0, b: Object = 0} = {};
    ·                       ──────
    ╰────
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:5]
+   ╭─[no_redeclare.ts:1:5]
  1 │ var a; var {a = 0, b: globalThis = 0} = {};
    ·     ┬       ┬
    ·     │       ╰── It can not be redeclared here.
@@ -185,14 +186,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'globalThis' is already defined as a built-in global variable.
-   ╭─[no_redeclare..cts:1:23]
+   ╭─[no_redeclare.ts:1:23]
  1 │ var a; var {a = 0, b: globalThis = 0} = {};
    ·                       ──────────
    ╰────
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:20]
+   ╭─[no_redeclare.ts:1:20]
  1 │ function f() { var a; var a; }
    ·                    ┬      ┬
    ·                    │      ╰── It can not be redeclared here.
@@ -201,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:12]
+   ╭─[no_redeclare.ts:1:12]
  1 │ function f(a, b = 1) { var a; var b;}
    ·            ┬               ┬
    ·            │               ╰── It can not be redeclared here.
@@ -210,7 +211,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'b' is already defined.
-   ╭─[no_redeclare..cts:1:15]
+   ╭─[no_redeclare.ts:1:15]
  1 │ function f(a, b = 1) { var a; var b;}
    ·               ┬                   ┬
    ·               │                   ╰── It can not be redeclared here.
@@ -219,7 +220,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:20]
+   ╭─[no_redeclare.ts:1:20]
  1 │ function f() { var a; if (test) { var a; } }
    ·                    ┬                  ┬
    ·                    │                  ╰── It can not be redeclared here.
@@ -228,7 +229,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
-   ╭─[no_redeclare..cts:1:10]
+   ╭─[no_redeclare.ts:1:10]
  1 │ for (var a, a;;);
    ·          ┬  ┬
    ·          │  ╰── It can not be redeclared here.
@@ -237,21 +238,21 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a different variable name or remove the duplicate declaration.
 
   ⚠ eslint(no-redeclare): 'undefined' is already defined as a built-in global variable.
-   ╭─[no_redeclare..cts:1:17]
- 1 │ export function undefined(): void; export function undefined() { }
-   ·                 ─────────
+   ╭─[no_redeclare.ts:1:10]
+ 1 │ function undefined() {}
+   ·          ─────────
    ╰────
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'undefined' is already defined as a built-in global variable.
-   ╭─[no_redeclare..cts:1:52]
- 1 │ export function undefined(): void; export function undefined() { }
-   ·                                                    ─────────
+   ╭─[no_redeclare.ts:1:5]
+ 1 │ var undefined = 1;
+   ·     ─────────
    ╰────
   help: Use a different variable name to avoid shadowing the built-in global.
 
   ⚠ eslint(no-redeclare): 'foo' is already defined.
-   ╭─[no_redeclare..cts:1:6]
+   ╭─[no_redeclare.ts:1:6]
  1 │ type foo = 1; export function foo(): void; export function foo() { }
    ·      ─┬─                                                   ─┬─
    ·       │                                                     ╰── It can not be redeclared here.
