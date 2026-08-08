@@ -12,8 +12,10 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    DiagnosticMode, TextDocument, Tool, ToolBuilder, ToolRestartChanges, WorkerManager,
-    backend::Backend, tool::DiagnosticResult,
+    DiagnosticMode, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
+    WorkerManager,
+    backend::Backend,
+    tool::{ClientMessage, DiagnosticResult},
 };
 
 #[derive(Default)]
@@ -33,8 +35,11 @@ impl FakeToolBuilder {
 }
 
 impl ToolBuilder for FakeToolBuilder {
-    fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(FakeTool { cache_uris: self.cache_uris.clone() })
+    fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
+        ToolBuildResult {
+            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone() }),
+            client_message: None,
+        }
     }
 
     fn server_capabilities(
@@ -89,18 +94,31 @@ impl Tool for FakeTool {
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
         if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
+            let result = builder.build(root_uri, new_options_json);
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, new_options_json)),
+                tool: Some(result.tool),
                 watch_patterns: None,
+                client_message: result.client_message,
             };
         }
         if new_options_json.as_u64() == Some(2) {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+                client_message: None,
             };
         }
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        if new_options_json.as_u64() == Some(4) {
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_message: Some(ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::WARNING,
+                }),
+            };
+        }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
     }
 
     fn get_watcher_patterns(
@@ -121,19 +139,22 @@ impl Tool for FakeTool {
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         if changed_uri.as_str().ends_with("tool.config") {
+            let result = builder.build(root_uri, options);
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, options)),
+                tool: Some(result.tool),
                 watch_patterns: None,
+                client_message: result.client_message,
             };
         }
         if changed_uri.as_str().ends_with("watcher.config") {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+                client_message: None,
             };
         }
 
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
     }
 
     fn get_code_actions_or_commands(
