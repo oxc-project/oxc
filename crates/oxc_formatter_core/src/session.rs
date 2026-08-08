@@ -4,9 +4,7 @@ use std::sync::Arc;
 
 use oxc_allocator::Allocator;
 
-use crate::{
-    DispatchOutcome, DispatchRequest, EmbeddedContext, FormatDispatcher, UniqueGroupIdBuilder,
-};
+use crate::{DispatchOutcome, DispatchRequest, FormatDispatcher, UniqueGroupIdBuilder};
 
 /// Upper bound on nested embedded dispatches;
 /// exceeding it is an operational error, catching accidental A-in-B-in-A infinite recursion.
@@ -37,9 +35,6 @@ pub enum InputKind {
 /// so any formatter (not just JS) can dispatch embedded languages.
 /// Cloning hands out another handle to the SAME session (shared `GroupId` space, same depth);
 /// the session for one embedded child comes from [`Self::derive_child`].
-///
-/// TODO: Supersedes [`crate::EmbeddedContext`],
-/// which remains as a migration adapter until every entry point is session-aware.
 #[derive(Clone)]
 pub struct FormatSession<'a> {
     allocator: &'a Allocator,
@@ -86,11 +81,8 @@ impl<'a> FormatSession<'a> {
     /// no dispatcher installed (plain standalone run) counts as the deliberate
     /// `Ok(DispatchOutcome::PreserveOriginal)`, and reaching `MAX_DISPATCH_DEPTH` is an `Err`.
     ///
-    /// TODO: The callback should receive the derived child session itself
-    /// (and must then not create another `GroupId` space or bump the depth again).
-    /// Until the dispatcher signature is session-aware, it receives an
-    /// [`EmbeddedContext`] adapter sourced from the child,
-    /// so the child's bumped depth is not yet visible to nested dispatches.
+    /// The callback receives the derived child session;
+    /// it must not create another `GroupId` space or bump the depth again.
     ///
     /// # Errors
     /// Operational failures only (recursion limit, transport/internal errors).
@@ -103,14 +95,8 @@ impl<'a> FormatSession<'a> {
                 "embedded dispatch exceeded the recursion limit ({MAX_DISPATCH_DEPTH})"
             ));
         }
-        let FormatSession { allocator, group_id_builder, dispatcher: child_dispatcher, .. } =
-            self.derive_child(request.input_kind);
-        let ctx = EmbeddedContext {
-            allocator,
-            group_id_builder: &group_id_builder,
-            dispatcher: child_dispatcher,
-        };
-        dispatcher(&ctx, request)
+        let child = self.derive_child(request.input_kind);
+        dispatcher(&child, request)
     }
 
     /// The arena shared between the root and every embedded child.
@@ -128,12 +114,6 @@ impl<'a> FormatSession<'a> {
     /// Envelope semantics of the input this session formats.
     pub fn input_kind(&self) -> InputKind {
         self.input_kind
-    }
-
-    /// The dispatcher for formatting embedded languages,
-    /// `None` when recursion is unavailable (plain standalone formatting).
-    pub fn dispatcher(&self) -> Option<&FormatDispatcher> {
-        self.dispatcher.as_ref()
     }
 
     /// How many dispatch boundaries deep this session is (0 for a root).

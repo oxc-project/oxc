@@ -70,19 +70,18 @@ impl FixtureFormatter for CssHarness {
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
 fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{
-        Document, EmbeddedContext, FormatElement, FormatOptions, Printer, TextWidth,
-    };
+    use oxc_formatter_core::{Document, FormatElement, FormatOptions, Printer, TextWidth};
 
     let allocator = Allocator::default();
-    let group_id_builder = oxc_formatter_core::UniqueGroupIdBuilder::default();
-    let ctx = EmbeddedContext {
-        allocator: &allocator,
-        group_id_builder: &group_id_builder,
-        dispatcher: None,
-    };
-    let embedded =
-        oxc_formatter_css::format_to_ir(&ctx, source, options).expect("format should succeed");
+    let session = oxc_formatter_core::FormatSession::new(
+        &allocator,
+        oxc_formatter_core::InputKind::Fragment,
+        None,
+    );
+    let embedded = oxc_formatter_css::format_to_ir(
+        &session, source, options, /* template_placeholders */ true,
+    )
+    .expect("format should succeed");
     let document = Document::new(embedded.ir, Vec::new());
     document.propagate_expand();
     let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
@@ -100,7 +99,7 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
             }
             other => other.clone(),
         }),
-        &ctx.allocator,
+        &session.allocator(),
     )
     .into_arena_slice();
     let mut code =

@@ -8,9 +8,10 @@ use std::sync::{Arc, OnceLock};
 
 use tracing::{debug, debug_span};
 
+use oxc_formatter::CssInJsTemplate;
 use oxc_formatter_core::{
-    CoreFormatOptions, DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedContext,
-    EmbeddedIr, FormatDispatcher,
+    CoreFormatOptions, DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedIr,
+    FormatDispatcher, FormatSession,
 };
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
@@ -106,11 +107,7 @@ impl ResolvedDispatchConfig {
 /// Assembled only in napi builds ([`super::prettier_fallback`]);
 /// the pure Rust build passes `None` and unsupported languages are deliberately preserved as-is.
 pub type PrettierDocFallback = Arc<
-    dyn for<'a, 'g> Fn(
-            &EmbeddedContext<'a, 'g>,
-            &str,
-            &[&str],
-        ) -> Result<DispatchOutcome<'a>, String>
+    dyn for<'a> Fn(&FormatSession<'a>, &str, &[&str]) -> Result<DispatchOutcome<'a>, String>
         + Send
         + Sync,
 >;
@@ -122,11 +119,11 @@ pub fn build_dispatcher(
     dispatch_config: Arc<ResolvedDispatchConfig>,
     fallback: Option<PrettierDocFallback>,
 ) -> FormatDispatcher {
-    Arc::new(move |ctx: &EmbeddedContext<'_, '_>, request: DispatchRequest<'_>| {
+    Arc::new(move |session: &FormatSession<'_>, request: DispatchRequest<'_>| {
         // Rust implementations replace branches one by one;
         match request.language {
             "graphql" | "gql" => Ok(formatted_or_preserved(
-                format_graphql_to_irs(ctx, request.texts, dispatch_config.graphql_options()),
+                format_graphql_to_irs(session, request.texts, dispatch_config.graphql_options()),
                 "format_graphql_to_irs",
             )),
             "css" | "scss" | "less" => {
@@ -139,21 +136,36 @@ pub fn build_dispatcher(
                         request.texts.len()
                     ));
                 };
-                // CSS-in-JS is always parsed as SCSS (Prettier's embed uses the
-                // `scss` parser for all of css/scss/less template tags).
+                // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS
+                // with `${}` placeholder markers.
+                // Any other caller gets the strict standalone grammar with the variant
+                // taken from the fence/request language.
+                let (variant, template_placeholders) = if request
+                    .parent_context
+                    .is_some_and(|c| c.downcast_ref::<CssInJsTemplate>().is_some())
+                {
+                    (CssVariant::Scss, true)
+                } else {
+                    (css_variant_for(request.language), false)
+                };
                 Ok(formatted_or_preserved(
-                    format_css_to_ir(ctx, text, dispatch_config.css_options(CssVariant::Scss)),
+                    format_css_to_ir(
+                        session,
+                        text,
+                        dispatch_config.css_options(variant),
+                        template_placeholders,
+                    ),
                     "format_css_to_ir",
                 ))
             }
             "yaml" | "yml" => Ok(formatted_or_preserved(
-                format_yaml_to_irs(ctx, request.texts, dispatch_config.yaml_options()),
+                format_yaml_to_irs(session, request.texts, dispatch_config.yaml_options()),
                 "format_yaml_to_irs",
             )),
             // Everything else: Prettier fallback (Doc→IR path) when available
             _ => {
                 if let Some(fallback) = &fallback {
-                    fallback(ctx, request.language, request.texts)
+                    fallback(session, request.language, request.texts)
                 } else {
                     // A language without a formatter is a deliberate skip.
                     debug!("No formatter for language '{}', part stays as-is", request.language);
@@ -162,6 +174,16 @@ pub fn build_dispatcher(
             }
         }
     })
+}
+
+/// Map a fence/request language to its standalone [`CssVariant`]
+/// (css-in-js is Scss regardless of the tag; see the dispatcher's css arm).
+pub fn css_variant_for(language: &str) -> CssVariant {
+    match language {
+        "scss" => CssVariant::Scss,
+        "less" => CssVariant::Less,
+        _ => CssVariant::Css,
+    }
 }
 
 /// Maps a native branch result: a parse failure is a deliberate skip
@@ -184,7 +206,7 @@ fn formatted_or_preserved<'a>(
 ///
 /// Any parse error fails the whole batch (an embedded template is all-or-nothing).
 fn format_graphql_to_irs<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     texts: &[&str],
     options: GraphqlFormatOptions,
 ) -> Result<DispatchResult<'a>, String> {
@@ -192,7 +214,7 @@ fn format_graphql_to_irs<'a>(
         .iter()
         .map(|text| {
             debug_span!("oxfmt::external::format_graphql_to_ir").in_scope(|| {
-                let embedded = oxc_formatter_graphql::format_to_ir(ctx, text, options)
+                let embedded = oxc_formatter_graphql::format_to_ir(session, text, options)
                     .map_err(|err| err.to_string())?;
                 Ok(embedded.ir)
             })
@@ -204,13 +226,15 @@ fn format_graphql_to_irs<'a>(
 /// Format the single joined CSS text (placeholders included) via `oxc_formatter_css`,
 /// returning one IR per call (the IR-channel contract for CSS).
 fn format_css_to_ir<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     text: &str,
     options: CssFormatOptions,
+    template_placeholders: bool,
 ) -> Result<DispatchResult<'a>, String> {
     debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
         let EmbeddedIr { ir, tailwind_classes } =
-            oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
+            oxc_formatter_css::format_to_ir(session, text, options, template_placeholders)
+                .map_err(|err| err.to_string())?;
         Ok(DispatchResult { docs: vec![ir], tailwind_classes, meta: None })
     })
 }
@@ -220,7 +244,7 @@ fn format_css_to_ir<'a>(
 ///
 /// Any parse error fails the whole batch (an embedded template is all-or-nothing).
 fn format_yaml_to_irs<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     texts: &[&str],
     options: YamlFormatOptions,
 ) -> Result<DispatchResult<'a>, String> {
@@ -228,7 +252,7 @@ fn format_yaml_to_irs<'a>(
         .iter()
         .map(|text| {
             debug_span!("oxfmt::external::format_yaml_to_ir").in_scope(|| {
-                let embedded = oxc_formatter_yaml::format_to_ir(ctx, text, options)
+                let embedded = oxc_formatter_yaml::format_to_ir(session, text, options)
                     .map_err(|err| err.to_string())?;
                 Ok(embedded.ir)
             })
@@ -243,8 +267,7 @@ mod tests {
 
     use oxc_allocator::Allocator;
     use oxc_formatter_core::{
-        CoreFormatOptions, DispatchOutcome, DispatchRequest, EmbeddedContext, InputKind,
-        UniqueGroupIdBuilder,
+        CoreFormatOptions, DispatchOutcome, DispatchRequest, FormatSession, InputKind,
     };
 
     use super::{ResolvedDispatchConfig, build_dispatcher};
@@ -260,24 +283,19 @@ mod tests {
     /// Pure-build criterion: the native registry dispatches YAML with no fallback installed.
     #[test]
     fn native_yaml_dispatch_works_without_fallback() {
-        let dispatcher = build_dispatcher(dispatch_config(), None);
         let allocator = Allocator::default();
-        let group_id_builder = UniqueGroupIdBuilder::default();
-        let ctx = EmbeddedContext {
-            allocator: &allocator,
-            group_id_builder: &group_id_builder,
-            dispatcher: None,
-        };
-
-        let outcome = dispatcher(
-            &ctx,
-            DispatchRequest {
-                language: "yaml",
-                texts: &["a:   1"],
-                input_kind: InputKind::Fragment,
-                parent_context: None,
-            },
+        let session = FormatSession::new(
+            &allocator,
+            InputKind::PhysicalFile,
+            Some(build_dispatcher(dispatch_config(), None)),
         );
+
+        let outcome = session.dispatch(DispatchRequest {
+            language: "yaml",
+            texts: &["a:   1"],
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        });
         assert!(
             matches!(outcome, Ok(DispatchOutcome::Formatted(ref result)) if result.docs.len() == 1)
         );
@@ -285,24 +303,19 @@ mod tests {
 
     #[test]
     fn unsupported_language_without_fallback_preserves_original() {
-        let dispatcher = build_dispatcher(dispatch_config(), None);
         let allocator = Allocator::default();
-        let group_id_builder = UniqueGroupIdBuilder::default();
-        let ctx = EmbeddedContext {
-            allocator: &allocator,
-            group_id_builder: &group_id_builder,
-            dispatcher: None,
-        };
-
-        let outcome = dispatcher(
-            &ctx,
-            DispatchRequest {
-                language: "html",
-                texts: &["<div></div>"],
-                input_kind: InputKind::Fragment,
-                parent_context: None,
-            },
+        let session = FormatSession::new(
+            &allocator,
+            InputKind::PhysicalFile,
+            Some(build_dispatcher(dispatch_config(), None)),
         );
+
+        let outcome = session.dispatch(DispatchRequest {
+            language: "html",
+            texts: &["<div></div>"],
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        });
         assert!(matches!(outcome, Ok(DispatchOutcome::PreserveOriginal)));
     }
 }

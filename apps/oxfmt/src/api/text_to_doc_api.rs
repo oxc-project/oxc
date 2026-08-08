@@ -6,6 +6,7 @@ use tracing::{debug, instrument};
 
 use oxc_allocator::Allocator;
 use oxc_formatter::FragmentContext;
+use oxc_formatter_core::{FormatSession, InputKind};
 use oxc_span::SourceType;
 
 use crate::{
@@ -137,13 +138,20 @@ fn run_full(
     let dispatch_config =
         Arc::new(ResolvedDispatchConfig::new(config, core).with_path(parent_filepath));
 
-    let external_callbacks =
+    let (external_callbacks, dispatcher) =
         external_formatter.to_external_callbacks(&format_options, &dispatch_config);
 
     let allocator = Allocator::default();
+    let session = FormatSession::new(
+        &allocator,
+        // A Vue/Svelte `<script>` block is a complete document the host passes as embedded input,
+        // never the owner of file envelopes (BOM / front matter).
+        InputKind::VirtualDocument,
+        dispatcher,
+    );
     let formatted = match tokio::task::block_in_place(|| {
-        oxc_formatter::format(
-            &allocator,
+        oxc_formatter::format_with_session(
+            &session,
             source_text,
             source_type,
             *format_options,

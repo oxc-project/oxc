@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -51,7 +51,7 @@ pub fn format<'a>(
 /// formatter's document (dispatcher path, e.g. graphql-in-js).
 ///
 /// Unlike [`format()`], this:
-/// - allocates from the shared arena in `ctx`,
+/// - allocates from the session's shared arena and `GroupId` space,
 ///   so the IR lives as long as the parent's document
 /// - emits neither a BOM nor the trailing newline (the parent owns the layout
 ///   around the embedded part, matching Prettier's `textToDoc` + `stripTrailingHardline` behavior)
@@ -59,15 +59,15 @@ pub fn format<'a>(
 /// # Errors
 /// Same as [`format()`]: any parse error bails out.
 pub fn format_to_ir<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
-    let allocator = ctx.allocator;
+    let allocator = session.allocator();
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
-    let mut state = FormatState::new(context, allocator);
+    let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::new(&mut state);
 
     write!(&mut buffer, FormatGraphqlEmbedded { document });

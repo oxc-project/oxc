@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
 
-use oxc_formatter_core::DispatchOutcome;
+use oxc_formatter_core::{DispatchOutcome, DispatchRequest, InputKind};
 
 use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
@@ -32,13 +32,12 @@ pub(super) fn try_embed_markdown<'a>(
     let text = if has_indent { strip_indentation(text, indentation, allocator) } else { text };
 
     // Phase 3: Get the IR from the dispatcher
-    let allocator = f.allocator();
-    let group_id_builder = f.group_id_builder();
-    let Ok(DispatchOutcome::Formatted(result)) = f
-        .context()
-        .external_callbacks()
-        .dispatch_embedded(allocator, group_id_builder, "markdown", &[text])
-    else {
+    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
+        language: "markdown",
+        texts: &[text],
+        input_kind: InputKind::Fragment,
+        parent_context: None,
+    }) else {
         return false;
     };
     let Some(mut ir) = result.docs.into_iter().next() else {

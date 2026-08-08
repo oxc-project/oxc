@@ -1,15 +1,20 @@
 use std::sync::Arc;
 
-use oxc_allocator::Allocator;
-use oxc_formatter_core::{
-    DispatchOutcome, DispatchRequest, EmbeddedContext, FormatDispatcher, InputKind,
-    UniqueGroupIdBuilder,
-};
-
 /// Callback function type for formatting embedded code.
 /// Takes (tag_name, code) and returns formatted code or an error.
 pub type EmbeddedFormatterCallback =
     Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
+
+/// Parent→child parse-mode context for CSS dispatched from a JS template literal (css-in-js).
+///
+/// Requests SCSS grammar + `${}` placeholder markers + top-level declarations.
+/// Travels as `DispatchRequest::parent_context`;
+/// its ABSENCE means the child parses as a plain standalone stylesheet
+/// (e.g. a JSDoc fence routed through the dispatcher).
+///
+/// Defined here for the same reason as [`HtmlEmbedMeta`]:
+/// it is JS↔CSS pair-specific, and `oxc_formatter` must never depend on language crates.
+pub struct CssInJsTemplate;
 
 /// Child→parent metadata for HTML/Angular formatted as an embedded child.
 ///
@@ -31,34 +36,28 @@ pub type TailwindCallback = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync
 
 /// External callbacks for JS-side functionality.
 ///
-/// This struct holds all callbacks that delegate to external implementations:
-/// - Embedded language formatting (CSS, GraphQL, HTML in template literals)
-///   via the orchestrator-assembled [`FormatDispatcher`]
+/// This struct holds the callbacks that delegate to the host's JS side:
+/// - String-based embedded formatting (JSDoc fenced blocks + the html-in-js recovery)
 /// - Tailwind CSS class sorting
+///
+/// IR-channel embedded dispatch is NOT here: it travels on the
+/// `FormatSession` this formatter runs under (see `oxc_formatter_core`).
 #[derive(Default, Clone)]
 pub struct ExternalCallbacks {
     embedded_formatter: Option<EmbeddedFormatterCallback>,
-    dispatcher: Option<FormatDispatcher>,
     tailwind: Option<TailwindCallback>,
 }
 
 impl ExternalCallbacks {
     /// Create a new `ExternalCallbacks` with no callbacks set.
     pub fn new() -> Self {
-        Self { embedded_formatter: None, dispatcher: None, tailwind: None }
+        Self { embedded_formatter: None, tailwind: None }
     }
 
     /// Set the embedded formatter callback.
     #[must_use]
     pub fn with_embedded_formatter(mut self, callback: Option<EmbeddedFormatterCallback>) -> Self {
         self.embedded_formatter = callback;
-        self
-    }
-
-    /// Set the embedded-language dispatcher (IR path).
-    #[must_use]
-    pub fn with_dispatcher(mut self, dispatcher: Option<FormatDispatcher>) -> Self {
-        self.dispatcher = dispatcher;
         self
     }
 
@@ -83,55 +82,6 @@ impl ExternalCallbacks {
     /// * `None` - No embedded formatter callback is set
     pub fn format_embedded(&self, language: &str, code: &str) -> Option<Result<String, String>> {
         self.embedded_formatter.as_ref().map(|cb| cb(language, code))
-    }
-
-    /// Format embedded code through the dispatcher (IR path).
-    ///
-    /// Builds an [`EmbeddedContext`] from the current formatting state and
-    /// invokes the dispatcher with it, so the child formatter shares this
-    /// formatter's arena and `GroupId` space (and can recurse further).
-    ///
-    /// # Arguments
-    /// * `allocator` - The arena allocator for allocating strings in `FormatElement::Text`
-    /// * `group_id_builder` - Builder for creating unique `GroupId`s
-    /// * `language` - A generic language identifier (e.g., "css", "graphql", "html", "angular").
-    ///   These are NOT specific to any external formatter.
-    ///   The dispatcher implementation is responsible for mapping them to its own parser/language names.
-    /// * `texts` - The code texts to format (multiple quasis for GraphQL, single joined text for CSS/HTML)
-    ///
-    /// # Returns
-    /// See [`DispatchOutcome`] for the outcome-vs-error contract;
-    /// "no dispatcher set" counts as the deliberate `PreserveOriginal`.
-    ///
-    /// # Errors
-    /// Operational failures only (transport / internal errors).
-    /// NOTE: unlike `FormatSession::dispatch`, this legacy adapter does NOT enforce the recursion limit;
-    /// the guard arrives when embed sites become session-aware.
-    pub fn dispatch_embedded<'a>(
-        &self,
-        allocator: &'a Allocator,
-        group_id_builder: &UniqueGroupIdBuilder,
-        language: &str,
-        texts: &[&str],
-    ) -> Result<DispatchOutcome<'a>, String> {
-        let Some(dispatcher) = self.dispatcher.as_ref() else {
-            return Ok(DispatchOutcome::PreserveOriginal);
-        };
-
-        let ctx = EmbeddedContext {
-            allocator,
-            group_id_builder,
-            dispatcher: Some(Arc::clone(dispatcher)),
-        };
-        // Every JS template embed is a grammar fragment; parser modes
-        // (e.g. css-in-js placeholder tolerance) travel separately.
-        let request = DispatchRequest {
-            language,
-            texts,
-            input_kind: InputKind::Fragment,
-            parent_context: None,
-        };
-        dispatcher(&ctx, request)
     }
 
     /// Sort Tailwind CSS classes.
