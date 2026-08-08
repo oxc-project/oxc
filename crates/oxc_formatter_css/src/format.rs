@@ -108,7 +108,7 @@ pub fn format_with_session<'a>(
 /// [`CssFormatOptions::sort_tailwindcss`] is on).
 /// The parent document owns the batch sort,
 /// so the caller must re-index the elements into the parent's class space
-/// (`DispatchResult::remap_tailwind_into`).
+/// (`DispatchResult::into_doc`).
 ///
 /// # Errors
 /// Same as [`format()`].
@@ -273,20 +273,17 @@ fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {
         // front matter inside front matter must never acquire envelope semantics (generic FM recursion).
         let outcome = f.session().dispatch(DispatchRequest {
             language: fm.language(),
-            texts: &[body],
+            text: body,
             input_kind: InputKind::Fragment,
             parent_context: None,
         });
-        if let Ok(DispatchOutcome::Formatted(mut result)) = outcome
-            && result.docs.len() == 1
-        {
-            result.remap_tailwind_into(f.context_mut());
-            let ir = result.docs.into_iter().next().expect("length checked above");
+        if let Ok(DispatchOutcome::Formatted(result)) = outcome {
+            let ir = result.into_doc(f.context_mut());
             write_front_matter_frame(fm, Some(ir), f);
             return;
         }
-        // `PreserveOriginal`, an operational error,
-        // or an unexpected doc count: fall through to the verbatim block below.
+        // `PreserveOriginal` or an operational error:
+        // fall through to the verbatim block below.
     }
     write!(f, text(fm.raw));
 }

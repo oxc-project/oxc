@@ -53,9 +53,9 @@ pub(super) fn format_html_doc<'a>(
         let has_leading_ws = cooked.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = cooked.ends_with(|c: char| c.is_ascii_whitespace());
 
-        let Ok(DispatchOutcome::Formatted(mut result)) = f.session().dispatch(DispatchRequest {
+        let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
             language: embedded_language,
-            texts: &[cooked],
+            text: cooked,
             input_kind: InputKind::Fragment,
             parent_context: None,
         }) else {
@@ -72,10 +72,7 @@ pub(super) fn format_html_doc<'a>(
         // Remap is a no-op today (the Prettier Doc path never carries classes),
         // but the boundary contract is "merge at every embed site".
         // A Rust HTML formatter collecting `class` attributes will rely on this.
-        result.remap_tailwind_into(f.context_mut());
-        let Some(mut ir) = result.docs.into_iter().next() else {
-            return false;
-        };
+        let mut ir = result.into_doc(f.context_mut());
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
@@ -120,9 +117,9 @@ pub(super) fn format_html_doc<'a>(
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
 
     // Phase 2: Format via the dispatcher (IR path)
-    let Ok(DispatchOutcome::Formatted(mut result)) = f.session().dispatch(DispatchRequest {
+    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
         language: embedded_language,
-        texts: &[joined],
+        text: joined,
         input_kind: InputKind::Fragment,
         parent_context: None,
     }) else {
@@ -156,10 +153,7 @@ pub(super) fn format_html_doc<'a>(
         return false;
     };
     // See the Phase 0 note: remap is no-op today, load-bearing once `oxc_formatter_html` lands
-    result.remap_tailwind_into(f.context_mut());
-    let Some(mut ir) = result.docs.into_iter().next() else {
-        return false;
-    };
+    let mut ir = result.into_doc(f.context_mut());
 
     // Re-escape template chars in `Text` runs before counting / substituting:
     // the IR is reinserted into a JS template literal built from `.cooked` values.

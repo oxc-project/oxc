@@ -1,8 +1,6 @@
 use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
 
-use oxc_formatter_core::{DispatchOutcome, DispatchRequest, InputKind};
-
 use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
 /// Format a Markdown-in-JS tagged template literal via the Doc→IR path.
@@ -32,15 +30,7 @@ pub(super) fn try_embed_markdown<'a>(
     let text = if has_indent { strip_indentation(text, indentation, allocator) } else { text };
 
     // Phase 3: Get the IR from the dispatcher
-    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
-        language: "markdown",
-        texts: &[text],
-        input_kind: InputKind::Fragment,
-        parent_context: None,
-    }) else {
-        return false;
-    };
-    let Some(mut ir) = result.docs.into_iter().next() else {
+    let Some(mut ir) = super::dispatch_fragment_ir(f, "markdown", text, None) else {
         return false;
     };
 

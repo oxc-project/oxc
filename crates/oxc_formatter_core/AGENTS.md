@@ -83,13 +83,13 @@ The core is parameterized over a consumer-supplied context so it stays language-
 - A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort Tailwind classes), one shape for every child language, no per-crate tuples
 - Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`)
   - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
-- Consumers access `DispatchResult.docs` directly (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`)
-  - Call `DispatchResult::remap_tailwind_into` first when the child may carry classes, the printer's `debug_assert` catches a forgotten merge
+- Consumers take the doc via `DispatchResult::into_doc(collector)`, which folds the Tailwind class merge into consumption
+  - The printer's `debug_assert` backstops any hand-rolled consumption that skips the merge
 - `FormatSession` (`session.rs`) is the execution unit:
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
   - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel; temporary while some languages only format via a string API), `tailwind_sorter` (print-time batch sort). Core only transports them
   - `FormatState` holds one (`new_with_session`; plain `new` wraps a service-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write
-- A dispatch states its request as `DispatchRequest` (language, texts, `InputKind`, pair-specific context) and yields `Result<DispatchOutcome, String>`:
+- A dispatch states its request as `DispatchRequest` (language, text, `InputKind`, pair-specific context) and yields `Result<DispatchOutcome, String>`:
   - `DispatchOutcome::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
   - Optional-embed callers degrade the same way for both, but never conflate them at the source
   - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
@@ -115,7 +115,7 @@ Output targets Prettier compatibility, but the layer is defined by what it is, n
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
-`string_embedder` additionally carries an exit criterion: it is removed when md/html/angular gain IR-capable formatters (until then it is the string-out channel's transport; see its rustdoc).
+`string_embedder` additionally carries an exit criterion: it is removed when (a) md/html/angular gain IR-capable formatters AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
 
 Three gates, all required and note "shared across languages" describes what lives here but is not the admission test.
 The gates are:

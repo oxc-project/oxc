@@ -1,18 +1,22 @@
 use rustc_hash::FxHashSet;
 
+#[cfg(feature = "napi")]
+use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
     CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
     JsdocOptions, LineWrappingStyle, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions,
-    SortOrder, SortTailwindcssOptions, TrailingCommas,
+    SortOrder, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
+#[cfg(feature = "napi")]
+use super::super::oxfmtrc::SortTailwindcssUserConfig;
 use super::super::oxfmtrc::{
     ArrowParensConfig, CommentLineStrategyConfig, CustomGroupItemConfig, FormatConfig,
     HtmlWhitespaceSensitivityConfig, JsdocUserConfig, LineWrappingStyleConfig, ObjectWrapConfig,
     QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig,
-    SortTailwindcssUserConfig, TrailingCommaConfig,
+    TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -112,6 +116,10 @@ pub fn to_oxc_formatter(
 
     format_options.sort_imports = sort_imports;
     format_options.jsdoc = to_jsdoc(config);
+    // napi only, like the CSS mapper: collection itself normalizes whitespace,
+    // so enabling it without the JS-side sorter would apply half the feature
+    // (normalized but unsorted classes).
+    #[cfg(feature = "napi")]
     if let Some(tw_config) =
         config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
     {
@@ -612,8 +620,12 @@ mod tests {
         let config: FormatConfig = serde_json::from_str(r#"{"sortImports": false}"#).unwrap();
         assert!(build(&config).unwrap().sort_imports.is_none());
 
+        // Tailwind collection maps napi-only
         let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": true}"#).unwrap();
+        #[cfg(feature = "napi")]
         assert!(build(&config).unwrap().sort_tailwindcss.is_some());
+        #[cfg(not(feature = "napi"))]
+        assert!(build(&config).unwrap().sort_tailwindcss.is_none());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": false}"#).unwrap();
         assert!(build(&config).unwrap().sort_tailwindcss.is_none());

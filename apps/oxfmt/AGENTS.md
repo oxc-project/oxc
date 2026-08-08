@@ -44,12 +44,24 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
-Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
-JS/TS and standalone CSS roots run on a `PhysicalFile` session carrying the registry dispatcher in EVERY build.
-The Vue/Svelte `<script>` root (`api/text_to_doc_api.rs`, a `VirtualDocument` session, napi only) is the 3rd assembly site: a Rust branch per `NativeLanguage` (css/graphql/yaml/json/...), plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest.
-The pure Rust build runs fallback-less, so non-native embeds (html-in-js, TOML/custom front matter) deliberately stay verbatim like Prettier; `embeddedLanguageFormatting: off` installs no dispatcher (every root assembles its `SessionServices` via `ResolvedDispatchConfig::for_root` + `root_dispatcher` / `ExternalFormatter::session_services` / `fence::session_services`, all consulting the same off-gate).
-The service builders are SERVICE PROFILES, not host bindings: `ExternalFormatter::session_services` (napi standard set) / `fence::session_services` (pure native-only set) serve any host with that shape. (Future Markdown host reuses them as-is.)
-A new host picks a profile; whether a Tier 1 host's root takes the Prettier fallback for its embeds (e.g. md-in-graphql before the md Rust port) is a per-host policy decision made explicitly at that root, never a builder default (the CSS root's fallback-less literal in `format.rs` is the current example).
+#### Embedded language formatting
+
+Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`:
+a Rust branch per `NativeLanguage` (css/graphql/yaml/json/...), plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest.
+The pure Rust build runs fallback-less, so non-native embeds (html-in-js, TOML/custom front matter) deliberately stay verbatim.
+
+Three roots install `SessionServices` (each built from `ResolvedDispatchConfig::for_root`):
+
+| Root                                             | Session           | napi build                                           | pure build          |
+| ------------------------------------------------ | ----------------- | ---------------------------------------------------- | ------------------- |
+| JS/TS file (`core/format.rs`)                    | `PhysicalFile`    | standard profile                                     | native-only profile |
+| CSS file (`core/format.rs`)                      | `PhysicalFile`    | fallback-less literal (dispatcher + Tailwind sorter) | same, sorter-less   |
+| Vue/Svelte `<script>` (`api/text_to_doc_api.rs`) | `VirtualDocument` | standard profile                                     | -                   |
+
+The service builders are SERVICE PROFILES, not host bindings: `ExternalFormatter::session_services` (napi standard set) and `fence::session_services` (pure native-only set) serve any host with that shape. (a future Markdown host reuses them as-is.)
+Whether a Tier 1 host's root takes the Prettier fallback for its embeds (e.g. md-in-graphql before the md Rust port) is a per-host policy decision made explicitly at that root, never a builder default; the CSS root's fallback-less literal in `format.rs` is the current example.
+`embeddedLanguageFormatting: off` installs no dispatcher, every builder consults the same off-gate, `ResolvedDispatchConfig::is_embedded_formatting_enabled`.
+
 Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
 
 A separate string-out channel (the session's `string_embedder` service, NOT the dispatcher) carries the string-in/string-out consumers:
@@ -63,6 +75,8 @@ A separate string-out channel (the session's `string_embedder` service, NOT the 
 NOTE: These string-out channel is temporary workaround, should be replaced by native implementations and Prettier usage should be eliminated in the future.
 JSDoc's string-out is also NOT structural: fences can move to IR-out (session dispatch inside the comment IR) once the printer grows a per-line prefix mechanism for the `*` continuation, but deferred for verification time, not by design.
 
+#### Tailwind CSS class sorting
+
 Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 
 - Rust collects classes into `FormatElement::TailwindClass`
@@ -71,9 +85,10 @@ Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
   - `sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config
 
 Embedded boundaries carry classes through `DispatchResult::tailwind_classes`;
-each embed site calls `DispatchResult::remap_tailwind_into(collector)` before consuming `docs`.
+each embed site consumes the doc via `DispatchResult::into_doc(collector)`, which merges them into the parent's class space.
 
-The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `ExternalFormatter::session_services`. No CSS goes to Prettier for this; the pure Rust build never collects (no sorter available).
+The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `ExternalFormatter::session_services`.
+No CSS goes to Prettier for this; the pure Rust build never collects at all (both mappers gate collection behind napi, since no sorter exists there).
 
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 
