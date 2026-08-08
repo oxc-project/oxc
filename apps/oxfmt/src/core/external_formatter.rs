@@ -1,10 +1,11 @@
-//! Bridge between napi-rs `ThreadsafeFunction`s and the Rust callback shapes
-//! consumed by the embedded orchestration in `core::embed`.
+//! Transport between napi-rs `ThreadsafeFunction`s and plain Rust callback shapes;
+//! no assembly logic (the napi `SessionServices` profiles live in `core::embed::services`).
 //!
-//! [`ExternalFormatter`] stores the JS callbacks as `Arc<dyn Fn>`s wrapped by the private `wrap_*` helpers,
-//! exposes [`ExternalFormatter::format_file`] for the Tier 3/4 file delegations,
-//! and assembles the napi build's `SessionServices` via [`ExternalFormatter::session_services`],
-//! delegating the actual dispatcher / string-channel / Tailwind closures to `core::embed::{string_channel, dispatcher, prettier_fallback}`.
+//! [`ExternalFormatter`] wraps the JS callbacks as `Arc<dyn Fn>`s (private `wrap_*` helpers), serving:
+//! - [`ExternalFormatter::init`]: JS-side worker-pool setup
+//! - [`ExternalFormatter::format_file`]: Tier 3/4 whole-file delegation (`core::format`)
+//! - the embed callback `Arc`s (`format_embedded` / `format_embedded_doc` / `sort_tailwindcss_classes`),
+//!   consumed by the `core::embed::services` profiles
 
 use std::sync::{Arc, RwLock};
 
@@ -16,12 +17,16 @@ use napi::{
 use serde_json::Value;
 use tracing::debug_span;
 
-use oxc_formatter_core::{SessionServices, TailwindSorter};
-
 use crate::core::embed::{
-    self, FormatEmbeddedDocWithConfigCallback, FormatEmbeddedWithConfigCallback,
-    FormatFileWithConfigCallback, TailwindWithConfigCallback,
+    FormatEmbeddedDocWithConfigCallback, FormatEmbeddedWithConfigCallback,
+    TailwindWithConfigCallback,
 };
+
+/// Callback function type for formatting whole files (Tier 3/4 delegation).
+/// Takes (options, code) and returns formatted code or an error.
+/// The `options` Value is owned and includes `parser` and `filepath` set by the caller.
+pub type FormatFileWithConfigCallback =
+    Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument; signals JS to perform any one-time setup before formatting.
@@ -220,99 +225,6 @@ impl ExternalFormatter {
     /// The `options` Value should already have `parser` and `filepath` set by the caller.
     pub fn format_file(&self, options: Value, code: &str) -> Result<String, String> {
         (self.format_file)(options, code)
-    }
-
-    /// Assemble the napi build's [`SessionServices`] for a root formatter run:
-    /// the registry dispatcher with this formatter's Prettier Doc→IR fallback,
-    /// the string channel, and the Tailwind sorter.
-    /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
-    ///
-    /// `dispatch_config` carries the resolved config; per-language options are mapped lazily at dispatch time
-    /// (see `embed::dispatcher::ResolvedDispatchConfig`).
-    /// The pure build's twin is `embed::fence::session_services`.
-    ///
-    /// Actual closure assembly lives in `core::embed::{string_channel, dispatcher, prettier_fallback}`;
-    /// this method just bridges the napi-held callback `Arc`s into those factories.
-    ///
-    /// NOTE: Tailwind data paths
-    /// `sort_tailwindcss_classes` is wired into THREE distinct callback slots,
-    /// because Tailwind class sorting has four legitimate paths depending on
-    /// where the classes live and how they reach printing:
-    ///
-    /// 1. Standalone JS/TS (`className` / functions / custom attributes):
-    ///    `oxc_formatter` collects classes into `FormatElement::TailwindClass`.
-    ///    When the entry document is finalized,
-    ///    the printer sorts them in one host batch via the session's `tailwind_sorter`.
-    /// 2. Standalone CSS / SCSS / LESS (`@apply` at top level):
-    ///    the CSS root's session carries the same sorter (`CssFormatOptions::sort_tailwindcss`
-    ///    only switches collection); classes sort once at finalize, no embedded boundary involved.
-    /// 3. Embedded CSS (css-in-js + Angular `@Component({ styles })`):
-    ///    `oxc_formatter_css::format_to_ir()` returns pre-sort `@apply` classes
-    ///    in `DispatchResult::tailwind_classes`.
-    ///    The JS parent re-indexes them into its own collector (`DispatchResult::into_doc`)
-    ///    so they ride the SAME parent batch as path 1.
-    ///    The standalone CSS sort closure is NOT invoked here.
-    /// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
-    ///    Goes through the string channel's fence adapter,
-    ///    which returns a formatted string (not parent-integrated IR),
-    ///    so there is no parent index space to remap into:
-    ///    the adapter sorts the returned `DispatchResult::tailwind_classes` itself before printing.
-    ///    The `string_channel::build_string_embedder` factory receives the sorter for this case.
-    ///
-    /// All four paths use the SAME `sort_tailwindcss_classes` napi callback; only the wiring differs.
-    /// Moving sorting to the wrong layer (e.g. sorting inside embedded CSS instead of remapping)
-    /// would double-sort or drop classes.
-    /// `DispatchResult::into_doc` folds the merge into doc consumption; the printer `debug_assert` backstops it.
-    ///
-    /// The dispatcher and the string channel consult the same off-predicate
-    /// (`ResolvedDispatchConfig::is_embedded_formatting_enabled`),
-    /// so the two channels never diverge on the off-semantics.
-    pub fn session_services(
-        &self,
-        dispatch_config: &Arc<embed::dispatcher::ResolvedDispatchConfig>,
-    ) -> SessionServices {
-        let needs_embedded = dispatch_config.is_embedded_formatting_enabled();
-        // Built only when the off-gate passes; `root_dispatcher` re-checks the
-        // same predicate, so an off run allocates neither fallback nor dispatcher.
-        let fallback = needs_embedded.then(|| {
-            embed::prettier_fallback::build_prettier_fallback(
-                Arc::clone(dispatch_config),
-                Arc::clone(&self.format_embedded_doc),
-            )
-        });
-
-        let tailwind_sorter = self.tailwind_sorter(dispatch_config);
-
-        let string_embedder = needs_embedded.then(|| {
-            embed::string_channel::build_string_embedder(
-                Arc::clone(&self.format_embedded),
-                tailwind_sorter.clone(),
-                Arc::clone(dispatch_config),
-            )
-        });
-
-        SessionServices {
-            dispatcher: dispatch_config.root_dispatcher(fallback),
-            string_embedder,
-            tailwind_sorter,
-        }
-    }
-
-    /// The ONE pre-bound Tailwind sorter (options JSON applied here, once),
-    /// shared by every consumer: the JS root's session service, the fence
-    /// adapter, and the standalone CSS root.
-    pub fn tailwind_sorter(
-        &self,
-        dispatch_config: &Arc<embed::dispatcher::ResolvedDispatchConfig>,
-    ) -> Option<TailwindSorter> {
-        dispatch_config.is_tailwind_enabled().then(|| {
-            let sort = Arc::clone(&self.sort_tailwindcss_classes);
-            let dispatch_config = Arc::clone(dispatch_config);
-            Arc::new(move |classes: Vec<String>| {
-                debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
-                    .in_scope(|| (sort)(dispatch_config.external_options(), classes))
-            }) as TailwindSorter
-        })
     }
 
     #[cfg(test)]

@@ -1,8 +1,8 @@
-//! Native dispatch registry: the `FormatDispatcher` assembly shared by every build.
+//! The embedded routing table ([`route`]) and the `FormatDispatcher` assembly shared by every build.
 //!
 //! Each language maps to a Rust formatter where available;
-//! everything else goes to the napi-only Prettier Doc→IR fallback ([`super::prettier_fallback`]) when
-//! one is supplied, and is deliberately preserved as-is otherwise (pure Rust build).
+//! the [`PrettierLanguage`] set goes to the napi-only Prettier Doc→IR channel ([`super::prettier_doc`]) when one is supplied,
+//! and is deliberately preserved as-is otherwise (pure Rust build); everything else stays as-is in every build.
 
 use std::sync::{Arc, OnceLock};
 
@@ -27,12 +27,9 @@ use crate::core::{
     oxfmtrc::FormatConfig,
 };
 
-/// The native formatter registry:
-/// a request/fence language parses to its Rust formatter branch here, or it has none.
-///
-/// [`build_dispatcher`] and the napi string channel's fence routing (`is_native_language`)
-/// both consult this single mapping, so their notions of "native" can never drift.
-enum NativeLanguage {
+/// The native half of the routing table:
+/// a request/fence language routed to [`Route::Native`] parses to its Rust formatter branch here.
+pub enum NativeLanguage {
     Graphql,
     /// The fence-derived variant;
     /// the css-in-js typed context overrides it to Scss + placeholders at dispatch time (see the css branch).
@@ -41,29 +38,75 @@ enum NativeLanguage {
     Json(JsonVariant),
 }
 
-fn native_language(language: &str) -> Option<NativeLanguage> {
-    Some(match language {
-        "graphql" | "gql" => NativeLanguage::Graphql,
-        "css" => NativeLanguage::Css(CssVariant::Css),
-        "scss" => NativeLanguage::Css(CssVariant::Scss),
-        "less" => NativeLanguage::Css(CssVariant::Less),
-        "yaml" | "yml" => NativeLanguage::Yaml,
-        "json" => NativeLanguage::Json(JsonVariant::Json),
-        "jsonc" => NativeLanguage::Json(JsonVariant::Jsonc),
-        "json5" => NativeLanguage::Json(JsonVariant::Json5),
-        _ => return None,
-    })
+/// Languages Prettier still formats for us (no Rust formatter yet).
+///
+/// [`PrettierDocFallback`] receives this instead of a raw string,
+/// so the fallback can never be handed a language the table did not route to it.
+/// The set shrinks as Rust ports land (markdown first), and the type disappears with the last port.
+#[derive(Clone, Copy)]
+pub enum PrettierLanguage {
+    Html,
+    Angular,
+    Markdown,
 }
 
-/// Whether `language` has a native (Rust formatter) branch in the registry.
-/// (Consulted by the napi string channel's routing; the dispatcher itself matches
-/// [`native_language`] directly, and the pure build's fence adapter just dispatches.)
 #[cfg(feature = "napi")]
-pub fn is_native_language(language: &str) -> bool {
-    native_language(language).is_some()
+impl PrettierLanguage {
+    /// The Prettier `parser` name injected into the options JSON.
+    ///
+    /// NOTE: language identifiers happen to overlap with some Prettier parser names,
+    /// but `oxc_formatter` treats them as generic language names;
+    /// this method is the only place mapping EMBEDDED language identifiers to Prettier parsers
+    /// (the whole-file Tier 3/4 path has its own filename-keyed map in `core::support`).
+    pub fn parser(self) -> &'static str {
+        match self {
+            Self::Html => "html",
+            Self::Angular => "angular",
+            Self::Markdown => "markdown",
+        }
+    }
+
+    /// Whether the Doc→IR conversion must surface `HtmlEmbedMeta`
+    /// (`htmlHasMultipleRootElements`) to the embed site.
+    pub fn wants_html_meta(self) -> bool {
+        matches!(self, Self::Html | Self::Angular)
+    }
 }
 
-/// Per-run dispatch configuration: the resolved config plus lazily-mapped per-language options.
+/// Where a language identifier routes.
+pub enum Route {
+    /// A Rust formatter branch in [`build_dispatcher`]; never re-routed to Prettier.
+    Native(NativeLanguage),
+    /// Prettier serves it (napi Doc→IR fallback / string channel);
+    /// the pure build preserves it as-is.
+    Prettier(PrettierLanguage),
+    /// No formatter anywhere: the part deliberately stays as-is in every build.
+    Unsupported,
+}
+
+/// THE routing table: "which formatter serves this language?" answered in one place.
+/// [`build_dispatcher`] and the napi string channel's fence routing both consult it,
+/// so their notions of who formats what can never drift,
+/// and aliases (`"gql"` / `"yml"` / `"md"`) are resolved here and nowhere else.
+pub fn route(language: &str) -> Route {
+    match language {
+        "graphql" | "gql" => Route::Native(NativeLanguage::Graphql),
+        "css" => Route::Native(NativeLanguage::Css(CssVariant::Css)),
+        "scss" => Route::Native(NativeLanguage::Css(CssVariant::Scss)),
+        "less" => Route::Native(NativeLanguage::Css(CssVariant::Less)),
+        "yaml" | "yml" => Route::Native(NativeLanguage::Yaml),
+        "json" => Route::Native(NativeLanguage::Json(JsonVariant::Json)),
+        "jsonc" => Route::Native(NativeLanguage::Json(JsonVariant::Jsonc)),
+        "json5" => Route::Native(NativeLanguage::Json(JsonVariant::Json5)),
+        "html" => Route::Prettier(PrettierLanguage::Html),
+        "angular" => Route::Prettier(PrettierLanguage::Angular),
+        "markdown" | "md" => Route::Prettier(PrettierLanguage::Markdown),
+        _ => Route::Unsupported,
+    }
+}
+
+/// Per-root context shared by every embedded service (dispatcher, string embedder, Tailwind sorter):
+/// the host file's resolved config plus lazily-mapped per-language options.
 ///
 /// Language options are NOT built up front: an embed-free file pays only for empty cells,
 /// and a host where every language is embeddable (Markdown-scale) maps exactly the languages that actually appear,
@@ -82,12 +125,25 @@ pub struct ResolvedDispatchConfig {
     yaml: OnceLock<YamlFormatOptions>,
     /// One cell per fence-reachable [`JsonVariant`] (json / jsonc / json5; `JsonStringify` is `package.json`-only).
     json: [OnceLock<JsonFormatOptions>; 3],
-    /// Host file path, for `filepath` injection into the Prettier options JSON.
+    /// The options handed to the external formatter; see [`ExternalOptions`].
     #[cfg(feature = "napi")]
+    external: ExternalOptions,
+}
+
+/// The lazily-built options JSON handed to the external formatter (Prettier + plugins),
+/// consumed by the Doc→IR / string paths and the Tailwind sorter.
+/// `path` is an ingredient, not a sibling datum: it becomes the JSON's `filepath` at last
+/// (see [`crate::core::options::build_external_options`]).
+///
+/// NOTE: The late merge is load-bearing: the JSON must derive from the RESOLVED per-file config
+/// (a pre-built Value loses overrides, #18246), and `path` is the one per-file ingredient,
+/// keeping it out of the config is what keeps the config shareable across files.
+/// Lazy so an embed-free file never builds the JSON at all.
+#[cfg(feature = "napi")]
+#[derive(Default)]
+struct ExternalOptions {
     path: std::path::PathBuf,
-    /// Prettier-compatible options JSON for the JS-side consumers (Doc→IR fallback, string channel, Tailwind sorter).
-    #[cfg(feature = "napi")]
-    external_options: OnceLock<serde_json::Value>,
+    options: OnceLock<serde_json::Value>,
 }
 
 impl ResolvedDispatchConfig {
@@ -103,18 +159,8 @@ impl ResolvedDispatchConfig {
             yaml: OnceLock::new(),
             json: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
             #[cfg(feature = "napi")]
-            path: std::path::PathBuf::new(),
-            #[cfg(feature = "napi")]
-            external_options: OnceLock::new(),
+            external: ExternalOptions::default(),
         }
-    }
-
-    /// Sets the host file path for `filepath` injection into [`Self::external_options`];
-    /// chained by [`Self::for_root`].
-    #[cfg(feature = "napi")]
-    fn with_path(mut self, path: std::path::PathBuf) -> Self {
-        self.path = path;
-        self
     }
 
     /// The one construction recipe for a root formatter run at `path`:
@@ -144,19 +190,10 @@ impl ResolvedDispatchConfig {
         self.is_embedded_formatting_enabled().then(|| build_dispatcher(Arc::clone(self), fallback))
     }
 
-    /// The single off-predicate: [`Self::root_dispatcher`] and the service builders
-    /// (`fence::session_services`, `ExternalFormatter::session_services`) all consult it,
+    /// The single off-predicate: [`Self::root_dispatcher`] and both build's `services::for_root` definitions consult it,
     /// so the off-semantics can never diverge between channels or builds.
     pub fn is_embedded_formatting_enabled(&self) -> bool {
         self.config.is_embedded_formatting_enabled()
-    }
-
-    /// The single Tailwind predicate, same pattern as
-    /// [`Self::is_embedded_formatting_enabled`]: every sorter-assembly site consults it
-    /// (the sorter is napi-only; the pure build has no JS-side class order source).
-    #[cfg(feature = "napi")]
-    pub fn is_tailwind_enabled(&self) -> bool {
-        self.config.is_tailwind_enabled()
     }
 
     pub fn graphql_options(&self) -> GraphqlFormatOptions {
@@ -195,47 +232,69 @@ impl ResolvedDispatchConfig {
     pub fn print_options(&self) -> PrinterOptions {
         self.core.as_print_options()
     }
+}
 
-    /// The Prettier options JSON shared by the JS-side consumers
+/// Napi-only methods: the [`ExternalOptions`] accessors and the Tailwind predicate.
+#[cfg(feature = "napi")]
+impl ResolvedDispatchConfig {
+    /// Sets the host file path for `filepath` injection into [`Self::external_options`];
+    /// chained by [`Self::for_root`].
+    fn with_path(mut self, path: std::path::PathBuf) -> Self {
+        self.external.path = path;
+        self
+    }
+
+    /// The single Tailwind predicate, same pattern as
+    /// [`Self::is_embedded_formatting_enabled`]: every sorter-assembly site consults it
+    /// (the sorter is napi-only; the pure build has no JS-side class order source).
+    pub fn is_tailwind_enabled(&self) -> bool {
+        self.config.is_tailwind_enabled()
+    }
+
+    /// The options JSON handed to the external formatter
     /// (see [`crate::core::options::build_external_options`]).
-    #[cfg(feature = "napi")]
     pub fn external_options(&self) -> &serde_json::Value {
-        self.external_options
-            .get_or_init(|| crate::core::options::build_external_options(&self.config, &self.path))
+        self.external.options.get_or_init(|| {
+            crate::core::options::build_external_options(&self.config, &self.external.path)
+        })
     }
 }
 
-/// Fallback invoked for languages without a native branch.
+/// Fallback invoked for [`Route::Prettier`] languages.
 /// Same shape as `FormatDispatcher` minus the request envelope
 /// (the Doc path consumes neither `input_kind` nor `parent_context` today;
 /// re-examine if it ever serves envelope-bearing inputs).
 ///
-/// Assembled only in napi builds ([`super::prettier_fallback`]);
-/// the pure Rust build passes `None` and unsupported languages are deliberately preserved as-is.
+/// Assembled only in napi builds ([`super::prettier_doc`]);
+/// the pure Rust build passes `None` and these languages are deliberately preserved as-is.
 pub type PrettierDocFallback = Arc<
-    dyn for<'a> Fn(&FormatSession<'a>, &str, &str) -> Result<DispatchOutcome<'a>, String>
+    dyn for<'a> Fn(
+            &FormatSession<'a>,
+            PrettierLanguage,
+            &str,
+        ) -> Result<DispatchOutcome<'a>, String>
         + Send
         + Sync,
 >;
 
 /// Build the `FormatDispatcher` carried by the root's `FormatSession`:
-/// Rust formatters for the [`NativeLanguage`] registry (no Prettier fallback for them),
-/// `fallback` for everything else.
+/// Rust formatters for the [`Route::Native`] branches (never re-routed to Prettier, even on failure),
+/// `fallback` for the [`Route::Prettier`] set, deliberate preservation for the rest.
 pub fn build_dispatcher(
     dispatch_config: Arc<ResolvedDispatchConfig>,
     fallback: Option<PrettierDocFallback>,
 ) -> FormatDispatcher {
     Arc::new(move |session: &FormatSession<'_>, request: DispatchRequest<'_>| {
         let text = request.text;
-        match native_language(request.language) {
-            Some(NativeLanguage::Graphql) => Ok(format_native("graphql", || {
+        match route(request.language) {
+            Route::Native(NativeLanguage::Graphql) => Ok(format_native("graphql", || {
                 oxc_formatter_graphql::format_to_ir(
                     session,
                     text,
                     dispatch_config.graphql_options(),
                 )
             })),
-            Some(NativeLanguage::Css(variant)) => {
+            Route::Native(NativeLanguage::Css(variant)) => {
                 // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS with `${}` placeholder markers.
                 // Any other caller gets the strict standalone grammar with the fence/request language's variant.
                 let (variant, template_placeholders) = if request
@@ -255,25 +314,35 @@ pub fn build_dispatcher(
                     )
                 }))
             }
-            Some(NativeLanguage::Yaml) => Ok(format_native("yaml", || {
+            Route::Native(NativeLanguage::Yaml) => Ok(format_native("yaml", || {
                 oxc_formatter_yaml::format_to_ir(session, text, dispatch_config.yaml_options())
             })),
-            Some(NativeLanguage::Json(variant)) => Ok(format_native("json", || {
+            Route::Native(NativeLanguage::Json(variant)) => Ok(format_native("json", || {
                 oxc_formatter_json::format_to_ir(
                     session,
                     text,
                     dispatch_config.json_options(variant),
                 )
             })),
-            // Everything else: Prettier fallback (Doc→IR path) when available
-            None => {
+
+            // Prettier-served languages: Doc→IR fallback when available (napi),
+            // deliberate skip otherwise (pure build).
+            Route::Prettier(language) => {
                 if let Some(fallback) = &fallback {
-                    fallback(session, request.language, text)
+                    fallback(session, language, text)
                 } else {
-                    // A language without a formatter is a deliberate skip.
-                    debug!("No formatter for language '{}', part stays as-is", request.language);
+                    debug!(
+                        "No fallback for Prettier language '{}' in this build, part stays as-is",
+                        request.language
+                    );
                     Ok(DispatchOutcome::PreserveOriginal)
                 }
+            }
+
+            // A language without a formatter is a deliberate skip, in every build.
+            Route::Unsupported => {
+                debug!("No formatter for language '{}', part stays as-is", request.language);
+                Ok(DispatchOutcome::PreserveOriginal)
             }
         }
     })
@@ -315,9 +384,9 @@ mod tests {
         ))
     }
 
-    /// Every fence language the registry claims as native must format
+    /// Every fence language the routing table claims as native must format
     /// WITHOUT a fallback installed
-    /// (an accidentally dropped `native_language` entry would fall through to `PreserveOriginal` and fail here).
+    /// (an accidentally dropped [`super::route`] entry would fall through to `PreserveOriginal` and fail here).
     #[test]
     fn every_native_language_dispatches() {
         let allocator = Allocator::default();
@@ -375,8 +444,10 @@ mod tests {
         assert!(matches!(outcome, Ok(DispatchOutcome::Formatted(_))));
     }
 
+    /// Both non-native routes preserve without a fallback installed:
+    /// a Prettier-served language (pure-build behavior) and a fully unsupported one.
     #[test]
-    fn unsupported_language_without_fallback_preserves_original() {
+    fn non_native_language_without_fallback_preserves_original() {
         let allocator = Allocator::default();
         let session = FormatSession::with_services(
             &allocator,
@@ -387,12 +458,17 @@ mod tests {
             },
         );
 
-        let outcome = session.dispatch(DispatchRequest {
-            language: "html",
-            text: "<div></div>",
-            input_kind: InputKind::Fragment,
-            parent_context: None,
-        });
-        assert!(matches!(outcome, Ok(DispatchOutcome::PreserveOriginal)));
+        for (language, text) in [("html", "<div></div>"), ("toml", "a = 1")] {
+            let outcome = session.dispatch(DispatchRequest {
+                language,
+                text,
+                input_kind: InputKind::Fragment,
+                parent_context: None,
+            });
+            assert!(
+                matches!(outcome, Ok(DispatchOutcome::PreserveOriginal)),
+                "language '{language}' should be preserved without a fallback"
+            );
+        }
     }
 }
