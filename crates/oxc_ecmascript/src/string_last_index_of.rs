@@ -1,4 +1,4 @@
-use crate::ToInt32;
+use crate::to_integer_or_infinity::{ToIntegerOrInfinity, ToIntegerOrInfinityResult};
 
 pub trait StringLastIndexOf {
     /// `String.prototype.lastIndexOf ( searchString [ , position ] )`
@@ -7,16 +7,34 @@ pub trait StringLastIndexOf {
 }
 
 impl StringLastIndexOf for &str {
-    #[expect(clippy::cast_possible_wrap, clippy::cast_sign_loss)]
     fn last_index_of(&self, search_value: Option<&str>, from_index: Option<f64>) -> isize {
-        let Some(search_value) = search_value else { return -1 };
-        let from_index =
-            from_index.map_or(usize::MAX, |x| x.to_int_32().max(0) as usize + search_value.len());
-        self.chars()
-            .take(from_index)
-            .collect::<String>()
-            .rfind(search_value)
-            .map_or(-1, |index| index as isize)
+        let string = self.encode_utf16().collect::<Vec<_>>();
+        let search_value = search_value.unwrap_or("undefined").encode_utf16().collect::<Vec<_>>();
+        let from_index = match from_index {
+            None => string.len(),
+            Some(value) if value.is_nan() => string.len(),
+            Some(value) => match value.to_integer_or_infinity_as_i64() {
+                ToIntegerOrInfinityResult::Infinity => string.len(),
+                ToIntegerOrInfinityResult::NegativeInfinity => 0,
+                ToIntegerOrInfinityResult::Value(value) if value <= 0 => 0,
+                ToIntegerOrInfinityResult::Value(value) => {
+                    usize::try_from(value).unwrap_or(string.len()).min(string.len())
+                }
+            },
+        };
+        if search_value.is_empty() {
+            return isize::try_from(from_index).unwrap_or(-1);
+        }
+        if search_value.len() > string.len() {
+            return -1;
+        }
+
+        let from_index = from_index.min(string.len() - search_value.len());
+        string[..from_index + search_value.len()]
+            .windows(search_value.len())
+            .rposition(|window| window == search_value)
+            .and_then(|index| isize::try_from(index).ok())
+            .unwrap_or(-1)
     }
 }
 
@@ -36,5 +54,8 @@ mod test {
         assert_eq!("test test test".last_index_of(Some("notpresent"), Some(0.0)), -1);
         assert_eq!("test test test".last_index_of(None, Some(1.0)), -1);
         assert_eq!("abcdef".last_index_of(Some("b"), None), 1);
+        assert_eq!("undefined".last_index_of(None, None), 0);
+        assert_eq!("a😀a".last_index_of(Some("a"), None), 3);
+        assert_eq!("aba".last_index_of(Some("b"), Some(f64::NAN)), 1);
     }
 }

@@ -32,6 +32,18 @@ fn test_string_index_of() {
     test("x = 'abcundefineddef'.indexOf(undefined)", "x = 3");
     test("x = 'abcnulldef'.indexOf(null)", "x = 3");
     test("x = 'abctruedef'.indexOf(true)", "x = 3");
+    test("x = 'undefined'.indexOf()", "x = 0");
+    test("x = 'undefined'.lastIndexOf()", "x = 0");
+
+    // String indices are UTF-16 code unit offsets, not UTF-8 byte offsets.
+    test("x = 'éa'.indexOf('a')", "x = 1");
+    test("x = '中a'.indexOf('a')", "x = 1");
+    test("x = '😀a'.indexOf('a')", "x = 2");
+    test("x = 'a😀a'.lastIndexOf('a')", "x = 3");
+
+    // NaN and undefined positions default to positive infinity for lastIndexOf.
+    test("x = 'aba'.lastIndexOf('b', NaN)", "x = 1");
+    test("x = 'aba'.lastIndexOf('b', undefined)", "x = 1");
 
     test_same("x = 1 .indexOf('bcd');");
     test_same("x = NaN.indexOf('bcd')");
@@ -195,6 +207,8 @@ fn test_fold_string_substring() {
     test("x = 'abcde'.substring(0,2)", "x = 'ab'");
     test("x = 'abcde'.substring(1,2)", "x = 'b'");
     test("x = 'abcde'.substring(2)", "x = 'cde'");
+    test("x = '😀a'.substring(2)", "x = 'a'");
+    test_same("x = '😀a'.substring(1)");
     test_same("x = 'abcde'.substring(...a, 1)");
     test_same("x = 'abcde'.substring(1, ...a)");
     test_same("x = 'abcde'.substring(a, 1)");
@@ -217,6 +231,8 @@ fn test_fold_string_slice() {
     test("x = 'abcde'.slice(0,2)", "x = 'ab'");
     test("x = 'abcde'.slice(1,2)", "x = 'b'");
     test("x = 'abcde'.slice(2)", "x = 'cde'");
+    test("x = '😀a'.slice(2)", "x = 'a'");
+    test_same("x = '😀a'.slice(1)");
 
     // we should be leaving negative, out-of-bound, and inverted indices alone for now
     test_same("x = 'abcde'.slice(-1)");
