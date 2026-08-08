@@ -4,6 +4,7 @@
 # stdout
 ```
   x language-options-plugin(lang): languageOptions:
+  | language: javascript
   | sourceType: commonjs
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"commonjs","ecmaFeatures":{"jsx":true,"globalReturn":true,"impliedStrict":false}}
@@ -15,6 +16,7 @@
    `----
 
   x language-options-plugin(lang): languageOptions:
+  | language: javascript
   | sourceType: script
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":false}}
@@ -803,6 +805,7 @@
    `----
 
   x language-options-plugin(lang): languageOptions:
+  | language: javascript
   | sourceType: module
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"module","ecmaFeatures":{"jsx":true,"globalReturn":false,"impliedStrict":true}}
@@ -814,6 +817,7 @@
    `----
 
   x language-options-plugin(lang): languageOptions:
+  | language: typescript
   | sourceType: script
   | ecmaVersion: 2026
   | parserOptions: {"sourceType":"script","ecmaFeatures":{"jsx":false,"globalReturn":false,"impliedStrict":false}}

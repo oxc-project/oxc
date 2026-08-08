@@ -95,7 +95,7 @@ export default defineConfig([
   // Main build
   {
     ...commonConfig,
-    entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugins-dev.ts"],
+    entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugins-dev.ts", "src-js/language-plugins.ts"],
     format: "esm",
     deps: {
       ...commonConfig.deps,

@@ -26,6 +26,7 @@ const plugin: Plugin = {
         context.report({
           message:
             "languageOptions:\n" +
+            `language: ${languageOptions.language}\n` +
             `sourceType: ${languageOptions.sourceType}\n` +
             `ecmaVersion: ${languageOptions.ecmaVersion}\n` +
             `parserOptions: ${JSON.stringify(languageOptions.parserOptions)}\n` +

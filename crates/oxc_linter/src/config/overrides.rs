@@ -12,6 +12,7 @@ use oxc_config::GlobSet;
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
 
 use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
+use super::language_plugins::{LanguagePluginEntry, language_plugins_schema};
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -117,6 +118,13 @@ pub struct OxlintOverride {
     #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
+
+    /// Language plugins for this override.
+    ///
+    /// See [`crate::config::oxlintrc::Oxlintrc::language_plugins`].
+    #[serde(rename = "languagePlugins", default, skip_serializing_if = "Option::is_none")]
+    #[schemars(schema_with = "language_plugins_schema")]
+    pub language_plugins: Option<FxHashSet<LanguagePluginEntry>>,
 
     #[serde(default)]
     pub rules: OxlintRules,

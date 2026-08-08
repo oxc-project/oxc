@@ -9,12 +9,17 @@
   "imports": {
     "#oxlint": "./dist/index.js",
     "#oxlint/plugins": "./dist-pkg-plugins/index.js",
-    "#oxlint/plugins-dev": "./dist/plugins-dev.js"
+    "#oxlint/plugins-dev": "./dist/plugins-dev.js",
+    "#oxlint/language-plugins": "./dist/language-plugins.js"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./language-plugins": {
+      "types": "./dist/language-plugins.d.ts",
+      "default": "./dist/language-plugins.js"
     },
     "./plugins-dev": {
       "types": "./dist/plugins-dev.d.ts",
