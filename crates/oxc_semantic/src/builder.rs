@@ -79,9 +79,6 @@ pub struct SemanticBuilder<'a> {
 
     // states
     pub(crate) current_scope_id: ScopeId,
-    /// `NodeId` of current `Function` (not including arrow functions).
-    /// When not in a function, is `NodeId` of `Program`.
-    pub(crate) current_function_node_id: NodeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     /// Nesting depth of TypeScript ambient contexts.
@@ -157,7 +154,6 @@ impl<'a> SemanticBuilder<'a> {
             current_reference_flags: ReferenceFlags::empty(),
             ambient_depth: 0,
             current_scope_id,
-            current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
@@ -436,9 +432,9 @@ impl<'a> SemanticBuilder<'a> {
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         #[cfg(not(feature = "jsdoc"))]
-        let flags = self.node_store.current_node_flags;
+        let flags = NodeFlags::empty();
         #[cfg(feature = "jsdoc")]
-        let mut flags = self.node_store.current_node_flags;
+        let mut flags = NodeFlags::empty();
         #[cfg(feature = "jsdoc")]
         if self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
@@ -873,7 +869,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         #[cfg(feature = "cfg")]
         let cfg_id = control_flow!(self, |cfg| cfg.current_node_ix);
         let scope_id = self.current_scope_id;
-        let flags = self.node_store.current_node_flags;
+        let flags = NodeFlags::empty();
         match &mut self.node_store.kind {
             AstNodeStoreKind::Full(nodes) => {
                 nodes.add_program_node(
@@ -924,8 +920,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
         self.leave_ambient_context(is_ambient);
 
-        // Check `current_function_node_id` has been reset to as it was at start
-        debug_assert_eq!(self.current_function_node_id, NodeId::ROOT);
         debug_assert_eq!(self.ambient_depth, 0);
     }
 
@@ -2031,9 +2025,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.enter_ambient_context(func.declare);
 
-        let parent_function_node_id = self.current_function_node_id;
-        self.current_function_node_id = self.node_store.current_node_id;
-
         if func.is_declaration() {
             func.bind(self);
         }
@@ -2120,8 +2111,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
         self.leave_node(kind);
         self.leave_ambient_context(func.declare);
-
-        self.current_function_node_id = parent_function_node_id;
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
@@ -2800,22 +2789,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.reference_identifier(ident);
         self.visit_span(&ident.span);
-        self.leave_node(kind);
-    }
-
-    fn visit_yield_expression(&mut self, expr: &YieldExpression<'a>) {
-        let kind = AstKind::YieldExpression(self.alloc(expr));
-        self.enter_node(kind);
-        // If not in a function, `current_function_node_id` is `NodeId` of `Program`.
-        // But it shouldn't be possible for `yield` to be at top level - that's a parse error.
-        // `HasYield` is a flag on the full node store, so only set it when that store is built.
-        if let AstNodeStoreKind::Full(nodes) = &mut self.node_store.kind {
-            *nodes.flags_mut(self.current_function_node_id) |= NodeFlags::HasYield;
-        }
-        self.visit_span(&expr.span);
-        if let Some(argument) = &expr.argument {
-            self.visit_expression(argument);
-        }
         self.leave_node(kind);
     }
 
