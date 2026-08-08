@@ -317,6 +317,41 @@ impl<'a> PeepholeOptimizations {
                         _ => break 'throw_loop,
                     }
                 }
+            } else if matches!(
+                stmts.last(),
+                Some(Statement::BreakStatement(_) | Statement::ContinueStatement(_))
+            ) {
+                'jump_loop: while stmts.len() >= 2 {
+                    let prev_index = stmts.len() - 2;
+                    let prev_stmt = &stmts[prev_index];
+
+                    let Statement::IfStatement(if_stmt) = prev_stmt else {
+                        break 'jump_loop;
+                    };
+                    if let Some(alternate) = &if_stmt.alternate {
+                        if Self::jump_stmts_look_the_same(stmts.last().unwrap(), alternate) {
+                            let Statement::IfStatement(prev_if) = &mut stmts[prev_index] else {
+                                unreachable!()
+                            };
+                            ctx.drop_statement(&prev_if.alternate.take().unwrap());
+                            continue 'jump_loop;
+                        }
+                    } else if Self::jump_stmts_look_the_same(
+                        stmts.last().unwrap(),
+                        &if_stmt.consequent,
+                    ) {
+                        let test = if let Statement::IfStatement(prev_if) = &mut stmts[prev_index] {
+                            prev_if.test.take_in(ctx)
+                        } else {
+                            unreachable!()
+                        };
+
+                        let new_expr = Statement::new_expression_statement(test.span(), test, ctx);
+                        ctx.replace_statement(&mut stmts[prev_index], new_expr);
+                        continue 'jump_loop;
+                    }
+                    break 'jump_loop;
+                }
             }
         }
     }
