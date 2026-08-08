@@ -79,6 +79,14 @@ pub struct EmbeddedIr<'a> {
     pub tailwind_classes: Vec<String>,
 }
 
+/// The single-text case: one [`EmbeddedIr`] becomes a one-doc result,
+/// carrying the child's Tailwind classes through (hand-rolling the literal invites silently dropping them).
+impl<'a> From<EmbeddedIr<'a>> for DispatchResult<'a> {
+    fn from(embedded: EmbeddedIr<'a>) -> Self {
+        Self { docs: vec![embedded.ir], tailwind_classes: embedded.tailwind_classes, meta: None }
+    }
+}
+
 /// Result of a [`FormatDispatcher`] call.
 pub struct DispatchResult<'a> {
     /// One IR per input text (usually one; GraphQL returns one per quasi).

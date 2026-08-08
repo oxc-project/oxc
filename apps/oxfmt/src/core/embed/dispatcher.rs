@@ -11,8 +11,10 @@ use tracing::{debug, debug_span};
 use oxc_formatter::CssInJsTemplate;
 use oxc_formatter_core::{
     CoreFormatOptions, DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedIr,
-    FormatDispatcher, FormatOptions, FormatSession, PrinterOptions,
+    FormatDispatcher, FormatSession,
 };
+#[cfg(feature = "napi")]
+use oxc_formatter_core::{FormatOptions, PrinterOptions};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
@@ -55,6 +57,8 @@ fn native_language(language: &str) -> Option<NativeLanguage> {
 }
 
 /// Whether `language` has a native (Rust formatter) branch in the registry.
+/// (Consulted by the napi-only JSDoc string adapter; the dispatcher itself matches [`native_language`] directly.)
+#[cfg(feature = "napi")]
 pub fn is_native_language(language: &str) -> bool {
     native_language(language).is_some()
 }
@@ -145,7 +149,8 @@ impl ResolvedDispatchConfig {
     }
 
     /// Printer options from the shared resolved core bundle;
-    /// the string adapter prints dispatched child IR standalone with these.
+    /// the (napi-only) string adapter prints dispatched child IR standalone with these.
+    #[cfg(feature = "napi")]
     pub fn print_options(&self) -> PrinterOptions {
         self.core.as_print_options()
     }
@@ -294,10 +299,10 @@ fn format_css_to_ir<'a>(
     template_placeholders: bool,
 ) -> Result<DispatchResult<'a>, String> {
     debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
-        let EmbeddedIr { ir, tailwind_classes } =
+        let embedded =
             oxc_formatter_css::format_to_ir(session, text, options, template_placeholders)
                 .map_err(|err| err.to_string())?;
-        Ok(DispatchResult { docs: vec![ir], tailwind_classes, meta: None })
+        Ok(embedded.into())
     })
 }
 
