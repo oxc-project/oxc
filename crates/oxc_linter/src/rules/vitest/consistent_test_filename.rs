@@ -12,7 +12,9 @@ use crate::{
 };
 
 fn consistent_test_filename_diagnostic(file_path: &str, pattern: &str) -> OxcDiagnostic {
-    let message = format!("The {file_path} is a test file but his name is not allowed");
+    let message = format!(
+        "The file {file_path} is a test file, but its name does not match the expected pattern."
+    );
     let help = format!("Rename the file that match the pattern {pattern}");
 
     OxcDiagnostic::warn(message).with_help(help)
