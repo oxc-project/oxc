@@ -1,0 +1,451 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number or string.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: [Number, String],
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number or function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: [Number, Object],
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Number,
+ 6 │                         default: ''
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Number,
+ 6 │                         default: false
+   ·                                  ─────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Number,
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Number,
+ 6 │                         default: []
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: String,
+ 6 │                         default: 2
+   ·                                  ─
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: String,
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: String,
+ 6 │                         default: []
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a boolean.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Boolean,
+ 6 │                         default: ''
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a boolean.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Boolean,
+ 6 │                         default: 5
+   ·                                  ─
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a boolean.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Boolean,
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a boolean.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Boolean,
+ 6 │                         default: []
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Object,
+ 6 │                         default: ''
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Object,
+ 6 │                         default: 55
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Object,
+ 6 │                         default: false
+   ·                                  ─────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Object,
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Object,
+ 6 │                         default: []
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Array,
+ 6 │                         default: ''
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Array,
+ 6 │                         default: 55
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Array,
+ 6 │                         default: false
+   ·                                  ─────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Array,
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Array,
+ 6 │                         default: []
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function or number.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: [Object, Number],
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function or number.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: [Object, Number],
+ 6 │                         default: {}
+   ·                                  ──
+ 7 │                       } as PropOptions<object>
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Object,
+ 6 │                         default: ''
+   ·                                  ──
+ 7 │                       },
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'bar' prop must be a function.
+    ╭─[require_valid_default_prop.tsx:10:34]
+  9 │                         type: Object,
+ 10 │                         default: ''
+    ·                                  ──
+ 11 │                       },
+    ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for '[baz]' prop must be a function.
+    ╭─[require_valid_default_prop.tsx:14:34]
+ 13 │                         type: Object,
+ 14 │                         default: ''
+    ·                                  ──
+ 15 │                       }
+    ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: String,
+ 6 │                         default: 1n
+   ·                                  ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:7:34]
+ 6 │                         default() {
+ 7 │                           return ''
+   ·                                  ──
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a object.
+   ╭─[require_valid_default_prop.tsx:7:34]
+ 6 │                         default() {
+ 7 │                           return ''
+   ·                                  ──
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:7:34]
+ 6 │                         default() {
+ 7 │                           return 123
+   ·                                  ───
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:7:34]
+ 6 │                         default: () => {
+ 7 │                           return ''
+   ·                                  ──
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a object.
+   ╭─[require_valid_default_prop.tsx:7:34]
+ 6 │                         default: () => {
+ 7 │                           return ''
+   ·                                  ──
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:7:34]
+ 6 │                         default: () => {
+ 7 │                           return 123
+   ·                                  ───
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:6:40]
+ 5 │                         type: Number,
+ 6 │                         default: () => ''
+   ·                                        ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a object.
+   ╭─[require_valid_default_prop.tsx:6:40]
+ 5 │                         type: Object,
+ 6 │                         default: () => ''
+   ·                                        ──
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:40]
+ 5 │                         type: String,
+ 6 │                         default: () => 123
+   ·                                        ───
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: Function,
+ 6 │                         default: 1
+   ·                                  ─
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string or boolean.
+   ╭─[require_valid_default_prop.tsx:8:44]
+ 7 │                           switch (kind) {
+ 8 │                             case 1: return 1
+   ·                                            ─
+ 9 │                             case 2: return '' // OK
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string or boolean.
+    ╭─[require_valid_default_prop.tsx:10:44]
+  9 │                             case 2: return '' // OK
+ 10 │                             case 3: return {}
+    ·                                            ──
+ 11 │                             case 4: return Foo // ignore?
+    ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string or boolean.
+    ╭─[require_valid_default_prop.tsx:12:44]
+ 11 │                             case 4: return Foo // ignore?
+ 12 │                             case 5: return () => {}
+    ·                                            ────────
+ 13 │                             case 6: return false // OK
+    ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: String,
+ 6 │                         default: Number?.()
+   ·                                  ──────────
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:36]
+ 5 │                           type: Array as PropType<string[]>,
+ 6 │                           default: []
+   ·                                    ──
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:36]
+ 5 │                           type: Object as PropType<{ [key: number]: number }>,
+ 6 │                           default: {}
+   ·                                    ──
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a function.
+   ╭─[require_valid_default_prop.tsx:6:36]
+ 5 │                           type: Function as PropType<() => number>,
+ 6 │                           default: 10
+   ·                                    ──
+ 7 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:40]
+ 5 │                         type: String,
+ 6 │                         default: () => 123
+   ·                                        ───
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:4:34]
+ 3 │                     withDefaults(defineProps<{foo:string}>(),{
+ 4 │                       foo: () => 123
+   ·                                  ───
+ 5 │                     })
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:3:35]
+ 2 │                   <script setup>
+ 3 │                     const { foo = 123 } = defineProps({
+   ·                                   ───
+ 4 │                       foo: String
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:34]
+ 5 │                         type: String,
+ 6 │                         default: 123
+   ·                                  ───
+ 7 │                       }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:3:35]
+ 2 │                   <script setup>
+ 3 │                     const { foo = 123 } = defineProps({
+   ·                                   ───
+ 4 │                       foo: {
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a number.
+   ╭─[require_valid_default_prop.tsx:3:35]
+ 2 │                   <script setup>
+ 3 │                     const { foo = [] } = defineProps({
+   ·                                   ──
+ 4 │                       foo: {
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a array.
+   ╭─[require_valid_default_prop.tsx:3:35]
+ 2 │                   <script setup>
+ 3 │                     const { foo = 42 } = defineProps({
+   ·                                   ──
+ 4 │                       foo: {
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a array.
+   ╭─[require_valid_default_prop.tsx:7:34]
+ 6 │                         default: () => {
+ 7 │                           return 42
+   ·                                  ──
+ 8 │                         }
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a array.
+   ╭─[require_valid_default_prop.tsx:3:35]
+ 2 │                   <script setup>
+ 3 │                     const { foo = (()=>[]) } = defineProps({
+   ·                                   ────────
+ 4 │                       foo: {
+   ╰────
+
+  ⚠ vue(require-valid-default-prop): Type of the default value for 'foo' prop must be a string.
+   ╭─[require_valid_default_prop.tsx:6:32]
+ 5 │                       type: String,
+ 6 │                       default: /x/
+   ·                                ───
+ 7 │                     }
+   ╰────
