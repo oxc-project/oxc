@@ -42,7 +42,6 @@ pub fn format<'a>(
     let context = state.into_context();
 
     let ir = Document::new(elements, Vec::new());
-    ir.propagate_expand();
 
     Ok(Formatted::new(ir, context))
 }
@@ -53,7 +52,6 @@ pub fn format<'a>(
 /// Unlike [`format()`], this:
 /// - allocates from the shared arena in `ctx`, so the IR lives as long as the parent's document
 /// - emits neither a BOM nor the trailing newline
-/// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
 /// # Errors
 /// Same as [`format()`]: any parse error bails out.
