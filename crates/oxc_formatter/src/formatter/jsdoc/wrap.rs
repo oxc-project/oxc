@@ -465,7 +465,7 @@ pub fn wrap_text(
     capitalize: bool,
     format_options: Option<&crate::JsFormatOptions>,
     allocator: Option<&oxc_allocator::Allocator>,
-    external_callbacks: Option<&crate::external_formatter::ExternalCallbacks>,
+    string_embedder: Option<&oxc_formatter_core::StringEmbedder>,
 ) -> String {
     if text.is_empty() {
         return String::new();
@@ -477,7 +477,7 @@ pub fn wrap_text(
         capitalize,
         format_options,
         allocator,
-        external_callbacks,
+        string_embedder,
     )
 }
 

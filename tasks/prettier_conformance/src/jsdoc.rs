@@ -301,6 +301,6 @@ impl JsdocTestRunner {
             jsdoc: Some(jsdoc_options.clone()),
             ..JsFormatOptions::default()
         };
-        Some(format_program(&allocator, &ret.program, options, None).print().ok()?.into_code())
+        Some(format_program(&allocator, &ret.program, options).print().ok()?.into_code())
     }
 }

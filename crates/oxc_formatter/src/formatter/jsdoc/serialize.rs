@@ -2,11 +2,10 @@ use std::borrow::Cow;
 
 use oxc_allocator::Allocator;
 use oxc_ast::Comment;
-use oxc_formatter_core::LineWidth;
+use oxc_formatter_core::{LineWidth, StringEmbedder};
 use oxc_jsdoc::JSDoc;
 use oxc_span::Span;
 
-use crate::external_formatter::ExternalCallbacks;
 use crate::formatter::prelude::*;
 use crate::options::{JsdocOptions, QuoteStyle};
 use crate::{JsFormatOptions, write};
@@ -62,7 +61,7 @@ pub(super) struct JsdocFormatter<'a, 'o> {
     pub(super) format_options: &'o JsFormatOptions,
     pub(super) type_format_options: JsFormatOptions,
     pub(super) allocator: &'a Allocator,
-    pub(super) external_callbacks: Option<&'o ExternalCallbacks>,
+    pub(super) string_embedder: Option<&'o StringEmbedder>,
     pub(super) wrap_width: usize,
     pub(super) content_lines: LineBuffer,
 }
@@ -73,7 +72,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         format_options: &'o JsFormatOptions,
         allocator: &'a Allocator,
         available_width: usize,
-        external_callbacks: Option<&'o ExternalCallbacks>,
+        string_embedder: Option<&'o StringEmbedder>,
     ) -> Self {
         let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
         // Use commentContentPrintWidth (= wrap_width) as the line width for type
@@ -94,7 +93,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
             format_options,
             type_format_options,
             allocator,
-            external_callbacks,
+            string_embedder,
             wrap_width,
             content_lines: LineBuffer::new(),
         }
@@ -180,7 +179,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 self.options.capitalize_descriptions,
                 Some(self.format_options),
                 Some(self.allocator),
-                self.external_callbacks,
+                self.string_embedder,
             );
             if self.options.description_tag {
                 // Emit as @description tag
@@ -1070,14 +1069,9 @@ pub fn format_jsdoc_comment<'a>(
     available_width: usize,
     f: &JsFormatter<'_, 'a>,
 ) -> Option<FormattedJsdoc<'a>> {
-    let external_callbacks = f.context().external_callbacks();
-    let fmt = JsdocFormatter::new(
-        options,
-        f.options(),
-        f.allocator(),
-        available_width,
-        Some(external_callbacks),
-    );
+    let string_embedder = f.session().string_embedder();
+    let fmt =
+        JsdocFormatter::new(options, f.options(), f.allocator(), available_width, string_embedder);
     fmt.format(comment, source_text)
 }
 

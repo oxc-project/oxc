@@ -7,8 +7,8 @@
 //! - [`dispatcher`] (every build): the native registry — `ResolvedDispatchConfig`
 //!   (lazy per-language options) + `build_dispatcher` with a Rust branch per `NativeLanguage`;
 //!   IR integrates into the parent's arena / `GroupId` space
-//! - [`fence`] (every build): the JSDoc native-fence string adapter over the registry
-//!   (the pure build's whole string-out channel)
+//! - [`fence`] (every build): the JSDoc native-fence string adapter over the registry,
+//!   plus the pure build's root `SessionServices` assembly (`session_services`)
 //! - [`prettier_fallback`] (napi only): Prettier Doc→IR path for the rest
 //! - [`string_channel`] (napi only): the Prettier string paths of the string-out channel
 //!   - md/html/angular JSDoc fences + html-in-js fallback

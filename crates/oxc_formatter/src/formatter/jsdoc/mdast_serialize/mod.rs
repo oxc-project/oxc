@@ -8,9 +8,9 @@ use std::borrow::Cow;
 use markdown::{Constructs, ParseOptions, to_mdast};
 
 use oxc_allocator::Allocator;
+use oxc_formatter_core::StringEmbedder;
 
 use crate::JsFormatOptions;
-use crate::external_formatter::ExternalCallbacks;
 
 use super::line_buffer::LineBuffer;
 use super::wrap::{wrap_plain_paragraphs, wrap_plain_paragraphs_balance};
@@ -35,7 +35,7 @@ pub fn format_description_mdast(
     capitalize: bool,
     format_options: Option<&JsFormatOptions>,
     allocator: Option<&Allocator>,
-    external_callbacks: Option<&ExternalCallbacks>,
+    string_embedder: Option<&StringEmbedder>,
 ) -> String {
     if text.trim().is_empty() {
         return String::new();
@@ -144,7 +144,7 @@ pub fn format_description_mdast(
         source: &protected,
         format_options,
         allocator,
-        external_callbacks,
+        string_embedder,
     };
     serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
 
@@ -162,5 +162,5 @@ pub(super) struct SerializeOptions<'a> {
     pub(super) source: &'a str,
     pub(super) format_options: Option<&'a JsFormatOptions>,
     pub(super) allocator: Option<&'a Allocator>,
-    pub(super) external_callbacks: Option<&'a ExternalCallbacks>,
+    pub(super) string_embedder: Option<&'a StringEmbedder>,
 }

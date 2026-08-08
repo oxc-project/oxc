@@ -47,18 +47,21 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
 JS/TS and standalone CSS roots run on a `PhysicalFile` session carrying the registry dispatcher in EVERY build.
 The Vue/Svelte `<script>` root (`api/text_to_doc_api.rs`, a `VirtualDocument` session, napi only) is the 3rd assembly site: a Rust branch per `NativeLanguage` (css/graphql/yaml/json/...), plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest.
-The pure Rust build runs fallback-less, so non-native embeds (html-in-js, TOML/custom front matter) deliberately stay verbatim like Prettier; `embeddedLanguageFormatting: off` installs no dispatcher (every root assembles via `ResolvedDispatchConfig::for_root` + `root_dispatcher`, which owns that gate).
+The pure Rust build runs fallback-less, so non-native embeds (html-in-js, TOML/custom front matter) deliberately stay verbatim like Prettier; `embeddedLanguageFormatting: off` installs no dispatcher (every root assembles its `SessionServices` via `ResolvedDispatchConfig::for_root` + `root_dispatcher` / `ExternalFormatter::session_services` / `fence::session_services`, all consulting the same off-gate).
+The service builders are SERVICE PROFILES, not host bindings: `ExternalFormatter::session_services` (napi standard set) / `fence::session_services` (pure native-only set) serve any host with that shape. (Future Markdown host reuses them as-is.)
+A new host picks a profile; whether a Tier 1 host's root takes the Prettier fallback for its embeds (e.g. md-in-graphql before the md Rust port) is a per-host policy decision made explicitly at that root, never a builder default (the CSS root's fallback-less literal in `format.rs` is the current example).
 Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
 
-A separate string-out channel (the `embedded_callback`, NOT the dispatcher) carries the string-in/string-out consumers:
+A separate string-out channel (the session's `string_embedder` service, NOT the dispatcher) carries the string-in/string-out consumers:
 
 - JSDoc fenced code blocks: routing follows ONE rule
-  - a fence language in the `NativeLanguage` registry formats through the dispatcher via a thin string adapter (`embed/fence.rs::format_native_fence`, EVERY build — the pure Rust build installs `build_native_fence_callback` directly)
+  - a fence language in the `NativeLanguage` registry formats through the dispatcher via a thin string adapter (`embed/fence.rs::format_native_fence`, EVERY build, the pure Rust build wires it via `fence::session_services`)
   - md/html/angular fences stay on the Prettier string path (`string_channel.rs`, napi only; their Doc→IR conversion has unrepresentable cases);
   - everything else stays verbatim
-- html-in-js fallback (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`)
+- temporary html-in-js fallback (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`)
 
 NOTE: These string-out channel is temporary workaround, should be replaced by native implementations and Prettier usage should be eliminated in the future.
+JSDoc's string-out is also NOT structural: fences can move to IR-out (session dispatch inside the comment IR) once the printer grows a per-line prefix mechanism for the `*` continuation, but deferred for verification time, not by design.
 
 Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 
@@ -70,7 +73,7 @@ Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 Embedded boundaries carry classes through `DispatchResult::tailwind_classes`;
 each embed site calls `DispatchResult::remap_tailwind_into(collector)` before consuming `docs`.
 
-The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `ExternalFormatter::to_external_callbacks`. No CSS goes to Prettier for this; the pure Rust build never collects (no sorter available).
+The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `ExternalFormatter::session_services`. No CSS goes to Prettier for this; the pure Rust build never collects (no sorter available).
 
 Consequently, managing these various formatter implementations and handling their respective options are also part of Oxfmt's responsibilities.
 

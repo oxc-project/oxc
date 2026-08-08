@@ -749,9 +749,8 @@ fn serialize_code(
 /// - JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or indented blocks):
 ///   formatted in-process via [`format_jsdoc_js_snippet`] (`oxc_formatter`'s own parser/formatter).
 /// - Non-JS/TS fenced code (css, html, graphql, etc.):
-///   when external callbacks are wired,
-///   routed through `ExternalCallbacks::format_embedded` (the string channel).
-///   When callbacks are absent (Rust-only conformance / pure CLI build), preserved verbatim.
+///   when the session carries a string embedder, routed through it (the string channel);
+///   absent one (Rust-only conformance, or the language has no native branch), preserved verbatim.
 ///
 /// NOTE: `@example` fences diverge here, see `tag_formatters::format_example_fenced_block`.
 fn format_code_value<'a>(
@@ -765,8 +764,8 @@ fn format_code_value<'a>(
         if let Some(l) = lang
             && !is_js_ts_lang(l)
         {
-            if let Some(external) = opts.external_callbacks
-                && let Some(Ok(formatted)) = external.format_embedded(l, code)
+            if let Some(embed) = opts.string_embedder
+                && let Ok(formatted) = embed(l, code)
             {
                 let mut result = formatted;
                 // Trim trailing newline that Prettier adds

@@ -1,6 +1,6 @@
 //! String-in/string-out embedded channel.
 //!
-//! Two consumers reach this channel through the same `EmbeddedFormatterCallback` contract on `ExternalCallbacks`:
+//! Two consumers reach this channel through the session's `StringEmbedder` contract:
 //! - JSDoc fenced code blocks (` ```css `, ` ```yaml `, …)
 //! - html-in-js fallback (`format_js_in_html_as_fallback`):
 //!   the IR channel's HTML route returned Prettier Doc that the IR converter can't represent,
@@ -19,28 +19,28 @@ use std::sync::Arc;
 
 use tracing::{debug, debug_span};
 
-use oxc_formatter::{EmbeddedFormatterCallback, TailwindCallback};
+use oxc_formatter_core::{StringEmbedder, TailwindSorter};
 
 use crate::core::{
     embed::{FormatEmbeddedWithConfigCallback, dispatcher, fence, language_to_prettier_parser},
     options::inject_parser,
 };
 
-/// Build the `embedded_formatter` callback installed on `ExternalCallbacks`.
+/// Build the napi build's string embedder installed on the session.
 ///
 /// Dispatches by language identifier: the native registry when available,
 /// otherwise Prettier via `format_embedded`.
 /// The JSDoc fenced consumer reaches every language;
 /// the html-in-js fallback only ever passes `"html"` and therefore always lands on the Prettier branch.
 ///
-/// `sort_tailwind` is the SAME pre-bound sorter as `ExternalCallbacks`' Tailwind callback
-/// (options JSON already applied by `to_external_callbacks`),
+/// `sort_tailwind` is the SAME pre-bound sorter as the session's Tailwind service
+/// (options JSON already applied by `session_services`),
 /// for the `@apply` classes a CSS fence collects.
-pub fn build_embedded_callback(
+pub fn build_string_embedder(
     format_embedded: FormatEmbeddedWithConfigCallback,
-    sort_tailwind: Option<TailwindCallback>,
+    sort_tailwind: Option<TailwindSorter>,
     dispatch_config: Arc<dispatcher::ResolvedDispatchConfig>,
-) -> EmbeddedFormatterCallback {
+) -> StringEmbedder {
     let fence_dispatcher = fence::build_fence_dispatcher(&dispatch_config);
     Arc::new(move |language: &str, code: &str| {
         // Native registry first (JSDoc fenced code blocks).

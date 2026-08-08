@@ -1,22 +1,20 @@
-//! Native-fence string adapter: a JSDoc fenced code block whose language has a
-//! Rust formatter branch formats through the dispatch registry, in EVERY build.
+//! Native-fence string adapter:
+//! a JSDoc fenced code block whose language has a Rust formatter branch
+//! formats through the dispatch registry, in EVERY build.
 //!
 //! This is the build-independent half of the string-out channel:
-//! the napi [`super::string_channel`] routes native fences here before its
-//! Prettier string paths; the pure Rust build installs `build_external_callbacks`
-//! directly (non-native fences stay verbatim).
+//! the napi [`super::string_channel`] routes native fences here before its Prettier string paths;
+//! the pure Rust build assembles its whole `SessionServices` here
+//! (`session_services`; non-native fences stay verbatim).
 
 use std::sync::Arc;
 
 use tracing::debug_span;
 
 use oxc_allocator::Allocator;
-#[cfg(not(feature = "napi"))]
-use oxc_formatter::ExternalCallbacks;
-use oxc_formatter::TailwindCallback;
 use oxc_formatter_core::{
     DispatchOutcome, DispatchRequest, DispatchResult, Document, FormatDispatcher, FormatSession,
-    InputKind,
+    InputKind, SessionServices, TailwindSorter,
 };
 
 use super::dispatcher::{self, ResolvedDispatchConfig};
@@ -28,25 +26,27 @@ pub fn build_fence_dispatcher(dispatch_config: &Arc<ResolvedDispatchConfig>) -> 
     dispatcher::build_dispatcher(Arc::clone(dispatch_config), None)
 }
 
-/// The pure build's `ExternalCallbacks`: just the native-fence adapter, gated by
-/// the shared off-predicate (the napi twin is `ExternalFormatter::to_external_callbacks`).
-/// Non-native fences answer `Err` — the string channel's "keep verbatim" — since
-/// no Prettier exists in this build.
+/// The pure build's `SessionServices`: the fallback-less registry dispatcher plus
+/// the native-fence string embedder, both behind the shared off-predicate
+/// (the napi twin is `ExternalFormatter::session_services`).
+/// Non-native fences answer `Err` (the string channel's "keep verbatim"),
+/// since no Prettier exists in this build; no Tailwind sorter exists either.
 #[cfg(not(feature = "napi"))]
-pub fn build_external_callbacks(
-    dispatch_config: &Arc<ResolvedDispatchConfig>,
-) -> ExternalCallbacks {
-    let embedded_callback = dispatch_config.is_embedded_formatting_enabled().then(|| {
-        let fence_dispatcher = build_fence_dispatcher(dispatch_config);
+pub fn session_services(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
+    // A fence dispatcher and this root's dispatcher are the same fallback-less registry,
+    // so the root's doubles as the fence adapter's.
+    let dispatcher = dispatch_config.root_dispatcher(None);
+    let string_embedder = dispatcher.as_ref().map(|dispatcher| {
+        let fence_dispatcher = Arc::clone(dispatcher);
         let dispatch_config = Arc::clone(dispatch_config);
         Arc::new(move |language: &str, code: &str| {
             if !dispatcher::is_native_language(language) {
                 return Err(format!("Unsupported language: {language}"));
             }
             format_native_fence(language, code, &fence_dispatcher, &dispatch_config, None)
-        }) as oxc_formatter::EmbeddedFormatterCallback
+        }) as oxc_formatter_core::StringEmbedder
     });
-    ExternalCallbacks::new().with_embedded_formatter(embedded_callback)
+    SessionServices { dispatcher, string_embedder, tailwind_sorter: None }
 }
 
 /// Format a JSDoc fenced code block through the native dispatch registry:
@@ -58,7 +58,7 @@ pub fn build_external_callbacks(
 ///   keeping `TailwindClass(index)` references valid). The pure build passes no sorter.
 /// - `Err` keeps the fence verbatim, covering both `PreserveOriginal`
 ///   (parse failure — never a Prettier fallback for native languages) and operational errors.
-/// - The session-less `EmbeddedFormatterCallback` contract forces a fresh root session per fence,
+/// - The session-less `StringEmbedder` contract forces a fresh root session per fence,
 ///   so `dispatch_depth` resets at this string boundary (inert today: no native fence language re-dispatches).
 ///   Threading the parent session through the callback is the eventual fix.
 pub fn format_native_fence(
@@ -66,12 +66,19 @@ pub fn format_native_fence(
     code: &str,
     fence_dispatcher: &FormatDispatcher,
     dispatch_config: &ResolvedDispatchConfig,
-    sort_tailwind: Option<&TailwindCallback>,
+    sort_tailwind: Option<&TailwindSorter>,
 ) -> Result<String, String> {
     debug_span!("oxfmt::external::format_native_fence", language = language).in_scope(|| {
         let allocator = Allocator::default();
-        let session =
-            FormatSession::new(&allocator, InputKind::Fragment, Some(Arc::clone(fence_dispatcher)));
+        let session = FormatSession::with_services(
+            &allocator,
+            InputKind::Fragment,
+            SessionServices {
+                dispatcher: Some(Arc::clone(fence_dispatcher)),
+                tailwind_sorter: sort_tailwind.cloned(),
+                ..SessionServices::default()
+            },
+        );
         let outcome = session.dispatch(DispatchRequest {
             language,
             texts: &[code],
@@ -88,10 +95,7 @@ pub fn format_native_fence(
         }
         let ir = docs.pop().unwrap();
 
-        let tailwind_classes = match sort_tailwind {
-            Some(sort) if !tailwind_classes.is_empty() => sort(tailwind_classes),
-            _ => tailwind_classes,
-        };
+        let tailwind_classes = session.sort_tailwind_classes(tailwind_classes);
 
         let mut code = Document::new(ir, tailwind_classes)
             .print(code.len(), dispatch_config.print_options())

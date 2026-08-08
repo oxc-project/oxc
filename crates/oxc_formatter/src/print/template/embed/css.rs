@@ -7,7 +7,7 @@ use oxc_formatter_core::{
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::CssInJsTemplate,
+    embed_context::CssInJsTemplate,
     formatter::prelude::*,
     print::template::{
         FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,

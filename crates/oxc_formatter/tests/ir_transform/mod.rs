@@ -196,7 +196,7 @@ fn format_code(code: &str, options: &JsFormatOptions) -> String {
     let allocator = Allocator::new();
     let source_type = SourceType::from_path("dummy.tsx").unwrap();
 
-    match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
+    match oxc_formatter::format(&allocator, code, source_type, options.clone()) {
         Ok(formatted) => formatted.print().unwrap().into_code(),
         Err(error) => panic!("💥 Parser error: {}", error.message),
     }

@@ -96,7 +96,7 @@ impl FixtureFormatter for JsHarness {
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {
         let source_type = SourceType::from_path(path).unwrap();
         let allocator = Allocator::default();
-        oxc_formatter::format(&allocator, source, source_type, options.clone(), None)
+        oxc_formatter::format(&allocator, source, source_type, options.clone())
             .unwrap()
             .print()
             .unwrap()
@@ -128,7 +128,6 @@ fn bom_is_preserved() {
         "\u{feff}let a = 1",
         SourceType::mjs(),
         JsFormatOptions::default(),
-        None,
     )
     .expect("BOM input should parse")
     .print()
