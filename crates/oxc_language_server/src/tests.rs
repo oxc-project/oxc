@@ -22,11 +22,12 @@ use crate::{
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    pub build_client_message: Option<ClientMessage>,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode, cache_uris: None }
+        Self { diagnostic_mode, cache_uris: None, build_client_message: None }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
@@ -38,7 +39,7 @@ impl ToolBuilder for FakeToolBuilder {
     fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
         ToolBuildResult {
             tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone() }),
-            client_message: None,
+            client_message: self.build_client_message.clone(),
         }
     }
 
@@ -151,6 +152,16 @@ impl Tool for FakeTool {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
                 client_message: None,
+            };
+        }
+        if changed_uri.as_str().ends_with("misconfiguration.config") {
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_message: Some(ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::WARNING,
+                }),
             };
         }
 
@@ -398,6 +409,7 @@ struct InitializeRequestOptions {
     dynamic_watchers: bool,
     workspace_edit: bool,
     pull_mode: bool,
+    show_message: bool,
     initialization_options: Option<Value>,
     workspace_folders: Option<Vec<WorkspaceFolder>>,
     root_uri: Option<Uri>,
@@ -427,6 +439,14 @@ fn initialize_request_workspace_folders(options: InitializeRequestOptions) -> Re
                 }),
                 ..Default::default()
             }),
+            window: if options.show_message {
+                Some(WindowClientCapabilities {
+                    show_message: Some(ShowMessageRequestClientCapabilities::default()),
+                    ..Default::default()
+                })
+            } else {
+                None
+            },
             ..Default::default()
         },
         initialization_options: options.initialization_options,
@@ -625,13 +645,13 @@ mod test_suite {
     use tower_lsp_server::{
         jsonrpc::{Error, ErrorCode, Id, Response},
         ls_types::{
-            ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, ServerInfo,
-            WorkspaceEdit, WorkspaceFolder,
+            ApplyWorkspaceEditResponse, InitializeResult, MessageType, PublishDiagnosticsParams,
+            ServerInfo, WorkspaceEdit, WorkspaceFolder,
         },
     };
 
     use crate::{
-        DiagnosticMode,
+        ClientMessage, DiagnosticMode,
         backend::Backend,
         tests::{
             FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
@@ -647,6 +667,39 @@ mod test_suite {
 
     fn server_info() -> ServerInfo {
         ServerInfo { name: "oxc".to_owned(), version: Some("1.0.0".to_owned()) }
+    }
+
+    #[tokio::test]
+    async fn test_client_message_deferred_until_initialized() {
+        let builder = FakeToolBuilder {
+            build_client_message: Some(ClientMessage {
+                message: "Fake misconfiguration message".to_string(),
+                r#type: MessageType::WARNING,
+            }),
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+        });
+
+        // initialize: worker starts here (no workspace_configuration), message must NOT be sent yet
+        server
+            .send_request(initialize_request(InitializeRequestOptions {
+                show_message: true,
+                ..Default::default()
+            }))
+            .await;
+        let initialize_result = server.recv_response().await;
+        assert!(initialize_result.is_ok());
+
+        // initialized: message must be sent now
+        server.send_request(initialized_notification()).await;
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "Fake misconfiguration message");
+
+        server.shutdown(2).await;
     }
 
     #[tokio::test]
@@ -1054,6 +1107,52 @@ mod test_suite {
 
         // No direct response expected for notifications, client does not support workspace configuration or watchers
         server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_workspace_added_shows_client_message() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![WorkspaceFolder {
+                uri: "file:///path/to/new_folder".parse().unwrap(),
+                name: "new_folder".to_string(),
+            }],
+            vec![],
+        );
+
+        let builder = FakeToolBuilder {
+            build_client_message: Some(ClientMessage {
+                message: "Fake misconfiguration message".to_string(),
+                r#type: MessageType::WARNING,
+            }),
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+            },
+            initialize_request(InitializeRequestOptions {
+                show_message: true,
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        // Initial worker startup message is sent on initialized; consume it first.
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+
+        server.send_request(folders_changed_notification).await;
+
+        // Adding a workspace starts a new worker and should surface its client message.
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "Fake misconfiguration message");
+        assert_eq!(params["type"], json!(MessageType::WARNING));
+
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
