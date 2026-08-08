@@ -1422,7 +1422,10 @@ fn lower_binding_assignment<'a>(
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
-                    lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Array(ArrayPattern { items, span: Some(pattern.span) }),
+                        kind,
+                    },
                     value,
                     span: Some(span),
                 },
@@ -1576,7 +1579,10 @@ fn lower_binding_assignment<'a>(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern {
-                        pattern: Pattern::Object(ObjectPattern { properties }),
+                        pattern: Pattern::Object(ObjectPattern {
+                            properties,
+                            span: Some(pattern.span),
+                        }),
                         kind,
                     },
                     value,
@@ -2018,7 +2024,10 @@ fn lower_assignment_target<'a>(
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
-                    lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Array(ArrayPattern { items, span: Some(pattern.span) }),
+                        kind,
+                    },
                     value,
                     span: Some(span),
                 },
@@ -2289,7 +2298,10 @@ fn lower_assignment_target<'a>(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern {
-                        pattern: Pattern::Object(ObjectPattern { properties }),
+                        pattern: Pattern::Object(ObjectPattern {
+                            properties,
+                            span: Some(pattern.span),
+                        }),
                         kind,
                     },
                     value,
