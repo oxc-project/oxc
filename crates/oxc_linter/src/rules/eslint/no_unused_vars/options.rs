@@ -565,12 +565,8 @@ impl TryFrom<&Value> for CaughtErrors {
 }
 
 /// Parses a potential pattern into a [`Regex`] that accepts unicode characters.
-fn parse_unicode_rule(value: Option<&Value>, name: &str) -> IgnorePattern<Regex> {
-    IgnorePattern::try_from(value.and_then(Value::as_str))
-        .map_err(|err| {
-            OxcDiagnostic::error(format!("Invalid '{name}' option for no-unused-vars: {err}"))
-        })
-        .unwrap()
+fn parse_unicode_rule(value: Option<&Value>) -> Result<IgnorePattern<Regex>, String> {
+    IgnorePattern::try_from(value.and_then(Value::as_str)).map_err(|err| err.to_string())
 }
 
 fn parse_fix_mode(value: Option<&Value>, name: &str) -> Result<NoUnusedVarsFixMode, OxcDiagnostic> {
@@ -608,14 +604,14 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                 // NOTE: when a configuration object is provided, do not provide
                 // a default ignore pattern here. They've opted into configuring
                 // this rule, and we'll give them full control over it.
-                let vars_ignore_pattern =
-                    parse_unicode_rule(config.get("varsIgnorePattern"), "varsIgnorePattern");
+                let vars_ignore_pattern = parse_unicode_rule(config.get("varsIgnorePattern"))
+                    .map_err(|err| invalid_option_error("varsIgnorePattern", err))?;
 
                 let args: ArgsOption =
                     config.get("args").map(TryInto::try_into).transpose()?.unwrap_or_default();
 
-                let args_ignore_pattern =
-                    parse_unicode_rule(config.get("argsIgnorePattern"), "argsIgnorePattern");
+                let args_ignore_pattern = parse_unicode_rule(config.get("argsIgnorePattern"))
+                    .map_err(|err| invalid_option_error("argsIgnorePattern", err))?;
 
                 let caught_errors: CaughtErrors = config
                     .get("caughtErrors")
@@ -623,15 +619,14 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     .transpose()?
                     .unwrap_or_default();
 
-                let caught_errors_ignore_pattern = parse_unicode_rule(
-                    config.get("caughtErrorsIgnorePattern"),
-                    "caughtErrorsIgnorePattern",
-                );
+                let caught_errors_ignore_pattern =
+                    parse_unicode_rule(config.get("caughtErrorsIgnorePattern"))
+                        .map_err(|err| invalid_option_error("caughtErrorsIgnorePattern", err))?;
 
                 let destructured_array_ignore_pattern = parse_unicode_rule(
                     config.get("destructuredArrayIgnorePattern"),
-                    "destructuredArrayIgnorePattern",
-                );
+                )
+                .map_err(|err| invalid_option_error("destructuredArrayIgnorePattern", err))?;
 
                 let ignore_rest_siblings: bool = config
                     .get("ignoreRestSiblings")
@@ -696,6 +691,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
+    use crate::{rule::Rule as _, rules::eslint::no_unused_vars::NoUnusedVars};
 
     #[test]
     fn test_options_default() {
@@ -851,11 +847,10 @@ mod tests {
     #[test]
     fn test_parse_unicode_regex() {
         let pat = json!("^[iI]gnore");
-        parse_unicode_rule(Some(&pat), "varsIgnorePattern")
-            .expect("json strings should get parsed into a regex");
+        parse_unicode_rule(Some(&pat)).expect("json strings should get parsed into a regex");
 
         let pat = json!("^_");
-        assert!(parse_unicode_rule(Some(&pat), "varsIgnorePattern").is_default());
+        assert!(parse_unicode_rule(Some(&pat)).unwrap().is_default());
     }
 
     #[test]
@@ -875,5 +870,17 @@ mod tests {
             let result: Result<NoUnusedVarsOptions, OxcDiagnostic> = options.try_into();
             assert!(result.is_err());
         }
+    }
+
+    #[test]
+    fn invalid_ignore_pattern_returns_configuration_error() {
+        let error = NoUnusedVars::from_configuration(json!([{
+            "varsIgnorePattern": "[",
+        }]))
+        .unwrap_err();
+
+        assert!(
+            error.to_string().starts_with("Invalid 'varsIgnorePattern' option for no-unused-vars:")
+        );
     }
 }
