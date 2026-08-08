@@ -256,6 +256,20 @@ impl SourceFormatter {
         }
     }
 
+    /// The build's default `SessionServices` for a root run (`embed::services::for_root`),
+    /// with the napi transport threaded in; the cfg fork lives here once, not per root.
+    #[cfg_attr(not(feature = "napi"), expect(clippy::unused_self))]
+    fn root_services(&self, dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
+        #[cfg(feature = "napi")]
+        {
+            super::embed::services::for_root(self.external_formatter(), dispatch_config)
+        }
+        #[cfg(not(feature = "napi"))]
+        {
+            super::embed::services::for_root(dispatch_config)
+        }
+    }
+
     /// Format a file based on its resolved strategy.
     #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %resolved.path().display()))]
     pub fn format(&self, source_text: &str, resolved: FormatStrategy) -> FormatResult {
@@ -403,29 +417,26 @@ impl SourceFormatter {
         core: CoreFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
-        let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
+        let session = {
+            let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
+            let services = self.root_services(&dispatch_config);
+            FormatSession::with_services(&allocator, InputKind::PhysicalFile, services)
+        };
 
-        #[cfg(feature = "napi")]
-        let services = self
-            .external_formatter
-            .as_ref()
-            .expect("`external_formatter` must exist when `napi` feature is enabled")
-            .session_services(&dispatch_config);
-        // No Prettier fallback / Tailwind sorter, but native embeds
-        // (xxx-in-js and JSDoc fences) still format through the registry.
-        #[cfg(not(feature = "napi"))]
-        let services = super::embed::fence::session_services(&dispatch_config);
-
-        let session = FormatSession::with_services(&allocator, InputKind::PhysicalFile, services);
-        let formatted =
-            oxc_formatter::format_with_session(&session, source_text, source_type, format_options)?;
-
-        let code = formatted.print().map_err(|err| {
-            OxcDiagnostic::error(format!(
-                "Failed to print formatted code: {}\n{err}",
-                path.display()
-            ))
-        })?;
+        let code = {
+            let formatted = oxc_formatter::format_with_session(
+                &session,
+                source_text,
+                source_type,
+                format_options,
+            )?;
+            formatted.print().map_err(|err| {
+                OxcDiagnostic::error(format!(
+                    "Failed to print formatted code: {}\n{err}",
+                    path.display()
+                ))
+            })?
+        };
 
         #[cfg(feature = "detect_code_removal")]
         {
@@ -507,14 +518,14 @@ impl SourceFormatter {
         Ok(printed.into_code())
     }
 
-    /// Format CSS/SCSS/Less source using `oxc_formatter_css` on a `PhysicalFile` session,
-    /// so front matter YAML dispatches to the native registry in every build
-    /// (fallback-less: TOML and custom languages stay verbatim, matching Prettier, which never formats them either).
+    /// Format CSS/SCSS/Less source using `oxc_formatter_css` on a `PhysicalFile` session
+    /// carrying the build's default services.
+    /// The crate's front matter gate dispatches only `yaml` / `toml`
+    /// (yaml formats natively; toml and other languages stay verbatim, matching Prettier).
     /// `embeddedLanguageFormatting: off` installs no dispatcher and the block stays verbatim wholesale.
-    /// When the config enables Tailwind class sorting,
-    /// the napi build passes a JS-side sorter for the `@apply` classes the formatter collects
-    /// (the order itself comes from the Tailwind config, which only the JS side can resolve).
-    /// The pure build never collects classes.
+    /// Tailwind `@apply` classes sort via the napi sorter
+    /// (the order comes from the Tailwind config, which only the JS side can resolve);
+    /// the pure build never collects classes.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_css", skip_all)]
     fn format_by_oxc_formatter_css(
         &self,
@@ -524,34 +535,25 @@ impl SourceFormatter {
         config: &Arc<FormatConfig>,
         core: CoreFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
-        let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
-        // Deliberately NOT the JS root's builder: the CSS root's dispatcher stays
-        // fallback-less in every build (native never falls back to Prettier),
-        // and CSS has no string-channel consumers.
-        let services = SessionServices {
-            dispatcher: dispatch_config.root_dispatcher(None),
-            string_embedder: None,
-            #[cfg(feature = "napi")]
-            tailwind_sorter: self
-                .external_formatter
-                .as_ref()
-                .expect("`external_formatter` must exist when `napi` feature is enabled")
-                .tailwind_sorter(&dispatch_config),
-            #[cfg(not(feature = "napi"))]
-            tailwind_sorter: None,
+        let allocator = self.allocator_pool.get();
+        let session = {
+            let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
+            let services = self.root_services(&dispatch_config);
+            FormatSession::with_services(&allocator, InputKind::PhysicalFile, services)
         };
 
-        let allocator = self.allocator_pool.get();
-        let session = FormatSession::with_services(&allocator, InputKind::PhysicalFile, services);
-        let formatted =
-            oxc_formatter_css::format_with_session(&session, source_text, format_options)?;
-        let printed = formatted.print().map_err(|err| {
-            OxcDiagnostic::error(format!(
-                "Failed to print formatted CSS: {}\n{err}",
-                path.display()
-            ))
-        })?;
-        Ok(printed.into_code())
+        let code = {
+            let formatted =
+                oxc_formatter_css::format_with_session(&session, source_text, format_options)?;
+            formatted.print().map_err(|err| {
+                OxcDiagnostic::error(format!(
+                    "Failed to print formatted CSS: {}\n{err}",
+                    path.display()
+                ))
+            })?
+        };
+
+        Ok(code.into_code())
     }
 
     /// Format YAML source using `oxc_formatter_yaml`.
@@ -614,6 +616,13 @@ impl SourceFormatter {
         self
     }
 
+    /// The napi transport, installed by [`Self::with_external_formatter`] before any format run.
+    fn external_formatter(&self) -> &super::ExternalFormatter {
+        self.external_formatter
+            .as_ref()
+            .expect("`external_formatter` must exist when `napi` feature is enabled")
+    }
+
     /// Format non-JS/TS file using external formatter (Prettier).
     ///
     /// Plugin payloads are injected based on capability flags & user config.
@@ -642,12 +651,7 @@ impl SourceFormatter {
             inject_svelte_plugin_payload(&mut external_options, config);
         }
 
-        let external_formatter = self
-            .external_formatter
-            .as_ref()
-            .expect("`external_formatter` must exist when `napi` feature is enabled");
-
-        external_formatter.format_file(external_options, source_text).map_err(|err| {
+        self.external_formatter().format_file(external_options, source_text).map_err(|err| {
             // NOTE: We are trying to make the error from oxc_formatter(_xxx) and external_formatter (Prettier) look similar.
             // Ideally, we would unify them into `OxcDiagnostic`, which would eliminate the need for relative path conversion.
             // However, doing so would require:

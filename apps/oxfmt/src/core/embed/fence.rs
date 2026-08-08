@@ -2,10 +2,10 @@
 //! a JSDoc fenced code block whose language has a Rust formatter branch
 //! formats through the dispatch registry, in EVERY build.
 //!
-//! This is the build-independent half of the string-out channel:
-//! the napi [`super::string_channel`] routes native fences here before its Prettier string paths;
-//! the pure Rust build assembles its whole `SessionServices` here
-//! (`session_services`; non-native fences stay verbatim).
+//! This is the build-independent half of the string-out channel;
+//! the profiles in [`super::services`] wire it into the session's string embedder
+//! (the napi one via [`super::prettier_string`], which routes native fences here
+//! before its Prettier string paths; the pure one directly, non-native fences stay verbatim).
 
 use std::sync::Arc;
 
@@ -19,27 +19,6 @@ use oxc_formatter_core::{
 
 use super::dispatcher::ResolvedDispatchConfig;
 
-/// The pure build's `SessionServices`: the fallback-less registry dispatcher plus
-/// the native-fence string embedder, both behind the shared off-predicate
-/// (the napi twin is `ExternalFormatter::session_services`).
-/// A non-native fence dispatches to the registry's `PreserveOriginal`,
-/// which the adapter answers as `Err` (the string channel's "keep verbatim");
-/// no Prettier exists in this build, and no Tailwind sorter either.
-#[cfg(not(feature = "napi"))]
-pub fn session_services(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
-    // A fence dispatcher and this root's dispatcher are the same fallback-less registry,
-    // so the root's doubles as the fence adapter's.
-    let dispatcher = dispatch_config.root_dispatcher(None);
-    let string_embedder = dispatcher.as_ref().map(|dispatcher| {
-        let fence_dispatcher = Arc::clone(dispatcher);
-        let dispatch_config = Arc::clone(dispatch_config);
-        Arc::new(move |language: &str, code: &str| {
-            format_native_fence(language, code, &fence_dispatcher, &dispatch_config, None)
-        }) as oxc_formatter_core::StringEmbedder
-    });
-    SessionServices { dispatcher, string_embedder, tailwind_sorter: None }
-}
-
 /// Format a JSDoc fenced code block through the native dispatch registry:
 /// a string-in/string-out adapter over the IR contract.
 ///
@@ -48,7 +27,7 @@ pub fn session_services(dispatch_config: &Arc<ResolvedDispatchConfig>) -> Sessio
 ///   (element-wise: the sorter reorders classes WITHIN each collected string, never the vector,
 ///   keeping `TailwindClass(index)` references valid). The pure build passes no sorter.
 /// - `Err` keeps the fence verbatim, covering both `PreserveOriginal`
-///   (parse failure — never a Prettier fallback for native languages) and operational errors.
+///   (parse failure; a failed native language never re-routes to Prettier) and operational errors.
 /// - The session-less `StringEmbedder` contract forces a fresh root session per fence,
 ///   so `dispatch_depth` resets at this string boundary (inert today: no native fence language re-dispatches).
 ///   Threading the parent session through the callback is the eventual fix.
