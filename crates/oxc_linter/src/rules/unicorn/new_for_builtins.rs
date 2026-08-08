@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -73,6 +76,11 @@ impl Rule for NewForBuiltins {
                 }
             }
             AstKind::CallExpression(call_expr) => {
+                // An optional chain can't be rewritten to a `new` expression, which can't be optional.
+                if call_uses_optional_chain(call_expr) {
+                    return;
+                }
+
                 let Some(builtin_name) = is_expr_global_builtin(&call_expr.callee, ctx) else {
                     return;
                 };
@@ -101,6 +109,28 @@ impl Rule for NewForBuiltins {
             _ => {}
         }
     }
+}
+
+fn call_uses_optional_chain(call_expr: &CallExpression) -> bool {
+    call_expr.optional || expression_uses_optional_chain(&call_expr.callee)
+}
+
+fn expression_uses_optional_chain(expr: &Expression) -> bool {
+    let expr = expr.get_inner_expression();
+
+    if matches!(expr, Expression::ChainExpression(_)) {
+        return true;
+    }
+
+    if let Some(member_expr) = expr.as_member_expression() {
+        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
+    }
+
+    if let Expression::CallExpression(call_expr) = expr {
+        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
+    }
+
+    false
 }
 
 fn is_expr_global_builtin<'a, 'b>(
