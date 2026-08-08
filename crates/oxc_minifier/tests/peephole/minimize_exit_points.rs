@@ -296,6 +296,32 @@ fn test_dont_remove_break_in_try_finally() {
     test_same("function f() {b:try{throw 9} finally {break b} return 1;}");
 }
 
+#[test]
+fn test_try_catch_termination() {
+    test_same("function f(){if(a)try{b}catch{c}else throw i()}");
+    test_same("function f(){if(a)try{return g()}catch{c}else throw i()}");
+    test_same("function f(){if(a)try{b}catch{return g()}else throw i()}");
+    test(
+        "function f(){if(a)try{return g()}catch{return g()}else throw i()}",
+        "function f(){if(a)try{return g()}catch{return g()}throw i()}",
+    );
+
+    test_same("function f(){if(a)try{b}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{return g()}finally{d}else throw i()}");
+    test(
+        "function f(){if(a)try{b}finally{return g()}else throw i()}",
+        "function f(){if(a)try{b}finally{return g()}throw i()}",
+    );
+
+    test_same("function f(){if(a)try{b}catch{c}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{return g()}catch{d}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{b}catch{return g()}finally{d}else throw i()}");
+    test(
+        "function f(){if(a)try{b}catch{c}finally{return g(d)}else throw i()}",
+        "function f(){if(a)try{b}catch{c}finally{return g(d)}throw i()}",
+    );
+}
+
 /**
  * The 'break' prevents the 'b=false' from being evaluated. If we test the do-while to
  * 'do;while(b=false)' the code will be incorrect.
