@@ -22,13 +22,15 @@ use tracing::instrument;
 use oxc_config::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
 #[cfg(feature = "napi")]
 use oxc_formatter::JsFormatOptions;
+#[cfg(feature = "napi")]
+use oxc_formatter_core::CoreFormatOptions;
 
 use self::{
     editorconfig::{apply_editorconfig, has_editorconfig_overrides, load_editorconfig},
     overrides::OxfmtrcOverrides,
 };
 #[cfg(feature = "napi")]
-use super::options::to_oxc_formatter;
+use super::options::{to_core_options, to_oxc_formatter};
 use super::{
     FormatStrategy,
     options::validate,
@@ -140,8 +142,9 @@ pub fn resolve_for_api(
     let mut format_config: FormatConfig =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
     format_config.resolve_tailwind_paths(cwd);
-    // Validate eagerly: `from_format_config` skips validation for `ExternalFormatter*` kinds,
-    // so range-out values (e.g., `printWidth: 1000`) would otherwise silently reach Prettier.
+    // Validate eagerly, as the single gate for every option (core bundle + sortImports):
+    // downstream mapping (`from_format_config`, `ResolvedDispatchConfig`) relies on values having been rejected here,
+    // and `ExternalFormatter*` kinds have no later chance before values reach Prettier.
     validate(&format_config)?;
     if let Some(plugin) = kind.requires_plugin(&format_config) {
         return Ok(ResolveOutcome::MissingPlugin(plugin));
@@ -153,10 +156,14 @@ pub fn resolve_for_api(
 #[cfg(feature = "napi")]
 #[derive(Debug)]
 pub struct EmbeddedCallbackResolved {
+    /// Other xxx-in-js options are may be or may not be used, so derived lazily with `config` and `core`.
+    /// `JsFormatOptions` is always needed, so hold it here.
     pub format_options: Box<JsFormatOptions>,
     /// Retained so nested embedded callbacks can derive Prettier options on demand.
-    /// (e.g., CSS-in-JS inside the embedded JS)
-    pub config: Box<FormatConfig>,
+    pub config: Arc<FormatConfig>,
+    /// The validated core bundle, carried from resolution so dispatch-config
+    /// construction never re-derives (or re-fails) it.
+    pub core: CoreFormatOptions,
     pub parent_filepath: PathBuf,
 }
 
@@ -176,8 +183,9 @@ pub fn resolve_for_embedded_js(
     config: FormatConfig,
     parent_filepath: PathBuf,
 ) -> Result<EmbeddedCallbackResolved, String> {
+    let core = to_core_options(&config)?;
     let format_options = Box::new(to_oxc_formatter(&config)?);
-    Ok(EmbeddedCallbackResolved { format_options, config: Box::new(config), parent_filepath })
+    Ok(EmbeddedCallbackResolved { format_options, config: Arc::new(config), core, parent_filepath })
 }
 
 // ---

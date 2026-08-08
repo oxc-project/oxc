@@ -17,8 +17,6 @@ use serde_json::Value;
 use tracing::debug_span;
 
 use oxc_formatter::{ExternalCallbacks, JsFormatOptions, TailwindCallback};
-use oxc_formatter_css::CssFormatOptions;
-use oxc_formatter_graphql::GraphqlFormatOptions;
 
 use crate::core::embed::{
     self, FormatEmbeddedDocWithConfigCallback, FormatEmbeddedWithConfigCallback,
@@ -227,10 +225,10 @@ impl ExternalFormatter {
     /// Convert this external formatter to the `oxc_formatter::ExternalCallbacks` type.
     /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
     ///
-    /// `graphql_options` / `css_options` are dual mappings of the same resolved config
-    /// for the dispatcher's Rust branches (gql-in-js / css-in-js).
+    /// `dispatch_config` carries the resolved config; per-language options are mapped lazily at dispatch time
+    /// (see `embed::dispatcher::ResolvedDispatchConfig`).
     ///
-    /// Actual closure assembly lives in `core::embed::{string_channel, ir_channel}`;
+    /// Actual closure assembly lives in `core::embed::{string_channel, dispatcher, prettier_fallback}`;
     /// this method just bridges the napi-held callback `Arc`s into those factories.
     ///
     /// NOTE: Tailwind data paths
@@ -266,9 +264,7 @@ impl ExternalFormatter {
     pub fn to_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
-        options: Value,
-        graphql_options: GraphqlFormatOptions,
-        css_options: CssFormatOptions,
+        dispatch_config: &Arc<embed::dispatcher::ResolvedDispatchConfig>,
     ) -> ExternalCallbacks {
         let needs_embedded = !format_options.embedded_language_formatting.is_off();
         let tailwind_enabled = format_options.sort_tailwindcss.is_some();
@@ -277,26 +273,24 @@ impl ExternalFormatter {
             embed::string_channel::build_embedded_callback(
                 Arc::clone(&self.format_embedded),
                 tailwind_enabled.then(|| Arc::clone(&self.sort_tailwindcss_classes)),
-                options.clone(),
-                graphql_options,
-                css_options,
+                Arc::clone(dispatch_config),
             )
         });
 
         let dispatcher = needs_embedded.then(|| {
-            embed::ir_channel::build_dispatcher(
+            let fallback = embed::prettier_fallback::build_prettier_fallback(
+                Arc::clone(dispatch_config),
                 Arc::clone(&self.format_embedded_doc),
-                options.clone(),
-                graphql_options,
-                css_options,
-            )
+            );
+            embed::dispatcher::build_dispatcher(Arc::clone(dispatch_config), Some(fallback))
         });
 
         let tailwind_callback: Option<TailwindCallback> = tailwind_enabled.then(|| {
             let sort = Arc::clone(&self.sort_tailwindcss_classes);
+            let dispatch_config = Arc::clone(dispatch_config);
             Arc::new(move |classes: Vec<String>| {
                 debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
-                    .in_scope(|| (sort)(&options, classes))
+                    .in_scope(|| (sort)(dispatch_config.external_options(), classes))
             }) as TailwindCallback
         });
 
