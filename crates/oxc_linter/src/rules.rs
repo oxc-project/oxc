@@ -49,6 +49,7 @@ pub(crate) mod eslint {
     pub mod capitalized_comments;
     pub mod class_methods_use_this;
     pub mod complexity;
+    pub mod consistent_this;
     pub mod constructor_super;
     pub mod curly;
     pub mod default_case;

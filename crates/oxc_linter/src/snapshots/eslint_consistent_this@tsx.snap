@@ -1,0 +1,27 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.tsx:1:7]
+ 1 │ const self = <div />;
+   ·       ──────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.tsx:1:5]
+ 1 │ var context = this as any;
+   ·     ─────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.tsx:1:12]
+ 1 │ function f<self,>(): void {}
+   ·            ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.tsx:1:1]
+ 1 │ @dec class self {}
+   · ──────────────────
+   ╰────
