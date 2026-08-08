@@ -23,6 +23,9 @@ use crate::{FormatElement, group_id::UniqueGroupIdBuilder};
 /// The same context is threaded through recursive dispatcher calls so that
 /// nested embeddings (e.g. css-in-html-in-js) share one arena and one
 /// `GroupId` space.
+///
+/// TODO: Migration adapter: [`crate::FormatSession`] supersedes this type
+/// and will replace it once every entry point is session-aware.
 pub struct EmbeddedContext<'a, 'g> {
     /// Arena shared between parent and child formatters;
     /// strings allocated by the child live as long as the parent's IR.

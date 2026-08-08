@@ -2,7 +2,10 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, GetAllocator};
 
-use crate::{FormatElement, GroupId, UniqueGroupIdBuilder, format_element::Interned};
+use crate::{
+    FormatElement, FormatSession, GroupId, InputKind, UniqueGroupIdBuilder,
+    format_element::Interned,
+};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -11,8 +14,8 @@ use crate::{FormatElement, GroupId, UniqueGroupIdBuilder, format_element::Intern
 /// for the whole process of formatting a root with [crate::format!].
 pub struct FormatState<'ast, C> {
     context: C,
-    allocator: &'ast Allocator,
-    group_id_builder: UniqueGroupIdBuilder,
+    /// The shared execution unit of this format run; see [`FormatSession`].
+    session: FormatSession<'ast>,
     // For the document IR printing process
     /// The interned elements that have been printed to this point
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
@@ -28,15 +31,35 @@ impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
 }
 
 impl<'ast, C> FormatState<'ast, C> {
-    /// Creates a new state with the given language specific context
+    /// Creates a new state with the given language specific context.
+    ///
+    /// Compatibility wrapper: builds a dispatcher-less [`InputKind::PhysicalFile`]
+    /// session with its own `GroupId` space.
+    /// Entry points that share a run with other formatters use [`Self::new_with_session`] instead.
+    ///
+    /// NOTE: embedded entries (`format_to_ir`) still run through this wrapper,
+    /// so their `input_kind` is mislabeled until they migrate to [`Self::new_with_session`];
+    /// nothing may consult `input_kind` for envelope decisions (front matter, BOM) before that migration.
     pub fn new(context: C, allocator: &'ast Allocator) -> Self {
+        Self::new_with_session(
+            context,
+            FormatSession::new(allocator, InputKind::PhysicalFile, None),
+        )
+    }
+
+    /// Creates a new state on an existing session, sharing its arena and `GroupId` space.
+    pub fn new_with_session(context: C, session: FormatSession<'ast>) -> Self {
         Self {
             context,
-            allocator,
-            group_id_builder: UniqueGroupIdBuilder::default(),
+            session,
             printed_interned_elements: FxHashMap::default(),
             scratch: Vec::new(),
         }
+    }
+
+    /// The session this state formats under.
+    pub fn session(&self) -> &FormatSession<'ast> {
+        &self.session
     }
 
     /// The heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run.
@@ -51,7 +74,7 @@ impl<'ast, C> FormatState<'ast, C> {
 
     /// Returns the allocator used for arena-allocating format elements.
     pub fn allocator(&self) -> &'ast Allocator {
-        self.allocator
+        self.session.allocator()
     }
 
     pub fn into_context(self) -> C {
@@ -72,12 +95,12 @@ impl<'ast, C> FormatState<'ast, C> {
     /// [std::fmt::Debug] of the document if this is a debug build.
     /// The name is unused for production builds and has no meaning on the equality of two group ids.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
-        self.group_id_builder.group_id(debug_name)
+        self.session.group_id_builder().group_id(debug_name)
     }
 
     /// Returns a reference to the unique group id builder.
     pub fn group_id_builder(&self) -> &UniqueGroupIdBuilder {
-        &self.group_id_builder
+        self.session.group_id_builder()
     }
 
     #[expect(clippy::mutable_key_type)]
@@ -89,6 +112,6 @@ impl<'ast, C> FormatState<'ast, C> {
 impl<'ast, C> GetAllocator<'ast> for FormatState<'ast, C> {
     #[inline]
     fn allocator(&self) -> &'ast Allocator {
-        self.allocator
+        self.session.allocator()
     }
 }

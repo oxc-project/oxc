@@ -27,6 +27,7 @@ mod group_id;
 mod macros;
 mod options;
 pub mod printer;
+mod session;
 mod simple_context;
 mod source;
 pub mod spec;
@@ -64,6 +65,7 @@ pub use options::{
     LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
+pub use session::{FormatSession, InputKind};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source::{SourceText, SpanCursor};
 pub use state::FormatState;
