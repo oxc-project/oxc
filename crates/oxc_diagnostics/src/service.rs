@@ -37,7 +37,7 @@ pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 /// thread::spawn(move || {
 ///     sender.send((
 ///         PathBuf::from("file.txt"),
-///         vec![Error::new(OxcDiagnostic::error("Something went wrong"))],
+///         vec![OxcDiagnostic::error("Something went wrong").into()],
 ///     ));
 ///
 ///     // The service will stop listening when all senders are dropped.
@@ -198,7 +198,7 @@ impl DiagnosticService {
                                 diagnostic.with_help(format!("{path} seems like a minified file"));
                         }
 
-                        let minified_diagnostic = Error::new(diagnostic);
+                        let minified_diagnostic = diagnostic.into();
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
                             writer
@@ -445,7 +445,7 @@ mod tests {
         }
         let (mut service, sender) =
             DiagnosticService::new(Box::new(LongLineReporter { fallback_enabled: false }));
-        sender.send(vec![Error::new(OxcDiagnostic::warn("original diagnostic"))]).unwrap();
+        sender.send(vec![OxcDiagnostic::warn("original diagnostic").into()]).unwrap();
         drop(sender);
 
         let mut output = Vec::new();

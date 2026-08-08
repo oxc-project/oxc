@@ -36,8 +36,8 @@
 //!
 //!     for _ in 0..10 {
 //!         if let Err(diagnostic) = my_tool() {
-//!             let report = diagnostic.with_source_code(Arc::clone(&file_being_processed));
-//!             sender.send((file_path_being_processed, vec![Error::new(e)]));
+//!             let error = diagnostic.with_source_code(Arc::clone(&file_being_processed));
+//!             sender.send(vec![error]);
 //!         }
 //!         // The service will stop when all senders are dropped
 //!     }
@@ -58,13 +58,23 @@ pub mod reporter;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService};
 
-pub type Error = miette::Error;
+#[expect(clippy::error_impl_error, reason = "preserves the public diagnostic container name")]
+pub type Error = Box<dyn Diagnostic + Send + Sync>;
 pub type Severity = miette::Severity;
 
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
 pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, Labels, NamedSource};
+
+fn render(diagnostic: &dyn Diagnostic) -> String {
+    let mut output = String::new();
+    let _ = GraphicalReportHandler::new_themed(GraphicalTheme::none())
+        .with_width(80)
+        .with_links(false)
+        .render_report(&mut output, diagnostic);
+    output
+}
 
 /// A collection of [`OxcDiagnostic`]s.
 ///
@@ -282,6 +292,11 @@ impl OxcDiagnostic {
         Self::new(Severity::Warning, message.into())
     }
 
+    /// Render this diagnostic using Oxc's deterministic non-interactive style.
+    pub fn render(&self) -> String {
+        render(self)
+    }
+
     // Outlined so the `Box` allocation + field initialization exists once in the binary
     // instead of being inlined into every diagnostic construction site.
     #[inline(never)]
@@ -454,11 +469,85 @@ impl OxcDiagnostic {
     ///
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
     pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
-        Error::from(self).with_source_code(code)
+        Box::new(DiagnosticWithSource { diagnostic: self, source_code: Box::new(code) })
+    }
+
+    /// Attach source code and render using Oxc's deterministic non-interactive style.
+    pub fn render_with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> String {
+        let diagnostic = self.with_source_code(code);
+        render(diagnostic.as_ref())
     }
 
     /// Consumes the diagnostic and returns the inner owned data.
     pub fn inner_owned(self) -> OxcDiagnosticInner {
         *self.inner
+    }
+}
+
+struct DiagnosticWithSource {
+    diagnostic: OxcDiagnostic,
+    source_code: Box<dyn SourceCode>,
+}
+
+impl fmt::Debug for DiagnosticWithSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.diagnostic, f)
+    }
+}
+
+impl Display for DiagnosticWithSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(&self.diagnostic, f)
+    }
+}
+
+impl std::error::Error for DiagnosticWithSource {}
+
+impl Diagnostic for DiagnosticWithSource {
+    fn code(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.code()
+    }
+
+    fn severity(&self) -> Option<Severity> {
+        self.diagnostic.severity()
+    }
+
+    fn help(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.help()
+    }
+
+    fn note(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.note()
+    }
+
+    fn url(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.url()
+    }
+
+    fn labels(&self) -> Labels {
+        self.diagnostic.labels()
+    }
+
+    fn source_code(&self) -> Option<&dyn SourceCode> {
+        Some(self.source_code.as_ref())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn boxed_diagnostic_preserves_source_and_rendering() {
+        let diagnostic =
+            OxcDiagnostic::warn("unused binding").with_label(LabeledSpan::new(None, 4, 1));
+        let error = diagnostic.with_source_code(NamedSource::new("test.js", "let x;"));
+
+        assert_eq!(error.severity(), Some(Severity::Warning));
+        assert_eq!(error.source_code().and_then(SourceCode::name), Some("test.js"));
+
+        let rendered = render(error.as_ref());
+        assert!(rendered.contains("unused binding"));
+        assert!(rendered.contains("test.js"));
     }
 }
