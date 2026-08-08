@@ -20,7 +20,7 @@ use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, 
 
 use crate::{
     CompositeFix, FixKind, Fixer, Message, PossibleFixes, RuleTimingRecord, RuleTimingSource,
-    RuleTimingStore, WEBSITE_BASE_RULES_URL, suppression::DiffManager,
+    RuleTimingStore, WEBSITE_BASE_RULES_URL, fixer::IgnoreFixContext, suppression::DiffManager,
 };
 
 /// State required to initialize the `tsgolint` linter.
@@ -495,7 +495,16 @@ impl TsGoLintState {
                                 );
 
                                 if self.with_ignore_fixes {
-                                    message.add_ignore_fix(0, &source_text_owned);
+                                    message.add_ignore_fix(
+                                        0,
+                                        &source_text_owned,
+                                        IgnoreFixContext::JavaScript,
+                                        resolved_config
+                                            .config
+                                            .options
+                                            .respect_eslint_disable_directives
+                                            .unwrap_or(true),
+                                    );
                                 }
 
                                 message.error.severity = if severity == AllowWarnDeny::Deny {
