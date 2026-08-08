@@ -41,11 +41,9 @@ pub fn format<'a>(
     options: CssFormatOptions,
     sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
-    // NOTE: this wrapper labels the run `PhysicalFile`.
-    // JSDoc CSS fences still reach it through the string channel,
-    // so front-matter support on this entry MUST NOT land
-    // before those fences route through the dispatcher as `Fragment`s.
-    // Otherwise fence content starting with `---` would wrongly acquire file envelope semantics.
+    // NOTE: this wrapper labels the run `PhysicalFile`, so front-matter support may land on this entry.
+    // Every embedded caller (css-in-js, JSDoc fences) reaches the crate through `format_to_ir` as a `Fragment` instead,
+    // and fence content starting with `---` never acquires file envelope semantics.
     format_with_session(
         &FormatSession::new(allocator, InputKind::PhysicalFile, None),
         source_text,
