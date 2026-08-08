@@ -67,7 +67,7 @@ pub fn format_with_session<'a>(
     sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     let allocator = session.allocator();
-    let has_bom = source_text.starts_with('\u{feff}');
+    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
 
     let (stylesheet, source, comments) =
         parse_stylesheet(allocator, source_text, options, /* tolerate_placeholders */ false)?;
@@ -123,6 +123,8 @@ pub fn format_to_ir<'a>(
     template_placeholders: bool,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
+    // Input hygiene: embedded sources may carry a BOM; strip it, never re-emit.
+    let (_, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let (stylesheet, source, comments) = parse_stylesheet(
         allocator,
         source_text,
@@ -144,15 +146,15 @@ pub fn format_to_ir<'a>(
 
 /// Parse the source into an AST and collect comments, bailing out on any error.
 ///
-/// Copies the source into the arena (minus any BOM, which `oxc-css-parser` would skip anyway)
-/// so every slice taken from it carries `'a`.
+/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Entries own the BOM strip; a leading `\u{feff}` still reaching this point is content
+/// (e.g. a doubled BOM's second copy) and is the parser's to judge.
 fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
     source_text: &str,
     options: CssFormatOptions,
     tolerate_placeholders: bool,
 ) -> Result<(Stylesheet<'a>, &'a str, &'a [CssComment]), OxcDiagnostic> {
-    let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
     // NOTE: Normalize line endings BEFORE parsing like Prettier, unlike other `oxc_formatter_xxx`.
     // For CSS formatter, the printer slices verbatim text from the source in many places.
     // (comments, progid, custom properties, ...etc)

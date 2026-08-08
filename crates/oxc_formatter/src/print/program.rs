@@ -3,7 +3,6 @@ use std::ops::Deref;
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::ZWNBSP;
 
 use crate::{
     Buffer, Format,
@@ -26,15 +25,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
             );
         });
 
+        // BOM: JS is the exception to the entries-own-the-strip rule — `format_program`
+        // is AST-in (the formatter never owns pre-parse text) and oxc_parser lexes
+        // U+FEFF as whitespace itself. Detect at print time, re-emit once at byte 0.
+        let has_bom = oxc_formatter_core::spec::split_bom(f.source_text().as_str()).0;
+
         write!(
             f,
             [
-                // BOM
-                f.source_text()
-                    .chars()
-                    .next()
-                    .is_some_and(|c| c == ZWNBSP)
-                    .then_some(text("\u{feff}")),
+                has_bom.then_some(text("\u{feff}")),
                 self.hashbang(),
                 self.directives(),
                 FormatStatementsWithImports(self.body()),
