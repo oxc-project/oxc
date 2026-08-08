@@ -479,17 +479,37 @@ impl<'a> TypeScript<'a> {
         Self::create_assignment(target, value, ctx)
     }
 
-    /// Find the position of the `super()` call in the constructor body, otherwise return 0.
-    ///
-    /// Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
+    /// Find the position of the statement that contains the `super()` call in the constructor body, otherwise return 0.
     pub fn get_super_call_position(statements: &[Statement<'a>]) -> usize {
-        // Find the position of the `super()` call in the constructor body.
-        // Don't need to handle nested `super()` call because `TypeScript` doesn't allow it.
+        use oxc_ast_visit::Visit;
+
+        struct FindSuperCall {
+            found: bool,
+        }
+
+        impl<'a> Visit<'a> for FindSuperCall {
+            fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
+                if expr.is_super_call_expression() {
+                    self.found = true;
+                }
+                if !self.found {
+                    oxc_ast_visit::walk_call_expression(self, expr);
+                }
+            }
+
+            // Don't traverse into nested function/class scopes - a `super()` there
+            // belongs to the inner class, not the outer constructor.
+            fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+            fn visit_class(&mut self, _class: &Class<'a>) {}
+            fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
+        }
+
         statements
             .iter()
             .position(|stmt| {
-                matches!(stmt, Statement::ExpressionStatement(stmt)
-                        if stmt.expression.is_super_call_expression())
+                let mut visitor = FindSuperCall { found: false };
+                visitor.visit_statement(stmt);
+                visitor.found
             })
             .map_or(0, |pos| pos + 1)
     }
