@@ -58,6 +58,7 @@ jobs:
           pnpm --filter oxc-minify run build-dev
           pnpm --filter oxc-parser run build-dev
           pnpm --filter oxc-transform run build-dev
+          pnpm --filter oxc-transform-react run build-dev
 
       - name: Update Cargo.lock
         run: cargo check
