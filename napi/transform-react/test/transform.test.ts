@@ -166,22 +166,32 @@ describe("transformSync", () => {
     expect(result.code).toContain("import { CSS_VAR }");
   });
 
-  it("ignores ESLint suppressions when internal validations are enabled", () => {
+  it("honors default ESLint suppressions", () => {
     const result = transformSync(
-      "Component.tsx",
-      `function Component({ value }: { value: number }) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        const doubled: number = value * 2;
-        return <div>{doubled}</div>;
+      "Counter.jsx",
+      `import { useEffect, useRef, useState } from "react";
+      export function Counter({ step }) {
+        const [count, setCount] = useState(0);
+        const ref = useRef(step);
+        useEffect(() => {
+          setCount((value) => value + ref.current);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+        return <div>{count}</div>;
       }`,
     );
 
-    expect(result.errors).toEqual([]);
-    expect(result.code).toContain("react/compiler-runtime");
-    expect(result.code).toContain("_c(");
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({
+      severity: "Error",
+      message: expect.stringContaining("[ReactCompiler] Suppression:"),
+    });
+    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).not.toContain("_c(");
   });
 
-  it("honors ESLint suppressions when internal validations are disabled", () => {
+  it("allows ESLint suppression bailouts to be disabled", () => {
     const result = transformSync(
       "Component.tsx",
       `function Component({ value }: { value: number }) {
@@ -191,21 +201,15 @@ describe("transformSync", () => {
       }`,
       {
         reactCompiler: {
-          environment: {
-            validateExhaustiveMemoizationDependencies: false,
-          },
+          eslintSuppressionRules: [],
         },
       },
     );
 
     expect(result.fatal).toBe(false);
-    expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toMatchObject({
-      severity: "Error",
-      message: expect.stringContaining("[ReactCompiler] Suppression:"),
-    });
-    expect(result.code).not.toBe("");
-    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
     expect(result.code).not.toContain(": number");
     expect(result.code).not.toContain("<div");
   });
@@ -246,13 +250,6 @@ describe("transformSync", () => {
       export function Component(props: { text: string }) {
         return <span>{props.text}</span>;
       }`,
-      {
-        reactCompiler: {
-          environment: {
-            validateExhaustiveMemoizationDependencies: false,
-          },
-        },
-      },
     );
 
     expect(result.fatal).toBe(false);
@@ -276,9 +273,6 @@ describe("transformSync", () => {
         {
           reactCompiler: {
             panicThreshold,
-            environment: {
-              validateExhaustiveMemoizationDependencies: false,
-            },
           },
         },
       );

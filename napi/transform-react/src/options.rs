@@ -84,8 +84,9 @@ pub struct ReactCompilerOptions {
     #[napi(ts_type = "'client' | 'ssr' | 'lint'")]
     pub output_mode: Option<String>,
 
-    /// ESLint rule names whose suppressions opt a function out of compilation when
-    /// hooks usage or exhaustive memoization dependency validation is disabled.
+    /// ESLint rule names whose suppressions opt a function out of compilation.
+    /// Defaults to `react-hooks/exhaustive-deps` and `react-hooks/rules-of-hooks`;
+    /// pass an empty array to disable this behavior.
     pub eslint_suppression_rules: Option<Vec<String>>,
 
     /// Treat Flow suppression comments as opt-outs.
