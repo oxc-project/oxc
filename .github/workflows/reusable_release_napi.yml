@@ -81,6 +81,10 @@ jobs:
             build: pnpm build-wasm
 
           - os: ubuntu-latest
+            target: wasm32-unknown-emscripten
+            build: pnpm build-emscripten
+
+          - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
             build: |
               export CFLAGS="-fuse-ld=lld"
@@ -136,6 +140,11 @@ jobs:
 
       - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
 
+      - uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
+        if: ${{ matrix.target == 'wasm32-unknown-emscripten' }}
+        with:
+          version: 5.0.3
+
       - run: rustup target add ${{ matrix.target }}
 
       - name: Setup OpenHarmony SDK
@@ -157,6 +166,12 @@ jobs:
           # `*-pc-windows-msvc` targets and let cc-rs pick `cl.exe`.
           TARGET_CC: ${{ !contains(matrix.target, 'pc-windows-msvc') && 'clang' || '' }} # for mimalloc
 
+      - name: Test Emscripten binding
+        if: ${{ matrix.target == 'wasm32-unknown-emscripten' }}
+        run: |
+          pnpm -C "napi/${name}" test-emscripten
+          pnpm -C wasm/emscripten test "../../napi/${name}"
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           if-no-files-found: error
@@ -165,6 +180,7 @@ jobs:
           path: |
             napi/${{ inputs.name }}/**/*.node
             napi/${{ inputs.name }}/**/*.wasm
+            target/emscripten/${{ inputs.name }}/**
 
   build-freebsd:
     needs: check
@@ -249,6 +265,13 @@ jobs:
       - run: pnpm -C ${package_path} build-browser-bundle --npmDir ../../${npm_dir}
         if: ${{ inputs.name == 'parser' }}
 
+      - name: Prepare Emscripten package
+        run: >-
+          node .github/scripts/napi-emscripten/prepare-package.mjs
+          --package-dir ${package_path}
+          --artifacts-dir artifacts
+          --npm-dir ${npm_dir}
+
       - name: Check Publish
         run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
 
@@ -257,4 +280,5 @@ jobs:
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to `package_path`.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          bash .github/scripts/publish-if-needed.sh ${npm_dir}/wasm32-emscripten ${PUBLISH_FLAGS}
           bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}

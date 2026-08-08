@@ -8,6 +8,16 @@ See [usage instructions](https://oxc.rs/docs/guide/usage/parser).
 
 See https://stackblitz.com/edit/oxc-parser for usage example.
 
+### Cloudflare Workers
+
+Import `oxc-parser` normally. Wrangler selects the Emscripten binding through
+the `workerd` package export; the binding package is installed automatically as
+an optional dependency.
+
+Set `compatibility_date` to `2025-05-05` or later, or enable the
+[`enable_weak_ref` compatibility flag](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#enable-finalizationregistry-and-weakref).
+The Emscripten binding is single-threaded, including its async functions.
+
 ### ESTree
 
 When parsing JS or JSX files, the AST returned is fully conformant with the

@@ -1,0 +1,11 @@
+{
+  "name": "oxc-emscripten-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "catalog:"
+  }
+}
