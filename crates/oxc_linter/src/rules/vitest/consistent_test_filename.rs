@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 
-use lazy_regex::Regex;
+use lazy_regex::{Regex, RegexBuilder};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use schemars::JsonSchema;
@@ -132,7 +132,7 @@ where
         return Regex::new(pattern).map_err(D::Error::custom);
     }
 
-    Regex::new(&format!("(?u){regex_str}")).map_err(D::Error::custom)
+    RegexBuilder::new(&regex_str).unicode(true).build().map_err(D::Error::custom)
 }
 
 impl Rule for ConsistentTestFilename {
