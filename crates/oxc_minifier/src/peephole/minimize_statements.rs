@@ -105,7 +105,7 @@ impl<'a> PeepholeOptimizations {
 
         // Drop a trailing unconditional jump statement if applicable
         if let Some(last_stmt) = stmts.last()
-            && Self::can_remove_termination_statement(last_stmt, ctx)
+            && Self::can_remove_termination_statement(last_stmt, true, ctx)
         {
             let dropped = stmts.pop().unwrap();
             ctx.drop_statement(&dropped);
@@ -373,9 +373,6 @@ impl<'a> PeepholeOptimizations {
             }
             Statement::ForOfStatement(for_of_stmt) => {
                 Self::handle_for_of_statement(for_of_stmt, result, ctx);
-            }
-            Statement::LabeledStatement(label_stmt) => {
-                Self::handle_labeled_statement(label_stmt, result, ctx);
             }
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
@@ -845,7 +842,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&dropped);
                 }
 
-                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
+                if Self::can_remove_termination_statement(&if_stmt.consequent, true, ctx) {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
                     // If so, inverting the branch condition and nesting statements after
@@ -1236,33 +1233,6 @@ impl<'a> PeepholeOptimizations {
             }
         }
         result.push(Statement::ForOfStatement(for_of_stmt));
-    }
-
-    fn handle_labeled_statement(
-        mut labeled_stmt: ArenaBox<'a, LabeledStatement<'a>>,
-        result: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Statement::BlockStatement(block_stmt) = &mut labeled_stmt.body {
-            Self::minimize_statements(&mut block_stmt.body, ctx);
-        } else if !Self::statement_cares_about_scope(&labeled_stmt.body) {
-            let mut stmts = ArenaVec::from_value_in(labeled_stmt.body.take_in(ctx), ctx);
-            Self::minimize_statements(&mut stmts, ctx);
-            labeled_stmt.body = match stmts.len() {
-                0 => Statement::new_empty_statement(labeled_stmt.body.span(), ctx),
-                1 => stmts[0].take_in(ctx),
-                _ => {
-                    ctx.notice_change();
-                    Statement::new_block_statement_with_scope_id(
-                        labeled_stmt.span,
-                        stmts,
-                        ctx.create_child_scope_of_current(ScopeFlags::empty()),
-                        ctx,
-                    )
-                }
-            };
-        }
-        result.push(Statement::LabeledStatement(labeled_stmt));
     }
 
     /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9839>
@@ -2062,29 +2032,60 @@ impl<'a> PeepholeOptimizations {
     /// safely removed:
     /// - Unlabeled `continue` statements that terminate a loop body
     /// - Bare `return` statements that terminate a function body
-    fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    /// - Unlabeled `break` statements that terminate a `do...while` body whose test is statically `false`
+    ///
+    /// skip_first_transparent_body: is used to ignore the first block Statement if we checked it before
+    ///
+    /// Limitations:
+    /// A single wrapping block is also transparent (caller guarantees it is the last statement),
+    /// but deeper nested block (statements) are not — we cannot verify they are last in their parent.
+    pub fn can_remove_termination_statement(
+        stmt: &Statement<'a>,
+        skip_first_transparent_body: bool,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                matches!(
-                    ctx.ancestors().nth(1),
-                    Some(
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
                         Ancestor::ForStatementBody(_)
-                            | Ancestor::ForInStatementBody(_)
-                            | Ancestor::ForOfStatementBody(_)
-                            | Ancestor::WhileStatementBody(_)
-                            | Ancestor::DoWhileStatementBody(_)
-                    )
-                )
+                        | Ancestor::ForInStatementBody(_)
+                        | Ancestor::ForOfStatementBody(_)
+                        | Ancestor::WhileStatementBody(_)
+                        | Ancestor::DoWhileStatementBody(_) => {
+                            return true;
+                        }
+                        Ancestor::BlockStatementBody(_)
+                            if skip_first_transparent_body && index == 0 => {}
+                        Ancestor::IfStatementConsequent(_)
+                        | Ancestor::IfStatementAlternate(_)
+                        | Ancestor::LabeledStatementBody(_) => {}
+                        _ => return false,
+                    }
+                }
+                false
             }
             // unlabeled `break;` that terminates a `do...while` body if test is false.
-            Statement::BreakStatement(stmt) if stmt.label.is_none() => {
-                match ctx.ancestors().nth(1) {
-                    Some(Ancestor::DoWhileStatementBody(do_while)) => {
-                        do_while.test().get_side_free_boolean_value(ctx) == Some(false)
+            Statement::BreakStatement(stmt) => {
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
+                        Ancestor::DoWhileStatementBody(do_while) => {
+                            return stmt.label.is_none()
+                                && do_while.test().get_side_free_boolean_value(ctx) == Some(false);
+                        }
+                        Ancestor::BlockStatementBody(_)
+                            if skip_first_transparent_body && index == 0 => {}
+                        Ancestor::LabeledStatementBody(label_stmt) => {
+                            if let Some(label) = &stmt.label {
+                                return label.name == label_stmt.label().name;
+                            }
+                        }
+                        Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_) => {}
+                        _ => return false,
                     }
-                    _ => false,
                 }
+                false
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
