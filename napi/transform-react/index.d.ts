@@ -122,6 +122,11 @@ export interface ReactCompilerEnvironmentOptions {
   enableResetCacheOnSourceFileChanges?: boolean
   enablePreserveExistingMemoizationGuarantees?: boolean
   validatePreserveExistingMemoizationGuarantees?: boolean
+  /**
+   * Enable post-1.0 exhaustive manual memo dependency validation.
+   *
+   * @default false
+   */
   validateExhaustiveMemoizationDependencies?: boolean
   validateExhaustiveEffectDependencies?: 'off' | 'all' | 'missing-only' | 'extra-only'
   enableOptionalDependencies?: boolean
