@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
+  merge_group:
   push:
     branches:
       - main
