@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -135,11 +135,11 @@ fn run_full(
 
     // Per-language options (and the Prettier options JSON with the Tailwind payload)
     // are mapped lazily at dispatch time; `core` was validated during resolution.
-    let dispatch_config =
-        Arc::new(ResolvedDispatchConfig::new(config, core).with_path(parent_filepath));
+    let dispatch_config = ResolvedDispatchConfig::for_root(&config, core, &parent_filepath);
 
-    let (external_callbacks, dispatcher) =
+    let (external_callbacks, fallback) =
         external_formatter.to_external_callbacks(&format_options, &dispatch_config);
+    let dispatcher = dispatch_config.root_dispatcher(Some(fallback));
 
     let allocator = Allocator::default();
     let session = FormatSession::new(

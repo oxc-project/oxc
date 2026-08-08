@@ -2,18 +2,17 @@ use rustc_hash::FxHashSet;
 
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
-    CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier,
-    ImportSelector, JsFormatOptions, JsdocOptions, LineWrappingStyle, QuoteProperties, QuoteStyle,
-    Semicolons, SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
+    CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
+    JsdocOptions, LineWrappingStyle, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions,
+    SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
 use super::super::oxfmtrc::{
-    ArrowParensConfig, CommentLineStrategyConfig, CustomGroupItemConfig,
-    EmbeddedLanguageFormattingConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
-    JsdocUserConfig, LineWrappingStyleConfig, ObjectWrapConfig, QuotePropsConfig,
-    SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig,
-    TrailingCommaConfig,
+    ArrowParensConfig, CommentLineStrategyConfig, CustomGroupItemConfig, FormatConfig,
+    HtmlWhitespaceSensitivityConfig, JsdocUserConfig, LineWrappingStyleConfig, ObjectWrapConfig,
+    QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig,
+    SortTailwindcssUserConfig, TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -107,14 +106,6 @@ pub fn to_oxc_formatter(
     if let Some(sensitivity) = config.html_whitespace_sensitivity {
         format_options.html_whitespace_sensitivity_ignore =
             matches!(sensitivity, HtmlWhitespaceSensitivityConfig::Ignore);
-    }
-
-    // [Prettier] embeddedLanguageFormatting: "auto" | "off"
-    if let Some(embedded_language_formatting) = config.embedded_language_formatting {
-        format_options.embedded_language_formatting = match embedded_language_formatting {
-            EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
-            EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
-        };
     }
 
     // Below are our own extensions

@@ -262,26 +262,25 @@ impl ExternalFormatter {
     /// would double-sort or drop classes.
     /// `DispatchResult::remap_tailwind_into`'s printer `debug_assert` catches dropped remaps.
     ///
-    /// Also returns the `FormatDispatcher` for the root's `FormatSession`,
-    /// gated by the SAME `embeddedLanguageFormatting` predicate as the string channel
-    /// (off => `None` => embeds deliberately stay as-is): the two channels must never diverge on the off-semantics.
+    /// Also returns this formatter's Prettier Doc→IR fallback for the root dispatcher's default arm:
+    /// the caller assembles via `ResolvedDispatchConfig::root_dispatcher` (which owns the off-gate),
+    /// so the fallback-vs-fallback-less difference between builds stays data, not structure.
+    /// The string channel below consults the same off-predicate,
+    /// so the two channels never diverge on the off-semantics.
     pub fn to_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
         dispatch_config: &Arc<embed::dispatcher::ResolvedDispatchConfig>,
-    ) -> (ExternalCallbacks, Option<oxc_formatter_core::FormatDispatcher>) {
-        let needs_embedded = !format_options.embedded_language_formatting.is_off();
+    ) -> (ExternalCallbacks, embed::dispatcher::PrettierDocFallback) {
+        let needs_embedded = dispatch_config.is_embedded_formatting_enabled();
         let tailwind_enabled = format_options.sort_tailwindcss.is_some();
-        let dispatcher = needs_embedded.then(|| self.build_dispatcher(dispatch_config));
+        let fallback = embed::prettier_fallback::build_prettier_fallback(
+            Arc::clone(dispatch_config),
+            Arc::clone(&self.format_embedded_doc),
+        );
 
-        let embedded_callback = needs_embedded.then(|| {
-            embed::string_channel::build_embedded_callback(
-                Arc::clone(&self.format_embedded),
-                tailwind_enabled.then(|| Arc::clone(&self.sort_tailwindcss_classes)),
-                Arc::clone(dispatch_config),
-            )
-        });
-
+        // The ONE pre-bound sorter (options JSON applied here, once);
+        // both the direct Tailwind callback and the fence adapter share it.
         let tailwind_callback: Option<TailwindCallback> = tailwind_enabled.then(|| {
             let sort = Arc::clone(&self.sort_tailwindcss_classes);
             let dispatch_config = Arc::clone(dispatch_config);
@@ -291,25 +290,20 @@ impl ExternalFormatter {
             }) as TailwindCallback
         });
 
+        let embedded_callback = needs_embedded.then(|| {
+            embed::string_channel::build_embedded_callback(
+                Arc::clone(&self.format_embedded),
+                tailwind_callback.clone(),
+                Arc::clone(dispatch_config),
+            )
+        });
+
         (
             ExternalCallbacks::new()
                 .with_embedded_formatter(embedded_callback)
                 .with_tailwind(tailwind_callback),
-            dispatcher,
+            fallback,
         )
-    }
-
-    /// Build the `FormatDispatcher` for the JS root's `FormatSession`:
-    /// the native registry plus this formatter's Prettier Doc→IR fallback.
-    fn build_dispatcher(
-        &self,
-        dispatch_config: &Arc<embed::dispatcher::ResolvedDispatchConfig>,
-    ) -> oxc_formatter_core::FormatDispatcher {
-        let fallback = embed::prettier_fallback::build_prettier_fallback(
-            Arc::clone(dispatch_config),
-            Arc::clone(&self.format_embedded_doc),
-        );
-        embed::dispatcher::build_dispatcher(Arc::clone(dispatch_config), Some(fallback))
     }
 
     #[cfg(test)]
