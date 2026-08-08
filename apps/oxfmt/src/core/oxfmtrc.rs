@@ -289,20 +289,20 @@ pub struct FormatConfig {
 }
 
 impl FormatConfig {
+    /// Whether embedded-language formatting is enabled by this config
+    /// (`embeddedLanguageFormatting` defaults to `"auto"`; only an explicit `"off"` disables it).
+    /// Consumers reach this through `ResolvedDispatchConfig::is_embedded_formatting_enabled`,
+    /// which owns the never-diverge invariant.
+    pub fn is_embedded_formatting_enabled(&self) -> bool {
+        !matches!(self.embedded_language_formatting, Some(EmbeddedLanguageFormattingConfig::Off))
+    }
+
     /// Whether `prettier-plugin-svelte` is enabled by this config.
     ///
     /// Enabled when `svelte` is set to `true` or an object;
     /// disabled when unset or `false`.
     pub fn is_svelte_enabled(&self) -> bool {
         matches!(self.svelte, Some(SvelteUserConfig::Bool(true) | SvelteUserConfig::Object(_)))
-    }
-
-    /// Whether embedded-language formatting is enabled by this config
-    /// (`embeddedLanguageFormatting` defaults to `"auto"`; only an explicit `"off"` disables it).
-    /// Every dispatcher-assembly site consults this,
-    /// so the off-semantics can never diverge between channels.
-    pub fn is_embedded_formatting_enabled(&self) -> bool {
-        !matches!(self.embedded_language_formatting, Some(EmbeddedLanguageFormattingConfig::Off))
     }
 
     /// Whether Tailwind class sorting is enabled by this config.

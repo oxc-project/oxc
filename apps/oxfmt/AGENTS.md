@@ -45,14 +45,16 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
 Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
-Standalone CSS files also run on a `PhysicalFile` session with a fallback-less registry dispatcher (every build), so front matter YAML formats natively while TOML/custom languages stay verbatim like Prettier; `embeddedLanguageFormatting: off` installs no dispatcher.
-Rust formatter branches (the `NativeLanguage` registry in that file) in every build, plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest, the pure Rust build deliberately preserves those as-is. Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
+JS/TS and standalone CSS roots run on a `PhysicalFile` session carrying the registry dispatcher in EVERY build.
+The Vue/Svelte `<script>` root (`api/text_to_doc_api.rs`, a `VirtualDocument` session, napi only) is the 3rd assembly site: a Rust branch per `NativeLanguage` (css/graphql/yaml/json/...), plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest.
+The pure Rust build runs fallback-less, so non-native embeds (html-in-js, TOML/custom front matter) deliberately stay verbatim like Prettier; `embeddedLanguageFormatting: off` installs no dispatcher (every root assembles via `ResolvedDispatchConfig::for_root` + `root_dispatcher`, which owns that gate).
+Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
 
-A separate string-out channel (the `embedded_callback` in the same file, NOT the dispatcher) carries the string-in/string-out consumers:
+A separate string-out channel (the `embedded_callback`, NOT the dispatcher) carries the string-in/string-out consumers:
 
 - JSDoc fenced code blocks: routing follows ONE rule
-  - a fence language in the `NativeLanguage` registry formats through the dispatcher via a thin string adapter (`string_channel.rs::format_native_fence`)
-  - md/html/angular fences stay on the Prettier string path (their Doc→IR conversion has unrepresentable cases);
+  - a fence language in the `NativeLanguage` registry formats through the dispatcher via a thin string adapter (`embed/fence.rs::format_native_fence`, EVERY build — the pure Rust build installs `build_native_fence_callback` directly)
+  - md/html/angular fences stay on the Prettier string path (`string_channel.rs`, napi only; their Doc→IR conversion has unrepresentable cases);
   - everything else stays verbatim
 - html-in-js fallback (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`)
 
