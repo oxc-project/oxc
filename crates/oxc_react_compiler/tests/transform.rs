@@ -107,6 +107,43 @@ export function Component({ value }) {
 }
 
 #[test]
+fn matches_babel_1_0_memo_cache_construction() {
+    let cases = [
+        (
+            "object-pattern rest",
+            "function Component({ x, ...rest }) {\n  const z = rest.z;\n  identity(z);\n  return <X x={x} z={z} />;\n}\n",
+            "_c(6)",
+            "if ($[0] !== t0)",
+        ),
+        (
+            "array hole type inference",
+            "import { useTransition } from 'react';\nfunction Component() {\n  const [, startTransition] = useTransition();\n  return <button onClick={() => startTransition(run)}>Run</button>;\n}\n",
+            "_c(2)",
+            "if ($[0] !== startTransition)",
+        ),
+        (
+            "useOptimistic setter",
+            "import { useOptimistic } from 'react';\nfunction Component({ value }) {\n  const [state, setState] = useOptimistic(value);\n  return <button onClick={() => setState(value)}>{state}</button>;\n}\n",
+            "_c(6)",
+            "if ($[0] !== setState || $[1] !== value)",
+        ),
+    ];
+
+    for (name, source, expected_cache, expected_dependency) in cases {
+        let allocator = Allocator::default();
+        let (program, result) =
+            transform_source(source, SourceType::jsx(), &allocator, PluginOptions::default());
+
+        assert!(result.changed, "{name} should compile: {:?}", result.diagnostics);
+        assert!(!result.diagnostics.has_errors(), "{name}: {:?}", result.diagnostics);
+
+        let output = Codegen::new().build(&program).code;
+        assert!(output.contains(expected_cache), "{name} cache size mismatch:\n{output}");
+        assert!(output.contains(expected_dependency), "{name} dependency mismatch:\n{output}");
+    }
+}
+
+#[test]
 fn skips_non_react_code() {
     let source = "function add(a, b) {\n  return a + b;\n}\n";
     let allocator = Allocator::default();

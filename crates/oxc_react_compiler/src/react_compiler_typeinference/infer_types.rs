@@ -662,7 +662,8 @@ fn generate_instruction_types<'a>(
                             )?;
                         }
                         ArrayPatternElement::Hole => {
-                            continue;
+                            // Babel 1.0 stops inferring tuple properties at the first hole.
+                            break;
                         }
                     }
                 }

@@ -90,12 +90,12 @@ fn is_stable_ref_type(
 
 /// TS: `isStableType`
 fn is_stable_type(ty: &Type) -> bool {
+    // Babel 1.0 does not yet treat useOptimistic's setter as stable.
     is_set_state_type(ty)
         || is_set_action_state_type(ty)
         || is_dispatcher_type(ty)
         || is_use_ref_type(ty)
         || is_start_transition_type(ty)
-        || is_set_optimistic_type(ty)
 }
 
 fn is_set_state_type(ty: &Type) -> bool {
@@ -112,10 +112,6 @@ fn is_dispatcher_type(ty: &Type) -> bool {
 
 fn is_start_transition_type(ty: &Type) -> bool {
     matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_START_TRANSITION_ID)
-}
-
-fn is_set_optimistic_type(ty: &Type) -> bool {
-    matches!(ty, Type::Function { shape_id: Some(id), .. } if *id == object_shape::BUILT_IN_SET_OPTIMISTIC_ID)
 }
 
 // =============================================================================

@@ -4,9 +4,13 @@ input_file: crates/oxc_react_compiler/fixtures/ssr/ssr-infer-event-handlers-from
 ---
 // @outputMode:"ssr"
 function Component() {
-	useTransition();
+	const [, startTransition] = useTransition();
 	const state = 0;
 	const ref = useRef(null);
-	const onChange = undefined;
+	const onChange = (e) => {
+		startTransition(() => {
+			setState.call(null, e.target.value);
+		});
+	};
 	return <CustomInput value={state} onChange={onChange} ref={ref} />;
 }

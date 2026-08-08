@@ -60,7 +60,6 @@ use crate::react_compiler_hir::object_shape::BUILT_IN_ARRAY_ID;
 use crate::react_compiler_hir::object_shape::BUILT_IN_MAP_ID;
 use crate::react_compiler_hir::object_shape::BUILT_IN_SET_ID;
 use crate::react_compiler_hir::object_shape::FunctionSignature;
-use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::type_config::AliasingEffectConfig;
 use crate::react_compiler_hir::type_config::AliasingSignatureConfig;
 use crate::react_compiler_hir::type_config::ApplyArgConfig;
@@ -168,8 +167,6 @@ pub fn infer_mutation_aliasing_effects<'a>(
     queue(&mut queued_states, &states_by_block, func.body.entry, initial_state);
 
     let hoisted_context_declarations = find_hoisted_context_declarations(func, env);
-    let non_mutating_spreads = find_non_mutated_destructure_spreads(func, env);
-
     let mut context = Context {
         alloc: env.allocator,
         interned_effects: FxHashMap::default(),
@@ -177,7 +174,6 @@ pub fn infer_mutation_aliasing_effects<'a>(
         catch_handlers: FxHashMap::default(),
         is_function_expression,
         hoisted_context_declarations,
-        non_mutating_spreads,
         effect_value_id_cache: FxHashMap::default(),
         function_values: FxHashMap::default(),
         function_signature_cache: FxHashMap::default(),
@@ -692,7 +688,6 @@ struct Context<'a> {
     catch_handlers: FxHashMap<BlockId, Place>,
     is_function_expression: bool,
     hoisted_context_declarations: FxHashMap<DeclarationId, Option<Place>>,
-    non_mutating_spreads: FxHashSet<IdentifierId>,
     /// Cache of ValueIds keyed by effect key, ensuring stable allocation-site identity
     /// across fixpoint iterations. Mirrors TS `effectInstructionValueCache`.
     effect_value_id_cache: FxHashMap<EffectKey, ValueId>,
@@ -1015,124 +1010,6 @@ fn find_hoisted_context_declarations(
         }
     }
     hoisted
-}
-
-fn find_non_mutated_destructure_spreads(
-    func: &HirFunction,
-    env: &Environment,
-) -> FxHashSet<IdentifierId> {
-    let mut known_frozen: FxHashSet<IdentifierId> = FxHashSet::default();
-    if func.fn_type == ReactFunctionType::Component {
-        if let Some(ParamPattern::Place(p)) = func.params.first() {
-            known_frozen.insert(p.identifier);
-        }
-    } else {
-        for param in &func.params {
-            if let ParamPattern::Place(p) = param {
-                known_frozen.insert(p.identifier);
-            }
-        }
-    }
-
-    let mut candidate_non_mutating_spreads: FxHashMap<IdentifierId, IdentifierId> =
-        FxHashMap::default();
-    for (_block_id, block) in &func.body.blocks {
-        if !candidate_non_mutating_spreads.is_empty() {
-            for phi in &block.phis {
-                for (_, operand) in &phi.operands {
-                    if let Some(spread) =
-                        candidate_non_mutating_spreads.get(&operand.identifier).copied()
-                    {
-                        candidate_non_mutating_spreads.remove(&spread);
-                    }
-                }
-            }
-        }
-        for instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.index()];
-            let lvalue_id = instr.lvalue.identifier;
-            match &instr.value {
-                InstructionValue::Destructure { lvalue, value, .. } => {
-                    if !known_frozen.contains(&value.identifier) {
-                        continue;
-                    }
-                    if !(lvalue.kind == InstructionKind::Let
-                        || lvalue.kind == InstructionKind::Const)
-                    {
-                        continue;
-                    }
-                    match &lvalue.pattern {
-                        Pattern::Object(obj_pat) => {
-                            for prop in &obj_pat.properties {
-                                if let ObjectPropertyOrSpread::Spread(s) = prop {
-                                    candidate_non_mutating_spreads
-                                        .insert(s.place.identifier, s.place.identifier);
-                                }
-                            }
-                        }
-                        _ => continue,
-                    }
-                }
-                InstructionValue::LoadLocal { place, .. } => {
-                    if let Some(spread) =
-                        candidate_non_mutating_spreads.get(&place.identifier).copied()
-                    {
-                        candidate_non_mutating_spreads.insert(lvalue_id, spread);
-                    }
-                }
-                InstructionValue::StoreLocal { lvalue: sl, value: sv, .. } => {
-                    if let Some(spread) =
-                        candidate_non_mutating_spreads.get(&sv.identifier).copied()
-                    {
-                        candidate_non_mutating_spreads.insert(lvalue_id, spread);
-                        candidate_non_mutating_spreads.insert(sl.place.identifier, spread);
-                    }
-                }
-                InstructionValue::JsxFragment { .. } | InstructionValue::JsxExpression { .. } => {
-                    // Passing objects created with spread to jsx can't mutate them
-                }
-                InstructionValue::PropertyLoad { .. } => {
-                    // Properties must be frozen since the original value was frozen
-                }
-                InstructionValue::CallExpression { callee, .. }
-                | InstructionValue::MethodCall { property: callee, .. } => {
-                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
-                    if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some() {
-                        if !is_ref_or_ref_value_for_id(env, lvalue_id) {
-                            known_frozen.insert(lvalue_id);
-                        }
-                    } else if !candidate_non_mutating_spreads.is_empty() {
-                        for operand in visitors::each_instruction_value_operand(&instr.value, env) {
-                            if let Some(spread) =
-                                candidate_non_mutating_spreads.get(&operand.identifier).copied()
-                            {
-                                candidate_non_mutating_spreads.remove(&spread);
-                            }
-                        }
-                    }
-                }
-                _ => {
-                    if !candidate_non_mutating_spreads.is_empty() {
-                        for operand in visitors::each_instruction_value_operand(&instr.value, env) {
-                            if let Some(spread) =
-                                candidate_non_mutating_spreads.get(&operand.identifier).copied()
-                            {
-                                candidate_non_mutating_spreads.remove(&spread);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    let mut non_mutating: FxHashSet<IdentifierId> = FxHashSet::default();
-    for (key, value) in &candidate_non_mutating_spreads {
-        if key == value {
-            non_mutating.insert(*key);
-        }
-    }
-    non_mutating
 }
 
 // =============================================================================
@@ -1621,8 +1498,9 @@ fn apply_effect<'a>(
             let source_type = match from_kind {
                 ValueKind::Context => Some("context"),
                 ValueKind::Global | ValueKind::Primitive => None,
-                ValueKind::MaybeFrozen | ValueKind::Frozen => Some("frozen"),
-                ValueKind::Mutable => Some("mutable"),
+                ValueKind::Frozen => Some("frozen"),
+                // Babel 1.0 conservatively treats maybe-frozen captures as mutable.
+                ValueKind::Mutable | ValueKind::MaybeFrozen => Some("mutable"),
             };
 
             if source_type == Some("frozen") {
@@ -2271,16 +2149,11 @@ fn compute_signature_for_instruction<'a>(
                         }
                     }
                     PatternItem::Spread(place) => {
-                        let value_kind = if context.non_mutating_spreads.contains(&place.identifier)
-                        {
-                            ValueKind::Frozen
-                        } else {
-                            ValueKind::Mutable
-                        };
                         effects.push(AliasingEffect::Create {
                             into: *place,
                             reason: ValueReason::Other,
-                            value: value_kind,
+                            // Babel 1.0 treats object-pattern rest values as mutable.
+                            value: ValueKind::Mutable,
                         });
                         effects.push(AliasingEffect::Capture { from: *dest_value, into: *place });
                     }
@@ -3177,13 +3050,6 @@ fn is_builtin_collection_type(ty: &Type) -> bool {
 fn is_ref_or_ref_value_for_id(env: &Environment, id: IdentifierId) -> bool {
     let ty = &env.types[env.identifiers[id].type_];
     is_ref_or_ref_value(ty)
-}
-
-fn get_hook_kind_for_type<'a>(
-    env: &'a Environment,
-    ty: &Type,
-) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
-    env.get_hook_kind_for_type(ty)
 }
 
 /// Format a Type for printPlace-style output, matching TS's `printType()`.

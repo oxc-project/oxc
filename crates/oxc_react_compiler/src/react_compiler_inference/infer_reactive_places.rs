@@ -403,6 +403,7 @@ fn get_hook_kind_for_type<'a>(
 }
 
 fn is_stable_type(ty: &Type) -> bool {
+    // Babel 1.0 does not yet treat useOptimistic's setter as stable.
     match ty {
         Type::Function { shape_id: Some(id), .. } => {
             matches!(
@@ -411,7 +412,6 @@ fn is_stable_type(ty: &Type) -> bool {
                     | "BuiltInSetActionState"
                     | "BuiltInDispatch"
                     | "BuiltInStartTransition"
-                    | "BuiltInSetOptimistic"
             )
         }
         Type::Object { shape_id: Some(id) } => {
@@ -429,7 +429,6 @@ fn is_stable_type_container(ty: &Type) -> bool {
                 "BuiltInUseState"
                     | "BuiltInUseActionState"
                     | "BuiltInUseReducer"
-                    | "BuiltInUseOptimistic"
                     | "BuiltInUseTransition"
             )
         }
@@ -446,7 +445,6 @@ fn evaluates_to_stable_type_or_container(env: &Environment, callee_ty: &Type) ->
                 | HookKind::UseActionState
                 | HookKind::UseRef
                 | HookKind::UseTransition
-                | HookKind::UseOptimistic
         )
     } else {
         false
