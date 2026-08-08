@@ -960,21 +960,9 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 }
                 Ok(self.extract_value_block_result(&instructions, block_id_val))
             }
-            Terminal::MaybeThrow { continuation, .. } => {
-                let continuation_id = *continuation;
-                let continuation_block = self.cx.block(continuation_id);
-                let cont_instructions_empty = continuation_block.instructions.is_empty();
-                let cont_is_goto = matches!(continuation_block.terminal, Terminal::Goto { .. });
-                let cont_block_id = continuation_block.id;
-
-                if cont_instructions_empty && cont_is_goto {
-                    Ok(self.extract_value_block_result(&instructions, cont_block_id))
-                } else {
-                    let continuation =
-                        self.visit_value_block(continuation_id, span, fallthrough)?;
-                    Ok(self.wrap_with_sequence(&instructions, continuation))
-                }
-            }
+            Terminal::MaybeThrow { .. } => Err(ErrorCategory::Todo
+                .diagnostic("Support value blocks (conditional, logical, optional chaining, etc) within a try/catch statement")
+                .with_labels(span)),
             _ => {
                 // Value block ended in a value terminal, recurse to get the value
                 // of that terminal and stitch them together in a sequence.
@@ -1209,41 +1197,6 @@ impl<'a, 'b, 'h> Driver<'a, 'b, 'h> {
                 },
                 id,
             }
-        }
-    }
-
-    fn wrap_with_sequence(
-        &self,
-        instructions: &[InstructionId],
-        continuation: ValueBlockResult<'a>,
-    ) -> ValueBlockResult<'a> {
-        if instructions.is_empty() {
-            return continuation;
-        }
-
-        let alloc = self.env.allocator;
-        let reactive_instrs: ArenaVec<'a, ReactiveInstruction<'a>> = ArenaVec::from_iter_in(
-            instructions.iter().map(|iid| {
-                let instr = &self.hir.instructions[iid.index()];
-                ReactiveInstruction {
-                    id: instr.id,
-                    lvalue: Some(instr.lvalue),
-                    value: ReactiveValue::Instruction(instr.value.clone_in(alloc)),
-                    span: instr.span,
-                }
-            }),
-            &alloc,
-        );
-
-        ValueBlockResult {
-            block: continuation.block,
-            place: continuation.place,
-            value: ReactiveValue::SequenceExpression {
-                instructions: reactive_instrs,
-                id: continuation.id,
-                value: self.box_in(continuation.value),
-            },
-            id: continuation.id,
         }
     }
 

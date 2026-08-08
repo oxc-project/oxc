@@ -194,6 +194,32 @@ impl<'a> Transformer<'a> {
         #[expect(deprecated)]
         TransformerReturn { diagnostics, scoping, helpers_used }
     }
+
+    /// Lower TypeScript enums without removing any other TypeScript syntax.
+    ///
+    /// Babel lowers enums before React Compiler's program visitor runs. Native
+    /// React Compiler integrations can use this focused prepass to present the
+    /// same runtime enum shape without running the rest of the transform early.
+    pub fn build_typescript_enums_with_scoping(
+        mut self,
+        scoping: Scoping,
+        program: &mut Program<'a>,
+    ) -> TransformerReturn {
+        self.state.source_type = program.source_type;
+        self.state.source_text = program.source_text;
+
+        let mut transformer = typescript::r#enum::TypeScriptEnum::new(
+            self.typescript.optimize_const_enums,
+            self.typescript.optimize_enums,
+        );
+        let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, self.allocator);
+        traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
+        let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
+        let helpers_used = state.helper_loader.used_helpers.drain().collect();
+        let diagnostics = state.take_errors().into();
+        #[expect(deprecated)]
+        TransformerReturn { diagnostics, scoping, helpers_used }
+    }
 }
 
 struct TransformerImpl<'a> {

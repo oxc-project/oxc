@@ -3698,14 +3698,14 @@ fn lower_expression<'a>(
         }
         oxc::Expression::TaggedTemplateExpression(tagged) => {
             let span = Some(tagged.span);
-            // Upstream React Compiler bails on any interpolation here; the oxc port
-            // instead lowers the tag plus every quasi and every `${...}`
-            // subexpression (mirroring `TemplateLiteral`). This is a deliberate
-            // divergence from the TS reference.
-            //
-            // We still bail when any quasi's cooked value differs from its raw value
-            // (e.g. escape sequences or graphql templates), matching upstream's
-            // single-quasi behavior — the HIR only round-trips raw==cooked quasis.
+            if !tagged.quasi.expressions.is_empty() {
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("(BuildHIR::lowerExpression) Handle tagged template with interpolations")
+                        .with_labels(span),
+                )?;
+                return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
+            }
             if tagged.quasi.quasis.iter().any(|q| {
                 q.value.raw.as_str() != q.value.cooked.map(|c| c.to_string()).unwrap_or_default()
             }) {
@@ -5329,7 +5329,21 @@ fn lower_object_property_key<'a>(
             }))
         }
         _ if computed => {
-            let place = lower_expression_to_temporary(builder, key.to_expression())?;
+            let expression = key.to_expression();
+            if !matches!(expression, oxc::Expression::Identifier(_))
+                && !expression.is_member_expression()
+            {
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic(format!(
+                            "(BuildHIR::lowerExpression) Expected Identifier, got {} key in ObjectExpression",
+                            expression_type_name(expression)
+                        ))
+                        .with_label(expression.span()),
+                )?;
+                return Ok(None);
+            }
+            let place = lower_expression_to_temporary(builder, expression)?;
             Ok(Some(ObjectPropertyKey::Computed { name: place }))
         }
         _ => {

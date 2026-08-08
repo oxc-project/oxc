@@ -252,13 +252,10 @@ pub fn has_memo_cache_function_import(program: &Program, module_name: &str) -> b
     for stmt in &program.body {
         if let Statement::ImportDeclaration(import) = stmt
             && import.source.value == module_name
-            && import.import_kind.is_value()
             && let Some(specifiers) = &import.specifiers
         {
             for specifier in specifiers {
-                if let ImportDeclarationSpecifier::ImportSpecifier(data) = specifier
-                    && data.import_kind.is_value()
-                {
+                if let ImportDeclarationSpecifier::ImportSpecifier(data) = specifier {
                     let imported_name = match &data.imported {
                         ModuleExportName::IdentifierName(id) => Some(id.name.as_str()),
                         ModuleExportName::IdentifierReference(id) => Some(id.name.as_str()),

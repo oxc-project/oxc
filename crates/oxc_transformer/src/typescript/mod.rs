@@ -7,7 +7,7 @@ use crate::{context::TraverseCtx, state::TransformState};
 mod annotations;
 mod class;
 mod diagnostics;
-mod r#enum;
+pub mod r#enum;
 mod module;
 mod namespace;
 mod options;

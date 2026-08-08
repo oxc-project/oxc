@@ -115,6 +115,57 @@ fn skips_non_react_code() {
 }
 
 #[test]
+fn matches_babel_1_0_bailout_boundaries() {
+    let cases = [
+        (
+            "tagged template interpolation",
+            "function Component({ color }) { return <style>{css`color: ${color}`}</style>; }",
+            "Handle tagged template with interpolations",
+        ),
+        (
+            "type-wrapped computed key",
+            "function Component({ value }) { const key = 'value'; return <div style={{ [key as string]: value }} />; }",
+            "Expected Identifier, got TSAsExpression key in ObjectExpression",
+        ),
+        (
+            "value block in try/catch",
+            "function Component({ value }) { try { return <div>{value && value.text}</div>; } catch { return null; } }",
+            "Support value blocks (conditional, logical, optional chaining, etc) within a try/catch statement",
+        ),
+    ];
+
+    for (kind, source, expected) in cases {
+        let allocator = Allocator::default();
+        let (_program, result) =
+            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+        assert!(!result.changed, "{kind} must bail out for Babel 1.0 compatibility");
+        assert!(!result.fatal, "{kind} must remain a nonfatal bailout");
+        assert!(
+            result.diagnostics.iter().any(|diagnostic| diagnostic.message.contains(expected)),
+            "{kind} produced unexpected diagnostics: {:?}",
+            result.diagnostics
+        );
+    }
+}
+
+#[test]
+fn type_only_memo_cache_import_marks_file_as_compiled() {
+    let source = "\
+import type { c } from 'react/compiler-runtime';
+export function Component({ value }) {
+  return <div>{value}</div>;
+}
+";
+    let allocator = Allocator::default();
+    let (_program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(!result.changed, "Babel 1.0 treats the type-only cache import as compiled");
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+}
+
+#[test]
 fn default_eslint_suppressions_do_not_bail_out() {
     let fixtures = [
         (

@@ -87,7 +87,7 @@ fn transform_impl(
         return error_result(filename, source_text, diagnostics);
     }
 
-    let SemanticBuilderReturn { semantic, diagnostics: semantic_diagnostics } =
+    let SemanticBuilderReturn { mut semantic, diagnostics: semantic_diagnostics } =
         SemanticBuilder::new_compiler()
             .with_excess_capacity(2.0)
             .with_enum_eval(true)
@@ -96,6 +96,31 @@ fn transform_impl(
     if !semantic_diagnostics.is_empty() {
         diagnostics.extend(semantic_diagnostics);
         return error_result(filename, source_text, diagnostics);
+    }
+
+    if react_compiler_options.is_some()
+        && source_type.is_typescript()
+        && semantic
+            .scoping()
+            .symbol_ids()
+            .any(|symbol_id| semantic.scoping().symbol_flags(symbol_id).is_enum())
+    {
+        let enum_transform = Transformer::new(&allocator, Path::new(filename), &transform_options)
+            .build_typescript_enums_with_scoping(semantic.into_scoping(), &mut program);
+        diagnostics.extend(enum_transform.diagnostics);
+        if diagnostics.has_errors() {
+            return error_result(filename, source_text, diagnostics);
+        }
+        let rebuilt = SemanticBuilder::new_compiler()
+            .with_excess_capacity(2.0)
+            .with_enum_eval(true)
+            .with_build_nodes(true)
+            .build(&program);
+        diagnostics.extend(rebuilt.diagnostics);
+        if diagnostics.has_errors() {
+            return error_result(filename, source_text, diagnostics);
+        }
+        semantic = rebuilt.semantic;
     }
 
     let (react_output, react_diagnostics, react_fatal) = match react_compiler_options {

@@ -150,6 +150,36 @@ describe("transformSync", () => {
     expect(result.code).not.toContain("<button");
   });
 
+  it("skips node_modules by default", () => {
+    const skipped = transformSync("node_modules/pkg/Component.tsx", fixture);
+    expect(skipped.errors).toEqual([]);
+    expect(skipped.code).not.toContain("react/compiler-runtime");
+
+    const included = transformSync("node_modules/pkg/Component.tsx", fixture, {
+      reactCompiler: { sources: ["node_modules/pkg"] },
+    });
+    expect(included.errors).toEqual([]);
+    expect(included.code).toContain("react/compiler-runtime");
+  });
+
+  it("compiles components containing inline TypeScript enums", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `function Component({ value }: { value: boolean }) {
+        enum Bool {
+          True = "true",
+          False = "false",
+        }
+        const bool = value ? Bool.True : Bool.False;
+        return <div>{bool}</div>;
+      }`,
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain('Bool.True = "true"');
+  });
+
   it("keeps imports used by compiled computed keys", () => {
     const result = transformSync(
       "Box.tsx",
