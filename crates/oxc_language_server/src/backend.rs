@@ -171,7 +171,7 @@ impl LanguageServer for Backend {
 
         self.worker_manager.start_manager(workers, capabilities.diagnostic_mode.clone()).await;
 
-        if capabilities.show_message && !client_messages.is_empty() {
+        if !client_messages.is_empty() {
             let _ = self.pending_initialization_messages.set(client_messages);
         }
 
@@ -259,9 +259,7 @@ impl LanguageServer for Backend {
                                 "running diagnostics for {} failed: {err}",
                                 document.uri.as_str()
                             );
-                            if self.capabilities.get().is_some_and(|cap| cap.show_message) {
-                                self.client.show_message(MessageType::ERROR, err).await;
-                            }
+                            self.client.show_message(MessageType::ERROR, err).await;
                         }
                         Ok(diagnostics) => new_diagnostics.extend(diagnostics),
                     }
@@ -285,10 +283,8 @@ impl LanguageServer for Backend {
             }
         }
 
-        if capabilities.show_message {
-            for message in client_messages {
-                self.client.show_message(message.r#type, message.message).await;
-            }
+        for message in client_messages {
+            self.client.show_message(message.r#type, message.message).await;
         }
 
         let mut registrations = vec![];
@@ -454,10 +450,8 @@ impl LanguageServer for Backend {
             warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
         }
 
-        if self.capabilities.get().is_some_and(|capabilities| capabilities.show_message) {
-            for message in client_messages {
-                self.client.show_message(message.r#type, message.message).await;
-            }
+        for message in client_messages {
+            self.client.show_message(message.r#type, message.message).await;
         }
     }
 
@@ -529,10 +523,8 @@ impl LanguageServer for Backend {
             }
         }
 
-        if self.capabilities.get().is_some_and(|capabilities| capabilities.show_message) {
-            for message in client_messages {
-                self.client.show_message(message.r#type, message.message).await;
-            }
+        for message in client_messages {
+            self.client.show_message(message.r#type, message.message).await;
         }
     }
 
@@ -584,9 +576,7 @@ impl LanguageServer for Backend {
             let worker = self.worker_manager.create_worker(folder.uri, diagnostic_mode.clone());
             let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
 
-            if let Some(message) = worker.start_worker(options.clone()).await
-                && capabilities.is_some_and(|cap| cap.show_message)
-            {
+            if let Some(message) = worker.start_worker(options.clone()).await {
                 client_messages.push(message);
             }
             added_registrations.extend(worker.init_watchers().await);
@@ -616,10 +606,8 @@ impl LanguageServer for Backend {
         }
 
         // === Phase 6: Show messages to the client ===
-        if capabilities.is_some_and(|cap| cap.show_message) {
-            for message in client_messages {
-                self.client.show_message(message.r#type, message.message).await;
-            }
+        for message in client_messages {
+            self.client.show_message(message.r#type, message.message).await;
         }
     }
 
@@ -642,9 +630,7 @@ impl LanguageServer for Backend {
             match worker.run_diagnostic_on_save(&document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
-                    if self.capabilities.get().is_some_and(|cap| cap.show_message) {
-                        self.client.show_message(MessageType::ERROR, err).await;
-                    }
+                    self.client.show_message(MessageType::ERROR, err).await;
                 }
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
@@ -686,9 +672,7 @@ impl LanguageServer for Backend {
             match worker.run_diagnostic_on_change(&document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
-                    if self.capabilities.get().is_some_and(|cap| cap.show_message) {
-                        self.client.show_message(MessageType::ERROR, err).await;
-                    }
+                    self.client.show_message(MessageType::ERROR, err).await;
                 }
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
@@ -746,9 +730,7 @@ impl LanguageServer for Backend {
             match worker.run_diagnostic(&document).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
-                    if self.capabilities.get().is_some_and(|cap| cap.show_message) {
-                        self.client.show_message(MessageType::ERROR, err).await;
-                    }
+                    self.client.show_message(MessageType::ERROR, err).await;
                 }
                 Ok(diagnostics) => {
                     if !diagnostics.is_empty() {
