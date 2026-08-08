@@ -304,6 +304,21 @@ impl DisableDirectives {
     }
 
     pub fn contains(&self, rule_name: &str, span: Span) -> bool {
+        self.contains_impl(rule_name, None, span)
+    }
+
+    /// Like [`Self::contains`], but for a diagnostic tagged with a sub-rule by an
+    /// "umbrella" rule (see [`LintContext::diagnostic_with_sub_rule`]). Matches a
+    /// directive naming `{rule_name}/{sub_rule}`, with the same optional plugin
+    /// prefix as [`Self::contains`] — so both `react-compiler/refs` and
+    /// `react/react-compiler/refs` match.
+    ///
+    /// [`LintContext::diagnostic_with_sub_rule`]: crate::context::LintContext::diagnostic_with_sub_rule
+    pub fn contains_sub_rule(&self, rule_name: &str, sub_rule: &str, span: Span) -> bool {
+        self.contains_impl(rule_name, Some(sub_rule), span)
+    }
+
+    fn contains_impl(&self, rule_name: &str, sub_rule: Option<&str>, span: Span) -> bool {
         // For `eslint-disable-next-line` and `eslint-disable-line` directives, we only check
         // if the diagnostic's starting position falls within the disabled interval.
         // This prevents suppressing diagnostics for larger constructs (like functions) that
@@ -329,13 +344,22 @@ impl DisableDirectives {
                 // rather than doing a substring match. Otherwise unrelated rules like
                 // `canonical/no-re-export` would accidentally match oxlint's `export`
                 // rule because `"no-re-export".contains("export")` is true.
-                DisabledRule::Single { rule_name: name, .. } => {
-                    if rule_name.contains('/') {
-                        name == rule_name
-                    } else {
-                        name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule) == rule_name
+                DisabledRule::Single { rule_name: name, .. } => match sub_rule {
+                    // Split the sub-rule off the end first, then match what remains
+                    // against `rule_name` exactly as an un-tagged diagnostic would.
+                    Some(sub_rule) => name.rsplit_once('/').is_some_and(|(name, last)| {
+                        last == sub_rule
+                            && name.rsplit_once('/').map_or(name, |(_, rule)| rule) == rule_name
+                    }),
+                    None => {
+                        if rule_name.contains('/') {
+                            name == rule_name
+                        } else {
+                            name.rsplit_once('/').map_or(name.as_str(), |(_, rule)| rule)
+                                == rule_name
+                        }
                     }
-                }
+                },
             };
 
             if !rule_matches {

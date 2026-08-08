@@ -23,6 +23,7 @@ use crate::react_compiler::entrypoint::program::compile_program;
 pub use crate::react_compiler::entrypoint::compile_result::CompileResult;
 pub use crate::react_compiler::entrypoint::program::CompileOutput;
 
+pub use crate::diagnostics::ErrorCategory;
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::options::{
     CompilationMode, CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig,
@@ -40,14 +41,24 @@ pub use crate::react_compiler_hir::type_config::{
 pub use crate::react_compiler_utils::FxIndexMap;
 
 use oxc_ast::ast::Program;
-use oxc_diagnostics::Diagnostics;
+use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_semantic::Semantic;
 
 pub struct LintResult {
-    /// Errors and warnings produced by the compile.
-    pub diagnostics: Diagnostics,
+    /// Errors and warnings produced by the compile, each paired with its
+    /// [`ErrorCategory`] so consumers can filter or suppress by category (e.g.
+    /// per-sub-rule disable directives) without re-parsing the message.
+    pub diagnostics: Vec<ReactCompilerDiagnostic>,
     /// Whether compilation was aborted according to `panic_threshold`.
     pub fatal: bool,
+}
+
+/// A diagnostic from [`lint`], paired with the [`ErrorCategory`] it was built for.
+#[derive(Debug)]
+pub struct ReactCompilerDiagnostic {
+    pub diagnostic: OxcDiagnostic,
+    /// `None` for a diagnostic that carries no category — see [`ErrorCategory::of`].
+    pub category: Option<ErrorCategory>,
 }
 
 /// Run the React Compiler on a pre-parsed program.
@@ -115,8 +126,20 @@ pub fn lint<'a>(
     let mut options = options;
     options.no_emit = true;
 
-    match compile(program, semantic, allocator, options) {
-        CompileResult::Success { diagnostics, .. } => LintResult { diagnostics, fatal: false },
-        CompileResult::Fatal { diagnostics } => LintResult { diagnostics, fatal: true },
-    }
+    let (diagnostics, fatal) = match compile(program, semantic, allocator, options) {
+        CompileResult::Success { diagnostics, .. } => (diagnostics, false),
+        CompileResult::Fatal { diagnostics } => (diagnostics, true),
+    };
+    // The compiler flattens the category into the message when it builds each
+    // diagnostic (`ErrorCategory::diagnostic`). Recover it here so consumers match
+    // on the enum instead of re-parsing the message themselves.
+    let diagnostics = diagnostics
+        .into_vec()
+        .into_iter()
+        .map(|diagnostic| ReactCompilerDiagnostic {
+            category: ErrorCategory::of(&diagnostic),
+            diagnostic,
+        })
+        .collect();
+    LintResult { diagnostics, fatal }
 }
