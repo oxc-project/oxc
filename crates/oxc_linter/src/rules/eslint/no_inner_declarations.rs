@@ -105,20 +105,18 @@ impl Rule for NoInnerDeclarations {
         );
 
         // Options follow the mode string, matching ESLint's positional schema
-        // `[("functions" | "both"), { … }]`.
-        let block_scoped_functions = if value.is_array() && !value.is_null() {
-            value
-                .get(1)
-                .and_then(|v| v.get("blockScopedFunctions"))
-                .and_then(serde_json::Value::as_str)
-                .map(|value| match value {
-                    "disallow" => BlockScopedFunctions::Disallow,
-                    _ => BlockScopedFunctions::Allow,
-                })
-                .or(Some(BlockScopedFunctions::Allow))
-        } else {
-            None
-        };
+        // `[("functions" | "both"), { … }]`. Default `blockScopedFunctions` to
+        // `allow` even for bare severity (`"error"` / `-D`), matching ESLint and
+        // the schema `#[default]` — see #25073.
+        let block_scoped_functions = value
+            .get(1)
+            .and_then(|v| v.get("blockScopedFunctions"))
+            .and_then(serde_json::Value::as_str)
+            .map(|value| match value {
+                "disallow" => BlockScopedFunctions::Disallow,
+                _ => BlockScopedFunctions::Allow,
+            })
+            .or(Some(BlockScopedFunctions::Allow));
 
         let namespaces =
             value.get(1).and_then(|v| v.get("namespaces")).and_then(serde_json::Value::as_str).map(
@@ -132,6 +130,8 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // Keep this match at the top of `run` so linter codegen still detects
+        // Function + VariableDeclaration node types (lets-before-match → NODE_TYPES=None).
         let (decl_type, span) = match node.kind() {
             AstKind::VariableDeclaration(decl) => {
                 if self.0 == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
@@ -146,7 +146,8 @@ impl Rule for NoInnerDeclarations {
                 }
 
                 if self.0 == NoInnerDeclarationsConfig::Functions
-                    && self.1.block_scoped_functions == Some(BlockScopedFunctions::Allow)
+                    && self.1.block_scoped_functions.unwrap_or_default()
+                        == BlockScopedFunctions::Allow
                 {
                     // Modules are always strict mode.
                     // This check is redundant, because in modules, the scope will have strict mode flag set,
@@ -167,7 +168,13 @@ impl Rule for NoInnerDeclarations {
             _ => return,
         };
 
-        check_rule(node, ctx, self.1.namespaces == Some(Namespaces::Allow), decl_type, span);
+        check_rule(
+            node,
+            ctx,
+            self.1.namespaces.unwrap_or_default() == Namespaces::Allow,
+            decl_type,
+            span,
+        );
     }
 }
 
@@ -313,6 +320,16 @@ fn test() {
             "namespace N { function foo() {} }",
             Some(serde_json::json!(["functions", { "namespaces": "allow" }])),
         ),
+        // Bare severity / default options: `blockScopedFunctions` defaults to
+        // `allow`, so modules (strict) permit nested function declarations (#25073).
+        ("if (foo)  function f(){} ", None),
+        ("function doSomething() { do { function somethingElse() { } } while (test); }", None),
+        ("(function() { if (test) { function doSomething() { } } }());", None),
+        ("export {};\n{\n  function inner() {}\n  inner();\n}", None),
+        (
+            "export {};\n{\n  function inner() {}\n  inner();\n}",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "allow" }])),
+        ),
     ];
 
     let fail = vec![
@@ -322,12 +339,22 @@ fn test() {
         ("if (foo){ function f(){ if(bar){ var a; } } }", Some(serde_json::json!(["both"]))),
         ("if (foo) function f(){ if(bar) var a; }", Some(serde_json::json!(["both"]))),
         ("if (foo) { var fn = function(){} } ", Some(serde_json::json!(["both"]))),
-        ("if (foo)  function f(){} ", None),
+        // Explicit disallow still reports nested functions under default "functions" mode.
+        (
+            "if (foo)  function f(){} ",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "disallow" }])),
+        ),
         ("function bar() { if (foo) function f(){}; }", Some(serde_json::json!(["both"]))),
         ("function bar() { if (foo) var a; }", Some(serde_json::json!(["both"]))),
         ("if (foo) { var a; }", Some(serde_json::json!(["both"]))),
-        ("function doSomething() { do { function somethingElse() { } } while (test); }", None),
-        ("(function() { if (test) { function doSomething() { } } }());", None),
+        (
+            "function doSomething() { do { function somethingElse() { } } while (test); }",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "disallow" }])),
+        ),
+        (
+            "(function() { if (test) { function doSomething() { } } }());",
+            Some(serde_json::json!(["functions", { "blockScopedFunctions": "disallow" }])),
+        ),
         ("while (test) { var foo; }", Some(serde_json::json!(["both"]))),
         (
             "function doSomething() { if (test) { var foo = 42; } }",
