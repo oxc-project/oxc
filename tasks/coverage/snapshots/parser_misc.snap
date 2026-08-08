@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 76/76 (100.00%)
-Positive Passed: 76/76 (100.00%)
-Negative Passed: 158/158 (100.00%)
+AST Parsed     : 77/77 (100.00%)
+Positive Passed: 77/77 (100.00%)
+Negative Passed: 159/159 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -160,6 +160,13 @@ Negative Passed: 158/158 (100.00%)
  4 │       await foo;
    ·       ─────
  5 │     }
+   ╰────
+
+  × Expected `;` but found `,`
+   ╭─[misc/fail/class-field-comma-expression.js:1:16]
+ 1 │ class C { x = a,b }
+   ·                ┬
+   ·                ╰── `;` expected
    ╰────
 
   × Cannot use export statement outside a module
