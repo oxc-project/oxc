@@ -2,6 +2,26 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ react(react-compiler): Todo: Support value blocks (conditional, logical, optional chaining, etc) within a try/catch statement
+    ╭─[react_compiler.tsx:4:8]
+  3 │     
+  4 │ ╭─▶ export function Component({ user }: { user: { id: string } | null }) {
+  5 │ │     const [current, setCurrent] = useState<string | null>(null);
+  6 │ │   
+  7 │ │     const onScan = async (id: string) => {
+  8 │ │       try {
+  9 │ │         if (user?.id !== id) {
+ 10 │ │           setCurrent(await Promise.resolve(id));
+ 11 │ │         }
+ 12 │ │       } catch {
+ 13 │ │         setCurrent(null);
+ 14 │ │       }
+ 15 │ │     };
+ 16 │ │   
+ 17 │ │     return <button onClick={() => onScan('a')}>{current}</button>;
+ 18 │ ╰─▶ }
+    ╰────
+
   ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler.tsx:4:26]
  3 │ function Component() {

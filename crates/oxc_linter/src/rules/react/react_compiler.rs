@@ -311,6 +311,29 @@ function Component(props) {
     ];
 
     let fail = vec![
+        // A value block inside try/catch is a React Compiler bail-out.
+        (
+            "
+import { useState } from 'react';
+
+export function Component({ user }: { user: { id: string } | null }) {
+  const [current, setCurrent] = useState<string | null>(null);
+
+  const onScan = async (id: string) => {
+    try {
+      if (user?.id !== id) {
+        setCurrent(await Promise.resolve(id));
+      }
+    } catch {
+      setCurrent(null);
+    }
+  };
+
+  return <button onClick={() => onScan('a')}>{current}</button>;
+}
+",
+            Some(json!([{ "reportAllBailouts": true }])),
+        ),
         // ---- PluginTest-test.ts ----
         // Multiple diagnostic kinds from the same function are surfaced
         (
