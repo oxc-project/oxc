@@ -21,7 +21,7 @@ impl IsTerminated for Statement<'_> {
 
 impl IsTerminated for IfStatement<'_> {
     fn is_terminated(&self) -> bool {
-        self.consequent.is_terminated() && self.alternate.is_terminated()
+        self.alternate.is_terminated() && self.consequent.is_terminated()
     }
 }
 
