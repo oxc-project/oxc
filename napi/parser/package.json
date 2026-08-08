@@ -28,6 +28,7 @@
     "src-js/index.js",
     "src-js/wasm.d.ts",
     "src-js/wasm.js",
+    "src-js/workerd.js",
     "src-js/webcontainer-fallback.cjs",
     "src-js/wrap.js",
     "src-js/generated/constants.js",
@@ -55,6 +56,16 @@
   "type": "module",
   "main": "src-js/index.js",
   "browser": "src-js/wasm.js",
+  "exports": {
+    ".": {
+      "types": "./src-js/index.d.ts",
+      "workerd": "./src-js/workerd.js",
+      "browser": "./src-js/wasm.js",
+      "default": "./src-js/index.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -68,6 +79,8 @@
     "build-wasi": "napi build --config-path napi.wasm.json --target wasm32-wasip1-threads --dts parser.wasi.d.cts --no-dts-header",
     "build-wasm": "pnpm run build-wasm-dev --release",
     "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts parser.wasi.d.cts --no-dts-header",
+    "build-emscripten": "node ../../.github/scripts/napi-emscripten/build.mjs",
+    "test-emscripten": "node ../../.github/scripts/napi-emscripten/smoke-test.mjs",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --config-path napi.wasm.json --npm-dir npm-dir && pnpm napi artifacts --config-path napi.wasm.json --npm-dir npm-dir --output-dir src-js",
     "build-browser-bundle": "node scripts/build-browser-bundle.js",
     "test": "pnpm run test-node run",
@@ -88,6 +101,7 @@
     "@typescript-eslint/visitor-keys": "^8.54.0",
     "@vitest/browser": "4.1.10",
     "@vitest/browser-playwright": "4.1.10",
+    "emnapi": "catalog:",
     "playwright": "^1.51.0",
     "publint": "catalog:",
     "rolldown": "catalog:",

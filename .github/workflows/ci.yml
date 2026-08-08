@@ -190,6 +190,42 @@ jobs:
           pnpm run test-browser
           pnpm build-browser-bundle --npmDir npm-dir
 
+  test-wasm32-unknown-emscripten:
+    name: Test wasm32-unknown-emscripten
+    runs-on: namespace-profile-linux-x64-default
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: ./.github/actions/check-changes
+        id: filter
+        with:
+          exclude: oxc_linter
+          paths: napi/parser/,napi/minify/,napi/transform/,napi/transform-react/,.github/scripts/napi-emscripten/,wasm/emscripten/,pnpm-lock.yaml,pnpm-workspace.yaml,package.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
+      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
+        if: steps.filter.outputs.changed == 'true'
+      - uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          version: 5.0.3
+      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          path: /home/runner/.rustup
+          cache: |
+            rust
+            pnpm
+      - name: Build and test
+        if: steps.filter.outputs.changed == 'true'
+        run: |
+          rustup target add wasm32-unknown-emscripten
+          pnpm build-emscripten
+          for package in parser minify transform transform-react; do
+            pnpm -C "napi/${package}" test-emscripten
+            pnpm -C wasm/emscripten test "../../napi/${package}"
+          done
+          git diff --exit-code # Must commit everything
+
   test-napi-compiler:
     name: Test NAPI Compiler
     runs-on: namespace-profile-linux-x64-default

@@ -28,11 +28,22 @@
     "browser.js",
     "index.d.ts",
     "index.js",
+    "workerd.js",
     "webcontainer-fallback.cjs"
   ],
   "type": "module",
   "main": "index.js",
   "browser": "browser.js",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "workerd": "./workerd.js",
+      "browser": "./browser.js",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -45,6 +56,8 @@
     "postbuild-dev": "node scripts/patch.js",
     "build-wasm": "pnpm run build-wasm-dev --release",
     "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts transform.wasi.d.cts",
+    "build-emscripten": "node ../../.github/scripts/napi-emscripten/build.mjs",
+    "test-emscripten": "node ../../.github/scripts/napi-emscripten/smoke-test.mjs",
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {
@@ -52,6 +65,7 @@
     "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
+    "emnapi": "catalog:",
     "publint": "catalog:",
     "vitest": "catalog:"
   },

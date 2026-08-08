@@ -51,3 +51,13 @@ to leave JSX syntax in the output.
 Callback-valued options such as `logger`, function-valued `sources`, and type
 provider callbacks are not accepted by the native binding. `sources` accepts
 an array of filename substrings instead.
+
+## Cloudflare Workers
+
+Import `oxc-transform-react` normally. Wrangler selects the Emscripten binding
+through the `workerd` package export; the binding package is installed
+automatically as an optional dependency.
+
+Set `compatibility_date` to `2025-05-05` or later, or enable the
+[`enable_weak_ref` compatibility flag](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#enable-finalizationregistry-and-weakref).
+The Emscripten binding is single-threaded, including its async functions.

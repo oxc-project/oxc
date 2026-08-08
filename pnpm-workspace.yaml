@@ -24,6 +24,7 @@ catalog:
   tsdown: 0.22.14
   vite-plus: 0.2.8
   vitest: 4.1.10
+  wrangler: 4.120.0
 
 overrides:
   rolldown: "catalog:"
@@ -34,6 +35,7 @@ allowBuilds:
   esbuild@0.27.7: true
   esbuild@0.28.1: true
   "@nestjs/core@11.1.9": false
+  workerd@1.20260801.1: true
 
 verifyDepsBeforeRun: install
 minimumReleaseAgeExclude:
@@ -57,3 +59,5 @@ minimumReleaseAgeExclude:
   - vite
   - vite-plus
   - vitest
+  - miniflare@5.20260801.1-alpha
+  - wrangler@4.120.0

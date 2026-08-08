@@ -18,6 +18,7 @@ target/
 /plugins/node_modules/
 /tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
+/wasm/*/node_modules/
 /napi/*/npm-dir
 /napi/parser/tsconfig.browser.tsbuildinfo
 
