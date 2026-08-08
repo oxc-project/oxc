@@ -230,6 +230,7 @@ describe("transformSync", () => {
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].severity).toBe("Warning");
     expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
     expect(result.code).not.toContain("react/compiler-runtime");
   });
@@ -254,7 +255,7 @@ describe("transformSync", () => {
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
-      severity: "Error",
+      severity: "Warning",
       message: expect.stringContaining("[ReactCompiler] Suppression:"),
     });
     expect(result.code).not.toBe("");
@@ -328,6 +329,7 @@ describe("transformSync", () => {
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].severity).toBe("Warning");
     expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).not.toContain("props: { text: string }");
@@ -357,6 +359,7 @@ describe("transformSync", () => {
       expect(result.fatal).toBe(true);
       expect(result.code).toBe("");
       expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].severity).toBe("Error");
       expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
     },
   );

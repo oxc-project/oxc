@@ -34,9 +34,10 @@ if (result.fatal) {
 ```
 
 `errors` contains every diagnostic reported by parsing, the React Compiler, and
-the downstream transform. Some React Compiler bail-outs have error severity but
-are nonfatal under the default `panicThreshold`; check `fatal` to decide whether
-the transform emitted usable code.
+the downstream transform. Recoverable React Compiler bail-outs are warnings;
+compiler diagnostics retain error severity when `panicThreshold` makes the
+transform fatal. Check `fatal` to decide whether the transform emitted usable
+code.
 
 `reactCompiler` defaults to `true`. Set it to `false` to skip React Compiler,
 or pass an options object using the same names as
