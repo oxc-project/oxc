@@ -17,7 +17,6 @@ pub struct Capabilities {
     pub workspace_apply_edit: bool,
     pub workspace_configuration: bool,
     pub dynamic_watchers: bool,
-    pub show_message: bool,
     /// The diagnostic mode the server should use, should be overridden by the tool implementation.
     /// Defaults to `None`.
     pub diagnostic_mode: DiagnosticMode,
@@ -42,10 +41,6 @@ impl From<ClientCapabilities> for Capabilities {
                 watched_files.dynamic_registration.is_some_and(|dynamic| dynamic)
             })
         });
-
-        let show_message =
-            value.window.as_ref().is_some_and(|window| window.show_message.is_some());
-
         let pull_diagnostics = value
             .text_document
             .as_ref()
@@ -61,7 +56,6 @@ impl From<ClientCapabilities> for Capabilities {
             workspace_apply_edit,
             workspace_configuration,
             dynamic_watchers,
-            show_message,
             pull_diagnostics,
             refresh_diagnostics,
             diagnostic_mode: DiagnosticMode::None,

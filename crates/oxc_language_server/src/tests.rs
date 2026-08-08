@@ -409,7 +409,6 @@ struct InitializeRequestOptions {
     dynamic_watchers: bool,
     workspace_edit: bool,
     pull_mode: bool,
-    show_message: bool,
     initialization_options: Option<Value>,
     workspace_folders: Option<Vec<WorkspaceFolder>>,
     root_uri: Option<Uri>,
@@ -439,14 +438,6 @@ fn initialize_request_workspace_folders(options: InitializeRequestOptions) -> Re
                 }),
                 ..Default::default()
             }),
-            window: if options.show_message {
-                Some(WindowClientCapabilities {
-                    show_message: Some(ShowMessageRequestClientCapabilities::default()),
-                    ..Default::default()
-                })
-            } else {
-                None
-            },
             ..Default::default()
         },
         initialization_options: options.initialization_options,
@@ -683,12 +674,7 @@ mod test_suite {
         });
 
         // initialize: worker starts here (no workspace_configuration), message must NOT be sent yet
-        server
-            .send_request(initialize_request(InitializeRequestOptions {
-                show_message: true,
-                ..Default::default()
-            }))
-            .await;
+        server.send_request(initialize_request(InitializeRequestOptions::default())).await;
         let initialize_result = server.recv_response().await;
         assert!(initialize_result.is_ok());
 
@@ -1132,10 +1118,7 @@ mod test_suite {
             |client| {
                 Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
             },
-            initialize_request(InitializeRequestOptions {
-                show_message: true,
-                ..Default::default()
-            }),
+            initialize_request(InitializeRequestOptions::default()),
         )
         .await;
 
