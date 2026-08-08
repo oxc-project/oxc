@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::{
     api::{format_api, text_to_doc_api},
-    cli::{MigrateSource, Mode, StdinRunner, WalkRunner, format_command, init_miette, init_rayon},
+    cli::{MigrateSource, Mode, StdinRunner, WalkRunner, format_command, init_rayon},
     core::{
         ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
         JsInitExternalFormatterCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
@@ -102,8 +102,6 @@ pub async fn run_cli(
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
-            init_miette();
-
             let result = StdinRunner::new(
                 command,
                 Arc::clone(&js_config_loader),
@@ -114,7 +112,6 @@ pub async fn run_cli(
             ("stdin".to_string(), Some(result.exit_code()))
         }
         Mode::Cli(_) => {
-            init_miette();
             init_rayon(command.runtime_options.threads);
 
             let result = WalkRunner::new(command)

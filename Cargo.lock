@@ -142,6 +142,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bytecount"
+version = "0.6.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "175812e0be2bccb6abe50bb8d566126198344f707e304f45c648fd8f2cc0365e"
+
+[[package]]
 name = "bytes"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1710,28 +1716,14 @@ dependencies = [
 [[package]]
 name = "oxc-miette"
 version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e0df30faa68797917ca4263e7a2f889ec829e4da2dcb3d6dc752f7a494180f3"
+source = "git+https://github.com/oxc-project/oxc-miette.git?rev=e17102bf4ca6c6a1487c34ef4e98f8d9bacfa3f3#e17102bf4ca6c6a1487c34ef4e98f8d9bacfa3f3"
 dependencies = [
- "cfg-if",
+ "bytecount",
  "memchr",
  "owo-colors",
- "oxc-miette-derive",
  "textwrap",
- "thiserror",
  "unicode-segmentation",
  "unicode-width",
-]
-
-[[package]]
-name = "oxc-miette-derive"
-version = "3.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acc072d11d45ebe7801459b4e829184ba0934d68027fdc51d327335b53a95a49"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
 ]
 
 [[package]]
@@ -2845,7 +2837,6 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "oxc-miette",
  "oxc-schemars",
  "oxc-toml",
  "oxc_allocator",
