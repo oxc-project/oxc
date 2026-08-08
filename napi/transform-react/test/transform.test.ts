@@ -174,11 +174,34 @@ describe("transformSync", () => {
         const doubled: number = value * 2;
         return <div>{doubled}</div>;
       }`,
+      {
+        reactCompiler: {
+          environment: {
+            validateExhaustiveMemoizationDependencies: true,
+          },
+        },
+      },
     );
 
     expect(result.errors).toEqual([]);
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).toContain("_c(");
+  });
+
+  it("honors ESLint suppressions by default", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `function Component({ value }: { value: number }) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const doubled = value * 2;
+        return <div>{doubled}</div>;
+      }`,
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+    expect(result.code).not.toContain("react/compiler-runtime");
   });
 
   it("honors ESLint suppressions when internal validations are disabled", () => {
@@ -233,6 +256,24 @@ describe("transformSync", () => {
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).not.toContain("props: { text: string }");
     expect(result.code).not.toContain("<span");
+  });
+
+  it("does not enable manual memo dependency validation by default", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `import { useMemo } from "react";
+      import { typedCapture, typedCreateFrom, typedMutate, ValidateMemoization } from "shared-runtime";
+      function Component({ a, b }: { a: number; b: number }) {
+        const x = useMemo(() => ({ a }), [a, b]);
+        const y = typedCapture(x);
+        const z = typedCreateFrom(y);
+        typedMutate(z, b);
+        return <ValidateMemoization inputs={[a, b]} output={x} />;
+      }`,
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
   });
 
   it("compiles an unsuppressed sibling after a suppression bailout", () => {

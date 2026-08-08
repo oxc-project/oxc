@@ -228,6 +228,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_reset_cache_on_source_file_changes: Option<bool>,
     pub enable_preserve_existing_memoization_guarantees: Option<bool>,
     pub validate_preserve_existing_memoization_guarantees: Option<bool>,
+    /// Enable exhaustive manual memo dependency validation.
+    ///
+    /// @default false
     pub validate_exhaustive_memoization_dependencies: Option<bool>,
     #[napi(ts_type = "'off' | 'all' | 'missing-only' | 'extra-only'")]
     pub validate_exhaustive_effect_dependencies: Option<String>,
