@@ -201,6 +201,10 @@ fn test() {
     let pass = vec![
         "const foo = new Object()",
         "const foo = new Array()",
+        "const foo = Array?.()",
+        "const foo = Map?.()",
+        "const foo = Date?.()",
+        "const foo = globalThis?.Date()",
         "const foo = new ArrayBuffer()",
         "const foo = new BigInt64Array()",
         "const foo = new BigUint64Array()",
