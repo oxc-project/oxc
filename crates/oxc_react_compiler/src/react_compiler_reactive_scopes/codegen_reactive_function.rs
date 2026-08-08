@@ -48,7 +48,7 @@ use crate::react_compiler_hir::reactive::ReactiveTerminal;
 use crate::react_compiler_hir::reactive::ReactiveTerminalTargetKind;
 use crate::react_compiler_hir::reactive::ReactiveValue;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::Span;
+use oxc_span::{GetSpanMut, Span};
 
 use crate::react_compiler_reactive_scopes::build_reactive_function::build_reactive_function;
 use crate::react_compiler_reactive_scopes::prune_hoisted_contexts::prune_hoisted_contexts;
@@ -1130,10 +1130,10 @@ fn ox_extract_for_in_of_lval<'a>(
 ) -> Result<(oxc::BindingPattern<'a>, oxc::VariableDeclarationKind), OxcDiagnostic> {
     let (lval, kind) = match instr_value {
         InstructionValue::StoreLocal { lvalue, .. } => {
-            (ox_codegen_lvalue(cx, &LvalueRef::Place(&lvalue.place))?, lvalue.kind)
+            (ox_codegen_lvalue(cx, &LvalueRef::Place(&lvalue.place), span)?, lvalue.kind)
         }
         InstructionValue::Destructure { lvalue, .. } => {
-            (ox_codegen_lvalue(cx, &LvalueRef::Pattern(&lvalue.pattern))?, lvalue.kind)
+            (ox_codegen_lvalue(cx, &LvalueRef::Pattern(&lvalue.pattern), span)?, lvalue.kind)
         }
         InstructionValue::StoreContext { .. } => {
             cx.record_error(
@@ -1363,11 +1363,11 @@ fn ox_emit_store<'a>(
                     instr.span,
                 ));
             }
-            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            let lval = ox_codegen_lvalue(cx, lvalue, instr.span)?;
             Ok(Some(ox_make_var_decl(cx, oxc::VariableDeclarationKind::Const, lval, value)))
         }
         InstructionKind::Function => {
-            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            let lval = ox_codegen_lvalue(cx, lvalue, instr.span)?;
             let oxc::BindingPattern::BindingIdentifier(fn_id) = lval else {
                 return Err(invariant_err(
                     "Expected an identifier as function declaration lvalue",
@@ -1413,14 +1413,14 @@ fn ox_emit_store<'a>(
                     instr.span,
                 ));
             }
-            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            let lval = ox_codegen_lvalue(cx, lvalue, instr.span)?;
             Ok(Some(ox_make_var_decl(cx, oxc::VariableDeclarationKind::Let, lval, value)))
         }
         InstructionKind::Reassign => {
             let Some(rhs) = value else {
                 return Err(invariant_err("Expected a value for reassignment", None));
             };
-            let lval = ox_codegen_lvalue(cx, lvalue)?;
+            let lval = ox_codegen_lvalue(cx, lvalue, instr.span)?;
             let target = ox_binding_pattern_to_assignment_target(cx, lval)?;
             let expr = oxc_ast::ast::Expression::new_assignment_expression(
                 SPAN,
@@ -1924,13 +1924,13 @@ fn ox_codegen_base_instruction_value<'a>(
                 SPAN, *operation, true, target, &cx.ast,
             )))
         }
-        InstructionValue::StoreLocal { lvalue, value, .. } => {
+        InstructionValue::StoreLocal { lvalue, value, span } => {
             invariant(
                 lvalue.kind == InstructionKind::Reassign,
                 "Unexpected StoreLocal in codegenInstructionValue",
                 None,
             )?;
-            let lval = ox_codegen_lvalue(cx, &LvalueRef::Place(&lvalue.place))?;
+            let lval = ox_codegen_lvalue(cx, &LvalueRef::Place(&lvalue.place), *span)?;
             let target = ox_binding_pattern_to_assignment_target(cx, lval)?;
             let rhs = ox_codegen_place_to_expression(cx, value)?;
             Ok(OxValue::Expression(oxc_ast::ast::Expression::new_assignment_expression(
@@ -2145,7 +2145,14 @@ fn ox_codegen_place<'a>(
     let declaration_id = ident.declaration_id;
     if let Some(tmp) = cx.temp.get(&declaration_id) {
         if let Some(val) = tmp {
-            return Ok(val.clone_in_with_semantic_ids(cx.ast.allocator()));
+            let mut value = val.clone_in_with_semantic_ids(cx.ast.allocator());
+            if let Some(span) = place.span {
+                match &mut value {
+                    OxValue::Expression(expr) => *expr.span_mut() = span,
+                    OxValue::JsxText(text) => text.span = span,
+                }
+            }
+            return Ok(value);
         }
     } else if ident.name.is_none() {
         return Err(invariant_err(
@@ -2158,7 +2165,7 @@ fn ox_codegen_place<'a>(
     }
     let name = ox_identifier_name(cx.env, place.identifier)?;
     Ok(OxValue::Expression(oxc_ast::ast::Expression::new_identifier(
-        SPAN,
+        place.span.unwrap_or(SPAN),
         ox_str(&cx.ast, &name),
         &cx.ast,
     )))
@@ -2167,14 +2174,24 @@ fn ox_codegen_place<'a>(
 fn ox_codegen_lvalue<'a>(
     cx: &mut OxcContext<'a, '_>,
     pattern: &LvalueRef,
+    fallback_span: Option<Span>,
 ) -> Result<oxc::BindingPattern<'a>, OxcDiagnostic> {
-    match pattern {
-        LvalueRef::Place(place) => ox_binding_for_identifier(cx, place.identifier),
+    let (pattern, span) = match pattern {
+        LvalueRef::Place(place) => {
+            (ox_binding_for_identifier(cx, place.identifier), place.span.or(fallback_span))
+        }
         LvalueRef::Pattern(pat) => match pat {
-            Pattern::Array(arr) => ox_codegen_array_pattern(cx, arr),
-            Pattern::Object(obj) => ox_codegen_object_pattern(cx, obj),
+            Pattern::Array(arr) => (ox_codegen_array_pattern(cx, arr), arr.span.or(fallback_span)),
+            Pattern::Object(obj) => {
+                (ox_codegen_object_pattern(cx, obj), obj.span.or(fallback_span))
+            }
         },
+    };
+    let mut pattern = pattern?;
+    if let Some(span) = span {
+        *pattern.span_mut() = span;
     }
+    Ok(pattern)
 }
 
 fn ox_codegen_array_pattern<'a>(

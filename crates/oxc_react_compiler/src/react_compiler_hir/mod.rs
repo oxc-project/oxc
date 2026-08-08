@@ -1010,6 +1010,7 @@ pub struct SpreadPattern {
 #[derive(Debug)]
 pub struct ArrayPattern<'a> {
     pub items: ArenaVec<'a, ArrayPatternElement>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1022,6 +1023,7 @@ pub enum ArrayPatternElement {
 #[derive(Debug)]
 pub struct ObjectPattern<'a> {
     pub properties: ArenaVec<'a, ObjectPropertyOrSpread<'a>>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1884,14 +1886,14 @@ impl<'a> CloneIn<'a> for Pattern<'a> {
 impl<'a> CloneIn<'a> for ArrayPattern<'a> {
     type Cloned = ArrayPattern<'a>;
     fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
-        ArrayPattern { items: self.items.clone_in_impl(sem, alloc) }
+        ArrayPattern { items: self.items.clone_in_impl(sem, alloc), span: self.span }
     }
 }
 
 impl<'a> CloneIn<'a> for ObjectPattern<'a> {
     type Cloned = ObjectPattern<'a>;
     fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
-        ObjectPattern { properties: self.properties.clone_in_impl(sem, alloc) }
+        ObjectPattern { properties: self.properties.clone_in_impl(sem, alloc), span: self.span }
     }
 }
 

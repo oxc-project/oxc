@@ -357,12 +357,13 @@ describe("transformSync", () => {
 
   it("supports React Fast Refresh through JSX options", () => {
     const result = transformSync("Component.tsx", fixture, {
-      reactCompiler: false,
-      jsx: { refresh: true },
+      jsx: { refresh: { emitFullSignatures: true } },
     });
     expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).toContain("$RefreshSig$");
     expect(result.code).toContain("$RefreshReg$");
+    expect(result.code).toContain("useState{[count, setCount](0)}");
   });
 });
 
