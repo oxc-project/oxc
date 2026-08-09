@@ -1252,6 +1252,19 @@ fn get_declarator_name<'ast>(decl: &VariableDeclarator<'ast>) -> Option<&'ast st
     }
 }
 
+/// Whether a variable initializer is directly a function after ignoring
+/// parentheses. Babel does not materialize redundant parentheses as an AST
+/// node, so they must be transparent here as well.
+fn is_direct_function_init(expr: &Expression) -> bool {
+    match expr {
+        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => true,
+        Expression::ParenthesizedExpression(parenthesized) => {
+            is_direct_function_init(&parenthesized.expression)
+        }
+        _ => false,
+    }
+}
+
 // -----------------------------------------------------------------------
 // Discovery walker
 // -----------------------------------------------------------------------
@@ -1531,15 +1544,11 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
 
     fn walk_variable_declaration(&mut self, decl: &'b VariableDeclaration<'ast>) {
         for declarator in &decl.declarations {
-            // Only infer the declarator name when the init is a direct function
-            // expression, arrow, or call expression (for forwardRef/memo wrappers).
+            // Babel only infers a declarator name for a directly initialized
+            // function. Wrapper callbacks are inferred from the wrapper itself,
+            // not from the outer variable name.
             if let Some(init) = &declarator.init {
-                if matches!(
-                    init,
-                    Expression::FunctionExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::CallExpression(_)
-                ) {
+                if is_direct_function_init(init) {
                     self.current_declarator_name = get_declarator_name(declarator);
                 }
                 self.walk_expression(init);
@@ -1680,20 +1689,16 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             }
             Expression::CallExpression(node) => {
                 let callee_name = get_callee_name_if_react_api(&node.callee);
-                // The declarator name only flows through forwardRef/memo calls; for
-                // any other call, clear it so nested functions don't inherit it.
-                if callee_name.is_none() {
-                    self.current_declarator_name = None;
-                }
+                // A callback argument is not directly initialized by the outer
+                // variable declarator, including for forwardRef/memo wrappers.
+                self.current_declarator_name = None;
                 self.parent_callee_stack.push(callee_name);
                 self.walk_expression(&node.callee);
                 for arg in &node.arguments {
                     self.walk_argument(arg);
                 }
-                let was_react_api = self.parent_callee_stack.pop().flatten().is_some();
-                if was_react_api {
-                    self.current_declarator_name = None;
-                }
+                self.parent_callee_stack.pop();
+                self.current_declarator_name = None;
             }
             Expression::ChainExpression(node) => self.walk_chain_element(&node.expression),
             Expression::StaticMemberExpression(node) => self.walk_expression(&node.object),
@@ -2018,13 +2023,17 @@ fn has_wrapper_callee_reference(scoping: &Scoping, nodes: &AstNodes, symbol_id: 
 
 /// The `const Foo = <fn>` name for a function/arrow node, iff the declarator's
 /// init is directly this node — the same direct-init rule the discovery walker
-/// applies. A function whose direct parent is the declarator can only be its
-/// init (wrappers like parens or TS casts introduce an intermediate parent and
-/// break the inference there too).
+/// applies. Redundant parentheses are transparent in Babel's AST, while TS
+/// casts and other wrappers still break inference.
 fn declarator_name_for<'a>(nodes: &AstNodes<'a>, node_id: NodeId) -> Option<&'a str> {
-    match nodes.parent_kind(node_id) {
-        AstKind::VariableDeclarator(decl) => get_declarator_name(decl),
-        _ => None,
+    let mut current_id = node_id;
+    loop {
+        let parent = nodes.parent_node(current_id);
+        match parent.kind() {
+            AstKind::ParenthesizedExpression(_) => current_id = parent.id(),
+            AstKind::VariableDeclarator(decl) => return get_declarator_name(decl),
+            _ => return None,
+        }
     }
 }
 

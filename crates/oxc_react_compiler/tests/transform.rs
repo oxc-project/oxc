@@ -590,6 +590,42 @@ fn memo_wrapped_component_compiles() {
     assert!(output.contains("_c("), "expected memo cache reads:\n{output}");
 }
 
+#[test]
+fn forward_ref_callback_does_not_inherit_the_outer_declarator_name() {
+    let source = "\
+const TopStoriesItem = forwardRef((props, viewTracker) => {\n\
+  return <div ref={viewTracker}>{props.title}</div>;\n\
+});\n";
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(
+        result.changed,
+        "forwardRef callback should compile; diagnostics: {:?}",
+        result.diagnostics
+    );
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("react/compiler-runtime"), "should memoize:\n{output}");
+}
+
+#[test]
+fn parenthesized_arrow_inherits_its_declarator_name() {
+    let source = "\
+export const DiffEditor = ((props) => {\n\
+  return <div>{props.value}</div>;\n\
+});\n";
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(
+        result.changed,
+        "parenthesized component should compile; diagnostics: {:?}",
+        result.diagnostics
+    );
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("react/compiler-runtime"), "should memoize:\n{output}");
+}
+
 /// Diagnostics are surfaced at the compiler's own severity, not flattened.
 #[test]
 fn diagnostics_preserve_compiler_severity() {
