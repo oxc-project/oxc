@@ -321,6 +321,7 @@ mod graph {
     use std::path::Path;
 
     use petgraph::graphmap::DiGraphMap;
+    use rayon::prelude::*;
     use rustc_hash::FxHashMap;
 
     use super::{ModulesByPath, should_traverse_module};
@@ -328,27 +329,34 @@ mod graph {
     type ImportGraph<'a> = DiGraphMap<&'a Path, ()>;
 
     fn build_import_graph<'a>(ignore_types: bool, modules: &ModulesByPath<'a>) -> ImportGraph<'a> {
-        let mut graph = ImportGraph::new();
+        let edges: Vec<(&'a Path, &'a Path)> = modules
+            .par_iter()
+            .flat_map_iter(|(&path, &records)| {
+                records.iter().flat_map(move |module_record| {
+                    let loaded_modules = module_record.loaded_modules();
+                    loaded_modules
+                        .iter()
+                        .map(|(specifier, weak_module_record)| {
+                            (specifier, weak_module_record.upgrade().unwrap())
+                        })
+                        .filter(|(specifier, imported)| {
+                            should_traverse_module(ignore_types, specifier, imported, module_record)
+                        })
+                        .filter_map(|(_, imported)| {
+                            modules.get_key_value(imported.resolved_absolute_path.as_path())
+                        })
+                        .map(move |(&to, _)| (path, to))
+                        .collect::<Vec<_>>()
+                })
+            })
+            .collect();
 
-        for (&path, &records) in modules {
+        let mut graph = ImportGraph::new();
+        for &path in modules.keys() {
             graph.add_node(path);
-            for module_record in records {
-                let loaded_modules = module_record.loaded_modules();
-                let edges = loaded_modules
-                    .iter()
-                    .map(|(specifier, weak_module_record)| {
-                        (specifier, weak_module_record.upgrade().unwrap())
-                    })
-                    .filter(|(specifier, imported)| {
-                        should_traverse_module(ignore_types, specifier, imported, module_record)
-                    })
-                    .filter_map(|(_, imported)| {
-                        modules.get_key_value(imported.resolved_absolute_path.as_path())
-                    });
-                for (&to, _) in edges {
-                    graph.add_edge(path, to, ());
-                }
-            }
+        }
+        for (from, to) in edges {
+            graph.add_edge(from, to, ());
         }
 
         graph
