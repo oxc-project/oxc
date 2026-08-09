@@ -290,3 +290,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────────
    ╰────
   help: Only pass an Error object to the reject() function for user-defined errors in Promises.
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:34]
+ 1 │ new Promise(function (...rest) { (rest[1])(5); });
+   ·                                  ────────────
+   ╰────
+  help: Only pass an Error object to the reject() function for user-defined errors in Promises.
+
+  ⚠ eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error
+   ╭─[prefer_promise_reject_errors.tsx:1:34]
+ 1 │ new Promise(function (...rest) { ((rest[1]))(5); });
+   ·                                  ──────────────
+   ╰────
+  help: Only pass an Error object to the reject() function for user-defined errors in Promises.
