@@ -1611,9 +1611,7 @@ mod tests {
         crate::format::write(&mut buffer, Arguments::new(&[Argument::new(root)]));
 
         let elements = buffer.into_vec();
-        let document = Document::new(elements, Vec::default());
-        document.propagate_expand();
-        Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
+        Document::new(elements, Vec::default()).print(0, options).expect("Document to be valid")
     }
 
     #[test]

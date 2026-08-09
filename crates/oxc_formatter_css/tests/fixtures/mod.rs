@@ -70,7 +70,7 @@ impl FixtureFormatter for CssHarness {
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
 fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{Document, FormatElement, FormatOptions, Printer, TextWidth};
+    use oxc_formatter_core::{Document, FormatElement, FormatOptions, TextWidth};
 
     let allocator = Allocator::default();
     let session =
@@ -79,14 +79,11 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         &session, source, options, /* template_placeholders */ true,
     )
     .expect("format should succeed");
-    let document = Document::new(embedded.ir, Vec::new());
-    document.propagate_expand();
-    let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
     // Simulate the host: replace each typed placeholder with the canonical
     // sentinel (the real host substitutes `${expr}`; tests have no expressions).
     // The printer `debug_assert`s on any surviving `EmbedPlaceholder`.
     let elements = ArenaVec::from_iter_in(
-        elements.iter().map(|element| match element {
+        embedded.ir.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
                 let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
                 FormatElement::Text {
@@ -97,13 +94,11 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
             other => other.clone(),
         }),
         &session.allocator(),
-    )
-    .into_arena_slice();
-    let mut code =
-        Printer::with_capacity(source.len(), options.as_print_options(), &tailwind_classes)
-            .print(elements)
-            .expect("print should succeed")
-            .into_code();
+    );
+    let mut code = Document::new(elements, Vec::new())
+        .print(source.len(), options.as_print_options())
+        .expect("print should succeed")
+        .into_code();
     // The embedded entry point emits no trailing newline (the parent owns it);
     // add one so snapshots stay diff-friendly.
     code.push('\n');

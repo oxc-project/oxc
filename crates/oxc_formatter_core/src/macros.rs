@@ -304,7 +304,7 @@ macro_rules! dbg_write {
 ///
 /// [crate::BestFitting] acts as an expansion boundary:
 /// an expanding element inside a variant never expands the groups enclosing the [crate::BestFitting]
-/// (see [crate::Document::propagate_expand]), it is the ONLY boundary;
+/// (see `Document::propagate_expand`), it is the ONLY boundary;
 /// conditional content tags are transparent to propagation.
 ///
 /// [`Flat`]: crate::format_element::PrintMode::Flat

@@ -35,16 +35,17 @@ fn main() {
     match format_to_ir(&session, &source_text, options, /* template_placeholders */ true) {
         Ok(embedded) => {
             let document = Document::new(embedded.ir, Vec::new());
-            if std::env::var("DUMP_IR").is_ok() {
-                // Show the finalized IR (`Document::print` would re-propagate; it's idempotent).
-                document.propagate_expand();
-                for el in document.elements() {
-                    eprintln!("{el:?}");
-                }
-            }
+            // `elements` borrows the arena (not the document) and group modes are `Cell`s,
+            // so after `print` finalizes, the slice shows the finalized IR.
+            let elements = std::env::var("DUMP_IR").is_ok().then(|| document.elements());
             match document.print(source_text.len(), options.as_print_options()) {
                 Ok(printed) => println!("{}", printed.into_code()),
                 Err(err) => eprintln!("Print error: {err:?}"),
+            }
+            if let Some(elements) = elements {
+                for el in elements {
+                    eprintln!("{el:?}");
+                }
             }
         }
         Err(diagnostic) => eprintln!("Parse error: {diagnostic:?}"),

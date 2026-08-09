@@ -53,7 +53,7 @@ impl<'a> Document<'a> {
     }
 
     /// Finalizes and prints the document: propagates group expansion once
-    /// ([`Self::propagate_expand`]) and hands the elements to the [`Printer`].
+    /// (`Self::propagate_expand`) and hands the elements to the `Printer`.
     ///
     /// The single home of the finalize-once-then-print sequence:
     /// [`crate::Formatted::print`] and standalone raw-IR consumers
@@ -95,7 +95,7 @@ impl Document<'_> {
     /// [`BestFitting`]'s content expands is not propagated past the [`BestFitting`] element.
     ///
     /// [`BestFitting`]: FormatElement::BestFitting
-    pub fn propagate_expand(&self) {
+    pub(crate) fn propagate_expand(&self) {
         #[derive(Debug)]
         enum Enclosing<'a> {
             Group(&'a tag::Group),

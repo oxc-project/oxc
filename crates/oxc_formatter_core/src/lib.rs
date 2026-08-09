@@ -26,7 +26,7 @@ mod formatter;
 mod group_id;
 mod macros;
 mod options;
-pub mod printer;
+mod printer;
 mod session;
 mod simple_context;
 mod source;
@@ -65,7 +65,10 @@ pub use options::{
     CoreFormatOptions, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
     LineWidthFromIntError, ParseFormatNumberError,
 };
-pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
+pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};
+// `Printer` stays crate-internal: `Document::print` / `print_with_indent` are the only print entries,
+// which is what makes print-without-finalize unrepresentable outside core.
+pub(crate) use printer::Printer;
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source::{SourceText, SpanCursor};
