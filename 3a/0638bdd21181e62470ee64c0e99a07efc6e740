@@ -1,0 +1,31 @@
+Cargo.lock
+  s_5da6562f606377::t_22eca8b9887867 1850
+tasks/ast_generator_fuzz/Cargo.toml
+  s_5da6562f606377::t_42738c2a7995df 23
+tasks/ast_generator_fuzz/src/lib.rs
+  s_3c7a5db6237378::t_ba5a1b99b47cac 3-8,16,24-25,27-30,40-73,99,108-109,113,125-160,179-210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3a0638bdd21181e62470ee64c0e99a07efc6e740",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_5da6562f606377": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb028-4c3a-7d30-b26f-5154cdc35e58",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
