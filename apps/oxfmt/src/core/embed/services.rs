@@ -1,6 +1,6 @@
 //! Root `SessionServices` assembly: [`for_root`] builds the build's default service set,
 //! installed by every session-taking root (JS / CSS / Vue-Svelte script; a future Markdown host too).
-//! One name, one definition per build; the napi one additionally takes the `ExternalFormatter` transport.
+//! One name, one definition per build; the napi one additionally takes the `ExternalServices` transport.
 //!
 //! "Which languages may dispatch at all from this host" is the host crate's own gate
 //! (e.g. the CSS crate's front matter gate dispatches only `yaml` / `toml`), not a concern here;
@@ -17,7 +17,7 @@ use oxc_formatter_core::TailwindSorter;
 use tracing::debug_span;
 
 #[cfg(feature = "napi")]
-use crate::core::ExternalFormatter;
+use crate::core::ExternalServices;
 
 use super::dispatcher::ResolvedDispatchConfig;
 
@@ -55,7 +55,7 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
 /// per-language options are mapped lazily at dispatch time (see [`ResolvedDispatchConfig`]).
 ///
 /// This is the assembly point only: closure factories live in `embed::{prettier_string, dispatcher, prettier_doc}`,
-/// and the napi callback `Arc`s come from the transport ([`ExternalFormatter`]).
+/// and the napi callback `Arc`s come from the transport ([`ExternalServices`]).
 ///
 /// NOTE: Tailwind data paths
 /// `sort_tailwindcss_classes` is wired into THREE distinct callback slots,
@@ -82,7 +82,7 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
 /// `DispatchResult::into_doc` folds the merge into doc consumption; the printer `debug_assert` backstops it.
 #[cfg(feature = "napi")]
 pub fn for_root(
-    external_formatter: &ExternalFormatter,
+    external_services: &ExternalServices,
     dispatch_config: &Arc<ResolvedDispatchConfig>,
 ) -> SessionServices {
     let needs_embedded = dispatch_config.is_embedded_formatting_enabled();
@@ -91,14 +91,14 @@ pub fn for_root(
     let fallback = needs_embedded.then(|| {
         super::prettier_doc::build_prettier_fallback(
             Arc::clone(dispatch_config),
-            Arc::clone(&external_formatter.format_embedded_doc),
+            Arc::clone(&external_services.format_embedded_doc),
         )
     });
 
     // The ONE pre-bound Tailwind sorter (options JSON applied here, once);
     // the string embedder receives a clone of the same sorter for fence-collected classes.
     let sorter = dispatch_config.is_tailwind_enabled().then(|| {
-        let sort = Arc::clone(&external_formatter.sort_tailwindcss_classes);
+        let sort = Arc::clone(&external_services.sort_tailwindcss_classes);
         let dispatch_config = Arc::clone(dispatch_config);
         Arc::new(move |classes: Vec<String>| {
             debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
@@ -108,7 +108,7 @@ pub fn for_root(
 
     let string_embedder = needs_embedded.then(|| {
         super::prettier_string::build_string_embedder(
-            Arc::clone(&external_formatter.format_embedded),
+            Arc::clone(&external_services.format_embedded),
             sorter.clone(),
             Arc::clone(dispatch_config),
         )

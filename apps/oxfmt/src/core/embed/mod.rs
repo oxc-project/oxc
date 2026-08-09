@@ -31,9 +31,9 @@ pub mod services;
 // --- Cross-module callback types ---
 //
 // These describe the shape of the napi-wrapped callbacks the orchestration builders consume.
-// NOTE: They live here (not in `external_formatter`),
+// NOTE: They live here (not in `external_services`),
 // so the `prettier_doc` / `prettier_string` factories stay independent of the napi boundary.
-// `external_formatter` is the producer of these types via its `wrap_*` functions, and orchestration is the consumer.
+// `external_services` is the producer of these types via its `wrap_*` functions, and orchestration is the consumer.
 
 /// Callback function type for formatting embedded code with config.
 /// Takes (options, code) and returns formatted code or an error.

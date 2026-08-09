@@ -1,9 +1,9 @@
 //! Transport between napi-rs `ThreadsafeFunction`s and plain Rust callback shapes;
 //! no assembly logic (the napi `SessionServices` profiles live in `core::embed::services`).
 //!
-//! [`ExternalFormatter`] wraps the JS callbacks as `Arc<dyn Fn>`s (private `wrap_*` helpers), serving:
-//! - [`ExternalFormatter::init`]: JS-side worker-pool setup
-//! - [`ExternalFormatter::format_file`]: Tier 3/4 whole-file delegation (`core::format`)
+//! [`ExternalServices`] wraps the JS callbacks as `Arc<dyn Fn>`s (private `wrap_*` helpers), serving:
+//! - [`ExternalServices::init`]: JS-side worker-pool setup
+//! - [`ExternalServices::format_file`]: Tier 3/4 whole-file delegation (`core::format`)
 //! - the embed callback `Arc`s (`format_embedded` / `format_embedded_doc` / `sort_tailwindcss_classes`),
 //!   consumed by the `core::embed::services` profiles
 
@@ -28,9 +28,9 @@ use crate::core::embed::{
 pub type FormatFileWithConfigCallback =
     Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
 
-/// Type alias for the init external formatter callback function signature.
+/// Type alias for the init external services callback function signature.
 /// Takes num_threads as argument; signals JS to perform any one-time setup before formatting.
-pub type JsInitExternalFormatterCb = ThreadsafeFunction<
+pub type JsInitExternalServicesCb = ThreadsafeFunction<
     // Input arguments
     FnArgs<(u32,)>, // (num_threads,)
     // Return type (what JS function returns)
@@ -110,7 +110,7 @@ pub type JsSortTailwindClassesCb = ThreadsafeFunction<
 /// only read from the Option (common path), while only `cleanup()` needs write access.
 #[derive(Clone)]
 struct TsfnHandles {
-    init: Arc<RwLock<Option<JsInitExternalFormatterCb>>>,
+    init: Arc<RwLock<Option<JsInitExternalServicesCb>>>,
     format_file: Arc<RwLock<Option<JsFormatFileCb>>>,
     format_embedded: Arc<RwLock<Option<JsFormatEmbeddedCb>>>,
     format_embedded_doc: Arc<RwLock<Option<JsFormatEmbeddedDocCb>>>,
@@ -128,25 +128,26 @@ impl TsfnHandles {
     }
 }
 
-/// Callback function type for init external formatter.
+/// Callback function type for init external services.
 /// Takes num_threads.
-type InitExternalFormatterCallback = Arc<dyn Fn(usize) -> Result<(), String> + Send + Sync>;
+type InitExternalServicesCallback = Arc<dyn Fn(usize) -> Result<(), String> + Send + Sync>;
 
-/// External formatter that wraps a JS callback.
+/// Transport handle to the JS-side services (Prettier formatting, Tailwind sorting),
+/// each wrapped as a plain Rust callback.
 #[derive(Clone)]
-pub struct ExternalFormatter {
+pub struct ExternalServices {
     /// Handles to raw ThreadsafeFunctions for explicit cleanup
     handles: TsfnHandles,
-    pub init: InitExternalFormatterCallback,
+    pub init: InitExternalServicesCallback,
     pub format_file: FormatFileWithConfigCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
     pub format_embedded_doc: FormatEmbeddedDocWithConfigCallback,
     pub sort_tailwindcss_classes: TailwindWithConfigCallback,
 }
 
-impl std::fmt::Debug for ExternalFormatter {
+impl std::fmt::Debug for ExternalServices {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ExternalFormatter")
+        f.debug_struct("ExternalServices")
             .field("init", &"<callback>")
             .field("format_file", &"<callback>")
             .field("format_embedded", &"<callback>")
@@ -156,8 +157,8 @@ impl std::fmt::Debug for ExternalFormatter {
     }
 }
 
-impl ExternalFormatter {
-    /// Create an [`ExternalFormatter`] from JS callbacks.
+impl ExternalServices {
+    /// Create an [`ExternalServices`] from JS callbacks.
     ///
     /// The ThreadsafeFunctions are wrapped in `Arc<Mutex<Option<...>>>` to allow
     /// explicit cleanup via the `cleanup()` method. This prevents use-after-free
@@ -184,7 +185,7 @@ impl ExternalFormatter {
             sort_tailwind: Arc::clone(&sort_tailwind_handle),
         };
 
-        let rust_init = wrap_init_external_formatter(init_handle);
+        let rust_init = wrap_init_external_services(init_handle);
         let rust_format_file = wrap_format_file(format_file_handle);
         let rust_format_embedded = wrap_format_embedded(Arc::clone(&format_embedded_handle));
         let rust_format_embedded_doc = wrap_format_embedded_doc(format_embedded_doc_handle);
@@ -201,7 +202,7 @@ impl ExternalFormatter {
 
     /// Attach the init callback. Only paths that own a JS-side worker pool (CLI/LSP/Stdin) need this;
     /// the Node.js API path constructs without it and never calls [`Self::init`].
-    pub fn with_init_cb(self, init_cb: JsInitExternalFormatterCb) -> Self {
+    pub fn with_init_cb(self, init_cb: JsInitExternalServicesCb) -> Self {
         *self.handles.init.write().unwrap() = Some(init_cb);
         self
     }
@@ -215,7 +216,7 @@ impl ExternalFormatter {
         self.handles.cleanup();
     }
 
-    /// Initialize external formatter using the JS callback.
+    /// Initialize the JS-side services (worker pool) using the JS callback.
     pub fn init(&self, num_threads: usize) -> Result<(), String> {
         debug_span!("oxfmt::external::init", num_threads = num_threads)
             .in_scope(|| (self.init)(num_threads))
@@ -229,8 +230,8 @@ impl ExternalFormatter {
 
     #[cfg(test)]
     pub fn dummy() -> Self {
-        // Currently, LSP tests are implemented in Rust, while our external formatter relies on JS.
-        // Therefore, just provides a dummy external formatter that consistently returns errors.
+        // Currently, LSP tests are implemented in Rust, while the external services rely on JS.
+        // Therefore, just provides a dummy that consistently returns errors.
         Self {
             handles: TsfnHandles {
                 init: Arc::new(RwLock::new(None)),
@@ -264,10 +265,10 @@ impl ExternalFormatter {
 // Therefore, `block_in_place()` is used at the call site
 // to temporarily convert the current async task into a blocking context.
 
-/// Wrap JS `initExternalFormatter` callback as a normal Rust function.
-fn wrap_init_external_formatter(
-    cb_handle: Arc<RwLock<Option<JsInitExternalFormatterCb>>>,
-) -> InitExternalFormatterCallback {
+/// Wrap JS `initExternalServices` callback as a normal Rust function.
+fn wrap_init_external_services(
+    cb_handle: Arc<RwLock<Option<JsInitExternalServicesCb>>>,
+) -> InitExternalServicesCallback {
     Arc::new(move |num_threads: usize| {
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {

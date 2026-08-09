@@ -244,7 +244,7 @@ pub enum FormatResult {
 pub struct SourceFormatter {
     allocator_pool: AllocatorPool,
     #[cfg(feature = "napi")]
-    external_formatter: Option<super::ExternalFormatter>,
+    external_services: Option<super::ExternalServices>,
 }
 
 impl SourceFormatter {
@@ -252,7 +252,7 @@ impl SourceFormatter {
         Self {
             allocator_pool: AllocatorPool::new(num_of_threads),
             #[cfg(feature = "napi")]
-            external_formatter: None,
+            external_services: None,
         }
     }
 
@@ -262,7 +262,7 @@ impl SourceFormatter {
     fn root_services(&self, dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionServices {
         #[cfg(feature = "napi")]
         {
-            super::embed::services::for_root(self.external_formatter(), dispatch_config)
+            super::embed::services::for_root(self.external_services(), dispatch_config)
         }
         #[cfg(not(feature = "napi"))]
         {
@@ -608,19 +608,19 @@ impl SourceFormatter {
 #[cfg(feature = "napi")]
 impl SourceFormatter {
     #[must_use]
-    pub fn with_external_formatter(
+    pub fn with_external_services(
         mut self,
-        external_formatter: Option<super::ExternalFormatter>,
+        external_services: Option<super::ExternalServices>,
     ) -> Self {
-        self.external_formatter = external_formatter;
+        self.external_services = external_services;
         self
     }
 
-    /// The napi transport, installed by [`Self::with_external_formatter`] before any format run.
-    fn external_formatter(&self) -> &super::ExternalFormatter {
-        self.external_formatter
+    /// The napi transport, installed by [`Self::with_external_services`] before any format run.
+    fn external_services(&self) -> &super::ExternalServices {
+        self.external_services
             .as_ref()
-            .expect("`external_formatter` must exist when `napi` feature is enabled")
+            .expect("`external_services` must exist when `napi` feature is enabled")
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).
@@ -651,8 +651,8 @@ impl SourceFormatter {
             inject_svelte_plugin_payload(&mut external_options, config);
         }
 
-        self.external_formatter().format_file(external_options, source_text).map_err(|err| {
-            // NOTE: We are trying to make the error from oxc_formatter(_xxx) and external_formatter (Prettier) look similar.
+        self.external_services().format_file(external_options, source_text).map_err(|err| {
+            // NOTE: We are trying to make the error from oxc_formatter(_xxx) and external_services (Prettier) look similar.
             // Ideally, we would unify them into `OxcDiagnostic`, which would eliminate the need for relative path conversion.
             // However, doing so would require:
             // - Parsing Prettier's error messages
@@ -674,7 +674,7 @@ impl SourceFormatter {
 
 /// The JS root's session wiring (registry dispatcher installed / off-gate honored),
 /// which the registry-level tests in `embed::dispatcher` cannot see.
-/// The napi build runs on `ExternalFormatter::dummy()` (native branches never call JS).
+/// The napi build runs on `ExternalServices::dummy()` (native branches never call JS).
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -693,7 +693,7 @@ mod tests {
         let formatter = SourceFormatter::new(1);
         #[cfg(feature = "napi")]
         let formatter =
-            formatter.with_external_formatter(Some(crate::core::ExternalFormatter::dummy()));
+            formatter.with_external_services(Some(crate::core::ExternalServices::dummy()));
         match formatter.format(source, strategy) {
             FormatResult::Success { code, .. } => code,
             FormatResult::Error(errors) => panic!("format failed: {errors:?}"),

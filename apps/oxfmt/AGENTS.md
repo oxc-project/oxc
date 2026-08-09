@@ -52,13 +52,13 @@ Routing is ONE table (`dispatcher::route`): `Native` languages (css/graphql/yaml
 Vocabulary: "fallback" = the dispatcher's optional `PrettierDocFallback` slot (a build/root may not install one); "recovery" = the html-in-js after-failure string rescue.
 The pure Rust build runs fallback-less, so non-native embeds (html-in-js, TOML/custom front matter) deliberately stay verbatim.
 
-Three roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalFormatter` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS and CSS file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Vue/Svelte `<script>` root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
+Three roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS and CSS file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Vue/Svelte `<script>` root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
 
 Which languages may dispatch AT ALL from a given host is the host crate's own gate (e.g. `oxc_formatter_css` dispatches only `yaml`/`toml` front matter); the shared `route()` table then decides who serves the language. Adding a dispatch call to a host crate is therefore a routing decision (check `route()` and the embedded conformance when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
 `embeddedLanguageFormatting: off` installs no dispatcher, every builder consults the same off-gate, `ResolvedDispatchConfig::is_embedded_formatting_enabled`.
 Tracing span namespaces: `oxfmt::embed::` = pure Rust work, `oxfmt::external::` = napi-crossing calls.
 
-Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
+Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_services.rs` bridges the napi callbacks into these factories.
 
 A separate string-out channel (the session's `string_embedder` service, NOT the dispatcher) carries the string-in/string-out consumers:
 
