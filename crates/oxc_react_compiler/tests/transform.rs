@@ -70,6 +70,31 @@ fn memoizes_a_component_end_to_end() {
 }
 
 #[test]
+fn allows_ref_access_in_a_returned_event_handler() {
+    let source = "\
+function Component({ onChange, onInput }) {\n\
+  const lastValue = useRef(\"\");\n\
+  const wrappedEvent = (callback) => (event) => {\n\
+    const text = event.currentTarget.textContent || \"\";\n\
+    if (text !== lastValue.current) {\n\
+      lastValue.current = text;\n\
+      onChange?.(text);\n\
+    }\n\
+    callback?.(event);\n\
+  };\n\
+  return <div onInput={wrappedEvent(onInput)} />;\n\
+}\n";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should compile; diagnostics: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
+}
+
+#[test]
 fn preserves_manual_memoization_guarantees() {
     let source = "\
 import { useCallback, useMemo } from 'react';

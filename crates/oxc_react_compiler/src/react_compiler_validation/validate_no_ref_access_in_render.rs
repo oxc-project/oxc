@@ -238,13 +238,16 @@ impl Env {
         self.changed
     }
 
+    fn operand_id(&self, key: IdentifierId) -> IdentifierId {
+        self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key)
+    }
+
     fn get(&self, key: IdentifierId) -> Option<&RefAccessType> {
-        let operand_id = self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key);
-        self.data.get(&operand_id)
+        self.data.get(&self.operand_id(key))
     }
 
     fn set(&mut self, key: IdentifierId, value: RefAccessType) {
-        let operand_id = self.temporaries.get(&key).map(|p| p.identifier).unwrap_or(key);
+        let operand_id = self.operand_id(key);
         let current = self.data.get(&operand_id);
         let widened_value = join_ref_access_types(&value, current.unwrap_or(&RefAccessType::None));
         if current.is_none() && widened_value == RefAccessType::None {
@@ -751,9 +754,18 @@ fn validate_no_ref_access_in_render_impl(
                                 if let Some(ref effects) = instr.effects {
                                     /*
                                      * For non-hook functions with known aliasing effects,
-                                     * use the effects to determine what validation to apply.
+                                     * use the effects for actual call operands to determine
+                                     * what validation to apply. Oxc effects may also contain
+                                     * transitive captures that flow into a returned function;
+                                     * those values were not passed to the call and are safe to
+                                     * capture for later invocation.
                                      * Track visited id:kind pairs to avoid duplicate errors.
                                      */
+                                    let operand_ids: FxHashSet<IdentifierId> =
+                                        canonical_each_instruction_value_operand(&instr.value, env)
+                                            .iter()
+                                            .map(|place| ref_env.operand_id(place.identifier))
+                                            .collect();
                                     let mut visited_effects: FxHashSet<String> =
                                         FxHashSet::default();
                                     for effect in effects {
@@ -807,6 +819,8 @@ fn validate_no_ref_access_in_render_impl(
                                         };
                                         if let Some(place) = place
                                             && validation != "none"
+                                            && operand_ids
+                                                .contains(&ref_env.operand_id(place.identifier))
                                         {
                                             let key = format!(
                                                 "{}:{}",
