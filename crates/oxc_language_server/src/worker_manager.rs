@@ -12,7 +12,7 @@ use tower_lsp_server::{
 use tracing::debug;
 
 use crate::{
-    capabilities::DiagnosticMode, file_system::ResolvedPath, tool::ToolBuilder,
+    ClientMessage, capabilities::DiagnosticMode, file_system::ResolvedPath, tool::ToolBuilder,
     worker::WorkspaceWorker,
 };
 
@@ -97,13 +97,18 @@ impl WorkerManager {
 
     // ── Starting / Stopping ───────────────────────────────────────────────────────
 
+    /// Start the manager with the given workers and diagnostic mode.
+    ///
+    /// On dynamic workspaces, this will also start a worker for the root URI `file:///` with the given diagnostic mode.
+    /// It can return an optional [`ClientMessage`] that should be sent to the client.
+    ///
     /// # Panics
     /// If `file:///` cannot be converted to `Uri`, which should never happen.
     pub async fn start_manager(
         &self,
         workers: Vec<WorkspaceWorker>,
         diagnostic_mode: DiagnosticMode,
-    ) {
+    ) -> Option<ClientMessage> {
         *self.workers.write().await = workers;
 
         // for dynamic workspaces we need to start them manually
@@ -118,10 +123,14 @@ impl WorkerManager {
                 Arc::clone(&self.tool_builder),
                 diagnostic_mode,
             );
-            worker.start_worker(serde_json::Value::Null).await;
+            let client_message = worker.start_worker(serde_json::Value::Null).await;
 
             let _ = cell.set(worker);
+
+            return client_message;
         }
+
+        None
     }
 
     /// Shut down all workers and clear the worker list.
@@ -359,26 +368,28 @@ impl WorkerManager {
         uri: &Uri,
         diagnostic_mode: DiagnosticMode,
         dynamic_watchers: bool,
-    ) -> Option<Registration> {
+    ) -> (Option<Registration>, Option<ClientMessage>) {
         // Bail out immediately if we are not in single-file mode.
         if !self.is_single_file_mode() {
-            return None;
+            return (None, None);
         }
 
-        let parent_uri = Self::get_parent_dir_uri(uri)?;
+        let Some(parent_uri) = Self::get_parent_dir_uri(uri) else {
+            return (None, None);
+        };
 
         // Fast path: avoid a write lock when a suitable worker already exists.
         {
             let workers = self.workers.read().await;
             if Self::find_worker_for_uri(&workers, uri).is_some() {
-                return None;
+                return (None, None);
             }
         }
 
         debug!("single file mode: creating workspace worker for {}", parent_uri.as_str());
         let worker =
             WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builder), diagnostic_mode);
-        worker.start_worker(Value::Null).await;
+        let client_message = worker.start_worker(Value::Null).await;
         let registration = if dynamic_watchers { worker.init_watchers().await } else { None };
 
         // Acquire the write lock to insert the worker.  Re-check both the mode
@@ -400,10 +411,10 @@ impl WorkerManager {
         // the caller that no new registrations are needed.
         if let Some(discarded) = worker {
             discarded.shutdown().await;
-            return None;
+            return (None, None);
         }
 
-        registration
+        (registration, client_message)
     }
 
     /// In single-file mode, shut down and remove the [`WorkspaceWorker`] whose
