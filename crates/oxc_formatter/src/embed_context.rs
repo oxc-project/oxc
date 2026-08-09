@@ -12,14 +12,14 @@
 /// it is JS↔CSS pair-specific, and `oxc_formatter` must never depend on language crates.
 pub struct CssInJsTemplate;
 
-/// Child→parent metadata for HTML/Angular formatted as an embedded child.
+/// Child→parent pair context for HTML/Angular formatted as an embedded child.
 ///
 /// NOTE: This lives here permanently, NOT in a future HTML formatter crate:
 /// the consumer is this crate's `embed/html.rs` (the JS side of html-in-js),
 /// and `oxc_formatter` must never depend on language crates. Cross-language
 /// contract fields (placeholder counts, Tailwind classes) are first-class on
 /// `DispatchResult` in `oxc_formatter_core` instead; only what is truly
-/// specific to the JS↔HTML pair stays here as `dyn Any` metadata.
+/// specific to the JS↔HTML pair travels as the `dyn Any` child context.
 pub struct HtmlEmbedMeta {
     /// Whether the parsed HTML has more than one root element.
     /// Used to decide whether to `indent` the template content.

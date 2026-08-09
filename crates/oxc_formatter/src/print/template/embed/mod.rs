@@ -148,7 +148,7 @@ fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
 /// (`InputKind::Fragment` + the `into_doc` Tailwind merge in one place,
 /// so an embed site cannot re-derive the pair and skip the merge).
 /// `None` covers `PreserveOriginal` and operational errors alike,
-/// the caller keeps the template as-is (the html sites stay manual: they read `meta` first).
+/// the caller keeps the template as-is (the html sites stay manual: they read `child_context` first).
 pub(super) fn dispatch_fragment_ir<'a>(
     f: &mut JsFormatter<'_, 'a>,
     language: &str,

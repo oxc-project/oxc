@@ -28,7 +28,9 @@ pub struct DispatchRequest<'r> {
     /// Envelope semantics of the child input, as declared by the host.
     pub input_kind: InputKind,
     /// Parent→child language-pair specific data,
-    /// downcast by the implementation (`None` for most pairs).
+    /// downcast by the implementation (`None` for most pairs; e.g. JS's `CssInJsTemplate`).
+    /// The borrowed counterpart of [`DispatchResult::child_context`]
+    /// (borrowed because the parent outlives the dispatch call).
     pub parent_context: Option<&'r dyn Any>,
 }
 
@@ -81,7 +83,7 @@ pub struct EmbeddedIr<'a> {
 /// carrying the child's Tailwind classes through (hand-rolling the literal invites silently dropping them).
 impl<'a> From<EmbeddedIr<'a>> for DispatchResult<'a> {
     fn from(embedded: EmbeddedIr<'a>) -> Self {
-        Self { doc: embedded.ir, tailwind_classes: embedded.tailwind_classes, meta: None }
+        Self { doc: embedded.ir, tailwind_classes: embedded.tailwind_classes, child_context: None }
     }
 }
 
@@ -98,9 +100,11 @@ pub struct DispatchResult<'a> {
     /// The receiving parent MUST merge them into its own class space ([`Self::into_doc`] does);
     /// the printer's `debug_assert` catches a forgotten merge.
     pub tailwind_classes: Vec<String>,
-    /// Child→parent language-specific metadata; the parent downcasts it
-    /// (e.g. HTML's `has_multiple_root_elements`).
-    pub meta: Option<Box<dyn Any>>,
+    /// Child→parent language-pair specific data,
+    /// downcast by the parent (`None` for most pairs; e.g. HTML's `has_multiple_root_elements`).
+    /// The owned counterpart of [`DispatchRequest::parent_context`]
+    /// (owned because it outlives the child's stack frame).
+    pub child_context: Option<Box<dyn Any>>,
 }
 
 impl<'a> DispatchResult<'a> {

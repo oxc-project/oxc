@@ -62,9 +62,9 @@ pub(super) fn format_html_doc<'a>(
             return false;
         };
         let Some(html_has_multiple_root_elements) = result
-            .meta
+            .child_context
             .as_ref()
-            .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+            .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
             .map(|meta| meta.has_multiple_root_elements)
         else {
             return false;
@@ -145,9 +145,9 @@ pub(super) fn format_html_doc<'a>(
     };
 
     let Some(html_has_multiple_root_elements) = result
-        .meta
+        .child_context
         .as_ref()
-        .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+        .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
         .map(|meta| meta.has_multiple_root_elements)
     else {
         return false;

@@ -58,7 +58,7 @@ pub fn build_prettier_fallback(
                 )?;
                 from_prettier_doc::postprocess(&mut ir, allocator);
                 // HTML/Angular additionally surface `HtmlEmbedMeta` to the embed site.
-                let meta = language.wants_html_meta().then(|| {
+                let child_context = language.wants_html_meta().then(|| {
                     Box::new(HtmlEmbedMeta {
                         has_multiple_root_elements: metadata
                             .get("htmlHasMultipleRootElements")
@@ -68,7 +68,7 @@ pub fn build_prettier_fallback(
                 Ok(DispatchOutcome::Formatted(DispatchResult {
                     doc: ir,
                     tailwind_classes: Vec::new(),
-                    meta,
+                    child_context,
                 }))
             })
             .inspect_err(|err| {

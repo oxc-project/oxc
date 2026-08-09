@@ -247,7 +247,7 @@ mod tests {
             Ok(DispatchOutcome::Formatted(DispatchResult {
                 doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
                 tailwind_classes: Vec::new(),
-                meta: None,
+                child_context: None,
             }))
         });
         let session = FormatSession::with_services(
@@ -270,7 +270,7 @@ mod tests {
             Ok(DispatchOutcome::Formatted(DispatchResult {
                 doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
                 tailwind_classes: Vec::new(),
-                meta: None,
+                child_context: None,
             }))
         });
         let mut session = FormatSession::with_services(
