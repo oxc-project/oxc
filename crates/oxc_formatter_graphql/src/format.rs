@@ -62,8 +62,6 @@ pub fn format_to_ir<'a>(
     options: GraphqlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
-    // Input hygiene: embedded sources may carry a BOM; strip it, never re-emit.
-    let (_, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
@@ -80,8 +78,7 @@ pub fn format_to_ir<'a>(
 /// bailing out on any parse error.
 ///
 /// Copies the source into the arena so every slice taken from it carries `'a`.
-/// Entries own the BOM strip; a leading `\u{feff}` still reaching this point is content
-/// (e.g. a doubled BOM's second copy) and is the parser's to judge.
+/// Entries own the BOM strip; this layer assumes BOM-free (see [`oxc_formatter_core::spec::split_bom`]).
 fn parse_document<'a>(
     allocator: &'a Allocator,
     source_text: &str,

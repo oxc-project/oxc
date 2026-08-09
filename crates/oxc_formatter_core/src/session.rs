@@ -77,9 +77,14 @@ impl<'a> FormatSession<'a> {
 
     /// Formats one embedded-language request on a child session derived from this one.
     ///
-    /// See [`DispatchOutcome`] for the outcome-vs-`Err` contract; this method adds two rules:
-    /// no dispatcher installed (plain standalone run) counts as the deliberate
-    /// `Ok(DispatchOutcome::PreserveOriginal)`, and reaching `MAX_DISPATCH_DEPTH` is an `Err`.
+    /// See [`DispatchOutcome`] for the outcome-vs-`Err` contract; this method adds three rules:
+    /// - no dispatcher installed (plain standalone run) counts as the deliberat `Ok(DispatchOutcome::PreserveOriginal)`
+    /// - a request text starting with U+FEFF is deliberately preserved
+    ///   - in an embedded position it is content, not a BOM, formatting must not swallow it
+    ///   - and no child entry handles it
+    /// - reaching `MAX_DISPATCH_DEPTH`
+    ///
+    /// is an `Err`.
     ///
     /// The callback receives the derived child session;
     /// it must not create another `GroupId` space or bump the depth again.
@@ -90,11 +95,15 @@ impl<'a> FormatSession<'a> {
         let Some(dispatcher) = &self.dispatcher else {
             return Ok(DispatchOutcome::PreserveOriginal);
         };
+        if request.texts.iter().any(|text| text.starts_with('\u{feff}')) {
+            return Ok(DispatchOutcome::PreserveOriginal);
+        }
         if self.dispatch_depth >= MAX_DISPATCH_DEPTH {
             return Err(format!(
                 "embedded dispatch exceeded the recursion limit ({MAX_DISPATCH_DEPTH})"
             ));
         }
+
         let child = self.derive_child(request.input_kind);
         dispatcher(&child, request)
     }
@@ -146,6 +155,25 @@ mod tests {
         let session = FormatSession::new(&allocator, InputKind::PhysicalFile, None);
 
         assert!(matches!(session.dispatch(request()), Ok(DispatchOutcome::PreserveOriginal)));
+    }
+
+    #[test]
+    fn dispatch_preserves_a_bom_headed_text() {
+        let allocator = Allocator::default();
+        let dispatcher: FormatDispatcher = Arc::new(|_ctx, _request| {
+            Ok(DispatchOutcome::Formatted(DispatchResult {
+                docs: Vec::new(),
+                tailwind_classes: Vec::new(),
+                meta: None,
+            }))
+        });
+        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, Some(dispatcher));
+
+        let bom_request = DispatchRequest { texts: &["a: 1", "\u{feff}a: 1"], ..request() };
+        assert!(matches!(session.dispatch(bom_request), Ok(DispatchOutcome::PreserveOriginal)));
+        // A non-leading U+FEFF is ordinary content and formats normally
+        let inner_request = DispatchRequest { texts: &["a: \u{feff}1"], ..request() };
+        assert!(matches!(session.dispatch(inner_request), Ok(DispatchOutcome::Formatted(_))));
     }
 
     #[test]

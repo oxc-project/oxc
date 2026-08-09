@@ -135,15 +135,6 @@ pub fn format_to_ir<'a>(
     let allocator = session.allocator();
     let input_kind = session.input_kind();
 
-    // A BOM marks a document this entry does not own: physical roots handle
-    // BOMs at `format_with_session`; an embedded input carrying one is refused
-    // wholesale (the host degrades to `PreserveOriginal`, keeping the part as-is).
-    if oxc_formatter_core::spec::split_bom(source_text).0 {
-        return Err(OxcDiagnostic::error(
-            "Embedded CSS input starts with a BOM; the part is preserved as-is",
-        ));
-    }
-
     let prepared = prepare_source(allocator, source_text);
     if prepared.front_matter.is_some() && input_kind != InputKind::VirtualDocument {
         // A fragment (css-in-js, JSDoc fence) never acquires file envelope semantics:
@@ -208,15 +199,19 @@ fn prepare_source<'a>(allocator: &'a Allocator, source_text: &str) -> PreparedSo
 /// Parse the (already normalized, front-matter-blanked) source into an AST
 /// and collect comments, bailing out on any error.
 ///
-/// `parse_source` comes from [`prepare_source`]; entries own the BOM strip,
-/// and a leading `\u{feff}` still reaching this point is content
-/// (e.g. a doubled BOM's second copy) and is the parser's to judge.
+/// `parse_source` comes from [`prepare_source`]; a leading `\u{feff}` can never
+/// arrive here (physical entries split the whole BOM run, `FormatSession::dispatch`
+/// preserves BOM-headed embedded inputs), and this parser needs that guarantee:
+/// `oxc-css-parser` strips a leading `\u{feff}` from the source itself, which
+/// would desync every span from the arena copy the printer slices.
 fn parse_stylesheet<'a>(
     allocator: &'a Allocator,
     parse_source: &'a str,
     options: CssFormatOptions,
     tolerate_placeholders: bool,
 ) -> Result<(Stylesheet<'a>, &'a [CssComment]), OxcDiagnostic> {
+    debug_assert!(!parse_source.starts_with('\u{feff}'), "callers must never pass a leading BOM");
+
     let mut parser = ParserBuilder::new(allocator, parse_source)
         .syntax(options.variant.to_css_syntax())
         .options(ParserOptions {
