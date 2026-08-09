@@ -183,6 +183,7 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
                 })
                 .collect();
         }
+        sort_imports.validate().expect("fixture `options.json` holds an invalid sortImports set");
         options.sort_imports = Some(sort_imports);
     }
 

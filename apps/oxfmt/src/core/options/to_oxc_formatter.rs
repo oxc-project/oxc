@@ -1,5 +1,3 @@
-use rustc_hash::FxHashSet;
-
 #[cfg(feature = "napi")]
 use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
@@ -13,10 +11,10 @@ use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 #[cfg(feature = "napi")]
 use super::super::oxfmtrc::SortTailwindcssUserConfig;
 use super::super::oxfmtrc::{
-    ArrowParensConfig, CommentLineStrategyConfig, CustomGroupItemConfig, FormatConfig,
-    HtmlWhitespaceSensitivityConfig, JsdocUserConfig, LineWrappingStyleConfig, ObjectWrapConfig,
-    QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig,
-    TrailingCommaConfig,
+    ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
+    ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
+    ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig,
+    SortOrderConfig, TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -136,12 +134,16 @@ pub fn to_oxc_formatter(
     format_options
 }
 
-/// Parse and validate `sortImports` into [`SortImportsOptions`].
+/// Derive [`SortImportsOptions`] from the resolved config;
+/// the gate ([`super::validate::validate()`]) runs it once, like `to_core_options`.
 ///
-/// If possible, all validations should happen when deserializing `Oxfmtrc`.
-/// However, these options become problematic depending on their combinations.
-/// Also, since it cannot be known until `overrides` are resolved, the validation is done here.
-/// the gate ([`super::validate::validate()`]) runs it once and hands the artifact to [`to_oxc_formatter()`].
+/// NOTE: Combination validity is a property of the resolved config
+/// (overrides deep-merge field-wise, so two individually valid configs can compose into an invalid one),
+/// which is why none of these checks can run at deserialize time.
+/// Each rule lives with its owner and this function only converts and invokes them:
+/// marker grammar on `SortGroupItemConfig` (the flat-list syntax's type),
+/// combination / reference invariants on `SortImportsOptions` (the formatter's type),
+/// enumerated values (selector / modifiers) at deserialize.
 ///
 /// # Errors
 /// Returns an error if the `sortImports` configuration is invalid.
@@ -178,84 +180,46 @@ pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImport
     if let Some(v) = sort_imports_config.internal_pattern {
         sort_imports.internal_pattern = v;
     }
-    // Validate and parse `customGroups` first, since `groups` may refer to custom group names.
     if let Some(v) = sort_imports_config.custom_groups {
-        let mut custom_groups = Vec::with_capacity(v.len());
-        for cg in v {
-            let CustomGroupItemConfig { group_name, element_name_pattern, .. } = cg;
-            let selector = match cg.selector.as_deref() {
-                Some(s) => match ImportSelector::parse(s) {
-                    Some(parsed) => Some(parsed),
-                    None => {
-                        return Err(format!(
-                            "Invalid `sortImports` configuration: unknown selector: `{s}` in customGroups: `{group_name}`"
-                        ));
-                    }
-                },
-                None => None,
-            };
-            let raw_modifiers = cg.modifiers.unwrap_or_default();
-            let mut modifiers = Vec::with_capacity(raw_modifiers.len());
-            for m in &raw_modifiers {
-                match ImportModifier::parse(m) {
-                    Some(parsed) => modifiers.push(parsed),
-                    None => {
-                        return Err(format!(
-                            "Invalid `sortImports` configuration: unknown modifier: `{m}` in customGroups: `{group_name}`"
-                        ));
-                    }
-                }
-            }
-            custom_groups.push(CustomGroupDefinition {
-                group_name,
-                element_name_pattern,
-                selector,
-                modifiers,
-            });
-        }
-        sort_imports.custom_groups = custom_groups;
+        sort_imports.custom_groups = v
+            .into_iter()
+            .map(|cg| CustomGroupDefinition {
+                group_name: cg.group_name,
+                element_name_pattern: cg.element_name_pattern,
+                selector: cg.selector.map(to_import_selector),
+                modifiers: cg
+                    .modifiers
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(to_import_modifier)
+                    .collect(),
+            })
+            .collect();
     }
     if let Some(v) = sort_imports_config.groups {
-        let custom_group_names: FxHashSet<&str> =
-            sort_imports.custom_groups.iter().map(|g| g.group_name.as_str()).collect();
+        SortGroupItemConfig::validate_markers(&v)
+            .map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
+
         let mut groups = Vec::new();
         let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
         let mut pending_override: Option<bool> = None;
-
         for item in v {
             match item {
                 SortGroupItemConfig::NewlinesBetween(marker) => {
-                    if groups.is_empty() {
-                        return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`".to_string());
-                    }
-                    if pending_override.is_some() {
-                        return Err("Invalid `sortImports` configuration: consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`".to_string());
-                    }
+                    // `validate_markers` ruled out leading/adjacent markers,
+                    // so no override can be pending here.
+                    debug_assert!(pending_override.is_none());
                     pending_override = Some(marker.newlines_between);
                 }
                 other => {
                     if !groups.is_empty() {
                         newline_boundary_overrides.push(pending_override.take());
                     }
-                    let mut entries = Vec::new();
-                    for name in other.into_vec() {
-                        let entry = GroupEntry::parse(&name);
-                        if let GroupEntry::Custom(ref n) = entry
-                            && !custom_group_names.contains(n.as_str())
-                        {
-                            return Err(format!(
-                                "Invalid `sortImports` configuration: unknown group name `{name}` in `groups`"
-                            ));
-                        }
-                        entries.push(entry);
-                    }
-                    groups.push(entries);
+                    groups.push(
+                        other.into_vec().iter().map(|name| GroupEntry::parse(name)).collect(),
+                    );
                 }
             }
-        }
-
-        if pending_override.is_some() {
-            return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string());
         }
 
         sort_imports.groups = groups;
@@ -265,6 +229,36 @@ pub(super) fn to_sort_imports(config: &FormatConfig) -> Result<Option<SortImport
     sort_imports.validate().map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
 
     Ok(Some(sort_imports))
+}
+
+/// Pure field translation (unknown values are rejected at deserialize time).
+fn to_import_selector(config: ImportSelectorConfig) -> ImportSelector {
+    match config {
+        ImportSelectorConfig::Type => ImportSelector::Type,
+        ImportSelectorConfig::SideEffectStyle => ImportSelector::SideEffectStyle,
+        ImportSelectorConfig::SideEffect => ImportSelector::SideEffect,
+        ImportSelectorConfig::Style => ImportSelector::Style,
+        ImportSelectorConfig::Index => ImportSelector::Index,
+        ImportSelectorConfig::Sibling => ImportSelector::Sibling,
+        ImportSelectorConfig::Parent => ImportSelector::Parent,
+        ImportSelectorConfig::Subpath => ImportSelector::Subpath,
+        ImportSelectorConfig::Internal => ImportSelector::Internal,
+        ImportSelectorConfig::Builtin => ImportSelector::Builtin,
+        ImportSelectorConfig::External => ImportSelector::External,
+        ImportSelectorConfig::Import => ImportSelector::Import,
+    }
+}
+
+/// Pure field translation (unknown values are rejected at deserialize time).
+fn to_import_modifier(config: ImportModifierConfig) -> ImportModifier {
+    match config {
+        ImportModifierConfig::SideEffect => ImportModifier::SideEffect,
+        ImportModifierConfig::Type => ImportModifier::Type,
+        ImportModifierConfig::Value => ImportModifier::Value,
+        ImportModifierConfig::Default => ImportModifier::Default,
+        ImportModifierConfig::Wildcard => ImportModifier::Wildcard,
+        ImportModifierConfig::Named => ImportModifier::Named,
+    }
 }
 
 /// Convert `jsdoc` into [`oxc_formatter::JsdocOptions`].
@@ -322,7 +316,7 @@ pub(super) fn to_jsdoc(config: &FormatConfig) -> Option<JsdocOptions> {
 
 #[cfg(test)]
 mod tests {
-    use oxc_formatter::{Expand, GroupName};
+    use oxc_formatter::{Expand, GroupEntry, GroupName};
 
     use super::super::validate::validate;
     use super::*;
@@ -331,6 +325,28 @@ mod tests {
     fn build(config: &FormatConfig) -> Result<JsFormatOptions, String> {
         let validated = validate(config)?;
         Ok(to_oxc_formatter(config, validated.core, validated.sort_imports))
+    }
+
+    /// The config enums mirror `oxc_formatter`'s (which deliberately carries no
+    /// serde/schemars dependency). A config-side variant without a formatter
+    /// counterpart cannot compile (the mapper match forces it), but a formatter-side
+    /// addition missing its mirror is silent — this round-trip turns that into a failure.
+    #[test]
+    fn config_enums_mirror_formatter_enums() {
+        for selector in ImportSelector::ALL_SELECTORS {
+            let config: ImportSelectorConfig =
+                serde_json::from_value(serde_json::json!(selector.name())).unwrap_or_else(|_| {
+                    panic!("selector `{}` is missing from ImportSelectorConfig", selector.name())
+                });
+            assert_eq!(to_import_selector(config), *selector);
+        }
+        for modifier in ImportModifier::ALL_MODIFIERS {
+            let config: ImportModifierConfig =
+                serde_json::from_value(serde_json::json!(modifier.name())).unwrap_or_else(|_| {
+                    panic!("modifier `{}` is missing from ImportModifierConfig", modifier.name())
+                });
+            assert_eq!(to_import_modifier(config), *modifier);
+        }
     }
 
     #[test]
