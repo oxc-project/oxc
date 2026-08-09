@@ -270,7 +270,7 @@ impl<'a> PeepholeOptimizations {
         match &mut s.body {
             Statement::BreakStatement(break_stmt)
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
-            Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
+            Statement::BlockStatement(block) if block.body.is_empty() || block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
             Statement::EmptyStatement(_) => {
                 let new_stmt = Statement::new_empty_statement(s.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);

@@ -1968,17 +1968,21 @@ impl<'a> PeepholeOptimizations {
                 false
             }
             // unlabeled `break;` that terminates a `do...while` body if test is false.
-            Statement::BreakStatement(stmt) if stmt.label.is_none() => {
+            Statement::BreakStatement(stmt) => {
                 for (index, ancestor) in ctx.ancestors().enumerate() {
                     match ancestor {
                         Ancestor::DoWhileStatementBody(do_while) => {
-                            return do_while.test().get_side_free_boolean_value(ctx) == Some(false);
+                            return stmt.label.is_none()
+                                && do_while.test().get_side_free_boolean_value(ctx) == Some(false);
                         }
                         Ancestor::BlockStatementBody(_)
                             if skip_first_transparent_body && index == 0 => {}
-                        Ancestor::IfStatementConsequent(_)
-                        | Ancestor::IfStatementAlternate(_)
-                        | Ancestor::LabeledStatementBody(_) => {}
+                        Ancestor::LabeledStatementBody(label_stmt) => {
+                            if let Some(label) = &stmt.label {
+                                return label.name == label_stmt.label().name;
+                            }
+                        }
+                        Ancestor::IfStatementConsequent(_) | Ancestor::IfStatementAlternate(_) => {}
                         _ => return false,
                     }
                 }

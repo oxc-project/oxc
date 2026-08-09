@@ -2,12 +2,12 @@ use crate::{test, test_same};
 
 #[test]
 fn test_break_optimization() {
-    test("f:{if(true){a();break f;}else;b();}", "f:{a();break f}"); // f:a();
-    test("f:{if(false){a();break f;}else;b();break f;}", "f:{b();break f}"); // f:b();
+    test("f:{if(true){a();break f;}else;b();}", "f:a();");
+    test("f:{if(false){a();break f;}else;b();break f;}", "f:b();");
     test("f:{if(a()){b();break f;}else;c();}", "f:{if(a()){b();break f}c()}"); // f:a()?b():c();
-    test("f:{if(a()){b()}else{c();break f;}}", "f:if(a())b();else{c();break f}"); // f:a()?b():c();
-    test("f:{if(a()){b();break f;}else;}", "f:if(a()){b();break f}"); // f:a()&&b();
-    test("f:{if(a()){break f;}else;}", "f:if(a())break f;"); // f:a();
+    test("f:{if(a()){b()}else{c();break f;}}", "f:a()?b():c();");
+    test("f:{if(a()){b();break f;}else;}", "f:a()&&b();");
+    test("f:{if(a()){break f;}else;}", "f:a();");
 
     test("f:while(a())break f;", "f:for(;a();)break f;");
     test_same("f:for(x in a())break f");
@@ -25,7 +25,8 @@ fn test_break_optimization() {
     test("f:g:{if(a()){break f;}else{break f;} break f;}", "f:g:{if(a())break f;break f}"); // f:g:a();
     test("function f() { a: break a; }", "function f() {}");
     test("function f() { a: { break a; } }", "function f() {}");
-    test_same("function f() { a: { b(); break a; } c(); }");
+    test("function f() { a: { b(); break a; } c(); }", "function f() { a: b(); c(); }");
+    test_same("function f() { a: { b(); break b; } c(); }");
     test_same("function f() { a: { b(); return; } c(); }");
 }
 
