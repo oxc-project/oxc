@@ -22,3 +22,7 @@ export { getBufferOffset, parseRaw, parseRawSync }
 `;
 
 fs.writeFileSync(filename, data);
+
+const browserFilename = "./src-js/parser.wasip1-browser.js";
+const browser = fs.readFileSync(browserFilename, "utf-8").replaceAll(/[ \t]+$/gmu, "");
+fs.writeFileSync(browserFilename, browser);

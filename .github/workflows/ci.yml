@@ -176,7 +176,9 @@ jobs:
         if: steps.filter.outputs.changed == 'true'
         run: |
           rustup target add wasm32-wasip1-threads
+          rustup target add wasm32-wasip1
           pnpm run build-wasm-dev
+          pnpm run build-wasip1-dev
           git diff --exit-code # Must commit everything
       - name: Test wasi in browser
         if: steps.filter.outputs.changed == 'true'

@@ -81,6 +81,10 @@ jobs:
             build: pnpm build-wasm
 
           - os: ubuntu-latest
+            target: wasm32-wasip1
+            build: pnpm build-wasip1
+
+          - os: ubuntu-latest
             target: s390x-unknown-linux-gnu
             build: |
               export CFLAGS="-fuse-ld=lld"
