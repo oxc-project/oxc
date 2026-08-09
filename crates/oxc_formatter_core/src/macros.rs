@@ -183,7 +183,7 @@ macro_rules! dbg_write {
 ///     ]
 /// )?;
 ///
-/// let document = formatted.into_document();
+/// let document = formatted.into_final_document();
 ///
 /// // Takes the first variant if everything fits on a single line
 /// assert_eq!(
@@ -263,7 +263,7 @@ macro_rules! dbg_write {
 ///     ]
 /// )?;
 ///
-/// let document = formatted.into_document();
+/// let document = formatted.into_final_document();
 ///
 /// assert_eq!(
 ///     "expect(a).toMatch([\n\t1,\n\t2,\n\t3\n])",
