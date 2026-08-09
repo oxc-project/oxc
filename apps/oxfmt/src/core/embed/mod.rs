@@ -4,14 +4,15 @@
 //! (`FormatSession`, `FormatDispatcher`, `DispatchRequest`/`DispatchOutcome`, `TailwindCollector`);
 //! this module is its concrete counterpart owned by the orchestrator (Oxfmt).
 //!
-//! - [`dispatcher`] (every build): the native registry — `ResolvedDispatchConfig`
-//!   (lazy per-language options) + `build_dispatcher` with a Rust branch per `NativeLanguage`;
+//! - [`dispatcher`] (every build):
+//!   the routing table (`route`: one function answering "which formatter serves this language?"),
+//!   `ResolvedDispatchConfig` (lazy per-language options) + `build_dispatcher` with a Rust branch per `NativeLanguage`;
 //!   IR integrates into the parent's arena / `GroupId` space
-//! - [`fence`] (every build): the JSDoc native-fence string adapter over the registry,
-//!   plus the pure build's root `SessionServices` assembly (`session_services`)
-//! - [`prettier_fallback`] (napi only): Prettier Doc→IR path for the rest
-//! - [`string_channel`] (napi only): the Prettier string paths of the string-out channel
-//!   (md/html/angular JSDoc fences + the html-in-js fallback; results re-embed line-by-line)
+//! - [`services`] (every build): the root `SessionServices` assembly (`for_root`, one definition per build)
+//! - [`fence`] (every build): the JSDoc native-fence string adapter over the registry
+//! - [`prettier_doc`] (napi only): Prettier Doc→IR path for the `Route::Prettier` set
+//! - [`prettier_string`] (napi only): the Prettier string paths of the string-out channel
+//!   (md/html/angular JSDoc fences + the html-in-js string recovery; results re-embed line-by-line)
 
 #[cfg(feature = "napi")]
 use std::sync::Arc;
@@ -22,24 +23,17 @@ use serde_json::Value;
 pub mod dispatcher;
 pub mod fence;
 #[cfg(feature = "napi")]
-pub mod prettier_fallback;
+pub mod prettier_doc;
 #[cfg(feature = "napi")]
-pub mod string_channel;
+pub mod prettier_string;
+pub mod services;
 
 // --- Cross-module callback types ---
 //
 // These describe the shape of the napi-wrapped callbacks the orchestration builders consume.
-// They live here (not in `external_formatter`)
-// so the `prettier_fallback` / `string_channel` factories stay independent of the napi boundary.
-// `external_formatter` is the producer of these types via its `wrap_*` functions,
-// and orchestration is the consumer.
-
-/// Callback function type for formatting files with config.
-/// Takes (options, code) and returns formatted code or an error.
-/// The `options` Value is owned and includes `parser` and `filepath` set by the caller.
-#[cfg(feature = "napi")]
-pub type FormatFileWithConfigCallback =
-    Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
+// NOTE: They live here (not in `external_formatter`),
+// so the `prettier_doc` / `prettier_string` factories stay independent of the napi boundary.
+// `external_formatter` is the producer of these types via its `wrap_*` functions, and orchestration is the consumer.
 
 /// Callback function type for formatting embedded code with config.
 /// Takes (options, code) and returns formatted code or an error.
@@ -59,28 +53,3 @@ pub type FormatEmbeddedDocWithConfigCallback =
 /// The `filepath` is included in `options`.
 #[cfg(feature = "napi")]
 pub type TailwindWithConfigCallback = Arc<dyn Fn(&Value, Vec<String>) -> Vec<String> + Send + Sync>;
-
-// --- Shared language → Prettier parser mapping ---
-
-/// Mapping from language identifiers to Prettier `parser` names.
-/// This is the single source of truth for embedded languages that can still
-/// reach Prettier; languages fully served by a Rust crate are absent
-/// (css/scss/less and graphql/gql — both the dispatcher branches and the
-/// string channel format them in Rust before this map, with no fallback).
-///
-/// Language identifiers come from two sources:
-/// - xxx-in-js `(Tagged)TemplateLiteral` (`embed/*.rs`)
-/// - JSDoc fenced code blocks (`jsdoc/mdast_serialize/`)
-///
-/// NOTE: these identifiers happen to overlap with some Prettier parser names,
-/// but `oxc_formatter` treats them as generic language names.
-/// This function is the only place that maps them to Prettier-specific parsers.
-#[cfg(feature = "napi")]
-pub fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
-    match language {
-        "html" => Some("html"),
-        "angular" => Some("angular"),
-        "markdown" | "md" => Some("markdown"),
-        _ => None,
-    }
-}

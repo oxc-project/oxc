@@ -12,8 +12,10 @@ use oxc_span::SourceType;
 use crate::{
     core::{
         EmbeddedCallbackResolved, ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb,
-        JsFormatFileCb, JsSortTailwindClassesCb, embed::dispatcher::ResolvedDispatchConfig,
-        oxfmtrc::FormatConfig, resolve_for_embedded_js,
+        JsFormatFileCb, JsSortTailwindClassesCb,
+        embed::{self, dispatcher::ResolvedDispatchConfig},
+        oxfmtrc::FormatConfig,
+        resolve_for_embedded_js,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -137,7 +139,7 @@ fn run_full(
     // are mapped lazily at dispatch time; `core` was validated during resolution.
     let dispatch_config = ResolvedDispatchConfig::for_root(&config, core, &parent_filepath);
 
-    let services = external_formatter.session_services(&dispatch_config);
+    let services = embed::services::for_root(&external_formatter, &dispatch_config);
 
     let allocator = Allocator::default();
     let session = FormatSession::with_services(
