@@ -819,7 +819,7 @@ fn js_parser_test() {
     );
     test(
         "function _() { if (a) x: { if (b) break x } else return c }",
-        "function _() { if (a) { x: if (b) break x;} else return c; }",
+        "function _() { if (a) x: b; else return c; }",
     );
     test(
         "function _() { let a = foo(); return a != null ? a.b : undefined }",
@@ -2283,7 +2283,7 @@ fn test_remove_dead_expr_other() {
     test("if (1) a(); else { let b }", "a();");
     test("if (1) a(); else { throw b }", "a();");
     test("if (1) a(); else { return b }", "a();");
-    test("b: { if (x) a(); else { break b } }", "b: if (x) a(); else break b;");
+    test("b: { if (x) a(); else { break b } }", "b: x && a();");
     // test("b: { if (1) a(); else { break b } }", "a();");
     test("b: { if (0) a(); else { break b } }", "");
     test(
