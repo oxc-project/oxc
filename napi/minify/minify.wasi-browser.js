@@ -2,7 +2,7 @@ import {
   emnapiAsyncWorkPlugin as __emnapiAsyncWorkPlugin,
   emnapiTSFNPlugin as __emnapiTSFNPlugin,
   createOnMessage as __wasmCreateOnMessageForFsProxy,
-  instantiateNapiModuleSync as __emnapiInstantiateNapiModuleSync,
+  instantiateNapiModule as __emnapiInstantiateNapiModule,
   WASI as __WASI,
 } from '@napi-rs/wasm-runtime'
 import { createContext as __emnapiCreateContext } from '@emnapi/runtime'
@@ -32,6 +32,11 @@ const __sharedMemory = new WebAssembly.Memory({
   maximum: 65536,
   shared: true,
 })
+const __asyncWorkPoolSize = 4
+const __workerPoolSize = Math.max(
+  2,
+  globalThis.navigator?.hardwareConcurrency ?? 4,
+)
 
 let __emnapiContext
 
@@ -304,9 +309,10 @@ try {
     instance: __napiInstance,
     module: __wasiModule,
     napiModule: __napiModule,
-  } = __emnapiInstantiateNapiModuleSync(__wasmFile, {
+  } = await __emnapiInstantiateNapiModule(__wasmFile, {
     context: __emnapiContext,
-    asyncWorkPoolSize: 4,
+    asyncWorkPoolSize: __asyncWorkPoolSize,
+    reuseWorker: { size: __asyncWorkPoolSize + __workerPoolSize },
     plugins: [__emnapiAsyncWorkPlugin, __emnapiTSFNPlugin],
     wasi: __wasi,
     onCreateWorker() {
