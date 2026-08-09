@@ -5,7 +5,8 @@ use std::borrow::Cow;
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
-    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatState, ScratchBuffer,
+    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatSession, FormatState,
+    ScratchBuffer,
     buffer::HeapVecBuffer,
     builders::{FillBuilder, JoinBuilder},
     format::{Format, write},
@@ -54,6 +55,11 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
 
     pub fn allocator(&self) -> &'ast Allocator {
         self.state().allocator()
+    }
+
+    /// The [`FormatSession`] this format run executes under.
+    pub fn session(&self) -> &FormatSession<'ast> {
+        self.state().session()
     }
 
     /// Returns the Context specifying how to format the current CST

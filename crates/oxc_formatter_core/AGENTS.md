@@ -73,7 +73,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - All generic over the context `C`, consumers add a `C` bound only on `impl` blocks
   - Not on struct definitions, and typically define a `type FooFormatter<…> = Formatter<…, FooContext<…>>` alias to keep lifetimes aligned
 
-### Embedded-language infrastructure (`embedded.rs`)
+### Embedded-language infrastructure (`embedded.rs`, `session.rs`)
 
 `EmbeddedContext` / `FormatDispatcher` / `DispatchResult` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
@@ -85,6 +85,10 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
 - Consumers access `DispatchResult.docs` directly (single-doc takes `docs.into_iter().next()`, multi-doc walks `docs`)
   - Call `DispatchResult::remap_tailwind_into` first when the child may carry classes, the printer's `debug_assert` catches a forgotten merge
+- `FormatSession` (`session.rs`) is the successor execution unit:
+  - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the dispatcher, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
+  - `FormatState` holds one (`new_with_session`; plain `new` wraps a dispatcher-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write.
+  - `EmbeddedContext` remains as a migration adapter until every entry point is session-aware
 
 ## What belongs in core (the boundary)
 
