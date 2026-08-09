@@ -225,6 +225,36 @@ describe("JSDoc", () => {
     );
   });
 
+  it("should format embedded languages inside a fenced js block", async () => {
+    // The JS snippet formats on the parent session, so xxx-in-js inside the fence dispatch like anywhere else
+    // (upstream formats these too: formatCode runs prettier.format, whose embed pass applies).
+    const source = `
+/**
+ * \`\`\`js
+ * const s = css\`a{color:  red}\`;
+ * \`\`\`
+ */
+export const a = 1;
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`js
+ * const s = css\`
+ *   a {
+ *     color: red;
+ *   }
+ * \`;
+ * \`\`\`
+ */
+export const a = 1;
+`.trimStart(),
+    );
+  });
+
   it("should keep fenced code verbatim for languages outside the registry", async () => {
     const source = `
 /**

@@ -199,8 +199,7 @@ impl<'a> FormatSession<'a> {
     }
 
     /// The string channel service ([`StringEmbedder`]), when this run installs one.
-    /// (A handle rather than an invoking method: the JSDoc serializer threads it
-    /// through session-less layers; see the alias for the `Err`-means-verbatim contract.)
+    /// (A handle rather than an invoking method; see the alias for the `Err`-means-verbatim contract.)
     pub fn string_embedder(&self) -> Option<&StringEmbedder> {
         self.services.string_embedder.as_ref()
     }

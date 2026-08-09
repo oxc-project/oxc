@@ -759,22 +759,21 @@ fn format_code_value<'a>(
     width: usize,
     opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
-    if let (Some(format_options), Some(allocator)) = (opts.format_options, opts.allocator) {
-        // For fenced code with an explicit non-JS/TS lang, try external formatter (CSS, HTML, etc.)
-        if let Some(l) = lang
-            && !is_js_ts_lang(l)
+    // For fenced code with an explicit non-JS/TS lang, try external formatter (CSS, HTML, etc.)
+    if let Some(l) = lang
+        && !is_js_ts_lang(l)
+    {
+        if let Some(embed) = opts.session.string_embedder()
+            && let Ok(formatted) = embed(l, code, width)
         {
-            if let Some(embed) = opts.string_embedder
-                && let Ok(formatted) = embed(l, code, width)
-            {
-                return Cow::Owned(formatted);
-            }
-            return Cow::Borrowed(code);
-        }
-        // Fenced JS/TS, fenced with no lang, or indented code: try formatting
-        if let Some(formatted) = format_jsdoc_js_snippet(code, width, format_options, allocator) {
             return Cow::Owned(formatted);
         }
+        return Cow::Borrowed(code);
+    }
+    // Fenced JS/TS, fenced with no lang, or indented code: try formatting
+    if let Some(formatted) = format_jsdoc_js_snippet(code, width, opts.format_options, opts.session)
+    {
+        return Cow::Owned(formatted);
     }
     Cow::Borrowed(code)
 }
