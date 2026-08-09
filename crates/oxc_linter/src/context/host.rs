@@ -8,10 +8,11 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, ArenaBox};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_parser::Token;
 use oxc_semantic::Semantic;
-use oxc_span::{SourceType, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
@@ -20,7 +21,7 @@ use crate::{
         plugins::plugin_display_name,
     },
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
-    fixer::{Fix, FixKind, Message, PossibleFixes},
+    fixer::{Fix, FixKind, IgnoreFixContext, Message, PossibleFixes},
     frameworks::FrameworkOptions,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -49,6 +50,8 @@ pub struct ContextSubHost<'a> {
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
+    /// Whether eslint-style disable directives are respected.
+    respect_eslint_disable_directives: bool,
 }
 
 impl<'a> ContextSubHost<'a> {
@@ -82,6 +85,7 @@ impl<'a> ContextSubHost<'a> {
             disable_directives,
             framework_options: options.framework_options,
             parser_tokens: options.parser_tokens,
+            respect_eslint_disable_directives: options.respect_eslint_disable_directives,
         }
     }
 
@@ -105,6 +109,10 @@ impl<'a> ContextSubHost<'a> {
     /// Shared reference to the [`FrameworkOptions`]
     pub fn framework_options(&self) -> FrameworkOptions {
         self.framework_options
+    }
+
+    fn respect_eslint_disable_directives(&self) -> bool {
+        self.respect_eslint_disable_directives
     }
 }
 
@@ -319,7 +327,17 @@ impl<'a> ContextHost<'a> {
     pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
         if self.with_ignore_fixes {
             let source_text = self.semantic().source_text();
-            diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
+            let context = if self.source_type().is_jsx() {
+                self.jsx_ignore_fix_context(diagnostic.span)
+            } else {
+                IgnoreFixContext::JavaScript
+            };
+            diagnostic.add_ignore_fix(
+                self.current_sub_host().source_text_offset,
+                source_text,
+                context,
+                self.current_sub_host().respect_eslint_disable_directives(),
+            );
         }
         if self.current_sub_host().source_text_offset != 0 {
             diagnostic.move_offset(self.current_sub_host().source_text_offset);
@@ -327,12 +345,104 @@ impl<'a> ContextHost<'a> {
         self.diagnostics.borrow_mut().push(diagnostic);
     }
 
+    fn jsx_ignore_fix_context(&self, diagnostic_span: Span) -> IgnoreFixContext {
+        let nodes = self.semantic().nodes();
+        let source_text = self.semantic().source_text().as_bytes();
+        let Some((node_id, node)) = nodes
+            .iter_enumerated()
+            .filter(|(_, node)| node.kind().span().contains_inclusive(diagnostic_span))
+            .min_by_key(|(_, node)| {
+                let span = node.kind().span();
+                span.end - span.start
+            })
+        else {
+            return IgnoreFixContext::JavaScript;
+        };
+
+        let mut child_offset = None;
+        let mut in_attribute = false;
+        let mut expression_offset = None;
+        for kind in std::iter::once(node.kind()).chain(nodes.ancestor_kinds(node_id)) {
+            match kind {
+                // A same-line attribute diagnostic still needs a JSX comment before its child
+                // element. Discard the expression-container anchor and keep walking to it.
+                AstKind::JSXAttribute(_) => {
+                    child_offset = None;
+                    in_attribute = true;
+                }
+                AstKind::JSXSpreadAttribute(spread) => {
+                    child_offset = None;
+                    in_attribute = true;
+                    expression_offset = Some(spread.argument.span().start);
+                }
+                AstKind::JSXText(text) => {
+                    child_offset.get_or_insert(text.span.start);
+                }
+                AstKind::JSXSpreadChild(spread) => {
+                    child_offset = Some(spread.span.start);
+                }
+                AstKind::JSXExpressionContainer(container) => {
+                    let container_start = container.span.start as usize;
+                    let diagnostic_start = diagnostic_span.start as usize;
+                    if source_text
+                        .get(container_start..diagnostic_start)
+                        .is_some_and(|prefix| prefix.contains(&b'\n') || prefix.contains(&b'\r'))
+                    {
+                        // Later lines inside `{...}` are JavaScript and need a normal comment.
+                        return IgnoreFixContext::JavaScript;
+                    }
+                    expression_offset = Some(container.span.start + 1);
+                    // Anchor before the expression container, not a JSX element nested inside
+                    // its JavaScript expression.
+                    child_offset = Some(container.span.start);
+                }
+                AstKind::JSXClosingElement(closing) => {
+                    child_offset.get_or_insert(closing.span.start);
+                }
+                AstKind::JSXElement(element) => {
+                    if in_attribute {
+                        let element_start = element.span.start as usize;
+                        let diagnostic_start = diagnostic_span.start as usize;
+                        if source_text.get(element_start..diagnostic_start).is_some_and(|prefix| {
+                            prefix.contains(&b'\n') || prefix.contains(&b'\r')
+                        }) {
+                            return expression_offset.map_or(
+                                IgnoreFixContext::Unavailable,
+                                IgnoreFixContext::JsxExpression,
+                            );
+                        }
+                        in_attribute = false;
+                        expression_offset = None;
+                    }
+                    if let Some(child_offset) = child_offset {
+                        return IgnoreFixContext::JsxChild(child_offset);
+                    }
+                    child_offset = Some(element.span.start);
+                }
+                AstKind::JSXFragment(fragment) => {
+                    if let Some(child_offset) = child_offset {
+                        return IgnoreFixContext::JsxChild(child_offset);
+                    }
+                    child_offset = Some(fragment.span.start);
+                }
+                _ => {}
+            }
+        }
+
+        IgnoreFixContext::JavaScript
+    }
+
     // Append a list of diagnostics. Only used in report_unused_directives.
     fn append_diagnostics(&self, mut diagnostics: Vec<Message>) {
         if self.with_ignore_fixes {
             let source_text = self.semantic().source_text();
             for diagnostic in &mut diagnostics {
-                diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
+                diagnostic.add_ignore_fix(
+                    self.current_sub_host().source_text_offset,
+                    source_text,
+                    IgnoreFixContext::JavaScript,
+                    self.current_sub_host().respect_eslint_disable_directives(),
+                );
             }
         }
         if self.current_sub_host().source_text_offset != 0 {
@@ -555,5 +665,212 @@ impl<'a> ContextHost<'a> {
 impl<'a> From<ContextHost<'a>> for Vec<Message> {
     fn from(ctx_host: ContextHost<'a>) -> Self {
         ctx_host.diagnostics.into_inner()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+
+    use super::*;
+
+    fn byte_offset(source: &str, needle: &str) -> u32 {
+        u32::try_from(source.find(needle).unwrap()).unwrap()
+    }
+
+    fn with_tsx_host(source: &str, f: impl FnOnce(&ContextHost<'_>)) {
+        let allocator = Allocator::default();
+        let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
+        assert!(parser_ret.diagnostics.is_empty());
+        let program = allocator.alloc(parser_ret.program);
+        let semantic = SemanticBuilder::new_linter().build(program).semantic;
+        let host = ContextHost::new(
+            "test.tsx",
+            vec![ContextSubHost::new(
+                semantic,
+                Arc::new(ModuleRecord::default()),
+                0,
+                ContextSubHostOptions::default(),
+            )],
+            &allocator,
+            LintOptions { with_ignore_fixes: true, ..LintOptions::default() },
+            Arc::default(),
+        );
+        f(&host);
+    }
+
+    #[test]
+    fn jsx_child_offset_finds_same_line_nested_element() {
+        let source = "const node = <div><button onClick={submit} role=\"button\" /></div>;";
+        let start = byte_offset(source, "<button");
+        let end = byte_offset(source, "/></div>") + 2;
+
+        with_tsx_host(source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::new(start, end)),
+                IgnoreFixContext::JsxChild(start)
+            );
+        });
+    }
+
+    #[test]
+    fn jsx_child_offset_distinguishes_children_from_attributes() {
+        let child_source = "const node = <div>{foo}</div>;";
+        let child_error = byte_offset(child_source, "foo");
+        let child_offset = byte_offset(child_source, "{foo}");
+        with_tsx_host(child_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(child_error, 3)),
+                IgnoreFixContext::JsxChild(child_offset)
+            );
+        });
+
+        let attribute_source = "const node = <div value={foo} />;";
+        let attribute_error = byte_offset(attribute_source, "foo");
+        with_tsx_host(attribute_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(attribute_error, 3)),
+                IgnoreFixContext::JavaScript
+            );
+        });
+
+        let nested_attribute_source = "const node = <Parent>\n  <Child value={foo} />\n</Parent>;";
+        let nested_attribute_error = byte_offset(nested_attribute_source, "foo");
+        let nested_child_offset = byte_offset(nested_attribute_source, "<Child");
+        with_tsx_host(nested_attribute_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(nested_attribute_error, 3)),
+                IgnoreFixContext::JsxChild(nested_child_offset)
+            );
+        });
+
+        let multiline_expression_source = "const node = <div>{foo &&\n  bar}</div>;";
+        let multiline_expression_error = byte_offset(multiline_expression_source, "bar");
+        with_tsx_host(multiline_expression_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(multiline_expression_error, 3)),
+                IgnoreFixContext::JavaScript
+            );
+        });
+
+        let multiline_attribute_source =
+            "const node = <Parent>\n  <Child\n    value={foo}\n  />\n</Parent>;";
+        let multiline_attribute_error = byte_offset(multiline_attribute_source, "foo");
+        with_tsx_host(multiline_attribute_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(multiline_attribute_error, 3)),
+                IgnoreFixContext::JsxExpression(multiline_attribute_error)
+            );
+        });
+
+        let spread_attribute_source =
+            "const node = <Parent>\n  <Child\n    {...props}\n  />\n</Parent>;";
+        let spread_attribute_error = byte_offset(spread_attribute_source, "props");
+        with_tsx_host(spread_attribute_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(spread_attribute_error, 5)),
+                IgnoreFixContext::JsxExpression(spread_attribute_error)
+            );
+        });
+
+        let string_attribute_source =
+            "const node = <Parent>\n  <Child\n    value=\"foo\"\n  />\n</Parent>;";
+        let string_attribute_error = byte_offset(string_attribute_source, "foo");
+        with_tsx_host(string_attribute_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(string_attribute_error, 3)),
+                IgnoreFixContext::Unavailable
+            );
+        });
+    }
+
+    #[test]
+    fn jsx_child_offset_handles_closing_tags_and_spread_children() {
+        let closing_source = "const node = <div>\n</div>;";
+        let closing_offset = byte_offset(closing_source, "</div>");
+        with_tsx_host(closing_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(closing_offset, 6)),
+                IgnoreFixContext::JsxChild(closing_offset)
+            );
+        });
+
+        let spread_source = "const node = <div>\n  {...foo}\n</div>;";
+        let spread_error = byte_offset(spread_source, "foo");
+        let spread_offset = byte_offset(spread_source, "{...foo}");
+        with_tsx_host(spread_source, |host| {
+            assert_eq!(
+                host.jsx_ignore_fix_context(Span::sized(spread_error, 3)),
+                IgnoreFixContext::JsxChild(spread_offset)
+            );
+        });
+    }
+
+    #[test]
+    fn push_diagnostic_adds_valid_jsx_ignore_fix() {
+        let source = "const node = (\n  <>\n    <p>Another child</p>\n    <div\n      onClick={() => history.redirect('/')}\n      role=\"link\"\n    />\n  </>\n);";
+        let element_start = byte_offset(source, "<div");
+        let element_end = byte_offset(source, "/>\n  </>") + 2;
+        let line_start = byte_offset(source, "    <div");
+
+        with_tsx_host(source, |host| {
+            host.push_diagnostic(Message::new(
+                OxcDiagnostic::warn("interactive element must be focusable")
+                    .with_error_code("jsx-a11y", "interactive-supports-focus")
+                    .with_label(Span::new(element_start, element_end)),
+                PossibleFixes::None,
+            ));
+
+            let diagnostics = host.take_diagnostics();
+            let PossibleFixes::Multiple(fixes) = &diagnostics[0].fixes else {
+                panic!("expected line and section ignore fixes");
+            };
+            assert_eq!(fixes.len(), 2);
+            assert_eq!(
+                fixes[0].content,
+                "    {/* oxlint-disable-next-line jsx-a11y/interactive-supports-focus */}\n"
+            );
+            assert_eq!(fixes[0].span, Span::empty(line_start));
+            assert_eq!(fixes[0].kind, FixKind::IgnoreFix);
+        });
+    }
+
+    #[test]
+    fn push_diagnostic_adds_effective_multiline_jsx_attribute_ignore_fix() {
+        let source = "const node = (\n  <div\n    value={foo}\n  />\n);";
+        let error_start = byte_offset(source, "foo");
+
+        with_tsx_host(source, |host| {
+            host.push_diagnostic(Message::new(
+                OxcDiagnostic::warn("undefined variable")
+                    .with_error_code("eslint", "no-undef")
+                    .with_label(Span::sized(error_start, 3)),
+                PossibleFixes::None,
+            ));
+
+            let diagnostics = host.take_diagnostics();
+            let PossibleFixes::Multiple(fixes) = &diagnostics[0].fixes else {
+                panic!("expected line and section ignore fixes");
+            };
+            assert_eq!(fixes.len(), 2);
+            assert_eq!(fixes[0].content, "\n      // oxlint-disable-next-line no-undef\n      ");
+            assert_eq!(fixes[0].span, Span::empty(error_start));
+
+            let mut fixed = source.to_string();
+            fixed.insert_str(fixes[0].span.start as usize, &fixes[0].content);
+
+            let allocator = Allocator::default();
+            let parser_ret = Parser::new(&allocator, &fixed, SourceType::tsx()).parse();
+            assert!(parser_ret.diagnostics.is_empty());
+            let program = allocator.alloc(parser_ret.program);
+            let semantic = SemanticBuilder::new_linter().build(program).semantic;
+            let directives = DisableDirectivesBuilder::new().build(&fixed, semantic.comments());
+            let shifted_error_start = error_start + u32::try_from(fixes[0].content.len()).unwrap();
+            assert!(directives.contains("no-undef", Span::sized(shifted_error_start, 3)));
+        });
     }
 }
