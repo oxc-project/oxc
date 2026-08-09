@@ -19,7 +19,7 @@ use super::options::{
     inject_tailwind_plugin_payload, to_prettier,
 };
 use super::{
-    embed::dispatcher::{ResolvedDispatchConfig, build_dispatcher},
+    embed::dispatcher::ResolvedDispatchConfig,
     options::{
         ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
         to_oxc_formatter_json, to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
@@ -38,17 +38,15 @@ use super::{
 #[derive(Debug)]
 pub enum FormatStrategy {
     /// For JS/TS files formatted by oxc_formatter.
-    /// `config` is retained so embedded callbacks (e.g., xxx-in-js) can lazily
-    /// derive Prettier options at callback time.
+    /// `config` + `core` build the dispatch config for the root's session
+    /// (native xxx-in-js in every build, plus the napi embedded callbacks / Tailwind).
     OxcFormatter {
         path: Arc<Path>,
         source_type: SourceType,
         format_options: Box<JsFormatOptions>,
-        #[cfg(feature = "napi")]
         config: Arc<FormatConfig>,
         /// The validated core bundle, carried from resolution so dispatch-config
         /// construction never re-derives (or re-fails) it.
-        #[cfg(feature = "napi")]
         core: CoreFormatOptions,
         insert_final_newline: bool,
     },
@@ -165,9 +163,7 @@ impl FormatStrategy {
                     core,
                     validated.sort_imports.clone(),
                 )),
-                #[cfg(feature = "napi")]
                 config: Arc::new(config),
-                #[cfg(feature = "napi")]
                 core,
                 insert_final_newline,
             },
@@ -279,9 +275,7 @@ impl SourceFormatter {
                 path,
                 source_type,
                 format_options,
-                #[cfg(feature = "napi")]
                 config,
-                #[cfg(feature = "napi")]
                 core,
                 insert_final_newline,
             } => (
@@ -290,9 +284,7 @@ impl SourceFormatter {
                     &path,
                     source_type,
                     *format_options,
-                    #[cfg(feature = "napi")]
                     &config,
-                    #[cfg(feature = "napi")]
                     core,
                 ),
                 insert_final_newline,
@@ -396,8 +388,10 @@ impl SourceFormatter {
         }
     }
 
-    /// Format JS/TS source code using `oxc_formatter`.
-    /// `config` is needed to derive Prettier options for embedded callbacks (xxx-in-js, Tailwind).
+    /// Format JS/TS source code using `oxc_formatter` on a `PhysicalFile` session
+    /// carrying the registry dispatcher in every build
+    /// (fallback-less without napi, so non-native embeds stay verbatim);
+    /// the napi build adds the Prettier Doc→IR fallback and the string-channel callbacks.
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter", skip_all)]
     fn format_by_oxc_formatter(
         &self,
@@ -405,22 +399,28 @@ impl SourceFormatter {
         path: &Path,
         source_type: SourceType,
         format_options: JsFormatOptions,
-        #[cfg(feature = "napi")] config: &Arc<FormatConfig>,
-        #[cfg(feature = "napi")] core: CoreFormatOptions,
+        config: &Arc<FormatConfig>,
+        core: CoreFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
+        let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
 
         #[cfg(feature = "napi")]
-        let (external_callbacks, dispatcher) = {
-            let (callbacks, dispatcher) =
-                self.build_external_callbacks(&format_options, config, core, path);
-            (Some(callbacks), dispatcher)
+        let (external_callbacks, fallback) = {
+            let (callbacks, fallback) = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled")
+                .to_external_callbacks(&format_options, &dispatch_config);
+            (Some(callbacks), Some(fallback))
         };
+        // No Prettier fallback, but JSDoc native fences still format
+        // (the string-out channel's build-independent half).
         #[cfg(not(feature = "napi"))]
-        let (external_callbacks, dispatcher) = {
-            let _ = path;
-            (None, None)
-        };
+        let (external_callbacks, fallback) =
+            (Some(super::embed::fence::build_external_callbacks(&dispatch_config)), None);
+
+        let dispatcher = dispatch_config.root_dispatcher(fallback);
 
         let session = FormatSession::new(&allocator, InputKind::PhysicalFile, dispatcher);
         let formatted = oxc_formatter::format_with_session(
@@ -535,14 +535,8 @@ impl SourceFormatter {
         config: &Arc<FormatConfig>,
         core: CoreFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
-        let dispatch_config = ResolvedDispatchConfig::new(Arc::clone(config), core);
-        #[cfg(feature = "napi")]
-        let dispatch_config = dispatch_config.with_path(path.to_path_buf());
-        let dispatch_config = Arc::new(dispatch_config);
-
-        let dispatcher = config
-            .is_embedded_formatting_enabled()
-            .then(|| build_dispatcher(Arc::clone(&dispatch_config), None));
+        let dispatch_config = ResolvedDispatchConfig::for_root(config, core, path);
+        let dispatcher = dispatch_config.root_dispatcher(None);
 
         #[cfg(feature = "napi")]
         let sorter = self.tailwind_sorter(config, &dispatch_config);
@@ -646,33 +640,6 @@ impl SourceFormatter {
         })
     }
 
-    /// Build external callbacks for `oxc_formatter` from the NAPI external formatter.
-    ///
-    /// Tailwind is always considered "capable" here because `oxc_formatter` embeds the sorter internally;
-    /// the inject helper itself decides whether to fire based on user config.
-    /// Also returns the `FormatDispatcher` for the JS root's `FormatSession`
-    /// (`None` when `embeddedLanguageFormatting: off`; the gate is owned by `ExternalFormatter::to_external_callbacks`).
-    fn build_external_callbacks(
-        &self,
-        format_options: &JsFormatOptions,
-        config: &Arc<FormatConfig>,
-        core: CoreFormatOptions,
-        path: &Path,
-    ) -> (oxc_formatter::ExternalCallbacks, Option<oxc_formatter_core::FormatDispatcher>) {
-        let external_formatter = self
-            .external_formatter
-            .as_ref()
-            .expect("`external_formatter` must exist when `napi` feature is enabled");
-
-        // Per-language options are mapped lazily at dispatch time;
-        // `core` is the validated bundle carried on the strategy since resolution.
-        let dispatch_config = Arc::new(
-            ResolvedDispatchConfig::new(Arc::clone(config), core).with_path(path.to_path_buf()),
-        );
-
-        external_formatter.to_external_callbacks(format_options, &dispatch_config)
-    }
-
     /// Format non-JS/TS file using external formatter (Prettier).
     ///
     /// Plugin payloads are injected based on capability flags & user config.
@@ -724,5 +691,74 @@ impl SourceFormatter {
             };
             OxcDiagnostic::error(message)
         })
+    }
+}
+
+/// The JS root's session wiring (registry dispatcher installed / off-gate honored),
+/// which the registry-level tests in `embed::dispatcher` cannot see.
+/// The napi build runs on `ExternalFormatter::dummy()` (native branches never call JS).
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::{
+        options::validate,
+        oxfmtrc::{EmbeddedLanguageFormattingConfig, JsdocUserConfig},
+    };
+
+    fn format_ts(config: FormatConfig, source: &str) -> String {
+        let validated = validate(&config).expect("default-ish config must validate");
+        let kind = FileKind::OxcFormatter {
+            path: Arc::from(Path::new("test.ts")),
+            source_type: SourceType::ts(),
+        };
+        let strategy = FormatStrategy::from_format_config(config, &validated, kind);
+        let formatter = SourceFormatter::new(1);
+        #[cfg(feature = "napi")]
+        let formatter =
+            formatter.with_external_formatter(Some(crate::core::ExternalFormatter::dummy()));
+        match formatter.format(source, strategy) {
+            FormatResult::Success { code, .. } => code,
+            FormatResult::Error(errors) => panic!("format failed: {errors:?}"),
+        }
+    }
+
+    /// The JS root carries the registry dispatcher in every build,
+    /// so native xxx-in-js formats without Prettier.
+    #[test]
+    fn js_root_installs_the_registry_dispatcher() {
+        let code = format_ts(FormatConfig::default(), "const a = css`a{color:  red}`;\n");
+        assert!(code.contains("color: red;"), "css-in-js should format natively: {code}");
+    }
+
+    /// Pure-build criterion: html has no native branch and no Prettier fallback,
+    /// so the embed deliberately stays verbatim (under napi it reaches the fallback instead).
+    #[cfg(not(feature = "napi"))]
+    #[test]
+    fn non_native_embed_stays_verbatim_without_fallback() {
+        let source = "const h = html`<div>  <p>x</p></div>`;\n";
+        assert_eq!(format_ts(FormatConfig::default(), source), source);
+    }
+
+    /// A JSDoc fence whose language is in the native registry formats through
+    /// the fence adapter in every build (no Prettier involved).
+    #[test]
+    fn jsdoc_native_fence_formats_without_prettier() {
+        let config =
+            FormatConfig { jsdoc: Some(JsdocUserConfig::Bool(true)), ..FormatConfig::default() };
+        let source = "/**\n * ```css\n * a{color:  red}\n * ```\n */\n";
+        let code = format_ts(config, source);
+        assert!(code.contains("color: red;"), "css fence should format natively: {code}");
+    }
+
+    /// `embeddedLanguageFormatting: off` installs no dispatcher:
+    /// even native embeds stay verbatim.
+    #[test]
+    fn embedded_off_keeps_native_embeds_verbatim() {
+        let config = FormatConfig {
+            embedded_language_formatting: Some(EmbeddedLanguageFormattingConfig::Off),
+            ..FormatConfig::default()
+        };
+        let source = "const a = css`a{color:  red}`;\n";
+        assert_eq!(format_ts(config, source), source);
     }
 }

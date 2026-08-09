@@ -7,9 +7,11 @@
 //! - [`dispatcher`] (every build): the native registry — `ResolvedDispatchConfig`
 //!   (lazy per-language options) + `build_dispatcher` with a Rust branch per `NativeLanguage`;
 //!   IR integrates into the parent's arena / `GroupId` space
+//! - [`fence`] (every build): the JSDoc native-fence string adapter over the registry
+//!   (the pure build's whole string-out channel)
 //! - [`prettier_fallback`] (napi only): Prettier Doc→IR path for the rest
-//! - [`string_channel`] (napi only): string-in/string-out channel
-//!   - JSDoc fenced blocks + html-in-js fallback
+//! - [`string_channel`] (napi only): the Prettier string paths of the string-out channel
+//!   - md/html/angular JSDoc fences + html-in-js fallback
 //!   - Standalone string formatting that re-embeds line-by-line
 
 #[cfg(feature = "napi")]
@@ -19,6 +21,7 @@ use std::sync::Arc;
 use serde_json::Value;
 
 pub mod dispatcher;
+pub mod fence;
 #[cfg(feature = "napi")]
 pub mod prettier_fallback;
 #[cfg(feature = "napi")]

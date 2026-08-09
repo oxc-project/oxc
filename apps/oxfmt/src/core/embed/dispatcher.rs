@@ -13,7 +13,6 @@ use oxc_formatter_core::{
     CoreFormatOptions, DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedIr,
     FormatDispatcher, FormatSession,
 };
-#[cfg(feature = "napi")]
 use oxc_formatter_core::{FormatOptions, PrinterOptions};
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
@@ -57,8 +56,7 @@ fn native_language(language: &str) -> Option<NativeLanguage> {
 }
 
 /// Whether `language` has a native (Rust formatter) branch in the registry.
-/// (Consulted by the napi-only JSDoc string adapter; the dispatcher itself matches [`native_language`] directly.)
-#[cfg(feature = "napi")]
+/// (Consulted by the JSDoc fence adapter [`super::fence`]; the dispatcher itself matches [`native_language`] directly.)
 pub fn is_native_language(language: &str) -> bool {
     native_language(language).is_some()
 }
@@ -93,7 +91,8 @@ pub struct ResolvedDispatchConfig {
 impl ResolvedDispatchConfig {
     /// `core` is the pre-validated bundle carried from the config-resolution gate (`options::validate`);
     /// it never gets re-derived here.
-    pub fn new(config: Arc<FormatConfig>, core: CoreFormatOptions) -> Self {
+    /// Private so [`Self::for_root`] stays the only construction recipe.
+    fn new(config: Arc<FormatConfig>, core: CoreFormatOptions) -> Self {
         Self {
             config,
             core,
@@ -109,12 +108,45 @@ impl ResolvedDispatchConfig {
     }
 
     /// Sets the host file path for `filepath` injection into [`Self::external_options`];
-    /// both napi construction sites chain this.
+    /// chained by [`Self::for_root`].
     #[cfg(feature = "napi")]
-    #[must_use]
-    pub fn with_path(mut self, path: std::path::PathBuf) -> Self {
+    fn with_path(mut self, path: std::path::PathBuf) -> Self {
         self.path = path;
         self
+    }
+
+    /// The one construction recipe for a root formatter run at `path`:
+    /// [`Self::new`] plus the napi-only path recording
+    /// (the pure build has no JS-side consumers, so `path` goes unused there).
+    pub fn for_root(
+        config: &Arc<FormatConfig>,
+        core: CoreFormatOptions,
+        path: &std::path::Path,
+    ) -> Arc<Self> {
+        let dispatch_config = Self::new(Arc::clone(config), core);
+        #[cfg(feature = "napi")]
+        let dispatch_config = dispatch_config.with_path(path.to_path_buf());
+        #[cfg(not(feature = "napi"))]
+        let _ = path;
+        Arc::new(dispatch_config)
+    }
+
+    /// Assembles the root's `FormatDispatcher` behind the off-gate:
+    /// `None` under `embeddedLanguageFormatting: off`,
+    /// so a root cannot install the registry without honoring the off-semantics.
+    /// `fallback` is the one build-dependent datum (the napi Prettier Doc→IR path).
+    pub fn root_dispatcher(
+        self: &Arc<Self>,
+        fallback: Option<PrettierDocFallback>,
+    ) -> Option<FormatDispatcher> {
+        self.is_embedded_formatting_enabled().then(|| build_dispatcher(Arc::clone(self), fallback))
+    }
+
+    /// The single off-predicate: [`Self::root_dispatcher`] and the string-out channel builders
+    /// (`fence::build_external_callbacks`, `ExternalFormatter::to_external_callbacks`) all consult it,
+    /// so the off-semantics can never diverge between channels or builds.
+    pub fn is_embedded_formatting_enabled(&self) -> bool {
+        self.config.is_embedded_formatting_enabled()
     }
 
     pub fn graphql_options(&self) -> GraphqlFormatOptions {
@@ -149,8 +181,7 @@ impl ResolvedDispatchConfig {
     }
 
     /// Printer options from the shared resolved core bundle;
-    /// the (napi-only) string adapter prints dispatched child IR standalone with these.
-    #[cfg(feature = "napi")]
+    /// the fence adapter ([`super::fence`]) prints dispatched child IR standalone with these.
     pub fn print_options(&self) -> PrinterOptions {
         self.core.as_print_options()
     }
