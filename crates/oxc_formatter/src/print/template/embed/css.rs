@@ -1,9 +1,6 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{
-    DispatchOutcome, DispatchRequest, FormatElement, IndentWidth, InputKind,
-    format_element::TextWidth,
-};
+use oxc_formatter_core::{FormatElement, IndentWidth, format_element::TextWidth};
 
 use crate::{
     ast_nodes::AstNode,
@@ -55,16 +52,7 @@ pub(super) fn format_css_doc<'a>(
             return true;
         }
 
-        let Ok(DispatchOutcome::Formatted(mut result)) = f.session().dispatch(DispatchRequest {
-            language: "css",
-            texts: &[raw],
-            input_kind: InputKind::Fragment,
-            parent_context: Some(&CssInJsTemplate),
-        }) else {
-            return false;
-        };
-        result.remap_tailwind_into(f.context_mut());
-        let Some(ir) = result.docs.into_iter().next() else {
+        let Some(ir) = super::dispatch_fragment_ir(f, "css", raw, Some(&CssInJsTemplate)) else {
             return false;
         };
 
@@ -90,16 +78,7 @@ pub(super) fn format_css_doc<'a>(
     };
 
     // Phase 2: Format via the dispatcher (IR path)
-    let Ok(DispatchOutcome::Formatted(mut result)) = f.session().dispatch(DispatchRequest {
-        language: "css",
-        texts: &[joined],
-        input_kind: InputKind::Fragment,
-        parent_context: Some(&CssInJsTemplate),
-    }) else {
-        return false;
-    };
-    result.remap_tailwind_into(f.context_mut());
-    let Some(ir) = result.docs.into_iter().next() else {
+    let Some(ir) = super::dispatch_fragment_ir(f, "css", joined, Some(&CssInJsTemplate)) else {
         return false;
     };
 

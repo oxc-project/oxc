@@ -79,7 +79,7 @@ impl<'a> CssFormatContext<'a> {
     }
 }
 
-/// Lets a dispatched child's classes remap into this host's index space (`DispatchResult::remap_tailwind_into`).
+/// Lets a dispatched child's classes remap into this host's index space (`DispatchResult::into_doc`).
 /// A YAML front matter child returns none today, but the cross-language contract holds for any future child.
 impl TailwindCollector for CssFormatContext<'_> {
     fn add_class(&mut self, class: String) -> usize {

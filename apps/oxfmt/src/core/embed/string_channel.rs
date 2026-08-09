@@ -41,7 +41,9 @@ pub fn build_string_embedder(
     sort_tailwind: Option<TailwindSorter>,
     dispatch_config: Arc<dispatcher::ResolvedDispatchConfig>,
 ) -> StringEmbedder {
-    let fence_dispatcher = fence::build_fence_dispatcher(&dispatch_config);
+    // Fence dispatchers never take the Prettier fallback (native fences never fall back),
+    // so one is invariant across the callback's lifetime: build it once, not per fence.
+    let fence_dispatcher = dispatcher::build_dispatcher(Arc::clone(&dispatch_config), None);
     Arc::new(move |language: &str, code: &str| {
         // Native registry first (JSDoc fenced code blocks).
         if dispatcher::is_native_language(language) {

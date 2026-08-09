@@ -11,8 +11,7 @@
 //!   plus the pure build's root `SessionServices` assembly (`session_services`)
 //! - [`prettier_fallback`] (napi only): Prettier Doc→IR path for the rest
 //! - [`string_channel`] (napi only): the Prettier string paths of the string-out channel
-//!   - md/html/angular JSDoc fences + html-in-js fallback
-//!   - Standalone string formatting that re-embeds line-by-line
+//!   (md/html/angular JSDoc fences + the html-in-js fallback; results re-embed line-by-line)
 
 #[cfg(feature = "napi")]
 use std::sync::Arc;
@@ -49,11 +48,11 @@ pub type FormatFileWithConfigCallback =
 pub type FormatEmbeddedWithConfigCallback =
     Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
 
-/// Callback function type for formatting embedded code via Doc IR path (batch).
-/// Takes (options, texts) and returns Doc JSON strings (one per text) or an error.
+/// Callback function type for formatting embedded code via the Doc IR path.
+/// Takes (options, text) and returns a Doc JSON string or an error.
 #[cfg(feature = "napi")]
 pub type FormatEmbeddedDocWithConfigCallback =
-    Arc<dyn Fn(Value, &[&str]) -> Result<Vec<String>, String> + Send + Sync>;
+    Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
 
 /// Internal callback type for Tailwind processing with config.
 /// Takes (options, classes) and returns sorted classes.

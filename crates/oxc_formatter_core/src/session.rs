@@ -8,7 +8,8 @@ use crate::{DispatchOutcome, DispatchRequest, FormatDispatcher, UniqueGroupIdBui
 
 /// Upper bound on nested embedded dispatches;
 /// exceeding it is an operational error, catching accidental A-in-B-in-A infinite recursion.
-pub const MAX_DISPATCH_DEPTH: u16 = 32;
+/// Real nesting is shallow (css-in-md-in-js would be 3); 8 is a generous ceiling.
+const MAX_DISPATCH_DEPTH: u8 = 8;
 
 /// String-in/string-out embedded formatter: `(language, code)` to formatted code.
 ///
@@ -61,21 +62,21 @@ pub enum InputKind {
 /// The same type serves standalone roots and dispatched children,
 /// so any formatter (not just JS) can dispatch embedded languages.
 /// Cloning hands out another handle to the SAME session (shared `GroupId` space, same depth);
-/// the session for one embedded child comes from [`Self::derive_child`].
+/// the session for one embedded child is derived internally by [`Self::dispatch`].
 #[derive(Clone)]
 pub struct FormatSession<'a> {
     allocator: &'a Allocator,
     group_id_builder: Arc<UniqueGroupIdBuilder>,
     services: SessionServices,
     input_kind: InputKind,
-    dispatch_depth: u16,
+    dispatch_depth: u8,
 }
 
 impl<'a> FormatSession<'a> {
     /// Creates a service-less root session
     /// (standalone runs: embeds stay as-is, Tailwind classes print unsorted).
     /// Hosts that install services use [`Self::with_services`].
-    /// Children must come from [`Self::derive_child`], never be re-rooted,
+    /// Children are derived internally by [`Self::dispatch`], never re-rooted,
     /// so the `GroupId` space stays shared.
     pub fn new(allocator: &'a Allocator, input_kind: InputKind) -> Self {
         Self::with_services(allocator, input_kind, SessionServices::default())
@@ -98,9 +99,10 @@ impl<'a> FormatSession<'a> {
 
     /// Derives the session for one embedded child: same arena, `GroupId` space,
     /// and services; the child's envelope semantics and one more dispatch level.
-    /// The recursion limit over `dispatch_depth` is enforced by the dispatch path, not here.
+    /// Private on purpose: [`Self::dispatch`] is the only caller,
+    /// which makes "children never re-root the `GroupId` space or reset the depth" a compiler-checked fact.
     #[must_use]
-    pub fn derive_child(&self, input_kind: InputKind) -> Self {
+    fn derive_child(&self, input_kind: InputKind) -> Self {
         Self {
             allocator: self.allocator,
             group_id_builder: Arc::clone(&self.group_id_builder),
@@ -113,16 +115,12 @@ impl<'a> FormatSession<'a> {
     /// Formats one embedded-language request on a child session derived from this one.
     ///
     /// See [`DispatchOutcome`] for the outcome-vs-`Err` contract; this method adds three rules:
-    /// - no dispatcher installed (plain standalone run) counts as the deliberat `Ok(DispatchOutcome::PreserveOriginal)`
-    /// - a request text starting with U+FEFF is deliberately preserved
-    ///   - in an embedded position it is content, not a BOM, formatting must not swallow it
-    ///   - and no child entry handles it
-    /// - reaching `MAX_DISPATCH_DEPTH`
+    /// - no dispatcher installed (plain standalone run) is the deliberate `Ok(DispatchOutcome::PreserveOriginal)`
+    /// - a request text starting with U+FEFF is deliberately preserved:
+    ///   in an embedded position it is content, not a BOM (formatting must not swallow it), and no child entry handles it
+    /// - reaching `MAX_DISPATCH_DEPTH` is an `Err`
     ///
-    /// is an `Err`.
-    ///
-    /// The callback receives the derived child session;
-    /// it must not create another `GroupId` space or bump the depth again.
+    /// The callback receives the derived child session.
     ///
     /// # Errors
     /// Operational failures only (recursion limit, transport/internal errors).
@@ -130,7 +128,7 @@ impl<'a> FormatSession<'a> {
         let Some(dispatcher) = &self.services.dispatcher else {
             return Ok(DispatchOutcome::PreserveOriginal);
         };
-        if request.texts.iter().any(|text| text.starts_with('\u{feff}')) {
+        if request.text.starts_with('\u{feff}') {
             return Ok(DispatchOutcome::PreserveOriginal);
         }
         if self.dispatch_depth >= MAX_DISPATCH_DEPTH {
@@ -158,11 +156,6 @@ impl<'a> FormatSession<'a> {
     /// Envelope semantics of the input this session formats.
     pub fn input_kind(&self) -> InputKind {
         self.input_kind
-    }
-
-    /// How many dispatch boundaries deep this session is (0 for a root).
-    pub fn dispatch_depth(&self) -> u16 {
-        self.dispatch_depth
     }
 
     /// The string channel service ([`StringEmbedder`]), when this run installs one.
@@ -194,7 +187,7 @@ mod tests {
     fn request<'r>() -> DispatchRequest<'r> {
         DispatchRequest {
             language: "yaml",
-            texts: &[],
+            text: "",
             input_kind: InputKind::Fragment,
             parent_context: None,
         }
@@ -211,9 +204,9 @@ mod tests {
     #[test]
     fn dispatch_preserves_a_bom_headed_text() {
         let allocator = Allocator::default();
-        let dispatcher: FormatDispatcher = Arc::new(|_ctx, _request| {
+        let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
             Ok(DispatchOutcome::Formatted(DispatchResult {
-                docs: Vec::new(),
+                doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
                 tailwind_classes: Vec::new(),
                 meta: None,
             }))
@@ -224,19 +217,19 @@ mod tests {
             SessionServices { dispatcher: Some(dispatcher), ..SessionServices::default() },
         );
 
-        let bom_request = DispatchRequest { texts: &["a: 1", "\u{feff}a: 1"], ..request() };
+        let bom_request = DispatchRequest { text: "\u{feff}a: 1", ..request() };
         assert!(matches!(session.dispatch(bom_request), Ok(DispatchOutcome::PreserveOriginal)));
         // A non-leading U+FEFF is ordinary content and formats normally
-        let inner_request = DispatchRequest { texts: &["a: \u{feff}1"], ..request() };
+        let inner_request = DispatchRequest { text: "a: \u{feff}1", ..request() };
         assert!(matches!(session.dispatch(inner_request), Ok(DispatchOutcome::Formatted(_))));
     }
 
     #[test]
     fn dispatch_stops_at_the_depth_limit() {
         let allocator = Allocator::default();
-        let dispatcher: FormatDispatcher = Arc::new(|_ctx, _request| {
+        let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
             Ok(DispatchOutcome::Formatted(DispatchResult {
-                docs: Vec::new(),
+                doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
                 tailwind_classes: Vec::new(),
                 meta: None,
             }))
@@ -274,7 +267,7 @@ mod tests {
         let child = parent.derive_child(InputKind::Fragment);
 
         assert_eq!(child.input_kind(), InputKind::Fragment);
-        assert_eq!(child.dispatch_depth(), 1);
+        assert_eq!(child.dispatch_depth, 1);
         // Ids stay unique across the boundary; independent builders would
         // both hand out the same first id.
         assert_ne!(parent.group_id_builder().group_id("a"), child.group_id_builder().group_id("b"));

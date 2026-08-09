@@ -80,11 +80,11 @@ export function formatEmbeddedCode(
 
 export function formatEmbeddedDoc(
   options: FormatEmbeddedDocParam["options"],
-  texts: string[],
-): Promise<string[] | null> {
+  code: string,
+): Promise<string | null> {
   return toNullable(
     getPool().then((pool) =>
-      pool.run({ options, texts } satisfies FormatEmbeddedDocParam, {
+      pool.run({ options, code } satisfies FormatEmbeddedDocParam, {
         name: "formatEmbeddedDoc",
       }),
     ),

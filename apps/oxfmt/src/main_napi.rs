@@ -45,9 +45,7 @@ pub async fn run_cli(
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
@@ -163,9 +161,7 @@ pub async fn format(
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
@@ -205,9 +201,7 @@ pub async fn js_text_to_doc(
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"

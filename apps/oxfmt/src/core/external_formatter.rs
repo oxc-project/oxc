@@ -70,16 +70,16 @@ pub type JsFormatEmbeddedCb = ThreadsafeFunction<
     false,
 >;
 
-/// Type alias for the Doc-path callback function signature (batch).
-/// Takes (options, texts[]) as arguments and returns Doc JSON string[] (one per text) or null on error.
+/// Type alias for the Doc-path callback function signature.
+/// Takes (options, code) as arguments and returns a Doc JSON string or null on error.
 /// The `options` object includes `parser` field set by Rust side.
 pub type JsFormatEmbeddedDocCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(Value, Vec<String>)>, // (options, texts)
+    FnArgs<(Value, String)>, // (options, code)
     // Return type (what JS function returns)
-    Promise<Option<Vec<String>>>,
+    Promise<Option<String>>,
     // Arguments (repeated)
-    FnArgs<(Value, Vec<String>)>,
+    FnArgs<(Value, String)>,
     // Error status
     Status,
     // CalleeHandled
@@ -249,7 +249,7 @@ impl ExternalFormatter {
     /// 3. Embedded CSS (css-in-js + Angular `@Component({ styles })`):
     ///    `oxc_formatter_css::format_to_ir()` returns pre-sort `@apply` classes
     ///    in `DispatchResult::tailwind_classes`.
-    ///    The JS parent re-indexes them into its own collector (`remap_tailwind_into`)
+    ///    The JS parent re-indexes them into its own collector (`DispatchResult::into_doc`)
     ///    so they ride the SAME parent batch as path 1.
     ///    The standalone CSS sort closure is NOT invoked here.
     /// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
@@ -257,12 +257,12 @@ impl ExternalFormatter {
     ///    which returns a formatted string (not parent-integrated IR),
     ///    so there is no parent index space to remap into:
     ///    the adapter sorts the returned `DispatchResult::tailwind_classes` itself before printing.
-    ///    The `string_channel::build_embedded_callback` factory receives the sorter for this case.
+    ///    The `string_channel::build_string_embedder` factory receives the sorter for this case.
     ///
     /// All four paths use the SAME `sort_tailwindcss_classes` napi callback; only the wiring differs.
     /// Moving sorting to the wrong layer (e.g. sorting inside embedded CSS instead of remapping)
     /// would double-sort or drop classes.
-    /// `DispatchResult::remap_tailwind_into`'s printer `debug_assert` catches dropped remaps.
+    /// `DispatchResult::into_doc` folds the merge into doc consumption; the printer `debug_assert` backstops it.
     ///
     /// The dispatcher and the string channel consult the same off-predicate
     /// (`ResolvedDispatchConfig::is_embedded_formatting_enabled`),
@@ -330,7 +330,7 @@ impl ExternalFormatter {
             init: Arc::new(|_| Err("Dummy init called".to_string())),
             format_file: Arc::new(|_, _| Err("Dummy format_file called".to_string())),
             format_embedded: Arc::new(|_, _| Err("Dummy format_embedded called".to_string())),
-            format_embedded_doc: Arc::new(|_, _: &[&str]| {
+            format_embedded_doc: Arc::new(|_, _: &str| {
                 Err("Dummy format_embedded_doc called".to_string())
             }),
             sort_tailwindcss_classes: Arc::new(|_, _| vec![]),
@@ -454,22 +454,21 @@ fn wrap_format_embedded(
     })
 }
 
-/// Wrap JS `formatEmbeddedDoc` callback as a normal Rust function (batch).
+/// Wrap JS `formatEmbeddedDoc` callback as a normal Rust function.
 /// The `options` Value is received with `parser` already set by the caller.
 fn wrap_format_embedded_doc(
     cb_handle: Arc<RwLock<Option<JsFormatEmbeddedDocCb>>>,
 ) -> FormatEmbeddedDocWithConfigCallback {
-    Arc::new(move |options: Value, texts: &[&str]| {
+    Arc::new(move |options: Value, code: &str| {
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {
             return Err("JS callback unavailable (environment shutting down)".to_string());
         };
-        let texts_owned: Vec<String> = texts.iter().map(|t| (*t).to_string()).collect();
         let result = block_on(async {
-            let status = cb.call_async(FnArgs::from((options, texts_owned))).await;
+            let status = cb.call_async(FnArgs::from((options, code.to_string()))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(Some(doc_jsons)) => Ok(doc_jsons),
+                    Ok(Some(doc_json)) => Ok(doc_json),
                     Ok(None) => Err("Embedded doc formatting failed".to_string()),
                     // JS side never rejects; it returns `null` on error instead.
                     // `Err` here would only come from a napi-rs internal failure.
