@@ -72,6 +72,7 @@ pub struct EnvironmentConfig {
 
     pub enable_preserve_existing_memoization_guarantees: bool,
     pub validate_preserve_existing_memoization_guarantees: bool,
+    /// Exhaustive manual memo dependency validation, disabled by default.
     pub validate_exhaustive_memoization_dependencies: bool,
     pub validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode,
 
@@ -124,7 +125,7 @@ impl Default for EnvironmentConfig {
             module_type_provider: None,
             enable_preserve_existing_memoization_guarantees: true,
             validate_preserve_existing_memoization_guarantees: true,
-            validate_exhaustive_memoization_dependencies: true,
+            validate_exhaustive_memoization_dependencies: false,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::Off,
             enable_optional_dependencies: true,
             enable_name_anonymous_functions: false,

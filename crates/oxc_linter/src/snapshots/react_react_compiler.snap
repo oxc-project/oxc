@@ -77,16 +77,6 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState)
 
-  ⚠ react(react-compiler): MemoDependencies: Found extra memoization dependencies
-    ╭─[react_compiler.tsx:13:19]
- 12 │     }
- 13 │   }, [cond, item, init]);
-    ·                   ──┬─
-    ·                     ╰── Unnecessary dependency `init`. Values declared outside of a component/hook should not be listed as dependencies as the component will not re-render if they change
- 14 │ 
-    ╰────
-  help: Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often
-
   ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler.tsx:4:5]
  3 │   if (cond) {
