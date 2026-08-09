@@ -45,13 +45,17 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
 Embedded languages (e.g. css-in-js) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
-Rust formatter branches (graphql / css / yaml) in every build, plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest, the pure Rust build deliberately preserves those as-is. Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
+Rust formatter branches (the `NativeLanguage` registry in that file) in every build, plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest, the pure Rust build deliberately preserves those as-is. Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
 
-A separate string-out channel (the `embedded_callback` in the same file, NOT the dispatcher) carries the cases that don't fit IR integration.
-Two consumers today:
+A separate string-out channel (the `embedded_callback` in the same file, NOT the dispatcher) carries the string-in/string-out consumers:
 
-- JSDoc fenced code blocks
+- JSDoc fenced code blocks: routing follows ONE rule
+  - a fence language in the `NativeLanguage` registry formats through the dispatcher via a thin string adapter (`string_channel.rs::format_native_fence`)
+  - md/html/angular fences stay on the Prettier string path (their Doc→IR conversion has unrepresentable cases);
+  - everything else stays verbatim
 - html-in-js fallback (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`)
+
+NOTE: These string-out channel is temporary workaround, should be replaced by native implementations and Prettier usage should be eliminated in the future.
 
 Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 

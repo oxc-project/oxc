@@ -24,7 +24,7 @@ use super::options::{
 };
 use super::{
     options::{
-        to_core_options, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
+        ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
         to_oxc_formatter_json, to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
     },
     oxfmtrc::FormatConfig,
@@ -137,32 +137,38 @@ impl FormatStrategy {
         }
     }
 
-    /// Build a `FormatStrategy` from a typed [`FormatConfig`] and a [`FileKind`].
+    /// Build a `FormatStrategy` from a typed [`FormatConfig`], the validation gate's artifacts, and a [`FileKind`].
     ///
-    /// `to_oxc_formatter` / `to_oxc_toml` run eagerly: their validating
-    /// typed conversion belongs at carving so the format step stays infallible.
-    /// The Prettier `Value` for `ExternalFormatter*` is deferred:
+    /// Infallible by construction:
+    /// every fallible conversion already ran at the gate (`options::validate`),
+    /// whose derived values arrive as `validated`; the option mappers below are pure field translation.
+    ///
+    /// The Prettier `Value` for `ExternalFormatter*` is deferred to the format step:
     /// `FormatConfig` is the single SoT, no validation needed,
     /// and `Box<FormatConfig>` is materially smaller per file than a fully-built `Value`.
-    ///
-    /// # Errors
-    /// Returns `Err` if the kind needs `JsFormatOptions`/`TomlFormatterOptions`
-    /// and the config fails validation.
     // `config` is moved into the napi-only `ExternalFormatter*` variants;
     // when the `napi` feature is off, those branches are cfg-gated out and the
     // value is only borrowed, but we keep the by-value signature for symmetry.
     #[cfg_attr(not(feature = "napi"), expect(clippy::needless_pass_by_value))]
-    pub(crate) fn from_format_config(config: FormatConfig, kind: FileKind) -> Result<Self, String> {
+    pub(crate) fn from_format_config(
+        config: FormatConfig,
+        validated: &ValidatedOptions,
+        kind: FileKind,
+    ) -> Self {
         let insert_final_newline = config.insert_final_newline.unwrap_or(true);
-        // Single validation point for the core options shared by every mapper below;
-        // graphql/css/yaml mappers take the validated bundle and cannot fail.
-        let core = to_core_options(&config)?;
+        // Borrowed so the resolver's fast path can hand out its cached artifacts per file;
+        // `sort_imports` (the only non-`Copy` member) is cloned in the one arm that needs it.
+        let core = validated.core;
 
-        Ok(match kind {
+        match kind {
             FileKind::OxcFormatter { path, source_type } => Self::OxcFormatter {
                 path,
                 source_type,
-                format_options: Box::new(to_oxc_formatter(&config)?),
+                format_options: Box::new(to_oxc_formatter(
+                    &config,
+                    core,
+                    validated.sort_imports.clone(),
+                )),
                 #[cfg(feature = "napi")]
                 config: Arc::new(config),
                 #[cfg(feature = "napi")]
@@ -171,15 +177,16 @@ impl FormatStrategy {
             },
             FileKind::OxcFormatterJson { path, variant } => Self::OxcFormatterJson {
                 path,
-                format_options: Box::new(to_oxc_formatter_json(&config, variant)?),
+                format_options: Box::new(to_oxc_formatter_json(&config, core, variant)),
                 insert_final_newline,
             },
             FileKind::OxcFormatterJsonPackageJson { path } => Self::OxcFormatterJsonPackageJson {
                 path,
                 format_options: Box::new(to_oxc_formatter_json(
                     &config,
+                    core,
                     JsonVariant::JsonStringify,
-                )?),
+                )),
                 sort_package_json: to_sort_package_json(&config),
                 insert_final_newline,
             },
@@ -203,12 +210,18 @@ impl FormatStrategy {
             FileKind::OxcFormatterYamlRc { path } => Self::OxcFormatterYamlRc {
                 path,
                 yaml_format_options: Box::new(to_oxc_formatter_yaml(&config, core)),
-                json_format_options: Box::new(to_oxc_formatter_json(&config, JsonVariant::Json)?),
+                json_format_options: Box::new(to_oxc_formatter_json(
+                    &config,
+                    core,
+                    JsonVariant::Json,
+                )),
                 insert_final_newline,
             },
-            FileKind::OxfmtToml { path } => {
-                Self::OxfmtToml { path, toml_options: to_oxc_toml(&config)?, insert_final_newline }
-            }
+            FileKind::OxfmtToml { path } => Self::OxfmtToml {
+                path,
+                toml_options: to_oxc_toml(&config, core),
+                insert_final_newline,
+            },
             #[cfg(feature = "napi")]
             FileKind::ExternalFormatter {
                 path,
@@ -225,7 +238,7 @@ impl FormatStrategy {
                 supports_svelte,
                 insert_final_newline,
             },
-        })
+        }
     }
 }
 

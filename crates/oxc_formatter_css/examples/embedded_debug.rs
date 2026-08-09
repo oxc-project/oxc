@@ -12,7 +12,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{Document, FormatOptions, FormatSession, InputKind, Printer};
+use oxc_formatter_core::{Document, FormatOptions, FormatSession, InputKind};
 use oxc_formatter_css::{CssFormatOptions, CssVariant, format_to_ir};
 
 fn main() {
@@ -35,20 +35,14 @@ fn main() {
     match format_to_ir(&session, &source_text, options, /* template_placeholders */ true) {
         Ok(embedded) => {
             let document = Document::new(embedded.ir, Vec::new());
-            document.propagate_expand();
             if std::env::var("DUMP_IR").is_ok() {
+                // Show the finalized IR (`Document::print` would re-propagate; it's idempotent).
+                document.propagate_expand();
                 for el in document.elements() {
                     eprintln!("{el:?}");
                 }
             }
-            let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
-            match Printer::with_capacity(
-                source_text.len(),
-                options.as_print_options(),
-                &tailwind_classes,
-            )
-            .print(elements)
-            {
+            match document.print(source_text.len(), options.as_print_options()) {
                 Ok(printed) => println!("{}", printed.into_code()),
                 Err(err) => eprintln!("Print error: {err:?}"),
             }

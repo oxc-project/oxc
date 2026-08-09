@@ -1,34 +1,32 @@
 use rustc_hash::FxHashSet;
 
-use oxc_formatter_core::FormatOptions;
-
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
     CustomGroupDefinition, EmbeddedLanguageFormatting, Expand, GroupEntry, ImportModifier,
     ImportSelector, JsFormatOptions, JsdocOptions, LineWrappingStyle, QuoteProperties, QuoteStyle,
     Semicolons, SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
+use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
-use super::{
-    super::oxfmtrc::{
-        ArrowParensConfig, CommentLineStrategyConfig, CustomGroupItemConfig,
-        EmbeddedLanguageFormattingConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
-        JsdocUserConfig, LineWrappingStyleConfig, ObjectWrapConfig, QuotePropsConfig,
-        SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig,
-        TrailingCommaConfig,
-    },
-    to_core_options::to_core_options,
+use super::super::oxfmtrc::{
+    ArrowParensConfig, CommentLineStrategyConfig, CustomGroupItemConfig,
+    EmbeddedLanguageFormattingConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
+    JsdocUserConfig, LineWrappingStyleConfig, ObjectWrapConfig, QuotePropsConfig,
+    SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, SortTailwindcssUserConfig,
+    TrailingCommaConfig,
 };
 
-/// Convert `FormatConfig` into validated `JsFormatOptions` for `oxc_formatter`.
+/// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
 ///
-/// # Errors
-/// Returns error if any option value is invalid.
-pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String> {
-    let core = to_core_options(config)?;
-
+/// NOTE: Pure field translation:
+/// `core` and `sort_imports` are the validation gate's artifacts ([`super::validate::validate()`]), so this cannot fail.
+pub fn to_oxc_formatter(
+    config: &FormatConfig,
+    core_options: CoreFormatOptions,
+    sort_imports: Option<SortImportsOptions>,
+) -> JsFormatOptions {
     let mut format_options = JsFormatOptions::default();
-    format_options.apply_core(core);
+    format_options.apply_core(core_options);
 
     // NOTE: Not yet supported options:
     // [Prettier] experimentalOperatorPosition: "start" | "end"
@@ -121,7 +119,7 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
 
     // Below are our own extensions
 
-    format_options.sort_imports = to_sort_imports(config)?;
+    format_options.sort_imports = sort_imports;
     format_options.jsdoc = to_jsdoc(config);
     if let Some(tw_config) =
         config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
@@ -136,13 +134,15 @@ pub fn to_oxc_formatter(config: &FormatConfig) -> Result<JsFormatOptions, String
         });
     }
 
-    Ok(format_options)
+    format_options
 }
 
 /// Parse and validate `sortImports` into [`SortImportsOptions`].
 ///
-/// Parsing is the validation here, so this is shared by
-/// both [`to_oxc_formatter()`] (build) and [`super::validate::validate()`] (gate).
+/// If possible, all validations should happen when deserializing `Oxfmtrc`.
+/// However, these options become problematic depending on their combinations.
+/// Also, since it cannot be known until `overrides` are resolved, the validation is done here.
+/// the gate ([`super::validate::validate()`]) runs it once and hands the artifact to [`to_oxc_formatter()`].
 ///
 /// # Errors
 /// Returns an error if the `sortImports` configuration is invalid.
@@ -328,6 +328,12 @@ mod tests {
     use super::super::validate::validate;
     use super::*;
 
+    /// Production shape: the gate validates/derives, then the infallible mapper builds.
+    fn build(config: &FormatConfig) -> Result<JsFormatOptions, String> {
+        let validated = validate(config)?;
+        Ok(to_oxc_formatter(config, validated.core, validated.sort_imports))
+    }
+
     #[test]
     fn test_config_parsing() {
         let json = r#"{
@@ -345,7 +351,7 @@ mod tests {
         }"#;
 
         let config: FormatConfig = serde_json::from_str(json).unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
 
         assert!(format_options.indent_style.is_tab());
         assert_eq!(format_options.indent_width.value(), 4);
@@ -369,7 +375,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
 
         // Should use defaults
         assert!(format_options.indent_style.is_space());
@@ -381,7 +387,7 @@ mod tests {
     #[test]
     fn test_empty_config() {
         let config: FormatConfig = serde_json::from_str("{}").unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
 
         // Should use defaults
         assert!(format_options.indent_style.is_space());
@@ -394,12 +400,12 @@ mod tests {
     fn test_arrow_parens_normalization() {
         // Test "avoid" -> "as-needed" normalization
         let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         assert!(format_options.arrow_parentheses.is_as_needed());
 
         // Test "always" remains unchanged
         let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         assert!(format_options.arrow_parentheses.is_always());
     }
 
@@ -407,12 +413,12 @@ mod tests {
     fn test_object_wrap_normalization() {
         // Test "preserve" -> "auto" normalization
         let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         assert_eq!(format_options.expand, Expand::Auto);
 
         // Test "collapse" -> "never" normalization
         let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         assert_eq!(format_options.expand, Expand::Never);
     }
 
@@ -424,7 +430,7 @@ mod tests {
         }"#,
         )
         .unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
@@ -438,7 +444,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort_imports.unwrap();
         assert!(!sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
@@ -452,7 +458,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
@@ -466,7 +472,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxc_formatter(&config).is_ok());
+        assert!(build(&config).is_ok());
         let config: FormatConfig = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
@@ -476,7 +482,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("newlinesBetween")));
+        assert!(build(&config).is_err_and(|e| e.contains("newlinesBetween")));
 
         let config: FormatConfig = serde_json::from_str(
             r#"{
@@ -492,7 +498,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
         assert_eq!(
@@ -525,7 +531,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let format_options = to_oxc_formatter(&config).unwrap();
+        let format_options = build(&config).unwrap();
         let sort_imports = format_options.sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 3);
         assert_eq!(
@@ -557,7 +563,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("start")));
+        assert!(build(&config).is_err_and(|e| e.contains("start")));
 
         // Test error: newlinesBetween at end of groups
         let config: FormatConfig = serde_json::from_str(
@@ -572,7 +578,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("end")));
+        assert!(build(&config).is_err_and(|e| e.contains("end")));
 
         // Test error: consecutive newlinesBetween markers
         let config: FormatConfig = serde_json::from_str(
@@ -588,7 +594,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("consecutive")));
+        assert!(build(&config).is_err_and(|e| e.contains("consecutive")));
 
         // Test error: partitionByNewline with per-group newlinesBetween markers
         let config: FormatConfig = serde_json::from_str(
@@ -604,28 +610,28 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("partitionByNewline")));
+        assert!(build(&config).is_err_and(|e| e.contains("partitionByNewline")));
     }
 
     #[test]
     fn test_bool_for_object_options() {
         let config: FormatConfig = serde_json::from_str(r#"{"sortImports": true}"#).unwrap();
-        assert!(to_oxc_formatter(&config).unwrap().sort_imports.is_some());
+        assert!(build(&config).unwrap().sort_imports.is_some());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortImports": false}"#).unwrap();
-        assert!(to_oxc_formatter(&config).unwrap().sort_imports.is_none());
+        assert!(build(&config).unwrap().sort_imports.is_none());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": true}"#).unwrap();
-        assert!(to_oxc_formatter(&config).unwrap().sort_tailwindcss.is_some());
+        assert!(build(&config).unwrap().sort_tailwindcss.is_some());
 
         let config: FormatConfig = serde_json::from_str(r#"{"sortTailwindcss": false}"#).unwrap();
-        assert!(to_oxc_formatter(&config).unwrap().sort_tailwindcss.is_none());
+        assert!(build(&config).unwrap().sort_tailwindcss.is_none());
 
         let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": true}"#).unwrap();
-        assert!(to_oxc_formatter(&config).unwrap().jsdoc.is_some());
+        assert!(build(&config).unwrap().jsdoc.is_some());
 
         let config: FormatConfig = serde_json::from_str(r#"{"jsdoc": false}"#).unwrap();
-        assert!(to_oxc_formatter(&config).unwrap().jsdoc.is_none());
+        assert!(build(&config).unwrap().jsdoc.is_none());
     }
 
     #[test]
@@ -634,12 +640,12 @@ mod tests {
         let config: FormatConfig =
             serde_json::from_str(r#"{ "printWidth": 80, "sortImports": true }"#).unwrap();
         assert!(validate(&config).is_ok());
-        assert!(to_oxc_formatter(&config).is_ok());
+        assert!(build(&config).is_ok());
 
         // Core range error (valid u16, but outside `LineWidth` bounds).
         let config: FormatConfig = serde_json::from_str(r#"{ "printWidth": 1000 }"#).unwrap();
         assert!(validate(&config).is_err());
-        assert!(to_oxc_formatter(&config).is_err());
+        assert!(build(&config).is_err());
 
         // JS-specific error (sortImports) must be caught by `validate` too,
         // not just by building `JsFormatOptions`.
@@ -648,7 +654,7 @@ mod tests {
         )
         .unwrap();
         assert!(validate(&config).is_err_and(|e| e.contains("start")));
-        assert!(to_oxc_formatter(&config).is_err_and(|e| e.contains("start")));
+        assert!(build(&config).is_err_and(|e| e.contains("start")));
 
         // JS-specific error (jsdoc enum) is rejected at deserialize time,
         // so neither `validate` nor `to_oxc_formatter` can ever see it.
