@@ -99,16 +99,16 @@ pub enum FormatStrategy {
     },
     /// For TOML files.
     OxfmtToml { path: Arc<Path>, toml_options: TomlFormatterOptions, insert_final_newline: bool },
-    /// For non-JS files formatted by external formatter (Prettier).
+    /// For non-JS files formatted by delegating to Prettier (Tier 3/4).
     ///
-    /// `supports_xxx` are capability flags carried over from [`FileKind::ExternalFormatter`].
+    /// `supports_xxx` are capability flags carried over from [`FileKind::Prettier`].
     /// The format step injects the corresponding payload (`_useXxxPlugin`) only when
     /// the capability AND the user config both enable the plugin.
     ///
     /// When `supports_oxfmt` is true, `config` doubles as the host Prettier options
     /// source AND the `_oxfmtPluginOptionsJson` payload — single SoT for both.
     #[cfg(feature = "napi")]
-    ExternalFormatter {
+    Prettier {
         path: Arc<Path>,
         parser_name: &'static str,
         config: Box<FormatConfig>,
@@ -131,7 +131,7 @@ impl FormatStrategy {
             | Self::OxcFormatterYamlRc { path, .. }
             | Self::OxfmtToml { path, .. } => path,
             #[cfg(feature = "napi")]
-            Self::ExternalFormatter { path, .. } => path,
+            Self::Prettier { path, .. } => path,
         }
     }
 
@@ -141,7 +141,7 @@ impl FormatStrategy {
     /// every fallible conversion already ran at the gate (`options::validate`),
     /// whose derived values arrive as `validated`; the option mappers below are pure field translation.
     ///
-    /// The Prettier `Value` for `ExternalFormatter*` is deferred to the format step:
+    /// The Prettier `Value` for the `Prettier` kind is deferred to the format step:
     /// `FormatConfig` is the single SoT, no validation needed,
     /// and `Box<FormatConfig>` is materially smaller per file than a fully-built `Value`.
     pub(crate) fn from_format_config(
@@ -215,13 +215,13 @@ impl FormatStrategy {
                 insert_final_newline,
             },
             #[cfg(feature = "napi")]
-            FileKind::ExternalFormatter {
+            FileKind::Prettier {
                 path,
                 parser_name,
                 supports_tailwind,
                 supports_oxfmt,
                 supports_svelte,
-            } => Self::ExternalFormatter {
+            } => Self::Prettier {
                 path,
                 parser_name,
                 config: Box::new(config),
@@ -363,7 +363,7 @@ impl SourceFormatter {
                 (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline)
             }
             #[cfg(feature = "napi")]
-            FormatStrategy::ExternalFormatter {
+            FormatStrategy::Prettier {
                 path,
                 parser_name,
                 config,
@@ -372,7 +372,7 @@ impl SourceFormatter {
                 supports_svelte,
                 insert_final_newline,
             } => (
-                self.format_by_external_formatter(
+                self.format_by_prettier(
                     source_text,
                     &path,
                     parser_name,
@@ -603,7 +603,7 @@ impl SourceFormatter {
 
 /// NAPI-only methods for `SourceFormatter`.
 ///
-/// These methods handle external formatter (Prettier) integration,
+/// These methods handle Prettier delegation,
 /// which is only available when running through the Node.js NAPI bridge.
 #[cfg(feature = "napi")]
 impl SourceFormatter {
@@ -623,11 +623,11 @@ impl SourceFormatter {
             .expect("`external_services` must exist when `napi` feature is enabled")
     }
 
-    /// Format non-JS/TS file using external formatter (Prettier).
+    /// Format non-JS/TS file by delegating to Prettier.
     ///
     /// Plugin payloads are injected based on capability flags & user config.
-    #[instrument(level = "debug", name = "oxfmt::format::external_formatter", skip_all, fields(parser = %parser_name))]
-    fn format_by_external_formatter(
+    #[instrument(level = "debug", name = "oxfmt::format::prettier", skip_all, fields(parser = %parser_name))]
+    fn format_by_prettier(
         &self,
         source_text: &str,
         path: &Path,
@@ -637,22 +637,22 @@ impl SourceFormatter {
         supports_oxfmt: bool,
         supports_svelte: bool,
     ) -> Result<String, OxcDiagnostic> {
-        let mut external_options = to_prettier(config);
-        inject_parser(&mut external_options, parser_name);
-        inject_filepath(&mut external_options, path);
+        let mut prettier_options = to_prettier(config);
+        inject_parser(&mut prettier_options, parser_name);
+        inject_filepath(&mut prettier_options, path);
 
         if supports_tailwind {
-            inject_tailwind_plugin_payload(&mut external_options, config);
+            inject_tailwind_plugin_payload(&mut prettier_options, config);
         }
         if supports_oxfmt {
-            inject_oxfmt_plugin_payload(&mut external_options, config, path);
+            inject_oxfmt_plugin_payload(&mut prettier_options, config, path);
         }
         if supports_svelte {
-            inject_svelte_plugin_payload(&mut external_options, config);
+            inject_svelte_plugin_payload(&mut prettier_options, config);
         }
 
-        self.external_services().format_file(external_options, source_text).map_err(|err| {
-            // NOTE: We are trying to make the error from oxc_formatter(_xxx) and external_services (Prettier) look similar.
+        self.external_services().format_file(prettier_options, source_text).map_err(|err| {
+            // NOTE: We are trying to make the error from oxc_formatter(_xxx) and Prettier look similar.
             // Ideally, we would unify them into `OxcDiagnostic`, which would eliminate the need for relative path conversion.
             // However, doing so would require:
             // - Parsing Prettier's error messages

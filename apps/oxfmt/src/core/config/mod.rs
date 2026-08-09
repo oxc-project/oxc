@@ -145,7 +145,7 @@ pub fn resolve_for_api(
     format_config.resolve_tailwind_paths(cwd);
     // Validate eagerly, as the single gate for every option (core + js/sortImports):
     // downstream mapping consumes the derived artifacts and cannot re-fail,
-    // and `ExternalFormatter*` kinds have no later chance before values reach Prettier.
+    // and `Prettier` kinds have no later chance before values reach Prettier.
     let validated = validate(&format_config)?;
     if let Some(plugin) = kind.requires_plugin(&format_config) {
         return Ok(ResolveOutcome::MissingPlugin(plugin));
@@ -460,7 +460,7 @@ impl ConfigResolver {
     /// Fast path: reuses the snapshot + gate artifacts cached by [`Self::build_and_validate`].
     /// Slow path: always validates the merged config here
     ///   the single gate for every kind (downstream carving is infallible;
-    ///   for `ExternalFormatter*` kinds this is also the only safety net before values reach Prettier).
+    ///   for `Prettier` kinds this is also the only safety net before values reach Prettier).
     ///
     /// # Errors
     /// Returns `Err` when overrides introduce invalid values, including:
@@ -609,7 +609,7 @@ mod tests_slow_path_validation {
     /// Without it, `printWidth: 1000` (above LineWidth::MAX = 320) would silently leak into the Prettier options.
     #[test]
     #[cfg(feature = "napi")]
-    fn override_only_invalid_value_is_rejected_for_external_formatter() {
+    fn override_only_invalid_value_is_rejected_for_prettier() {
         let resolver = resolver_from_json(serde_json::json!({
             "printWidth": 80,
             "overrides": [
@@ -618,7 +618,7 @@ mod tests_slow_path_validation {
         }));
 
         // Slow path triggers because the override matches.
-        let kind = FileKind::ExternalFormatter {
+        let kind = FileKind::Prettier {
             path: Arc::from(PathBuf::from("data.json").as_path()),
             parser_name: "json",
             supports_tailwind: false,
@@ -655,13 +655,13 @@ mod tests_slow_path_validation {
         assert!(resolver.resolve(kind).is_ok());
     }
 
-    /// `resolve_for_api` must validate even for `ExternalFormatter*` kinds.
+    /// `resolve_for_api` must validate even for `Prettier` kinds.
     /// Without the eager `validate()` call,
     /// `printWidth: 1000` would silently flow through to Prettier via the NAPI `format()` API.
     #[test]
     #[cfg(feature = "napi")]
-    fn resolve_for_api_rejects_invalid_value_for_external_formatter() {
-        let kind = FileKind::ExternalFormatter {
+    fn resolve_for_api_rejects_invalid_value_for_prettier() {
+        let kind = FileKind::Prettier {
             path: Arc::from(PathBuf::from("page.vue").as_path()),
             parser_name: "vue",
             supports_tailwind: true,

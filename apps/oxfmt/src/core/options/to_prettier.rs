@@ -210,11 +210,11 @@ pub fn inject_tailwind_plugin_payload(opts: &mut Value, config: &FormatConfig) {
 
 /// Build the Prettier options JSON shared by the embedded callbacks and the Tailwind sorter:
 /// resolved config + `filepath` + the Tailwind plugin payload (which the JS-side sorter resolves the class order from).
-pub fn build_external_options(config: &FormatConfig, path: &Path) -> Value {
-    let mut external_options = to_prettier(config);
-    inject_filepath(&mut external_options, path);
-    inject_tailwind_plugin_payload(&mut external_options, config);
-    external_options
+pub fn build_prettier_options(config: &FormatConfig, path: &Path) -> Value {
+    let mut prettier_options = to_prettier(config);
+    inject_filepath(&mut prettier_options, path);
+    inject_tailwind_plugin_payload(&mut prettier_options, config);
+    prettier_options
 }
 
 /// Inject Svelte plugin keys derived from `config.svelte`.

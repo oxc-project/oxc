@@ -70,7 +70,7 @@ pub fn build_string_embedder(
         debug_span!("oxfmt::external::format_embedded", parser = parser_name).in_scope(|| {
             // `clone()` is unavoidable here,
             // because there may be multiple embedded sections in one JS/TS file.
-            let mut options = dispatch_config.external_options().clone();
+            let mut options = dispatch_config.prettier_options().clone();
             inject_parser(&mut options, parser_name);
             // The same effective width the native branch prints at
             inject_print_width(&mut options, print_width);

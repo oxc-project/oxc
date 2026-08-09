@@ -35,7 +35,7 @@ pub fn build_prettier_fallback(
         let parser_name = language.parser();
         debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
             .in_scope(|| {
-                let mut options = dispatch_config.external_options().clone();
+                let mut options = dispatch_config.prettier_options().clone();
                 inject_parser(&mut options, parser_name);
                 let doc_json_str = (format_embedded_doc)(options, text).map_err(|err| {
                     format!("Failed to get Doc for embedded code (parser '{parser_name}'): {err}")

@@ -18,7 +18,7 @@ pub struct ValidatedOptions {
 }
 
 /// The eager validation gate during config resolution.
-/// For `ExternalFormatter*` kinds, it is the only safety net before values reach Prettier.
+/// For `Prettier` kinds, it is the only safety net before values reach Prettier.
 ///
 /// This runs every fallible conversion and returns the derived artifacts
 /// (enumerated options are already rejected at deserialize time,

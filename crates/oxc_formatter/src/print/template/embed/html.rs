@@ -1,8 +1,11 @@
 use cow_utils::CowUtils;
 
-use oxc_allocator::ArenaStringBuilder;
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
-use oxc_formatter_core::{DispatchOutcome, DispatchRequest, FormatElement, InputKind};
+use oxc_formatter_core::{
+    DispatchOutcome, DispatchRequest, FormatElement, IndentWidth, InputKind,
+    format_element::TextWidth,
+};
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
@@ -184,12 +187,7 @@ pub(super) fn format_html_doc<'a>(
                     for (i, part) in parts.iter().enumerate() {
                         if i.is_multiple_of(2) {
                             if !part.is_empty() {
-                                super::write_text_with_line_breaks(
-                                    f,
-                                    part,
-                                    allocator,
-                                    indent_width,
-                                );
+                                write_text_with_line_breaks(f, part, allocator, indent_width);
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(expr) = expressions.get(idx)
@@ -319,4 +317,30 @@ fn format_js_in_html_as_fallback<'a>(
 
     write!(f, ["`", block_indent(&format_content), "`"]);
     true
+}
+
+/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
+///
+/// Uses [`literal_line_break`] instead of `hard_line_break()` to avoid adding indentation:
+/// the returned HTML Doc already carries its indentation in the text content,
+/// so the surrounding `block_indent` must not add more.
+fn write_text_with_line_breaks<'a>(
+    f: &mut JsFormatter<'_, 'a>,
+    text: &str,
+    allocator: &'a Allocator,
+    indent_width: IndentWidth,
+) {
+    let mut first = true;
+    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
+    for line in text.split('\n') {
+        if !first {
+            write!(f, [literal_line_break()]);
+        }
+        first = false;
+        if !line.is_empty() {
+            let arena_text = allocator.alloc_str(line);
+            let width = TextWidth::from_text(arena_text, indent_width);
+            f.write_element(FormatElement::Text { text: arena_text, width });
+        }
+    }
 }

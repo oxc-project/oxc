@@ -125,15 +125,15 @@ pub struct ResolvedDispatchConfig {
     yaml: OnceLock<YamlFormatOptions>,
     /// One cell per fence-reachable [`JsonVariant`] (json / jsonc / json5; `JsonStringify` is `package.json`-only).
     json: [OnceLock<JsonFormatOptions>; 3],
-    /// The options handed to the external formatter; see [`ExternalOptions`].
+    /// The options handed to Prettier; see [`PrettierOptions`].
     #[cfg(feature = "napi")]
-    external: ExternalOptions,
+    prettier: PrettierOptions,
 }
 
-/// The lazily-built options JSON handed to the external formatter (Prettier + plugins),
+/// The lazily-built options JSON handed to Prettier (+ plugins),
 /// consumed by the Doc→IR / string paths and the Tailwind sorter.
 /// `path` is an ingredient, not a sibling datum: it becomes the JSON's `filepath` at last
-/// (see [`crate::core::options::build_external_options`]).
+/// (see [`crate::core::options::build_prettier_options`]).
 ///
 /// NOTE: The late merge is load-bearing: the JSON must derive from the RESOLVED per-file config
 /// (a pre-built Value loses overrides, #18246), and `path` is the one per-file ingredient,
@@ -141,7 +141,7 @@ pub struct ResolvedDispatchConfig {
 /// Lazy so an embed-free file never builds the JSON at all.
 #[cfg(feature = "napi")]
 #[derive(Default)]
-struct ExternalOptions {
+struct PrettierOptions {
     path: std::path::PathBuf,
     options: OnceLock<serde_json::Value>,
 }
@@ -159,7 +159,7 @@ impl ResolvedDispatchConfig {
             yaml: OnceLock::new(),
             json: [OnceLock::new(), OnceLock::new(), OnceLock::new()],
             #[cfg(feature = "napi")]
-            external: ExternalOptions::default(),
+            prettier: PrettierOptions::default(),
         }
     }
 
@@ -235,13 +235,13 @@ impl ResolvedDispatchConfig {
     }
 }
 
-/// Napi-only methods: the [`ExternalOptions`] accessors and the Tailwind predicate.
+/// Napi-only methods: the [`PrettierOptions`] accessors and the Tailwind predicate.
 #[cfg(feature = "napi")]
 impl ResolvedDispatchConfig {
-    /// Sets the host file path for `filepath` injection into [`Self::external_options`];
+    /// Sets the host file path for `filepath` injection into [`Self::prettier_options`];
     /// chained by [`Self::for_root`].
     fn with_path(mut self, path: std::path::PathBuf) -> Self {
-        self.external.path = path;
+        self.prettier.path = path;
         self
     }
 
@@ -252,11 +252,11 @@ impl ResolvedDispatchConfig {
         self.config.is_tailwind_enabled()
     }
 
-    /// The options JSON handed to the external formatter
-    /// (see [`crate::core::options::build_external_options`]).
-    pub fn external_options(&self) -> &serde_json::Value {
-        self.external.options.get_or_init(|| {
-            crate::core::options::build_external_options(&self.config, &self.external.path)
+    /// The options JSON handed to Prettier
+    /// (see [`crate::core::options::build_prettier_options`]).
+    pub fn prettier_options(&self) -> &serde_json::Value {
+        self.prettier.options.get_or_init(|| {
+            crate::core::options::build_prettier_options(&self.config, &self.prettier.path)
         })
     }
 }

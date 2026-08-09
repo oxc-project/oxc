@@ -102,7 +102,7 @@ pub fn for_root(
         let dispatch_config = Arc::clone(dispatch_config);
         Arc::new(move |classes: Vec<String>| {
             debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
-                .in_scope(|| (sort)(dispatch_config.external_options(), classes))
+                .in_scope(|| (sort)(dispatch_config.prettier_options(), classes))
         }) as TailwindSorter
     });
 

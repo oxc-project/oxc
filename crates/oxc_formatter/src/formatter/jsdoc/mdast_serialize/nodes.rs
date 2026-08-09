@@ -759,7 +759,8 @@ fn format_code_value<'a>(
     width: usize,
     opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
-    // For fenced code with an explicit non-JS/TS lang, try external formatter (CSS, HTML, etc.)
+    // Fenced code with an explicit non-JS/TS lang: route through the session's string embedder
+    // (the host decides who serves the language); verbatim when absent or it fails.
     if let Some(l) = lang
         && !is_js_ts_lang(l)
     {
