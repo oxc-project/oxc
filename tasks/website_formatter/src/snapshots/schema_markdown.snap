@@ -240,6 +240,23 @@ Add blank lines between different tag groups (e.g. between `@param` and `@return
 - Default: `false`
 
 
+## jsxBlankLines
+
+type: `"preserve" | "remove"`
+
+
+Whether to keep blank lines between JSX children.
+
+`"preserve"` keeps a single blank line wherever one was written, matching Prettier.
+`"remove"` drops them, printing children one per line — the shape already used
+when a JSX element has a meaningful text child.
+
+Blank lines between statements are unaffected.
+
+- Languages: JSX, TSX
+- Default: `"preserve"`
+
+
 ## jsxSingleQuote
 
 type: `boolean`
@@ -528,6 +545,23 @@ type: `boolean`
 Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
 
 - Default: `false`
+
+
+##### overrides[n].options.jsxBlankLines
+
+type: `"preserve" | "remove"`
+
+
+Whether to keep blank lines between JSX children.
+
+`"preserve"` keeps a single blank line wherever one was written, matching Prettier.
+`"remove"` drops them, printing children one per line — the shape already used
+when a JSX element has a meaningful text child.
+
+Blank lines between statements are unaffected.
+
+- Languages: JSX, TSX
+- Default: `"preserve"`
 
 
 ##### overrides[n].options.jsxSingleQuote

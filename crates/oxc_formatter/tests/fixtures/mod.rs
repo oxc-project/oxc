@@ -86,6 +86,13 @@ impl FixtureFormatter for JsHarness {
                 "jsdoc" if value.is_object() => {
                     options.jsdoc = Some(JsdocOptions::default());
                 }
+                "jsxBlankLines" => {
+                    if let Some(s) = value.as_str()
+                        && let Ok(parsed) = s.parse()
+                    {
+                        options.jsx_blank_lines = parsed;
+                    }
+                }
                 _ => {}
             }
         }

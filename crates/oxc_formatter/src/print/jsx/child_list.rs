@@ -243,7 +243,10 @@ impl FormatJsxChildList {
                     //   <div>Second</div>
                     //   Third
                     // </>
-                    if children_meta.meaningful_text {
+                    //
+                    // `jsxBlankLines: "remove"` asks for that same shape for every
+                    // element, not only the ones that happen to contain text.
+                    if children_meta.meaningful_text || f.options().jsx_blank_lines.is_remove() {
                         multiline.write_separator(&hard_line_break(), f);
                     } else {
                         multiline.write_separator(&empty_line(), f);

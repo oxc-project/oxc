@@ -272,6 +272,19 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub jsdoc: Option<JsdocUserConfig>,
 
+    /// Whether to keep blank lines between JSX children.
+    ///
+    /// `"preserve"` keeps a single blank line wherever one was written, matching Prettier.
+    /// `"remove"` drops them, printing children one per line — the shape already used
+    /// when a JSX element has a meaningful text child.
+    ///
+    /// Blank lines between statements are unaffected.
+    ///
+    /// - Languages: JSX, TSX
+    /// - Default: `"preserve"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jsx_blank_lines: Option<JsxBlankLinesConfig>,
+
     /// Options for `prettier-plugin-svelte`.
     ///
     /// Pass `true` or an object to enable `.svelte` file formatting,
@@ -399,6 +412,13 @@ pub enum TrailingCommaConfig {
     All,
     Es5,
     None,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum JsxBlankLinesConfig {
+    Preserve,
+    Remove,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]

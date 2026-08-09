@@ -72,6 +72,15 @@
       ],
       "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
     },
+    "jsxBlankLines": {
+      "description": "Whether to keep blank lines between JSX children.\n\n`\"preserve\"` keeps a single blank line wherever one was written, matching Prettier.\n`\"remove\"` drops them, printing children one per line — the shape already used\nwhen a JSX element has a meaningful text child.\n\nBlank lines between statements are unaffected.\n\n- Languages: JSX, TSX\n- Default: `\"preserve\"`",
+      "allOf": [
+        {
+          "$ref": "#/definitions/JsxBlankLinesConfig"
+        }
+      ],
+      "markdownDescription": "Whether to keep blank lines between JSX children.\n\n`\"preserve\"` keeps a single blank line wherever one was written, matching Prettier.\n`\"remove\"` drops them, printing children one per line — the shape already used\nwhen a JSX element has a meaningful text child.\n\nBlank lines between statements are unaffected.\n\n- Languages: JSX, TSX\n- Default: `\"preserve\"`"
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`",
       "type": "boolean",
@@ -330,6 +339,15 @@
           ],
           "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\nPass `true` or an object to enable with defaults, or omit/set `false` to disable.\n\n- Languages: JS, JSX, TS, TSX\n- Default: Disabled"
         },
+        "jsxBlankLines": {
+          "description": "Whether to keep blank lines between JSX children.\n\n`\"preserve\"` keeps a single blank line wherever one was written, matching Prettier.\n`\"remove\"` drops them, printing children one per line — the shape already used\nwhen a JSX element has a meaningful text child.\n\nBlank lines between statements are unaffected.\n\n- Languages: JSX, TSX\n- Default: `\"preserve\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/JsxBlankLinesConfig"
+            }
+          ],
+          "markdownDescription": "Whether to keep blank lines between JSX children.\n\n`\"preserve\"` keeps a single blank line wherever one was written, matching Prettier.\n`\"remove\"` drops them, printing children one per line — the shape already used\nwhen a JSX element has a meaningful text child.\n\nBlank lines between statements are unaffected.\n\n- Languages: JSX, TSX\n- Default: `\"preserve\"`"
+        },
         "jsxSingleQuote": {
           "description": "Use single quotes instead of double quotes in JSX.\n\n- Languages: JSX, TSX\n- Default: `false`",
           "type": "boolean",
@@ -572,6 +590,13 @@
         {
           "$ref": "#/definitions/JsdocConfig"
         }
+      ]
+    },
+    "JsxBlankLinesConfig": {
+      "type": "string",
+      "enum": [
+        "preserve",
+        "remove"
       ]
     },
     "LineWrappingStyleConfig": {

@@ -71,6 +71,57 @@ pub struct JsFormatOptions {
     /// When enabled, JSDoc comments will be normalized and reformatted.
     /// Defaults to None (disabled).
     pub jsdoc: Option<JsdocOptions>,
+    /// Whether blank lines between JSX children are kept. Defaults to preserving them.
+    pub jsx_blank_lines: JsxBlankLines,
+}
+
+/// Whether blank lines between JSX children are kept.
+///
+/// Prettier has no equivalent and always preserves them, so `Preserve` is the default.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum JsxBlankLines {
+    /// Keep a single blank line wherever the author wrote one.
+    #[default]
+    Preserve,
+    /// Drop them, printing children one per line.
+    ///
+    /// This is the shape already produced when a JSX element has a meaningful text
+    /// child, which switches its children to a filled text flow.
+    Remove,
+}
+
+impl JsxBlankLines {
+    pub const fn is_remove(self) -> bool {
+        matches!(self, Self::Remove)
+    }
+
+    pub const fn is_preserve(self) -> bool {
+        matches!(self, Self::Preserve)
+    }
+}
+
+impl FromStr for JsxBlankLines {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "preserve" => Ok(Self::Preserve),
+            "remove" => Ok(Self::Remove),
+            _ => Err(
+                "Value not supported for JsxBlankLines. Supported values are 'preserve' and 'remove'.",
+            ),
+        }
+    }
+}
+
+impl fmt::Display for JsxBlankLines {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            JsxBlankLines::Preserve => "Preserve",
+            JsxBlankLines::Remove => "Remove",
+        };
+        f.write_str(s)
+    }
 }
 
 /// How to format JSDoc comment blocks: single-line, multi-line, or preserve original.

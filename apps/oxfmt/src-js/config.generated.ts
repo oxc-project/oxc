@@ -10,6 +10,7 @@ export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
 export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
 export type LineWrappingStyleConfig = "greedy" | "balance";
+export type JsxBlankLinesConfig = "preserve" | "remove";
 export type ObjectWrapConfig = "preserve" | "collapse";
 /**
  * A set of glob patterns.
@@ -128,6 +129,19 @@ export interface Oxfmtrc {
    * - Default: Disabled
    */
   jsdoc?: JsdocUserConfig;
+  /**
+   * Whether to keep blank lines between JSX children.
+   *
+   * `"preserve"` keeps a single blank line wherever one was written, matching Prettier.
+   * `"remove"` drops them, printing children one per line — the shape already used
+   * when a JSX element has a meaningful text child.
+   *
+   * Blank lines between statements are unaffected.
+   *
+   * - Languages: JSX, TSX
+   * - Default: `"preserve"`
+   */
+  jsxBlankLines?: JsxBlankLinesConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *
@@ -448,6 +462,19 @@ export interface FormatConfig {
    * - Default: Disabled
    */
   jsdoc?: JsdocUserConfig;
+  /**
+   * Whether to keep blank lines between JSX children.
+   *
+   * `"preserve"` keeps a single blank line wherever one was written, matching Prettier.
+   * `"remove"` drops them, printing children one per line — the shape already used
+   * when a JSX element has a meaningful text child.
+   *
+   * Blank lines between statements are unaffected.
+   *
+   * - Languages: JSX, TSX
+   * - Default: `"preserve"`
+   */
+  jsxBlankLines?: JsxBlankLinesConfig;
   /**
    * Use single quotes instead of double quotes in JSX.
    *

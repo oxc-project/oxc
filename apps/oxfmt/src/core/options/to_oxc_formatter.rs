@@ -3,8 +3,8 @@ use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
     CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
-    JsdocOptions, LineWrappingStyle, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions,
-    SortOrder, TrailingCommas,
+    JsdocOptions, JsxBlankLines, LineWrappingStyle, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
@@ -12,9 +12,9 @@ use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 use super::super::oxfmtrc::SortTailwindcssUserConfig;
 use super::super::oxfmtrc::{
     ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
-    ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
-    ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig, SortImportsUserConfig,
-    SortOrderConfig, TrailingCommaConfig,
+    ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, JsxBlankLinesConfig,
+    LineWrappingStyleConfig, ObjectWrapConfig, QuotePropsConfig, SortGroupItemConfig,
+    SortImportsUserConfig, SortOrderConfig, TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -44,6 +44,14 @@ pub fn to_oxc_formatter(
     if let Some(jsx_single_quote) = config.jsx_single_quote {
         format_options.jsx_quote_style =
             if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+    }
+
+    // [Oxfmt] jsxBlankLines: "preserve" | "remove"
+    if let Some(jsx_blank_lines) = config.jsx_blank_lines {
+        format_options.jsx_blank_lines = match jsx_blank_lines {
+            JsxBlankLinesConfig::Preserve => JsxBlankLines::Preserve,
+            JsxBlankLinesConfig::Remove => JsxBlankLines::Remove,
+        };
     }
 
     // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
@@ -347,6 +355,22 @@ mod tests {
                 });
             assert_eq!(to_import_modifier(config), *modifier);
         }
+    }
+
+    /// Omitting the key must leave Prettier's behaviour in place, so the default
+    /// case is asserted alongside the two explicit ones.
+    #[test]
+    fn jsx_blank_lines_maps_from_config() {
+        let preserve: FormatConfig =
+            serde_json::from_str(r#"{ "jsxBlankLines": "preserve" }"#).unwrap();
+        assert!(build(&preserve).unwrap().jsx_blank_lines.is_preserve());
+
+        let remove: FormatConfig =
+            serde_json::from_str(r#"{ "jsxBlankLines": "remove" }"#).unwrap();
+        assert!(build(&remove).unwrap().jsx_blank_lines.is_remove());
+
+        let omitted: FormatConfig = serde_json::from_str("{}").unwrap();
+        assert!(build(&omitted).unwrap().jsx_blank_lines.is_preserve());
     }
 
     #[test]
