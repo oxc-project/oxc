@@ -34,7 +34,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let semantic_ret = SemanticBuilder::new_linter().build(&parser_ret.program);
                 let semantic = semantic_ret.semantic;
                 let module_record =
-                    Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
+                    Arc::new(ModuleRecord::new(path, 0, &parser_ret.module_record, &semantic));
                 let mut external_plugin_store = ExternalPluginStore::default();
                 let lint_config =
                     ConfigStoreBuilder::all().build(&mut external_plugin_store).unwrap();

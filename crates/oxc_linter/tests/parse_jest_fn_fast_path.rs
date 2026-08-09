@@ -24,7 +24,7 @@ fn lint_all_rules(source: &str, path: &str) -> Vec<String> {
     let parser_ret = Parser::new(&allocator, source, source_type).parse();
     let semantic = SemanticBuilder::new_linter().build(&parser_ret.program).semantic;
     let path = Path::new(path);
-    let module_record = Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));
+    let module_record = Arc::new(ModuleRecord::new(path, 0, &parser_ret.module_record, &semantic));
     let mut external_plugin_store = ExternalPluginStore::default();
     let lint_config = ConfigStoreBuilder::all().build(&mut external_plugin_store).unwrap();
     let linter = Linter::new(

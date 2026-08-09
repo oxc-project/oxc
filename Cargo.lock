@@ -2244,6 +2244,7 @@ dependencies = [
  "oxc_str",
  "oxc_syntax",
  "papaya",
+ "petgraph",
  "phf",
  "rayon",
  "rust-lapper",
