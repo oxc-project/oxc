@@ -32,6 +32,11 @@ const __sharedMemory = new WebAssembly.Memory({
   maximum: 65536,
   shared: true,
 })
+const __asyncWorkPoolSize = 4
+const __workerPoolSize = Math.max(
+  2,
+  globalThis.navigator?.hardwareConcurrency ?? 4,
+)
 
 let __emnapiContext
 
@@ -306,7 +311,8 @@ try {
     napiModule: __napiModule,
   } = await __emnapiInstantiateNapiModule(__wasmFile, {
     context: __emnapiContext,
-    asyncWorkPoolSize: 4,
+    asyncWorkPoolSize: __asyncWorkPoolSize,
+    reuseWorker: { size: __asyncWorkPoolSize + __workerPoolSize },
     plugins: [__emnapiAsyncWorkPlugin, __emnapiTSFNPlugin],
     wasi: __wasi,
     onCreateWorker() {
