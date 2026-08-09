@@ -12,7 +12,7 @@ use serde_json::Value;
 use tracing::{debug, debug_span};
 
 use oxc_formatter::HtmlEmbedMeta;
-use oxc_formatter_core::{DispatchOutcome, DispatchResult, FormatSession};
+use oxc_formatter_core::{DispatchPayload, DispatchResponse, FormatSession};
 
 use crate::{
     core::{
@@ -65,7 +65,7 @@ pub fn build_prettier_fallback(
                             .and_then(Value::as_bool),
                     }) as Box<dyn std::any::Any>
                 });
-                Ok(DispatchOutcome::Formatted(DispatchResult {
+                Ok(DispatchResponse::Formatted(DispatchPayload {
                     doc: ir,
                     tailwind_classes: Vec::new(),
                     child_context,

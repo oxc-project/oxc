@@ -3,7 +3,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    DispatchOutcome, DispatchRequest, FormatElement, IndentWidth, InputKind,
+    DispatchRequest, DispatchResponse, FormatElement, IndentWidth, InputKind,
     format_element::TextWidth,
 };
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
@@ -56,7 +56,7 @@ pub(super) fn format_html_doc<'a>(
         let has_leading_ws = cooked.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = cooked.ends_with(|c: char| c.is_ascii_whitespace());
 
-        let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
+        let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
             language: embedded_language,
             text: cooked,
             input_kind: InputKind::Fragment,
@@ -120,7 +120,7 @@ pub(super) fn format_html_doc<'a>(
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
 
     // Phase 2: Format via the dispatcher (IR path)
-    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
+    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
         language: embedded_language,
         text: joined,
         input_kind: InputKind::Fragment,

@@ -18,7 +18,7 @@ pub struct CssInJsTemplate;
 /// the consumer is this crate's `embed/html.rs` (the JS side of html-in-js),
 /// and `oxc_formatter` must never depend on language crates. Cross-language
 /// contract fields (placeholder counts, Tailwind classes) are first-class on
-/// `DispatchResult` in `oxc_formatter_core` instead; only what is truly
+/// `DispatchPayload` in `oxc_formatter_core` instead; only what is truly
 /// specific to the JS↔HTML pair travels as the `dyn Any` child context.
 pub struct HtmlEmbedMeta {
     /// Whether the parsed HTML has more than one root element.

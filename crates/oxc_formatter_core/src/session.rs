@@ -5,7 +5,7 @@ use std::sync::Arc;
 use oxc_allocator::Allocator;
 
 use crate::{
-    DispatchOutcome, DispatchRequest, DispatchResult, Document, FormatDispatcher, PrinterOptions,
+    DispatchPayload, DispatchRequest, DispatchResponse, Document, FormatDispatcher, PrinterOptions,
     UniqueGroupIdBuilder,
 };
 
@@ -128,8 +128,8 @@ impl<'a> FormatSession<'a> {
 
     /// Formats one embedded-language request on a child session derived from this one.
     ///
-    /// See [`DispatchOutcome`] for the outcome-vs-`Err` contract; this method adds three rules:
-    /// - no dispatcher installed (plain standalone run) is the deliberate `Ok(DispatchOutcome::PreserveOriginal)`
+    /// See [`DispatchResponse`] for the `PreserveOriginal`-vs-`Err` contract; this method adds three rules:
+    /// - no dispatcher installed (plain standalone run) is the deliberate `Ok(DispatchResponse::PreserveOriginal)`
     /// - a request text starting with U+FEFF is deliberately preserved:
     ///   in an embedded position it is content, not a BOM (formatting must not swallow it), and no child entry handles it
     /// - reaching `MAX_DISPATCH_DEPTH` is an `Err`
@@ -138,12 +138,12 @@ impl<'a> FormatSession<'a> {
     ///
     /// # Errors
     /// Operational failures only (recursion limit, transport/internal errors).
-    pub fn dispatch(&self, request: DispatchRequest<'_>) -> Result<DispatchOutcome<'a>, String> {
+    pub fn dispatch(&self, request: DispatchRequest<'_>) -> Result<DispatchResponse<'a>, String> {
         let Some(dispatcher) = &self.services.dispatcher else {
-            return Ok(DispatchOutcome::PreserveOriginal);
+            return Ok(DispatchResponse::PreserveOriginal);
         };
         if request.text.starts_with('\u{feff}') {
-            return Ok(DispatchOutcome::PreserveOriginal);
+            return Ok(DispatchResponse::PreserveOriginal);
         }
         if self.dispatch_depth >= MAX_DISPATCH_DEPTH {
             return Err(format!(
@@ -166,7 +166,7 @@ impl<'a> FormatSession<'a> {
     /// through this session's sorter instead of merging upward.
     ///
     /// Returns `Ok(None)` when the dispatch deliberately preserved the input
-    /// (see [`DispatchOutcome::PreserveOriginal`]); the caller keeps its original text.
+    /// (see [`DispatchResponse::PreserveOriginal`]); the caller keeps its original text.
     ///
     /// # Errors
     /// Operational failures only (dispatch transport, recursion limit, print).
@@ -176,7 +176,7 @@ impl<'a> FormatSession<'a> {
         printer_options: PrinterOptions,
     ) -> Result<Option<String>, String> {
         let text_len = request.text.len();
-        let DispatchOutcome::Formatted(DispatchResult { doc, tailwind_classes, .. }) =
+        let DispatchResponse::Formatted(DispatchPayload { doc, tailwind_classes, .. }) =
             self.dispatch(request)?
         else {
             return Ok(None);
@@ -230,7 +230,9 @@ mod tests {
     use oxc_allocator::Allocator;
 
     use super::{FormatSession, InputKind, MAX_DISPATCH_DEPTH, SessionServices};
-    use crate::{DispatchOutcome, DispatchRequest, DispatchResult, FormatDispatcher, FormatState};
+    use crate::{
+        DispatchPayload, DispatchRequest, DispatchResponse, FormatDispatcher, FormatState,
+    };
 
     fn request<'r>() -> DispatchRequest<'r> {
         DispatchRequest {
@@ -246,14 +248,14 @@ mod tests {
         let allocator = Allocator::default();
         let session = FormatSession::new(&allocator, InputKind::PhysicalFile);
 
-        assert!(matches!(session.dispatch(request()), Ok(DispatchOutcome::PreserveOriginal)));
+        assert!(matches!(session.dispatch(request()), Ok(DispatchResponse::PreserveOriginal)));
     }
 
     #[test]
     fn dispatch_preserves_a_bom_headed_text() {
         let allocator = Allocator::default();
         let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
-            Ok(DispatchOutcome::Formatted(DispatchResult {
+            Ok(DispatchResponse::Formatted(DispatchPayload {
                 doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
                 tailwind_classes: Vec::new(),
                 child_context: None,
@@ -266,17 +268,17 @@ mod tests {
         );
 
         let bom_request = DispatchRequest { text: "\u{feff}a: 1", ..request() };
-        assert!(matches!(session.dispatch(bom_request), Ok(DispatchOutcome::PreserveOriginal)));
+        assert!(matches!(session.dispatch(bom_request), Ok(DispatchResponse::PreserveOriginal)));
         // A non-leading U+FEFF is ordinary content and formats normally
         let inner_request = DispatchRequest { text: "a: \u{feff}1", ..request() };
-        assert!(matches!(session.dispatch(inner_request), Ok(DispatchOutcome::Formatted(_))));
+        assert!(matches!(session.dispatch(inner_request), Ok(DispatchResponse::Formatted(_))));
     }
 
     #[test]
     fn dispatch_stops_at_the_depth_limit() {
         let allocator = Allocator::default();
         let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
-            Ok(DispatchOutcome::Formatted(DispatchResult {
+            Ok(DispatchResponse::Formatted(DispatchPayload {
                 doc: oxc_allocator::ArenaVec::new_in(&ctx.allocator()),
                 tailwind_classes: Vec::new(),
                 child_context: None,
@@ -288,7 +290,7 @@ mod tests {
             SessionServices { dispatcher: Some(dispatcher), ..SessionServices::default() },
         );
 
-        assert!(matches!(session.dispatch(request()), Ok(DispatchOutcome::Formatted(_))));
+        assert!(matches!(session.dispatch(request()), Ok(DispatchResponse::Formatted(_))));
         for _ in 0..MAX_DISPATCH_DEPTH {
             session = session.derive_child(InputKind::Fragment);
         }

@@ -45,7 +45,7 @@ pub use buffer::{
 };
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 pub use embedded::{
-    DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedIr, FormatDispatcher,
+    DispatchPayload, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
     TailwindCollector, dispatch_fragment_ir,
 };
 pub use envelope::write_front_matter;

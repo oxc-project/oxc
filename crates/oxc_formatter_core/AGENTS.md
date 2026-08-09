@@ -75,23 +75,23 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ### Embedded-language infrastructure (`embedded.rs`, `session.rs`)
 
-`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchResult` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
+`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchPayload` / `TailwindCollector` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
 - The orchestrator (oxfmt) assembles the dispatcher, mapping language names to formatter implementations (or a Prettier fallback)
   - Formatter crates only invoke it via `FormatSession::dispatch`
 - Parent and child share one arena and one `GroupId` space through the session
 - A language crate's `format_to_ir` entry returns `EmbeddedIr` (IR + pre-sort Tailwind classes), one shape for every child language, no per-crate tuples
-- Cross-language contract data is first-class on `DispatchResult` (`tailwind_classes`)
+- Cross-language contract data is first-class on `DispatchPayload` (`tailwind_classes`)
   - Only truly language-pair specific data crosses as `dyn Any` (e.g. HTML's `has_multiple_root_elements`), core never learns concrete languages
-- Consumers take the doc via `DispatchResult::into_doc(collector)`, which folds the Tailwind class merge into consumption
+- Consumers take the doc via `DispatchPayload::into_doc(collector)`, which folds the Tailwind class merge into consumption
   - The printer's `debug_assert` backstops any hand-rolled consumption that skips the merge
 - `FormatSession` (`session.rs`) is the execution unit:
   - One arena, one shared `GroupId` space (`Arc<UniqueGroupIdBuilder>`), the host's `SessionServices`, and the input's envelope semantics (`InputKind`), usable by standalone roots and dispatched children alike
   - `SessionServices` names the three per-run duties, one field each: `dispatcher` (IR channel), `string_embedder` (string-out channel, `(language, code, print_width)`; temporary while some languages only format via a string API), `tailwind_sorter` (print-time batch sort). Core only transports them
   - `FormatSession::dispatch_to_string(request, printer_options)` is the string-out counterpart of `dispatch` (caller supplies the printer options; `Ok(None)` = deliberate keep; see its rustdoc)
   - `FormatState` holds one (`new_with_session`; plain `new` wraps a service-less `PhysicalFile` session), and `Formatter::session()` exposes it during a write
-- A dispatch states its request as `DispatchRequest` (language, text, `InputKind`, pair-specific context) and yields `Result<DispatchOutcome, String>`:
-  - `DispatchOutcome::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
+- A dispatch states its request as `DispatchRequest` (language, text, `InputKind`, pair-specific context) and yields `Result<DispatchResponse, String>`:
+  - `DispatchResponse::PreserveOriginal` is the DELIBERATE "keep the source as-is" answer (unsupported language, child parse failure, no dispatcher installed); `Err` is reserved for operational failures (transport / internal, recursion limit)
   - Optional-embed callers degrade the same way for both, but never conflate them at the source
   - `FormatSession::dispatch` owns the no-dispatcher case and the recursion limit (`MAX_DISPATCH_DEPTH`), and runs the callback on a `derive_child`ed session
 

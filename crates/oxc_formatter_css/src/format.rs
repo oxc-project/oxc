@@ -108,7 +108,7 @@ pub fn format_with_session<'a>(
 /// [`CssFormatOptions::sort_tailwindcss`] is on).
 /// The parent document owns the batch sort,
 /// so the caller must re-index the elements into the parent's class space
-/// (`DispatchResult::into_doc`).
+/// (`DispatchPayload::into_doc`).
 ///
 /// # Errors
 /// Same as [`format()`].

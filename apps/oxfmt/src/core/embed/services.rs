@@ -68,18 +68,18 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
 ///    the CSS root's session carries the same sorter (`CssFormatOptions::sort_tailwindcss` only switches collection);
 ///    classes sort once at finalize, no embedded boundary involved.
 /// 3. Embedded CSS (css-in-js + Angular `@Component({ styles })`):
-///    `oxc_formatter_css::format_to_ir()` returns pre-sort `@apply` classes in `DispatchResult::tailwind_classes`.
-///    The JS parent re-indexes them into its own collector (`DispatchResult::into_doc`), so they ride the SAME parent batch as path 1.
+///    `oxc_formatter_css::format_to_ir()` returns pre-sort `@apply` classes in `DispatchPayload::tailwind_classes`.
+///    The JS parent re-indexes them into its own collector (`DispatchPayload::into_doc`), so they ride the SAME parent batch as path 1.
 ///    The standalone CSS sort closure is NOT invoked here.
 /// 4. JSDoc fenced CSS (Markdown code fence in JSDoc descriptions):
 ///    Goes through the string embedder's fence adapter, which returns a formatted string (not parent-integrated IR),
 ///    so there is no parent index space to remap into:
-///    the adapter sorts the returned `DispatchResult::tailwind_classes` itself before printing.
+///    the adapter sorts the returned `DispatchPayload::tailwind_classes` itself before printing.
 ///    The `prettier_string::build_string_embedder` factory receives the sorter for this case.
 ///
 /// All four paths use the SAME `sort_tailwindcss_classes` napi callback; only the wiring differs.
 /// Moving sorting to the wrong layer (e.g. sorting inside embedded CSS instead of remapping) would double-sort or drop classes.
-/// `DispatchResult::into_doc` folds the merge into doc consumption; the printer `debug_assert` backstops it.
+/// `DispatchPayload::into_doc` folds the merge into doc consumption; the printer `debug_assert` backstops it.
 #[cfg(feature = "napi")]
 pub fn for_root(
     external_services: &ExternalServices,

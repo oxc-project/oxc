@@ -81,8 +81,8 @@ Tailwind class sorting (`sortTailwindcss`) splits responsibilities:
 - and the JS side sorts them in one batch
   - `sortTailwindClasses` → tailwind's `getClassOrder`, which needs the resolved Tailwind config
 
-Embedded boundaries carry classes through `DispatchResult::tailwind_classes`;
-each embed site consumes the doc via `DispatchResult::into_doc(collector)`, which merges them into the parent's class space.
+Embedded boundaries carry classes through `DispatchPayload::tailwind_classes`;
+each embed site consumes the doc via `DispatchPayload::into_doc(collector)`, which merges them into the parent's class space.
 
 The four data paths (JS/TS top-level / standalone CSS / embedded CSS / JSDoc fenced CSS) are documented at `embed::services::for_root` (napi definition).
 No CSS goes to Prettier for this; the pure Rust build never collects at all (both mappers gate collection behind napi, since no sorter exists there).

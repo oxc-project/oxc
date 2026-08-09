@@ -8,7 +8,7 @@
 //! mapping a language name to a formatter implementation (or a fallback).
 //!
 //! Core only carries the shared plumbing (arena, group-id space, recursion handle)
-//! and the cross-language contract field ([`DispatchResult::tailwind_classes`]);
+//! and the cross-language contract field ([`DispatchPayload::tailwind_classes`]);
 //! anything truly language-pair specific crosses as a `dyn Any` passthrough.
 //! Core knows nothing about any concrete language.
 
@@ -29,12 +29,12 @@ pub struct DispatchRequest<'r> {
     pub input_kind: InputKind,
     /// Parent→child language-pair specific data,
     /// downcast by the implementation (`None` for most pairs; e.g. JS's `CssInJsTemplate`).
-    /// The borrowed counterpart of [`DispatchResult::child_context`]
+    /// The borrowed counterpart of [`DispatchPayload::child_context`]
     /// (borrowed because the parent outlives the dispatch call).
     pub parent_context: Option<&'r dyn Any>,
 }
 
-/// What a dispatch produced.
+/// The dispatcher's answer to a [`DispatchRequest`].
 ///
 /// [`Self::PreserveOriginal`] is the DELIBERATE "do not format" answer
 /// (unsupported language, child parse failure, an envelope the child refuses,
@@ -42,9 +42,9 @@ pub struct DispatchRequest<'r> {
 /// `Result::Err` around this enum is reserved for operational failures (transport / internal errors);
 /// optional-embed callers degrade the same way for both,
 /// but the two must never be conflated at the source.
-pub enum DispatchOutcome<'a> {
-    /// The child formatted the request; consume [`DispatchResult`].
-    Formatted(DispatchResult<'a>),
+pub enum DispatchResponse<'a> {
+    /// The child formatted the request; consume [`DispatchPayload`].
+    Formatted(DispatchPayload<'a>),
     /// Deliberately not formatted; keep the original source untouched.
     PreserveOriginal,
 }
@@ -60,13 +60,13 @@ pub type FormatDispatcher = Arc<
     dyn for<'a, 'r> Fn(
             &FormatSession<'a>,
             DispatchRequest<'r>,
-        ) -> Result<DispatchOutcome<'a>, String>
+        ) -> Result<DispatchResponse<'a>, String>
         + Send
         + Sync,
 >;
 
 /// IR built by a language crate's embedded entry point (`format_to_ir`) for one input text.
-/// The orchestrator's dispatcher wraps it into a [`DispatchResult`].
+/// The orchestrator's dispatcher wraps it into a [`DispatchPayload`].
 ///
 /// Every language crate's `format_to_ir` returns this shape,
 /// so a new child language only has to fill in the fields (no per-crate tuple conventions).
@@ -79,20 +79,20 @@ pub struct EmbeddedIr<'a> {
     pub tailwind_classes: Vec<String>,
 }
 
-/// One [`EmbeddedIr`] becomes a result,
+/// One [`EmbeddedIr`] becomes a payload,
 /// carrying the child's Tailwind classes through (hand-rolling the literal invites silently dropping them).
-impl<'a> From<EmbeddedIr<'a>> for DispatchResult<'a> {
+impl<'a> From<EmbeddedIr<'a>> for DispatchPayload<'a> {
     fn from(embedded: EmbeddedIr<'a>) -> Self {
         Self { doc: embedded.ir, tailwind_classes: embedded.tailwind_classes, child_context: None }
     }
 }
 
-/// Result of a [`FormatDispatcher`] call.
+/// The child's formatted product, carried by [`DispatchResponse::Formatted`].
 ///
 /// Consume through [`Self::into_doc`] when a parent index space exists
 /// (every IR-channel embed site); only a parent-less consumer
 /// (the fence adapter, which sorts locally) destructures the fields directly.
-pub struct DispatchResult<'a> {
+pub struct DispatchPayload<'a> {
     /// The formatted IR, arena-allocated alongside its elements.
     pub doc: ArenaVec<'a, FormatElement<'a>>,
     /// Pre-sort Tailwind classes referenced by the doc's
@@ -107,7 +107,7 @@ pub struct DispatchResult<'a> {
     pub child_context: Option<Box<dyn Any>>,
 }
 
-impl<'a> DispatchResult<'a> {
+impl<'a> DispatchPayload<'a> {
     /// Consumes the result:
     /// moves the child's pre-sort Tailwind classes into the parent's class space and hands out the doc.
     /// Folding the merge into the only way to get the doc makes a forgotten merge unrepresentable.
@@ -150,7 +150,7 @@ impl<'a> DispatchResult<'a> {
 }
 
 /// Whether a `TailwindClass` sits below an `Interned` / `BestFitting` boundary,
-/// where [`DispatchResult::into_doc`]'s flat remap cannot rewrite it
+/// where [`DispatchPayload::into_doc`]'s flat remap cannot rewrite it
 /// (a top-level `TailwindClass` is the remap's normal input, not a hit).
 fn has_nested_tailwind_class(elements: &[FormatElement<'_>]) -> bool {
     fn contains(element: &FormatElement<'_>) -> bool {
@@ -170,11 +170,11 @@ fn has_nested_tailwind_class(elements: &[FormatElement<'_>]) -> bool {
 
 /// Dispatches one embedded fragment and consumes the result into the parent.
 ///
-/// `InputKind::Fragment` + the [`DispatchResult::into_doc`] Tailwind merge in one place,
+/// `InputKind::Fragment` + the [`DispatchPayload::into_doc`] Tailwind merge in one place,
 /// so an embed site cannot re-derive the pair and skip the merge.
-/// `None` covers [`DispatchOutcome::PreserveOriginal`] and operational errors alike;
+/// `None` covers [`DispatchResponse::PreserveOriginal`] and operational errors alike;
 /// the caller keeps its original source.
-/// Embed sites that must inspect [`DispatchResult::child_context`] first stay manual.
+/// Embed sites that must inspect [`DispatchPayload::child_context`] first stay manual.
 pub fn dispatch_fragment_ir<'a, C>(
     f: &mut Formatter<'_, 'a, C>,
     language: &str,
@@ -184,7 +184,7 @@ pub fn dispatch_fragment_ir<'a, C>(
 where
     C: FormatContext + TailwindCollector,
 {
-    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
+    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
         language,
         text,
         input_kind: InputKind::Fragment,
@@ -199,8 +199,8 @@ where
 ///
 /// `FormatElement::TailwindClass(usize)` holds pre-sort class strings by index;
 /// sorting happens in one host-supplied batch when the entry formatter's document is finalized.
-/// A child formatter collects classes locally (0-based) and returns them in [`DispatchResult::tailwind_classes`];
-/// the receiving parent implements this trait on its format context and receives them through [`DispatchResult::into_doc`].
+/// A child formatter collects classes locally (0-based) and returns them in [`DispatchPayload::tailwind_classes`];
+/// the receiving parent implements this trait on its format context and receives them through [`DispatchPayload::into_doc`].
 ///
 /// NOTE: an alternative design (threading one shared collector through [`FormatSession`]
 /// so children allocate parent indices directly) was considered and deferred:

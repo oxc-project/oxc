@@ -10,7 +10,7 @@ use tracing::{debug, debug_span};
 
 use oxc_formatter::CssInJsTemplate;
 use oxc_formatter_core::{
-    CoreFormatOptions, DispatchOutcome, DispatchRequest, EmbeddedIr, FormatDispatcher,
+    CoreFormatOptions, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
     FormatSession,
 };
 use oxc_formatter_core::{FormatOptions, PrinterOptions};
@@ -273,7 +273,7 @@ pub type PrettierDocFallback = Arc<
             &FormatSession<'a>,
             PrettierLanguage,
             &str,
-        ) -> Result<DispatchOutcome<'a>, String>
+        ) -> Result<DispatchResponse<'a>, String>
         + Send
         + Sync,
 >;
@@ -336,14 +336,14 @@ pub fn build_dispatcher(
                         "No fallback for Prettier language '{}' in this build, part stays as-is",
                         request.language
                     );
-                    Ok(DispatchOutcome::PreserveOriginal)
+                    Ok(DispatchResponse::PreserveOriginal)
                 }
             }
 
             // A language without a formatter is a deliberate skip, in every build.
             Route::Unsupported => {
                 debug!("No formatter for language '{}', part stays as-is", request.language);
-                Ok(DispatchOutcome::PreserveOriginal)
+                Ok(DispatchResponse::PreserveOriginal)
             }
         }
     })
@@ -355,12 +355,12 @@ pub fn build_dispatcher(
 fn format_native<'a, E: std::fmt::Display>(
     language: &'static str,
     format_to_ir: impl FnOnce() -> Result<EmbeddedIr<'a>, E>,
-) -> DispatchOutcome<'a> {
+) -> DispatchResponse<'a> {
     debug_span!("oxfmt::embed::format_to_ir", language).in_scope(|| match format_to_ir() {
-        Ok(embedded) => DispatchOutcome::Formatted(embedded.into()),
+        Ok(embedded) => DispatchResponse::Formatted(embedded.into()),
         Err(err) => {
             debug!("native '{language}' format_to_ir failed, part stays as-is: {err}");
-            DispatchOutcome::PreserveOriginal
+            DispatchResponse::PreserveOriginal
         }
     })
 }
@@ -371,7 +371,7 @@ mod tests {
 
     use oxc_allocator::Allocator;
     use oxc_formatter_core::{
-        CoreFormatOptions, DispatchOutcome, DispatchRequest, FormatSession, InputKind,
+        CoreFormatOptions, DispatchRequest, DispatchResponse, FormatSession, InputKind,
         SessionServices,
     };
 
@@ -410,14 +410,14 @@ mod tests {
                 "json" | "jsonc" | "json5" => "{ \"a\": 1 }",
                 other => panic!("no sample input for native language '{other}'"),
             };
-            let outcome = session.dispatch(DispatchRequest {
+            let response = session.dispatch(DispatchRequest {
                 language,
                 text,
                 input_kind: InputKind::Fragment,
                 parent_context: None,
             });
             assert!(
-                matches!(outcome, Ok(DispatchOutcome::Formatted(_))),
+                matches!(response, Ok(DispatchResponse::Formatted(_))),
                 "language '{language}' did not dispatch natively"
             );
         }
@@ -436,13 +436,13 @@ mod tests {
             },
         );
 
-        let outcome = session.dispatch(DispatchRequest {
+        let response = session.dispatch(DispatchRequest {
             language: "yaml",
             text: "a:   1",
             input_kind: InputKind::Fragment,
             parent_context: None,
         });
-        assert!(matches!(outcome, Ok(DispatchOutcome::Formatted(_))));
+        assert!(matches!(response, Ok(DispatchResponse::Formatted(_))));
     }
 
     /// Both non-native routes preserve without a fallback installed:
@@ -460,14 +460,14 @@ mod tests {
         );
 
         for (language, text) in [("html", "<div></div>"), ("toml", "a = 1")] {
-            let outcome = session.dispatch(DispatchRequest {
+            let response = session.dispatch(DispatchRequest {
                 language,
                 text,
                 input_kind: InputKind::Fragment,
                 parent_context: None,
             });
             assert!(
-                matches!(outcome, Ok(DispatchOutcome::PreserveOriginal)),
+                matches!(response, Ok(DispatchResponse::PreserveOriginal)),
                 "language '{language}' should be preserved without a fallback"
             );
         }
