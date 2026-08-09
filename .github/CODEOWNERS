@@ -61,13 +61,21 @@ pnpm-lock.yaml
 /crates/oxc_codegen @dunqing
 /crates/oxc_napi @dunqing
 /napi/transform @dunqing
-/napi/transform-react @dunqing
 /napi/minify @dunqing
 /npm/runtime @dunqing
 /tasks/transform_conformance @dunqing
 /tasks/transform_checker @dunqing
 /tasks/minsize @dunqing
 /tasks/compat_data @dunqing
+
+# React Compiler (@Boshen)
+
+/crates/oxc_react_compiler @Boshen
+/crates/oxc_linter/src/rules/react/react_compiler.rs @Boshen
+/crates/oxc_linter/src/snapshots/react_react_compiler.snap @Boshen
+/napi/transform-react @Boshen
+/tasks/benchmark/benches/react_compiler.rs @Boshen
+/.github/workflows/release_napi_transform_react.yml @Boshen
 
 # Core infrastructure crates (@overlookmotel)
 
@@ -89,5 +97,5 @@ pnpm-lock.yaml
 
 # Everything else falls through to the default owner @Boshen, including:
 #   parser (crates/oxc_parser, napi/parser), umbrella crates (crates/oxc,
-#   crates/oxc_react_compiler), crates/oxc_diagnostics, CI/release config,
-#   .github, build/dev toolchain configs, and project documentation.
+#   crates/oxc_diagnostics), CI/release config, .github, build/dev toolchain
+#   configs, and project documentation.
