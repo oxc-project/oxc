@@ -440,7 +440,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::try_minimize_if(stmt, ctx);
                 }
                 Statement::VariableDeclaration(s) => {
-                    Self::try_minimize_variable_declarator(&mut s.declarations, ctx)
+                    Self::try_minimize_variable_declarator(&mut s.declarations, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);

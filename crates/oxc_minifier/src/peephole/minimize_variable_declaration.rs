@@ -142,7 +142,7 @@ impl<'a> PeepholeOptimizations {
             Some(BindingPattern::AssignmentPattern(mut pattern)) => {
                 if init_item.is_literal_value(false, ctx) {
                     // if value is determined, `[a = b] = [c]` => `a = c` or `a = b`
-                    if init_item.is_void() || init_item.is_undefined() {
+                    if init_item.is_void_0() {
                         // `[a = b] = [undefined]` => `a = b`
                         ctx.drop_expression(&init_item);
                         Some((Some(pattern.left.take_in(ctx)), Some(pattern.right.take_in(ctx))))

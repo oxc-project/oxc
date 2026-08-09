@@ -26,6 +26,7 @@ fn test_array_variable_destruction() {
     // defaults
     test("let [a = 1] = []", "let a = 1");
     test("let [a = 1] = [void 0]", "let a = 1");
+    test_same("let [a = 1] = [void b]");
     test("let [a = 1] = [null]", "let a = null");
     test_same("let [a = 1] = [foo]");
     test("let [a = foo] = [2]", "let a = 2");
@@ -35,6 +36,7 @@ fn test_array_variable_destruction() {
     test("let [, , ] = [1, 2]", "");
     test("let [a, , c, d] = [, 3, , 4]", "let a, c, d = 4");
     test_same("let [a, , c, d] = [void 0, e, null, f]");
+    test_same("let [a, , c, d] = [void b, null]");
     test("let [a, , c, d] = [1, 2, 3, 4]", "let a = 1, c = 3, d = 4");
     test("let [ , , a] = [1, 2, 3, 4]", "let a = 3, [] = [4]");
     test("let [ , , ...t] = [1, 2, 3, 4]", "let t = [3, 4]");
