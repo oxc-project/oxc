@@ -5,9 +5,9 @@ use tracing::instrument;
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::JsFormatOptions;
-use oxc_formatter_css::CssFormatOptions;
 #[cfg(feature = "napi")]
-use oxc_formatter_css::CssVariant;
+use oxc_formatter_core::CoreFormatOptions;
+use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_yaml::YamlFormatOptions;
@@ -15,14 +15,16 @@ use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
 
 #[cfg(feature = "napi")]
+use super::embed::dispatcher::ResolvedDispatchConfig;
+#[cfg(feature = "napi")]
 use super::options::{
-    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
-    inject_tailwind_plugin_payload, to_prettier,
+    build_external_options, inject_filepath, inject_oxfmt_plugin_payload, inject_parser,
+    inject_svelte_plugin_payload, inject_tailwind_plugin_payload, to_prettier,
 };
 use super::{
     options::{
-        to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql, to_oxc_formatter_json,
-        to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
+        to_core_options, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
+        to_oxc_formatter_json, to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
     },
     oxfmtrc::FormatConfig,
     support::FileKind,
@@ -45,7 +47,11 @@ pub enum FormatStrategy {
         source_type: SourceType,
         format_options: Box<JsFormatOptions>,
         #[cfg(feature = "napi")]
-        config: Box<FormatConfig>,
+        config: Arc<FormatConfig>,
+        /// The validated core bundle, carried from resolution so dispatch-config
+        /// construction never re-derives (or re-fails) it.
+        #[cfg(feature = "napi")]
+        core: CoreFormatOptions,
         insert_final_newline: bool,
     },
     /// For JSON (and JSON-like) files formatted by `oxc_formatter_json`.
@@ -147,6 +153,9 @@ impl FormatStrategy {
     #[cfg_attr(not(feature = "napi"), expect(clippy::needless_pass_by_value))]
     pub(crate) fn from_format_config(config: FormatConfig, kind: FileKind) -> Result<Self, String> {
         let insert_final_newline = config.insert_final_newline.unwrap_or(true);
+        // Single validation point for the core options shared by every mapper below;
+        // graphql/css/yaml mappers take the validated bundle and cannot fail.
+        let core = to_core_options(&config)?;
 
         Ok(match kind {
             FileKind::OxcFormatter { path, source_type } => Self::OxcFormatter {
@@ -154,7 +163,9 @@ impl FormatStrategy {
                 source_type,
                 format_options: Box::new(to_oxc_formatter(&config)?),
                 #[cfg(feature = "napi")]
-                config: Box::new(config),
+                config: Arc::new(config),
+                #[cfg(feature = "napi")]
+                core,
                 insert_final_newline,
             },
             FileKind::OxcFormatterJson { path, variant } => Self::OxcFormatterJson {
@@ -173,24 +184,24 @@ impl FormatStrategy {
             },
             FileKind::OxcFormatterGraphql { path } => Self::OxcFormatterGraphql {
                 path,
-                format_options: Box::new(to_oxc_formatter_graphql(&config)?),
+                format_options: Box::new(to_oxc_formatter_graphql(&config, core)),
                 insert_final_newline,
             },
             FileKind::OxcFormatterCss { path, variant } => Self::OxcFormatterCss {
                 path,
-                format_options: Box::new(to_oxc_formatter_css(&config, variant)?),
+                format_options: Box::new(to_oxc_formatter_css(&config, core, variant)),
                 #[cfg(feature = "napi")]
                 config: Box::new(config),
                 insert_final_newline,
             },
             FileKind::OxcFormatterYaml { path } => Self::OxcFormatterYaml {
                 path,
-                format_options: Box::new(to_oxc_formatter_yaml(&config)?),
+                format_options: Box::new(to_oxc_formatter_yaml(&config, core)),
                 insert_final_newline,
             },
             FileKind::OxcFormatterYamlRc { path } => Self::OxcFormatterYamlRc {
                 path,
-                yaml_format_options: Box::new(to_oxc_formatter_yaml(&config)?),
+                yaml_format_options: Box::new(to_oxc_formatter_yaml(&config, core)),
                 json_format_options: Box::new(to_oxc_formatter_json(&config, JsonVariant::Json)?),
                 insert_final_newline,
             },
@@ -260,6 +271,8 @@ impl SourceFormatter {
                 format_options,
                 #[cfg(feature = "napi")]
                 config,
+                #[cfg(feature = "napi")]
+                core,
                 insert_final_newline,
             } => (
                 self.format_by_oxc_formatter(
@@ -269,6 +282,8 @@ impl SourceFormatter {
                     *format_options,
                     #[cfg(feature = "napi")]
                     &config,
+                    #[cfg(feature = "napi")]
+                    core,
                 ),
                 insert_final_newline,
             ),
@@ -380,12 +395,14 @@ impl SourceFormatter {
         path: &Path,
         source_type: SourceType,
         format_options: JsFormatOptions,
-        #[cfg(feature = "napi")] config: &FormatConfig,
+        #[cfg(feature = "napi")] config: &Arc<FormatConfig>,
+        #[cfg(feature = "napi")] core: CoreFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
         let allocator = self.allocator_pool.get();
 
         #[cfg(feature = "napi")]
-        let external_callbacks = Some(self.build_external_callbacks(&format_options, config, path));
+        let external_callbacks =
+            Some(self.build_external_callbacks(&format_options, config, core, path));
         #[cfg(not(feature = "napi"))]
         let external_callbacks = {
             let _ = path;
@@ -582,16 +599,6 @@ impl SourceFormatter {
         self
     }
 
-    /// Build the Prettier options JSON shared by the embedded callbacks and the Tailwind sorter:
-    /// resolved config + `filepath` + the Tailwind plugin payload
-    /// (which the JS-side sorter resolves the class order from).
-    fn build_external_options(config: &FormatConfig, path: &Path) -> serde_json::Value {
-        let mut external_options = to_prettier(config);
-        inject_filepath(&mut external_options, path);
-        inject_tailwind_plugin_payload(&mut external_options, config);
-        external_options
-    }
-
     /// Build the JS-side Tailwind class sorter for `oxc_formatter_css`'s `@apply` collection,
     /// or `None` when the config does not enable it.
     fn tailwind_sorter(
@@ -605,7 +612,7 @@ impl SourceFormatter {
                 .as_ref()
                 .expect("`external_formatter` must exist when `napi` feature is enabled");
             let sort = std::sync::Arc::clone(&external_formatter.sort_tailwindcss_classes);
-            let external_options = Self::build_external_options(config, path);
+            let external_options = build_external_options(config, path);
             move |classes: Vec<String>| sort(&external_options, classes)
         })
     }
@@ -617,7 +624,8 @@ impl SourceFormatter {
     fn build_external_callbacks(
         &self,
         format_options: &JsFormatOptions,
-        config: &FormatConfig,
+        config: &Arc<FormatConfig>,
+        core: CoreFormatOptions,
         path: &Path,
     ) -> oxc_formatter::ExternalCallbacks {
         let external_formatter = self
@@ -625,24 +633,13 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        let external_options = Self::build_external_options(config, path);
+        // Per-language options are mapped lazily at dispatch time; `core` is the
+        // validated bundle carried on the strategy since resolution.
+        let dispatch_config = Arc::new(
+            ResolvedDispatchConfig::new(Arc::clone(config), core).with_path(path.to_path_buf()),
+        );
 
-        // Dual mapping of the same resolved config for the dispatcher's Rust branches.
-        // Cannot fail here: building `JsFormatOptions` from this config already succeeded,
-        // and both share the same `to_core_options()` validation.
-        let graphql_options = to_oxc_formatter_graphql(config)
-            .expect("config was already validated when building `JsFormatOptions`");
-        // CSS-in-JS is always parsed as SCSS (Prettier's embed uses the
-        // `scss` parser for all of css/scss/less template tags).
-        let css_options = to_oxc_formatter_css(config, CssVariant::Scss)
-            .expect("config was already validated when building `JsFormatOptions`");
-
-        external_formatter.to_external_callbacks(
-            format_options,
-            external_options,
-            graphql_options,
-            css_options,
-        )
+        external_formatter.to_external_callbacks(format_options, &dispatch_config)
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).

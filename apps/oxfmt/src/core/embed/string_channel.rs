@@ -1,19 +1,16 @@
 //! String-in/string-out embedded channel.
 //!
-//! Two consumers reach this channel through the same `EmbeddedFormatterCallback`
-//! contract on `ExternalCallbacks`:
+//! Two consumers reach this channel through the same `EmbeddedFormatterCallback` contract on `ExternalCallbacks`:
 //! - JSDoc fenced code blocks (` ```css `, ` ```graphql `, …)
-//! - html-in-js fallback (`format_js_in_html_as_fallback`): the IR channel's
-//!   HTML route returned Prettier Doc that the IR converter can't represent,
-//!   so the parent re-requests the same HTML via this string channel and
-//!   substitutes placeholders back to `${expr}`.
+//! - html-in-js fallback (`format_js_in_html_as_fallback`):
+//!   the IR channel's HTML route returned Prettier Doc that the IR converter can't represent,
+//!   so the parent re-requests the same HTML via this string channel and substitutes placeholders back to `${expr}`.
 //!
-//! Unlike the [`super::ir_channel`], errors here keep the input verbatim (no
-//! Prettier fallback, no diagnostics for JSDoc since it's inside a comment).
+//! Unlike the [`super::dispatcher`], errors here keep the input verbatim
+//! (no Prettier fallback, no diagnostics for JSDoc since it's inside a comment).
 
 use std::sync::Arc;
 
-use serde_json::Value;
 use tracing::{debug, debug_span};
 
 use oxc_allocator::Allocator;
@@ -24,41 +21,46 @@ use oxc_formatter_graphql::GraphqlFormatOptions;
 
 use crate::core::{
     embed::{
-        FormatEmbeddedWithConfigCallback, TailwindWithConfigCallback, language_to_prettier_parser,
+        FormatEmbeddedWithConfigCallback, TailwindWithConfigCallback,
+        dispatcher::ResolvedDispatchConfig, language_to_prettier_parser,
     },
     options::inject_parser,
 };
 
 /// Build the `embedded_formatter` callback installed on `ExternalCallbacks`.
 ///
-/// Dispatches by language identifier: a Rust formatter when available
-/// (graphql/gql, css/scss/less), otherwise Prettier via `format_embedded`.
-/// The JSDoc fenced consumer reaches every language; the html-in-js fallback
-/// only ever passes `"html"` and therefore always lands on the Prettier branch.
+/// Dispatches by language identifier: a Rust formatter when available (graphql/gql, css/scss/less),
+/// otherwise Prettier via `format_embedded`.
+/// The JSDoc fenced consumer reaches every language;
+/// the html-in-js fallback only ever passes `"html"` and therefore always lands on the Prettier branch.
 ///
-/// `options` already carries the Tailwind plugin payload (`tailwindConfig`,
-/// `tailwindStylesheet`, …) so the JS-side sorter can resolve class order
-/// when the CSS branch passes its collected `@apply` classes.
+/// `dispatch_config.external_options()` already carries the Tailwind plugin payload,
+/// so the JS-side sorter can resolve class order when the CSS branch passes its collected `@apply` classes.
 pub fn build_embedded_callback(
     format_embedded: FormatEmbeddedWithConfigCallback,
     sort_tailwind: Option<TailwindWithConfigCallback>,
-    options: Value,
-    graphql_options: GraphqlFormatOptions,
-    css_options: CssFormatOptions,
+    dispatch_config: Arc<ResolvedDispatchConfig>,
 ) -> EmbeddedFormatterCallback {
     Arc::new(move |language: &str, code: &str| {
         // Rust implementations first (JSDoc fenced code blocks).
         match language {
             "graphql" | "gql" => {
-                return format_graphql_embedded(code, graphql_options);
+                return format_graphql_embedded(code, dispatch_config.graphql_options());
             }
             "css" | "scss" | "less" => {
+                let css_options = dispatch_config.css_options(match language {
+                    "scss" => CssVariant::Scss,
+                    "less" => CssVariant::Less,
+                    _ => CssVariant::Css,
+                });
                 return match &sort_tailwind {
                     Some(sort) => {
-                        let sorter = |classes: Vec<String>| sort(&options, classes);
-                        format_css_embedded(code, language, css_options, Some(&sorter))
+                        let sorter = |classes: Vec<String>| {
+                            sort(dispatch_config.external_options(), classes)
+                        };
+                        format_css_embedded(code, css_options, Some(&sorter))
                     }
-                    None => format_css_embedded(code, language, css_options, None),
+                    None => format_css_embedded(code, css_options, None),
                 };
             }
             _ => {}
@@ -71,7 +73,7 @@ pub fn build_embedded_callback(
         debug_span!("oxfmt::external::format_embedded", parser = parser_name).in_scope(|| {
             // `clone()` is unavoidable here,
             // because there may be multiple embedded sections in one JS/TS file.
-            let mut options = options.clone();
+            let mut options = dispatch_config.external_options().clone();
             inject_parser(&mut options, parser_name);
             (format_embedded)(options, code)
                 .map(|mut code| {
@@ -89,7 +91,7 @@ pub fn build_embedded_callback(
 }
 
 /// Format a JSDoc fenced code block as a standalone GraphQL document
-/// (string-in/string-out, unlike the [`super::ir_channel`] contract).
+/// (string-in/string-out, unlike the [`super::dispatcher`] contract).
 fn format_graphql_embedded(code: &str, options: GraphqlFormatOptions) -> Result<String, String> {
     debug_span!("oxfmt::external::format_graphql_embedded").in_scope(|| {
         let allocator = Allocator::default();
@@ -100,23 +102,14 @@ fn format_graphql_embedded(code: &str, options: GraphqlFormatOptions) -> Result<
 }
 
 /// Format a JSDoc fenced code block as a standalone stylesheet
-/// (string-in/string-out, unlike the [`super::ir_channel`] contract).
-///
-/// The `options` carry the IR channel's css-in-js variant (Scss),
-/// so the variant is re-derived from the fence language here.
+/// (string-in/string-out, unlike the [`super::dispatcher`] contract).
+/// The `options` already carry the fence language's variant.
 fn format_css_embedded(
     code: &str,
-    language: &str,
     options: CssFormatOptions,
     sorter: Option<oxc_formatter_css::TailwindSorter<'_>>,
 ) -> Result<String, String> {
-    debug_span!("oxfmt::external::format_css_embedded", language = language).in_scope(|| {
-        let variant = match language {
-            "scss" => CssVariant::Scss,
-            "less" => CssVariant::Less,
-            _ => CssVariant::Css,
-        };
-        let options = CssFormatOptions { variant, ..options };
+    debug_span!("oxfmt::external::format_css_embedded").in_scope(|| {
         let allocator = Allocator::default();
         let formatted = oxc_formatter_css::format(&allocator, code, options, sorter)
             .map_err(|err| err.to_string())?;

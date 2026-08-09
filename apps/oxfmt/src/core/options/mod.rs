@@ -23,6 +23,7 @@ mod to_oxc_toml;
 mod to_prettier;
 mod validate;
 
+pub use to_core_options::to_core_options;
 pub use to_oxc_formatter::to_oxc_formatter;
 pub use to_oxc_formatter_css::to_oxc_formatter_css;
 pub use to_oxc_formatter_graphql::to_oxc_formatter_graphql;
@@ -31,7 +32,7 @@ pub use to_oxc_formatter_yaml::to_oxc_formatter_yaml;
 pub use to_oxc_toml::to_oxc_toml;
 #[cfg(feature = "napi")]
 pub use to_prettier::{
-    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
-    inject_tailwind_plugin_payload, to_prettier,
+    build_external_options, inject_filepath, inject_oxfmt_plugin_payload, inject_parser,
+    inject_svelte_plugin_payload, inject_tailwind_plugin_payload, to_prettier,
 };
 pub use validate::validate;
