@@ -14,28 +14,9 @@
 
 use std::{any::Any, sync::Arc};
 
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::ArenaVec;
 
-use crate::{FormatElement, InputKind, group_id::UniqueGroupIdBuilder};
-
-/// Shared IR-infrastructure context for formatting embedded code.
-///
-/// The same context is threaded through recursive dispatcher calls so that
-/// nested embeddings (e.g. css-in-html-in-js) share one arena and one
-/// `GroupId` space.
-///
-/// TODO: Migration adapter: [`crate::FormatSession`] supersedes this type
-/// and will replace it once every entry point is session-aware.
-pub struct EmbeddedContext<'a, 'g> {
-    /// Arena shared between parent and child formatters;
-    /// strings allocated by the child live as long as the parent's IR.
-    pub allocator: &'a Allocator,
-    /// `GroupId` builder shared to avoid id collisions across formatters.
-    pub group_id_builder: &'g UniqueGroupIdBuilder,
-    /// Dispatcher for the child formatter to format its own embedded languages.
-    /// `None` when recursion is not available (e.g. plain standalone formatting).
-    pub dispatcher: Option<FormatDispatcher>,
-}
+use crate::{FormatElement, FormatSession, InputKind};
 
 /// One embedded-language formatting request, as the host formatter states it.
 pub struct DispatchRequest<'r> {
@@ -70,14 +51,13 @@ pub enum DispatchOutcome<'a> {
 /// Dispatcher resolving a language name to a formatter implementation.
 ///
 /// Assembled by the orchestrator (oxfmt), which knows all languages;
-/// formatter crates only invoke it.
-/// The intended entry is [`crate::FormatSession::dispatch`]
-/// (which owns the recursion limit and the no-dispatcher case),
-/// but until every entry point is session-aware,
-/// the JS host's `dispatch_embedded` adapter still invokes it directly WITHOUT the depth guard.
+/// formatter crates only invoke it via [`FormatSession::dispatch`],
+/// which owns the recursion limit and the no-dispatcher case.
+/// The callback receives the CHILD session, already derived from the caller's
+/// (same arena / `GroupId` space / dispatcher, the request's `InputKind`, depth + 1).
 pub type FormatDispatcher = Arc<
-    dyn for<'a, 'g, 'r> Fn(
-            &EmbeddedContext<'a, 'g>,
+    dyn for<'a, 'r> Fn(
+            &FormatSession<'a>,
             DispatchRequest<'r>,
         ) -> Result<DispatchOutcome<'a>, String>
         + Send
@@ -144,19 +124,16 @@ impl DispatchResult<'_> {
 
 /// Index-space provider for batched Tailwind class sorting.
 ///
-/// `FormatElement::TailwindClass(usize)` holds pre-sort class strings by
-/// index; sorting happens in one host-supplied batch when the entry
-/// formatter's document is finalized. A child formatter collects classes
-/// locally (0-based) and returns them in [`DispatchResult::tailwind_classes`];
-/// the receiving parent implements this trait on its format context and
-/// calls [`DispatchResult::remap_tailwind_into`] before consuming `docs`.
+/// `FormatElement::TailwindClass(usize)` holds pre-sort class strings by index;
+/// sorting happens in one host-supplied batch when the entry formatter's document is finalized.
+/// A child formatter collects classes locally (0-based) and returns them in [`DispatchResult::tailwind_classes`];
+/// the receiving parent implements this trait on its format context
+/// and calls [`DispatchResult::remap_tailwind_into`] before consuming `docs`.
 ///
-/// NOTE: an alternative design — threading one shared collector through
-/// [`EmbeddedContext`] so children allocate parent indices directly — was
-/// considered and deferred: it needs interior mutability plumbing through
-/// every format context for no current gain. Revisit if deep embedding nests
-/// (e.g. css-in-html-in-js at plan Step 8/9) make per-boundary remapping
-/// burdensome.
+/// NOTE: an alternative design (threading one shared collector through [`FormatSession`]
+/// so children allocate parent indices directly) was considered and deferred:
+/// it needs interior mutability plumbing through every format context for no current gain.
+/// Revisit if deep embedding nests (e.g. css-in-html-in-js at plan Step 8/9) make per-boundary remapping burdensome.
 pub trait TailwindCollector {
     /// Register a class string, returning its index in the collector's space.
     fn add_class(&mut self, class: String) -> usize;

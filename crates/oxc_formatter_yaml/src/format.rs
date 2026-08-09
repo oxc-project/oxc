@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -50,22 +50,22 @@ pub fn format<'a>(
 /// formatter's document (dispatcher path, e.g. a fenced block in markdown).
 ///
 /// Unlike [`format()`], this:
-/// - allocates from the shared arena in `ctx`, so the IR lives as long as the parent's document
+/// - allocates from the session's shared arena and `GroupId` space, so the IR lives as long as the parent's document
 /// - emits neither a BOM nor the trailing newline
 ///
 /// # Errors
 /// Same as [`format()`]: any parse error bails out.
 pub fn format_to_ir<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     source_text: &str,
     options: YamlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
-    let allocator = ctx.allocator;
+    let allocator = session.allocator();
     let (root, source, comments) = parse_root(allocator, source_text)?;
 
     let context =
         YamlFormatContext::new(options, source, comments, print::last_descendant_end(root));
-    let mut state = FormatState::new(context, allocator);
+    let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::new(&mut state);
 
     write!(&mut buffer, FormatYamlEmbedded { root });

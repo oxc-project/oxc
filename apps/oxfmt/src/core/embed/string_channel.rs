@@ -16,13 +16,14 @@ use tracing::{debug, debug_span};
 use oxc_allocator::Allocator;
 use oxc_formatter::EmbeddedFormatterCallback;
 use oxc_formatter_core::{FormatContext, Formatted};
-use oxc_formatter_css::{CssFormatOptions, CssVariant};
+use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 
 use crate::core::{
     embed::{
         FormatEmbeddedWithConfigCallback, TailwindWithConfigCallback,
-        dispatcher::ResolvedDispatchConfig, language_to_prettier_parser,
+        dispatcher::{ResolvedDispatchConfig, css_variant_for},
+        language_to_prettier_parser,
     },
     options::inject_parser,
 };
@@ -48,11 +49,7 @@ pub fn build_embedded_callback(
                 return format_graphql_embedded(code, dispatch_config.graphql_options());
             }
             "css" | "scss" | "less" => {
-                let css_options = dispatch_config.css_options(match language {
-                    "scss" => CssVariant::Scss,
-                    "less" => CssVariant::Less,
-                    _ => CssVariant::Css,
-                });
+                let css_options = dispatch_config.css_options(css_variant_for(language));
                 return match &sort_tailwind {
                     Some(sort) => {
                         let sorter = |classes: Vec<String>| {

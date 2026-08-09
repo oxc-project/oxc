@@ -3,7 +3,8 @@ use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Sty
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, InputKind,
+    VecBuffer,
     builders::{empty_line, hard_line_break, text},
     write,
 };
@@ -40,6 +41,32 @@ pub fn format<'a>(
     options: CssFormatOptions,
     sort_tailwind_classes: Option<TailwindSorter<'_>>,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
+    // NOTE: this wrapper labels the run `PhysicalFile`.
+    // JSDoc CSS fences still reach it through the string channel,
+    // so front-matter support on this entry MUST NOT land
+    // before those fences route through the dispatcher as `Fragment`s.
+    // Otherwise fence content starting with `---` would wrongly acquire file envelope semantics.
+    format_with_session(
+        &FormatSession::new(allocator, InputKind::PhysicalFile, None),
+        source_text,
+        options,
+        sort_tailwind_classes,
+    )
+}
+
+/// Like [`format()`], but on a caller-supplied [`FormatSession`]:
+/// the root that lets this formatter dispatch its own embedded languages
+/// (front matter YAML, once wired) through the session's dispatcher.
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn format_with_session<'a>(
+    session: &FormatSession<'a>,
+    source_text: &str,
+    options: CssFormatOptions,
+    sort_tailwind_classes: Option<TailwindSorter<'_>>,
+) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
+    let allocator = session.allocator();
     let has_bom = source_text.starts_with('\u{feff}');
 
     let (stylesheet, source, comments) =
@@ -48,7 +75,7 @@ pub fn format<'a>(
 
     let context =
         CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
-    let mut state = FormatState::new(context, allocator);
+    let mut state = FormatState::new_with_session(context, session.clone());
     // Pre-allocate: measured on 616 real-world files (bootstrap, vscode, saleor; css/scss/less),
     // 0.5x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 98% of the corpus.
     let capacity = (source.len() / 2).max(1024);
@@ -74,8 +101,11 @@ pub fn format<'a>(
 /// formatter's document (dispatcher path, e.g. css-in-js).
 ///
 /// Unlike [`format()`], this:
-/// - allocates from the shared arena in `ctx`
+/// - allocates from the session's shared arena and `GroupId` space
 /// - emits neither a BOM nor the trailing newline
+/// - `template_placeholders` enables the css-in-js parse mode
+///   (`` `PLACEHOLDER-N` `` markers + top-level declarations);
+///   JSDoc-style whole-stylesheet fragments pass `false`
 ///
 /// The returned [`EmbeddedIr`] also carries the pre-sort `@apply` Tailwind
 /// classes the IR's `TailwindClass(index)` elements refer to (empty unless
@@ -87,28 +117,21 @@ pub fn format<'a>(
 /// # Errors
 /// Same as [`format()`].
 pub fn format_to_ir<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     source_text: &str,
     options: CssFormatOptions,
+    template_placeholders: bool,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
-    let allocator = ctx.allocator;
-    // css-in-js: The dispatcher input substitutes `${}` interpolations
-    // with `` `PLACEHOLDER-N` `` markers, which may sit in value or selector position.
-    let allow_placeholders = true;
+    let allocator = session.allocator();
     let (stylesheet, source, comments) = parse_stylesheet(
         allocator,
         source_text,
         options,
-        /* tolerate_placeholders */ allow_placeholders,
+        /* tolerate_placeholders */ template_placeholders,
     )?;
 
-    let context = CssFormatContext::new(
-        options,
-        source,
-        comments,
-        /* template_placeholders */ allow_placeholders,
-    );
-    let mut state = FormatState::new(context, allocator);
+    let context = CssFormatContext::new(options, source, comments, template_placeholders);
+    let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::new(&mut state);
 
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet });

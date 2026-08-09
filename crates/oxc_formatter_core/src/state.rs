@@ -2,10 +2,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, GetAllocator};
 
-use crate::{
-    FormatElement, FormatSession, GroupId, InputKind, UniqueGroupIdBuilder,
-    format_element::Interned,
-};
+use crate::{FormatElement, FormatSession, GroupId, InputKind, format_element::Interned};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -37,9 +34,11 @@ impl<'ast, C> FormatState<'ast, C> {
     /// session with its own `GroupId` space.
     /// Entry points that share a run with other formatters use [`Self::new_with_session`] instead.
     ///
-    /// NOTE: embedded entries (`format_to_ir`) still run through this wrapper,
-    /// so their `input_kind` is mislabeled until they migrate to [`Self::new_with_session`];
-    /// nothing may consult `input_kind` for envelope decisions (front matter, BOM) before that migration.
+    /// NOTE: standalone `format()` compatibility wrappers reach this
+    /// (directly or via their own dispatcher-less session),
+    /// including the string channel's JSDoc-fence formatting, which is semantically a fragment;
+    /// nothing may consult `input_kind` for envelope decisions on those paths
+    /// until that channel routes through the dispatcher.
     pub fn new(context: C, allocator: &'ast Allocator) -> Self {
         Self::new_with_session(
             context,
@@ -96,11 +95,6 @@ impl<'ast, C> FormatState<'ast, C> {
     /// The name is unused for production builds and has no meaning on the equality of two group ids.
     pub fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.session.group_id_builder().group_id(debug_name)
-    }
-
-    /// Returns a reference to the unique group id builder.
-    pub fn group_id_builder(&self) -> &UniqueGroupIdBuilder {
-        self.session.group_id_builder()
     }
 
     #[expect(clippy::mutable_key_type)]

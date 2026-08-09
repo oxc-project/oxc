@@ -1,7 +1,7 @@
 //! Embedded-language formatting orchestration.
 //!
-//! `oxc_formatter_core::embedded` holds the abstract contract
-//! (`EmbeddedContext`, `FormatDispatcher`, `DispatchResult`, `TailwindCollector`);
+//! `oxc_formatter_core` holds the abstract contract
+//! (`FormatSession`, `FormatDispatcher`, `DispatchRequest`/`DispatchOutcome`, `TailwindCollector`);
 //! this module is its concrete counterpart owned by the orchestrator (Oxfmt).
 //!
 //! - [`dispatcher`] (every build): the native registry — `ResolvedDispatchConfig`
