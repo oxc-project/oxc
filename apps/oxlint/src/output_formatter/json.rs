@@ -20,6 +20,10 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
+    fn supports_jetbrains_file_urls(&self) -> bool {
+        false
+    }
+
     fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
         #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
@@ -154,7 +158,7 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
 mod test {
     use std::time::Duration;
 
-    use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
+    use oxc_diagnostics::{DiagnosticService, OxcDiagnostic, reporter::DiagnosticResult};
     use oxc_span::Span;
 
     use crate::output_formatter::{
@@ -163,11 +167,18 @@ mod test {
 
     #[test]
     fn reporter() {
+        let cwd = tempfile::tempdir().unwrap();
         let formatter = JsonOutputFormatter::default();
 
-        let error = OxcDiagnostic::warn("error message")
-            .with_label(Span::new(0, 8))
-            .with_source_code(NamedSource::new("file://test.ts", "debugger;"));
+        let diagnostic = OxcDiagnostic::warn("error message").with_label(Span::new(0, 8));
+        let [error] = DiagnosticService::wrap_diagnostics(
+            cwd.path(),
+            cwd.path().join("test file.ts"),
+            "debugger;",
+            vec![diagnostic],
+        )
+        .try_into()
+        .unwrap();
 
         let mut diagnostic_reporter = formatter.get_diagnostic_reporter();
         let first_result = diagnostic_reporter.render_error(error);
@@ -191,7 +202,7 @@ mod test {
             .unwrap();
         assert_eq!(
             &output,
-            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
+            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"test file.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
         );
     }
 }

@@ -10,21 +10,21 @@ mod stylish;
 mod unix;
 mod xml_utils;
 
-use std::str::FromStr;
-use std::time::Duration;
+use std::{path::PathBuf, str::FromStr, time::Duration};
 
 use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use oxc_diagnostics::{Error, file_url, with_file_url};
 use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
 use rustc_hash::FxHashSet;
 use sarif::SarifOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
 
-use oxc_diagnostics::reporter::DiagnosticReporter;
+use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
 
 use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
@@ -129,6 +129,11 @@ impl LintCommandInfo {
 /// An Interface for the different output formats.
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
+    /// Whether diagnostics should use file URLs when running in a JetBrains terminal.
+    fn supports_jetbrains_file_urls(&self) -> bool {
+        true
+    }
+
     /// Print all available rules by oxlint
     fn all_rules(&self, _enabled_rules: FxHashSet<&str>) -> Option<String> {
         None
@@ -146,11 +151,21 @@ trait InternalFormatter {
 
 pub struct OutputFormatter {
     internal: Box<dyn InternalFormatter>,
+    jetbrains_cwd: Option<PathBuf>,
 }
 
 impl OutputFormatter {
     pub fn new(format: OutputFormat) -> Self {
-        Self { internal: Self::get_internal_formatter(format) }
+        Self::new_with_cwd(format, std::env::current_dir().unwrap_or_default())
+    }
+
+    pub fn new_with_cwd(format: OutputFormat, cwd: PathBuf) -> Self {
+        let internal = Self::get_internal_formatter(format);
+        let is_jetbrains =
+            std::env::var("TERMINAL_EMULATOR").is_ok_and(|value| value == "JetBrains-JediTerm");
+        let jetbrains_cwd =
+            (is_jetbrains && internal.supports_jetbrains_file_urls()).then_some(cwd);
+        Self { internal, jetbrains_cwd }
     }
 
     fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
@@ -182,7 +197,35 @@ impl OutputFormatter {
     /// Returns the [`DiagnosticReporter`] which then will be used by [`DiagnosticService`](oxc_diagnostics::DiagnosticService)
     /// See [`InternalFormatter::get_diagnostic_reporter`] for more details.
     pub fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        self.internal.get_diagnostic_reporter()
+        let reporter = self.internal.get_diagnostic_reporter();
+        if let Some(cwd) = &self.jetbrains_cwd {
+            Box::new(JetBrainsReporter { reporter, cwd: cwd.clone() })
+        } else {
+            reporter
+        }
+    }
+}
+
+struct JetBrainsReporter {
+    reporter: Box<dyn DiagnosticReporter>,
+    cwd: PathBuf,
+}
+
+impl DiagnosticReporter for JetBrainsReporter {
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+        self.reporter.finish(result)
+    }
+
+    fn supports_minified_file_fallback(&self) -> bool {
+        self.reporter.supports_minified_file_fallback()
+    }
+
+    fn format_source_name(&self, name: &str) -> String {
+        file_url(name, &self.cwd).unwrap_or_else(|| name.to_string())
+    }
+
+    fn render_error(&mut self, error: Error) -> Option<String> {
+        self.reporter.render_error(with_file_url(error, &self.cwd))
     }
 }
 

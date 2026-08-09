@@ -141,7 +141,7 @@ impl WalkRunner {
         let (tx_success, rx_success) = mpsc::channel();
         // Diagnostic from formatting service
         let (mut diagnostic_service, tx_error) =
-            DiagnosticService::new(Box::new(DefaultReporter::default()));
+            DiagnosticService::new(Box::new(DefaultReporter::new(cwd.clone())));
 
         if matches!(format_mode, OutputMode::Check) {
             utils::print_and_flush(stdout, "Checking formatting...\n");

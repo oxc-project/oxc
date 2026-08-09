@@ -122,18 +122,9 @@ impl DiagnosticService {
         source_text: &str,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Error> {
-        // TODO: This causes snapshots to fail when running tests through a JetBrains terminal.
-        let is_jetbrains =
-            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
-
         let path_ref = path.as_ref();
-        let path_display = if is_jetbrains { from_file_path(path_ref) } else { None }
-            .unwrap_or_else(|| {
-                let relative_path =
-                    path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
-                let normalized_path = relative_path.cow_replace('\\', "/");
-                normalized_path.to_string()
-            });
+        let relative_path = path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
+        let path_display = relative_path.cow_replace('\\', "/").into_owned();
 
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         diagnostics
@@ -194,6 +185,7 @@ impl DiagnosticService {
                         let mut diagnostic =
                             OxcDiagnostic::warn("File is too long to fit on the screen");
                         if let Some(path) = path {
+                            let path = self.reporter.format_source_name(&path);
                             diagnostic =
                                 diagnostic.with_help(format!("{path} seems like a minified file"));
                         }
@@ -249,7 +241,8 @@ impl DiagnosticService {
     }
 }
 
-// The following from_file_path and strict_canonicalize implementations are from tower-lsp-community/tower-lsp-server
+// The following file URL conversion and strict_canonicalize implementations are from
+// tower-lsp-community/tower-lsp-server
 // available under the MIT License or Apache 2.0 License.
 //
 // Copyright (c) 2023 Eyal Kalderon
@@ -265,7 +258,7 @@ const ASCII_SET: AsciiSet =
         // we do not want path separators to be percent-encoded
         .remove(b'/');
 
-fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
+pub fn to_file_url<A: AsRef<Path>>(path: A) -> Option<String> {
     let path = path.as_ref();
 
     let fragment = if path.is_absolute() {
@@ -342,15 +335,14 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
-    use crate::{
-        Error, OxcDiagnostic,
-        reporter::{DiagnosticReporter, DiagnosticResult},
-        service::from_file_path,
-    };
+    use std::{borrow::Cow, path::PathBuf, sync::Arc};
 
     use super::DiagnosticService;
+    use crate::{
+        Error, NamedSource, OxcDiagnostic,
+        reporter::{DiagnosticReporter, DiagnosticResult},
+        service::to_file_url,
+    };
 
     fn with_schema(path: &str) -> String {
         const EXPECTED_SCHEMA: &str = if cfg!(windows) { "file:///" } else { "file://" };
@@ -388,7 +380,7 @@ mod tests {
         ];
 
         for (path, expected) in paths.iter().zip(expected) {
-            let uri = from_file_path(path).unwrap();
+            let uri = to_file_url(path).unwrap();
             assert_eq!(uri.clone(), expected);
         }
     }
@@ -413,7 +405,7 @@ mod tests {
         ];
 
         for (path, expected) in paths.iter().zip(expected) {
-            let uri = from_file_path(path).unwrap();
+            let uri = to_file_url(path).unwrap();
             assert_eq!(uri, expected);
         }
     }
@@ -434,12 +426,16 @@ mod tests {
                 self.fallback_enabled
             }
 
+            fn format_source_name(&self, name: &str) -> String {
+                format!("formatted:{name}")
+            }
+
             fn render_error(&mut self, error: Error) -> Option<String> {
                 let message = error.to_string();
                 if message == "original diagnostic" {
                     Some(format!("{}\n", "x".repeat(1200)))
                 } else {
-                    Some(format!("{message}\n"))
+                    Some(format!("{}\n", error.help().unwrap_or(Cow::Owned(message))))
                 }
             }
         }
@@ -453,5 +449,18 @@ mod tests {
         let output = String::from_utf8(output).unwrap();
 
         assert_eq!(output, format!("{}\n", "x".repeat(1200)));
+
+        let (mut service, sender) =
+            DiagnosticService::new(Box::new(LongLineReporter { fallback_enabled: true }));
+        let diagnostic = OxcDiagnostic::warn("original diagnostic")
+            .with_source_code(Arc::new(NamedSource::new("src/file.js", "source")));
+        sender.send(vec![diagnostic]).unwrap();
+        drop(sender);
+
+        let mut output = Vec::new();
+        service.run(&mut output);
+        let output = String::from_utf8(output).unwrap();
+
+        assert_eq!(output, "formatted:src/file.js seems like a minified file\n");
     }
 }
