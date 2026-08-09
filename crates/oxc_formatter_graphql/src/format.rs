@@ -25,9 +25,7 @@ pub fn format<'a>(
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<Formatted<'a, GraphqlFormatContext<'a>>, OxcDiagnostic> {
-    // Checked against the original input: `parse_document` strips the BOM
-    // before copying into the arena, so spans and gap scans never see it.
-    let has_bom = source_text.starts_with('\u{feff}');
+    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
@@ -64,6 +62,8 @@ pub fn format_to_ir<'a>(
     options: GraphqlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
+    // Input hygiene: embedded sources may carry a BOM; strip it, never re-emit.
+    let (_, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
@@ -79,15 +79,14 @@ pub fn format_to_ir<'a>(
 /// Parse the source into a direct AST and collect comment trivia,
 /// bailing out on any parse error.
 ///
-/// Copies the source into the arena so every slice taken from it carries `'a`,
-/// stripping any BOM first so offset-based scans never see it
-/// (the caller re-emits it from `has_bom`).
+/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Entries own the BOM strip; a leading `\u{feff}` still reaching this point is content
+/// (e.g. a doubled BOM's second copy) and is the parser's to judge.
 fn parse_document<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<(&'a GraphQLDocument<'a>, &'a str, &'a [Span]), OxcDiagnostic> {
-    let source: &'a str =
-        allocator.alloc_str(source_text.strip_prefix('\u{feff}').unwrap_or(source_text));
+    let source: &'a str = allocator.alloc_str(source_text);
 
     // Opt-in graphql-js 17 syntax
     let ast = Parser::new(allocator, source).experimental_fragment_arguments(true).parse();

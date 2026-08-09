@@ -7,7 +7,6 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::ZWNBSP;
 
 use crate::{
     comments::write_trailing_inside_comments,
@@ -26,6 +25,7 @@ pub fn format<'a>(
     source_text: &str,
     options: JsonFormatOptions,
 ) -> Result<Formatted<'a, JsonFormatContext<'a>>, OxcDiagnostic> {
+    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let parsed = parse_json(allocator, source_text, options.variant)?;
 
     let context = JsonFormatContext::new(
@@ -41,8 +41,6 @@ pub fn format<'a>(
     let capacity = (source_text.len() * 3 / 10).max(1024);
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
-    // BOM detection runs on the original `source_text`; `wrapped_source` may prepend `(`.
-    let has_bom = source_text.starts_with(ZWNBSP);
     write!(&mut buffer, FormatJsonRoot { expression: parsed.expression, has_bom });
 
     let elements = buffer.into_vec();

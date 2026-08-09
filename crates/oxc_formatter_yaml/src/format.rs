@@ -24,8 +24,7 @@ pub fn format<'a>(
     source_text: &str,
     options: YamlFormatOptions,
 ) -> Result<Formatted<'a, YamlFormatContext<'a>>, OxcDiagnostic> {
-    // Checked against the original input: `parse_root` strips the BOM
-    let has_bom = source_text.starts_with('\u{feff}');
+    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let (root, source, comments) = parse_root(allocator, source_text)?;
 
     let context =
@@ -61,6 +60,8 @@ pub fn format_to_ir<'a>(
     options: YamlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
+    // Input hygiene: embedded sources may carry a BOM; strip it, never re-emit.
+    let (_, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let (root, source, comments) = parse_root(allocator, source_text)?;
 
     let context =
@@ -78,11 +79,12 @@ pub fn format_to_ir<'a>(
 /// bailing out on any parse error.
 ///
 /// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Entries own the BOM strip; a leading `\u{feff}` still reaching this point is content
+/// (e.g. a doubled BOM's second copy) and is the parser's to judge.
 fn parse_root<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<(&'a Root<'a>, &'a str, &'a [SourceComment]), OxcDiagnostic> {
-    let source_text = source_text.strip_prefix('\u{feff}').unwrap_or(source_text);
     // NOTE: Normalize line endings BEFORE parsing, unlike other `oxc_formatter_xxx`.
     // For YAML formatter, the printer slices verbatim text from the source in many places.
     // YAML is also unusual in that line breaks and whitespace have meaning.
