@@ -1,13 +1,13 @@
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
+    utils::call_uses_optional_chain,
+};
 
 fn enforce(span: Span, fn_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `new {fn_name}()` instead of `{fn_name}()`")).with_label(span)
@@ -109,28 +109,6 @@ impl Rule for NewForBuiltins {
             _ => {}
         }
     }
-}
-
-fn call_uses_optional_chain(call_expr: &CallExpression) -> bool {
-    call_expr.optional || expression_uses_optional_chain(&call_expr.callee)
-}
-
-fn expression_uses_optional_chain(expr: &Expression) -> bool {
-    let expr = expr.get_inner_expression();
-
-    if matches!(expr, Expression::ChainExpression(_)) {
-        return true;
-    }
-
-    if let Some(member_expr) = expr.as_member_expression() {
-        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
-    }
-
-    if let Expression::CallExpression(call_expr) = expr {
-        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
-    }
-
-    false
 }
 
 fn is_expr_global_builtin<'a, 'b>(
