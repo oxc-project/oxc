@@ -97,7 +97,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ## What belongs in core (the boundary)
 
-Four layers, four admission rules. A type/fn that fits none of them belongs in a consumer crate.
+Five layers, five admission rules. A type/fn that fits none of them belongs in a consumer crate.
 
 - (1) engine: The IR + Printer + the option types the `Printer` actually consumes
   - `PrinterOptions`: `IndentStyle`, `IndentWidth`, `LineWidth`, `LineEnding`
@@ -118,6 +118,10 @@ Admission: core stores the service and hands it back (or applies it mechanically
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
 `string_embedder` additionally carries an exit criterion: it is removed when (a) md/html/angular gain IR-capable formatters AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
 
+- (5) `envelope.rs`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
+
+Admission: the host opts in by CALLING, and every language difference arrives as a data parameter (`embeddable_languages`); core asserts nothing about what the names mean. Unlike `spec/`, this layer writes IR and drives the dispatcher.
+
 Three gates, all required and note "shared across languages" describes what lives here but is not the admission test.
 The gates are:
 
@@ -131,8 +135,9 @@ A pure predicate over text shared by design (e.g. `is_suppression_marker`: all f
 Unlike option types like `QuoteStyle`, where sharing would encode a coincidental contract that breaks when languages diverge.
 
 `spec/front_matter.rs` shows the same line from the envelope side:
-core owns pure detection (`parse_front_matter`, a Prettier `front-matter/parse.js` port) and byte-preserving blanking only.
-What the header language MEANS and how the block composes into output stay host policy, Astro's leading `---` is a JS component script, not YAML, so a central "every `---` is YAML" rule can never exist here.
+core owns pure detection (`parse_front_matter`, a Prettier `front-matter/parse.js` port) and byte-preserving blanking; the IR half is layer (5).
+What the header language MEANS stays host policy: a host opts in by calling and passes its embeddable set as data.
+Astro's leading `---` is a JS component script, not YAML, so its host simply never calls — a central "every `---` is YAML" rule cannot exist in core.
 
 Parameterizing language differences (sharpened gate 2), when a shared helper needs to vary per language:
 

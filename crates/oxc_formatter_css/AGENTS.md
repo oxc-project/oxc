@@ -9,25 +9,9 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
 - Entry points:
-  - `format()`: standalone files (returns a printable `Formatted`); wraps a dispatcher-less session, so front matter degrades to verbatim
-  - `format_with_session()`: standalone on a caller-supplied `FormatSession`; the session's dispatcher formats front matter YAML (oxfmt wires the native registry here)
-  - `format_to_ir()`: embedded use via the dispatcher; the `template_placeholders` mode enables `${}` placeholders and `TopLevelDeclaration` (css-in-js), `false` is the strict whole-stylesheet grammar
-
-### Front matter
-
-This crate owns the CSS translation of the envelope contract;
-detection and blanking come from `oxc_formatter_core::spec::{parse_front_matter, blank_front_matter}`.
-
-- The `InputKind` matrix: `PhysicalFile` / `VirtualDocument` own front matter (blank → parse body → compose);
-  - `Fragment` (css-in-js, JSDoc fence) with a valid envelope or ANY non-physical input with a leading BOM is refused wholesale
-    (`Err` → the host's `PreserveOriginal`), never partially treated
-- Language routing: only a resolved `yaml`/`toml` is dispatched (as a `Fragment`, so FM never nests);
-  - Any other explicit language (`---css`, …) stays raw WITHOUT consulting the registry.
-  - TOML has no IR-capable formatter yet and degrades to verbatim
-- Composition: delimiter + re-emitted explicit tag (`---yaml`), child IR between hardlines, closing delimiter (`...` stays `...`), then exactly ONE blank line before a nonempty body (regardless of the source gap). An empty block prints delimiters only, no dispatch
-- Every refusal (`PreserveOriginal`, dispatch error, unparsable YAML) keeps the whole block verbatim while the CSS body still formats;
-  - the block's bytes are never partially dropped
-- Verification lives in oxfmt, like embedded behavior in general, this crate carries no dispatcher-wired FM tests
+  - `format()`: standalone files, on a service-less session
+  - `format_with_session()`: standalone, on the caller's `FormatSession`
+  - `format_to_ir()`: embedded use via the dispatcher (`template_placeholders` = the css-in-js parse mode)
 
 ### Forked parser
 
@@ -131,6 +115,11 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - The JS host (`oxc_formatter`) counts these and substitutes them inline through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
 
 `tests/fixtures/embedded/scss/*-placeholders.scss` is the source of truth for which positions parse and how they print (the `embedded/` harness runs `format_to_ir` with the option on); add a fixture there when extending coverage.
+
+### Front matter (yaml-in-css)
+
+The envelope contract (host opt-in, detection, frame composition, refusal semantics) is core's (`write_front_matter` / `spec::front_matter`; boundary layer 5 in `oxc_formatter_core`'s AGENTS.md); this crate's side (the embeddable set, blank-and-compose wiring, the gap rule) lives in `format.rs`.
+FM behavior is verified through oxfmt; this crate carries no dispatcher-wired FM tests.
 
 ## Prettier mapping
 

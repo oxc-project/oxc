@@ -61,6 +61,15 @@ pub enum InputKind {
     Fragment,
 }
 
+impl InputKind {
+    /// Whether this input kind formats a leading front matter block as an envelope:
+    /// `true` for roots and complete embedded documents,
+    /// `false` for a [`Self::Fragment`] (its head is content, not an envelope).
+    pub fn owns_front_matter(self) -> bool {
+        matches!(self, Self::PhysicalFile | Self::VirtualDocument)
+    }
+}
+
 /// Execution unit threaded through a formatting run: one arena, one `GroupId` space,
 /// the run's [`SessionServices`], plus the input's envelope semantics.
 ///

@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    FormatElement, IndentWidth,
+    FormatElement, IndentWidth, dispatch_fragment_ir,
     format_element::{LineMode, TextWidth},
 };
 
@@ -85,7 +85,7 @@ pub(super) fn format_graphql_doc<'a>(
         let mut ir = if info.comments_only {
             build_graphql_comment_ir(info.text, allocator, indent_width)
         } else {
-            let Some(ir) = super::dispatch_fragment_ir(f, "graphql", info.text, None) else {
+            let Some(ir) = dispatch_fragment_ir(f, "graphql", info.text, None) else {
                 return false;
             };
             Some(ir)

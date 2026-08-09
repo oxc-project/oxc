@@ -18,6 +18,7 @@ pub mod buffer;
 pub mod builders;
 mod diagnostics;
 mod embedded;
+mod envelope;
 pub mod format;
 pub mod format_element;
 mod format_extensions;
@@ -45,8 +46,9 @@ pub use buffer::{
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 pub use embedded::{
     DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedIr, FormatDispatcher,
-    TailwindCollector,
+    TailwindCollector, dispatch_fragment_ir,
 };
+pub use envelope::write_front_matter;
 pub use format::{Format, write};
 pub use format_element::debug::DisplayDocument;
 pub use format_element::document::Document;

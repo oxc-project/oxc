@@ -16,7 +16,7 @@ use std::{any::Any, sync::Arc};
 
 use oxc_allocator::ArenaVec;
 
-use crate::{FormatElement, FormatSession, InputKind};
+use crate::{FormatContext, FormatElement, FormatSession, Formatter, InputKind};
 
 /// One embedded-language formatting request, as the host formatter states it.
 pub struct DispatchRequest<'r> {
@@ -166,6 +166,33 @@ fn has_nested_tailwind_class(elements: &[FormatElement<'_>]) -> bool {
         }
     }
     elements.iter().any(descends)
+}
+
+/// Dispatches one embedded fragment and consumes the result into the parent.
+///
+/// `InputKind::Fragment` + the [`DispatchResult::into_doc`] Tailwind merge in one place,
+/// so an embed site cannot re-derive the pair and skip the merge.
+/// `None` covers [`DispatchOutcome::PreserveOriginal`] and operational errors alike;
+/// the caller keeps its original source.
+/// Embed sites that must inspect [`DispatchResult::child_context`] first stay manual.
+pub fn dispatch_fragment_ir<'a, C>(
+    f: &mut Formatter<'_, 'a, C>,
+    language: &str,
+    text: &str,
+    parent_context: Option<&dyn Any>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>>
+where
+    C: FormatContext + TailwindCollector,
+{
+    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
+        language,
+        text,
+        input_kind: InputKind::Fragment,
+        parent_context,
+    }) else {
+        return None;
+    };
+    Some(result.into_doc(f.context_mut()))
 }
 
 /// Index-space provider for batched Tailwind class sorting.

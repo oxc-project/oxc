@@ -3,8 +3,8 @@ use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Sty
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, BufferExtensions, DispatchOutcome, DispatchRequest, Document, EmbeddedIr, Format,
-    FormatElement, FormatSession, FormatState, Formatted, InputKind, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, InputKind,
+    VecBuffer,
     builders::{empty_line, hard_line_break, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter},
     write,
@@ -122,10 +122,9 @@ pub fn format_to_ir<'a>(
     let input_kind = session.input_kind();
 
     let prepared = prepare_source(allocator, source_text);
-    if prepared.front_matter.is_some() && input_kind != InputKind::VirtualDocument {
+    if prepared.front_matter.is_some() && !input_kind.owns_front_matter() {
         // A fragment (css-in-js, JSDoc fence) never acquires file envelope semantics:
         // refuse the whole child instead of partially treating its head as front matter.
-        // Only a `VirtualDocument` (a complete embedded document, e.g. a fenced stylesheet) formats front matter like a root.
         return Err(OxcDiagnostic::error(
             "Front matter in a CSS fragment; the part is preserved as-is",
         ));
@@ -253,59 +252,10 @@ pub fn to_span(span: &oxc_css_parser::Span) -> Span {
     )
 }
 
-/// Writes the front matter block:
-/// dispatched through the session when its language qualifies, verbatim otherwise.
-/// Never fails, any refusal keeps the block as-is while the CSS body still formats
-/// (a document must not lose its front matter bytes over an optional embed).
-///
-/// Language routing: only a resolved `yaml` / `toml` is ever dispatched.
-/// Any other explicit language (`---css`, …) stays raw WITHOUT consulting the registry.
-/// NOTE: TOML currently has no IR-capable formatter, so it degrades to verbatim through `PreserveOriginal`.
 fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {
-    if matches!(fm.language(), "yaml" | "toml") {
-        let body = fm.value.trim();
-        if body.is_empty() {
-            // Empty block: the delimiters alone
-            write_front_matter_frame(fm, None, f);
-            return;
-        }
-        // The body is a Fragment:
-        // front matter inside front matter must never acquire envelope semantics (generic FM recursion).
-        let outcome = f.session().dispatch(DispatchRequest {
-            language: fm.language(),
-            text: body,
-            input_kind: InputKind::Fragment,
-            parent_context: None,
-        });
-        if let Ok(DispatchOutcome::Formatted(result)) = outcome {
-            let ir = result.into_doc(f.context_mut());
-            write_front_matter_frame(fm, Some(ir), f);
-            return;
-        }
-        // `PreserveOriginal` or an operational error:
-        // fall through to the verbatim block below.
-    }
-    write!(f, text(fm.raw));
-}
-
-/// The composed shape (Prettier `embed.js` + `printer-postcss.js` css-root):
-/// opening delimiter with the explicit language re-emitted (`---yaml`),
-/// the child IR between hardlines, then the closing delimiter (a `...` closing stays `...`).
-fn write_front_matter_frame<'a>(
-    fm: &FrontMatter<'a>,
-    body: Option<ArenaVec<'a, FormatElement<'a>>>,
-    f: &mut CssFormatter<'_, 'a>,
-) {
-    write!(f, text(fm.start_delimiter));
-    if let Some(language) = fm.explicit_language {
-        write!(f, text(language));
-    }
-    if let Some(ir) = body {
-        write!(f, hard_line_break());
-        f.write_elements(ir);
-    }
-    write!(f, hard_line_break());
-    write!(f, text(fm.end_delimiter));
+    // NOTE: TOML currently has no IR-capable formatter, so it degrades to verbatim through `PreserveOriginal`.
+    // Still need to specify here since blank TOML frontmatter will be normalized.
+    oxc_formatter_core::write_front_matter(fm, &["yaml", "toml"], f);
 }
 
 /// Emits the stylesheet followed by any trailing comments, and the final newline.

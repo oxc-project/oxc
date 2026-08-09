@@ -1,5 +1,6 @@
 use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
+use oxc_formatter_core::dispatch_fragment_ir;
 
 use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
@@ -30,7 +31,7 @@ pub(super) fn try_embed_markdown<'a>(
     let text = if has_indent { strip_indentation(text, indentation, allocator) } else { text };
 
     // Phase 3: Get the IR from the dispatcher
-    let Some(mut ir) = super::dispatch_fragment_ir(f, "markdown", text, None) else {
+    let Some(mut ir) = dispatch_fragment_ir(f, "markdown", text, None) else {
         return false;
     };
 

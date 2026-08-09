@@ -1,6 +1,8 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, IndentWidth, format_element::TextWidth};
+use oxc_formatter_core::{
+    FormatElement, IndentWidth, dispatch_fragment_ir, format_element::TextWidth,
+};
 
 use crate::{
     ast_nodes::AstNode,
@@ -52,7 +54,7 @@ pub(super) fn format_css_doc<'a>(
             return true;
         }
 
-        let Some(ir) = super::dispatch_fragment_ir(f, "css", raw, Some(&CssInJsTemplate)) else {
+        let Some(ir) = dispatch_fragment_ir(f, "css", raw, Some(&CssInJsTemplate)) else {
             return false;
         };
 
@@ -78,7 +80,7 @@ pub(super) fn format_css_doc<'a>(
     };
 
     // Phase 2: Format via the dispatcher (IR path)
-    let Some(ir) = super::dispatch_fragment_ir(f, "css", joined, Some(&CssInJsTemplate)) else {
+    let Some(ir) = dispatch_fragment_ir(f, "css", joined, Some(&CssInJsTemplate)) else {
         return false;
     };
 
