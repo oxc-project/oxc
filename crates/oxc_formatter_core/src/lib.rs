@@ -66,7 +66,7 @@ pub use options::{
     LineWidthFromIntError, ParseFormatNumberError,
 };
 pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
-pub use session::{FormatSession, InputKind};
+pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source::{SourceText, SpanCursor};
 pub use state::FormatState;

@@ -486,8 +486,7 @@ impl TestRunner {
         let source_type = SourceType::from_path(path).unwrap();
 
         let formatted =
-            oxc_formatter::format(&allocator, source_text, source_type, format_options, None)
-                .ok()?;
+            oxc_formatter::format(&allocator, source_text, source_type, format_options).ok()?;
         Some(formatted.print().ok()?.into_code())
     }
 
@@ -511,8 +510,7 @@ impl TestRunner {
 
     fn run_css_formatter(source_text: &str, format_options: CssFormatOptions) -> Option<String> {
         let allocator = Allocator::default();
-        let formatted =
-            oxc_formatter_css::format(&allocator, source_text, format_options, None).ok()?;
+        let formatted = oxc_formatter_css::format(&allocator, source_text, format_options).ok()?;
         let printed = formatted.print().ok()?;
         Some(printed.into_code())
     }

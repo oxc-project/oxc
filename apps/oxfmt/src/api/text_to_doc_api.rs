@@ -137,26 +137,18 @@ fn run_full(
     // are mapped lazily at dispatch time; `core` was validated during resolution.
     let dispatch_config = ResolvedDispatchConfig::for_root(&config, core, &parent_filepath);
 
-    let (external_callbacks, fallback) =
-        external_formatter.to_external_callbacks(&format_options, &dispatch_config);
-    let dispatcher = dispatch_config.root_dispatcher(Some(fallback));
+    let services = external_formatter.session_services(&dispatch_config);
 
     let allocator = Allocator::default();
-    let session = FormatSession::new(
+    let session = FormatSession::with_services(
         &allocator,
         // A Vue/Svelte `<script>` block is a complete document the host passes as embedded input,
         // never the owner of file envelopes (BOM / front matter).
         InputKind::VirtualDocument,
-        dispatcher,
+        services,
     );
     let formatted = match tokio::task::block_in_place(|| {
-        oxc_formatter::format_with_session(
-            &session,
-            source_text,
-            source_type,
-            *format_options,
-            Some(external_callbacks),
-        )
+        oxc_formatter::format_with_session(&session, source_text, source_type, *format_options)
     }) {
         Ok(formatted) => formatted,
         Err(err) => {

@@ -35,15 +35,12 @@ impl<'ast, C> FormatState<'ast, C> {
     /// Entry points that share a run with other formatters use [`Self::new_with_session`] instead.
     ///
     /// NOTE: standalone `format()` compatibility wrappers reach this
-    /// (directly or via their own dispatcher-less session),
+    /// (directly or via their own service-less session),
     /// including the string channel's JSDoc-fence formatting, which is semantically a fragment;
     /// nothing may consult `input_kind` for envelope decisions on those paths
     /// until that channel routes through the dispatcher.
     pub fn new(context: C, allocator: &'ast Allocator) -> Self {
-        Self::new_with_session(
-            context,
-            FormatSession::new(allocator, InputKind::PhysicalFile, None),
-        )
+        Self::new_with_session(context, FormatSession::new(allocator, InputKind::PhysicalFile))
     }
 
     /// Creates a new state on an existing session, sharing its arena and `GroupId` space.

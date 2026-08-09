@@ -415,7 +415,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 self.push_indented_desc(indent, desc);
             }
@@ -464,7 +464,7 @@ impl JsdocFormatter<'_, '_> {
                 false,
                 Some(self.format_options),
                 Some(self.allocator),
-                self.external_callbacks,
+                self.string_embedder,
             );
             self.push_indented_desc(indent, desc);
             return;
@@ -490,7 +490,7 @@ impl JsdocFormatter<'_, '_> {
                 false,
                 Some(self.format_options),
                 Some(self.allocator),
-                self.external_callbacks,
+                self.string_embedder,
             );
             // Skip leading blank line from wrap_text since we already added one
             if desc.starts_with('\n') {
@@ -614,7 +614,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 self.push_indented_desc(indent, desc);
                 return;
@@ -664,7 +664,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 self.push_indented_desc(indent, desc);
             } else {
@@ -676,7 +676,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 let mut iter = desc.split('\n');
                 if let Some(first) = iter.next() {
@@ -830,7 +830,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 self.push_indented_desc(indent, desc);
             }
@@ -879,7 +879,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 self.push_indented_desc(indent, desc);
             } else {
@@ -890,7 +890,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 let mut iter = desc.split('\n');
                 if let Some(first) = iter.next() {
@@ -1027,7 +1027,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 if desc.starts_with('\n') {
                     desc.remove(0);
@@ -1043,7 +1043,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 // Skip leading blank line from wrap_text since we already added one
                 if desc.starts_with('\n') {
@@ -1067,7 +1067,7 @@ impl JsdocFormatter<'_, '_> {
                 false,
                 Some(self.format_options),
                 Some(self.allocator),
-                self.external_callbacks,
+                self.string_embedder,
             );
             self.push_indented_desc(indent, desc);
             return;
@@ -1098,7 +1098,7 @@ impl JsdocFormatter<'_, '_> {
                         false,
                         Some(self.format_options),
                         Some(self.allocator),
-                        self.external_callbacks,
+                        self.string_embedder,
                     );
                     self.push_indented_desc(indent, desc);
                     return;
@@ -1186,7 +1186,7 @@ impl JsdocFormatter<'_, '_> {
                         false,
                         Some(self.format_options),
                         Some(self.allocator),
-                        self.external_callbacks,
+                        self.string_embedder,
                     );
                     let mut iter = desc.split('\n');
                     if let Some(first) = iter.next() {
@@ -1227,7 +1227,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 self.push_indented_desc(indent, desc);
             } else {
@@ -1238,7 +1238,7 @@ impl JsdocFormatter<'_, '_> {
                     false,
                     Some(self.format_options),
                     Some(self.allocator),
-                    self.external_callbacks,
+                    self.string_embedder,
                 );
                 let mut iter = desc.split('\n');
                 if let Some(first) = iter.next() {

@@ -8,7 +8,7 @@ use crate::{JsFormatOptions, format_program, parse_for_format};
 /// Helper for:
 /// - Parse a snippet
 /// - and format it to a string with trailing whitespace trimmed
-/// - (no external callbacks)
+/// - (no string embedder)
 ///
 /// Returns `None` if parsing fails (panic or any error), the gate every embedded site uses.
 ///
@@ -24,8 +24,7 @@ fn parse_and_build<'a>(
     if ret.panicked || !ret.diagnostics.is_empty() {
         return None;
     }
-    let mut code =
-        format_program(allocator, &ret.program, options, None).print().unwrap().into_code();
+    let mut code = format_program(allocator, &ret.program, options).print().unwrap().into_code();
     code.truncate(code.trim_end().len());
     Some(code)
 }

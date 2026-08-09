@@ -59,7 +59,7 @@ impl FixtureFormatter for CssHarness {
         }
 
         let allocator = Allocator::default();
-        format(&allocator, source, options, None)
+        format(&allocator, source, options)
             .expect("format should succeed")
             .print()
             .expect("print should succeed")
@@ -73,11 +73,8 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
     use oxc_formatter_core::{Document, FormatElement, FormatOptions, Printer, TextWidth};
 
     let allocator = Allocator::default();
-    let session = oxc_formatter_core::FormatSession::new(
-        &allocator,
-        oxc_formatter_core::InputKind::Fragment,
-        None,
-    );
+    let session =
+        oxc_formatter_core::FormatSession::new(&allocator, oxc_formatter_core::InputKind::Fragment);
     let embedded = oxc_formatter_css::format_to_ir(
         &session, source, options, /* template_placeholders */ true,
     )
@@ -137,7 +134,7 @@ include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 fn bom_is_preserved() {
     let allocator = Allocator::default();
     let formatted =
-        format(&allocator, "\u{feff}a {\n  color: red;\n}\n", CssFormatOptions::default(), None)
+        format(&allocator, "\u{feff}a {\n  color: red;\n}\n", CssFormatOptions::default())
             .expect("BOM input should parse")
             .print()
             .expect("print should succeed")
@@ -179,9 +176,6 @@ fn parse_error_is_err() {
         // (postcss-selector-parser accepts and lowercases it).
         ("a:nth-child(2N-1) { color: red; }", css),
     ] {
-        assert!(
-            format(&allocator, source, options, None).is_err(),
-            "{source:?} should fail to format"
-        );
+        assert!(format(&allocator, source, options).is_err(), "{source:?} should fail to format");
     }
 }
