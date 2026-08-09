@@ -765,14 +765,9 @@ fn format_code_value<'a>(
             && !is_js_ts_lang(l)
         {
             if let Some(embed) = opts.string_embedder
-                && let Ok(formatted) = embed(l, code)
+                && let Ok(formatted) = embed(l, code, width)
             {
-                let mut result = formatted;
-                // Trim trailing newline that Prettier adds
-                if result.ends_with('\n') {
-                    result.pop();
-                }
-                return Cow::Owned(result);
+                return Cow::Owned(formatted);
             }
             return Cow::Borrowed(code);
         }

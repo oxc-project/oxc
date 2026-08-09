@@ -159,6 +159,11 @@ pub fn inject_parser(opts: &mut Value, parser_name: &str) {
     as_object_mut(opts).insert("parser".to_string(), Value::String(parser_name.to_string()));
 }
 
+/// Inject `printWidth` key, overriding the configured one.
+pub fn inject_print_width(opts: &mut Value, print_width: usize) {
+    as_object_mut(opts).insert("printWidth".to_string(), Value::from(print_width));
+}
+
 /// Inject `filepath` key.
 ///
 /// Some plugins (Tailwind sorter, etc.) depend on it.

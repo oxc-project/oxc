@@ -4,20 +4,25 @@ use std::sync::Arc;
 
 use oxc_allocator::Allocator;
 
-use crate::{DispatchOutcome, DispatchRequest, FormatDispatcher, UniqueGroupIdBuilder};
+use crate::{
+    DispatchOutcome, DispatchRequest, DispatchResult, Document, FormatDispatcher, PrinterOptions,
+    UniqueGroupIdBuilder,
+};
 
 /// Upper bound on nested embedded dispatches;
 /// exceeding it is an operational error, catching accidental A-in-B-in-A infinite recursion.
 /// Real nesting is shallow (css-in-md-in-js would be 3); 8 is a generous ceiling.
 const MAX_DISPATCH_DEPTH: u8 = 8;
 
-/// String-in/string-out embedded formatter: `(language, code)` to formatted code.
+/// String-in/string-out embedded formatter: `(language, code, print_width)` to formatted code.
 ///
-/// The string-out channel's session-carried contract,
-/// for consumers whose result must come back as TEXT
+/// The string-out channel's session-carried contract, for consumers whose result must come back as TEXT
 /// (a JSDoc fence re-embedded line-by-line into a comment, the html-in-js temporary recovery path).
+/// `print_width` is the caller's effective width at the embedding position
+/// (e.g. a JSDoc fence's comment-content width minus the fence indent).
+/// The returned text carries no trailing whitespace (implementations trim before returning).
 /// `Err` means "keep the input verbatim".
-pub type StringEmbedder = Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
+pub type StringEmbedder = Arc<dyn Fn(&str, &str, usize) -> Result<String, String> + Send + Sync>;
 
 /// Print-time batch sorter for the classes referenced by `FormatElement::TailwindClass(index)`;
 /// runs once when a root formatter finalizes its `Document`.
@@ -139,6 +144,41 @@ impl<'a> FormatSession<'a> {
 
         let child = self.derive_child(request.input_kind);
         dispatcher(&child, request)
+    }
+
+    /// Formats one embedded request and prints the result to text:
+    /// dispatch → local Tailwind sort → [`Document`] print.
+    ///
+    /// The string-out counterpart of [`Self::dispatch`], for consumers whose result
+    /// must come back as TEXT. The caller supplies `printer_options`, typically its own
+    /// print options with the embedding position's effective width, and owns any
+    /// re-embedding conventions (e.g. trailing-newline handling) on the returned text.
+    /// A text consumer has no parent index space, so Tailwind classes sort locally
+    /// through this session's sorter instead of merging upward.
+    ///
+    /// Returns `Ok(None)` when the dispatch deliberately preserved the input
+    /// (see [`DispatchOutcome::PreserveOriginal`]); the caller keeps its original text.
+    ///
+    /// # Errors
+    /// Operational failures only (dispatch transport, recursion limit, print).
+    pub fn dispatch_to_string(
+        &self,
+        request: DispatchRequest<'_>,
+        printer_options: PrinterOptions,
+    ) -> Result<Option<String>, String> {
+        let text_len = request.text.len();
+        let DispatchOutcome::Formatted(DispatchResult { doc, tailwind_classes, .. }) =
+            self.dispatch(request)?
+        else {
+            return Ok(None);
+        };
+        let tailwind_classes = self.sort_tailwind_classes(tailwind_classes);
+
+        let code = Document::new(doc, tailwind_classes)
+            .print(text_len, printer_options)
+            .map_err(|err| err.to_string())?
+            .into_code();
+        Ok(Some(code))
     }
 
     /// The arena shared between the root and every embedded child.

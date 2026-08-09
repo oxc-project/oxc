@@ -34,10 +34,11 @@ pub fn for_root(dispatch_config: &Arc<ResolvedDispatchConfig>) -> SessionService
     let string_embedder = dispatcher.as_ref().map(|dispatcher| {
         let fence_dispatcher = Arc::clone(dispatcher);
         let dispatch_config = Arc::clone(dispatch_config);
-        Arc::new(move |language: &str, code: &str| {
-            super::fence::format_native_fence(
+        Arc::new(move |language: &str, code: &str, print_width: usize| {
+            super::jsdoc_fence::format_native_fence(
                 language,
                 code,
+                print_width,
                 &fence_dispatcher,
                 &dispatch_config,
                 None,

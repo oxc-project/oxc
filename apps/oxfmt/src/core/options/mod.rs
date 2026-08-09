@@ -34,6 +34,6 @@ pub use to_oxc_toml::to_oxc_toml;
 #[cfg(feature = "napi")]
 pub use to_prettier::{
     build_external_options, inject_filepath, inject_oxfmt_plugin_payload, inject_parser,
-    inject_svelte_plugin_payload, inject_tailwind_plugin_payload, to_prettier,
+    inject_print_width, inject_svelte_plugin_payload, inject_tailwind_plugin_payload, to_prettier,
 };
 pub use validate::{ValidatedOptions, validate};

@@ -7,7 +7,7 @@
 //!   so the parent re-requests the same HTML via this string channel and substitutes placeholders back to `${expr}`.
 //!
 //! Fence routing follows ONE rule, the shared routing table ([`dispatcher::route`]):
-//! a `Route::Native` language formats through the dispatcher via [`super::fence::format_native_fence`] (the build-independent adapter);
+//! a `Route::Native` language formats through the dispatcher via [`super::jsdoc_fence::format_native_fence`] (the build-independent adapter);
 //! the `Route::Prettier` set (md/html/angular) stays on the Prettier string path
 //! (their Doc→IR conversion has unrepresentable cases,
 //! so forcing them through the dispatcher would regress to verbatim; the wall falls with the HTML Rust port).
@@ -26,9 +26,9 @@ use crate::core::{
     embed::{
         FormatEmbeddedWithConfigCallback,
         dispatcher::{self, Route},
-        fence,
+        jsdoc_fence,
     },
-    options::inject_parser,
+    options::{inject_parser, inject_print_width},
 };
 
 /// Build the napi build's string embedder installed on the session.
@@ -49,13 +49,14 @@ pub fn build_string_embedder(
     // Fence dispatchers never take the Prettier fallback (native fences never fall back),
     // so one is invariant across the callback's lifetime: build it once, not per fence.
     let fence_dispatcher = dispatcher::build_dispatcher(Arc::clone(&dispatch_config), None);
-    Arc::new(move |language: &str, code: &str| {
+    Arc::new(move |language: &str, code: &str, print_width: usize| {
         let parser_name = match dispatcher::route(language) {
             // Native branch (JSDoc fenced code blocks): through the dispatcher, never Prettier.
             Route::Native(_) => {
-                return fence::format_native_fence(
+                return jsdoc_fence::format_native_fence(
                     language,
                     code,
+                    print_width,
                     &fence_dispatcher,
                     &dispatch_config,
                     sort_tailwind.as_ref(),
@@ -71,6 +72,8 @@ pub fn build_string_embedder(
             // because there may be multiple embedded sections in one JS/TS file.
             let mut options = dispatch_config.external_options().clone();
             inject_parser(&mut options, parser_name);
+            // The same effective width the native branch prints at
+            inject_print_width(&mut options, print_width);
             (format_embedded)(options, code)
                 .map(|mut code| {
                     // Remove trailing newline added by Prettier without allocation.

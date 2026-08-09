@@ -228,7 +228,8 @@ impl ResolvedDispatchConfig {
     }
 
     /// Printer options from the shared resolved core bundle;
-    /// the fence adapter ([`super::fence`]) prints dispatched child IR standalone with these.
+    /// the fence adapter ([`super::jsdoc_fence`]) derives its per-fence options from these
+    /// (width overridden to the fence's effective width).
     pub fn print_options(&self) -> PrinterOptions {
         self.core.as_print_options()
     }

@@ -286,7 +286,10 @@ fn format_js_in_html_as_fallback<'a>(
     expressions: &[&AstNode<'a, Expression<'a>>],
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
-    let Some(Ok(formatted)) = f.session().string_embedder().map(|embed| embed("html", joined))
+    // Configured width; the template's indent is not subtracted (recovery path, matches prior behavior)
+    let print_width = usize::from(f.options().line_width.value());
+    let Some(Ok(formatted)) =
+        f.session().string_embedder().map(|embed| embed("html", joined, print_width))
     else {
         return false;
     };

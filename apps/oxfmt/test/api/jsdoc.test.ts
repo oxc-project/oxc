@@ -145,6 +145,86 @@ describe("JSDoc", () => {
     );
   });
 
+  it("should print native fences at the fence's effective width, not the full printWidth", async () => {
+    // Effective width at top level = printWidth(100) - " * "(3) - 4 = 93,
+    // the same width JS/TS snippets in the same position already use.
+    // The 94-char field line must break; the 92-char one must not.
+    // (Upstream `prettier-plugin-jsdoc` uses a flat printWidth - 4, which overflows `printWidth` for indented comments;
+    // see tasks/prettier_conformance/jsdoc/upstream-jsdoc-bugs.md)
+    const source = `
+/**
+ * \`\`\`graphql
+ * query { fieldName(argOne: "value1", argTwo: "value2", argThree: "value3", four: 4444, five: 5555577) }
+ * \`\`\`
+ *
+ * \`\`\`graphql
+ * query { fieldName(argOne: "value1", argTwo: "value2", argThree: "value3", four: 4444, five: 55555) }
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`graphql
+ * query {
+ *   fieldName(
+ *     argOne: "value1"
+ *     argTwo: "value2"
+ *     argThree: "value3"
+ *     four: 4444
+ *     five: 5555577
+ *   )
+ * }
+ * \`\`\`
+ *
+ * \`\`\`graphql
+ * query {
+ *   fieldName(argOne: "value1", argTwo: "value2", argThree: "value3", four: 4444, five: 55555)
+ * }
+ * \`\`\`
+ */
+`.trimStart(),
+    );
+  });
+
+  it("should pass the fence's effective width to the Prettier string path too", async () => {
+    // Same 93-char boundary as the native case, exercised through the Prettier
+    // branch (html fences go to Prettier with `printWidth` injected):
+    // the 96-char element must break, the 93-char one must not.
+    const source = `
+/**
+ * \`\`\`html
+ * <section class="wrapper-xl" data-role="banner" id="hero"><span>hello world text</span></section>
+ * \`\`\`
+ *
+ * \`\`\`html
+ * <section class="wrapper" data-role="banner" id="hero"><span>hello world text</span></section>
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`html
+ * <section class="wrapper-xl" data-role="banner" id="hero">
+ *   <span>hello world text</span>
+ * </section>
+ * \`\`\`
+ *
+ * \`\`\`html
+ * <section class="wrapper" data-role="banner" id="hero"><span>hello world text</span></section>
+ * \`\`\`
+ */
+`.trimStart(),
+    );
+  });
+
   it("should keep fenced code verbatim for languages outside the registry", async () => {
     const source = `
 /**

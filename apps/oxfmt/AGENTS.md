@@ -62,9 +62,10 @@ Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them 
 A separate string-out channel (the session's `string_embedder` service, NOT the dispatcher) carries the string-in/string-out consumers:
 
 - JSDoc fenced code blocks: routing follows ONE rule, the same `dispatcher::route` table
-  - a `Native` fence language formats through the dispatcher via a thin string adapter (`embed/fence.rs::format_native_fence`, EVERY build, the pure Rust build wires it via `services::for_root`)
+  - a `Native` fence language formats through `FormatSession::dispatch_to_string` via a thin string adapter (`embed/jsdoc_fence.rs::format_native_fence`, EVERY build, the pure Rust build wires it via `services::for_root`)
   - md/html/angular fences stay on the Prettier string path (`embed/prettier_string.rs`, napi only; their Doc→IR conversion has unrepresentable cases);
   - everything else stays verbatim
+  - the embedder carries the caller's effective print width; both branches honor it (native via `PrintWidth` override, Prettier via `printWidth` in the options JSON), so a fence prints at the same width a JS/TS snippet in the same position would (see `upstream-jsdoc-bugs.md` #11 for the deliberate divergence from upstream's flat `printWidth - 4`)
 - temporary html-in-js string recovery (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`): rescues the template as text when the Doc→IR conversion cannot represent the returned Doc
 
 NOTE: These string-out channel is temporary workaround, should be replaced by native implementations and Prettier usage should be eliminated in the future.
