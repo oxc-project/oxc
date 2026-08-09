@@ -44,7 +44,8 @@ Oxfmt utilizes different implementations depending on the file extension and fil
 
 NOTE: Rust written formatters never fall back to Prettier, since they exist to reduce the dependency on Prettier.
 
-Embedded languages (e.g. css-in-js) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
+Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
+Standalone CSS files also run on a `PhysicalFile` session with a fallback-less registry dispatcher (every build), so front matter YAML formats natively while TOML/custom languages stay verbatim like Prettier; `embeddedLanguageFormatting: off` installs no dispatcher.
 Rust formatter branches (the `NativeLanguage` registry in that file) in every build, plus the Prettier Doc→IR fallback (`embed/prettier_fallback.rs`, napi only) for the rest, the pure Rust build deliberately preserves those as-is. Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_formatter.rs` bridges the napi callbacks into these factories.
 
 A separate string-out channel (the `embedded_callback` in the same file, NOT the dispatcher) carries the string-in/string-out consumers:

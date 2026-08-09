@@ -5,9 +5,7 @@ use tracing::instrument;
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::JsFormatOptions;
-#[cfg(feature = "napi")]
-use oxc_formatter_core::CoreFormatOptions;
-use oxc_formatter_core::{FormatSession, InputKind};
+use oxc_formatter_core::{CoreFormatOptions, FormatSession, InputKind};
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
@@ -16,13 +14,12 @@ use oxc_span::SourceType;
 use oxc_toml::Options as TomlFormatterOptions;
 
 #[cfg(feature = "napi")]
-use super::embed::dispatcher::ResolvedDispatchConfig;
-#[cfg(feature = "napi")]
 use super::options::{
-    build_external_options, inject_filepath, inject_oxfmt_plugin_payload, inject_parser,
-    inject_svelte_plugin_payload, inject_tailwind_plugin_payload, to_prettier,
+    inject_filepath, inject_oxfmt_plugin_payload, inject_parser, inject_svelte_plugin_payload,
+    inject_tailwind_plugin_payload, to_prettier,
 };
 use super::{
+    embed::dispatcher::{ResolvedDispatchConfig, build_dispatcher},
     options::{
         ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
         to_oxc_formatter_json, to_oxc_formatter_yaml, to_oxc_toml, to_sort_package_json,
@@ -76,12 +73,15 @@ pub enum FormatStrategy {
         insert_final_newline: bool,
     },
     /// For CSS/SCSS/Less files formatted by `oxc_formatter_css`.
-    /// `config` is retained (napi only) to build the Tailwind class sorter options.
+    /// `config` + `core` build the dispatch config for the root's session
+    /// (front matter YAML, plus the napi Tailwind sorter options).
     OxcFormatterCss {
         path: Arc<Path>,
         format_options: Box<CssFormatOptions>,
-        #[cfg(feature = "napi")]
-        config: Box<FormatConfig>,
+        config: Arc<FormatConfig>,
+        /// The validated core bundle, carried from resolution so dispatch-config
+        /// construction never re-derives (or re-fails) it.
+        core: CoreFormatOptions,
         insert_final_newline: bool,
     },
     /// For YAML files formatted by `oxc_formatter_yaml`.
@@ -146,10 +146,6 @@ impl FormatStrategy {
     /// The Prettier `Value` for `ExternalFormatter*` is deferred to the format step:
     /// `FormatConfig` is the single SoT, no validation needed,
     /// and `Box<FormatConfig>` is materially smaller per file than a fully-built `Value`.
-    // `config` is moved into the napi-only `ExternalFormatter*` variants;
-    // when the `napi` feature is off, those branches are cfg-gated out and the
-    // value is only borrowed, but we keep the by-value signature for symmetry.
-    #[cfg_attr(not(feature = "napi"), expect(clippy::needless_pass_by_value))]
     pub(crate) fn from_format_config(
         config: FormatConfig,
         validated: &ValidatedOptions,
@@ -198,8 +194,8 @@ impl FormatStrategy {
             FileKind::OxcFormatterCss { path, variant } => Self::OxcFormatterCss {
                 path,
                 format_options: Box::new(to_oxc_formatter_css(&config, core, variant)),
-                #[cfg(feature = "napi")]
-                config: Box::new(config),
+                config: Arc::new(config),
+                core,
                 insert_final_newline,
             },
             FileKind::OxcFormatterYaml { path } => Self::OxcFormatterYaml {
@@ -326,16 +322,16 @@ impl SourceFormatter {
             FormatStrategy::OxcFormatterCss {
                 path,
                 format_options,
-                #[cfg(feature = "napi")]
                 config,
+                core,
                 insert_final_newline,
             } => (
                 self.format_by_oxc_formatter_css(
                     source_text,
                     &path,
                     *format_options,
-                    #[cfg(feature = "napi")]
                     &config,
+                    core,
                 ),
                 insert_final_newline,
             ),
@@ -522,8 +518,10 @@ impl SourceFormatter {
         Ok(printed.into_code())
     }
 
-    /// Format CSS/SCSS/Less source using `oxc_formatter_css`.
-    ///
+    /// Format CSS/SCSS/Less source using `oxc_formatter_css` on a `PhysicalFile` session,
+    /// so front matter YAML dispatches to the native registry in every build
+    /// (fallback-less: TOML and custom languages stay verbatim, matching Prettier, which never formats them either).
+    /// `embeddedLanguageFormatting: off` installs no dispatcher and the block stays verbatim wholesale.
     /// When the config enables Tailwind class sorting,
     /// the napi build passes a JS-side sorter for the `@apply` classes the formatter collects
     /// (the order itself comes from the Tailwind config, which only the JS side can resolve).
@@ -534,16 +532,27 @@ impl SourceFormatter {
         source_text: &str,
         path: &Path,
         format_options: CssFormatOptions,
-        #[cfg(feature = "napi")] config: &FormatConfig,
+        config: &Arc<FormatConfig>,
+        core: CoreFormatOptions,
     ) -> Result<String, OxcDiagnostic> {
+        let dispatch_config = ResolvedDispatchConfig::new(Arc::clone(config), core);
         #[cfg(feature = "napi")]
-        let sorter = self.tailwind_sorter(config, path);
+        let dispatch_config = dispatch_config.with_path(path.to_path_buf());
+        let dispatch_config = Arc::new(dispatch_config);
+
+        let dispatcher = config
+            .is_embedded_formatting_enabled()
+            .then(|| build_dispatcher(Arc::clone(&dispatch_config), None));
+
+        #[cfg(feature = "napi")]
+        let sorter = self.tailwind_sorter(config, &dispatch_config);
         #[cfg(not(feature = "napi"))]
         let sorter: Option<fn(Vec<String>) -> Vec<String>> = None;
 
         let allocator = self.allocator_pool.get();
-        let formatted = oxc_formatter_css::format(
-            &allocator,
+        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, dispatcher);
+        let formatted = oxc_formatter_css::format_with_session(
+            &session,
             source_text,
             format_options,
             sorter.as_ref().map(|s| s as &dyn Fn(Vec<String>) -> Vec<String>),
@@ -619,10 +628,12 @@ impl SourceFormatter {
 
     /// Build the JS-side Tailwind class sorter for `oxc_formatter_css`'s `@apply` collection,
     /// or `None` when the config does not enable it.
+    /// The Prettier options JSON comes from the dispatch config's lazy cell,
+    /// so a file without `@apply` classes never pays for building it.
     fn tailwind_sorter(
         &self,
         config: &FormatConfig,
-        path: &Path,
+        dispatch_config: &Arc<ResolvedDispatchConfig>,
     ) -> Option<impl Fn(Vec<String>) -> Vec<String>> {
         config.is_tailwind_enabled().then(|| {
             let external_formatter = self
@@ -630,8 +641,8 @@ impl SourceFormatter {
                 .as_ref()
                 .expect("`external_formatter` must exist when `napi` feature is enabled");
             let sort = std::sync::Arc::clone(&external_formatter.sort_tailwindcss_classes);
-            let external_options = build_external_options(config, path);
-            move |classes: Vec<String>| sort(&external_options, classes)
+            let dispatch_config = Arc::clone(dispatch_config);
+            move |classes: Vec<String>| sort(dispatch_config.external_options(), classes)
         })
     }
 

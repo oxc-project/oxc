@@ -18,9 +18,6 @@ use std::sync::Arc;
 #[cfg(feature = "napi")]
 use serde_json::Value;
 
-// In the pure Rust build the registry compiles and is tested,
-// but its production consumer (standalone CSS dispatching front-matter YAML) arrives with the FM work.
-#[cfg_attr(all(not(feature = "napi"), not(test)), expect(dead_code))]
 pub mod dispatcher;
 #[cfg(feature = "napi")]
 pub mod prettier_fallback;
