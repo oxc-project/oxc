@@ -16,7 +16,7 @@ use std::{any::Any, sync::Arc};
 
 use oxc_allocator::{Allocator, ArenaVec};
 
-use crate::{FormatElement, group_id::UniqueGroupIdBuilder};
+use crate::{FormatElement, InputKind, group_id::UniqueGroupIdBuilder};
 
 /// Shared IR-infrastructure context for formatting embedded code.
 ///
@@ -37,24 +37,49 @@ pub struct EmbeddedContext<'a, 'g> {
     pub dispatcher: Option<FormatDispatcher>,
 }
 
+/// One embedded-language formatting request, as the host formatter states it.
+pub struct DispatchRequest<'r> {
+    /// Generic language identifier (e.g. `"css"`, `"graphql"`);
+    /// the dispatcher implementation maps it to its own parser/language names.
+    pub language: &'r str,
+    /// Code to format. Usually a single text;
+    /// GraphQL sends N quasis and receives N IRs back (the batch is atomic: all format or none do).
+    pub texts: &'r [&'r str],
+    /// Envelope semantics of the child input, as declared by the host.
+    pub input_kind: InputKind,
+    /// Parent→child language-pair specific data,
+    /// downcast by the implementation (`None` for most pairs).
+    pub parent_context: Option<&'r dyn Any>,
+}
+
+/// What a dispatch produced.
+///
+/// [`Self::PreserveOriginal`] is the DELIBERATE "do not format" answer
+/// (unsupported language, child parse failure, an envelope the child refuses,
+/// embedded formatting turned off): the caller keeps the original source as-is.
+/// `Result::Err` around this enum is reserved for operational failures (transport / internal errors);
+/// optional-embed callers degrade the same way for both,
+/// but the two must never be conflated at the source.
+pub enum DispatchOutcome<'a> {
+    /// The child formatted the request; consume [`DispatchResult`].
+    Formatted(DispatchResult<'a>),
+    /// Deliberately not formatted; keep the original source untouched.
+    PreserveOriginal,
+}
+
 /// Dispatcher resolving a language name to a formatter implementation.
 ///
 /// Assembled by the orchestrator (oxfmt), which knows all languages;
-/// formatter crates only invoke it. Arguments are
-/// `(context, language, texts, parent_context)`:
-///
-/// - `language`: generic language identifier (e.g. `"css"`, `"graphql"`)
-/// - `texts`: code to format. Usually a single text; GraphQL sends N quasis
-///   and receives N IRs back
-/// - `parent_context`: parent→child language-pair specific data, downcast by
-///   the implementation (`None` for most pairs)
+/// formatter crates only invoke it.
+/// The intended entry is [`crate::FormatSession::dispatch`]
+/// (which owns the recursion limit and the no-dispatcher case),
+/// but until every entry point is session-aware,
+/// the JS host's `dispatch_embedded` adapter still invokes it directly WITHOUT the depth guard.
 pub type FormatDispatcher = Arc<
-    dyn for<'a, 'g> Fn(
+    dyn for<'a, 'g, 'r> Fn(
             &EmbeddedContext<'a, 'g>,
-            &str,
-            &[&str],
-            Option<&dyn Any>,
-        ) -> Result<DispatchResult<'a>, String>
+            DispatchRequest<'r>,
+        ) -> Result<DispatchOutcome<'a>, String>
         + Send
         + Sync,
 >;

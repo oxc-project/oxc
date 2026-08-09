@@ -44,7 +44,8 @@ pub use buffer::{
 };
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 pub use embedded::{
-    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, TailwindCollector,
+    DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedContext, EmbeddedIr,
+    FormatDispatcher, TailwindCollector,
 };
 pub use format::{Format, write};
 pub use format_element::debug::DisplayDocument;

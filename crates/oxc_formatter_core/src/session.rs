@@ -4,7 +4,13 @@ use std::sync::Arc;
 
 use oxc_allocator::Allocator;
 
-use crate::{FormatDispatcher, UniqueGroupIdBuilder};
+use crate::{
+    DispatchOutcome, DispatchRequest, EmbeddedContext, FormatDispatcher, UniqueGroupIdBuilder,
+};
+
+/// Upper bound on nested embedded dispatches;
+/// exceeding it is an operational error, catching accidental A-in-B-in-A infinite recursion.
+pub const MAX_DISPATCH_DEPTH: u16 = 32;
 
 /// Document-envelope semantics of the input being formatted.
 ///
@@ -74,6 +80,39 @@ impl<'a> FormatSession<'a> {
         }
     }
 
+    /// Formats one embedded-language request on a child session derived from this one.
+    ///
+    /// See [`DispatchOutcome`] for the outcome-vs-`Err` contract; this method adds two rules:
+    /// no dispatcher installed (plain standalone run) counts as the deliberate
+    /// `Ok(DispatchOutcome::PreserveOriginal)`, and reaching `MAX_DISPATCH_DEPTH` is an `Err`.
+    ///
+    /// TODO: The callback should receive the derived child session itself
+    /// (and must then not create another `GroupId` space or bump the depth again).
+    /// Until the dispatcher signature is session-aware, it receives an
+    /// [`EmbeddedContext`] adapter sourced from the child,
+    /// so the child's bumped depth is not yet visible to nested dispatches.
+    ///
+    /// # Errors
+    /// Operational failures only (recursion limit, transport/internal errors).
+    pub fn dispatch(&self, request: DispatchRequest<'_>) -> Result<DispatchOutcome<'a>, String> {
+        let Some(dispatcher) = &self.dispatcher else {
+            return Ok(DispatchOutcome::PreserveOriginal);
+        };
+        if self.dispatch_depth >= MAX_DISPATCH_DEPTH {
+            return Err(format!(
+                "embedded dispatch exceeded the recursion limit ({MAX_DISPATCH_DEPTH})"
+            ));
+        }
+        let FormatSession { allocator, group_id_builder, dispatcher: child_dispatcher, .. } =
+            self.derive_child(request.input_kind);
+        let ctx = EmbeddedContext {
+            allocator,
+            group_id_builder: &group_id_builder,
+            dispatcher: child_dispatcher,
+        };
+        dispatcher(&ctx, request)
+    }
+
     /// The arena shared between the root and every embedded child.
     #[inline]
     pub fn allocator(&self) -> &'a Allocator {
@@ -105,10 +144,57 @@ impl<'a> FormatSession<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use oxc_allocator::Allocator;
 
-    use super::{FormatSession, InputKind};
-    use crate::FormatState;
+    use super::{FormatSession, InputKind, MAX_DISPATCH_DEPTH};
+    use crate::{DispatchOutcome, DispatchRequest, DispatchResult, FormatDispatcher, FormatState};
+
+    fn request<'r>() -> DispatchRequest<'r> {
+        DispatchRequest {
+            language: "yaml",
+            texts: &[],
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        }
+    }
+
+    #[test]
+    fn dispatch_without_dispatcher_preserves_original() {
+        let allocator = Allocator::default();
+        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, None);
+
+        assert!(matches!(session.dispatch(request()), Ok(DispatchOutcome::PreserveOriginal)));
+    }
+
+    #[test]
+    fn dispatch_stops_at_the_depth_limit() {
+        let allocator = Allocator::default();
+        let dispatcher: FormatDispatcher = Arc::new(|_ctx, _request| {
+            Ok(DispatchOutcome::Formatted(DispatchResult {
+                docs: Vec::new(),
+                tailwind_classes: Vec::new(),
+                meta: None,
+            }))
+        });
+        let mut session = FormatSession::new(&allocator, InputKind::PhysicalFile, Some(dispatcher));
+
+        assert!(matches!(session.dispatch(request()), Ok(DispatchOutcome::Formatted(_))));
+        for _ in 0..MAX_DISPATCH_DEPTH {
+            session = session.derive_child(InputKind::Fragment);
+        }
+        assert!(session.dispatch(request()).is_err());
+    }
+
+    #[test]
+    fn dispatch_propagates_operational_errors() {
+        let allocator = Allocator::default();
+        let dispatcher: FormatDispatcher = Arc::new(|_ctx, _request| Err("boom".to_string()));
+        let session = FormatSession::new(&allocator, InputKind::PhysicalFile, Some(dispatcher));
+
+        assert_eq!(session.dispatch(request()).err().as_deref(), Some("boom"));
+    }
 
     #[test]
     fn derived_child_shares_the_group_id_space() {

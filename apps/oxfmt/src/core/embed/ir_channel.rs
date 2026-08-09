@@ -14,7 +14,8 @@ use tracing::{debug, debug_span};
 use oxc_allocator::Allocator;
 use oxc_formatter::HtmlEmbedMeta;
 use oxc_formatter_core::{
-    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, UniqueGroupIdBuilder,
+    DispatchOutcome, DispatchRequest, DispatchResult, EmbeddedContext, EmbeddedIr,
+    FormatDispatcher, UniqueGroupIdBuilder,
 };
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
@@ -37,35 +38,53 @@ pub fn build_dispatcher(
     css_options: CssFormatOptions,
 ) -> FormatDispatcher {
     let prettier_fallback = build_prettier_fallback(format_embedded_doc, options);
-    Arc::new(
-        move |ctx: &EmbeddedContext<'_, '_>, language: &str, texts: &[&str], _parent_context| {
-            // Rust implementations replace branches one by one;
-            match language {
-                // This is always `graphql` for now
-                "graphql" | "gql" => format_graphql_to_irs(ctx, texts, graphql_options)
-                    .inspect_err(|err| {
+    Arc::new(move |ctx: &EmbeddedContext<'_, '_>, request: DispatchRequest<'_>| {
+        // Rust implementations replace branches one by one;
+        match request.language {
+            // This is always `graphql` for now
+            "graphql" | "gql" => {
+                match format_graphql_to_irs(ctx, request.texts, graphql_options) {
+                    Ok(result) => Ok(DispatchOutcome::Formatted(result)),
+                    // A parse failure is a deliberate skip, not an operational error.
+                    Err(err) => {
                         debug!(
                             "`format_graphql_to_irs` failed, gql-in-xxx part stays as-is: {err}"
                         );
-                    }),
-                // This is always `css` with `CssVariant:Scss` for now
-                "css" | "scss" | "less" => {
-                    format_css_to_irs(ctx, texts, css_options).inspect_err(|err| {
-                        debug!("`format_css_to_irs` failed, css-in-xxx part stays as-is: {err}");
-                    })
+                        Ok(DispatchOutcome::PreserveOriginal)
+                    }
                 }
-                // Everything else: Prettier fallback (Doc→IR path)
-                _ => prettier_fallback(ctx, language, texts),
             }
-        },
-    )
+            // This is always `css` with `CssVariant:Scss` for now
+            "css" | "scss" | "less" => {
+                // A wrong text count is a host-contract violation, not a parse failure:
+                // unlike GraphQL's one-IR-per-quasi, the CSS embed joins quasis with
+                // placeholders into a single text before dispatching.
+                let [text] = request.texts else {
+                    return Err(format!(
+                        "CSS dispatch expects exactly one text, got {}",
+                        request.texts.len()
+                    ));
+                };
+                match format_css_to_ir(ctx, text, css_options) {
+                    Ok(result) => Ok(DispatchOutcome::Formatted(result)),
+                    // A parse failure is a deliberate skip, not an operational error.
+                    Err(err) => {
+                        debug!("`format_css_to_ir` failed, css-in-xxx part stays as-is: {err}");
+                        Ok(DispatchOutcome::PreserveOriginal)
+                    }
+                }
+            }
+            // Everything else: Prettier fallback (Doc→IR path)
+            _ => prettier_fallback(ctx, request.language, request.texts),
+        }
+    })
 }
 
 /// Format each text as a standalone GraphQL document via `oxc_formatter_graphql`,
 /// returning one IR per text (the IR-channel contract for GraphQL).
 ///
 /// Any parse error fails the whole batch (an embedded template is all-or-nothing):
-/// `Err` makes the parent print the template as-is.
+/// the caller maps `Err` to `PreserveOriginal`, so the parent prints the template as-is.
 fn format_graphql_to_irs<'a>(
     ctx: &EmbeddedContext<'a, '_>,
     texts: &[&str],
@@ -86,16 +105,11 @@ fn format_graphql_to_irs<'a>(
 
 /// Format the single joined CSS text (placeholders included) via `oxc_formatter_css`,
 /// returning one IR per call (the IR-channel contract for CSS).
-fn format_css_to_irs<'a>(
+fn format_css_to_ir<'a>(
     ctx: &EmbeddedContext<'a, '_>,
-    texts: &[&str],
+    text: &str,
     options: CssFormatOptions,
 ) -> Result<DispatchResult<'a>, String> {
-    // Unlike GraphQL's one-IR-per-quasi,
-    // the CSS embed joins quasis with placeholders into a single text before dispatching.
-    let [text] = texts else {
-        return Err(format!("CSS dispatch expects exactly one text, got {}", texts.len()));
-    };
     debug_span!("oxfmt::external::format_css_to_ir").in_scope(|| {
         let EmbeddedIr { ir, tailwind_classes } =
             oxc_formatter_css::format_to_ir(ctx, text, options).map_err(|err| err.to_string())?;
@@ -104,13 +118,15 @@ fn format_css_to_irs<'a>(
 }
 
 /// Type of the Prettier Doc→IR fallback used inside [`build_dispatcher`].
-/// Same shape as `FormatDispatcher` minus the `parent_context` passthrough.
+/// Same shape as `FormatDispatcher` minus the request envelope
+/// (the Doc path consumes neither `input_kind` nor `parent_context` today;
+/// re-examine if it ever serves envelope-bearing inputs).
 type PrettierDocFallback = Arc<
     dyn for<'a, 'g> Fn(
             &EmbeddedContext<'a, 'g>,
             &str,
             &[&str],
-        ) -> Result<DispatchResult<'a>, String>
+        ) -> Result<DispatchOutcome<'a>, String>
         + Send
         + Sync,
 >;
@@ -123,7 +139,9 @@ fn build_prettier_fallback(
 ) -> PrettierDocFallback {
     Arc::new(move |ctx: &EmbeddedContext<'_, '_>, language: &str, texts: &[&str]| {
         let Some(parser_name) = language_to_prettier_parser(language) else {
-            return Err(format!("Unsupported language: {language}"));
+            // An unsupported language is a deliberate skip, not an operational error.
+            debug!("No Prettier parser for language '{language}', part stays as-is");
+            return Ok(DispatchOutcome::PreserveOriginal);
         };
         debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
             .in_scope(|| {
@@ -154,6 +172,7 @@ fn build_prettier_fallback(
                     ctx.allocator,
                     ctx.group_id_builder,
                 )
+                .map(DispatchOutcome::Formatted)
             })
             .inspect_err(|err| {
                 debug!("Failed to format embedded doc for parser '{parser_name}': {err}");

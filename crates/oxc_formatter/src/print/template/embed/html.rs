@@ -2,7 +2,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::FormatElement;
+use oxc_formatter_core::{DispatchOutcome, FormatElement};
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
@@ -55,12 +55,11 @@ pub(super) fn format_html_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-            allocator,
-            group_id_builder,
-            embedded_language,
-            &[cooked],
-        ) else {
+        let Ok(DispatchOutcome::Formatted(mut result)) = f
+            .context()
+            .external_callbacks()
+            .dispatch_embedded(allocator, group_id_builder, embedded_language, &[cooked])
+        else {
             return false;
         };
         let Some(html_has_multiple_root_elements) = result
@@ -123,12 +122,11 @@ pub(super) fn format_html_doc<'a>(
     // Phase 2: Format via the dispatcher (IR path)
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-        allocator,
-        group_id_builder,
-        embedded_language,
-        &[joined],
-    ) else {
+    let Ok(DispatchOutcome::Formatted(mut result)) = f
+        .context()
+        .external_callbacks()
+        .dispatch_embedded(allocator, group_id_builder, embedded_language, &[joined])
+    else {
         // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
         // returned Prettier's `Doc` output may contain `conditionalGroup`.
         // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
@@ -140,6 +138,10 @@ pub(super) fn format_html_doc<'a>(
         // Of course, there will be formatting differences.
         // Support `conditionalGroup` and convert to our `BestFitting` may be possible,
         // but it also requires placeholder replacement, which is non-trivial.
+        //
+        // NOTE: `Ok(PreserveOriginal)` lands here too and gets the same recovery attempt;
+        // splitting the match (PreserveOriginal -> plain template path)
+        // is deferred until this site is session-aware.
         return format_js_in_html_as_fallback(joined, &expressions, f);
     };
 

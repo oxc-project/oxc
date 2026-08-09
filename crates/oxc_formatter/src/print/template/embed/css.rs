@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, IndentWidth, format_element::TextWidth};
+use oxc_formatter_core::{DispatchOutcome, FormatElement, IndentWidth, format_element::TextWidth};
 
 use crate::{
     ast_nodes::AstNode,
@@ -53,12 +53,11 @@ pub(super) fn format_css_doc<'a>(
 
         let allocator = f.allocator();
         let group_id_builder = f.group_id_builder();
-        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-            allocator,
-            group_id_builder,
-            "css",
-            &[raw],
-        ) else {
+        let Ok(DispatchOutcome::Formatted(mut result)) = f
+            .context()
+            .external_callbacks()
+            .dispatch_embedded(allocator, group_id_builder, "css", &[raw])
+        else {
             return false;
         };
         result.remap_tailwind_into(f.context_mut());
@@ -90,12 +89,11 @@ pub(super) fn format_css_doc<'a>(
     // Phase 2: Format via the dispatcher (IR path)
     let allocator = f.allocator();
     let group_id_builder = f.group_id_builder();
-    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-        allocator,
-        group_id_builder,
-        "css",
-        &[joined],
-    ) else {
+    let Ok(DispatchOutcome::Formatted(mut result)) = f
+        .context()
+        .external_callbacks()
+        .dispatch_embedded(allocator, group_id_builder, "css", &[joined])
+    else {
         return false;
     };
     result.remap_tailwind_into(f.context_mut());
