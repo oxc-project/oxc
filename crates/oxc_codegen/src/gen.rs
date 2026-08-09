@@ -2029,7 +2029,18 @@ impl GenExpr for ConditionalExpression<'_> {
             ctx &= Context::FORBID_IN.not();
         }
         p.wrap(wrap, |p| {
-            self.test.print_expr(p, Precedence::Conditional, ctx & Context::FORBID_IN);
+            // Keep `as` and `satisfies` expressions grouped as the conditional test. Without
+            // parentheses, a regexp consequent such as `(value as Type) ? /x/ : y` fails to
+            // reparse.
+            let test_precedence = if matches!(
+                self.test.without_parentheses(),
+                Expression::TSAsExpression(_) | Expression::TSSatisfiesExpression(_)
+            ) {
+                Precedence::Compare
+            } else {
+                Precedence::Conditional
+            };
+            self.test.print_expr(p, test_precedence, ctx & Context::FORBID_IN);
             p.print_soft_space();
             p.print_ascii_byte(b'?');
             p.print_soft_space();
