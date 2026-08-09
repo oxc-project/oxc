@@ -70,6 +70,43 @@ fn memoizes_a_component_end_to_end() {
 }
 
 #[test]
+fn preserves_manual_memoization_guarantees() {
+    let source = "\
+import { useCallback, useMemo } from 'react';
+export function Component({ value }) {
+  const callback = useCallback(() => value, [value]);
+  const memo = useMemo(() => ({ callback }), [callback]);
+  return <button onClick={callback}>{memo.callback()}</button>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(!result.diagnostics.has_errors(), "unexpected errors: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("if ($[0] !== value)"),
+        "useCallback must retain its source dependency:\n{output}"
+    );
+    assert!(
+        output.contains("if ($[2] !== callback)"),
+        "useMemo must retain its source dependency:\n{output}"
+    );
+    assert!(
+        !output.contains("useCallback(()") && !output.contains("useMemo(()"),
+        "manual memo calls should be lowered into compiler caches:\n{output}"
+    );
+    assert!(
+        output.contains("import { useCallback, useMemo } from \"react\""),
+        "the compiler must leave surrounding import cleanup to downstream transforms:\n{output}"
+    );
+}
+
+#[test]
 fn skips_non_react_code() {
     let source = "function add(a, b) {\n  return a + b;\n}\n";
     let allocator = Allocator::default();
