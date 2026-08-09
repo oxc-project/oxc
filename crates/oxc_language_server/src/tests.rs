@@ -1421,6 +1421,65 @@ mod test_suite {
         server.shutdown(3).await;
     }
 
+    /// A client is entitled to do work before replying to
+    /// `workspace/diagnostic/refresh` — typically re-pulling diagnostics from
+    /// this same server. The server must therefore keep servicing requests
+    /// while refresh replies are outstanding. Before the fix, each in-flight
+    /// refresh pinned one of the transport's 4 concurrency slots inside the
+    /// notification handler that sent it, so 4 unanswered refreshes wedged the
+    /// server permanently (issue #24955): this test then timed out waiting for
+    /// the shutdown response.
+    #[tokio::test]
+    async fn test_outstanding_diagnostic_refreshes_do_not_wedge_the_server() {
+        let init_options = InitializeRequestOptions {
+            dynamic_watchers: true,
+            pull_mode: true,
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+
+        // Fire enough watched-file events to trigger more refresh requests
+        // than the transport has concurrency slots (tower-lsp-server's
+        // default is 4), and read each refresh WITHOUT replying to it.
+        for _ in 0..4 {
+            let file_change_notification =
+                did_change_watched_files(format!("{WORKSPACE}/tool.config").as_str());
+            server.send_request(file_change_notification).await;
+
+            let refresh_request = server.recv_notification().await;
+            assert_eq!(refresh_request.method(), "workspace/diagnostic/refresh");
+            // Deliberately no ack: the client is still busy re-pulling.
+        }
+
+        // With 4 refresh replies outstanding, the server must still answer
+        // new requests — a wedged server never responds and the timeout
+        // fails the test instead of hanging it.
+        server.send_request(shutdown_request(3)).await;
+        let shutdown_result =
+            tokio::time::timeout(std::time::Duration::from_secs(10), server.recv_response())
+                .await
+                .expect(
+                    "server did not answer while diagnostic-refresh replies were outstanding \
+                     (deadlocked, issue #24955)",
+                );
+        assert!(shutdown_result.is_ok());
+        assert_eq!(shutdown_result.id(), &Id::Number(3));
+    }
+
     #[tokio::test]
     async fn test_did_change_configuration_no_changes() {
         let init_options =

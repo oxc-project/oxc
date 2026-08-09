@@ -277,9 +277,7 @@ impl LanguageServer for Backend {
                 );
 
                 // In pull diagnostic model, we ask the client to refresh diagnostics
-                if let Err(err) = self.client.workspace_diagnostic_refresh().await {
-                    warn!("sending workspace/diagnostic/refresh failed: {err}");
-                }
+                self.spawn_diagnostic_refresh();
             }
         }
 
@@ -434,9 +432,7 @@ impl LanguageServer for Backend {
 
         if diagnostic_mode == DiagnosticMode::Pull && needs_diagnostics_refresh {
             // In pull diagnostic model, we ask the client to refresh diagnostics
-            if let Err(err) = self.client.workspace_diagnostic_refresh().await {
-                warn!("sending workspace/diagnostic/refresh failed: {err}");
-            }
+            self.spawn_diagnostic_refresh();
         }
 
         if !removing_registrations.is_empty()
@@ -504,9 +500,7 @@ impl LanguageServer for Backend {
 
         if diagnostic_mode == DiagnosticMode::Pull && needs_diagnostics_refresh {
             // In pull diagnostic model, we ask the client to refresh diagnostics
-            if let Err(err) = self.client.workspace_diagnostic_refresh().await {
-                warn!("sending workspace/diagnostic/refresh failed: {err}");
-            }
+            self.spawn_diagnostic_refresh();
         }
 
         if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
@@ -980,6 +974,28 @@ impl Backend {
             file_system: Arc::new(LSPFileSystem::default()),
             pending_initialization_messages: OnceCell::new(),
         }
+    }
+
+    /// Ask the client to refresh pull diagnostics, without awaiting its reply
+    /// inside the calling handler.
+    ///
+    /// `workspace/diagnostic/refresh` is a server-to-client *request*: the
+    /// client may do arbitrary work before responding — typically re-pulling
+    /// `textDocument/diagnostic` from this very server. Awaiting the reply
+    /// inside a notification handler therefore pins one of the transport's
+    /// concurrency slots (4 by default in tower-lsp-server) for the whole
+    /// round-trip. Once every slot is pinned this way, the server can no
+    /// longer service the diagnostic pulls the client is waiting on before it
+    /// replies: a circular wait with no timeout and no recovery. The refresh
+    /// is advisory and nothing depends on its result beyond logging, so it is
+    /// detached instead.
+    fn spawn_diagnostic_refresh(&self) {
+        let client = self.client.clone();
+        tokio::spawn(async move {
+            if let Err(err) = client.workspace_diagnostic_refresh().await {
+                warn!("sending workspace/diagnostic/refresh failed: {err}");
+            }
+        });
     }
 
     /// Request the workspace configuration from the client
