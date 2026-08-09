@@ -218,7 +218,8 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 
     if !ctx.in_ambient_context() {
         let mut is_in_overload_group = false;
-        for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
+        for (a, b) in class.body.body.iter().map(Some).chain(std::iter::once(None)).tuple_windows()
+        {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
