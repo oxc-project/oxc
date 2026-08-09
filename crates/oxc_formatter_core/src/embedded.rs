@@ -117,6 +117,16 @@ impl<'a> DispatchResult<'a> {
         mut self,
         collector: &mut dyn TailwindCollector,
     ) -> ArenaVec<'a, FormatElement<'a>> {
+        // The remap below reaches only top-level elements;
+        // a `TailwindClass` below an `Interned` / `BestFitting` boundary is unrewritable
+        // (`Interned` targets are shared `&[FormatElement]`),
+        // its stale index would print the WRONG classes with no assert.
+        // If this ever fires, that is the trigger to revisit the session-shared collector
+        // (see the NOTE on `TailwindCollector`).
+        debug_assert!(
+            self.tailwind_classes.is_empty() || !has_nested_tailwind_class(&self.doc),
+            "child IR holds a TailwindClass inside an Interned/BestFitting subtree; the flat remap cannot reach it"
+        );
         let mut classes = std::mem::take(&mut self.tailwind_classes).into_iter();
         if let Some(first) = classes.next() {
             // The collector hands out consecutive indices,
@@ -133,6 +143,25 @@ impl<'a> DispatchResult<'a> {
         }
         self.doc
     }
+}
+
+/// Whether a `TailwindClass` sits below an `Interned` / `BestFitting` boundary,
+/// where [`DispatchResult::into_doc`]'s flat remap cannot rewrite it
+/// (a top-level `TailwindClass` is the remap's normal input, not a hit).
+fn has_nested_tailwind_class(elements: &[FormatElement<'_>]) -> bool {
+    fn contains(element: &FormatElement<'_>) -> bool {
+        matches!(element, FormatElement::TailwindClass(_)) || descends(element)
+    }
+    fn descends(element: &FormatElement<'_>) -> bool {
+        match element {
+            FormatElement::Interned(interned) => interned.iter().any(contains),
+            FormatElement::BestFitting(best_fitting) => {
+                best_fitting.variants().iter().any(|variant| variant.iter().any(contains))
+            }
+            _ => false,
+        }
+    }
+    elements.iter().any(descends)
 }
 
 /// Index-space provider for batched Tailwind class sorting.
