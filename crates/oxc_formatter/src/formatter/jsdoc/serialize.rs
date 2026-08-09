@@ -73,6 +73,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
         session: &'o FormatSession<'a>,
         available_width: usize,
     ) -> Self {
+        // NOTE: `jsdocPrintWidth` (`jsdocPrintWidth ?? printWidth`) is not yet ported
         let wrap_width = available_width.saturating_sub(LINE_PREFIX_LEN);
         // Use commentContentPrintWidth (= wrap_width) as the line width for type
         // formatting, matching upstream's `formatType()` which passes

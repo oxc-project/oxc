@@ -108,6 +108,11 @@ impl<'a> DispatchResult<'a> {
     /// moves the child's pre-sort Tailwind classes into the parent's class space and hands out the doc.
     /// Folding the merge into the only way to get the doc makes a forgotten merge unrepresentable.
     /// The entry formatter's document then sorts all collected classes in one host-supplied batch.
+    ///
+    /// A consumer may DISCARD the returned doc afterwards (an all-or-nothing embed site keeping its template verbatim):
+    /// the already-merged classes stay as unreferenced collector entries, which are inert.
+    /// The sorter reorders classes WITHIN each string, never the vector,
+    /// so indices stay stable and unprinted entries never reach the output.
     pub fn into_doc(
         mut self,
         collector: &mut dyn TailwindCollector,

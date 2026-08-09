@@ -72,7 +72,8 @@ pub(super) fn format_graphql_doc<'a>(
 
     // Phase 2+3: Build `ir_parts`, one dispatch per non-comment quas.
     // (any failure keeps the whole template verbatim:
-    // the quasis are one interleaved template, so degradation is all-or-nothing)
+    // the quasis are one interleaved template, so degradation is all-or-nothing.
+    // Discarding docs already consumed via `into_doc` is safe, see its rustdoc)
     // Comment-only quasis are synthesized locally.
     // The IR is re-inserted into a JS template literal built from `.cooked` values,
     // so template-literal characters (`` ` ``, `${`, `\`) are re-escaped here
