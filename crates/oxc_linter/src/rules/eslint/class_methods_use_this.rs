@@ -355,6 +355,7 @@ fn test() {
         ("class A { static foo = function() {} }", None),
         ("class A { static foo = () => {} }", None),
         ("class A { foo() { return class { [this.foo] = 1 }; } }", None),
+        ("class A { foo() { let x: typeof this.bar; } }", None),
         ("class A { static {} }", None),
         ("class A { accessor foo = function() {this} }", None),
         ("class A { accessor foo = () => {this} }", None),
