@@ -2029,7 +2029,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.62.0"
+version = "0.63.0"
 dependencies = [
  "cow-utils",
  "fast-glob",
@@ -2060,7 +2060,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter_core"
-version = "0.62.0"
+version = "0.63.0"
 dependencies = [
  "cow-utils",
  "oxc_allocator",
@@ -2073,7 +2073,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter_css"
-version = "0.62.0"
+version = "0.63.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2088,7 +2088,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter_graphql"
-version = "0.62.0"
+version = "0.63.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2103,7 +2103,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter_json"
-version = "0.62.0"
+version = "0.63.0"
 dependencies = [
  "dragonbox_ecma",
  "insta",
@@ -2120,7 +2120,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter_yaml"
-version = "0.62.0"
+version = "0.63.0"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2199,7 +2199,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.77.0"
+version = "1.78.0"
 dependencies = [
  "bitflags",
  "constcat",
@@ -2823,7 +2823,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.62.0"
+version = "0.63.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -2865,7 +2865,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "1.77.0"
+version = "1.78.0"
 dependencies = [
  "bpaf",
  "cow-utils",
