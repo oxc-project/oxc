@@ -1,0 +1,15 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/for-loop-no-init.js
+---
+import { useEffect } from "react";
+function Component() {
+	useEffect(_temp);
+	return null;
+}
+function _temp() {
+	let i = 0;
+	for (; i < 3; i++) {
+		console.log(i);
+	}
+}

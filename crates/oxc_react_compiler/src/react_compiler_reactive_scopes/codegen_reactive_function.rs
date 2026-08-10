@@ -1182,6 +1182,22 @@ fn ox_codegen_for_init<'a>(
             &cx.env.allocator,
         );
         let body = ox_codegen_block(cx, &block_items)?;
+        // Intentionally diverges from upstream React Compiler: a missing `for`
+        // initializer is one synthetic `Primitive(undefined)` instruction, which
+        // codegen emits as `undefined;`. Match pre-codegen HIR so real expressions
+        // retain the existing declaration validation.
+        if matches!(
+            instructions.as_slice(),
+            [ReactiveInstruction {
+                value: ReactiveValue::Instruction(InstructionValue::Primitive {
+                    value: PrimitiveValue::Undefined,
+                    ..
+                }),
+                ..
+            }]
+        ) {
+            return Ok(None);
+        }
         let mut declarators: oxc_allocator::Vec<'a, oxc::VariableDeclarator<'a>> =
             oxc_allocator::ArenaVec::new_in(&cx.ast);
         let mut kind = oxc::VariableDeclarationKind::Const;
