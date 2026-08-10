@@ -1,0 +1,43 @@
+apps/oxfmt/AGENTS.md
+  s_d1cec614e6f1ef::t_942bbe9e4681c2 52,63,71
+apps/oxfmt/conformance/snapshots/conformance.snap.md
+  s_d1cec614e6f1ef::t_17ee8949aa4bd4 74,109
+apps/oxfmt/src-js/libs/apis.ts
+  s_d1cec614e6f1ef::t_5b83d219b91c3e 137
+apps/oxfmt/src/core/embed/mod.rs
+  s_d1cec614e6f1ef::t_41a5ce225f1dea 15
+apps/oxfmt/src/core/embed/prettier_string.rs
+  s_d1cec614e6f1ef::t_20b667da80f3e8 3-4,35
+apps/oxfmt/src/prettier_compat/from_prettier_doc.rs
+  s_d1cec614e6f1ef::t_317724bdd7b395 17,193-256,259,479-494,496-497,575-681
+crates/oxc_formatter/AGENTS.md
+  s_d1cec614e6f1ef::t_61b5ebb465a14f 27
+crates/oxc_formatter/src/print/template/embed/graphql.rs
+  s_d1cec614e6f1ef::t_87185231183051 94
+crates/oxc_formatter/src/print/template/embed/html.rs
+  s_d1cec614e6f1ef::t_675f5e095348ba 1,5,7,80,126,140-151,154,156-164,167-176,246-274,277-278,280-350,352,354,356,360-361,370,376,380-429
+crates/oxc_formatter/src/print/template/embed/markdown.rs
+  s_d1cec614e6f1ef::t_92701a75e32716 42
+crates/oxc_formatter/src/print/template/embed/mod.rs
+  s_d1cec614e6f1ef::t_fd60d8e471d01a 6,8-12,276-278,283-285,288,291,295-308,310-345
+crates/oxc_formatter_core/AGENTS.md
+  s_d1cec614e6f1ef::t_23a01b6074fabc 31
+crates/oxc_formatter_core/src/session.rs
+  s_d1cec614e6f1ef::t_be5cb51948a65c 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "54358a752e070680d447616f879234f269b85dee",
+  "prompts": {},
+  "sessions": {
+    "s_d1cec614e6f1ef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fe955-fdb2-7d71-b270-710441af388b",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
