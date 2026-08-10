@@ -1,0 +1,1017 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var context = this
+   ·     ──────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'that' for 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var that = this
+   ·     ───────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'self' for 'this'.
+   ╭─[consistent_this.js:1:15]
+ 1 │ var foo = 42, self = this
+   ·               ───────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = 42
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; self = 42
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:11]
+ 1 │ var self; self = 42
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ context = this
+   · ──────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'that' for 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ that = this
+   · ───────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'self' for 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ self = this
+   · ───────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ self += this
+   · ────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; (function() { self = this; }())
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var context = (this)
+   ·     ────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = this.foo
+   ·     ───────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = this || foo
+   ·     ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = () => this
+   ·     ─────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ self = 42
+   · ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ self = this.foo
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ self = this || foo
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ self ||= this
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'foo' for 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ foo += this
+   · ───────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:18]
+ 1 │ var self = this; self = 42
+   ·                  ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:11]
+ 1 │ var self; self = 42; self = this
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; self += this
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:11]
+ 1 │ var self; self += this
+   ·           ────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; var self
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:15]
+ 1 │ var self; var self
+   ·               ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:15]
+ 1 │ var self; var self = 42
+   ·               ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; function f(){ self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:19]
+ 1 │ function f(){ var self; function g(){ self = this } }
+   ·                   ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; if (a) { self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; { self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; class C { static { self = this } }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:14]
+ 1 │ (() => { var self = 42; })()
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ (() => { var self; self = 42; })()
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:13]
+ 1 │ (self) => { self = 42 }
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:17]
+ 1 │ ({ self }) => { self = 42 }
+   ·                 ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:15]
+ 1 │ ([self]) => { self = 42 }
+   ·               ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f(self){}
+   ·            ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f(self = this){}
+   ·            ───────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f(self = 42){}
+   ·            ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f({ self }){}
+   ·            ────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f([self]){}
+   ·            ──────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f(self){ self = 42 }
+   ·            ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:19]
+ 1 │ function f(self){ self = 42 }
+   ·                   ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f({ self }){ self = 42 }
+   ·            ────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:23]
+ 1 │ function f({ self }){ self = 42 }
+   ·                       ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:12]
+ 1 │ function f(self){ var self; }
+   ·            ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:23]
+ 1 │ function f(self){ var self; }
+   ·                       ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:23]
+ 1 │ function f(self){ var self = 42; }
+   ·                       ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ function self(){}
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ function self(){ self = this }
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:26]
+ 1 │ var f = function self(){ self = 42 }
+   ·                          ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:30]
+ 1 │ var f = function self(){ var self; }
+   ·                              ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:23]
+ 1 │ var f = function self(self){}
+   ·                       ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:23]
+ 1 │ var f = function self(self){ self = 42 }
+   ·                       ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:30]
+ 1 │ var f = function self(self){ self = 42 }
+   ·                              ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ class self {}
+   · ─────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ var o = { m(){ var self; } }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ class C { m(){ var self; } }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ try{} catch(self){ self = 42 }
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:14]
+ 1 │ if (a) { let self = 42; }
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:14]
+ 1 │ if (a) { var self; }
+   ·              ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:10]
+ 1 │ for (let self = 0;;) {}
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:10]
+ 1 │ for (var self;;) {}
+   ·          ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:10]
+ 1 │ for (var self of xs) {}
+   ·          ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (;;) { self = this; break }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (let i = 0; self = this;) break
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (let i = 0;; self = this) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (let i = (self = this);;) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (let x of xs) self = this
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (const x in xs) self = this
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (let key in (self = this, obj)) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (using x of xs) self = this
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; switch(x){ case 1: self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; try { self = this } catch(e){}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; try {} catch { self = this; }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; try {} catch (e) { self = this; }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; with (obj) { self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ function f() { var self; (() => { self = this; })(); }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:37]
+ 1 │ if (foo) { function self() {} } var self;
+   ·                                     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:10]
+ 1 │ if (foo) function self() {}
+   ·          ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:8]
+ 1 │ label: function self() {}
+   ·        ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; ({ self } = obj)
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; [self] = obj
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; ({ self = this } = obj)
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; ({ x: self = this } = obj)
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; [self = this] = obj
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; ([, self] = obj)
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; while (foo) { self = this; break }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; do { self = this; break } while (foo)
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; if (a) { self = this } else { self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; try { self = this } finally { self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:38]
+ 1 │ function f(){ return function(){ var self; } }
+   ·                                      ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; (() => self = this)()
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; (() => ({ self } = this))()
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; class C { method(){ self = this } }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:19]
+ 1 │ function f(){ var self; class C { m(){ self = this } } }
+   ·                   ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:24]
+ 1 │ class C { static { var self = 42; } }
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ class C { static { self = 42; } }
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:19]
+ 1 │ class C { field = self = 42 }
+   ·                   ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:38]
+ 1 │ class C { field = (() => { var self; self = 42; })() }
+   ·                                      ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:35]
+ 1 │ class C { field = function(){ var self; } }
+   ·                                   ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; class C { field = self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; class C { field = (self = this); }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; class C { [self = this] = 1; }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; class C extends (self = this) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ function f() { var self; class C { field = (() => { self = this; })(); } }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; function f(){ var self; }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:29]
+ 1 │ var self; function f(){ var self; }
+   ·                             ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; with (o) { self = this; }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; with (o) { var self; }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:26]
+ 1 │ var self; with (o) { var self; }
+   ·                          ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ function f() { var self; with (o) { self = this; } }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:16]
+ 1 │ label: label2: function self() {}
+   ·                ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:43]
+ 1 │ function f() { { function self() {} } var self; }
+   ·                                           ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; try { self = this } catch (self) { self = this }
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; do { self = this } while (0)
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (const [self] of xs) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (let { self } in o) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (var self of xs) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ var self; for (var self of xs) {}
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:37]
+ 1 │ var self = this; function f() { var self; }
+   ·                                     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ function f() { var self; { let self = 1; } }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:32]
+ 1 │ function f() { var self; { let self = 1; } }
+   ·                                ────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ function f() { let self; { var other; } }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; (() => (() => { self = this })())();
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ function f() { var self; return () => { self = this; }; }
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; new Function('self = this');
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; eval('self = this');
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ function self() {} function self() {}
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:20]
+ 1 │ function self() {} function self() {}
+   ·                    ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; function self() {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:11]
+ 1 │ var self; function self() {}
+   ·           ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; import('x');
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; self.foo = this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; this.self = this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = this?.foo;
+   ·     ────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = (this, this);
+   ·     ───────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = void this;
+   ·     ────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = !this;
+   ·     ────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'other' for 'this'.
+   ╭─[consistent_this.js:1:18]
+ 1 │ var self = this, other = this;
+   ·                  ────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; self ??= this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:11]
+ 1 │ var self; self ??= this;
+   ·           ─────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:34]
+ 1 │ function f() { 'use strict'; var self; }
+   ·                                  ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = this ? a : b;
+   ·     ───────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:1]
+ 1 │ class self { static { self = this; } }
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; delete self;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:10]
+ 1 │ for (var self in this) {}
+   ·          ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; queueMicrotask(function () { self = this; });
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self = globalThis;
+   ·     ─────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; obj[self++] = this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; obj[--self] = this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; ({ [self++]: x } = this);
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; [obj[self++]] = this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; self++;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (self in obj) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (self of obj) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (self of this) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (self in this) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for ([self] of [this]) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; for (obj[self++] of [this]) {}
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; obj[self] = this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; self &&= this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:11]
+ 1 │ var self; self &&= this;
+   ·           ─────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; self = x = this;
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:11]
+ 1 │ var self; self = x = this;
+   ·           ───────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'x' for 'this'.
+   ╭─[consistent_this.js:1:18]
+ 1 │ var self; self = x = this;
+   ·                  ────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.js:1:5]
+ 1 │ var self; with (o) self = this;
+   ·     ────
+   ╰────

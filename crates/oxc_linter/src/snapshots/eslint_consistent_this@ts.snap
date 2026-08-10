@@ -1,0 +1,243 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ var context = this as any
+   ·     ─────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ var context = <any>this
+   ·     ───────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ var context = this satisfies unknown
+   ·     ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ var context = this!
+   ·     ───────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ context = this as any
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Unexpected alias 'context' for 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ (context as any) = this
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ var self; (self as any) = 42
+   ·     ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:11]
+ 1 │ var self; (self as any) = 42
+   ·           ──────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ var self = this.foo as any
+   ·     ──────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ var self = foo as any
+   ·     ─────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:12]
+ 1 │ function f(self: unknown){}
+   ·            ─────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:12]
+ 1 │ function f(self?: unknown){}
+   ·            ──────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:12]
+ 1 │ function f(self: unknown){ self = 42 }
+   ·            ─────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:28]
+ 1 │ function f(self: unknown){ self = 42 }
+   ·                            ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:12]
+ 1 │ function f(self: any): void {}
+   ·            ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ type self = number;
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ interface self {}
+   · ─────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ enum self { A }
+   · ───────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ const enum self { A }
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ namespace self { export const x = 1; }
+   · ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ declare namespace self { const x: number; }
+   · ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:13]
+ 1 │ declare var self: any;
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:13]
+ 1 │ declare let self: any;
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:15]
+ 1 │ declare const self: any;
+   ·               ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ declare function self(): void;
+   · ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ declare class self {}
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ abstract class self {}
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:12]
+ 1 │ function f<self>(): void {}
+   ·            ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:13]
+ 1 │ import type self from 'x';
+   ·             ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:10]
+ 1 │ import { type x as self } from 'x';
+   ·          ──────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:1]
+ 1 │ function self(): void; function self(): void {}
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:24]
+ 1 │ function self(): void; function self(): void {}
+   ·                        ────────────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:23]
+ 1 │ class C { constructor(private self: any) {} }
+   ·                       ─────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:8]
+ 1 │ export type self = number;
+   ·        ───────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:23]
+ 1 │ function f(this: any, self: number) {}
+   ·                       ────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:13]
+ 1 │ class C { m<self>(): void {} }
+   ·             ────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:5]
+ 1 │ let self: any;
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:22]
+ 1 │ function f(): void { type self = number; }
+   ·                      ───────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:22]
+ 1 │ function f(): void { interface self {} }
+   ·                      ─────────────────
+   ╰────
+
+  ⚠ eslint(consistent-this): Designated alias 'self' is not assigned to 'this'.
+   ╭─[consistent_this.ts:1:22]
+ 1 │ function f(): void { enum self { A } }
+   ·                      ───────────────
+   ╰────
