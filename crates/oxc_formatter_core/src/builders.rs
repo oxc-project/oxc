@@ -814,7 +814,7 @@ impl<C> Format<'_, C> for ExpandParent {
 ///
 /// NOTE: A conditional tag is NOT an expansion boundary.
 /// An expanding element inside the content (a hard line break above all) expands
-/// the enclosing groups at build time (see [crate::Document::propagate_expand]) even when the branch is never printed.
+/// the enclosing groups at build time (see `Document::propagate_expand`) even when the branch is never printed.
 ///
 /// Prettier's `ifBreak` bodies don't have this problem only because they typically sit inside a `conditionalGroup`,
 /// whose boundary swallows the propagation;

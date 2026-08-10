@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, Function, ThisExpression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -109,7 +109,7 @@ struct ThisFinder {
     found: bool,
 }
 
-impl<'a> Visit<'a> for ThisFinder {
+impl<'a> VisitJs<'a> for ThisFinder {
     fn visit_this_expression(&mut self, _expr: &ThisExpression) {
         self.found = true;
     }

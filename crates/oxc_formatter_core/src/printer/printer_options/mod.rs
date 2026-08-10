@@ -1,6 +1,6 @@
 use crate::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 
-/// Options that affect how the [crate::Printer] prints the format tokens
+/// Options that affect how the `Printer` prints the format tokens
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PrinterOptions {
     /// Width of an indent in characters.

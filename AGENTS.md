@@ -22,11 +22,9 @@ Rust workspace with key directories:
 
 - `crates/` - Core functionality (start here when exploring)
 - `apps/` - Application binaries (oxlint, oxfmt)
-  - When working on `oxfmt`, refer to `./apps/oxfmt/AGENTS.md`
 - `napi/` - Node.js bindings
 - `npm/` - npm packages
 - `tasks/` - Development tools/automation
-- `editors/` - Editor integrations (e.g. oxc VS Code extension)
 
 Avoid editing `generated` subdirectories.
 
@@ -36,7 +34,8 @@ Avoid editing `generated` subdirectories.
 - `oxc_ast` - AST definitions/utilities
 - `oxc_semantic` - Semantic analysis/symbols/scopes
 - `oxc_linter` - Linting engine/rules
-- `oxc_formatter` - Code formatting (Prettier-like)
+- `oxc_formatter` - Code formatting (Prettier-like for JS)
+- `oxc_formatter_*` - Code formatting (Prettier-like for other languages)
 - `oxc_transformer` - Code transformation (Babel-like)
 - `oxc_minifier` - Code minification
 - `oxc_codegen` - Code generation
@@ -62,20 +61,21 @@ Prerequisites: Rust (MSRV: 1.95), Node.js, pnpm, just
 ### Essential Commands
 
 ```bash
-just fmt          # Format code (run after modifications)
-just test         # Run unit/integration tests
-just conformance  # Run conformance tests
-just ready        # Run all checks (use after commits)
-cargo lintgen     # Regenerate linter rules enum and impls after adding/modifying rules
-cargo lint-timings # Update linter timing data after changing linter rule codegen
+just fmt             # Format code (run after modifications)
+just test            # Run unit/integration tests
+just conformance     # Run conformance tests
+just ready           # Run all checks (use after commits)
+cargo lintgen        # Regenerate linter rules enum and impls after adding/modifying rules
+cargo lint-timings   # Update linter timing data after changing linter rule codegen
+
 # Crate-specific updates
-just ast          # Update generated files (oxc_ast changes)
-just minsize      # Update size snapshots (oxc_minifier changes)
-just allocs       # Update allocation snapshots (oxc_parser changes)
+just ast             # Update generated files (oxc_ast changes)
+just minsize         # Update size snapshots (oxc_minifier changes)
+just allocs          # Update allocation snapshots (oxc_parser changes)
 
 # Useful shortcuts
-just watch "command"  # Watch files and re-run command
-just example tool     # Run tool example (e.g., just example linter)
+just watch "command" # Watch files and re-run command
+just example tool    # Run tool example (e.g., just example linter)
 ```
 
 More commands can be found in `justfile`.
@@ -147,18 +147,18 @@ Oxc uses multiple testing approaches tailored to each crate:
 ### Quick Test Commands
 
 ```bash
-just test                                   # Run all Rust tests
-just conformance                            # Run all conformance tests (alias: cargo coverage)
-cargo test -p <crate_name>                  # Test specific crate
+just test                              # Run all Rust tests
+just conformance                       # Run all conformance tests (alias: cargo coverage)
+cargo test -p <crate_name>             # Test specific crate
 
 # Conformance for specific tools
-cargo coverage -- parser                    # Parser conformance
-cargo coverage -- transformer               # Transformer conformance
-cargo run -p oxc_transform_conformance      # Transformer Babel tests
-cargo run -p oxc_prettier_conformance       # Formatter Prettier tests
+cargo coverage -- parser               # Parser conformance
+cargo coverage -- transformer          # Transformer conformance
+cargo run -p oxc_transform_conformance # Transformer Babel tests
+cargo run -p oxc_prettier_conformance  # Formatter Prettier tests
 
 # NAPI packages
-pnpm test                                    # Test all Node.js bindings
+pnpm test                              # Test all Node.js bindings
 ```
 
 ### Crate-Specific Testing

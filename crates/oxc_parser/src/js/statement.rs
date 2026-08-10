@@ -559,7 +559,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         init_declaration: ArenaBox<'a, VariableDeclaration<'a>>,
         r#await: bool,
     ) -> Statement<'a> {
-        match self.cur_kind() {
+        let kind = self.cur_kind();
+        if matches!(kind, Kind::In | Kind::Of) {
+            self.check_for_in_or_of_variable_declaration(&init_declaration, kind);
+        }
+
+        match kind {
             Kind::In => self.parse_for_in_loop(
                 start,
                 parenthesis_opening_span,
@@ -578,6 +583,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Some(ForStatementInit::VariableDeclaration(init_declaration)),
                 r#await,
             ),
+        }
+    }
+
+    fn check_for_in_or_of_variable_declaration(
+        &mut self,
+        declaration: &VariableDeclaration<'a>,
+        kind: Kind,
+    ) {
+        debug_assert!(matches!(kind, Kind::In | Kind::Of));
+        let is_for_in = kind == Kind::In;
+
+        if declaration.declarations.len() > 1 {
+            self.error(diagnostics::multiple_declarations_in_for_loop_head(
+                is_for_in,
+                declaration.span,
+            ));
         }
     }
 

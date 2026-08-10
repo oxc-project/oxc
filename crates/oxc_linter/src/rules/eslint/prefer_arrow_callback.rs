@@ -400,6 +400,7 @@ fn test() {
         ("foo(a => a);", None),
         ("foo(function*() {});", None),
         ("foo(function() { this; });", None),
+        ("foo(function() { let x: typeof this.foo; });", None),
         ("foo(function bar() {});", Some(serde_json::json!([{ "allowNamedFunctions": true }]))),
         ("foo(function() { (() => this); });", None),
         ("foo(function() { this; }.bind(obj));", None),

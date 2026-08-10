@@ -1,13 +1,16 @@
 use cow_utils::CowUtils;
 
-use oxc_allocator::ArenaStringBuilder;
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
-use oxc_formatter_core::FormatElement;
+use oxc_formatter_core::{
+    DispatchRequest, DispatchResponse, FormatElement, IndentWidth, InputKind,
+    format_element::TextWidth,
+};
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::HtmlEmbedMeta,
+    embed_context::HtmlEmbedMeta,
     format_args,
     formatter::prelude::*,
     print::template::{
@@ -53,20 +56,18 @@ pub(super) fn format_html_doc<'a>(
         let has_leading_ws = cooked.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = cooked.ends_with(|c: char| c.is_ascii_whitespace());
 
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-            allocator,
-            group_id_builder,
-            embedded_language,
-            &[cooked],
-        ) else {
+        let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
+            language: embedded_language,
+            text: cooked,
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        }) else {
             return false;
         };
         let Some(html_has_multiple_root_elements) = result
-            .meta
+            .child_context
             .as_ref()
-            .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+            .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
             .map(|meta| meta.has_multiple_root_elements)
         else {
             return false;
@@ -74,13 +75,11 @@ pub(super) fn format_html_doc<'a>(
         // Remap is a no-op today (the Prettier Doc path never carries classes),
         // but the boundary contract is "merge at every embed site".
         // A Rust HTML formatter collecting `class` attributes will rely on this.
-        result.remap_tailwind_into(f.context_mut());
-        let Some(mut ir) = result.docs.into_iter().next() else {
-            return false;
-        };
+        let mut ir = result.into_doc(f.context_mut());
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
+        let allocator = f.allocator();
         super::escape_template_chars_in_ir(&mut ir, allocator, f.options().indent_width);
 
         let content = format_once(|f| f.write_elements(ir));
@@ -121,18 +120,16 @@ pub(super) fn format_html_doc<'a>(
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
 
     // Phase 2: Format via the dispatcher (IR path)
-    let allocator = f.allocator();
-    let group_id_builder = f.group_id_builder();
-    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-        allocator,
-        group_id_builder,
-        embedded_language,
-        &[joined],
-    ) else {
+    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
+        language: embedded_language,
+        text: joined,
+        input_kind: InputKind::Fragment,
+        parent_context: None,
+    }) else {
         // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
         // returned Prettier's `Doc` output may contain `conditionalGroup`.
         // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
-        // So `dispatch_embedded()` will return `Err`.
+        // So the dispatch will return `Err`.
         //
         // In Prettier, `conditionalGroup` is only used by JS and YAML formatting.
         // And we want to format JS by `oxc_formatter` via oxfmt-plugin,
@@ -140,22 +137,26 @@ pub(super) fn format_html_doc<'a>(
         // Of course, there will be formatting differences.
         // Support `conditionalGroup` and convert to our `BestFitting` may be possible,
         // but it also requires placeholder replacement, which is non-trivial.
+        //
+        // NOTE: `Ok(PreserveOriginal)` lands here too and gets the same recovery attempt
+        // (today it only arises when the dispatcher is absent,
+        // in which case the string callback is absent under the same gate
+        // and recovery degrades to the plain template path anyway).
+        // Splitting the match is string-channel-migration work,
+        // out of scope while html stays on the Prettier string path.
         return format_js_in_html_as_fallback(joined, &expressions, f);
     };
 
     let Some(html_has_multiple_root_elements) = result
-        .meta
+        .child_context
         .as_ref()
-        .and_then(|meta| meta.downcast_ref::<HtmlEmbedMeta>())
+        .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
         .map(|meta| meta.has_multiple_root_elements)
     else {
         return false;
     };
     // See the Phase 0 note: remap is no-op today, load-bearing once `oxc_formatter_html` lands
-    result.remap_tailwind_into(f.context_mut());
-    let Some(mut ir) = result.docs.into_iter().next() else {
-        return false;
-    };
+    let mut ir = result.into_doc(f.context_mut());
 
     // Re-escape template chars in `Text` runs before counting / substituting:
     // the IR is reinserted into a JS template literal built from `.cooked` values.
@@ -186,12 +187,7 @@ pub(super) fn format_html_doc<'a>(
                     for (i, part) in parts.iter().enumerate() {
                         if i.is_multiple_of(2) {
                             if !part.is_empty() {
-                                super::write_text_with_line_breaks(
-                                    f,
-                                    part,
-                                    allocator,
-                                    indent_width,
-                                );
+                                write_text_with_line_breaks(f, part, allocator, indent_width);
                             }
                         } else if let Some(idx) = part.parse::<usize>().ok()
                             && let Some(expr) = expressions.get(idx)
@@ -288,7 +284,10 @@ fn format_js_in_html_as_fallback<'a>(
     expressions: &[&AstNode<'a, Expression<'a>>],
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
-    let Some(Ok(formatted)) = f.context().external_callbacks().format_embedded("html", joined)
+    // Configured width; the template's indent is not subtracted (recovery path, matches prior behavior)
+    let print_width = usize::from(f.options().line_width.value());
+    let Some(Ok(formatted)) =
+        f.session().string_embedder().map(|embed| embed("html", joined, print_width))
     else {
         return false;
     };
@@ -318,4 +317,30 @@ fn format_js_in_html_as_fallback<'a>(
 
     write!(f, ["`", block_indent(&format_content), "`"]);
     true
+}
+
+/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
+///
+/// Uses [`literal_line_break`] instead of `hard_line_break()` to avoid adding indentation:
+/// the returned HTML Doc already carries its indentation in the text content,
+/// so the surrounding `block_indent` must not add more.
+fn write_text_with_line_breaks<'a>(
+    f: &mut JsFormatter<'_, 'a>,
+    text: &str,
+    allocator: &'a Allocator,
+    indent_width: IndentWidth,
+) {
+    let mut first = true;
+    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
+    for line in text.split('\n') {
+        if !first {
+            write!(f, [literal_line_break()]);
+        }
+        first = false;
+        if !line.is_empty() {
+            let arena_text = allocator.alloc_str(line);
+            let width = TextWidth::from_text(arena_text, indent_width);
+            f.write_element(FormatElement::Text { text: arena_text, width });
+        }
+    }
 }

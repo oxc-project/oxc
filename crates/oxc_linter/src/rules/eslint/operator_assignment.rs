@@ -282,8 +282,9 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
 /// Locates `operator` within `search_span`, the gap between the two operands.
 #[expect(clippy::cast_possible_truncation)]
 fn get_operator_span(search_span: Span, operator: &str, ctx: &LintContext) -> Span {
-    let offset =
-        ctx.find_next_token_within(search_span.start, search_span.end, operator).unwrap_or(0);
+    let offset = ctx
+        .find_next_token_within(search_span.start, search_span.end, operator)
+        .expect("assignment operator must be present between the operands");
     Span::sized(search_span.start + offset, operator.len() as u32)
 }
 

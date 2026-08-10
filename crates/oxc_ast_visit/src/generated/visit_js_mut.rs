@@ -541,6 +541,11 @@ pub trait VisitJsMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_heritage(&mut self, it: &mut ClassHeritage<'a>) {
+        walk_class_heritage(self, it);
+    }
+
+    #[inline]
     fn visit_class_body(&mut self, it: &mut ClassBody<'a>) {
         walk_class_body(self, it);
     }
@@ -2362,12 +2367,18 @@ pub mod walk_js_mut {
             visitor.visit_binding_identifier(id);
         }
         visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
-        if let Some(super_class) = &mut it.super_class {
-            visitor.visit_expression(super_class);
+        if let Some(heritage) = &mut it.heritage {
+            visitor.visit_class_heritage(heritage);
         }
         visitor.visit_class_body(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_heritage<'a, V: VisitJsMut<'a>>(visitor: &mut V, it: &mut ClassHeritage<'a>) {
+        // No `AstType` for this type
+        visitor.visit_expression(&mut it.expression);
     }
 
     #[inline]

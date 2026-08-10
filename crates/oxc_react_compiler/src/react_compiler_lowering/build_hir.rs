@@ -1422,7 +1422,10 @@ fn lower_binding_assignment<'a>(
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
-                    lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Array(ArrayPattern { items, span: Some(pattern.span) }),
+                        kind,
+                    },
                     value,
                     span: Some(span),
                 },
@@ -1576,7 +1579,10 @@ fn lower_binding_assignment<'a>(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern {
-                        pattern: Pattern::Object(ObjectPattern { properties }),
+                        pattern: Pattern::Object(ObjectPattern {
+                            properties,
+                            span: Some(pattern.span),
+                        }),
                         kind,
                     },
                     value,
@@ -2018,7 +2024,10 @@ fn lower_assignment_target<'a>(
             let temporary = lower_value_to_temporary(
                 builder,
                 InstructionValue::Destructure {
-                    lvalue: LValuePattern { pattern: Pattern::Array(ArrayPattern { items }), kind },
+                    lvalue: LValuePattern {
+                        pattern: Pattern::Array(ArrayPattern { items, span: Some(pattern.span) }),
+                        kind,
+                    },
                     value,
                     span: Some(span),
                 },
@@ -2289,7 +2298,10 @@ fn lower_assignment_target<'a>(
                 builder,
                 InstructionValue::Destructure {
                     lvalue: LValuePattern {
-                        pattern: Pattern::Object(ObjectPattern { properties }),
+                        pattern: Pattern::Object(ObjectPattern {
+                            properties,
+                            span: Some(pattern.span),
+                        }),
                         kind,
                     },
                     value,
@@ -4287,6 +4299,15 @@ fn lower_assignment_expression<'a>(
                 let ident_span = ident.span;
                 let symbol = builder.scope().resolve_reference(ident);
                 let left_place = lower_identifier(builder, ident.name, ident_span, symbol)?;
+                let is_context_identifier = builder.is_context_identifier(symbol);
+                let left_place = lower_value_to_temporary(
+                    builder,
+                    if is_context_identifier {
+                        InstructionValue::LoadContext { place: left_place, span: Some(ident_span) }
+                    } else {
+                        InstructionValue::LoadLocal { place: left_place, span: Some(ident_span) }
+                    },
+                )?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let binary_place = lower_value_to_temporary(
                     builder,

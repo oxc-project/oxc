@@ -136,12 +136,13 @@ impl NoUnusedVars {
 
         let comma_offset = fixer
             .find_next_token_within(default_spec.span().end, last_named.span().start, ",")
-            .unwrap_or(0);
+            .expect("default and named import specifiers must be separated by a comma");
         let delete_start = default_spec.span().end + comma_offset;
 
         let brace_offset = fixer
             .find_next_token_within(last_named.span().end, import.span.end, "}")
-            .map_or(0, |i| i + 1);
+            .expect("named import specifiers must be followed by a closing brace")
+            + 1;
         let delete_end = last_named.span().end + brace_offset;
 
         let span = Span::new(delete_start, delete_end);

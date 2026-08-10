@@ -5158,7 +5158,10 @@ impl RuleRunner for crate::rules::vue::define_props_destructuring::DefinePropsDe
 }
 
 impl RuleRunner for crate::rules::vue::max_props::MaxProps {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ExportDefaultDeclaration,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

@@ -18,6 +18,7 @@ pub mod buffer;
 pub mod builders;
 mod diagnostics;
 mod embedded;
+mod envelope;
 pub mod format;
 pub mod format_element;
 mod format_extensions;
@@ -26,7 +27,8 @@ mod formatter;
 mod group_id;
 mod macros;
 mod options;
-pub mod printer;
+mod printer;
+mod session;
 mod simple_context;
 mod source;
 pub mod spec;
@@ -43,8 +45,10 @@ pub use buffer::{
 };
 pub use diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError};
 pub use embedded::{
-    DispatchResult, EmbeddedContext, EmbeddedIr, FormatDispatcher, TailwindCollector,
+    DispatchPayload, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
+    TailwindCollector, dispatch_fragment_ir,
 };
+pub use envelope::write_front_matter;
 pub use format::{Format, write};
 pub use format_element::debug::DisplayDocument;
 pub use format_element::document::Document;
@@ -63,7 +67,11 @@ pub use options::{
     CoreFormatOptions, IndentStyle, IndentWidth, IndentWidthFromIntError, LineEnding, LineWidth,
     LineWidthFromIntError, ParseFormatNumberError,
 };
-pub use printer::{PrintResult, PrintWidth, Printed, Printer, PrinterOptions};
+pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};
+// `Printer` stays crate-internal: `Document::print` / `print_with_indent` are the only print entries,
+// which is what makes print-without-finalize unrepresentable outside core.
+pub(crate) use printer::Printer;
+pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
 pub(crate) use simple_context::SimpleFormatContext;
 pub use source::{SourceText, SpanCursor};
 pub use state::FormatState;

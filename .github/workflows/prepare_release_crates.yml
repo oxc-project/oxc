@@ -48,7 +48,7 @@ jobs:
           cargo release-oxc update --changelog --release crates
           echo "CRATES_VERSION=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
-      - uses: oxc-project/setup-node@3dcec485ad31d30d15b1bd177eaeddf0db86320e # v1.3.2
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
 
       # Run NAPI-RS build, because NAPI-RS uses version from `package.json` in the bindings file,
       # which is committed to the repo. The version has just been bumped in previous step.
@@ -58,6 +58,7 @@ jobs:
           pnpm --filter oxc-minify run build-dev
           pnpm --filter oxc-parser run build-dev
           pnpm --filter oxc-transform run build-dev
+          pnpm --filter oxc-transform-react run build-dev
 
       - name: Update Cargo.lock
         run: cargo check

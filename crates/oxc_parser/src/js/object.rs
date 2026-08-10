@@ -28,7 +28,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 Self::parse_object_expression_property,
             )
         });
-        if let Some(comma_start) = comma_start {
+        if let Some(comma_start) = comma_start
+            && matches!(
+                object_expression_properties.last(),
+                Some(ObjectPropertyKind::SpreadProperty(_))
+            )
+        {
             self.state.trailing_commas.insert(start, self.end_span(comma_start));
         }
         self.expect(Kind::RCurly);

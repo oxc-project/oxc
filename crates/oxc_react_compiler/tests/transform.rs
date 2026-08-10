@@ -1,5 +1,6 @@
 //! End-to-end integration tests: oxc parse + semantic -> compile -> codegen.
 
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{ModuleExportName, Program, Statement};
 use oxc_codegen::Codegen;
@@ -70,6 +71,68 @@ fn memoizes_a_component_end_to_end() {
 }
 
 #[test]
+fn allows_ref_access_in_a_returned_event_handler() {
+    let source = "\
+function Component({ onChange, onInput }) {\n\
+  const lastValue = useRef(\"\");\n\
+  const wrappedEvent = (callback) => (event) => {\n\
+    const text = event.currentTarget.textContent || \"\";\n\
+    if (text !== lastValue.current) {\n\
+      lastValue.current = text;\n\
+      onChange?.(text);\n\
+    }\n\
+    callback?.(event);\n\
+  };\n\
+  return <div onInput={wrappedEvent(onInput)} />;\n\
+}\n";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should compile; diagnostics: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
+}
+
+#[test]
+fn preserves_manual_memoization_guarantees() {
+    let source = "\
+import { useCallback, useMemo } from 'react';
+export function Component({ value }) {
+  const callback = useCallback(() => value, [value]);
+  const memo = useMemo(() => ({ callback }), [callback]);
+  return <button onClick={callback}>{memo.callback()}</button>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(!result.diagnostics.has_errors(), "unexpected errors: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("if ($[0] !== value)"),
+        "useCallback must retain its source dependency:\n{output}"
+    );
+    assert!(
+        output.contains("if ($[2] !== callback)"),
+        "useMemo must retain its source dependency:\n{output}"
+    );
+    assert!(
+        !output.contains("useCallback(()") && !output.contains("useMemo(()"),
+        "manual memo calls should be lowered into compiler caches:\n{output}"
+    );
+    assert!(
+        output.contains("import { useCallback, useMemo } from \"react\""),
+        "the compiler must leave surrounding import cleanup to downstream transforms:\n{output}"
+    );
+}
+
+#[test]
 fn skips_non_react_code() {
     let source = "function add(a, b) {\n  return a + b;\n}\n";
     let allocator = Allocator::default();
@@ -78,7 +141,7 @@ fn skips_non_react_code() {
 }
 
 #[test]
-fn default_eslint_suppressions_do_not_bail_out() {
+fn default_lint_suppressions_bail_out() {
     let fixtures = [
         (
             "eslint-disable-next-line",
@@ -90,18 +153,18 @@ fn default_eslint_suppressions_do_not_bail_out() {
         ),
     ];
 
-    for (kind, source) in fixtures {
-        let allocator = Allocator::default();
-        let (_program, result) =
-            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+    for prefix in ["eslint", "oxlint"] {
+        for (kind, source) in fixtures {
+            let source = source.cow_replace("eslint", prefix);
+            let allocator = Allocator::default();
+            let (_program, result) =
+                transform_source(&source, SourceType::tsx(), &allocator, PluginOptions::default());
 
-        assert!(result.changed, "{kind} must not prevent compilation");
-        assert!(!result.fatal, "{kind} must not produce a fatal result");
-        assert!(
-            !result.diagnostics.has_errors(),
-            "{kind} produced unexpected diagnostics: {:?}",
-            result.diagnostics
-        );
+            assert!(!result.changed, "{prefix} {kind} must prevent compilation");
+            assert!(!result.fatal, "{prefix} {kind} must not produce a fatal result");
+            assert_eq!(result.diagnostics.len(), 1);
+            assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+        }
     }
 }
 
@@ -124,6 +187,7 @@ fn eslint_suppressions_bail_out_when_either_internal_validation_is_disabled() {
 
     for disabled_validation in ["memo dependencies", "hooks usage"] {
         let mut options = PluginOptions::default();
+        options.environment.validate_exhaustive_memoization_dependencies = true;
         match disabled_validation {
             "memo dependencies" => {
                 options.environment.validate_exhaustive_memoization_dependencies = false;
@@ -182,9 +246,10 @@ function Component({ condition }) {
     ];
 
     for (kind, source, expected_category) in cases {
+        let mut options = PluginOptions::default();
+        options.environment.validate_exhaustive_memoization_dependencies = true;
         let allocator = Allocator::default();
-        let (_program, result) =
-            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+        let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
 
         assert!(!result.changed, "{kind} validation must prevent compilation");
         assert_eq!(result.diagnostics.len(), 1);
@@ -212,19 +277,19 @@ function Component({ value }) {
         ..PluginOptions::default()
     };
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
-    assert!(result.changed, "custom suppression must be ignored with both validations enabled");
-    assert!(!result.diagnostics.has_errors());
+    assert!(!result.changed, "custom suppression must bail out by default");
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
 
     let allocator = Allocator::default();
     let mut options = PluginOptions {
         eslint_suppression_rules: Some(vec!["custom/react-rule".to_string()]),
         ..PluginOptions::default()
     };
-    options.environment.validate_exhaustive_memoization_dependencies = false;
+    options.environment.validate_exhaustive_memoization_dependencies = true;
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
-    assert!(!result.changed, "custom suppression must bail out when validation is disabled");
-    assert_eq!(result.diagnostics.len(), 1);
-    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    assert!(result.changed, "custom suppression must be ignored with both validations enabled");
+    assert!(!result.diagnostics.has_errors());
 }
 
 #[test]

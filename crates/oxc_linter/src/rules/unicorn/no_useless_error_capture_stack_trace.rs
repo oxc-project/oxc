@@ -154,7 +154,7 @@ fn get_error_subclass_if_in_constructor<'a>(
 
 fn is_error_class(class: &oxc_ast::ast::Class, ctx: &LintContext) -> bool {
     // Check if the class extends a built-in Error type
-    let Some(super_class) = &class.super_class else {
+    let Some(super_class) = class.heritage_expression() else {
         return false;
     };
 

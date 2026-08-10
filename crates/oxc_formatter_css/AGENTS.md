@@ -8,9 +8,10 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
-- Two entry points:
-  - `format()`: standalone files (returns a printable `Formatted`)
-  - `format_to_ir()`: embedded use via the dispatcher (e.g. css-in-js); tolerates `${}` placeholders and `TopLevelDeclaration`
+- Entry points:
+  - `format()`: standalone files, on a service-less session
+  - `format_with_session()`: standalone, on the caller's `FormatSession`
+  - `format_to_ir()`: embedded use via the dispatcher (`template_placeholders` = the css-in-js parse mode)
 
 ### Forked parser
 
@@ -22,7 +23,7 @@ The fork adds:
   - Backtick-delimited marker `` `<prefix><digits>` `` with a parameterized inner affix (`TemplatePlaceholder { prefix }`);
   - Backtick is invalid CSS/SCSS/Sass (only Less's inline-JS delimiter), so the marker is
     unmistakably out-of-band, not a real `@var`/`$var` or at-rule
-  - Only `format_to_ir` enables it (with the option unset a backtick is a syntax error)
+  - Only `format_to_ir` with `template_placeholders: true` enables it (with the option unset a backtick is a syntax error)
   - MUST be used with `Syntax::Scss`; css-in-js is `CssVariant::Scss`-hardcoded
   - Tokenized as one typed `Token::Placeholder { index, suffix }` accepted in value / selector / statement / declaration-name positions
     - Per-position layout and coverage: see "css-in-js specifics" below
@@ -114,6 +115,11 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - The JS host (`oxc_formatter`) counts these and substitutes them inline through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
 
 `tests/fixtures/embedded/scss/*-placeholders.scss` is the source of truth for which positions parse and how they print (the `embedded/` harness runs `format_to_ir` with the option on); add a fixture there when extending coverage.
+
+### Front matter (yaml-in-css)
+
+The envelope contract (host opt-in, detection, frame composition, refusal semantics) is core's (`write_front_matter` / `spec::front_matter`; boundary layer 5 in `oxc_formatter_core`'s AGENTS.md); this crate's side (the embeddable set, blank-and-compose wiring, the gap rule) lives in `format.rs`.
+FM behavior is verified through oxfmt; this crate carries no dispatcher-wired FM tests.
 
 ## Prettier mapping
 

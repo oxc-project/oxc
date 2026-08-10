@@ -2029,7 +2029,18 @@ impl GenExpr for ConditionalExpression<'_> {
             ctx &= Context::FORBID_IN.not();
         }
         p.wrap(wrap, |p| {
-            self.test.print_expr(p, Precedence::Conditional, ctx & Context::FORBID_IN);
+            // Keep `as` and `satisfies` expressions grouped as the conditional test. Without
+            // parentheses, a regexp consequent such as `(value as Type) ? /x/ : y` fails to
+            // reparse.
+            let test_precedence = if matches!(
+                self.test.without_parentheses(),
+                Expression::TSAsExpression(_) | Expression::TSSatisfiesExpression(_)
+            ) {
+                Precedence::Compare
+            } else {
+                Precedence::Conditional
+            };
+            self.test.print_expr(p, test_precedence, ctx & Context::FORBID_IN);
             p.print_soft_space();
             p.print_ascii_byte(b'?');
             p.print_soft_space();
@@ -2545,12 +2556,12 @@ impl Gen for Class<'_> {
             if let Some(type_parameters) = self.type_parameters.as_ref() {
                 type_parameters.print(p, ctx);
             }
-            if let Some(super_class) = self.super_class.as_ref() {
+            if let Some(heritage) = &self.heritage {
                 p.print_soft_space();
                 p.print_space_before_identifier();
                 p.print_str("extends ");
-                super_class.print_expr(p, Precedence::Postfix, Context::empty());
-                if let Some(super_type_parameters) = &self.super_type_arguments {
+                heritage.expression.print_expr(p, Precedence::Postfix, Context::empty());
+                if let Some(super_type_parameters) = &heritage.type_arguments {
                     super_type_parameters.print(p, ctx);
                 }
             }
@@ -4134,7 +4145,7 @@ impl Gen for TSInterfaceDeclaration<'_> {
 
 impl Gen for TSInterfaceHeritage<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.expression.print_expr(p, Precedence::Call, ctx);
+        self.type_name.print(p, ctx);
         if let Some(type_parameters) = &self.type_arguments {
             type_parameters.print(p, ctx);
         }

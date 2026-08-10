@@ -11,7 +11,7 @@ use oxc_ast::{
         ObjectPropertyKind, ReturnStatement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
@@ -632,7 +632,7 @@ where
     }
 }
 
-impl<'a, F> Visit<'a> for SpreadInReturnVisitor<'a, '_, F>
+impl<'a, F> VisitJs<'a> for SpreadInReturnVisitor<'a, '_, F>
 where
     F: FnMut(Spread<'a, '_>),
 {
@@ -640,7 +640,7 @@ where
         self.is_in_return = true;
         self.return_span = stmt.argument.as_ref().map(GetSpan::span);
 
-        walk::walk_return_statement(self, stmt);
+        walk_js::walk_return_statement(self, stmt);
 
         self.is_in_return = false;
         // NOTE: do not clear `return_span` here. We want to keep the last

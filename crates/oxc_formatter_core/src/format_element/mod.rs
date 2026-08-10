@@ -146,7 +146,7 @@ impl LineMode {
     }
 
     /// The line forces enclosing groups to expand at build time.
-    /// See [crate::Document::propagate_expand]:
+    /// See `Document::propagate_expand`:
     /// every always-breaking mode except [Self::HardWithoutExpand].
     pub const fn propagates_expand(self) -> bool {
         self.will_break() && !matches!(self, LineMode::HardWithoutExpand)

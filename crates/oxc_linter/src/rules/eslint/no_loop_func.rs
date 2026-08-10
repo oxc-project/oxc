@@ -7,7 +7,7 @@ use oxc_ast::{
         Function, IdentifierReference, Statement, WhileStatement,
     },
 };
-use oxc_ast_visit::{Visit, VisitJs, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ScopeId, SymbolId};
@@ -192,7 +192,7 @@ impl NoLoopFunc {
         finder.found
     }
 
-    fn visit_function_node<'a, V: Visit<'a>>(func_node: &AstNode<'a>, visitor: &mut V) {
+    fn visit_function_node<'a, V: VisitJs<'a>>(func_node: &AstNode<'a>, visitor: &mut V) {
         match func_node.kind() {
             AstKind::Function(function) => visitor.visit_function(function, ScopeFlags::Function),
             AstKind::ArrowFunctionExpression(arrow) => {
@@ -599,16 +599,16 @@ impl<'a, 'ctx> NestedFunctionFinder<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for NestedFunctionFinder<'a, '_> {
+impl<'a> VisitJs<'a> for NestedFunctionFinder<'a, '_> {
     fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
         if self.should_walk_function(function.node_id(), function.r#async || function.generator) {
-            walk::walk_function(self, function, flags);
+            walk_js::walk_function(self, function, flags);
         }
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         if self.should_walk_function(arrow.node_id(), arrow.r#async) {
-            walk::walk_arrow_function_expression(self, arrow);
+            walk_js::walk_arrow_function_expression(self, arrow);
         }
     }
 }
@@ -629,7 +629,7 @@ impl<'a, 'ctx> UnsafeReferenceFinder<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for UnsafeReferenceFinder<'a, '_> {
+impl<'a> VisitJs<'a> for UnsafeReferenceFinder<'a, '_> {
     fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
         if self.found {
             return;
@@ -821,6 +821,10 @@ fn test() {
                   };
                 }
                   ",
+        // A value binding referenced only from type-space is not captured at runtime.
+        "for (var i = 0; i < 10; i++) {
+            const callback = function (): typeof i { return 0; };
+        }",
         // Function in the for-update slot is not in the loop body.
         "for (var i = 0; i < l; i++, (function () { i; })()) { }",
         r"

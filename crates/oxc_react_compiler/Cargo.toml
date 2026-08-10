@@ -12,7 +12,7 @@
 [package]
 name = "oxc_react_compiler"
 version = "0.143.0"
-publish = true
+publish = false
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true

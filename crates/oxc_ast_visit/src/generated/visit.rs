@@ -522,6 +522,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_class_heritage(&mut self, it: &ClassHeritage<'a>) {
+        walk_class_heritage(self, it);
+    }
+
+    #[inline]
     fn visit_class_body(&mut self, it: &ClassBody<'a>) {
         walk_class_body(self, it);
     }
@@ -2608,16 +2613,22 @@ pub mod walk {
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_class) = &it.super_class {
-            visitor.visit_expression(super_class);
-        }
-        if let Some(super_type_arguments) = &it.super_type_arguments {
-            visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
+        if let Some(heritage) = &it.heritage {
+            visitor.visit_class_heritage(heritage);
         }
         visitor.visit_ts_class_implements_list(&it.implements);
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_heritage<'a, V: Visit<'a>>(visitor: &mut V, it: &ClassHeritage<'a>) {
+        // No `AstKind` for this type
+        visitor.visit_expression(&it.expression);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
+        }
     }
 
     #[inline]
@@ -3871,7 +3882,7 @@ pub mod walk {
         let kind = AstKind::TSInterfaceHeritage(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
+        visitor.visit_ts_type_name(&it.type_name);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }

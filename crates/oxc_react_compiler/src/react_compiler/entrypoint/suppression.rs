@@ -38,6 +38,7 @@ fn comment_value(comment: Comment, source_text: &str) -> &str {
 fn matches_eslint_disable_next_line(value: &str, rule_names: &[String]) -> bool {
     value
         .strip_prefix("eslint-disable-next-line ")
+        .or_else(|| value.strip_prefix("oxlint-disable-next-line "))
         .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
 }
 
@@ -45,6 +46,7 @@ fn matches_eslint_disable_next_line(value: &str, rule_names: &[String]) -> bool 
 fn matches_eslint_disable(value: &str, rule_names: &[String]) -> bool {
     value
         .strip_prefix("eslint-disable ")
+        .or_else(|| value.strip_prefix("oxlint-disable "))
         .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
 }
 
@@ -52,6 +54,7 @@ fn matches_eslint_disable(value: &str, rule_names: &[String]) -> bool {
 fn matches_eslint_enable(value: &str, rule_names: &[String]) -> bool {
     value
         .strip_prefix("eslint-enable ")
+        .or_else(|| value.strip_prefix("oxlint-enable "))
         .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
 }
 

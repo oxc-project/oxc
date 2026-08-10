@@ -342,7 +342,7 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         let parsed = parse_for_format(&allocator, &file.source_text, file.source_type);
         assert!(parsed.diagnostics.is_empty());
-        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+        let _ = format_program(&allocator, &parsed.program, JsFormatOptions::default())
             .print()
             .unwrap()
             .into_code();
@@ -407,7 +407,7 @@ pub fn run() -> Result<(), io::Error> {
         assert!(parsed.diagnostics.is_empty());
 
         let (_, formatter_stats) = record_stats_in(&allocator, || {
-            format_program(&allocator, &parsed.program, JsFormatOptions::default(), None)
+            format_program(&allocator, &parsed.program, JsFormatOptions::default())
                 .print()
                 .unwrap()
                 .into_code()

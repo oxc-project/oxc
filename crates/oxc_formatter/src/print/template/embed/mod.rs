@@ -10,7 +10,6 @@ use oxc_formatter_core::{FormatElement, IndentWidth, format_element::TextWidth};
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::prelude::*,
-    write,
 };
 
 /// Try to format a tagged template with the embedded formatter if supported.
@@ -263,33 +262,6 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
     }
 
     result
-}
-
-/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
-///
-/// Uses [`literal_line_break`] instead of `hard_line_break()` to avoid adding indentation.
-///
-/// The external formatter has already computed proper indentation in the text content,
-/// so we must not add extra indent from the surrounding `block_indent`.
-fn write_text_with_line_breaks<'a>(
-    f: &mut JsFormatter<'_, 'a>,
-    text: &str,
-    allocator: &'a Allocator,
-    indent_width: IndentWidth,
-) {
-    let mut first = true;
-    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
-    for line in text.split('\n') {
-        if !first {
-            write!(f, [literal_line_break()]);
-        }
-        first = false;
-        if !line.is_empty() {
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            f.write_element(FormatElement::Text { text: arena_text, width });
-        }
-    }
 }
 
 // ---
