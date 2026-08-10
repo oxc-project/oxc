@@ -17,7 +17,7 @@ const MAX_DISPATCH_DEPTH: u8 = 8;
 /// String-in/string-out embedded formatter: `(language, code, print_width)` to formatted code.
 ///
 /// The string-out channel's session-carried contract, for consumers whose result must come back as TEXT
-/// (a JSDoc fence re-embedded line-by-line into a comment, the html-in-js temporary recovery path).
+/// (currently a JSDoc fence re-embedded line-by-line into a comment).
 /// `print_width` is the caller's effective width at the embedding position
 /// (e.g. a JSDoc fence's comment-content width minus the fence indent).
 /// The returned text carries no trailing whitespace (implementations trim before returning).

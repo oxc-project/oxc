@@ -24,7 +24,7 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
-  - the dispatcher (IR channel), the string embedder (JSDoc fences + html-in-js temporary recovery), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
+  - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
 
 ### Generated code
 
@@ -57,7 +57,7 @@ Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx 
 - xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles Rust based formatter, Prettier Doc→IR fallback otherwise
 - As the JS host, this crate also owns the parent-side concerns in `print/template/embed/`:
   - template-literal escape on returned IR,
-  - placeholder marker insertion / survival count / `${expr}` substitution,
+  - placeholder marker insertion / survival validation / `${expr}` substitution,
   - and `.raw` vs `.cooked` selection
   - Language formatter crates stay free of these rules
     - See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring

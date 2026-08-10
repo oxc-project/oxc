@@ -216,4 +216,25 @@ const pick = <U = T,>(x: U) => x;
     expect(result.code).toContain("const pick = <U = T,>(x: U) => x;");
     expect(result.errors).toStrictEqual([]);
   });
+
+  it("should not indent a comment-only script block", async () => {
+    // The comment's leading IR `Space` must be dropped at the line start,
+    // like the Rust printer does, or `/**` gains a spurious leading space.
+    const input = `
+<script lang="ts">
+/**
+ * Docs.
+ */
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toBe(`<script lang="ts">
+/**
+ * Docs.
+ */
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+  });
 });

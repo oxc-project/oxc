@@ -49,7 +49,7 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 Embedded languages (e.g. css-in-js, CSS front matter YAML) go through the `FormatDispatcher` (defined in `oxc_formatter_core`) assembled by `src/core/embed/dispatcher.rs`.
 Routing is ONE table (`dispatcher::route`): `Native` languages (css/graphql/yaml/json/...) get a Rust branch, the `Prettier` set (html/angular/markdown) goes to the Prettier Doc→IR channel (`embed/prettier_doc.rs`, napi only), everything else is deliberately preserved.
 
-Vocabulary: "fallback" = the dispatcher's optional `PrettierDocFallback` slot (a build/root may not install one); "recovery" = the html-in-js after-failure string rescue.
+Vocabulary: "fallback" = the dispatcher's optional `PrettierDocFallback` slot (a build/root may not install one).
 The pure Rust build runs fallback-less, so non-native embeds (html-in-js, TOML/custom front matter) deliberately stay verbatim.
 
 Three roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS and CSS file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Vue/Svelte `<script>` root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
@@ -60,17 +60,16 @@ Tracing span namespaces: `oxfmt::embed::` = pure Rust work, `oxfmt::external::` 
 
 Per-language options are NOT built up front: `ResolvedDispatchConfig` maps them lazily at dispatch time (`OnceLock`-memoized) from the host file's resolved config, including the Prettier options JSON for the JS-side consumers. `src/core/external_services.rs` bridges the napi callbacks into these factories.
 
-A separate string-out channel (the session's `string_embedder` service, NOT the dispatcher) carries the string-in/string-out consumers:
+A separate string-out channel (the session's `string_embedder` service, NOT the dispatcher) carries JSDoc's string-in/string-out consumer:
 
 - JSDoc fenced code blocks: routing follows ONE rule, the same `dispatcher::route` table
   - a `Native` fence language formats through `FormatSession::dispatch_to_string` via a thin string adapter (`embed/jsdoc_fence.rs::format_native_fence`, EVERY build, the pure Rust build wires it via `services::for_root`)
   - md/html/angular fences stay on the Prettier string path (`embed/prettier_string.rs`, napi only; their Doc→IR conversion has unrepresentable cases);
   - everything else stays verbatim
   - the embedder carries the caller's effective print width; both branches honor it (native via `PrintWidth` override, Prettier via `printWidth` in the options JSON), so a fence prints at the same width a JS/TS snippet in the same position would (see `upstream-jsdoc-bugs.md` #11 for the deliberate divergence from upstream's flat `printWidth - 4`)
-- temporary html-in-js string recovery (`format_js_in_html_as_fallback` in `oxc_formatter/src/print/template/embed/html.rs`): rescues the template as text when the Doc→IR conversion cannot represent the returned Doc
 
-NOTE: These string-out channel is temporary workaround, should be replaced by native implementations and Prettier usage should be eliminated in the future.
-JSDoc's string-out is also NOT structural: fences can move to IR-out (session dispatch inside the comment IR) once the printer grows a per-line prefix mechanism for the `*` continuation, but deferred for verification time, not by design.
+NOTE: The string-out channel outlives the md/html/angular rewrites; its full exit criterion is owned by `oxc_formatter_core`'s AGENTS.md (layer (4)).
+The half owned here: JSDoc's string-out is NOT structural, fences can move to IR-out (session dispatch inside the comment IR) once the printer grows a per-line prefix mechanism for the `*` continuation, deferred for verification time, not by design.
 
 #### Tailwind CSS class sorting
 

@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.63.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- b63eccc formatter: Keep comments after TS this_param (#25459) (leaysgur)
+- ab52a59 formatter: Format xxx-in-js inside JSDoc js fence (#25414) (leaysgur)
+- 1a2c64a formatter,oxfmt: Apply effective print width for JSDoc fence (#25413) (leaysgur)
+- ef1d04b formatter: Break mapped type brackets (#25297) (leaysgur)
+- 4e6f3f1 formatter: Break index signature brackets (#25296) (leaysgur)
+- c29b587 formatter_core: Measure decided-flat fill separator as flat during group re-measure (#25276) (leaysgur)
+
+### 📚 Documentation
+
+- 6eae5c9 formatter,oxfmt: Record embed-layer decisions in place (#25422) (leaysgur)
+
 ## [0.62.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES
