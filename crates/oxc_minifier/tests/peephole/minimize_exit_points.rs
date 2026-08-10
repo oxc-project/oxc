@@ -5,7 +5,7 @@ fn test_break_optimization() {
     test("f:{if(true){a();break f;}else;b();}", "f:{a();break f}"); // f:a();
     test("f:{if(false){a();break f;}else;b();break f;}", "f:{b();break f}"); // f:b();
     test("f:{if(a()){b();break f;}else;c();}", "f:{if(a()){b();break f}c()}"); // f:a()?b():c();
-    test("f:{if(a()){b()}else{c();break f;}}", "f:{if(!a()){c();break f}b();}"); // f:a()?b():c();
+    test("f:{if(a()){b()}else{c();break f;}}", "f:if(a())b();else{c();break f}"); // f:a()?b():c();
     test("f:{if(a()){b();break f;}else;}", "f:if(a()){b();break f}"); // f:a()&&b();
     test("f:{if(a()){break f;}else;}", "f:if(a())break f;"); // f:a();
 
@@ -39,14 +39,17 @@ fn test_function_return_optimization() {
     test("function f(){if(true){a();return;}else;b();}", "function f(){a();}");
     test("function f(){if(false){a();return;}else;b();return;}", "function f(){b();}");
     test("function f(){if(a()){b();return;}else;c();}", "function f(){if(a()){b();return}c()}"); // function f(){a()?b():c()}
-    test("function f(){if(a()){b()}else{c();return;}}", "function f(){if(!a()){c();return}b()}"); // function f(){a()?b():c()}
     test(
-        "function f(){ if(a()) { if (a) { return } throw a; } else return 2; }",
-        "function f(){ if(a()) { if (a) return; throw a } return 2 }",
+        "function f(){if(a()){b()}else{c();return;}}",
+        "function f(){if(a())b();else{c();return}}",
+    ); // function f(){a()?b():c()}
+    test(
+        "function f(){if(a()){if(a){return}throw a}else return 2}",
+        "function f(){if(!a())return 2;if(!a)throw a}",
     );
     test(
         "function f(){if(a()){if(b()){d();return;}else{return;}}else{return;} c();}",
-        "function f(){if(a()){if(b()){d();return}return}}",
+        "function f(){if(a()){if(!b())return;d()}}",
     ); // function f(){a()&&b()&&d()}
     test(
         "function f(a,b,c){if(a){}else if(b){x();return}else if(c){y();return}z()}",
@@ -130,14 +133,14 @@ fn test_while_continue_optimization() {
     test("while(true){if(true){a();continue;}else;b();}", "for(;;)a();");
     test("while(true){if(false){a();continue;}else;b();continue;}", "for(;;)b();");
     test("while(true){if(a()){b();continue;}else;c();}", "for(;;){if(a()){b();continue}c()}"); // for(;;)a()?b():c();
-    test("while(true){if(a()){b();}else{c();continue;}}", "for(;;){if(!a()){c();continue}b()}"); // for(;;)a()?b():c();
+    test("while(true){if(a()){b();}else{c();continue;}}", "for(;;)if(a())b();else{c();continue}"); // for(;;)a()?b():c();
     test("while(true){if(a()){b();continue;}else;}", "for (;;) if(a()){b();continue;}"); // for(;;)a()&&b();
     test("while(true){if(a()){continue;}else{continue;} continue;}", "for(;;)a();");
     test("while(true){if(a()){continue;}else{continue;} b();}", "for(;;)a();");
     test(
         "while(true){d();if(a()){continue;}else if(b()){c();continue;}else{continue;}}",
-        "for(;;)if(d(),!a()&&b()){c();continue}",
-    ); // for(;;)d(),!a()&&b()&&c();
+        "for(;;)d(),!a()&&b()&&c();",
+    );
 
     test("while(true)while(a())continue;", "for(;;)for(;a();)continue;"); // for(;;)for(;a(););
     test("while(true)for(x in a())continue", "for(;;)for(x in a())continue;"); // for(;;)for(x in a());
@@ -180,7 +183,7 @@ fn test_do_continue_optimization() {
     ); // do a()?b():c();while(!0)
     test(
         "do{if(a()){b();}else{c();continue;}}while(true)",
-        "do{if(!a()){c();continue}b()}while(!0);",
+        "do if(a())b();else{c();continue}while(!0);",
     ); // do a()?b():c();while(!0)
     test("do{if(a()){b();continue;}else;}while(true)", "do if(a()){b();continue}while(!0);"); // do a()&&b();while(!0)
     test("do{if(a()){continue;}else{continue;} continue;}while(true)", "do a();while(!0)");
@@ -228,14 +231,20 @@ fn test_for_continue_optimization() {
     test("for(x in y){if(true){a();continue;}else;b();}", "for(x in y)a()");
     test("for(x in y){if(false){a();continue;}else;b();continue;}", "for(x in y)b()");
     test("for(x in y){if(a()){b();continue;}else;c();}", "for(x in y){if(a()){b();continue}c()}"); // for(x in y)a()?b():c()
-    test("for(x in y){if(a()){b();}else{c();continue;}}", "for(x in y){if(!a()){c();continue}b()}"); // for(x in y)a()?b():c()
+    test(
+        "for(x in y){if(a()){b();}else{c();continue;}}",
+        "for(x in y)if(a())b();else{c();continue}",
+    ); // for(x in y)a()?b():c()
 
     test("for(x of y){if(x)continue; x=3; continue; }", "for(x of y)x||=3");
     test("for(x of y){a();continue;b()}", "for(x of y)a()");
     test("for(x of y){if(true){a();continue;}else;b();}", "for(x of y)a()");
     test("for(x of y){if(false){a();continue;}else;b();continue;}", "for(x of y)b()");
     test("for(x of y){if(a()){b();continue;}else;c();}", "for(x of y){if(a()){b();continue}c()}"); // for(x of y)a()?b():c()
-    test("for(x of y){if(a()){b();}else{c();continue;}}", "for(x of y){if(!a()){c();continue}b()}"); // for(x of y)a()?b():c()
+    test(
+        "for(x of y){if(a()){b();}else{c();continue;}}",
+        "for(x of y)if(a())b();else{c();continue}",
+    ); // for(x of y)a()?b():c()
 
     test(
         "r=async () => { for await (x of y){if(x)continue; x=3; continue; }}",
@@ -259,7 +268,7 @@ fn test_for_continue_optimization() {
     ); // r=async () => { for await(x of y)a()?b():c()};
     test(
         "r=async () => { for await (x of y){if(a()){b();}else{c();continue;}}}",
-        "r=async() => {for await(x of y){if(!a()){c();continue}b()}};",
+        "r=async () => { for await(x of y)if(a())b();else{c();continue}};",
     ); // r=async () => { for await (x of y) a() ? b() : c() };
 
     test("for(x=0;x<y;x++){if(a()){b();continue;}else;}", "for(x=0;x<y;x++)if(a()){b();continue}"); // for(x=0;x<y;x++)a()&&b()

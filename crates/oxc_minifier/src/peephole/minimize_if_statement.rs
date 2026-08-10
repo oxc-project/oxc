@@ -5,7 +5,6 @@ use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
 use crate::TraverseCtx;
-use crate::is_terminated::IsTerminated;
 
 use super::PeepholeOptimizations;
 
@@ -51,8 +50,8 @@ impl<'a> PeepholeOptimizations {
                 return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             }
 
-            let is_alternate_terminated = alternate.is_terminated();
-            let is_consequent_terminated = if_stmt.consequent.is_terminated();
+            let is_alternate_terminated = alternate.is_jump_statement();
+            let is_consequent_terminated = if_stmt.consequent.is_jump_statement();
 
             if is_alternate_terminated == is_consequent_terminated {
                 // Normalize: move the `!` out of the test by swapping branches.
