@@ -36,8 +36,8 @@
 //!
 //!     for _ in 0..10 {
 //!         if let Err(diagnostic) = my_tool() {
-//!             let report = diagnostic.with_source_code(Arc::clone(&file_being_processed));
-//!             sender.send((file_path_being_processed, vec![Error::new(e)]));
+//!             let error = diagnostic.with_source_code(Arc::clone(&file_being_processed));
+//!             sender.send(vec![error]);
 //!         }
 //!         // The service will stop when all senders are dropped
 //!     }
@@ -58,13 +58,27 @@ pub mod reporter;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService};
 
-pub type Error = miette::Error;
+pub type Error = Box<dyn Diagnostic + Send + Sync>;
 pub type Severity = miette::Severity;
 
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, Labels, NamedSource};
+pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
+
+fn render(diagnostic: &dyn Diagnostic) -> String {
+    let mut output = String::new();
+    let _ = GraphicalReportHandler::new_themed(GraphicalTheme::none())
+        .with_width(80)
+        .with_links(false)
+        .render_report(&mut output, diagnostic);
+    output
+}
+
+/// Owned labels attached to an [`OxcDiagnostic`].
+///
+/// The common one- and two-label cases are stored inline.
+pub type Labels = smallvec::SmallVec<[LabeledSpan; 2]>;
 
 /// A collection of [`OxcDiagnostic`]s.
 ///
@@ -254,8 +268,8 @@ impl Diagnostic for OxcDiagnostic {
     }
 
     /// Labels covering problematic portions of source code.
-    fn labels(&self) -> Labels {
-        self.labels.clone()
+    fn labels(&self) -> &[LabeledSpan] {
+        &self.labels
     }
 
     /// An error code uniquely identifying this diagnostic.
@@ -282,6 +296,11 @@ impl OxcDiagnostic {
         Self::new(Severity::Warning, message.into())
     }
 
+    /// Render this diagnostic using Oxc's deterministic non-interactive style.
+    pub fn render(&self) -> String {
+        render(self)
+    }
+
     // Outlined so the `Box` allocation + field initialization exists once in the binary
     // instead of being inlined into every diagnostic construction site.
     #[inline(never)]
@@ -289,7 +308,7 @@ impl OxcDiagnostic {
         Self {
             inner: Box::new(OxcDiagnosticInner {
                 message,
-                labels: Labels::None,
+                labels: Labels::new(),
                 help: None,
                 note: None,
                 severity,
@@ -404,7 +423,7 @@ impl OxcDiagnostic {
     /// [`oxc_span::Span`]: https://docs.rs/oxc_span/latest/oxc_span/struct.Span.html
     /// [`label`]: https://docs.rs/oxc_span/latest/oxc_span/struct.Span.html#method.label
     pub fn with_label<T: Into<LabeledSpan>>(mut self, label: T) -> Self {
-        self.inner.labels = Labels::One([label.into()]);
+        self.inner.labels = std::iter::once(label.into()).collect();
         self
     }
 
@@ -454,11 +473,72 @@ impl OxcDiagnostic {
     ///
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
     pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
-        Error::from(self).with_source_code(code)
+        Box::new(DiagnosticWithSource { diagnostic: self, source_code: Box::new(code) })
+    }
+
+    /// Attach source code and render using Oxc's deterministic non-interactive style.
+    pub fn render_with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> String {
+        let diagnostic = self.with_source_code(code);
+        render(diagnostic.as_ref())
     }
 
     /// Consumes the diagnostic and returns the inner owned data.
     pub fn inner_owned(self) -> OxcDiagnosticInner {
         *self.inner
+    }
+}
+
+impl From<OxcDiagnostic> for Error {
+    fn from(diagnostic: OxcDiagnostic) -> Self {
+        Box::new(diagnostic)
+    }
+}
+
+struct DiagnosticWithSource {
+    diagnostic: OxcDiagnostic,
+    source_code: Box<dyn SourceCode>,
+}
+
+impl fmt::Debug for DiagnosticWithSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.diagnostic, f)
+    }
+}
+
+impl Display for DiagnosticWithSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(&self.diagnostic, f)
+    }
+}
+
+impl std::error::Error for DiagnosticWithSource {}
+
+impl Diagnostic for DiagnosticWithSource {
+    fn code(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.code()
+    }
+
+    fn severity(&self) -> Option<Severity> {
+        self.diagnostic.severity()
+    }
+
+    fn help(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.help()
+    }
+
+    fn note(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.note()
+    }
+
+    fn url(&self) -> Option<Cow<'_, str>> {
+        self.diagnostic.url()
+    }
+
+    fn labels(&self) -> &[LabeledSpan] {
+        self.diagnostic.labels()
+    }
+
+    fn source_code(&self) -> Option<&dyn SourceCode> {
+        Some(self.source_code.as_ref())
     }
 }

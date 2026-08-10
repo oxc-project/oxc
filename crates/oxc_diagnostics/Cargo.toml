@@ -18,8 +18,10 @@ workspace = true
 
 [dependencies]
 cow-utils = { workspace = true }
+memchr = { workspace = true }
 miette = { workspace = true }
 percent-encoding = { workspace = true }
+smallvec = { workspace = true }
 
 [lib]
 doctest = false

@@ -48,7 +48,7 @@ fn main() -> std::io::Result<()> {
         let error_message: String = parser_ret
             .diagnostics
             .into_iter()
-            .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text))))
+            .map(|error| error.render_with_source_code(Arc::clone(&source_text)))
             .join("\n");
         println!("Parsing failed:\n\n{error_message}");
         return Ok(());
@@ -65,7 +65,7 @@ fn main() -> std::io::Result<()> {
         let error_message: String = semantic
             .diagnostics
             .into_iter()
-            .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text))))
+            .map(|error| error.render_with_source_code(Arc::clone(&source_text)))
             .join("\n");
         println!("Semantic analysis failed:\n\n{error_message}");
     }
