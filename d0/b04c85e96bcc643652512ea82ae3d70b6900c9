@@ -1,0 +1,119 @@
+apps/oxlint/src-js/generated/deserialize.js
+  s_aa3067c8f5ecd1::t_797dd74fcd8b66 2703,2711-2712,2717-2728,2732-2741
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_aa3067c8f5ecd1::t_62de55bfc7b7d2 730,738-749,2572,2580-2591
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_aa3067c8f5ecd1::t_e1b88cea0f32dc 541,553,566,585,598,612,2069,2081,2094,2113,2126,2140,3504,3516,3529,3548,3561,3575,5446,5458,5471,5490,5503,5517,8590,8602,8615,8634,8647,8661,9479,9491,9504,9523,9536,9550,10782,10794,10807,10826,10839,10853,13844,13856,13869,13888,13901,13915,14825,14837,14852,14872,14884,14899,14921,14934,14950,14970,14983,14999,15012-15050,16747,16759,16772,16791,16804,16818,17334,17346,17359,17378,17391,17405,19525,19537,19550,19569,19582,19596
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_aa3067c8f5ecd1::t_3cb6c492f0734d 2441,2454-2472
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_aa3067c8f5ecd1::t_33e90f164de88f 1208,1216-1222
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_aa3067c8f5ecd1::t_a1b192e58fb0a3 1318,1328-1336
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_aa3067c8f5ecd1::t_4ab375ae225fd7 1467-1471,1481-1489
+crates/oxc_ast/src/generated/derive_get_span.rs
+  s_aa3067c8f5ecd1::t_6b4e85a7402261 1054-1060
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_aa3067c8f5ecd1::t_74c7731b6c5722 203-204
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_aa3067c8f5ecd1::t_680469b4db07e7 205-206
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_aa3067c8f5ecd1::t_79126eb0e01f3b 11-12,16-21,23-25,28-30,32-41,44,46-59,61,63-70,74-90,94,96,102,104,110,112,118,120,126,130-138,146,148,154,156,162-166,168,174,176,182-186,188,194-218,220,226-231,234-238,242,244,250,254-259,263,267,275-276,279-280,283-287,295-296,298,300,302-303,308,316-317,320,328-329,332,334,340-352,360-361,364,368-372,374,380,382,388,390,396,398,404,406,412,414,420-421,424-429,432,440,442,448-449,452,454,460-461,464-468,470,476,478,484,488,491,493,495,501-502,504,506-511,514,522,530,532,538-539,542-546,550,552,558,560,566,574,576,582,590,592-593,598,600,606,608,613,615,617,623,627-628,631,633-634,638,640,642,648-649,652,654,659,661,665-673,681-682,685,687,693-697,699-700,705-706,709-710,713,715,721,723-724,729,731,737,745,747,752,754-755,758,760,766,770,772,778-779,782,784,790,792,798-799,802,810-815,818,820,826,828,834,836,842-843,846,848,854,862,866-871,874,877,879,881-882,887,889,895,897,903-908,911,913,919,921,926,928-929,932-933,936,940,944,946,952-957,960,968,972-977,980-981,984,988,990,996-997,1000,1002-1003,1008,1010,1016,1018,1024,1032,1034,1040-1045,1048-1053,1056,1058,1064-1065,1068,1072,1074-1075,1080,1082,1088-1089,1092-1097,1099,1104,1106-1110,1112-1113,1117,1119,1121,1126,1128,1130,1136-1141,1144,1146,1152,1154,1160,1162,1168-1176,1180-1181,1184,1196-1208,1210,1216,1218,1224,1226,1231,1233,1241,1245,1247,1252-1253,1255-1256,1259-1263,1265,1271,1273,1279,1283-1284,1287,1291,1293,1299,1301,1307-1316,1324-1329,1332-1333,1336,1340-1345,1352-1360,1362,1368-1369,1372,1374,1380,1382,1388,1390,1396,1398-1399,1404,1412,1420,1422,1428-1433,1436,1444,1446,1452,1454,1460,1464,1466,1472,1474,1480,1484-1488,1490,1496-1497,1500
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_aa3067c8f5ecd1::t_b12d6f06bf7425 524-528,2616-2617,2625-2633
+crates/oxc_ast_visit/src/generated/visit_js.rs
+  s_aa3067c8f5ecd1::t_c75fe9550241ef 551-555,2271-2272,2279-2284
+crates/oxc_ast_visit/src/generated/visit_js_mut.rs
+  s_aa3067c8f5ecd1::t_ed56a0a1a0786f 543-547,2370-2371,2378-2383
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_aa3067c8f5ecd1::t_69a824dfb97846 516-520,2707-2708,2716-2724
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_aa3067c8f5ecd1::t_c45e9e6dbd08d4 5032,5051,5069-5070,5086,5095,5146-5186
+crates/oxc_formatter/src/ast_nodes/generated/format.rs
+  s_aa3067c8f5ecd1::t_41b15ed7f591d0 2602-2614
+crates/oxc_formatter/src/print/class.rs
+  s_aa3067c8f5ecd1::t_11006910b9835e 247-252,279-281,350,492-495,500-503,515-518
+crates/oxc_linter/src/rules/eslint/constructor_super.rs
+  s_aa3067c8f5ecd1::t_2e4f1f667d7cec 223-224
+crates/oxc_linter/src/rules/typescript/no_extraneous_class.rs
+  s_aa3067c8f5ecd1::t_055c26c2cbd093 126
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_aa3067c8f5ecd1::t_a97d78e83e04fa 155-327,582,585-588,1338,1344-1348,2021,2411,2414-2415,9053,9099,9101-9102,9183,9185-9186,9269,9271-9272,9318,9323,9395,9404,9409,9449,9451-9452,9481,9490,9492,9532,9534-9535,9540,9542-9543,9565,9572-9575,9578-9581,9583,9585,9587,9591,9593,9595-9596,9598,9600-9605,9607,9609,9611,9616
+crates/oxc_minifier/src/generated/traverse.rs
+  s_aa3067c8f5ecd1::t_3caf839e9d6817 996-1000
+crates/oxc_minifier/src/generated/walk.rs
+  s_aa3067c8f5ecd1::t_fb2bd3a82e7ef9 2609-2610,2612-2613,2633-2657
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_aa3067c8f5ecd1::t_0adff7d2ef60fb 155-327,582,585-588,1338,1344-1348,2021,2411,2414-2415,9053,9099,9101-9102,9183,9185-9186,9269,9271-9272,9318,9323,9395,9404,9409,9449,9451-9452,9481,9490,9492,9532,9534-9535,9540,9542-9543,9565,9572-9575,9578-9581,9583,9585,9587,9591,9593,9595-9596,9598,9600-9605,9607,9609,9611,9616
+crates/oxc_traverse/src/generated/traverse.rs
+  s_aa3067c8f5ecd1::t_1a8b4ab7c01eae 1269-1283
+crates/oxc_traverse/src/generated/walk.rs
+  s_aa3067c8f5ecd1::t_ff651ad8c93de4 2609-2610,2612-2613,2633-2657
+napi/parser/src-js/generated/deserialize/js.js
+  s_aa3067c8f5ecd1::t_d21eb0e7d3ea2e 1967-1981,1984-1986
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_aa3067c8f5ecd1::t_e15d629437c39f 2179,2187-2194,2197-2199
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_aa3067c8f5ecd1::t_c977b2830b60cf 2185,2193-2200,2203-2205
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_aa3067c8f5ecd1::t_49da9dd9f6e98b 2396,2405-2412,2415-2417
+napi/parser/src-js/generated/deserialize/ts.js
+  s_aa3067c8f5ecd1::t_542b90c33251ae 2166-2189,2193-2202
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_aa3067c8f5ecd1::t_42b2893fa991d3 2397,2405-2406,2410-2421,2425-2434
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_aa3067c8f5ecd1::t_d56ad6b72618d0 2405,2413-2414,2418-2429,2433-2442
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_aa3067c8f5ecd1::t_4525b7687ad21c 2635,2643-2644,2649-2660,2664-2673
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_aa3067c8f5ecd1::t_02d6f92be20b65 8,19,41,43,74,76
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_aa3067c8f5ecd1::t_e1fede906d8624 76
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_aa3067c8f5ecd1::t_31e67d88b79920 19,41,74,76
+tasks/track_memory_allocations/allocs_semantic.yaml
+  s_aa3067c8f5ecd1::t_d667b4a51c1391 76
+tasks/track_memory_allocations/allocs_transformer.yaml
+  s_aa3067c8f5ecd1::t_be9c5bf32cce64 76
+crates/oxc_ecmascript/src/side_effects/expressions.rs
+  s_aa3067c8f5ecd1::t_6c6bd030eb40ce 360
+crates/oxc_linter/src/rules/eslint/no_this_before_super.rs
+  s_aa3067c8f5ecd1::t_ba37c2c338dbed 163
+crates/oxc_linter/src/rules/eslint/no_unsafe_optional_chaining.rs
+  s_aa3067c8f5ecd1::t_3cf9fbfed10bc2 215
+crates/oxc_linter/src/rules/react/display_name.rs
+  s_aa3067c8f5ecd1::t_68032a327bcd55 332
+crates/oxc_linter/src/rules/react/no_multi_comp.rs
+  s_aa3067c8f5ecd1::t_8d56205dd92b1d 411
+crates/oxc_linter/src/rules/react/no_redundant_should_component_update.rs
+  s_aa3067c8f5ecd1::t_df369555a58750 143
+crates/oxc_linter/src/rules/react/only_export_components.rs
+  s_aa3067c8f5ecd1::t_632b7a45c43828 628
+crates/oxc_linter/src/rules/typescript/no_invalid_void_type.rs
+  s_aa3067c8f5ecd1::t_7b4853103fb946 286,289
+crates/oxc_linter/src/rules/unicorn/custom_error_definition.rs
+  s_aa3067c8f5ecd1::t_9e5cb918237a9d 340
+crates/oxc_linter/src/rules/unicorn/no_useless_error_capture_stack_trace.rs
+  s_aa3067c8f5ecd1::t_efbee1dfd9666b 157
+crates/oxc_linter/src/rules/unicorn/prefer_event_target.rs
+  s_aa3067c8f5ecd1::t_09681dfb89aa74 61
+crates/oxc_react_compiler/src/react_compiler_lowering/identifier_loc_index.rs
+  s_aa3067c8f5ecd1::t_ba56003784e9ac 168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d0b04c85e96bcc643652512ea82ae3d70b6900c9",
+  "prompts": {},
+  "sessions": {
+    "s_aa3067c8f5ecd1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdba8-20bb-79c3-bc32-395e28a32e34",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

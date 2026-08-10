@@ -1,0 +1,252 @@
+crates/oxc_transformer/src/utils/ast_builder.rs
+  s_9116e0bb07f64a::t_5c1dc20c10d8e2 227-229,231-237,240,242-245
+crates/oxc_linter/src/rules/eslint/no_this_before_super.rs
+  s_9116e0bb07f64a::t_5244dc7d7abc60 3,156
+tasks/ast_tools/src/generators/traverse/walk.rs
+  s_9116e0bb07f64a::t_022f946f3c719b 541-547,551-556,558-560
+crates/oxc_ast_visit/src/generated/visit_js.rs
+  s_9116e0bb07f64a::t_ccd4300426dc80 566-575,2309,2317-2341
+crates/oxc_codegen/tests/integration/js.rs
+  s_9116e0bb07f64a::t_76379f8cf1a9d7 144-149
+crates/oxc_traverse/src/generated/traverse.rs
+  s_9116e0bb07f64a::t_99cc65ed8e8c19 1304-1333
+crates/oxc_linter/src/rules/typescript/explicit_member_accessibility.rs
+  s_9116e0bb07f64a::t_ccf84418fc5c80 9-10,213,260-279,441
+crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/static-with-constructor.snap
+  s_9116e0bb07f64a::t_4bdd106992f85e 52
+crates/oxc_minifier/src/generated/traverse.rs
+  s_9116e0bb07f64a::t_2ed04c7a683b5e 1011-1040
+crates/oxc_linter/src/rules/eslint/no_empty_function.rs
+  s_9116e0bb07f64a::t_12f1b8f57d7cfe 7-9,400-405,477-491
+crates/oxc_ast_macros/src/generated/structs.rs
+  s_9116e0bb07f64a::t_d939a78dfbb002 16,19,20,22,31,40,50,52,53,77,85,96,105-106,117,118,125-126,141,142,145,147,189-190,192,196,251,253-255,287,289-293,308-310,330-331,356-359,369-371,374,500,502-504,508,510-512,517,524,526-528,532,534-536,548,550-552,561,590,678,680-682,687-688,703,761-765,804,806,814,838-839,874-875,886,893-895,897-899,983,1044-1048,1058,1074-1078,1098-1102,1127-1128,1131-1132,1166-1168,1178,1187,1211,1219-1220,1222-1224,1226-1228,1280,1316,1328,1386-1387,1405,1410-1411,1450,1483-1484,1487-1488,1496,1503-1504,1511
+napi/parser/src-js/generated/lazy/constructors.js
+  s_9116e0bb07f64a::t_cbccd5af0484f4 5114,5116,5118,5120-5121,5128-5196,5441,5443,13648-13651
+crates/oxc_ast/src/generated/derive_get_span.rs
+  s_9116e0bb07f64a::t_3282ecbd4a3c2a 1065,1074-1089
+tasks/transform_conformance/snapshots/oxc.snap.md
+  s_9116e0bb07f64a::t_f1274e65bc9940 674-682
+crates/oxc_ast_macros/src/generated/enums.rs
+  s_9116e0bb07f64a::t_589285fc9e12c6 11,17,22,24,42,44-45,50,52,53,57,61-62,64,66-67,69,73,75,77,79,84-85,87,91,96-97,100-102,107,112,115,116,126
+crates/oxc_codegen/src/gen.rs
+  s_9116e0bb07f64a::t_fb4c242c3ec8d8 2591-2594,2615-2646,2912
+crates/oxc_linter/src/ast_util.rs
+  s_9116e0bb07f64a::t_31b2741b052b20 868-872,896
+crates/oxc_minifier/src/generated/ancestor.rs
+  s_9116e0bb07f64a::t_3c6e770398046f 592-595,1360-1364,2128-2132,2433-2434,9666-9760
+crates/oxc_ast/src/generated/derive_get_span_mut.rs
+  s_9116e0bb07f64a::t_af1cdadac6e72e 1064,1073-1088
+tasks/coverage/snapshots/parser_typescript.snap
+  s_9116e0bb07f64a::t_67918e474f6c01 14829,14832,14845,14848,18299-18306
+crates/oxc_minifier/src/generated/walk.rs
+  s_9116e0bb07f64a::t_2971329b44db82 2685-2687,2704-2743
+crates/oxc_linter/src/rules/unicorn/prefer_class_fields.rs
+  s_9116e0bb07f64a::t_df73982e800d8e 5
+crates/oxc_linter/src/rules/typescript/explicit_module_boundary_types.rs
+  s_9116e0bb07f64a::t_ad10282801eeb1 721,743-746
+napi/parser/src-js/generated/deserialize/js_parent.js
+  s_9116e0bb07f64a::t_5d955b08911f66 2227,2229,2231,2233-2234,2241-2277,2345,2347,6032-6035
+napi/parser/src-js/generated/deserialize/js.js
+  s_9116e0bb07f64a::t_cc943ae0efafad 2010,2012,2014,2016-2017,2024-2056,2118,2120,5494-5497
+crates/oxc_linter/src/rules/jsdoc/implements_on_classes.rs
+  s_9116e0bb07f64a::t_b9a6d08ea62812 68-70
+tasks/ast_tools/src/schema/defs/enum.rs
+  s_9116e0bb07f64a::t_ed258bbcf13021 15,213,225
+crates/oxc_ecmascript/src/prop_name.rs
+  s_9116e0bb07f64a::t_0af083fe0e1919 2-3,5,44,52-57
+crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expression/parameter-properties.snap
+  s_9116e0bb07f64a::t_9668c1aed3bc02 33,40,103,118
+napi/parser/src-js/generated/deserialize/ts_range.js
+  s_9116e0bb07f64a::t_10db4ad24e49e0 2463,2465,2467,2469-2470,2477-2521,2600,2602,6412-6415
+napi/parser/src-js/generated/deserialize/js_range_parent.js
+  s_9116e0bb07f64a::t_b11ea51782411d 2448,2450,2452,2454-2455,2462-2504,2578,2580,6599-6602
+crates/oxc_ast/src/generated/ast_builder.rs
+  s_9116e0bb07f64a::t_0f88925d831234 6853,6855-6857,6860,6862,6873-6874,6995,6997-6999,7002,7004,7010,7015-7016,7018,7020-7022,7025,7027,7038,7040
+crates/oxc_ast/src/generated/derive_estree.rs
+  s_9116e0bb07f64a::t_47cf805dedbf48 1513,1522-1538
+napi/parser/src-js/generated/deserialize/ts_parent.js
+  s_9116e0bb07f64a::t_c6d4bbf884e8ad 2456,2458,2460,2462-2463,2470-2512,2591,2593,6384-6387
+crates/oxc_ast/src/ast_impl/js.rs
+  s_9116e0bb07f64a::t_191ddf0dbc29bc 1721-1725,1749,1768,1779,1792-1793,1803,1815,1835,1845,1861,1878
+crates/oxc_transformer/src/typescript/annotations.rs
+  s_9116e0bb07f64a::t_4807f711c4f8a0 243
+crates/oxc_linter/src/rules/typescript/no_extraneous_class.rs
+  s_9116e0bb07f64a::t_41b3f4d3fecebf 162
+crates/oxc_parser/src/js/class.rs
+  s_9116e0bb07f64a::t_2308e6865d84fe 319,517,521-523,527-529,536-537,539,541,543,546,549,556,854,871-883,887,891-892
+crates/oxc_transformer/src/es2022/class_properties/class.rs
+  s_9116e0bb07f64a::t_5a491218c27020 164-165,275-278,813-815
+crates/oxc_semantic/src/checker/typescript.rs
+  s_9116e0bb07f64a::t_471d371d800b20 59,223-228,230-250,252-254,257,274-283
+crates/oxc_linter/src/rules/unicorn/custom_error_definition.rs
+  s_9116e0bb07f64a::t_fcc4ec253911aa 3,180-181,185-186
+crates/oxc_ast/src/ast/js.rs
+  s_9116e0bb07f64a::t_b46d83a2005a2a 2211-2212,2215-2218,2227-2255,2400-2403,2406,2408,2410
+crates/oxc_ast/src/generated/derive_dummy.rs
+  s_9116e0bb07f64a::t_1f2fec6f5cc557 1369-1392,1466
+crates/oxc_formatter/src/print/class.rs
+  s_9116e0bb07f64a::t_619460255d207e 84-114,132
+crates/oxc_transformer/src/typescript/class.rs
+  s_9116e0bb07f64a::t_f8a769927df78b 153-155,157,294-295,297,401,404
+crates/oxc_linter/src/rules/typescript/no_unnecessary_parameter_property_assignment.rs
+  s_9116e0bb07f64a::t_d31715406630b2 5,65
+tasks/ast_tools/src/derives/content_eq.rs
+  s_9116e0bb07f64a::t_3bb3f394bd6879 33-36,52-54,129-130
+crates/oxc_ast/src/serialize/js.rs
+  s_9116e0bb07f64a::t_dfd39569f2af4c 859-881,883-938
+crates/oxc_linter/src/rules/unicorn/no_useless_error_capture_stack_trace.rs
+  s_9116e0bb07f64a::t_4a7afa26962161 136
+crates/oxc_jsdoc/src/builder.rs
+  s_9116e0bb07f64a::t_dc1601b1c8035f 190
+crates/oxc_traverse/src/generated/ancestor.rs
+  s_9116e0bb07f64a::t_a10069c4bf76fe 592-595,1360-1364,2128-2132,2433-2434,9666-9760
+crates/oxc_ast_visit/src/generated/utf8_to_utf16_converter.rs
+  s_9116e0bb07f64a::t_7ec4e375b30ef4 1160-1168
+  s_9116e0bb07f64a::t_d82a064e13adef 474-479,1169
+crates/oxc_linter/src/generated/rule_runner_impls.rs
+  s_9116e0bb07f64a::t_9587e2abe3c098 1257,1630,1889,2038
+crates/oxc_semantic/src/checker/mod.rs
+  s_9116e0bb07f64a::t_a0706b85eb752b 90-92
+crates/oxc_ast_visit/src/generated/visit.rs
+  s_9116e0bb07f64a::t_053c6442e28fe3 539-548,2657,2665-2689
+apps/oxlint/src-js/generated/deserialize.js
+  s_9116e0bb07f64a::t_a7a03d727adcf1 2767,2769,2771,2773-2774,2781-2831,2918,2920,6854-6857
+crates/oxc_linter/src/rules/eslint/constructor_super.rs
+  s_9116e0bb07f64a::t_b49b330c04a46d 228-229,735-740
+crates/oxc_semantic/src/checker/javascript.rs
+  s_9116e0bb07f64a::t_4274183f0756d8 959,962,1178,1184,1197,1204-1211,1213-1217
+crates/oxc_ast/src/ast_kind_impl.rs
+  s_9116e0bb07f64a::t_3926619895c120 505
+crates/oxc_linter/src/rules/eslint/no_constructor_return.rs
+  s_9116e0bb07f64a::t_8855753874f3aa 1,67-70
+crates/oxc_ast/src/generated/derive_unstable_address.rs
+  s_9116e0bb07f64a::t_9aa4af3e557c20 167-168
+crates/oxc_ast/src/generated/derive_take_in.rs
+  s_9116e0bb07f64a::t_c03dbdd5d44954 211-214
+crates/oxc_minifier/src/peephole/inline.rs
+  s_9116e0bb07f64a::t_69c7116a9ade03 222
+tasks/ast_tools/src/generators/utf8_to_utf16.rs
+  s_9116e0bb07f64a::t_c75a4663bfdb8b 9,87-99,113,172-233
+crates/oxc_linter/src/rules/react/state_in_constructor.rs
+  s_9116e0bb07f64a::t_87858a823ad146 151-152
+crates/oxc_semantic/src/class/builder.rs
+  s_9116e0bb07f64a::t_4c5e710c7a4bbb 124
+crates/oxc_minifier/src/traverse_context/scopes_collector.rs
+  s_9116e0bb07f64a::t_df2321f493daf7 1106,1118-1119
+crates/oxc_formatter/src/ast_nodes/generated/format.rs
+  s_9116e0bb07f64a::t_082cd03ce6c9e3 2644-2653,2690-2723
+crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/parameter-property.snap
+  s_9116e0bb07f64a::t_7844f06a7dffad 60,67
+crates/oxc_ast/src/generated/derive_get_address.rs
+  s_9116e0bb07f64a::t_f8345d05f784f2 500
+tasks/ast_tools/src/generators/formatter/format.rs
+  s_9116e0bb07f64a::t_a62e4b67e0d12c 332-336,345
+crates/oxc_linter/src/rules/unicorn/no_static_only_class.rs
+  s_9116e0bb07f64a::t_026d031420d0e3 82-86
+crates/oxc_transformer/src/es2022/class_static_block.rs
+  s_9116e0bb07f64a::t_17a0186e0eb603 82
+crates/oxc_linter/src/rules/typescript/unified_signatures.rs
+  s_9116e0bb07f64a::t_0d3d9f1b10b910 219-245
+crates/oxc_ast/src/generated/derive_content_eq.rs
+  s_9116e0bb07f64a::t_a349692a8470f6 1239,1245-1262
+crates/oxc_traverse/src/generated/walk.rs
+  s_9116e0bb07f64a::t_441431ce2c530d 2685-2687,2702-2741
+tasks/ast_tools/src/schema/extensions/content_eq.rs
+  s_9116e0bb07f64a::t_c8e6f321a75aa9 14-20
+crates/oxc_formatter/src/ast_nodes/generated/ast_nodes.rs
+  s_9116e0bb07f64a::t_62db9e8f62f623 108,312,516,715,5229-5236,5274-5339
+crates/oxc_linter/src/rules/typescript/adjacent_overload_signatures.rs
+  s_9116e0bb07f64a::t_e015202e816842 142-148
+crates/oxc_linter/src/rules/typescript/explicit_function_return_type.rs
+  s_9116e0bb07f64a::t_fcc2af021e3e47 494
+crates/oxc_linter/src/rules/jsdoc/require_param.rs
+  s_9116e0bb07f64a::t_b06b1c76937350 165-167
+tasks/ast_tools/src/generators/formatter/ast_nodes.rs
+  s_9116e0bb07f64a::t_124e1fc4d27b88 553-554,569-570
+napi/parser/src-js/generated/deserialize/ts_range_parent.js
+  s_9116e0bb07f64a::t_352956ed38c458 2698,2700,2702,2704-2705,2712-2760,2845,2847,6979-6982
+crates/oxc_ast_visit/src/generated/visit_mut.rs
+  s_9116e0bb07f64a::t_bd59f148664474 531-540,2748,2756-2783
+crates/oxc_transformer/src/decorator/legacy/metadata.rs
+  s_9116e0bb07f64a::t_9dc327f4ce4978 173-174
+crates/oxc_transformer/src/decorator/legacy/mod.rs
+  s_9116e0bb07f64a::t_789e497d7e7723 1097,1102,1247-1250,1273,1285-1324,1348-1349
+crates/oxc_ast/src/generated/derive_replace_with.rs
+  s_9116e0bb07f64a::t_824e09946f08db 209-212
+crates/oxc_linter/src/rules/jsdoc/require_returns.rs
+  s_9116e0bb07f64a::t_e42aefbbccd5e9 198-200
+crates/oxc_linter/src/rules/eslint/func_names.rs
+  s_9116e0bb07f64a::t_b84fc3f300660b 328
+crates/oxc_minifier/src/peephole/remove_unused_expression.rs
+  s_9116e0bb07f64a::t_61679fbb849cab 1048-1050,1065
+crates/oxc_ast/src/generated/assert_layouts.rs
+  s_9116e0bb07f64a::t_db73cc1e1b2f19 764-775,2618-2629
+crates/oxc_ast/src/generated/derive_clone_in.rs
+  s_9116e0bb07f64a::t_596e4c96eb4b44 2514-2516,2532-2576
+crates/oxc_ecmascript/src/side_effects/expressions.rs
+  s_9116e0bb07f64a::t_504f69737907a5 378-380
+napi/parser/src-js/generated/lazy/type_ids.js
+  s_9116e0bb07f64a::t_9eff2df106f5af 107-117
+crates/oxc_traverse/src/generated/scopes_collector.rs
+  s_9116e0bb07f64a::t_d95950f07bbd04 1093-1105
+napi/parser/src-js/generated/deserialize/js_range.js
+  s_9116e0bb07f64a::t_c07ce89021e291 2232,2234,2236,2238-2239,2246-2284,2352,2354,6062-6065
+crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/method-param-default.snap
+  s_9116e0bb07f64a::t_e93c8e9c1efdc5 26,49
+napi/parser/src-js/generated/deserialize/ts.js
+  s_9116e0bb07f64a::t_36c845fa2d728d 2220,2222,2224,2226-2227,2234-2272,2345,2347,5816-5819
+tasks/prettier_conformance/snapshots/prettier.js.snap.md
+  s_9116e0bb07f64a::t_3e2638031816c3 10
+crates/oxc_linter/src/rules/typescript/parameter_properties.rs
+  s_9116e0bb07f64a::t_0252a9ecd666a5 8-9,137,162,200
+crates/oxc_transformer/src/typescript/mod.rs
+  s_9116e0bb07f64a::t_dfdc17428e616c 192-199
+tasks/track_linter_timings/linter_timings.snap
+  s_9116e0bb07f64a::t_c69268531179da 8,23,130,148,150,460,511,518,580
+crates/oxc_isolated_declarations/src/class.rs
+  s_9116e0bb07f64a::t_96e1f5cb1c38a0 228-243,246-257,335,349-356,358-362,484,531-559,572,604-607,670
+crates/oxc_semantic/src/builder.rs
+  s_9116e0bb07f64a::t_323e82fd5fa270 2473-2482
+crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/parameter-properties.snap
+  s_9116e0bb07f64a::t_0973e60a3ba69f 33,40,103,118
+crates/oxc_ast/src/generated/ast_kind.rs
+  s_9116e0bb07f64a::t_21915575da63ee 94-106,300,513,714,917,1121,1635-1639
+crates/oxc_linter/src/rules/eslint/no_useless_constructor.rs
+  s_9116e0bb07f64a::t_c68cd02065f285 4-5,111,149,175
+tasks/prettier_conformance/snapshots/prettier.ts.snap.md
+  s_9116e0bb07f64a::t_ec90c80c43ec10 12
+crates/oxc_linter/src/rules/react/no_direct_mutation_state.rs
+  s_9116e0bb07f64a::t_ce12ba5ec35250 1,144
+crates/oxc_semantic/tests/fixtures/oxc/ts/decorators/parameter-decorator-shadow.snap
+  s_9116e0bb07f64a::t_b2f1522e4bf439 91,98,113,120
+crates/oxc_ast/src/generated/get_id.rs
+  s_9116e0bb07f64a::t_95af485facce8f 1479-1494,4119
+crates/oxc_linter/src/utils/jsdoc.rs
+  s_9116e0bb07f64a::t_0e7d09da1217d2 91
+crates/oxc_minifier/src/peephole/remove_unused_private_members.rs
+  s_9116e0bb07f64a::t_c971821a0c2a65 47,85
+crates/oxc_linter/src/rules/typescript/class_literal_property_style.rs
+  s_9116e0bb07f64a::t_bbefb836cbf0ba 200-201
+crates/oxc_ecmascript/src/private_bound_identifiers.rs
+  s_9116e0bb07f64a::t_d46e744e67a6ac 14-16
+crates/oxc_linter/src/rules/eslint/no_unused_vars/allowed.rs
+  s_9116e0bb07f64a::t_ce7373d690df03 370-372
+napi/parser/src-js/generated/lazy/walk.js
+  s_9116e0bb07f64a::t_de4c8d8d4fab60 77,2497,2500,2503,2506-2508,2516,2518-2546,2564,2588,2604,2623,2640,2674,2691,2707,2727,2757,5582-5585
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cf45799ce21cca3d2b7d4320006f30460aa94266",
+  "prompts": {},
+  "sessions": {
+    "s_9116e0bb07f64a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f6640-b764-7883-99f4-c8f340605997",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
