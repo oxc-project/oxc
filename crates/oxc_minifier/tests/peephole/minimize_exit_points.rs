@@ -109,10 +109,7 @@ fn test_function_return_optimization() {
 
     test_same("function f(){g:return}"); // function f(){}
     test("function f(){g:{return}}", "function f(){g:return}"); // function f(){}
-    test(
-        "function f(){g:if(a()){return;}else{return;} return;}",
-        "function f(){g:if(a())return;else return}",
-    ); // function f(){g:a()}
+    test("function f(){g:if(a()){return;}else{return;} return;}", "function f(){g:{a();return;}}"); // function f(){g:a()}
     test("function f(){g:{if(a()){return;}else{return;} return;}}", "function f(){g:{a();return}}"); // function f(){g:a()}
     test(
         "function f(){g:{a();if(b()){return;}else{return;} return;}}",

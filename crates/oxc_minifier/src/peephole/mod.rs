@@ -444,6 +444,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     {
                         ctx.replace_statement(stmt, folded_stmt);
                     }
+                    Self::try_unfold_if_else(stmt, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
