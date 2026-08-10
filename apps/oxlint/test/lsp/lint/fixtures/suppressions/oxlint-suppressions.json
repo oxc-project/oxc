@@ -1,0 +1,7 @@
+{
+  "default.js": { "no-console": { "count": 2 } },
+  "fix.js": { "no-debugger": { "count": 1 } },
+  "hidden.js": { "no-console": { "count": 2 } },
+  "increased.js": { "no-console": { "count": 2 } },
+  "severity.js": { "no-console": { "count": 2 } }
+}

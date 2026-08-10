@@ -109,6 +109,25 @@ currently has no effect for them.
 See [#26613](https://github.com/oxc-project/oxc/issues/26613)
 
 
+## showSuppressedViolations
+
+type: `boolean`
+
+
+Whether to show violations suppressed by the bulk-suppression baseline
+(`oxlint-suppressions.json`) in the editor as faded (`UNNECESSARY`-tagged) diagnostics
+instead of hiding them entirely. Unset is treated as `true`; set to `false` to hide them.
+
+
+## suppressedViolationSeverity
+
+type: `"hint" | "information" | "warning" | "error"`
+
+
+Severity used to render bulk-suppressed violations when they are shown. Defaults to
+`warning`.
+
+
 ## tsConfigPath
 
 type: `string`
