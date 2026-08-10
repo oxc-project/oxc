@@ -30,6 +30,40 @@ debugger;
 --------------------"
 `;
 
+exports[`LSP code actions > basic code actions > should handle js-plugin-fix/non-zero-offset.js 1`] = `
+"--- FILE -----------
+js-plugin-fix/non-zero-offset.js
+--- Original Content ---------
+const value = 1;
+debugger;
+
+--- Code Actions ---------
+
+Title : Fix this Remove debugger statement problem
+Preferred: Yes
+Resulting Content:
+const value = 1;
+
+######
+
+Title : Disable fixes-plugin/fixes for this line
+Preferred: No
+Resulting Content:
+const value = 1;
+// oxlint-disable-next-line fixes-plugin/fixes
+debugger;
+######
+
+Title : Disable fixes-plugin/fixes for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable fixes-plugin/fixes
+const value = 1;
+debugger;
+
+--------------------"
+`;
+
 exports[`LSP code actions > basic code actions > should handle js-plugin-fix/test.js 1`] = `
 "--- FILE -----------
 js-plugin-fix/test.js

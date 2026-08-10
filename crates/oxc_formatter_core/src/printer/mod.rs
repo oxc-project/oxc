@@ -366,13 +366,12 @@ impl<'a> Printer<'a> {
             }
             FormatElement::TailwindClass(index) => {
                 let text = self.state.sorted_tailwind_classes.get(*index);
-                // A dangling index silently DELETES the class list from the
-                // output, so fail loudly in debug builds instead.
+                // A dangling index silently DELETES the class list from the output,
+                // so fail loudly in debug builds instead.
                 debug_assert!(
                     text.is_some(),
-                    "TailwindClass index {index} out of bounds ({} classes) — \
-                     was the embedded IR remapped into the parent's class space \
-                     (`DispatchResult::remap_tailwind_into`)?",
+                    "TailwindClass index {index} out of bounds ({} classes): \
+                     Was the embedded IR remapped into the parent's class space (`DispatchPayload::into_doc`)?",
                     self.state.sorted_tailwind_classes.len(),
                 );
                 if let Some(text) = text {
@@ -1612,9 +1611,7 @@ mod tests {
         crate::format::write(&mut buffer, Arguments::new(&[Argument::new(root)]));
 
         let elements = buffer.into_vec();
-        let document = Document::new(elements, Vec::default());
-        document.propagate_expand();
-        Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
+        Document::new(elements, Vec::default()).print(0, options).expect("Document to be valid")
     }
 
     #[test]

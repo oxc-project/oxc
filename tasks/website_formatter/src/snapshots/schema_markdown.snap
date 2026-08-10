@@ -694,24 +694,27 @@ Name of the custom group, used in the `groups` option.
 
 ######## overrides[n].options.sortImports.customGroups[n].modifiers
 
-type: `string[]`
+type: `array`
 
 
 Modifiers to match the import characteristics.
 All specified modifiers must be present (AND logic).
 
-Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+
+######### overrides[n].options.sortImports.customGroups[n].modifiers[n]
+
+type: `"side_effect" | "type" | "value" | "default" | "wildcard" | "named"`
+
+
+Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
 
 
 ######## overrides[n].options.sortImports.customGroups[n].selector
 
-type: `string`
+type: `"type" | "side_effect_style" | "side_effect" | "style" | "index" | "sibling" | "parent" | "subpath" | "internal" | "builtin" | "external" | "import"`
 
 
 Selector to match the import kind.
-
-Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
-`"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
 
 
 ###### overrides[n].options.sortImports.groups
@@ -1239,24 +1242,27 @@ Name of the custom group, used in the `groups` option.
 
 ##### sortImports.customGroups[n].modifiers
 
-type: `string[]`
+type: `array`
 
 
 Modifiers to match the import characteristics.
 All specified modifiers must be present (AND logic).
 
-Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+
+###### sortImports.customGroups[n].modifiers[n]
+
+type: `"side_effect" | "type" | "value" | "default" | "wildcard" | "named"`
+
+
+Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
 
 
 ##### sortImports.customGroups[n].selector
 
-type: `string`
+type: `"type" | "side_effect_style" | "side_effect" | "style" | "index" | "sibling" | "parent" | "subpath" | "internal" | "builtin" | "external" | "import"`
 
 
 Selector to match the import kind.
-
-Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
-`"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
 
 
 ### sortImports.groups

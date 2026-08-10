@@ -672,6 +672,21 @@
       },
       "additionalProperties": false
     },
+    "AnchorHasContentConfig": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "Additional custom component names to treat as anchor elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional custom component names to treat as anchor elements."
+        }
+      },
+      "additionalProperties": false
+    },
     "AnchorIsValidAspect": {
       "type": "string",
       "enum": [
@@ -2034,6 +2049,15 @@
       },
       "additionalProperties": false
     },
+    "DescriptionFormatConfig": {
+      "type": "object",
+      "properties": {
+        "descriptionFormat": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "Destructure": {
       "oneOf": [
         {
@@ -2091,13 +2115,7 @@
           "$ref": "#/definitions/RequireDescription"
         },
         {
-          "type": "object",
-          "properties": {
-            "descriptionFormat": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
+          "$ref": "#/definitions/DescriptionFormatConfig"
         }
       ]
     },
@@ -3563,6 +3581,26 @@
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/no-blank-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoBlankBlocks"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/no-defaults": {
           "anyOf": [
             {
@@ -3757,7 +3795,24 @@
           ]
         },
         "jsx-a11y/anchor-has-content": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AnchorHasContentConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/anchor-is-valid": {
           "anyOf": [
@@ -5846,6 +5901,26 @@
                 }
               ],
               "maxItems": 3,
+              "minItems": 2
+            }
+          ]
+        },
+        "one-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/OneVar"
+                }
+              ],
+              "maxItems": 2,
               "minItems": 2
             }
           ]
@@ -13715,6 +13790,18 @@
       },
       "additionalProperties": false
     },
+    "NoBlankBlocks": {
+      "type": "object",
+      "properties": {
+        "enableFixer": {
+          "description": "Whether to automatically remove blank JSDoc blocks.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to automatically remove blank JSDoc blocks."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoCallbackInPromiseConfig": {
       "type": "object",
       "properties": {
@@ -16583,6 +16670,153 @@
           }
         }
       ]
+    },
+    "OneVar": {
+      "description": "Enforces consistent grouping of variable declarations.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OneVarConfig"
+        }
+      ],
+      "markdownDescription": "Enforces consistent grouping of variable declarations."
+    },
+    "OneVarConfig": {
+      "description": "Configuration accepted by the `one-var` rule.",
+      "anyOf": [
+        {
+          "description": "Applies one grouping mode to every declaration kind and initialization state.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Applies one grouping mode to every declaration kind and initialization state."
+        },
+        {
+          "description": "Configures grouping by declaration kind or initialization state.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarOptions"
+            }
+          ],
+          "markdownDescription": "Configures grouping by declaration kind or initialization state."
+        }
+      ],
+      "markdownDescription": "Configuration accepted by the `one-var` rule."
+    },
+    "OneVarMode": {
+      "description": "Controls how variable declarators are grouped into declarations.",
+      "oneOf": [
+        {
+          "description": "Requires one declaration per variable kind in each applicable scope.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Requires one declaration per variable kind in each applicable scope."
+        },
+        {
+          "description": "Requires each declarator to have its own declaration statement.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Requires each declarator to have its own declaration statement."
+        },
+        {
+          "description": "Requires adjacent declarations of the same kind to be combined.",
+          "type": "string",
+          "enum": [
+            "consecutive"
+          ],
+          "markdownDescription": "Requires adjacent declarations of the same kind to be combined."
+        }
+      ],
+      "markdownDescription": "Controls how variable declarators are grouped into declarations."
+    },
+    "OneVarOptions": {
+      "description": "Options for configuring declaration grouping by kind or initialization state.\n\n`initialized` and `uninitialized` take precedence over the per-kind option for the\ncorresponding declarators.",
+      "type": "object",
+      "properties": {
+        "awaitUsing": {
+          "description": "Controls grouping for `await using` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `await using` declarations."
+        },
+        "const": {
+          "description": "Controls grouping for `const` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `const` declarations."
+        },
+        "initialized": {
+          "description": "Controls grouping for initialized declarators, overriding per-kind options.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for initialized declarators, overriding per-kind options."
+        },
+        "let": {
+          "description": "Controls grouping for `let` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `let` declarations."
+        },
+        "separateRequires": {
+          "description": "Keeps direct `require(...)` initializers separate from other initialized declarations.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Keeps direct `require(...)` initializers separate from other initialized declarations."
+        },
+        "uninitialized": {
+          "description": "Controls grouping for uninitialized declarators, overriding per-kind options.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for uninitialized declarators, overriding per-kind options."
+        },
+        "using": {
+          "description": "Controls grouping for `using` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `using` declarations."
+        },
+        "var": {
+          "description": "Controls grouping for `var` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `var` declarations."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Options for configuring declaration grouping by kind or initialization state.\n\n`initialized` and `uninitialized` take precedence over the per-kind option for the\ncorresponding declarators."
     },
     "OnlyExportComponentsConfig": {
       "type": "object",

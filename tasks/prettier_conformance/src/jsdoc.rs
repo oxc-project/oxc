@@ -284,9 +284,11 @@ impl JsdocTestRunner {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap_or_default();
 
-        // Parse here (not via `oxc_formatter::format`) so recoverable parse errors are tolerated:
-        // some jsdoc fixtures (e.g. duplicate declarations) still format correctly. Only a hard
-        // parser panic aborts. `format_program` is the AST-in entry point for exactly this.
+        // NOTE: Parse here (not via `oxc_formatter::format`) so recoverable parse errors are tolerated,
+        // some jsdoc fixtures (e.g. duplicate declarations) still format correctly.
+        // Only a hard parser panic aborts.
+        // This deliberately DIVERGES from production oxfmt,
+        // whose fail-loud `format()` would report a diagnostic for these fixtures instead of formatting.
         let ret = parse_for_format(&allocator, source_text, source_type);
         if ret.panicked {
             return None;
@@ -299,6 +301,6 @@ impl JsdocTestRunner {
             jsdoc: Some(jsdoc_options.clone()),
             ..JsFormatOptions::default()
         };
-        Some(format_program(&allocator, &ret.program, options, None).print().ok()?.into_code())
+        Some(format_program(&allocator, &ret.program, options).print().ok()?.into_code())
     }
 }

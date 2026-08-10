@@ -1015,7 +1015,6 @@ impl<'a> LegacyDecorator<'a> {
         );
         let declarator = VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Let,
             binding.create_spanned_binding_pattern(binding_span, ctx),
             None,
             Some(initializer),

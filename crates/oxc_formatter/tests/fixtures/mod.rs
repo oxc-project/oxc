@@ -96,7 +96,7 @@ impl FixtureFormatter for JsHarness {
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {
         let source_type = SourceType::from_path(path).unwrap();
         let allocator = Allocator::default();
-        oxc_formatter::format(&allocator, source, source_type, options.clone(), None)
+        oxc_formatter::format(&allocator, source, source_type, options.clone())
             .unwrap()
             .print()
             .unwrap()
@@ -116,6 +116,24 @@ fn test_file(path: &Path) {
     }, {
         insta::assert_snapshot!(snap.name, snap.body);
     });
+}
+
+/// A leading BOM is preserved (Prettier does the same);
+/// `oxc_parser` keeps it in the source and the root re-emits it at byte 0.
+#[test]
+fn bom_is_preserved() {
+    let allocator = Allocator::default();
+    let formatted = oxc_formatter::format(
+        &allocator,
+        "\u{feff}let a = 1",
+        SourceType::mjs(),
+        JsFormatOptions::default(),
+    )
+    .expect("BOM input should parse")
+    .print()
+    .expect("print should succeed")
+    .into_code();
+    assert_eq!(formatted, "\u{feff}let a = 1;\n");
 }
 
 // Include auto-generated test functions from build.rs

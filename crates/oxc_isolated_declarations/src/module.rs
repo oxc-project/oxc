@@ -125,8 +125,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.error(default_export_inferred(expr.span()));
             }
 
-            let declaration =
-                VariableDeclarator::new(SPAN, kind, id, type_annotation, None, false, self);
+            let declaration = VariableDeclarator::new(SPAN, id, type_annotation, None, false, self);
 
             let variable_statement = Statement::new_variable_declaration(
                 decl_span,

@@ -956,3 +956,11 @@ fn test_comment_inside_parenthesized_expression_with_pife_arrow() {
 fn test_comment_inside_double_parenthesized_pife_arrow() {
     test_idempotency("const x = foo ? bar : ( ( ( a ) => a ) );");
 }
+
+// A leading comment on the statement which closes the directive prologue was dropped, because the
+// paren-protecting path prints that statement itself instead of going through its printer.
+#[test]
+fn test_comment_on_paren_protected_prologue_boundary() {
+    test_same("// leading comment\n(\"use strict\");\nfoo();\n");
+    test_same("\"use asm\";\n// leading comment\n(\"use strict\");\nfoo();\n");
+}

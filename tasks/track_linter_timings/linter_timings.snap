@@ -155,6 +155,7 @@ eslint/no-var                                              |  31363
 eslint/no-void                                             |   9106
 eslint/no-warning-comments                                 |      7
 eslint/object-shorthand                                    |  46617
+eslint/one-var                                             |      7
 eslint/operator-assignment                                 |  13005
 eslint/prefer-arrow-callback                               |  14283
 eslint/prefer-const                                        |  31363
@@ -281,6 +282,7 @@ jsdoc/check-property-names                                 |      7
 jsdoc/check-tag-names                                      |      7
 jsdoc/empty-tags                                           |      7
 jsdoc/implements-on-classes                                |  16812
+jsdoc/no-blank-blocks                                      |      7
 jsdoc/no-defaults                                          |  16812
 jsdoc/require-param                                        |  16812
 jsdoc/require-param-description                            |  16812
@@ -500,7 +502,7 @@ typescript/no-import-type-side-effects                     |     99
 typescript/no-inferrable-types                             |  55071
 typescript/no-invalid-void-type                            |    731
 typescript/no-misused-new                                  |    636
-typescript/no-namespace                                    |      6
+typescript/no-namespace                                    |      5
 typescript/no-non-null-asserted-nullish-coalescing         |   7341
 typescript/no-non-null-asserted-optional-chain             |    577
 typescript/no-non-null-assertion                           |    577
@@ -519,7 +521,7 @@ typescript/prefer-enum-initializers                        |     23
 typescript/prefer-for-of                                   |    557
 typescript/prefer-function-type                            |  14798
 typescript/prefer-literal-enum-member                      |    196
-typescript/prefer-namespace-keyword                        |      6
+typescript/prefer-namespace-keyword                        |      5
 typescript/prefer-ts-expect-error                          |      4
 typescript/triple-slash-reference                          |      4
 typescript/unified-signatures                              |   1116

@@ -314,7 +314,8 @@ impl<'a> Symbol<'_, 'a> {
                 // e.g.:
                 // - `type Foo = { bar(): Foo }`
                 // - `class Foo { static factory(): Foo { return new Foo() } }`
-                AstKind::TSModuleDeclaration(_)
+                AstKind::TSExternalModuleDeclaration(_)
+                | AstKind::TSNamespaceDeclaration(_)
                 | AstKind::TSGlobalDeclaration(_)
                 | AstKind::VariableDeclaration(_)
                 | AstKind::VariableDeclarator(_)

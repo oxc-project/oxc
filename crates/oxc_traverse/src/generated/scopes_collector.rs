@@ -623,7 +623,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Statement::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
             Statement::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
             Statement::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Statement::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            Statement::TSExternalModuleDeclaration(it) => {
+                self.visit_ts_external_module_declaration(it)
+            }
+            Statement::TSNamespaceDeclaration(it) => self.visit_ts_namespace_declaration(it),
             Statement::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             Statement::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
             Statement::ExportDeclaration(it) => self.visit_export_declaration(it),
@@ -670,7 +673,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Declaration::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
             Declaration::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Declaration::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            Declaration::TSExternalModuleDeclaration(it) => {
+                self.visit_ts_external_module_declaration(it)
+            }
+            Declaration::TSNamespaceDeclaration(it) => self.visit_ts_namespace_declaration(it),
             Declaration::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             _ => {
                 // Remaining variants do not contain scopes:
@@ -1929,7 +1935,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_interface_heritage(&mut self, it: &TSInterfaceHeritage<'a>) {
-        self.visit_expression(&it.expression);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
@@ -1948,13 +1953,13 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
-    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
+    fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
         self.add_scope(&it.scope_id);
     }
 
-    #[inline(always)]
-    fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
-        // Enum does not contain a scope. Halt traversal.
+    #[inline]
+    fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]

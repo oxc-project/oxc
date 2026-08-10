@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.78.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🚀 Features
+
+- ccb8fe8 linter/jsdoc: Implement `no-blank-blocks` rule (#25207) (Mikhail Baev)
+- d4a897c linter/eslint: Implement `one-var` rule (#24470) (Cole Ellison)
+- 5ab9340 linter/jsx-a11y/anchor-has-content: Add options to match eslint (#24571) (Cole Ellison)
+
+### 🐛 Bug Fixes
+
+- a92c541 linter: Preserve source text for JS plugin ignore fixes (#25280) (Norcleeh)
+- 6b1c479 oxlint: Normalize customized rule names (#25316) (camc314)
+- 9573937 linter/typescript: Validate `ban-ts-comment` description_format (#25320) (Mikhail Baev)
+
+### ⚡ Performance
+
+- 4ec9189 oxlint/lsp: Avoid second lock for getting/removing unused directives (#25350) (Sysix)
+- 6c0d01b oxlint/lsp: Preallocate fix-content vec (#25351) (Sysix)
+- 4abff11 linter: Avoid redundant message work in the agent reporter (#25315) (Connor Shea)
+- 6bb5421 linter: Hoist `current_dir` out of the stylish reporter loop (#25313) (Connor Shea)
+- 9a7c323 linter: Compute diagnostic `Info` once per diagnostic in junit reporter (#25312) (Connor Shea)
+- 1cf7dde oxlint: Render JSON report into a single buffer (#25295) (connorshea)
+
 ## [1.77.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

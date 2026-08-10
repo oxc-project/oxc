@@ -98,13 +98,22 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
-pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
-    if matches!(&decl.id, TSModuleDeclarationName::StringLiteral(_)) {
-        check_ambient_module_declaration(decl.span, ctx);
-    } else {
-        check_ts_module_or_global_declaration(decl.span, ctx);
+pub fn check_ts_external_module_declaration<'a>(
+    decl: &TSExternalModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    check_ambient_module_declaration(decl.span, ctx);
+    if let Some(body) = &decl.body {
+        check_ts_export_assignment_in_statements(&body.body, ctx);
     }
-    check_ts_export_assignment_in_module_decl(decl, ctx);
+}
+
+pub fn check_ts_namespace_declaration<'a>(
+    decl: &TSNamespaceDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    check_ts_module_or_global_declaration(decl.span, ctx);
+    check_ts_export_assignment_in_namespace_decl(decl, ctx);
 }
 
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
@@ -123,7 +132,8 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
         match kind {
             AstKind::Program(_)
             | AstKind::TSModuleBlock(_)
-            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSExternalModuleDeclaration(_)
+            | AstKind::TSNamespaceDeclaration(_)
             | AstKind::TSGlobalDeclaration(_) => {
                 break;
             }
@@ -145,19 +155,26 @@ fn check_ambient_module_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
     match ancestors.next() {
         Some(AstKind::Program(_)) => {}
         Some(AstKind::TSModuleBlock(_)) => match ancestors.next() {
-            Some(AstKind::TSModuleDeclaration(decl))
-                if matches!(&decl.id, TSModuleDeclarationName::StringLiteral(_))
-                    && ctx.source_type.is_script()
+            Some(AstKind::TSExternalModuleDeclaration(_))
+                if ctx.source_type.is_script()
                     && matches!(ancestors.next(), Some(AstKind::Program(_))) =>
             {
                 // Module augmentations may be nested directly in a top-level ambient module.
             }
-            Some(AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)) => {
+            Some(
+                AstKind::TSExternalModuleDeclaration(_)
+                | AstKind::TSNamespaceDeclaration(_)
+                | AstKind::TSGlobalDeclaration(_),
+            ) => {
                 ctx.error(diagnostics::nested_ambient_module_declaration(span));
             }
             _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
         },
-        Some(AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)) => {
+        Some(
+            AstKind::TSExternalModuleDeclaration(_)
+            | AstKind::TSNamespaceDeclaration(_)
+            | AstKind::TSGlobalDeclaration(_),
+        ) => {
             ctx.error(diagnostics::nested_ambient_module_declaration(span));
         }
         _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
@@ -201,7 +218,8 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 
     if !ctx.in_ambient_context() {
         let mut is_in_overload_group = false;
-        for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
+        for (a, b) in class.body.body.iter().map(Some).chain(std::iter::once(None)).tuple_windows()
+        {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
@@ -274,18 +292,15 @@ pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &Se
     check_ts_export_assignment_in_statements(&program.body, ctx);
 }
 
-fn check_ts_export_assignment_in_module_decl<'a>(
-    module_decl: &TSModuleDeclaration<'a>,
+fn check_ts_export_assignment_in_namespace_decl<'a>(
+    namespace_decl: &TSNamespaceDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    let Some(body) = &module_decl.body else {
-        return;
-    };
-    match body {
-        TSModuleDeclarationBody::TSModuleDeclaration(nested) => {
-            check_ts_export_assignment_in_module_decl(nested, ctx);
+    match &namespace_decl.body {
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(nested) => {
+            check_ts_export_assignment_in_namespace_decl(nested, ctx);
         }
-        TSModuleDeclarationBody::TSModuleBlock(block) => {
+        TSNamespaceDeclarationBody::TSModuleBlock(block) => {
             check_ts_export_assignment_in_statements(&block.body, ctx);
         }
     }

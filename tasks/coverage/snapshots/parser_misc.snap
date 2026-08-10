@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 74/74 (100.00%)
-Positive Passed: 74/74 (100.00%)
-Negative Passed: 155/155 (100.00%)
+AST Parsed     : 77/77 (100.00%)
+Positive Passed: 77/77 (100.00%)
+Negative Passed: 159/159 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -136,12 +136,37 @@ Negative Passed: 155/155 (100.00%)
     ╰────
   note: Classes are always strict mode code
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/auto-accessor-initializer-await.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = await 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[misc/fail/auto-accessor-initializer-yield.js:3:18]
+ 2 │   class C {
+ 3 │     accessor x = yield 1;
+   ·                  ─────
+ 4 │   }
+   ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
   × Cannot use await in class static initialization block
    ╭─[misc/fail/await-expr-in-block-in-class-static-block.mjs:4:7]
  3 │     {
  4 │       await foo;
    ·       ─────
  5 │     }
+   ╰────
+
+  × Expected `;` but found `,`
+   ╭─[misc/fail/class-field-comma-expression.js:1:16]
+ 1 │ class C { x = a,b }
+   ·                ┬
+   ·                ╰── `;` expected
    ╰────
 
   × Cannot use export statement outside a module
@@ -4181,6 +4206,28 @@ Negative Passed: 155/155 (100.00%)
  3 │ }
    ╰────
   help: If this is intended to be the condition for the switch statement, add `case` before it.
+
+  × TS(1009): Trailing comma not allowed.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:1:22]
+ 1 │ interface A extends B, {}
+   ·                      ─
+ 2 │ interface B extends this {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:2:21]
+ 1 │ interface A extends B, {}
+ 2 │ interface B extends this {}
+   ·                     ────
+ 3 │ interface C extends this.D {}
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[misc/fail/ts-interface-invalid-heritage.ts:3:21]
+ 2 │ interface B extends this {}
+ 3 │ interface C extends this.D {}
+   ·                     ──────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[misc/fail/ts-unerasable-as-chained.ts:4:33]

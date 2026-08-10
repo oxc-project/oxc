@@ -538,8 +538,7 @@ impl<'a> Expression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -551,8 +550,7 @@ impl<'a> Expression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -565,8 +563,7 @@ impl<'a> Expression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -585,8 +582,7 @@ impl<'a> Expression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -599,8 +595,7 @@ impl<'a> Expression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -614,8 +609,7 @@ impl<'a> Expression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -2072,8 +2066,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -2085,8 +2078,7 @@ impl<'a> ArrayExpressionElement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -2099,8 +2091,7 @@ impl<'a> ArrayExpressionElement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -2119,8 +2110,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -2133,8 +2123,7 @@ impl<'a> ArrayExpressionElement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -2148,8 +2137,7 @@ impl<'a> ArrayExpressionElement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -3513,8 +3501,7 @@ impl<'a> PropertyKey<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -3526,8 +3513,7 @@ impl<'a> PropertyKey<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -3540,8 +3526,7 @@ impl<'a> PropertyKey<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -3560,8 +3545,7 @@ impl<'a> PropertyKey<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -3574,8 +3558,7 @@ impl<'a> PropertyKey<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -3589,8 +3572,7 @@ impl<'a> PropertyKey<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -5461,8 +5443,7 @@ impl<'a> Argument<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5474,8 +5455,7 @@ impl<'a> Argument<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -5488,8 +5468,7 @@ impl<'a> Argument<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -5508,8 +5487,7 @@ impl<'a> Argument<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5522,8 +5500,7 @@ impl<'a> Argument<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -5537,8 +5514,7 @@ impl<'a> Argument<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -8611,8 +8587,7 @@ impl<'a> Statement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -8624,8 +8599,7 @@ impl<'a> Statement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -8638,8 +8612,7 @@ impl<'a> Statement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -8658,8 +8631,7 @@ impl<'a> Statement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -8672,8 +8644,7 @@ impl<'a> Statement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -8687,8 +8658,7 @@ impl<'a> Statement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -8855,26 +8825,81 @@ impl<'a> Statement<'a> {
         ))
     }
 
-    /// Build a [`Statement::TSModuleDeclaration`].
+    /// Build a [`Statement::TSExternalModuleDeclaration`].
     ///
-    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
+    /// This node contains a [`TSExternalModuleDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     #[inline]
-    pub fn new_ts_module_declaration(
+    pub fn new_ts_external_module_declaration(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::TSModuleDeclaration(TSModuleDeclaration::boxed(
+        Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed(
+            span,
+            id,
+            body,
+            declare,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`Statement::TSExternalModuleDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSExternalModuleDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn new_ts_external_module_declaration_with_scope_id(
+        span: Span,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
+        declare: bool,
+        scope_id: ScopeId,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed_with_scope_id(
+            span,
+            id,
+            body,
+            declare,
+            scope_id,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`Statement::TSNamespaceDeclaration`].
+    ///
+    /// This node contains a [`TSNamespaceDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `kind`
+    /// * `declare`
+    #[inline]
+    pub fn new_ts_namespace_declaration(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
+        declare: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TSNamespaceDeclaration(TSNamespaceDeclaration::boxed(
             span,
             id,
             body,
@@ -8884,28 +8909,28 @@ impl<'a> Statement<'a> {
         ))
     }
 
-    /// Build a [`Statement::TSModuleDeclaration`] with `scope_id`.
+    /// Build a [`Statement::TSNamespaceDeclaration`] with `scope_id`.
     ///
-    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
+    /// This node contains a [`TSNamespaceDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
+    /// * `kind`
     /// * `declare`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_module_declaration_with_scope_id(
+    pub fn new_ts_namespace_declaration_with_scope_id(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::TSModuleDeclaration(TSModuleDeclaration::boxed_with_scope_id(
+        Self::TSNamespaceDeclaration(TSNamespaceDeclaration::boxed_with_scope_id(
             span,
             id,
             body,
@@ -9451,8 +9476,7 @@ impl<'a> Declaration<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -9464,8 +9488,7 @@ impl<'a> Declaration<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -9478,8 +9501,7 @@ impl<'a> Declaration<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -9498,8 +9520,7 @@ impl<'a> Declaration<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -9512,8 +9533,7 @@ impl<'a> Declaration<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -9527,8 +9547,7 @@ impl<'a> Declaration<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -9695,26 +9714,81 @@ impl<'a> Declaration<'a> {
         ))
     }
 
-    /// Build a [`Declaration::TSModuleDeclaration`].
+    /// Build a [`Declaration::TSExternalModuleDeclaration`].
     ///
-    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
+    /// This node contains a [`TSExternalModuleDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     #[inline]
-    pub fn new_ts_module_declaration(
+    pub fn new_ts_external_module_declaration(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::TSModuleDeclaration(TSModuleDeclaration::boxed(
+        Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed(
+            span,
+            id,
+            body,
+            declare,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`Declaration::TSExternalModuleDeclaration`] with `scope_id`.
+    ///
+    /// This node contains a [`TSExternalModuleDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn new_ts_external_module_declaration_with_scope_id(
+        span: Span,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
+        declare: bool,
+        scope_id: ScopeId,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed_with_scope_id(
+            span,
+            id,
+            body,
+            declare,
+            scope_id,
+            builder.builder(),
+        ))
+    }
+
+    /// Build a [`Declaration::TSNamespaceDeclaration`].
+    ///
+    /// This node contains a [`TSNamespaceDeclaration`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `kind`
+    /// * `declare`
+    #[inline]
+    pub fn new_ts_namespace_declaration(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
+        declare: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        Self::TSNamespaceDeclaration(TSNamespaceDeclaration::boxed(
             span,
             id,
             body,
@@ -9724,28 +9798,28 @@ impl<'a> Declaration<'a> {
         ))
     }
 
-    /// Build a [`Declaration::TSModuleDeclaration`] with `scope_id`.
+    /// Build a [`Declaration::TSNamespaceDeclaration`] with `scope_id`.
     ///
-    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
+    /// This node contains a [`TSNamespaceDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
+    /// * `kind`
     /// * `declare`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_module_declaration_with_scope_id(
+    pub fn new_ts_namespace_declaration_with_scope_id(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::TSModuleDeclaration(TSModuleDeclaration::boxed_with_scope_id(
+        Self::TSNamespaceDeclaration(TSNamespaceDeclaration::boxed_with_scope_id(
             span,
             id,
             body,
@@ -9898,7 +9972,6 @@ impl<'a> VariableDeclarator<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `id`
     /// * `type_annotation`
     /// * `init`
@@ -9906,7 +9979,6 @@ impl<'a> VariableDeclarator<'a> {
     #[inline]
     pub fn new(
         span: Span,
-        kind: VariableDeclarationKind,
         id: BindingPattern<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         init: Option<Expression<'a>>,
@@ -9917,7 +9989,6 @@ impl<'a> VariableDeclarator<'a> {
         VariableDeclarator {
             node_id: Cell::new(builder.node_id()),
             span,
-            kind,
             id,
             type_annotation,
             init,
@@ -10708,8 +10779,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -10721,8 +10791,7 @@ impl<'a> ForStatementInit<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -10735,8 +10804,7 @@ impl<'a> ForStatementInit<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -10755,8 +10823,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -10769,8 +10836,7 @@ impl<'a> ForStatementInit<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -10784,8 +10850,7 @@ impl<'a> ForStatementInit<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -13776,8 +13841,7 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -13789,8 +13853,7 @@ impl<'a> ArrowFunctionBody<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -13803,8 +13866,7 @@ impl<'a> ArrowFunctionBody<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -13823,8 +13885,7 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -13837,8 +13898,7 @@ impl<'a> ArrowFunctionBody<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -13852,8 +13912,7 @@ impl<'a> ArrowFunctionBody<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -14763,8 +14822,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -14776,8 +14834,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -14792,8 +14849,7 @@ impl<'a> Class<'a> {
             decorators: decorators.into_in(builder.allocator()),
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements: implements.into_in(builder.allocator()),
             body,
             r#abstract,
@@ -14813,8 +14869,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -14826,8 +14881,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -14842,8 +14896,7 @@ impl<'a> Class<'a> {
                 decorators,
                 id,
                 type_parameters,
-                super_class,
-                super_type_arguments,
+                heritage,
                 implements,
                 body,
                 r#abstract,
@@ -14865,8 +14918,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -14879,8 +14931,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -14896,8 +14947,7 @@ impl<'a> Class<'a> {
             decorators: decorators.into_in(builder.allocator()),
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements: implements.into_in(builder.allocator()),
             body,
             r#abstract,
@@ -14917,8 +14967,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -14931,8 +14980,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -14948,8 +14996,7 @@ impl<'a> Class<'a> {
                 decorators,
                 id,
                 type_parameters,
-                super_class,
-                super_type_arguments,
+                heritage,
                 implements,
                 body,
                 r#abstract,
@@ -14959,6 +15006,24 @@ impl<'a> Class<'a> {
             ),
             &builder.allocator(),
         )
+    }
+}
+
+impl<'a> ClassHeritage<'a> {
+    /// Build a [`ClassHeritage`].
+    ///
+    /// ## Parameters
+    /// * `expression`: Superclass expression. This will usually be an [`IdentifierReference`].
+    /// * `type_arguments`: Type arguments passed to the superclass.
+    #[expect(unused_variables)]
+    #[inline]
+    pub fn new(
+        expression: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        ClassHeritage { expression, type_arguments }
     }
 }
 
@@ -16658,8 +16723,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -16671,8 +16735,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -16685,8 +16748,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -16705,8 +16767,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -16719,8 +16780,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -16734,8 +16794,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -17251,8 +17310,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -17264,8 +17322,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -17278,8 +17335,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -17298,8 +17354,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -17312,8 +17367,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -17327,8 +17381,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -19448,8 +19501,7 @@ impl<'a> JSXExpression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -19461,8 +19513,7 @@ impl<'a> JSXExpression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -19475,8 +19526,7 @@ impl<'a> JSXExpression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -19495,8 +19545,7 @@ impl<'a> JSXExpression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -19509,8 +19558,7 @@ impl<'a> JSXExpression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -19524,8 +19572,7 @@ impl<'a> JSXExpression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -25270,12 +25317,12 @@ impl<'a> TSInterfaceHeritage<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
+    /// * `type_name`
     /// * `type_arguments`
     #[inline]
     pub fn new(
         span: Span,
-        expression: Expression<'a>,
+        type_name: TSTypeName<'a>,
         type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
@@ -25283,7 +25330,7 @@ impl<'a> TSInterfaceHeritage<'a> {
         TSInterfaceHeritage {
             node_id: Cell::new(builder.node_id()),
             span,
-            expression,
+            type_name,
             type_arguments,
         }
     }
@@ -25373,29 +25420,140 @@ impl<'a> TSTypePredicateName<'a> {
     }
 }
 
-impl<'a> TSModuleDeclaration<'a> {
-    /// Build a [`TSModuleDeclaration`].
+impl<'a> TSExternalModuleDeclaration<'a> {
+    /// Build a [`TSExternalModuleDeclaration`].
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`TSModuleDeclaration::boxed`] instead.
+    /// use [`TSExternalModuleDeclaration::boxed`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
     /// * `declare`
     #[inline]
     pub fn new(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSModuleDeclaration {
+        TSExternalModuleDeclaration {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            id,
+            body,
+            declare,
+            scope_id: Default::default(),
+        }
+    }
+
+    /// Build a [`TSExternalModuleDeclaration`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`TSExternalModuleDeclaration::new`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `declare`
+    #[inline]
+    pub fn boxed(
+        span: Span,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
+        declare: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(Self::new(span, id, body, declare, builder), &builder.allocator())
+    }
+
+    /// Build a [`TSExternalModuleDeclaration`] with `scope_id`.
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`TSExternalModuleDeclaration::boxed_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn new_with_scope_id(
+        span: Span,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
+        declare: bool,
+        scope_id: ScopeId,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        TSExternalModuleDeclaration {
+            node_id: Cell::new(builder.node_id()),
+            span,
+            id,
+            body,
+            declare,
+            scope_id: Cell::new(Some(scope_id)),
+        }
+    }
+
+    /// Build a [`TSExternalModuleDeclaration`] with `scope_id`, and store it in the memory arena.
+    ///
+    /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`TSExternalModuleDeclaration::new_with_scope_id`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `declare`
+    /// * `scope_id`
+    #[inline]
+    pub fn boxed_with_scope_id(
+        span: Span,
+        id: StringLiteral<'a>,
+        body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
+        declare: bool,
+        scope_id: ScopeId,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> ArenaBox<'a, Self> {
+        let builder = builder.builder();
+        ArenaBox::new_in(
+            Self::new_with_scope_id(span, id, body, declare, scope_id, builder),
+            &builder.allocator(),
+        )
+    }
+}
+
+impl<'a> TSNamespaceDeclaration<'a> {
+    /// Build a [`TSNamespaceDeclaration`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`TSNamespaceDeclaration::boxed`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `id`
+    /// * `body`
+    /// * `kind`
+    /// * `declare`
+    #[inline]
+    pub fn new(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
+        declare: bool,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        TSNamespaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -25406,23 +25564,23 @@ impl<'a> TSModuleDeclaration<'a> {
         }
     }
 
-    /// Build a [`TSModuleDeclaration`], and store it in the memory arena.
+    /// Build a [`TSNamespaceDeclaration`], and store it in the memory arena.
     ///
     /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`TSModuleDeclaration::new`] instead.
+    /// If you want a stack-allocated node, use [`TSNamespaceDeclaration::new`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
+    /// * `kind`
     /// * `declare`
     #[inline]
     pub fn boxed(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
@@ -25430,30 +25588,30 @@ impl<'a> TSModuleDeclaration<'a> {
         ArenaBox::new_in(Self::new(span, id, body, kind, declare, builder), &builder.allocator())
     }
 
-    /// Build a [`TSModuleDeclaration`] with `scope_id`.
+    /// Build a [`TSNamespaceDeclaration`] with `scope_id`.
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`TSModuleDeclaration::boxed_with_scope_id`] instead.
+    /// use [`TSNamespaceDeclaration::boxed_with_scope_id`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
+    /// * `kind`
     /// * `declare`
     /// * `scope_id`
     #[inline]
     pub fn new_with_scope_id(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
         let builder = builder.builder();
-        TSModuleDeclaration {
+        TSNamespaceDeclaration {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
@@ -25464,24 +25622,24 @@ impl<'a> TSModuleDeclaration<'a> {
         }
     }
 
-    /// Build a [`TSModuleDeclaration`] with `scope_id`, and store it in the memory arena.
+    /// Build a [`TSNamespaceDeclaration`] with `scope_id`, and store it in the memory arena.
     ///
     /// Returns a [`Box`](ArenaBox) containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`TSModuleDeclaration::new_with_scope_id`] instead.
+    /// If you want a stack-allocated node, use [`TSNamespaceDeclaration::new_with_scope_id`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
+    /// * `kind`
     /// * `declare`
     /// * `scope_id`
     #[inline]
     pub fn boxed_with_scope_id(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
         builder: &impl GetAstBuilder<'a>,
@@ -25494,104 +25652,27 @@ impl<'a> TSModuleDeclaration<'a> {
     }
 }
 
-impl<'a> TSModuleDeclarationName<'a> {
-    /// Build a [`TSModuleDeclarationName::Identifier`].
+impl<'a> TSNamespaceDeclarationBody<'a> {
+    /// Build a [`TSNamespaceDeclarationBody::TSNamespaceDeclaration`].
+    ///
+    /// This node contains a [`TSNamespaceDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `name`: The identifier name being bound.
-    #[inline]
-    pub fn new_identifier(
-        span: Span,
-        name: impl Into<Ident<'a>>,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::Identifier(BindingIdentifier::new(span, name, builder.builder()))
-    }
-
-    /// Build a [`TSModuleDeclarationName::Identifier`] with `symbol_id`.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `name`: The identifier name being bound.
-    /// * `symbol_id`: Unique identifier for this binding.
-    #[inline]
-    pub fn new_identifier_with_symbol_id(
-        span: Span,
-        name: impl Into<Ident<'a>>,
-        symbol_id: SymbolId,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::Identifier(BindingIdentifier::new_with_symbol_id(
-            span,
-            name,
-            symbol_id,
-            builder.builder(),
-        ))
-    }
-
-    /// Build a [`TSModuleDeclarationName::StringLiteral`].
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    #[inline]
-    pub fn new_string_literal(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::new(span, value, raw, builder.builder()))
-    }
-
-    /// Build a [`TSModuleDeclarationName::StringLiteral`] with `lone_surrogates`.
-    ///
-    /// ## Parameters
-    /// * `span`: Node location in source code.
-    /// * `value`: The value of the string.
-    /// * `raw`: The raw string as it appears in source code.
-    /// * `lone_surrogates`: The string value contains lone surrogates.
-    #[inline]
-    pub fn new_string_literal_with_lone_surrogates(
-        span: Span,
-        value: impl Into<Str<'a>>,
-        raw: Option<Str<'a>>,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        Self::StringLiteral(StringLiteral::new_with_lone_surrogates(
-            span,
-            value,
-            raw,
-            lone_surrogates,
-            builder.builder(),
-        ))
-    }
-}
-
-impl<'a> TSModuleDeclarationBody<'a> {
-    /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`].
-    ///
-    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
+    /// * `kind`
     /// * `declare`
     #[inline]
-    pub fn new_ts_module_declaration(
+    pub fn new_ts_namespace_declaration(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::TSModuleDeclaration(TSModuleDeclaration::boxed(
+        Self::TSNamespaceDeclaration(TSNamespaceDeclaration::boxed(
             span,
             id,
             body,
@@ -25601,28 +25682,28 @@ impl<'a> TSModuleDeclarationBody<'a> {
         ))
     }
 
-    /// Build a [`TSModuleDeclarationBody::TSModuleDeclaration`] with `scope_id`.
+    /// Build a [`TSNamespaceDeclarationBody::TSNamespaceDeclaration`] with `scope_id`.
     ///
-    /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
+    /// This node contains a [`TSNamespaceDeclaration`] that will be stored in the memory arena.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `id`: The name of the module/namespace being declared.
+    /// * `id`
     /// * `body`
-    /// * `kind`: The keyword used to define this module declaration.
+    /// * `kind`
     /// * `declare`
     /// * `scope_id`
     #[inline]
-    pub fn new_ts_module_declaration_with_scope_id(
+    pub fn new_ts_namespace_declaration_with_scope_id(
         span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
+        id: BindingIdentifier<'a>,
+        body: TSNamespaceDeclarationBody<'a>,
+        kind: TSNamespaceDeclarationKind,
         declare: bool,
         scope_id: ScopeId,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
-        Self::TSModuleDeclaration(TSModuleDeclaration::boxed_with_scope_id(
+        Self::TSNamespaceDeclaration(TSNamespaceDeclaration::boxed_with_scope_id(
             span,
             id,
             body,
@@ -25633,7 +25714,7 @@ impl<'a> TSModuleDeclarationBody<'a> {
         ))
     }
 
-    /// Build a [`TSModuleDeclarationBody::TSModuleBlock`].
+    /// Build a [`TSNamespaceDeclarationBody::TSModuleBlock`].
     ///
     /// This node contains a [`TSModuleBlock`] that will be stored in the memory arena.
     ///

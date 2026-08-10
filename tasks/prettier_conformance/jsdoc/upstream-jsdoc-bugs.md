@@ -303,3 +303,22 @@ The plugin has two bugs with `@typedef{type}` (no space before brace):
 ```
 
 **Found in**: conformance tests (main/011-bad-defined-name)
+
+## 11. Fenced-code width base ignores the comment prefix, exceeding printWidth in indented comments
+
+**Severity**: Low — fence content in indented comments can exceed printWidth
+
+The plugin formats fenced code (and `@example` bodies) at a flat `printWidth - 4`
+(`utils.ts` `formatCode`: `examplePrintWith = printWidth - 4`), without subtracting the
+comment's indent or the `*` line prefix. At top level the re-embedded line lands at
+`content + 3 <= printWidth - 1`, but for a comment indented by N columns the final line is
+`N + 3 + (printWidth - 4)`, exceeding printWidth for any N > 1.
+
+**Root cause**: `formatCode` receives only `printWidth`; the re-embedding indent
+(`beginningSpace`) is applied after formatting and never enters the width budget.
+
+**oxfmt behavior**: fences format at `effective width - 4`, where the effective width already
+subtracts the comment indent and the `*` prefix — the same base every JS/TS snippet in the
+same position uses. Final lines never exceed `printWidth - 4 + prefix`. At top level this is
+3 chars narrower than upstream (content 93 vs 96 at printWidth=100); pinned by
+`apps/oxfmt/test/api/jsdoc.test.ts` ("effective width" case).

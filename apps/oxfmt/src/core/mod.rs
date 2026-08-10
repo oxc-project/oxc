@@ -1,5 +1,4 @@
 mod config;
-#[cfg(feature = "napi")]
 pub mod embed;
 mod format;
 pub mod options;
@@ -8,7 +7,7 @@ mod support;
 pub mod utils;
 
 #[cfg(feature = "napi")]
-mod external_formatter;
+mod external_services;
 
 pub use config::{
     ConfigResolver, NestedConfigCtx, ResolveOutcome, resolve_editorconfig_path,
@@ -19,14 +18,14 @@ pub use config::{
 pub use config::config_discovery;
 #[cfg(feature = "napi")]
 pub use config::{
-    JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader, resolve_for_api,
-    resolve_for_embedded_js,
+    EmbeddedCallbackResolved, JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader,
+    resolve_for_api, resolve_for_embedded_js,
 };
 pub use format::{FormatResult, FormatStrategy, SourceFormatter};
 pub use support::classify_file_kind;
 
 #[cfg(feature = "napi")]
-pub use external_formatter::{
-    ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-    JsInitExternalFormatterCb, JsSortTailwindClassesCb,
+pub use external_services::{
+    ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+    JsInitExternalServicesCb, JsSortTailwindClassesCb,
 };

@@ -286,6 +286,8 @@ after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
+Only ambient modules can use quoted names.
+Only ambient modules can use quoted names.
 Ambient modules cannot be nested in other modules or namespaces.
 Ambient modules cannot be nested in other modules or namespaces.
 Bindings mismatch:

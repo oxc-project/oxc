@@ -1012,7 +1012,6 @@ impl<'a> ArrowFunctionConverter<'a> {
         );
         VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
             None,
             Some(init),
@@ -1189,7 +1188,6 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         Some(VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Var,
             arguments_var.create_binding_pattern(ctx),
             None,
             Some(init),
@@ -1250,7 +1248,6 @@ impl<'a> ArrowFunctionConverter<'a> {
             Self::adjust_binding_scope(target_scope_id, &this_var, ctx);
             let variable_declarator = VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
                 None,
                 init,
@@ -1306,8 +1303,8 @@ impl<'a> VisitJsMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 
         // `class Inner extends super() {}`
         //                      ^^^^^^^
-        if let Some(super_class) = &mut class.super_class {
-            self.visit_expression(super_class);
+        if let Some(heritage) = &mut class.heritage {
+            self.visit_expression(&mut heritage.expression);
         }
 
         for element in &mut class.body.body {

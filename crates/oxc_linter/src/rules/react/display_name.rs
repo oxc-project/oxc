@@ -329,7 +329,7 @@ fn is_create_context_call(call: &oxc_ast::ast::CallExpression) -> bool {
 
 /// Check if a class extends React.Component or React.PureComponent
 fn extends_react_component(class: &oxc_ast::ast::Class) -> bool {
-    class.super_class.as_ref().is_some_and(|super_class| {
+    class.heritage_expression().is_some_and(|super_class| {
         if let Some(member_expr) = super_class.as_member_expression()
             && let Expression::Identifier(ident) = member_expr.object()
         {

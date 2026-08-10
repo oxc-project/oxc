@@ -38,7 +38,10 @@ pub fn format_elements_to_prettier_doc(
     sorted_tailwind_classes: &[String],
 ) -> Result<Value, String> {
     let mut state = ConvertState::new(sorted_tailwind_classes);
-    let children = convert_elements(elements, &mut state)?;
+    // The conversion starts at a line start (the printer's `line_width == 0`),
+    // so a leading `Space` is dropped, not flushed.
+    // (Fragment Docs are spliced mid-line by Prettier, but no fragment IR can start with a `Space`.)
+    let children = convert_elements(elements, &mut state, LineState::Hardline)?;
     let doc = normalize_array(children);
     Ok(json!({ "doc": doc, "refs": Value::Array(state.refs) }))
 }
@@ -106,12 +109,13 @@ struct PrinterState {
     /// Boolean semantics naturally deduplicates consecutive spaces.
     pending_space: bool,
 
-    /// Mirrors the printer's end-of-line state for hardline collapsing:
+    /// Mirrors the printer's end-of-line state for hardline collapsing and space suppression:
     /// its `line_width > 0` guard (`Content` vs the rest) and its `has_empty_line` cap (`Blank`).
-    /// See the `Line` arm of `Printer::print_element` in `printer/mod.rs`.
+    /// See the `Line` and `Space` arms of `Printer::print_element` in `printer/mod.rs`.
     ///
-    /// NOTE: the state resets to `Content` at `Interned` / `BestFitting` boundaries,
-    /// so element sequences crossing them are approximated;
+    /// The document start is a line start (`Hardline`);
+    /// `Interned` / `BestFitting` contents convert with a `Content` (mid-line) assumption,
+    /// so element sequences crossing those boundaries are approximated;
     /// the real IR shapes (straight-line emission) are what this mirrors faithfully.
     line: LineState,
 }
@@ -130,8 +134,8 @@ enum LineState {
 }
 
 impl PrinterState {
-    fn new() -> Self {
-        Self { pending_space: false, line: LineState::Content }
+    fn new(initial_line: LineState) -> Self {
+        Self { pending_space: false, line: initial_line }
     }
 
     /// Flushes the pending space (if any) by appending `" "` to the current scope's children.
@@ -147,16 +151,19 @@ impl PrinterState {
 fn convert_elements(
     elements: &[FormatElement],
     state: &mut ConvertState,
+    initial_line: LineState,
 ) -> Result<Vec<Value>, String> {
     let mut stack: Vec<StackEntry> =
         vec![StackEntry { start_tag: None, start_info: None, children: vec![] }];
-    let mut printer = PrinterState::new();
+    let mut printer = PrinterState::new(initial_line);
 
     for element in elements {
         match element {
             FormatElement::Space => {
-                printer.pending_space = true;
-                printer.line = LineState::Content;
+                // `Space` at the start of a line is dropped, never made pending
+                if printer.line == LineState::Content {
+                    printer.pending_space = true;
+                }
             }
             FormatElement::Token { text } => {
                 printer.flush_pending_space(&mut stack)?;
@@ -221,7 +228,7 @@ fn convert_elements(
                         // A blank is left behind from the start of a line always,
                         // mid-line only when a break remains after the line-ending one.
                         // NOTE: `line != Content` approximates the printer's `line_width == 0`,
-                        // they diverge at the document start and right after a `Literal` (blank there, mid-line here).
+                        // they diverge right after a `Literal` (blank there, mid-line here).
                         // Real IR always emits `ExactLineBreaks` after content, where they agree.
                         printer.line = if printer.line != LineState::Content || count.get() > 1 {
                             LineState::Blank
@@ -303,23 +310,7 @@ fn convert_elements(
                             "Invalid formatter IR: mismatched tags (start: `{start_tag:?}`, end: `{tag:?}`)"
                         ));
                     }
-                    let is_line_suffix = matches!(entry.start_info, Some(StartTagInfo::LineSuffix));
-                    let mut doc = build_doc(entry.start_info.as_ref(), entry.children);
-
-                    // The formatter always prepends a `Space` inside `LineSuffix` for separation
-                    // from preceding code (e.g. `x = 1; // comment`).
-                    // The printer guards this with `line_width > 0`,
-                    // so the `Space` is suppressed when the line has no content yet.
-                    // When the parent scope has no preceding content (e.g. comment-only `<script>` blocks),
-                    // strip the leading space from the `lineSuffix` contents to avoid a spurious leading space.
-                    if is_line_suffix
-                        && current_children_mut(&mut stack)?.is_empty()
-                        && let Value::Object(ref mut map) = doc
-                        && let Some(contents) = map.get_mut("contents")
-                    {
-                        strip_leading_space(contents);
-                    }
-
+                    let doc = build_doc(entry.start_info.as_ref(), entry.children);
                     current_children_mut(&mut stack)?.push(doc);
                 }
             }
@@ -346,7 +337,7 @@ fn convert_elements(
                     let id = state.refs.len();
                     state.refs.push(Value::Null);
                     state.interned_to_ref.insert(key, id);
-                    let converted = convert_elements(interned, state)?;
+                    let converted = convert_shared_elements(interned, state)?;
                     state.refs[id] = normalize_array(converted);
                     id
                 };
@@ -392,6 +383,16 @@ fn convert_elements(
         || Err("Invalid formatter IR: missing root stack entry".to_string()),
         |e| Ok(e.children),
     )
+}
+
+/// Converts `Interned` / `BestFitting` contents:
+/// they are emitted once and reused at arbitrary positions,
+/// so they convert under the mid-line (`Content`) assumption.
+fn convert_shared_elements(
+    elements: &[FormatElement],
+    state: &mut ConvertState,
+) -> Result<Vec<Value>, String> {
+    convert_elements(elements, state, LineState::Content)
 }
 
 fn current_children_mut(stack: &mut [StackEntry]) -> Result<&mut Vec<Value>, String> {
@@ -611,7 +612,7 @@ fn convert_best_fitting(
     }
 
     if variants.len() == 1 {
-        let first_contents = normalize_array(convert_elements(variants[0], state)?);
+        let first_contents = normalize_array(convert_shared_elements(variants[0], state)?);
         return Ok(json!({"type": "group", "contents": first_contents}));
     }
 
@@ -627,14 +628,14 @@ fn convert_best_fitting(
     // get later ids; `state.refs[id]` is filled in after.
     let first_id = state.refs.len();
     state.refs.push(Value::Null);
-    let first_content = normalize_array(convert_elements(variants[0], state)?);
+    let first_content = normalize_array(convert_shared_elements(variants[0], state)?);
     state.refs[first_id] = first_content;
     let first_ref = json!({ "_REF": first_id });
 
     let mut expanded_states: Vec<Value> = Vec::with_capacity(variants.len());
     expanded_states.push(first_ref.clone());
     for v in &variants[1..] {
-        expanded_states.push(normalize_array(convert_elements(v, state)?));
+        expanded_states.push(normalize_array(convert_shared_elements(v, state)?));
     }
 
     Ok(json!({
@@ -661,24 +662,6 @@ fn children_are_only_hardlines(children: &[Value]) -> bool {
             false
         }
     })
-}
-
-/// Strips a leading space character from a `Value`.
-/// Handles both plain strings (`" foo"` → `"foo"`) and arrays whose first element is a string.
-fn strip_leading_space(value: &mut Value) {
-    match value {
-        Value::String(s) if s.starts_with(' ') => {
-            s.remove(0);
-        }
-        Value::Array(arr) => {
-            if let Some(Value::String(s)) = arr.first_mut()
-                && s.starts_with(' ')
-            {
-                s.remove(0);
-            }
-        }
-        _ => {}
-    }
 }
 
 /// Concatenates a string onto the last element if it's also a string,
@@ -708,9 +691,13 @@ mod tests {
     use std::num::NonZeroU32;
 
     use oxc_formatter_core::{FormatElement, LineMode};
-    use serde_json::Value;
+    use serde_json::{Value, json};
 
     use super::format_elements_to_prettier_doc;
+
+    fn to_doc(elements: &[FormatElement]) -> Value {
+        format_elements_to_prettier_doc(elements, &[]).unwrap()
+    }
 
     /// Counts `{"type": "line", "hard": true}` nodes (excluding literal lines) in the Doc.
     fn count_hardlines(doc: &Value) -> usize {
@@ -734,35 +721,53 @@ mod tests {
     const A: FormatElement<'static> = FormatElement::Token { text: "a" };
     const HARD: FormatElement<'static> = FormatElement::Line(LineMode::Hard);
     const EMPTY: FormatElement<'static> = FormatElement::Line(LineMode::Empty);
+    const SPACE: FormatElement<'static> = FormatElement::Space;
 
     #[test]
     fn exact_line_breaks_expand_to_that_many_hardlines() {
-        let doc = format_elements_to_prettier_doc(&[A, exact(3), A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(3), A]);
         assert_eq!(count_hardlines(&doc), 3);
     }
 
     #[test]
     fn empty_after_mid_line_single_exact_break_adds_a_blank() {
         // Mid-line count=1 leaves no blank behind: the following Empty may still add one.
-        let doc = format_elements_to_prettier_doc(&[A, exact(1), EMPTY, A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(1), EMPTY, A]);
         assert_eq!(count_hardlines(&doc), 2);
     }
 
     #[test]
     fn empty_after_blank_leaving_exact_breaks_is_capped() {
         // Mid-line count=2 leaves a blank: the following Empty adds nothing.
-        let doc = format_elements_to_prettier_doc(&[A, exact(2), EMPTY, A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(2), EMPTY, A]);
         assert_eq!(count_hardlines(&doc), 2);
 
         // From the start of a line even count=1 leaves a blank
         // (no break is consumed as a line ending), capping the Empty too.
-        let doc = format_elements_to_prettier_doc(&[A, HARD, exact(1), EMPTY, A], &[]).unwrap();
+        let doc = to_doc(&[A, HARD, exact(1), EMPTY, A]);
         assert_eq!(count_hardlines(&doc), 2);
     }
 
     #[test]
     fn hard_after_exact_line_breaks_is_absorbed() {
-        let doc = format_elements_to_prettier_doc(&[A, exact(2), HARD, A], &[]).unwrap();
+        let doc = to_doc(&[A, exact(2), HARD, A]);
         assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    #[test]
+    fn space_at_line_start_is_dropped() {
+        // e.g. a comment-only program: the IR starts with the trailing-comment `Space`,
+        // which the printer drops at `line_width == 0`.
+        let doc = to_doc(&[SPACE, A]);
+        assert_eq!(doc["doc"], "a");
+
+        let doc = to_doc(&[A, HARD, SPACE, A]);
+        assert_eq!(
+            doc["doc"],
+            json!(["a", {"type": "line", "hard": true}, {"type": "break-parent"}, "a"])
+        );
+        // The dropped space must not resurrect a hardline collapse either.
+        let doc = to_doc(&[A, HARD, SPACE, HARD, A]);
+        assert_eq!(count_hardlines(&doc), 1);
     }
 }

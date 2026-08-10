@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+
+### 🐛 Bug Fixes
+
+- cc2e28d parser: Reject trailing tokens in `Parser::parse_expression` (#25371) (camc314)
+
 ## [0.143.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES

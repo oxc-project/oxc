@@ -708,6 +708,11 @@ fn preserve_at_license_legal_comment_when_dce_removes_anchor() {
         "/* @license */\nconsole.log('val');",
         CompressOptions::dce(),
     );
+    test_with_options(
+        "/*x@license*/\nconst foo = 'val';\nconsole.log(foo);",
+        "/*x@license*/\nconsole.log('val');",
+        CompressOptions::dce(),
+    );
 }
 
 #[test]
