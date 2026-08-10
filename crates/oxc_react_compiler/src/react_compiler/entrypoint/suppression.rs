@@ -35,27 +35,27 @@ fn comment_value(comment: Comment, source_text: &str) -> &str {
 }
 
 /// Check if a comment value matches `eslint-disable-next-line <rule>` for any rule in `rule_names`.
-fn matches_eslint_disable_next_line(value: &str, rule_names: &[String]) -> bool {
+fn matches_eslint_disable_next_line<S: AsRef<str>>(value: &str, rule_names: &[S]) -> bool {
     value
         .strip_prefix("eslint-disable-next-line ")
         .or_else(|| value.strip_prefix("oxlint-disable-next-line "))
-        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
+        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_ref())))
 }
 
 /// Check if a comment value matches `eslint-disable <rule>` for any rule in `rule_names`.
-fn matches_eslint_disable(value: &str, rule_names: &[String]) -> bool {
+fn matches_eslint_disable<S: AsRef<str>>(value: &str, rule_names: &[S]) -> bool {
     value
         .strip_prefix("eslint-disable ")
         .or_else(|| value.strip_prefix("oxlint-disable "))
-        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
+        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_ref())))
 }
 
 /// Check if a comment value matches `eslint-enable <rule>` for any rule in `rule_names`.
-fn matches_eslint_enable(value: &str, rule_names: &[String]) -> bool {
+fn matches_eslint_enable<S: AsRef<str>>(value: &str, rule_names: &[S]) -> bool {
     value
         .strip_prefix("eslint-enable ")
         .or_else(|| value.strip_prefix("oxlint-enable "))
-        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_str())))
+        .is_some_and(|rest| rule_names.iter().any(|name| rest.starts_with(name.as_ref())))
 }
 
 /// Check if a comment value matches a Flow suppression pattern.
@@ -87,10 +87,10 @@ fn matches_flow_suppression(value: &str) -> bool {
 
 /// Parse eslint-disable/enable and Flow suppression comments from program comments.
 /// Equivalent to findProgramSuppressions in Suppression.ts
-pub fn find_program_suppressions(
+pub fn find_program_suppressions<S: AsRef<str>>(
     comments: &[Comment],
     source_text: &str,
-    rule_names: Option<&[String]>,
+    rule_names: &[S],
     flow_suppressions: bool,
 ) -> Vec<SuppressionRange> {
     let mut suppression_ranges: Vec<SuppressionRange> = Vec::new();
@@ -98,7 +98,7 @@ pub fn find_program_suppressions(
     let mut enable_comment: Option<Comment> = None;
     let mut source: Option<SuppressionSource> = None;
 
-    let rule_names = rule_names.filter(|names| !names.is_empty());
+    let rule_names = (!rule_names.is_empty()).then_some(rule_names);
 
     for &comment in comments {
         let value = comment_value(comment, source_text);

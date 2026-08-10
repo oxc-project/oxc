@@ -2883,24 +2883,23 @@ pub fn compile_program<'a>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    // The compiler's own validations cover the safety concerns represented by the
-    // React Hooks ESLint rules. Match Babel by only consulting ESLint suppressions
-    // when either validation is disabled.
-    let eslint_rules = (!options.environment.validate_exhaustive_memoization_dependencies
-        || !options.environment.validate_hooks_usage)
-        .then(|| {
-            options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
-            })
-        });
-
-    // Find program-level suppressions from comments
-    let suppressions = find_program_suppressions(
-        &program.comments,
-        program.source_text,
-        eslint_rules.as_deref(),
-        options.flow_suppressions,
-    );
+    // Match babel-plugin-react-compiler 1.0.0: ESLint suppressions are an explicit
+    // function-level opt-out, independent of the compiler's internal validations.
+    let suppressions = if let Some(eslint_rules) = options.eslint_suppression_rules.as_deref() {
+        find_program_suppressions(
+            &program.comments,
+            program.source_text,
+            eslint_rules,
+            options.flow_suppressions,
+        )
+    } else {
+        find_program_suppressions(
+            &program.comments,
+            program.source_text,
+            DEFAULT_ESLINT_SUPPRESSIONS,
+            options.flow_suppressions,
+        )
+    };
 
     // Check for module-scope opt-out directive
     let has_module_scope_opt_out = find_directive_disabling_memoization(
