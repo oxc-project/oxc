@@ -1,0 +1,19 @@
+crates/oxc_codegen/src/typescript.rs
+  s_6d5e6260ed517e::t_d87c89d815facd 29,32,152-154,171,174,304-306
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4c47b0e3fce15340a83ae1c5070f21c7b74fcde2",
+  "prompts": {},
+  "sessions": {
+    "s_6d5e6260ed517e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fec04-f78b-7602-a406-2a9695980983",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
