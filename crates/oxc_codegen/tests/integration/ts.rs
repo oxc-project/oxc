@@ -136,6 +136,62 @@ fn comparison_must_not_become_type_arguments() {
 }
 
 #[test]
+fn comparison_type_argument_ambiguity_across_expression_lists() {
+    let test_ts = |source, expected| {
+        test_reparse_with_source_type(source, expected, SourceType::ts(), default_options());
+    };
+
+    // A non-final item that exposes `<` is grouped when a later item structurally exposes `>`,
+    // `>>`, or `>>>`. This is independent of the token following the close.
+    test_ts("(\"hello\" < false), null > /a/;", "(\"hello\" < false), null > /a/;\n");
+    test_ts("(a < b), c > d;", "(a < b), c > d;\n");
+    test_ts("foo((a < b), c > /x/);", "foo((a < b), c > /x/);\n");
+    test_ts("foo((a < b), (c) => d > /x/);", "foo((a < b), (c) => d > /x/);\n");
+    test_ts("foo((a < b), <T>(c: T) => d > /x/);", "foo((a < b), <T>(c: T) => d > /x/);\n");
+    test_ts("(a < b), (c) => d > /x/;", "(a < b), (c) => d > /x/;\n");
+    test_ts(
+        "foo((a < b), c > /x/ /* before close */);",
+        "foo(\n\t(a < b),\n\tc > /x/\n\t/* before close */\n);\n",
+    );
+    test_ts("new Foo((a < b), c > /x/);", "new Foo((a < b), c > /x/);\n");
+    test_ts("[(a < b), c > /x/];", "[(a < b), c > /x/];\n");
+    test_ts("import((a < b), c > /x/);", "import((a < b), c > /x/);\n");
+
+    // The open suffix may be exposed through enclosing expression nodes.
+    test_ts("(x = a < b), c > /x/;", "(x = a < b), c > /x/;\n");
+    test_ts("foo((x => a < b), c > /x/);", "foo(((x) => a < b), c > /x/);\n");
+    test_ts("foo(x && (a < b), c > /x/);", "foo((x && a < b), c > /x/);\n");
+    test_ts("foo(...(a < b), c > /x/);", "foo(...(a < b), c > /x/);\n");
+
+    // Without a later structural close, comma containers retain their normal minimal output.
+    test_ts("(a < b), c;", "a < b, c;\n");
+    test_ts("foo((a < b), c);", "foo(a < b, c);\n");
+    test_ts("new Foo((a < b), c);", "new Foo(a < b, c);\n");
+    test_ts("[(a < b), c];", "[a < b, c];\n");
+    test_ts("import((a < b), c);", "import(a < b, c);\n");
+
+    // Final items and non-final items without an exposed open also stay minimal.
+    test_ts("foo(a, (b < c));", "foo(a, b < c);\n");
+    test_ts("x = 1, c > /x/;", "x = 1, c > /x/;\n");
+    test_ts("foo(x = 1, c > /x/);", "foo(x = 1, c > /x/);\n");
+    test_ts("foo((a < b), c >= d);", "foo(a < b, c >= d);\n");
+
+    // Exercise multi-character structural closes after each comma-list boundary.
+    test_ts("((a < b) < c), d >> /x/;", "(a < b < c), d >> /x/;\n");
+    test_ts("foo(((a < b) < c), d >> /x/);", "foo((a < b < c), d >> /x/);\n");
+    test_ts("new Foo((((a < b) < c) < d), e >>> `x`);", "new Foo((a < b < c < d), e >>> `x`);\n");
+    test_ts("[((a < b) < c), d >> /x/];", "[(a < b < c), d >> /x/];\n");
+    test_ts("import((((a < b) < c) < d), e >>> `x`);", "import((a < b < c < d), e >>> `x`);\n");
+
+    test_reparse_with_source_type(
+        "import((a < b), c > /x/);",
+        "import((a<b),c>/x/);",
+        SourceType::ts(),
+        CodegenOptions::minify(),
+    );
+}
+
+#[test]
 fn comparison_type_argument_ambiguity_in_expression_fragment() {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, "(a < b) > /x/;", SourceType::ts())

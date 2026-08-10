@@ -45,6 +45,31 @@ fn comparison_type_argument_parentheses_are_typescript_only() {
 }
 
 #[test]
+fn comparison_type_argument_list_parentheses_are_typescript_only() {
+    let test_js = |source, expected| {
+        test_reparse_with_source_type(
+            source,
+            expected,
+            SourceType::unambiguous(),
+            default_options(),
+        );
+    };
+
+    test_js("(\"hello\" < false), null > /a/;", "\"hello\" < false, null > /a/;\n");
+    test_js("(x = a < b), c > /x/;", "x = a < b, c > /x/;\n");
+    test_js("foo((a < b), c > /x/);", "foo(a < b, c > /x/);\n");
+    test_js("foo((a < b), (c) => d > /x/);", "foo(a < b, (c) => d > /x/);\n");
+    test_js("new Foo((a < b), c > /x/);", "new Foo(a < b, c > /x/);\n");
+    test_js("[(a < b), c > /x/];", "[a < b, c > /x/];\n");
+    test_js("import((a < b), c > /x/);", "import(a < b, c > /x/);\n");
+    test_js("((a < b) < c), d >> /x/;", "a < b < c, d >> /x/;\n");
+    test_js("foo(((a < b) < c), d >> /x/);", "foo(a < b < c, d >> /x/);\n");
+    test_js("new Foo((((a < b) < c) < d), e >>> `x`);", "new Foo(a < b < c < d, e >>> `x`);\n");
+    test_js("[((a < b) < c), d >> /x/];", "[a < b < c, d >> /x/];\n");
+    test_js("import((((a < b) < c) < d), e >>> `x`);", "import(a < b < c < d, e >>> `x`);\n");
+}
+
+#[test]
 fn decl() {
     test_same("const [foo, ...bar] = qux;\n");
     test_same("const { foo, ...bar } = qux;\n");

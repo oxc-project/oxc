@@ -765,21 +765,19 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    #[inline]
-    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
-        let Some((first, rest)) = items.split_first() else {
-            return;
-        };
-        first.print_expr(self, precedence, ctx);
-        for item in rest {
-            self.print_comma();
-            self.print_soft_space();
-            item.print_expr(self, precedence, ctx);
-        }
-    }
-
-    fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], ctx: Context) {
+    fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], _ctx: Context) {
         self.print_ascii_byte(b'(');
+
+        let type_argument_list = typescript::TypeArgumentList::new(
+            self.is_typescript,
+            arguments,
+            |argument| match argument {
+                Argument::SpreadElement(_) => None,
+                _ => Some(argument.to_expression()),
+            },
+            Precedence::Comma,
+            Context::empty(),
+        );
 
         let has_comment_before_right_paren = span.end > 0 && self.has_comment(span.end - 1);
 
@@ -788,7 +786,9 @@ impl<'a> Codegen<'a> {
 
         if has_comment {
             self.indent();
-            self.print_list_with_comments(arguments, ctx);
+        }
+        self.print_argument_list(arguments, &type_argument_list, has_comment);
+        if has_comment {
             // Handle `/* comment */);`
             if !has_comment_before_right_paren
                 || (span.end > 0 && !self.print_expr_comments(span.end - 1))
@@ -797,8 +797,6 @@ impl<'a> Codegen<'a> {
             }
             self.dedent();
             self.print_indent();
-        } else {
-            self.print_list(arguments, ctx);
         }
         // End mapping at the gen position OF `)`, not past it. Matches
         // esbuild/Babel and avoids shadowing the next AST node's start.
@@ -806,27 +804,67 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b')');
     }
 
-    fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
-        let Some((first, rest)) = items.split_first() else {
-            return;
-        };
-        if self.print_expr_comments(first.span().start) {
-            self.print_indent();
-        } else {
-            self.print_soft_newline();
-            self.print_indent();
-        }
-        first.print(self, ctx);
-        for item in rest {
-            self.print_comma();
-            if self.print_expr_comments(item.span().start) {
-                self.print_indent();
-            } else {
-                self.print_soft_newline();
-                self.print_indent();
+    fn print_argument_list(
+        &mut self,
+        arguments: &[Argument<'_>],
+        type_argument_list: &typescript::TypeArgumentList,
+        has_comment: bool,
+    ) {
+        for (index, argument) in arguments.iter().enumerate() {
+            if index > 0 {
+                self.print_comma();
+                if !has_comment {
+                    self.print_soft_space();
+                }
             }
-            item.print(self, ctx);
+            if has_comment {
+                if self.print_expr_comments(argument.span().start) {
+                    self.print_indent();
+                } else {
+                    self.print_soft_newline();
+                    self.print_indent();
+                }
+            }
+            let precedence =
+                type_argument_list.precedence_for(index, Some(Self::argument_expression(argument)));
+            self.print_argument(argument, precedence);
         }
+    }
+
+    fn argument_expression<'b, 'c>(argument: &'c Argument<'b>) -> &'c Expression<'b> {
+        match argument {
+            Argument::SpreadElement(element) => &element.argument,
+            _ => argument.to_expression(),
+        }
+    }
+
+    fn print_argument(&mut self, argument: &Argument<'_>, precedence: Precedence) {
+        match argument {
+            Argument::SpreadElement(element) => {
+                self.print_spread_element(element, precedence);
+            }
+            _ => argument.to_expression().print_expr(self, precedence, Context::empty()),
+        }
+    }
+
+    fn print_array_element(
+        &mut self,
+        element: &ArrayExpressionElement<'_>,
+        precedence: Precedence,
+    ) {
+        match element {
+            ArrayExpressionElement::SpreadElement(element) => {
+                self.print_spread_element(element, precedence);
+            }
+            ArrayExpressionElement::Elision(_) => {}
+            _ => element.to_expression().print_expr(self, precedence, Context::empty()),
+        }
+    }
+
+    fn print_spread_element(&mut self, element: &SpreadElement<'_>, precedence: Precedence) {
+        self.add_source_mapping(element.span);
+        self.print_ellipsis();
+        element.argument.print_expr(self, precedence, Context::empty());
     }
 
     #[inline]

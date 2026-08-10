@@ -15,6 +15,48 @@ use oxc_syntax::{
 
 use crate::Context;
 
+/// Determines which expressions in a comma-separated list need parentheses to
+/// prevent TypeScript from interpreting them as type arguments.
+pub struct TypeArgumentList {
+    last_closer: Option<usize>,
+    precedence: Precedence,
+    ctx: Context,
+}
+
+impl TypeArgumentList {
+    pub fn new<'a, T>(
+        is_typescript: bool,
+        items: &[T],
+        close_expression: impl for<'b> Fn(&'b T) -> Option<&'b Expression<'a>>,
+        precedence: Precedence,
+        ctx: Context,
+    ) -> Self {
+        let last_closer = (is_typescript && items.len() > 1)
+            .then(|| {
+                items.iter().rposition(|item| {
+                    close_expression(item).is_some_and(|expression| {
+                        expression_starts_with_ts_type_argument_close(expression, precedence, ctx)
+                    })
+                })
+            })
+            .flatten();
+
+        Self { last_closer, precedence, ctx }
+    }
+
+    pub fn precedence_for(&self, index: usize, expression: Option<&Expression<'_>>) -> Precedence {
+        if self.last_closer.is_some_and(|closer| index < closer)
+            && expression.is_some_and(|expression| {
+                expression_ends_with_ts_type_argument_open(expression, self.precedence, self.ctx)
+            })
+        {
+            Precedence::Shift
+        } else {
+            self.precedence
+        }
+    }
+}
+
 /// Returns whether the emitted suffix of `expression` exposes a `<` or `<<`
 /// token that TypeScript can reinterpret as the start of type arguments.
 ///
