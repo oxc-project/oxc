@@ -629,6 +629,7 @@ pub(crate) mod unicorn {
     pub mod no_useless_spread;
     pub mod no_useless_switch_case;
     pub mod no_useless_undefined;
+    pub mod no_xor_as_exponentiation;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
     pub mod numeric_separators_style;
