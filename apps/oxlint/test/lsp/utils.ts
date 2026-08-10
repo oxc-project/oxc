@@ -30,6 +30,7 @@ import {
   CodeAction,
   CodeActionContext,
   Command,
+  Diagnostic,
   DocumentDiagnosticReport,
   Range,
   Registration,
@@ -187,6 +188,7 @@ export async function initializationMessagesFixture(
   const workspaceUri = pathToFileURL(dirname(join(fixturesDir, fixturePath))).href;
   await using client = createLspConnection();
   const messagePromise = client.getShowMessage();
+
   await client.initialize(
     [{ uri: workspaceUri, name: "workspace-0" }],
     PULL_DIAGNOSTICS_CAPABILITY,
@@ -196,6 +198,33 @@ export async function initializationMessagesFixture(
   const message = await messagePromise;
 
   return snapshotShowMessages([message]);
+}
+
+export async function lintFixtureDiagnostics(
+  fixturesDir: string,
+  workspacePath: string,
+  fixturePath: string,
+  languageId: string,
+  initializationOptions?: OxlintLSPConfig,
+): Promise<Diagnostic[]> {
+  const workspaceUri = pathToFileURL(join(fixturesDir, workspacePath)).href;
+  const filePath = join(fixturesDir, workspacePath, fixturePath);
+  const fileUri = pathToFileURL(filePath).href;
+  const content = await fs.readFile(filePath, "utf-8");
+
+  await using client = createLspConnection();
+  await client.initialize(
+    [{ uri: workspaceUri, name: "workspace-0" }],
+    PULL_DIAGNOSTICS_CAPABILITY,
+    [{ workspaceUri, options: initializationOptions ?? null }],
+  );
+  await client.didOpen(fileUri, languageId, content);
+
+  const report = await client.diagnostic(fileUri);
+  if (report.kind !== "full") {
+    throw new Error("Only full reports are supported by oxlint lsp");
+  }
+  return report.items;
 }
 
 export async function lintSingleFileFixture(
@@ -450,6 +479,8 @@ type OxlintLSPConfig = {
   fixKind?: string;
   configPath?: string;
   typeAware?: boolean;
+  showSuppressedViolations?: boolean;
+  suppressedViolationSeverity?: "hint" | "information" | "warning" | "error";
   rulesCustomization?: Record<
     string,
     {
