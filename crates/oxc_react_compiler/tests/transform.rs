@@ -1,5 +1,6 @@
 //! End-to-end integration tests: oxc parse + semantic -> compile -> codegen.
 
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{ModuleExportName, Program, Statement};
 use oxc_codegen::Codegen;
@@ -140,7 +141,7 @@ fn skips_non_react_code() {
 }
 
 #[test]
-fn default_eslint_suppressions_bail_out() {
+fn default_lint_suppressions_bail_out() {
     let fixtures = [
         (
             "eslint-disable-next-line",
@@ -152,15 +153,18 @@ fn default_eslint_suppressions_bail_out() {
         ),
     ];
 
-    for (kind, source) in fixtures {
-        let allocator = Allocator::default();
-        let (_program, result) =
-            transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+    for prefix in ["eslint", "oxlint"] {
+        for (kind, source) in fixtures {
+            let source = source.cow_replace("eslint", prefix);
+            let allocator = Allocator::default();
+            let (_program, result) =
+                transform_source(&source, SourceType::tsx(), &allocator, PluginOptions::default());
 
-        assert!(!result.changed, "{kind} must prevent compilation");
-        assert!(!result.fatal, "{kind} must not produce a fatal result");
-        assert_eq!(result.diagnostics.len(), 1);
-        assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+            assert!(!result.changed, "{prefix} {kind} must prevent compilation");
+            assert!(!result.fatal, "{prefix} {kind} must not produce a fatal result");
+            assert_eq!(result.diagnostics.len(), 1);
+            assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+        }
     }
 }
 
