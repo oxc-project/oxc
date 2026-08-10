@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_expect_assertions.rs
+  s_a455a92896c113::t_27efb651798569 238-241,245,301,322-327,402-409
+crates/oxc_linter/src/rules/vitest/prefer_expect_assertions.rs
+  s_a455a92896c113::t_f31e014c7c2650 94-104,599-625
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3f99bd3306d91ed453d7ef91783401190d11ba34",
+  "prompts": {},
+  "sessions": {
+    "s_a455a92896c113": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019feaef-0046-7aa2-9b5c-7842f933bf31",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
