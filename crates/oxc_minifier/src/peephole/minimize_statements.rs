@@ -881,32 +881,25 @@ impl<'a> PeepholeOptimizations {
                 }
             }
 
+            // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
             if !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
                 && if_stmt.consequent.is_terminated()
+                && let Some(alternate) = if_stmt.alternate.take()
             {
-                // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 result.push(Statement::IfStatement(if_stmt));
-                loop {
-                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                        && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
-                        && if_stmt.consequent.is_terminated()
-                        && let Some(stmt) = if_stmt.alternate.take()
-                    {
-                        if let Statement::BlockStatement(block_stmt) = stmt {
-                            Self::handle_block(result, block_stmt, ctx);
-                        } else {
-                            result.push(stmt);
-                            ctx.notice_change();
-                        }
-                        continue;
-                    }
-                    break;
+
+                if let Statement::BlockStatement(block_stmt) = alternate {
+                    Self::handle_block(result, block_stmt, ctx);
+                } else {
+                    result.push(alternate);
+                    ctx.notice_change();
                 }
                 return ControlFlow::Continue(());
             }
         }
 
         result.push(Statement::IfStatement(if_stmt));
+
         ControlFlow::Continue(())
     }
 

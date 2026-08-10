@@ -111,7 +111,7 @@ fn test_function_return_optimization() {
     test("function f(){g:{return}}", "function f(){g:return}"); // function f(){}
     test(
         "function f(){g:if(a()){return;}else{return;} return;}",
-        "function f(){g:if(a())return;else return}",
+        "function f(){g:return a(),void 0;}",
     ); // function f(){g:a()}
     test(
         "function f(){g:{if(a()){return;}else{return;} return;}}",
