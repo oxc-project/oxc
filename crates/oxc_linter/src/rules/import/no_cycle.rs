@@ -149,6 +149,7 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    /// analogous to [`Rule::run_once`] but for the whole project
     pub fn run_all(
         config: &ConfigStore,
         paths_set: &IndexSet<Arc<OsStr>, FxBuildHasher>,
@@ -174,15 +175,18 @@ impl NoCycle {
             return FxHashMap::default();
         }
 
-        find_cycles(modules, &target_paths, disable_directives_map)
+        collect_cycle_diagnostics(modules, &target_paths, disable_directives_map)
     }
 }
 
 impl NoCycle {
+    /// builds diagnostics for `module_record`'s direct imports that are
+    /// `in_same_cycle`. cycles have already been detected here—this just builds
+    /// a nice error display via BFS
     fn module_diagnostics(
         self,
         module_record: &ModuleRecord,
-        can_cycle_be_closed: impl Fn(&Path) -> bool,
+        in_same_cycle: impl Fn(&Path) -> bool,
     ) -> Vec<OxcDiagnostic> {
         let needle = &module_record.resolved_absolute_path;
         let mut direct_imports = module_record
@@ -215,7 +219,7 @@ impl NoCycle {
                 continue;
             }
 
-            if !can_cycle_be_closed(&loaded_module_record.resolved_absolute_path) {
+            if !in_same_cycle(&loaded_module_record.resolved_absolute_path) {
                 continue;
             }
 
@@ -317,7 +321,7 @@ fn should_traverse_module(
 
 type ModulesByPath<'a> = FxHashMap<&'a Path, &'a [Arc<ModuleRecord>]>;
 
-mod graph {
+mod graph_cycles {
     use std::path::Path;
 
     use petgraph::graphmap::DiGraphMap;
@@ -328,6 +332,7 @@ mod graph {
 
     type ImportGraph<'a> = DiGraphMap<&'a Path, ()>;
 
+    /// Builds a directed graph in parallel so cycles can be detected
     fn build_import_graph<'a>(ignore_types: bool, modules: &ModulesByPath<'a>) -> ImportGraph<'a> {
         let edges: Vec<(&'a Path, &'a Path)> = modules
             .par_iter()
@@ -342,6 +347,8 @@ mod graph {
                         .filter(|(specifier, imported)| {
                             should_traverse_module(ignore_types, specifier, imported, module_record)
                         })
+                        // grabs module path from modules since `Weak` upgrade
+                        // doesn't live long enough
                         .filter_map(|(_, imported)| {
                             modules.get_key_value(imported.resolved_absolute_path.as_path())
                         })
@@ -362,11 +369,10 @@ mod graph {
         graph
     }
 
-    pub type StronglyConnectedComponentId = usize;
+    pub type CycleId = usize;
 
-    fn path_cycles<'a>(
-        graph: &ImportGraph<'a>,
-    ) -> FxHashMap<&'a Path, StronglyConnectedComponentId> {
+    /// Turns a directed module graph into a map of `Path` to `CycleId`. This is done linearly via Tarjan's algorithm
+    fn cycles_by_path<'a>(graph: &ImportGraph<'a>) -> FxHashMap<&'a Path, CycleId> {
         let is_cycle = |component: &[&Path]| -> bool {
             component.len() > 1 || graph.contains_edge(component[0], component[0])
         };
@@ -379,22 +385,26 @@ mod graph {
             .collect()
     }
 
+    /// Linearly detects cycles in the module graph. Returns which cycle a path
+    /// is in, if any
     pub fn cycles_by_module<'a>(
         ignore_types: bool,
         modules: &ModulesByPath<'a>,
-    ) -> FxHashMap<&'a Path, StronglyConnectedComponentId> {
-        path_cycles(&build_import_graph(ignore_types, modules))
+    ) -> FxHashMap<&'a Path, CycleId> {
+        cycles_by_path(&build_import_graph(ignore_types, modules))
     }
 }
 
-fn find_cycles(
+/// Converts the cycles found in `cycles_by_module` into diagnostics.
+/// Abides by disable directives like other rules
+fn collect_cycle_diagnostics(
     modules: &ModulesByPath<'_>,
     target_paths: &FxHashMap<PathBuf, (AllowWarnDeny, NoCycle)>,
     disable_directives_map: &Mutex<FxHashMap<PathBuf, DisableDirectives>>,
 ) -> FxHashMap<PathBuf, Vec<OxcDiagnostic>> {
     // types must be checked for the whole graph if any config enables them
     let include_type_edges = target_paths.values().any(|(_, config)| !config.ignore_types);
-    let cycles = graph::cycles_by_module(!include_type_edges, modules);
+    let cycles = graph_cycles::cycles_by_module(!include_type_edges, modules);
 
     let directives_map = disable_directives_map.lock().expect("disable_directives_map poisoned");
     let rule = RuleLabel::new(NoCycle::PLUGIN, NoCycle::NAME);
@@ -437,6 +447,8 @@ fn find_cycles(
         .collect()
 }
 
+/// attaches disable directives quick fixes to messages for the LSP when
+/// `with_ignore_fixes` is `true`
 pub fn diagnostics_to_messages(
     diagnostics: FxHashMap<PathBuf, Vec<OxcDiagnostic>>,
     with_ignore_fixes: bool,
