@@ -1,0 +1,24 @@
+crates/oxc_codegen/src/typescript.rs
+  s_6d5e6260ed517e::t_d87c89d815facd 29-306
+  s_6d5e6260ed517e::t_9b52e077fab9fd 26-28
+  s_6d5e6260ed517e::t_8f8f00209923b6 307-309
+  s_6d5e6260ed517e::t_5f764e64c3de00 1-25,310
+crates/oxc_codegen/tests/integration/ts.rs
+  s_6d5e6260ed517e::t_3e02100f6591f0 1-4,10-11,73-159
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "066b14c9b1dc45e6915655eb7e44a651f67d0efe",
+  "prompts": {},
+  "sessions": {
+    "s_6d5e6260ed517e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fec04-f78b-7602-a406-2a9695980983",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
