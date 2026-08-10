@@ -14,7 +14,7 @@ use oxc_linter::{
 
 use crate::lsp::{
     options::{RuleCustomizationSeverity, RulesCustomization},
-    utils::get_full_rule_name,
+    utils::{get_full_rule_name, get_oxc_diagnostic_full_message},
 };
 
 #[derive(Debug, Clone, Default)]
@@ -130,22 +130,7 @@ pub fn message_to_lsp_diagnostic(
         .and_then(|url| url.parse().ok())
         .map(|href| CodeDescription { href });
 
-    let mut diagnostic_message = String::with_capacity(
-        message.error.message.len()
-            + message.error.help.as_ref().map_or(0, |h| h.len() + 7) // "help: " prefix
-            + message.error.note.as_ref().map_or(0, |n| n.len() + 7), // "note: " prefix
-    );
-
-    diagnostic_message.push_str(&message.error.message);
-    if let Some(help) = &message.error.help {
-        diagnostic_message.push_str("\nhelp: ");
-        diagnostic_message.push_str(help);
-    }
-
-    if let Some(note) = &message.error.note {
-        diagnostic_message.push_str("\nnote: ");
-        diagnostic_message.push_str(note);
-    }
+    let diagnostic_message = get_oxc_diagnostic_full_message(&message.error);
 
     let diagnostic = Diagnostic {
         range,

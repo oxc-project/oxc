@@ -1,7 +1,10 @@
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createLspConnection } from "../utils";
+import { createLspConnection, initializationMessagesFixture } from "../utils";
 import { WatchKind } from "vscode-languageserver-protocol/node";
+
+const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
 describe("LSP initialization", () => {
   it("should start LSP server and respond to initialize request", async () => {
@@ -98,4 +101,24 @@ describe("LSP initialization", () => {
       ]);
     },
   );
+
+  it("should show an error message when the root config is invalid", async () => {
+    expect(
+      await initializationMessagesFixture(FIXTURES_DIR, "invalid-config-root/test.ts"),
+    ).toMatchSnapshot();
+  });
+
+  it("should show an error message when the nested config is invalid", async () => {
+    expect(
+      await initializationMessagesFixture(FIXTURES_DIR, "invalid-config-nested/test.ts"),
+    ).toMatchSnapshot();
+  });
+
+  it("should show an error message when configPath points to an invalid config", async () => {
+    expect(
+      await initializationMessagesFixture(FIXTURES_DIR, "invalid-custom-config-path/test.ts", {
+        configPath: "./not-found.json",
+      }),
+    ).toMatchSnapshot();
+  });
 });
