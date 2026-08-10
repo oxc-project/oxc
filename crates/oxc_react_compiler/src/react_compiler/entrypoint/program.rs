@@ -1531,11 +1531,11 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
 
     fn walk_variable_declaration(&mut self, decl: &'b VariableDeclaration<'ast>) {
         for declarator in &decl.declarations {
-            // Only infer the declarator name when the init is a direct function
-            // expression, arrow, or call expression (for forwardRef/memo wrappers).
+            // Ignore parenthesis nodes when deciding whether the declarator name
+            // flows into a function or forwardRef/memo wrapper.
             if let Some(init) = &declarator.init {
                 if matches!(
-                    init,
+                    init.without_parentheses(),
                     Expression::FunctionExpression(_)
                         | Expression::ArrowFunctionExpression(_)
                         | Expression::CallExpression(_)
@@ -2016,15 +2016,16 @@ fn has_wrapper_callee_reference(scoping: &Scoping, nodes: &AstNodes, symbol_id: 
     })
 }
 
-/// The `const Foo = <fn>` name for a function/arrow node, iff the declarator's
-/// init is directly this node — the same direct-init rule the discovery walker
-/// applies. A function whose direct parent is the declarator can only be its
-/// init (wrappers like parens or TS casts introduce an intermediate parent and
-/// break the inference there too).
-fn declarator_name_for<'a>(nodes: &AstNodes<'a>, node_id: NodeId) -> Option<&'a str> {
-    match nodes.parent_kind(node_id) {
-        AstKind::VariableDeclarator(decl) => get_declarator_name(decl),
-        _ => None,
+/// The `const Foo = <fn>` name for a function/arrow node, ignoring any parenthesis
+/// nodes between the function and declarator.
+fn declarator_name_for<'a>(nodes: &AstNodes<'a>, mut node_id: NodeId) -> Option<&'a str> {
+    loop {
+        let parent = nodes.parent_node(node_id);
+        match parent.kind() {
+            AstKind::ParenthesizedExpression(_) => node_id = parent.id(),
+            AstKind::VariableDeclarator(decl) => return get_declarator_name(decl),
+            _ => return None,
+        }
     }
 }
 
