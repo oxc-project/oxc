@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
-use oxc_diagnostics::OxcCode;
-use tower_lsp_server::ls_types::Range;
+use oxc_diagnostics::{OxcCode, OxcDiagnostic, Severity};
+use oxc_language_server::ClientMessage;
+use tower_lsp_server::ls_types::{MessageType, Range};
+
+use crate::config_loader::ConfigLoadError;
 
 /// Returns `true` if LSP ranges `a` and `b` overlap or touch (share a boundary point).
 ///
@@ -26,6 +29,60 @@ pub fn get_full_rule_name(rule_code: &OxcCode) -> Option<Cow<'_, str>> {
         Some(Cow::Borrowed(rule_name))
     } else {
         Some(Cow::Owned(format!("{scope}/{rule_name}")))
+    }
+}
+
+/// Returns a full diagnostic message string, including the main message, help text, and note if present.
+pub fn get_oxc_diagnostic_full_message(diagnostic: &OxcDiagnostic) -> String {
+    let mut diagnostic_message = String::with_capacity(
+        diagnostic.message.len()
+            + diagnostic.help.as_ref().map_or(0, |h| h.len() + 7) // "help: " prefix
+            + diagnostic.note.as_ref().map_or(0, |n| n.len() + 7), // "note: " prefix
+    );
+
+    diagnostic_message.push_str(&diagnostic.message);
+    if let Some(help) = &diagnostic.help {
+        diagnostic_message.push_str("\nhelp: ");
+        diagnostic_message.push_str(help);
+    }
+
+    if let Some(note) = &diagnostic.note {
+        diagnostic_message.push_str("\nnote: ");
+        diagnostic_message.push_str(note);
+    }
+    diagnostic_message
+}
+
+/// Converts an `OxcDiagnostic` to a `ClientMessage` for LSP communication.
+pub fn oxc_diagnostic_to_client_message(diagnostic: &OxcDiagnostic) -> ClientMessage {
+    let message = get_oxc_diagnostic_full_message(diagnostic);
+    let r#type = match diagnostic.severity {
+        Severity::Error => MessageType::ERROR,
+        Severity::Warning => MessageType::WARNING,
+        Severity::Advice => MessageType::INFO,
+    };
+    ClientMessage { message, r#type }
+}
+
+/// Converts a `ConfigLoadError` to a human-readable message string.
+pub fn config_loader_error_to_message(error: ConfigLoadError) -> String {
+    match error {
+        ConfigLoadError::Parse { path, error } => {
+            format!(
+                "Failed to parse config file {}: {}",
+                path.display(),
+                get_oxc_diagnostic_full_message(&error)
+            )
+        }
+        ConfigLoadError::Build { path, error } => {
+            format!("Failed to build config from file {}: {}", path.display(), error)
+        }
+        ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
+            "JavaScript/TypeScript config file found but JS runtime not available.".to_string()
+        }
+        ConfigLoadError::Diagnostic(diag) => {
+            format!("Failed to load config: {}", get_oxc_diagnostic_full_message(&diag))
+        }
     }
 }
 
