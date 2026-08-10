@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0c9b980 semantic: Report module declaration diagnostics (#25285) (camc314)
+
+### ⚡ Performance
+
+- dd1430b semantic: Avoid allocation in class overload check (#25440) (camc314)
+
 ## [0.143.0] - 2026-08-03
 
 ### 💥 BREAKING CHANGES
