@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/vitest/prefer_expect_assertions.rs
+  s_3c7a5db6237378::t_ae48883a0d88ec 5,129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "69554e62067a5e48f225e8c57a117bf981f80f9b",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
