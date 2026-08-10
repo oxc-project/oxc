@@ -1,12 +1,9 @@
-use cow_utils::CowUtils;
-
-use oxc_allocator::{Allocator, ArenaStringBuilder};
+use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
     DispatchRequest, DispatchResponse, FormatElement, IndentWidth, InputKind,
-    format_element::TextWidth,
+    format_element::{LineMode, TextWidth},
 };
-use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     ast_nodes::AstNode,
@@ -75,12 +72,11 @@ pub(super) fn format_html_doc<'a>(
         // Remap is a no-op today (the Prettier Doc path never carries classes),
         // but the boundary contract is "merge at every embed site".
         // A Rust HTML formatter collecting `class` attributes will rely on this.
-        let mut ir = result.into_doc(f.context_mut());
+        let ir = result.into_doc(f.context_mut());
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
-        let allocator = f.allocator();
-        super::escape_template_chars_in_ir(&mut ir, allocator, f.options().indent_width);
+        let ir = super::escape_template_chars_in_ir(&ir, f);
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
@@ -126,25 +122,7 @@ pub(super) fn format_html_doc<'a>(
         input_kind: InputKind::Fragment,
         parent_context: None,
     }) else {
-        // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
-        // returned Prettier's `Doc` output may contain `conditionalGroup`.
-        // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
-        // So the dispatch will return `Err`.
-        //
-        // In Prettier, `conditionalGroup` is only used by JS and YAML formatting.
-        // And we want to format JS by `oxc_formatter` via oxfmt-plugin,
-        // so for now, fall back to string-based rather than give up entirely.
-        // Of course, there will be formatting differences.
-        // Support `conditionalGroup` and convert to our `BestFitting` may be possible,
-        // but it also requires placeholder replacement, which is non-trivial.
-        //
-        // NOTE: `Ok(PreserveOriginal)` lands here too and gets the same recovery attempt
-        // (today it only arises when the dispatcher is absent,
-        // in which case the string callback is absent under the same gate
-        // and recovery degrades to the plain template path anyway).
-        // Splitting the match is string-channel-migration work,
-        // out of scope while html stays on the Prettier string path.
-        return format_js_in_html_as_fallback(joined, &expressions, f);
+        return false;
     };
 
     let Some(html_has_multiple_root_elements) = result
@@ -156,58 +134,63 @@ pub(super) fn format_html_doc<'a>(
         return false;
     };
     // See the Phase 0 note: remap is no-op today, load-bearing once `oxc_formatter_html` lands
-    let mut ir = result.into_doc(f.context_mut());
+    let ir = result.into_doc(f.context_mut());
 
-    // Re-escape template chars in `Text` runs before counting / substituting:
-    // the IR is reinserted into a JS template literal built from `.cooked` values.
-    let indent_width = f.options().indent_width;
-    super::escape_template_chars_in_ir(&mut ir, allocator, indent_width);
-
-    // Verify all placeholders survived HTML formatting
-    let placeholder_count: usize = ir
-        .iter()
-        .map(|el| match el {
-            FormatElement::Text { text, .. } => {
-                super::count_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX)
-            }
-            _ => 0,
-        })
-        .sum();
-    if placeholder_count != expressions.len() {
+    // Validate before formatting any expression.
+    // Formatting consumes comment state,
+    // so discovering an unusable placeholder layout afterwards would make the verbatim fallback unsafe.
+    let mut next_placeholder = 0;
+    if !placeholders_are_sequential(&ir, &mut next_placeholder)
+        || next_placeholder != expressions.len()
+    {
         return false;
     }
 
-    // Phase 3: Replace placeholders in IR with expressions
-    let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
-        for element in ir {
-            match &element {
-                FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts =
-                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
-                    for (i, part) in parts.iter().enumerate() {
-                        if i.is_multiple_of(2) {
-                            if !part.is_empty() {
-                                write_text_with_line_breaks(f, part, allocator, indent_width);
-                            }
-                        } else if let Some(idx) = part.parse::<usize>().ok()
-                            && let Some(expr) = expressions.get(idx)
-                        {
-                            // Prettier prints embedded `${expr}` with `printEmbeddedTemplateExpressions()`:
-                            // the plain-template expression logic minus source-indentation preservation.
-                            // Default options (zero indention) are exactly that (same as graphql.rs).
-                            let te = TemplateExpression::Expression(expr);
-                            FormatTemplateExpression::new(
-                                &te,
-                                FormatTemplateExpressionOptions::default(),
-                            )
-                            .fmt(f);
-                        }
+    // Format every expression exactly once.
+    // These elements are cloned into all `BestFitting` variants.
+    let mut formatted_expressions = Vec::with_capacity(expressions.len());
+    for expr in expressions {
+        let te = TemplateExpression::Expression(expr);
+        let element = f
+            .intern(&FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default()))
+            .expect("a template expression always emits non-empty IR");
+        formatted_expressions.push(element);
+    }
+
+    // Phase 3: Rebuild the IR in one pass, re-escaping template chars in `Text` runs
+    // (the IR is reinserted into a JS template literal built from `.cooked` values)
+    // and substituting placeholders inside every `BestFitting` variant.
+    // Escaping cannot alter placeholders: the sentinel is ASCII word characters only.
+    let indent_width = f.options().indent_width;
+    let ir = super::map_text_in_ir(&ir, f, &mut |text, out| {
+        let escaped = super::escape_template_chars(text, allocator);
+        let text = escaped.unwrap_or(text);
+        if text.contains(PLACEHOLDER_PREFIX) {
+            let parts = super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
+            if parts.len() > 1 {
+                for (index, part) in parts.iter().enumerate() {
+                    if index.is_multiple_of(2) {
+                        push_text_with_line_breaks(out, part, indent_width);
+                    } else {
+                        let expression = part
+                            .parse::<usize>()
+                            .ok()
+                            .and_then(|index| formatted_expressions.get(index))
+                            .expect(
+                                "placeholder indices were validated before expression formatting",
+                            );
+                        out.push(expression.clone());
                     }
                 }
-                _ => f.write_element(element),
+                return true;
             }
         }
+        // No placeholder to substitute; push the escaped text if escaping changed it
+        let Some(text) = escaped else { return false };
+        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        true
     });
+    let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| f.write_elements(ir));
 
     let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
     write_html_template(
@@ -277,70 +260,127 @@ fn write_html_template<'a>(
     }
 }
 
-/// Fallback formatting for JS-in-HTML-in-JS cases where
-/// Prettier's HTML formatting returns unsupported IR (e.g. with `conditionalGroup`).
-fn format_js_in_html_as_fallback<'a>(
-    joined: &str,
-    expressions: &[&AstNode<'a, Expression<'a>>],
-    f: &mut JsFormatter<'_, 'a>,
-) -> bool {
-    // Configured width; the template's indent is not subtracted (recovery path, matches prior behavior)
-    let print_width = usize::from(f.options().line_width.value());
-    let Some(Ok(formatted)) =
-        f.session().string_embedder().map(|embed| embed("html", joined, print_width))
-    else {
-        return false;
-    };
-
-    // Replace placeholders with `${source_text}` from the original expressions
-    let mut result = formatted;
-    for (idx, expr) in expressions.iter().enumerate() {
-        let placeholder = format!("{PLACEHOLDER_PREFIX}{idx}_{COUNTER}{PLACEHOLDER_SUFFIX}");
-        if !result.contains(&placeholder) {
-            return false;
-        }
-        let source = f.source_text().text_for(expr);
-        result = result.cow_replace(&placeholder, &format!("${{{source}}}")).into_owned();
-    }
-
-    // Write line by line, same as `format_embedded_template()`
-    let format_content = format_with(|f: &mut JsFormatter<'_, 'a>| {
-        let content = f.allocator().alloc_str(&result);
-        for line in LineTerminatorSplitter::new(content) {
-            if line.is_empty() {
-                write!(f, [empty_line()]);
-            } else {
-                write!(f, [text(line), hard_line_break()]);
+/// Check that placeholders appear in index order starting at `*next`, one occurrence each.
+///
+/// `BestFitting` alternatives describe the same logical content,
+/// so every variant must contain the same index sequence and contributes it only once to its parent sequence.
+/// On success `*next` is one past the last index seen; the caller checks it against the expression count.
+fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bool {
+    for element in ir {
+        match element {
+            FormatElement::Text { text, .. } => {
+                if !text.contains(PLACEHOLDER_PREFIX) {
+                    continue;
+                }
+                let parts =
+                    super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
+                for part in parts.iter().skip(1).step_by(2) {
+                    if !part.parse::<usize>().is_ok_and(|index| index == *next) {
+                        return false;
+                    }
+                    *next += 1;
+                }
             }
+            FormatElement::BestFitting(best_fitting) => {
+                let start = *next;
+                let mut variants = best_fitting.variants().iter();
+                let Some(first) = variants.next() else { return false };
+                if !placeholders_are_sequential(first, next) {
+                    return false;
+                }
+                for variant in variants {
+                    let mut variant_next = start;
+                    if !placeholders_are_sequential(variant, &mut variant_next)
+                        || variant_next != *next
+                    {
+                        return false;
+                    }
+                }
+            }
+            FormatElement::Interned(interned) if !placeholders_are_sequential(interned, next) => {
+                return false;
+            }
+            _ => {}
         }
-    });
-
-    write!(f, ["`", block_indent(&format_content), "`"]);
+    }
     true
 }
 
 /// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
 ///
-/// Uses [`literal_line_break`] instead of `hard_line_break()` to avoid adding indentation:
+/// Uses [`LineMode::Literal`] instead of a hard line break to avoid adding indentation:
 /// the returned HTML Doc already carries its indentation in the text content,
 /// so the surrounding `block_indent` must not add more.
-fn write_text_with_line_breaks<'a>(
-    f: &mut JsFormatter<'_, 'a>,
-    text: &str,
-    allocator: &'a Allocator,
+fn push_text_with_line_breaks<'a>(
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
+    text: &'a str,
     indent_width: IndentWidth,
 ) {
     let mut first = true;
-    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks.
+    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks
     for line in text.split('\n') {
         if !first {
-            write!(f, [literal_line_break()]);
+            out.push(FormatElement::Line(LineMode::Literal));
         }
         first = false;
         if !line.is_empty() {
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            f.write_element(FormatElement::Text { text: arena_text, width });
+            out.push(FormatElement::Text {
+                text: line,
+                width: TextWidth::from_text(line, indent_width),
+            });
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::{Allocator, ArenaVec};
+    use oxc_formatter_core::{
+        BestFittingElement, FormatElement, IndentWidth, format_element::TextWidth,
+    };
+
+    use super::placeholders_are_sequential;
+
+    fn text(text: &'static str) -> FormatElement<'static> {
+        FormatElement::Text { text, width: TextWidth::from_text(text, IndentWidth::default()) }
+    }
+
+    fn best_fitting<'a>(
+        allocator: &'a Allocator,
+        first: FormatElement<'a>,
+        second: FormatElement<'a>,
+    ) -> FormatElement<'a> {
+        let first = ArenaVec::from_array_in([first], &allocator).into_arena_slice();
+        let second = ArenaVec::from_array_in([second], &allocator).into_arena_slice();
+        let variants = ArenaVec::from_array_in([first as &[_], second as &[_]], &allocator);
+        // SAFETY: The helper always constructs exactly two variants
+        FormatElement::BestFitting(unsafe { BestFittingElement::from_vec_unchecked(variants) })
+    }
+
+    #[test]
+    fn placeholder_indices_count_best_fitting_variants_once() {
+        let allocator = Allocator::default();
+        let element = best_fitting(
+            &allocator,
+            text("aPRETTIER_HTML_PLACEHOLDER_0_0_IN_JSbPRETTIER_HTML_PLACEHOLDER_1_0_IN_JSc"),
+            text("PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS PRETTIER_HTML_PLACEHOLDER_1_0_IN_JS"),
+        );
+
+        let mut next = 0;
+        assert!(placeholders_are_sequential(&[element], &mut next));
+        assert_eq!(next, 2);
+    }
+
+    #[test]
+    fn placeholder_indices_reject_different_best_fitting_variants() {
+        let allocator = Allocator::default();
+        let element = best_fitting(
+            &allocator,
+            text("PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS"),
+            text("PRETTIER_HTML_PLACEHOLDER_1_0_IN_JS"),
+        );
+
+        let mut next = 0;
+        assert!(!placeholders_are_sequential(&[element], &mut next));
     }
 }

@@ -2067,6 +2067,24 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: *await_value });
             effects.push(AliasingEffect::Capture { from: *await_value, into: *lvalue });
         }
+        InstructionValue::TaggedTemplateExpression { tag, subexprs, span, .. } => {
+            // A tagged template is a function call whose first argument is the
+            // call-site's frozen template object, followed by the interpolated
+            // expressions. There is no HIR place for the implicit template object,
+            // so preserve its parameter position with a hole.
+            let mut args = ArenaVec::new_in(&alloc);
+            args.push(PlaceOrSpreadOrHole::Hole);
+            args.extend(subexprs.iter().copied().map(PlaceOrSpreadOrHole::Place));
+            effects.push(AliasingEffect::Apply {
+                receiver: *tag,
+                function: *tag,
+                mutates_function: true,
+                args,
+                into: *lvalue,
+                signature: Some(env.identifiers[tag.identifier].type_),
+                span: *span,
+            });
+        }
         InstructionValue::NewExpression { callee, args, span } => {
             effects.push(AliasingEffect::Apply {
                 receiver: *callee,
@@ -2390,8 +2408,7 @@ fn compute_signature_for_instruction<'a>(
             });
         }
         // All primitive-creating instructions
-        InstructionValue::TaggedTemplateExpression { .. }
-        | InstructionValue::BinaryExpression { .. }
+        InstructionValue::BinaryExpression { .. }
         | InstructionValue::Debugger { .. }
         | InstructionValue::JSXText { .. }
         | InstructionValue::MetaProperty { .. }

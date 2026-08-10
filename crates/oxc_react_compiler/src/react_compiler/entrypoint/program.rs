@@ -1531,14 +1531,12 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
 
     fn walk_variable_declaration(&mut self, decl: &'b VariableDeclaration<'ast>) {
         for declarator in &decl.declarations {
-            // Only infer the declarator name when the init is a direct function
-            // expression, arrow, or call expression (for forwardRef/memo wrappers).
+            // Ignore parenthesis nodes when deciding whether the declarator name
+            // flows into a function expression.
             if let Some(init) = &declarator.init {
                 if matches!(
-                    init,
-                    Expression::FunctionExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::CallExpression(_)
+                    init.without_parentheses(),
+                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
                 ) {
                     self.current_declarator_name = get_declarator_name(declarator);
                 }
@@ -1680,20 +1678,18 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             }
             Expression::CallExpression(node) => {
                 let callee_name = get_callee_name_if_react_api(&node.callee);
-                // The declarator name only flows through forwardRef/memo calls; for
-                // any other call, clear it so nested functions don't inherit it.
-                if callee_name.is_none() {
-                    self.current_declarator_name = None;
-                }
+                // Upstream `getFunctionName` only consults a function's direct parent
+                // (declarator/assignment/property), so a declarator name never names
+                // a function nested in call arguments; forwardRef/memo callbacks are
+                // detected as anonymous functions via `parent_callee_stack` instead,
+                // which skips the component-name param/return checks.
+                self.current_declarator_name = None;
                 self.parent_callee_stack.push(callee_name);
                 self.walk_expression(&node.callee);
                 for arg in &node.arguments {
                     self.walk_argument(arg);
                 }
-                let was_react_api = self.parent_callee_stack.pop().flatten().is_some();
-                if was_react_api {
-                    self.current_declarator_name = None;
-                }
+                self.parent_callee_stack.pop();
             }
             Expression::ChainExpression(node) => self.walk_chain_element(&node.expression),
             Expression::StaticMemberExpression(node) => self.walk_expression(&node.object),
@@ -2016,15 +2012,16 @@ fn has_wrapper_callee_reference(scoping: &Scoping, nodes: &AstNodes, symbol_id: 
     })
 }
 
-/// The `const Foo = <fn>` name for a function/arrow node, iff the declarator's
-/// init is directly this node — the same direct-init rule the discovery walker
-/// applies. A function whose direct parent is the declarator can only be its
-/// init (wrappers like parens or TS casts introduce an intermediate parent and
-/// break the inference there too).
-fn declarator_name_for<'a>(nodes: &AstNodes<'a>, node_id: NodeId) -> Option<&'a str> {
-    match nodes.parent_kind(node_id) {
-        AstKind::VariableDeclarator(decl) => get_declarator_name(decl),
-        _ => None,
+/// The `const Foo = <fn>` name for a function/arrow node, ignoring any parenthesis
+/// nodes between the function and declarator.
+fn declarator_name_for<'a>(nodes: &AstNodes<'a>, mut node_id: NodeId) -> Option<&'a str> {
+    loop {
+        let parent = nodes.parent_node(node_id);
+        match parent.kind() {
+            AstKind::ParenthesizedExpression(_) => node_id = parent.id(),
+            AstKind::VariableDeclarator(decl) => return get_declarator_name(decl),
+            _ => return None,
+        }
     }
 }
 
@@ -2886,24 +2883,23 @@ pub fn compile_program<'a>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    // The compiler's own validations cover the safety concerns represented by the
-    // React Hooks ESLint rules. Match Babel by only consulting ESLint suppressions
-    // when either validation is disabled.
-    let eslint_rules = (!options.environment.validate_exhaustive_memoization_dependencies
-        || !options.environment.validate_hooks_usage)
-        .then(|| {
-            options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
-            })
-        });
-
-    // Find program-level suppressions from comments
-    let suppressions = find_program_suppressions(
-        &program.comments,
-        program.source_text,
-        eslint_rules.as_deref(),
-        options.flow_suppressions,
-    );
+    // Match babel-plugin-react-compiler 1.0.0: ESLint suppressions are an explicit
+    // function-level opt-out, independent of the compiler's internal validations.
+    let suppressions = if let Some(eslint_rules) = options.eslint_suppression_rules.as_deref() {
+        find_program_suppressions(
+            &program.comments,
+            program.source_text,
+            eslint_rules,
+            options.flow_suppressions,
+        )
+    } else {
+        find_program_suppressions(
+            &program.comments,
+            program.source_text,
+            DEFAULT_ESLINT_SUPPRESSIONS,
+            options.flow_suppressions,
+        )
+    };
 
     // Check for module-scope opt-out directive
     let has_module_scope_opt_out = find_directive_disabling_memoization(

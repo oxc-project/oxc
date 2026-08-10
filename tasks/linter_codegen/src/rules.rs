@@ -9,6 +9,8 @@ pub struct RuleEntry<'e> {
     pub plugin_module_name: &'e str,
     /// The rule's module name, like `no_debugger` in `eslint::no_debugger:NoDebugger`.
     pub rule_module_name: &'e str,
+    /// Whether the rule overrides `Rule::from_configuration`.
+    pub has_custom_from_configuration: bool,
 }
 
 impl RuleEntry<'_> {
@@ -48,8 +50,13 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
             && line.ends_with(';')
             && let Some(rule_name) = line.strip_prefix("pub mod ").and_then(|s| s.strip_suffix(';'))
         {
-            rule_entries
-                .push(RuleEntry { plugin_module_name: plugin, rule_module_name: rule_name });
+            rule_entries.push(RuleEntry {
+                plugin_module_name: plugin,
+                rule_module_name: rule_name,
+                // Preserve the existing generated behavior unless codegen confirms that the rule
+                // uses the default implementation.
+                has_custom_from_configuration: true,
+            });
         }
     }
 
