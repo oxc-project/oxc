@@ -587,6 +587,7 @@ unicorn/no-unnecessary-slice-end                           |  62606
 unicorn/no-unreadable-array-destructuring                  |    276
 unicorn/no-unreadable-iife                                 |  62606
 unicorn/no-useless-collection-argument                     |   1421
+unicorn/no-useless-continue                                |    205
 unicorn/no-useless-error-capture-stack-trace               |  62606
 unicorn/no-useless-fallback-in-spread                      |  12119
 unicorn/no-useless-iterator-to-array                       |  65257
