@@ -50,22 +50,7 @@ impl<'a> PeepholeOptimizations {
                 return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             }
 
-            let is_alternate_terminated = alternate.is_jump_statement();
-            let is_consequent_terminated = if_stmt.consequent.is_jump_statement();
-
-            if is_alternate_terminated == is_consequent_terminated {
-                // Normalize: move the `!` out of the test by swapping branches.
-                // Avoid swapping when alternate is an `if` — that risks a worse chain.
-                // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
-                if !matches!(alternate, Statement::IfStatement(_))
-                    && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
-                    && unary_expr.operator.is_not()
-                {
-                    let new_test = unary_expr.argument.take_in(ctx);
-                    ctx.replace_expression(&mut if_stmt.test, new_test);
-                    std::mem::swap(&mut if_stmt.consequent, alternate);
-                }
-            } else if is_alternate_terminated {
+            if Self::should_invert_if(&if_stmt.consequent, alternate, &if_stmt.test, ctx) {
                 let new_test = match &mut if_stmt.test {
                     Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
                         unary_expr.argument.take_in(ctx)
@@ -108,6 +93,31 @@ impl<'a> PeepholeOptimizations {
 
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         None
+    }
+
+    fn should_invert_if(
+        consequent: &Statement<'a>,
+        alternate: &Statement<'a>,
+        test: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let is_alternate_terminated = alternate.is_jump_statement();
+        let is_consequent_terminated = consequent.is_jump_statement();
+
+        if is_alternate_terminated == is_consequent_terminated || ctx.parent().is_if_statement() {
+            // Normalize: move the `!` out of the test by swapping branches.
+            // Avoid swapping when alternate is an `if` — that risks a worse chain.
+            // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
+            if !matches!(alternate, Statement::IfStatement(_))
+                && let Expression::UnaryExpression(unary_expr) = test
+                && unary_expr.operator.is_not()
+            {
+                return true;
+            }
+        } else if is_alternate_terminated {
+            return true;
+        }
+        false
     }
 
     /// Wrap to avoid ambiguous else.
