@@ -10,13 +10,13 @@ use owo_colors::Style;
 /// Use one of the predefined constructors below.
 #[derive(Debug, Clone)]
 pub struct GraphicalTheme {
-    pub(crate) characters: ThemeCharacters,
-    pub(crate) styles: ThemeStyles,
+    pub(super) characters: ThemeCharacters,
+    pub(super) styles: ThemeStyles,
 }
 
 fn force_color() -> bool {
     // Assume CI can always print colors.
-    env::var("CI").is_ok() || env::var("FORCE_COLOR").is_ok_and(|env| env != "0")
+    env::var_os("CI").is_some() || env::var_os("FORCE_COLOR").is_some_and(|value| value != "0")
 }
 
 impl Default for GraphicalTheme {
@@ -28,13 +28,13 @@ impl Default for GraphicalTheme {
 impl GraphicalTheme {
     /// Chooses a graphical theme based on terminal and environment support.
     #[must_use]
-    pub(crate) fn new(is_terminal: bool) -> Self {
+    pub(super) fn new(is_terminal: bool) -> Self {
         if force_color() {
             return Self::unicode();
         }
-        match env::var("NO_COLOR") {
+        match env::var_os("NO_COLOR") {
             _ if !is_terminal => Self::none(),
-            Ok(string) if string != "0" => Self::unicode_nocolor(),
+            Some(value) if value != "0" => Self::unicode_nocolor(),
             _ => Self::unicode(),
         }
     }
@@ -74,16 +74,15 @@ impl GraphicalTheme {
 }
 
 #[derive(Debug, Clone)]
-#[expect(clippy::redundant_pub_crate, reason = "prevents public glob re-export")]
-pub(crate) struct ThemeStyles {
-    pub(crate) error: Style,
-    pub(crate) warning: Style,
-    pub(crate) advice: Style,
-    pub(crate) help: Style,
-    pub(crate) note: Style,
-    pub(crate) link: Style,
-    pub(crate) linum: Style,
-    pub(crate) highlights: [Style; 3],
+pub(super) struct ThemeStyles {
+    pub(super) error: Style,
+    pub(super) warning: Style,
+    pub(super) advice: Style,
+    pub(super) help: Style,
+    pub(super) note: Style,
+    pub(super) link: Style,
+    pub(super) linum: Style,
+    pub(super) highlights: [Style; 3],
 }
 
 fn style() -> Style {
@@ -93,7 +92,7 @@ fn style() -> Style {
 impl ThemeStyles {
     fn rgb() -> Self {
         Self {
-            error: style().fg_rgb::<225, 80, 80>().bold(), // CHANGED: <255, 30, 30>
+            error: style().fg_rgb::<225, 80, 80>().bold(),
             warning: style().fg_rgb::<244, 191, 117>().bold(),
             advice: style().fg_rgb::<106, 159, 181>(),
             help: style().fg_rgb::<106, 159, 181>(),
@@ -127,27 +126,26 @@ impl ThemeStyles {
 // https://github.com/zesterer/ariadne/blob/e3cb394cb56ecda116a0a1caecd385a49e7f6662/src/draw.rs
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[expect(clippy::redundant_pub_crate, reason = "prevents public glob re-export")]
-pub(crate) struct ThemeCharacters {
-    pub(crate) hbar: char,
-    pub(crate) vbar: char,
-    pub(crate) vbar_break: char,
+pub(super) struct ThemeCharacters {
+    pub(super) hbar: char,
+    pub(super) vbar: char,
+    pub(super) vbar_break: char,
 
-    pub(crate) uarrow: char,
-    pub(crate) rarrow: char,
+    pub(super) uarrow: char,
+    pub(super) rarrow: char,
 
-    pub(crate) ltop: char,
-    pub(crate) lbot: char,
+    pub(super) ltop: char,
+    pub(super) lbot: char,
 
-    pub(crate) lcross: char,
-    pub(crate) rcross: char,
+    pub(super) lcross: char,
+    pub(super) rcross: char,
 
-    pub(crate) underbar: char,
-    pub(crate) underline: char,
+    pub(super) underbar: char,
+    pub(super) underline: char,
 
-    pub(crate) error: &'static str,
-    pub(crate) warning: &'static str,
-    pub(crate) advice: &'static str,
+    pub(super) error: &'static str,
+    pub(super) warning: &'static str,
+    pub(super) advice: &'static str,
 }
 
 impl ThemeCharacters {

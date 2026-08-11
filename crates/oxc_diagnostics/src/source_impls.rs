@@ -1,6 +1,4 @@
-/*!
-Default trait implementations for [`SourceCode`].
-*/
+//! Default trait implementations for [`SourceCode`].
 #[cfg(test)]
 use std::str::from_utf8;
 use std::{collections::VecDeque, sync::Arc};
@@ -722,18 +720,13 @@ impl<'index, 'source> IndexedReader<'index, 'source> {
 /// origin fall back to a standalone [`SpanReader`].
 ///
 /// [`GraphicalReportHandler`]: crate::handlers::GraphicalReportHandler
-#[expect(clippy::redundant_pub_crate, reason = "keeps the renderer fast path crate-private")]
-pub(crate) struct SpanScanner<'a> {
+pub struct SpanScanner<'a> {
     context: ContextLines,
     index: LineIndex<'a>,
 }
 
 impl<'a> SpanScanner<'a> {
-    pub(crate) fn new(
-        input: &'a [u8],
-        context_lines_before: usize,
-        context_lines_after: usize,
-    ) -> Self {
+    pub fn new(input: &'a [u8], context_lines_before: usize, context_lines_after: usize) -> Self {
         Self {
             context: ContextLines::new(context_lines_before, context_lines_after),
             index: LineIndex::new(input),
@@ -741,7 +734,7 @@ impl<'a> SpanScanner<'a> {
     }
 
     /// Read a span while scanning only source bytes no earlier query scanned.
-    pub(crate) fn read_span(&mut self, span: Span) -> Option<SpanContents<'a>> {
+    pub fn read_span(&mut self, span: Span) -> Option<SpanContents<'a>> {
         let request = SpanRequest::new(span);
         let cut = request.prefix_end(self.index.input);
         if self.index.is_empty() {
@@ -772,7 +765,7 @@ impl SourceCode for str {
     }
 }
 
-/// Makes `src: &'static str` or `struct S<'a> { src: &'a str }` usable.
+/// Supports borrowed source text in generic contexts.
 impl SourceCode for &str {
     fn data(&self) -> &[u8] {
         self.as_bytes()

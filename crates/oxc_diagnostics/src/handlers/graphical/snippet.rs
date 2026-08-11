@@ -60,14 +60,13 @@ impl GraphicalReportHandler {
         for &right in labels {
             let right_conts = read(right.span()).ok_or(fmt::Error)?;
 
-            if contexts.is_empty() {
+            let Some((left, left_contents)) = contexts.last() else {
                 contexts.push((Cow::Borrowed(right), right_conts));
                 continue;
-            }
+            };
 
-            let (left, left_conts) = contexts.last().unwrap();
-            if left_conts.line() + left_conts.line_count() >= right_conts.line() {
-                // The snippets will overlap, so we create one Big Chunky Boi
+            if left_contents.line() + left_contents.line_count() >= right_conts.line() {
+                // Merge overlapping snippets into one context.
                 let left_end = left.offset() + left.len();
                 let right_end = right.offset() + right.len();
                 let new_end = max(left_end, right_end);
@@ -77,7 +76,7 @@ impl GraphicalReportHandler {
                     left.offset(),
                     new_end - left.offset(),
                 );
-                // Check that the two contexts can be combined
+                // Check that the two contexts can be combined.
                 if let Some(new_conts) = read(new_span.span()) {
                     contexts.pop();
                     contexts.push((Cow::Owned(new_span), new_conts));
@@ -102,25 +101,23 @@ impl GraphicalReportHandler {
         labels: &[&LabeledSpan],
         source_name: Option<&str>,
     ) -> fmt::Result {
-        let lines = self.get_lines(contents);
+        let lines = Self::get_lines(contents);
 
-        // only consider labels from the context as primary label
-        let ctx_labels =
+        // Only labels within this context can be its primary label.
+        let mut ctx_labels =
             labels.iter().filter(|label| context.span().contains_inclusive(label.span()));
         let primary_label =
-            ctx_labels.clone().find(|label| label.primary()).or_else(|| ctx_labels.clone().next());
+            ctx_labels.clone().find(|label| label.primary()).or_else(|| ctx_labels.next());
 
-        // sorting is your friend
+        // Assign styles after sorting labels by source position.
         let labels = labels
             .iter()
             .copied()
             .zip(self.theme.styles.highlights.iter().copied().cycle())
-            .map(|(label, st)| FancySpan::new(label.label(), label.span(), st))
+            .map(|(label, style)| FancySpan::new(label.label(), label.span(), style))
             .collect::<Vec<_>>();
 
-        // The max number of gutter-lines that will be active at any given
-        // point. We need this to figure out indentation, so we do one loop
-        // over the lines to see what the damage is gonna be.
+        // Find the maximum number of active gutter lines to determine indentation.
         let mut max_gutter = 0usize;
         for line in &lines {
             let mut num_highlights = 0;
@@ -132,8 +129,7 @@ impl GraphicalReportHandler {
             max_gutter = max(max_gutter, num_highlights);
         }
 
-        // Oh and one more thing: We need to figure out how much room our line
-        // numbers need!
+        // Determine the width of the line-number column.
         let linum_width = lines
             .last()
             .map_or(1, |line| line.number.checked_ilog10().map_or(1, |width| width as usize + 1));
@@ -168,28 +164,17 @@ impl GraphicalReportHandler {
             }
         }
 
-        // Now it's time for the fun part--actually rendering everything!
         for line in &lines {
-            // Line number, appropriately padded.
             self.write_linum(f, linum_width, line.number)?;
-
-            // Then, we need to print the gutter, along with any fly-bys We
-            // have separate gutters depending on whether we're on the actual
-            // line, or on one of the "highlight lines" below it.
             self.render_line_gutter(f, max_gutter, line, &labels)?;
-
-            // And _now_ we can print out the line text itself!
             Self::render_line_text(f, line.text)?;
 
-            // Next, we write all the highlights that apply to this particular line.
             let (single_line, multi_line): (Vec<_>, Vec<_>) = labels
                 .iter()
                 .filter(|hl| line.span_applies(hl))
                 .partition(|hl| line.span_line_only(hl));
             if !single_line.is_empty() {
-                // no line number!
                 self.write_no_linum(f, linum_width)?;
-                // gutter _again_
                 self.render_highlight_gutter(
                     f,
                     max_gutter,

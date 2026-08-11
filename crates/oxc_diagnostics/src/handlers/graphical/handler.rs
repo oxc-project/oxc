@@ -10,20 +10,15 @@ use crate::GraphicalTheme;
 #[derive(Debug, Clone)]
 pub struct GraphicalReportHandler {
     /// How to render links.
-    ///
-    /// Default: [`LinkStyle::Link`]
-    pub(crate) links: LinkStyle,
+    pub(super) links: LinkStyle,
     /// Terminal width to wrap at.
-    ///
-    /// Default: `400`
-    pub(crate) termwidth: usize,
-    /// How to style reports
-    pub(crate) theme: GraphicalTheme,
+    pub(super) termwidth: usize,
+    /// How to style reports.
+    pub(super) theme: GraphicalTheme,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[expect(clippy::redundant_pub_crate, reason = "prevents accidental glob re-export")]
-pub(crate) enum LinkStyle {
+pub(super) enum LinkStyle {
     Link,
     Text,
 }

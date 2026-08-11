@@ -91,7 +91,7 @@ pub type Labels = smallvec::SmallVec<[LabeledSpan; 2]>;
 pub struct Diagnostics(Vec<OxcDiagnostic>);
 
 impl Diagnostics {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(Vec::new())
     }
 
@@ -214,6 +214,7 @@ pub struct OxcCode {
 }
 
 impl OxcCode {
+    #[must_use]
     pub fn is_some(&self) -> bool {
         self.scope.is_some() || self.number.is_some()
     }
@@ -242,7 +243,7 @@ pub struct OxcDiagnosticInner {
 }
 
 impl Display for OxcDiagnostic {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.message.fmt(f)
     }
 }
@@ -338,10 +339,7 @@ impl OxcDiagnostic {
     /// Use [`OxcDiagnostic::with_error_code`] to set both the scope and number at once.
     #[inline]
     pub fn with_error_code_scope<T: Into<Cow<'static, str>>>(mut self, code_scope: T) -> Self {
-        self.inner.code.scope = match self.inner.code.scope {
-            Some(scope) => Some(scope),
-            None => Some(code_scope.into()),
-        };
+        self.inner.code.scope.get_or_insert_with(|| code_scope.into());
         debug_assert!(
             self.inner.code.scope.as_ref().is_some_and(|s| !s.is_empty()),
             "Error code scopes cannot be empty"
@@ -355,10 +353,7 @@ impl OxcDiagnostic {
     /// Use [`OxcDiagnostic::with_error_code`] to set both the scope and number at once.
     #[inline]
     pub fn with_error_code_num<T: Into<Cow<'static, str>>>(mut self, code_num: T) -> Self {
-        self.inner.code.number = match self.inner.code.number {
-            Some(num) => Some(num),
-            None => Some(code_num.into()),
-        };
+        self.inner.code.number.get_or_insert_with(|| code_num.into());
         debug_assert!(
             self.inner.code.number.as_ref().is_some_and(|n| !n.is_empty()),
             "Error code numbers cannot be empty"
@@ -475,14 +470,13 @@ impl OxcDiagnostic {
     /// Add source code to this diagnostic and convert it into an [`Error`].
     ///
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
-    pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
-        Box::new(DiagnosticWithSource { diagnostic: self, source_code: Box::new(code) })
+    pub fn with_source_code<T: SourceCode + 'static>(self, source_code: T) -> Error {
+        Box::new(DiagnosticWithSource { diagnostic: self, source_code })
     }
 
     /// Attach source code and render using Oxc's deterministic non-interactive style.
-    pub fn render_with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> String {
-        let diagnostic = self.with_source_code(code);
-        render(diagnostic.as_ref())
+    pub fn render_with_source_code<T: SourceCode>(self, source_code: T) -> String {
+        render(&DiagnosticWithSource { diagnostic: self, source_code })
     }
 
     /// Consumes the diagnostic and returns the inner owned data.
@@ -497,26 +491,26 @@ impl From<OxcDiagnostic> for Error {
     }
 }
 
-struct DiagnosticWithSource {
+struct DiagnosticWithSource<S> {
     diagnostic: OxcDiagnostic,
-    source_code: Box<dyn SourceCode>,
+    source_code: S,
 }
 
-impl fmt::Debug for DiagnosticWithSource {
+impl<S> fmt::Debug for DiagnosticWithSource<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(&self.diagnostic, f)
     }
 }
 
-impl Display for DiagnosticWithSource {
+impl<S> Display for DiagnosticWithSource<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.diagnostic, f)
     }
 }
 
-impl std::error::Error for DiagnosticWithSource {}
+impl<S> std::error::Error for DiagnosticWithSource<S> {}
 
-impl Diagnostic for DiagnosticWithSource {
+impl<S: SourceCode> Diagnostic for DiagnosticWithSource<S> {
     fn code(&self) -> Option<Cow<'_, str>> {
         self.diagnostic.code()
     }
@@ -542,6 +536,6 @@ impl Diagnostic for DiagnosticWithSource {
     }
 
     fn source_code(&self) -> Option<&dyn SourceCode> {
-        Some(self.source_code.as_ref())
+        Some(&self.source_code)
     }
 }

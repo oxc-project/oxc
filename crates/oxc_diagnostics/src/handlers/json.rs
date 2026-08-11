@@ -2,10 +2,8 @@ use std::fmt::{self, Write};
 
 use crate::{Severity, protocol::Diagnostic, source_impls::SpanScanner};
 
-/**
-Renders diagnostics as machine-readable JSON.
-*/
-#[derive(Debug, Clone)]
+/// Renders diagnostics as machine-readable JSON.
+#[derive(Debug, Clone, Default)]
 pub struct JSONReportHandler;
 
 impl JSONReportHandler {
@@ -17,31 +15,21 @@ impl JSONReportHandler {
     }
 }
 
-impl Default for JSONReportHandler {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 struct Escape<'a>(&'a str);
 
 impl fmt::Display for Escape<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for c in self.0.chars() {
-            let escape = match c {
-                '\\' => Some(r"\\"),
-                '"' => Some(r#"\""#),
-                '\r' => Some(r"\r"),
-                '\n' => Some(r"\n"),
-                '\t' => Some(r"\t"),
-                '\u{08}' => Some(r"\b"),
-                '\u{0c}' => Some(r"\f"),
-                _ => None,
-            };
-            if let Some(escape) = escape {
-                f.write_str(escape)?;
-            } else {
-                f.write_char(c)?;
+        for character in self.0.chars() {
+            match character {
+                '\\' => f.write_str(r"\\")?,
+                '"' => f.write_str(r#"\""#)?,
+                '\r' => f.write_str(r"\r")?,
+                '\n' => f.write_str(r"\n")?,
+                '\t' => f.write_str(r"\t")?,
+                '\u{08}' => f.write_str(r"\b")?,
+                '\u{0c}' => f.write_str(r"\f")?,
+                '\u{00}'..='\u{1f}' => write!(f, r"\u{:04x}", character as u32)?,
+                _ => f.write_char(character)?,
             }
         }
         Ok(())
@@ -73,9 +61,9 @@ impl JSONReportHandler {
             Some(Severity::Warning) => "warning",
             Some(Severity::Advice) => "advice",
         };
-        write!(f, r#""severity": "{severity:}","#)?;
+        write!(f, r#""severity": "{severity}","#)?;
         if let Some(url) = diagnostic.url() {
-            write!(f, r#""url": "{url}","#)?;
+            write!(f, r#""url": "{}","#, escape(&url))?;
         }
         if let Some(help) = diagnostic.help() {
             write!(f, r#""help": "{}","#, escape(&help))?;
@@ -87,38 +75,32 @@ impl JSONReportHandler {
         if let Some(source) = source {
             write!(f, r#""filename": "{}","#, escape(source.name().unwrap_or_default()))?;
         }
-        {
-            write!(f, r#""labels": ["#)?;
-            let mut scanner = source.map(|source| SpanScanner::new(source.data(), 0, 0));
-            let mut add_comma = false;
-            for label in diagnostic.labels() {
-                if add_comma {
-                    write!(f, ",")?;
-                } else {
-                    add_comma = true;
-                }
-                write!(f, "{{")?;
-                if let Some(label_name) = label.label() {
-                    write!(f, r#""label": "{}","#, escape(label_name))?;
-                }
-                write!(f, r#""span": {{"#)?;
-                write!(f, r#""offset": {},"#, label.offset())?;
-                write!(f, r#""length": {},"#, label.len())?;
-
-                if let Some(location) =
-                    scanner.as_mut().and_then(|scanner| scanner.read_span(label.span()))
-                {
-                    write!(f, r#""line": {},"#, location.line() + 1)?;
-                    write!(f, r#""column": {}"#, location.column() + 1)?;
-                } else {
-                    write!(f, r#""line": null,"column": null"#)?;
-                }
-
-                write!(f, "}}}}")?;
+        f.write_str(r#""labels": ["#)?;
+        let mut scanner = source.map(|source| SpanScanner::new(source.data(), 0, 0));
+        for (index, label) in diagnostic.labels().iter().enumerate() {
+            if index > 0 {
+                f.write_char(',')?;
             }
-            write!(f, "]")?;
+            f.write_char('{')?;
+            if let Some(label_name) = label.label() {
+                write!(f, r#""label": "{}","#, escape(label_name))?;
+            }
+            f.write_str(r#""span": {"#)?;
+            write!(f, r#""offset": {},"#, label.offset())?;
+            write!(f, r#""length": {},"#, label.len())?;
+
+            if let Some(location) =
+                scanner.as_mut().and_then(|scanner| scanner.read_span(label.span()))
+            {
+                write!(f, r#""line": {},"#, location.line() + 1)?;
+                write!(f, r#""column": {}"#, location.column() + 1)?;
+            } else {
+                f.write_str(r#""line": null,"column": null"#)?;
+            }
+
+            f.write_str("}}")?;
         }
-        write!(f, "}}")
+        f.write_str("]}")
     }
 }
 

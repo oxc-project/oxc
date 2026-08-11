@@ -1,6 +1,4 @@
-/*!
-This module defines the core diagnostic protocol used by Oxc's renderers.
-*/
+//! Core diagnostic protocol used by Oxc's renderers.
 use std::{borrow::Cow, error::Error};
 
 use oxc_span::LabeledSpan;
@@ -9,7 +7,7 @@ use oxc_span::LabeledSpan;
 pub trait Diagnostic: Error {
     /// Unique diagnostic code that can be used to look up more information
     /// about this `Diagnostic`. Ideally also globally unique, and documented
-    /// in the toplevel crate's documentation for easy searching. Rust path
+    /// in the top-level crate's documentation for easy searching. Rust path
     /// format (`foo::bar::baz`) is recommended, but more classic codes like
     /// `E0123` or enums will work just fine.
     fn code(&self) -> Option<Cow<'_, str>> {
@@ -24,8 +22,7 @@ pub trait Diagnostic: Error {
         None
     }
 
-    /// Additional help text related to this `Diagnostic`. Do you have any
-    /// advice for the poor soul who's just run into this issue?
+    /// Additional help text related to this diagnostic.
     fn help(&self) -> Option<Cow<'_, str>> {
         None
     }
@@ -57,18 +54,15 @@ pub trait Diagnostic: Error {
     }
 }
 
-/**
-[`Diagnostic`] severity. Renderers use this to change the way diagnostics are
-displayed. Defaults to [`Severity::Error`].
-*/
+/// [`Diagnostic`] severity. Renderers use this to change the way diagnostics are
+/// displayed. Defaults to [`Severity::Error`].
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Default)]
 pub enum Severity {
-    /// Just some help. Here's how you could be doing it better.
+    /// Advice for improving the reported code.
     Advice,
-    /// Warning. Please take note.
+    /// A non-fatal warning.
     Warning,
-    /// Critical failure. The program cannot continue.
-    /// This is the default severity, if you don't specify another one.
+    /// An error. This is the default severity.
     #[default]
     Error,
 }

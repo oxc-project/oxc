@@ -32,30 +32,30 @@ impl Line<'_> {
     }
 
     /// Returns whether `span` should be visible on this line, either in the gutter or under the
-    /// text on this line
+    /// text on this line.
     pub(super) fn span_applies(&self, span: &FancySpan) -> bool {
-        let spanlen = if span.len() == 0 { 1 } else { span.len() };
-        // Span starts in this line
+        let span_len = span.len().max(1);
+        let span_end = span.offset() + span_len;
+        let line_end = self.offset + self.length;
 
         (span.offset() >= self.offset && span.offset() < self.offset + self.length)
             // Span passes through this line
-            || (span.offset() < self.offset && span.offset() + spanlen > self.offset + self.length) //todo
+            || (span.offset() < self.offset && span_end > line_end)
             // Span ends on this line
-            || (span.offset() + spanlen > self.offset && span.offset() + spanlen <= self.offset + self.length)
+            || (span_end > self.offset && span_end <= line_end)
     }
 
     /// Returns whether `span` should be visible on this line in the gutter (so this excludes spans
-    /// that are only visible on this line and do not span multiple lines)
+    /// that are only visible on this line and do not span multiple lines).
     pub(super) fn span_applies_gutter(&self, span: &FancySpan) -> bool {
-        let spanlen = if span.len() == 0 { 1 } else { span.len() };
-        // Span starts in this line
+        let span_len = span.len().max(1);
+        let span_end = span.offset() + span_len;
+        let line_end = self.offset + self.length;
+        let starts_on_line = span.offset() >= self.offset && span.offset() < line_end;
+        let ends_on_line = span_end > self.offset && span_end <= line_end;
         self.span_applies(span)
-            && !(
-                // as long as it doesn't start *and* end on this line
-                (span.offset() >= self.offset && span.offset() < self.offset + self.length)
-                    && (span.offset() + spanlen > self.offset
-                        && span.offset() + spanlen <= self.offset + self.length)
-            )
+            // Exclude spans that start and end on this line.
+            && !(starts_on_line && ends_on_line)
     }
 
     // A 'flyby' is a multi-line span that technically covers this line, but
@@ -203,8 +203,7 @@ impl GraphicalReportHandler {
     }
 
     /// Splits already-scanned span contents into [`Line`]s.
-    #[expect(clippy::unused_self, reason = "kept as a renderer method for call-site consistency")]
-    pub(super) fn get_lines<'a>(&self, context_data: &SpanContents<'a>) -> Vec<Line<'a>> {
+    pub(super) fn get_lines<'a>(context_data: &SpanContents<'a>) -> Vec<Line<'a>> {
         let context = from_utf8(context_data.data()).expect("Bad utf8 detected");
         let mut line = context_data.line();
         let base = context_data.span().start as usize;
@@ -273,7 +272,6 @@ mod tests {
             ("a\r", &[(4, BASE, 2, "a\r")]),
             ("é\n火", &[(5, BASE, 3, "é"), (6, BASE + 3, 3, "火")]),
         ];
-        let handler = GraphicalReportHandler::new();
         for &(text, expected) in cases {
             let contents = SpanContents::new(
                 text.as_bytes(),
@@ -282,8 +280,7 @@ mod tests {
                 2,
                 expected.len(),
             );
-            let actual = handler
-                .get_lines(&contents)
+            let actual = GraphicalReportHandler::get_lines(&contents)
                 .iter()
                 .map(|line| (line.number, line.offset, line.length, line.text))
                 .collect::<Vec<_>>();
@@ -296,7 +293,7 @@ mod tests {
         let source = "before\ntarget\nafter\nrest";
         let mut scanner = SpanScanner::new(source.as_bytes(), 1, 1);
         let contents = scanner.read_span(Span::sized(7, 6)).unwrap();
-        let lines = GraphicalReportHandler::new().get_lines(&contents);
+        let lines = GraphicalReportHandler::get_lines(&contents);
 
         assert_eq!(lines.len(), 3);
         assert_eq!(lines.capacity(), 3);

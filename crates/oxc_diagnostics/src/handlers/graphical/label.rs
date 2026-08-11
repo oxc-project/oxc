@@ -96,6 +96,14 @@ struct LabelText<'a> {
     render_mode: LabelRenderMode,
 }
 
+struct LabelContext<'a, 'source, 'label> {
+    line: &'a Line<'source>,
+    line_number_width: usize,
+    max_gutter: usize,
+    all_highlights: &'a [FancySpan<'label>],
+    vertical_bars: &'a [(&'a FancySpan<'label>, usize)],
+}
+
 impl fmt::Display for LabelText<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let chars = self.chars;
@@ -165,103 +173,63 @@ impl GraphicalReportHandler {
         }
         f.write_char('\n')?;
 
+        let context = LabelContext {
+            line,
+            line_number_width: linum_width,
+            max_gutter,
+            all_highlights,
+            vertical_bars: &vbar_offsets,
+        };
         for &hl in single_liners.iter().rev() {
             if let Some(label) = hl.label() {
-                let mut lines = label.split('\n');
+                let mut lines = label.split('\n').peekable();
                 let first = lines.next().expect("split always yields at least one item");
-                if let Some(second) = lines.next() {
-                    self.write_label_text(
-                        f,
-                        line,
-                        linum_width,
-                        max_gutter,
-                        all_highlights,
-                        chars,
-                        &vbar_offsets,
-                        hl,
-                        first,
-                        LabelRenderMode::BlockFirst,
-                    )?;
-                    self.write_label_text(
-                        f,
-                        line,
-                        linum_width,
-                        max_gutter,
-                        all_highlights,
-                        chars,
-                        &vbar_offsets,
-                        hl,
-                        second,
-                        LabelRenderMode::BlockRest,
-                    )?;
-                    for label_line in lines {
-                        self.write_label_text(
-                            f,
-                            line,
-                            linum_width,
-                            max_gutter,
-                            all_highlights,
-                            chars,
-                            &vbar_offsets,
-                            hl,
-                            label_line,
-                            LabelRenderMode::BlockRest,
-                        )?;
-                    }
+                let first_mode = if lines.peek().is_some() {
+                    LabelRenderMode::BlockFirst
                 } else {
-                    self.write_label_text(
-                        f,
-                        line,
-                        linum_width,
-                        max_gutter,
-                        all_highlights,
-                        chars,
-                        &vbar_offsets,
-                        hl,
-                        first,
-                        LabelRenderMode::SingleLine,
-                    )?;
+                    LabelRenderMode::SingleLine
+                };
+                self.write_label_text(f, &context, hl, first, first_mode)?;
+                for label_line in lines {
+                    self.write_label_text(f, &context, hl, label_line, LabelRenderMode::BlockRest)?;
                 }
             }
         }
         Ok(())
     }
 
-    // I know it's not good practice, but making this a function makes a lot of sense
-    // and making a struct for this does not...
-    #[expect(clippy::too_many_arguments)]
-    pub(super) fn write_label_text(
+    fn write_label_text(
         &self,
         f: &mut impl fmt::Write,
-        line: &Line<'_>,
-        linum_width: usize,
-        max_gutter: usize,
-        all_highlights: &[FancySpan],
-        chars: &ThemeCharacters,
-        vbar_offsets: &[(&FancySpan, usize)],
+        context: &LabelContext<'_, '_, '_>,
         hl: &FancySpan,
         label: &str,
         render_mode: LabelRenderMode,
     ) -> fmt::Result {
-        self.write_no_linum(f, linum_width)?;
+        self.write_no_linum(f, context.line_number_width)?;
         self.render_highlight_gutter(
             f,
-            max_gutter,
-            line,
-            all_highlights,
+            context.max_gutter,
+            context.line,
+            context.all_highlights,
             LabelRenderMode::SingleLine,
         )?;
         let mut curr_offset = 1usize;
-        for (offset_hl, vbar_offset) in vbar_offsets {
+        for (offset_hl, vbar_offset) in context.vertical_bars {
             let padding = (*vbar_offset + 1).saturating_sub(curr_offset);
             write_padding(f, padding)?;
             curr_offset += padding;
             if *offset_hl == hl {
-                let line = LabelText { chars, label, style: hl.style, render_mode };
+                let line = LabelText {
+                    chars: &self.theme.characters,
+                    label,
+                    style: hl.style,
+                    render_mode,
+                };
                 writeln!(f, "{}", line.style(hl.style))?;
                 break;
             }
-            write!(f, "{}", chars.vbar.style(offset_hl.style))?;
+            write!(f, "{}", self.theme.characters.vbar.style(offset_hl.style))?;
             curr_offset += 1;
         }
         Ok(())
@@ -276,74 +244,44 @@ impl GraphicalReportHandler {
         line: &Line<'_>,
         label: &FancySpan,
     ) -> fmt::Result {
-        // no line number!
         self.write_no_linum(f, linum_width)?;
 
         if let Some(label_text) = label.label() {
-            let mut lines = label_text.split('\n');
+            let mut lines = label_text.split('\n').peekable();
             let first = lines.next().expect("split always yields at least one item");
-
-            if let Some(second) = lines.next() {
-                // gutter _again_
-                self.render_highlight_gutter(
-                    f,
-                    max_gutter,
-                    line,
-                    labels,
-                    LabelRenderMode::BlockFirst,
-                )?;
-
-                self.render_multi_line_end_single(
-                    f,
-                    first,
-                    label.style,
-                    LabelRenderMode::BlockFirst,
-                )?;
-                for label_line in std::iter::once(second).chain(lines) {
-                    // no line number!
-                    self.write_no_linum(f, linum_width)?;
-                    // gutter _again_
-                    self.render_highlight_gutter(
-                        f,
-                        max_gutter,
-                        line,
-                        labels,
-                        LabelRenderMode::BlockRest,
-                    )?;
-                    self.render_multi_line_end_single(
-                        f,
-                        label_line,
-                        label.style,
-                        LabelRenderMode::BlockRest,
-                    )?;
-                }
+            let first_mode = if lines.peek().is_some() {
+                LabelRenderMode::BlockFirst
             } else {
-                // gutter _again_
+                LabelRenderMode::SingleLine
+            };
+            self.render_highlight_gutter(f, max_gutter, line, labels, first_mode)?;
+            self.render_multi_line_end_single(f, first, label.style, first_mode)?;
+
+            for label_line in lines {
+                self.write_no_linum(f, linum_width)?;
                 self.render_highlight_gutter(
                     f,
                     max_gutter,
                     line,
                     labels,
-                    LabelRenderMode::SingleLine,
+                    LabelRenderMode::BlockRest,
                 )?;
                 self.render_multi_line_end_single(
                     f,
-                    first,
+                    label_line,
                     label.style,
-                    LabelRenderMode::SingleLine,
+                    LabelRenderMode::BlockRest,
                 )?;
             }
         } else {
-            // gutter _again_
             self.render_highlight_gutter(f, max_gutter, line, labels, LabelRenderMode::SingleLine)?;
-            // has no label
             writeln!(f, "{}", self.theme.characters.hbar.style(label.style))?;
         }
 
         Ok(())
     }
 
-    pub(super) fn render_multi_line_end_single(
+    fn render_multi_line_end_single(
         &self,
         f: &mut impl fmt::Write,
         label: &str,
