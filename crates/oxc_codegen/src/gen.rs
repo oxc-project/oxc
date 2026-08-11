@@ -2269,6 +2269,7 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
 
 impl Gen for AssignmentTargetRest<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ellipsis();
         self.target.print(p, ctx);
     }
@@ -2733,12 +2734,14 @@ impl Gen for JSXAttributeValue<'_> {
 
 impl Gen for JSXSpreadAttribute<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
         if p.print_comments_in_range(self.span.start, self.argument.span().start) {
             p.print_indent();
         }
         p.print_str("...");
         self.argument.print_expr(p, Precedence::Comma, Context::empty());
+        p.add_source_mapping_end(self.span);
         p.print_ascii_byte(b'}');
     }
 }

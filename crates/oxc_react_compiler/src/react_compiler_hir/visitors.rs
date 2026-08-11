@@ -199,7 +199,7 @@ pub fn each_instruction_value_operand_with_functions(
             for property in properties {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        if let ObjectPropertyKey::Computed { name } = &prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &prop.key {
                             result.push(*name);
                         }
                         result.push(prop.place);
@@ -942,7 +942,7 @@ pub fn for_each_instruction_value_operand_mut(
             for property in properties.iter_mut() {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        if let ObjectPropertyKey::Computed { name } = &mut prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &mut prop.key {
                             f(name);
                         }
                         f(&mut prop.place);

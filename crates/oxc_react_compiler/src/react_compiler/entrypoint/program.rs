@@ -2106,10 +2106,7 @@ impl<'a> CompileOutput<'a> {
 
 /// Drop comments left dangling by compilation.
 ///
-/// The compiled functions were rebuilt with fresh spans, so a comment that
-/// pointed inside one no longer lines up with any statement and codegen would
-/// re-emit it at a stale position. Keep only the comments still anchored to a
-/// top-level statement.
+/// Rewritten functions may no longer contain the statements comments were attached to.
 fn prune_inner_comments(program: &mut Program<'_>) {
     if program.comments.is_empty() {
         return;
@@ -2157,7 +2154,7 @@ fn ox_build_function<'a>(
     fn_type: FunctionType,
 ) -> ArenaBox<'a, Function<'a>> {
     Function::boxed(
-        SPAN,
+        codegen.span.unwrap_or_default(),
         fn_type,
         codegen.id.clone_in_with_semantic_ids(ast.allocator()),
         codegen.generator,
@@ -2181,7 +2178,7 @@ fn ox_build_compiled_expression<'a>(
 ) -> Expression<'a> {
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => Expression::new_arrow_function_expression(
-            SPAN,
+            codegen.span.unwrap_or_default(),
             codegen.is_async,
             None,
             codegen.params.clone_in_with_semantic_ids(ast.allocator()),
@@ -2220,7 +2217,11 @@ fn ox_replace_function<'a>(
         func.return_type = None;
         func.this_param = None;
     }
+    let source_id_span = func.id.as_ref().map(|id| id.span);
     func.id = codegen.id.clone_in_with_semantic_ids(ast.allocator());
+    if let (Some(id), Some(span)) = (&mut func.id, source_id_span) {
+        id.span = span;
+    }
     func.params = params;
     func.body = Some(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
     func.generator = codegen.generator;
@@ -2255,17 +2256,19 @@ fn ox_build_gated_const_decl<'a>(
     ast: &AstBuilder<'a>,
     gating_expression: &Expression<'a>,
     name: &str,
+    name_span: Span,
+    declaration_span: Span,
 ) -> Statement<'a> {
     let declarator = VariableDeclarator::new(
-        SPAN,
-        BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
+        declaration_span,
+        BindingPattern::new_binding_identifier(name_span, ox_atom(ast, name), ast),
         None,
         Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
         false,
         ast,
     );
     Statement::new_variable_declaration(
-        SPAN,
+        declaration_span,
         VariableDeclarationKind::Const,
         [declarator],
         false,
@@ -2316,6 +2319,8 @@ enum OxcVisitMode<'a, 'b> {
     FindOriginalFn { scope_id: ScopeId, found: Option<Expression<'a>> },
 }
 
+type GatedStatementMatch<'a> = (Option<(Ident<'a>, Span)>, Option<Span>);
+
 impl<'a> OxcVisitor<'a, '_> {
     /// In [`OxcVisitMode::ReplaceWithGated`]: if `stmt` is the target function
     /// declaration (bare, `export`-wrapped, or `export default`), substitute
@@ -2334,28 +2339,29 @@ impl<'a> OxcVisitor<'a, '_> {
         let scope_id = *scope_id;
         let gating_expression = *gating_expression;
         // FunctionDeclaration → `const Foo = gating() ? ... : ...;`
-        let replace_name: Option<Option<Ident<'a>>> = match &*stmt {
+        let replacement: Option<GatedStatementMatch<'a>> = match &*stmt {
             Statement::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
-                Some(f.id.as_ref().map(|id| id.name))
+                Some((f.id.as_ref().map(|id| (id.name, id.span)), None))
             }
             Statement::ExportDeclaration(e) => match &e.declaration {
                 Declaration::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
-                    Some(f.id.as_ref().map(|id| id.name))
+                    Some((f.id.as_ref().map(|id| (id.name, id.span)), Some(e.span)))
                 }
                 _ => None,
             },
             _ => None,
         };
-        if let Some(name) = replace_name {
-            let name = name.as_deref().unwrap_or("anonymous");
-            let is_export = matches!(stmt, Statement::ExportDeclaration(_));
-            let const_decl = ox_build_gated_const_decl(ast, gating_expression, name);
-            if is_export {
+        if let Some((name, export_span)) = replacement {
+            let (name, name_span) =
+                name.map_or(("anonymous", SPAN), |(name, span)| (name.as_str(), span));
+            let const_decl =
+                ox_build_gated_const_decl(ast, gating_expression, name, name_span, SPAN);
+            if let Some(export_span) = export_span {
                 let decl = match const_decl {
                     Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
                     _ => unreachable!(),
                 };
-                *stmt = Statement::new_export_declaration(SPAN, decl, ast);
+                *stmt = Statement::new_export_declaration(export_span, decl, ast);
             } else {
                 *stmt = const_decl;
             }
@@ -2367,12 +2373,20 @@ impl<'a> OxcVisitor<'a, '_> {
             && let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration
             && f.scope_id.get() == Some(scope_id)
         {
-            if let Some(id) = f.id.as_ref().map(|id| id.name) {
-                *stmt = ox_build_gated_const_decl(ast, gating_expression, id.as_str());
-                *export_default_name = Some(id);
+            let export_span = e.span;
+            let id = f.id.as_ref().map(|id| (id.name, id.span));
+            if let Some((name, name_span)) = id {
+                *stmt = ox_build_gated_const_decl(
+                    ast,
+                    gating_expression,
+                    name.as_str(),
+                    name_span,
+                    export_span,
+                );
+                *export_default_name = Some(name);
             } else {
                 *stmt = Statement::new_export_default_declaration(
-                    SPAN,
+                    export_span,
                     ExportDefaultDeclarationKind::from(
                         gating_expression.clone_in_with_semantic_ids(ast.allocator()),
                     ),
@@ -2409,7 +2423,7 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                 }
                 if func.scope_id.get() == Some(*scope_id) {
                     let f = Function::boxed(
-                        SPAN,
+                        func.span,
                         FunctionType::FunctionExpression,
                         func.id.clone_in_with_semantic_ids(ast.allocator()),
                         func.generator,

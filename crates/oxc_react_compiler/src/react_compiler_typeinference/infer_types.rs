@@ -575,7 +575,7 @@ fn generate_instruction_types<'a>(
         InstructionValue::ObjectExpression { properties, .. } => {
             for prop in properties {
                 if let ObjectPropertyOrSpread::Property(obj_prop) = prop
-                    && let ObjectPropertyKey::Computed { name } = &obj_prop.key
+                    && let ObjectPropertyKey::Computed { name, .. } = &obj_prop.key
                 {
                     let name_type = get_type(name.identifier, identifiers);
                     unifier.unify(name_type, Type::Primitive, shapes)?;
@@ -671,8 +671,8 @@ fn generate_instruction_types<'a>(
                 for prop in &object_pattern.properties {
                     if let ObjectPropertyOrSpread::Property(obj_prop) = prop {
                         match &obj_prop.key {
-                            ObjectPropertyKey::Identifier { name }
-                            | ObjectPropertyKey::String { name } => {
+                            ObjectPropertyKey::Identifier { name, .. }
+                            | ObjectPropertyKey::String { name, .. } => {
                                 let prop_place_type =
                                     get_type(obj_prop.place.identifier, identifiers);
                                 let value_type = get_type(value.identifier, identifiers);
@@ -757,7 +757,7 @@ fn generate_instruction_types<'a>(
         InstructionValue::JsxExpression { props, .. } => {
             if unifier.enable_treat_ref_like_identifiers_as_refs {
                 for prop in props {
-                    if let JsxAttribute::Attribute { name, place } = prop
+                    if let JsxAttribute::Attribute { name, place, .. } = prop
                         && name == "ref"
                     {
                         let ref_type = get_type(place.identifier, identifiers);
@@ -1062,7 +1062,7 @@ fn apply_instruction_operands<'a>(
                 match prop {
                     ObjectPropertyOrSpread::Property(obj_prop) => {
                         resolve_identifier(obj_prop.place.identifier, identifiers, types, unifier);
-                        if let ObjectPropertyKey::Computed { name } = &obj_prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &obj_prop.key {
                             resolve_identifier(name.identifier, identifiers, types, unifier);
                         }
                     }
@@ -1094,7 +1094,7 @@ fn apply_instruction_operands<'a>(
                     JsxAttribute::Attribute { place, .. } => {
                         resolve_identifier(place.identifier, identifiers, types, unifier);
                     }
-                    JsxAttribute::SpreadAttribute { argument } => {
+                    JsxAttribute::SpreadAttribute { argument, .. } => {
                         resolve_identifier(argument.identifier, identifiers, types, unifier);
                     }
                 }

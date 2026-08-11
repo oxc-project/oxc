@@ -308,6 +308,7 @@ fn enter_ssa_impl<'a>(
                     ParamPattern::Place(p) => ParamPattern::Place(builder.define_place(&p, env)?),
                     ParamPattern::Spread(s) => ParamPattern::Spread(SpreadPattern {
                         place: builder.define_place(&s.place, env)?,
+                        span: s.span,
                     }),
                 });
             }
@@ -399,6 +400,7 @@ fn enter_ssa_impl<'a>(
                         }
                         ParamPattern::Spread(s) => ParamPattern::Spread(SpreadPattern {
                             place: builder.define_place(&s.place, env)?,
+                            span: s.span,
                         }),
                     });
                 }
@@ -456,7 +458,9 @@ fn enter_ssa_impl<'a>(
 pub fn placeholder_function<'a>(alloc: &'a Allocator) -> HirFunction<'a> {
     HirFunction {
         span: None,
+        body_span: None,
         id: None,
+        id_span: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: ArenaVec::new_in(&alloc),

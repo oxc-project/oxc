@@ -384,12 +384,16 @@ fn collect_maybe_memo_dependencies<'a>(
             path: ArenaVec::new_in(&env.allocator),
             span: *span,
         }),
-        InstructionValue::PropertyLoad { object, property, span, .. } => {
+        InstructionValue::PropertyLoad { object, property, property_span, span } => {
             maybe_deps.get(&object.identifier).map(|object_dep| ManualMemoDependency {
                 root: object_dep.root,
                 path: {
                     let mut path = object_dep.path.clone_in(env.allocator);
-                    path.push(DependencyPathEntry { property: *property, optional, span: *span });
+                    path.push(DependencyPathEntry {
+                        property: *property,
+                        optional,
+                        span: property_span.or(*span),
+                    });
                     path
                 },
                 span: *span,
