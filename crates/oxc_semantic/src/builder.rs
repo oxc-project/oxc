@@ -89,6 +89,14 @@ pub struct SemanticBuilder<'a> {
     /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
+    /// Body scopes for each enum symbol. Multiple scopes belong to the same symbol when enum
+    /// declarations merge.
+    enum_body_scopes: FxHashMap<SymbolId, SmallVec<[ScopeId; 1]>>,
+    /// Reverse lookup for [`Self::enum_body_scopes`], used while walking a reference's scope
+    /// chain to identify enum body scopes.
+    enum_symbol_by_body_scope: FxHashMap<ScopeId, SymbolId>,
+    /// Enum symbols whose bodies are currently being visited.
+    enum_symbol_stack: SmallVec<[SymbolId; 1]>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -157,6 +165,9 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            enum_body_scopes: FxHashMap::default(),
+            enum_symbol_by_body_scope: FxHashMap::default(),
+            enum_symbol_stack: SmallVec::new(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unresolved_references_checkpoint: 0,
@@ -660,6 +671,25 @@ impl<'a> SemanticBuilder<'a> {
             {
                 return true;
             }
+
+            if !self.enum_symbol_by_body_scope.is_empty()
+                && let Some(enum_symbol_id) = self.enum_symbol_by_body_scope.get(&sid).copied()
+            {
+                let sibling_symbol_id =
+                    self.enum_body_scopes.get(&enum_symbol_id).and_then(|body_scopes| {
+                        body_scopes.iter().find_map(|&body_scope_id| {
+                            (body_scope_id != sid)
+                                .then(|| self.scoping.get_binding(body_scope_id, name))
+                                .flatten()
+                        })
+                    });
+                if let Some(symbol_id) = sibling_symbol_id
+                    && self.try_resolve_reference(reference_id, symbol_id)
+                {
+                    return true;
+                }
+            }
+
             scope_id = self.scoping.scope_parent_id(sid);
         }
         false
@@ -2730,13 +2760,31 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
+        self.enum_symbol_stack.push(decl.id.symbol_id.get().expect("enum declaration is bound"));
         self.visit_ts_enum_body(&decl.body);
+        self.enum_symbol_stack.pop();
         // Evaluate enum member values after all members are bound
         if self.enum_eval {
             crate::ts_enum::eval::evaluate_enum_members(decl, &mut self.scoping);
         }
         self.leave_node(kind);
         self.leave_ambient_context(decl.declare);
+    }
+
+    fn visit_ts_enum_body(&mut self, body: &TSEnumBody<'a>) {
+        let kind = AstKind::TSEnumBody(self.alloc(body));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty(), &body.scope_id);
+
+        let enum_symbol_id = *self.enum_symbol_stack.last().expect("enum body has an enum symbol");
+        let scope_id = self.current_scope_id;
+        self.enum_body_scopes.entry(enum_symbol_id).or_default().push(scope_id);
+        self.enum_symbol_by_body_scope.insert(scope_id, enum_symbol_id);
+
+        self.visit_span(&body.span);
+        self.visit_ts_enum_members(&body.members);
+        self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_ts_enum_member(&mut self, member: &TSEnumMember<'a>) {

@@ -1,0 +1,67 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/issue-25364.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "TSEnumBody",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(EnumMember)",
+            "id": 2,
+            "name": "B",
+            "node": "TSEnumMember",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Read)",
+                "id": 0,
+                "name": "B",
+                "node_id": 15,
+                "scope_id": 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 2,
+        "node": "TSEnumBody",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(EnumMember)",
+            "id": 3,
+            "name": "C",
+            "node": "TSEnumMember",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "B",
+        "node": "VariableDeclarator(B)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(RegularEnum)",
+        "id": 1,
+        "name": "A",
+        "node": "TSEnumDeclaration(A)",
+        "references": []
+      }
+    ]
+  }
+]
