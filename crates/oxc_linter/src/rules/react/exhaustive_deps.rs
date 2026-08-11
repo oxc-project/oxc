@@ -781,12 +781,17 @@ fn is_expression_referentially_unique(expr: &Expression) -> bool {
             is_expression_referentially_unique(&logical.left)
                 || is_expression_referentially_unique(&logical.right)
         }
-        Expression::BinaryExpression(bin_expr) => {
-            is_expression_referentially_unique(&bin_expr.right)
-        }
         Expression::AssignmentExpression(assignment) => {
             is_expression_referentially_unique(&assignment.right)
         }
+        // A BinaryExpression is deliberately absent: the arms above recurse
+        // because those expressions evaluate *to* one of their operands, which
+        // a binary expression never does. Every binary operator -- arithmetic,
+        // comparison, bitwise, `in`, `instanceof` -- yields a primitive, so the
+        // result is stable however unstable the operands are. Recursing into
+        // the right operand made `new Date(a) > new Date()` inherit
+        // "referentially unique" from the NewExpression and reported a boolean
+        // as changing every render.
         _ => false,
     }
 }
@@ -2894,9 +2899,43 @@ const Component = ({ filter }) => {
 
           return <div>test</div>;
         };",
+        // A binary expression always evaluates to a primitive, however
+        // unstable its operands are, so the result is a stable dependency.
+        // https://github.com/oxc-project/oxc/issues/25029
+        r"function MyComponent() {
+          const condition = new Date('2026-01-01') > new Date();
+          useCallback(() => {
+            return condition;
+          }, [condition]);
+        }",
+        r"function MyComponent() {
+          const label = 'total: ' + [1, 2, 3].length;
+          useCallback(() => {
+            return label;
+          }, [label]);
+        }",
+        r"function MyComponent(props) {
+          const isError = props.value instanceof Error;
+          useMemo(() => isError, [isError]);
+        }",
     ];
 
     let fail = vec![
+        // The conditional and logical arms must keep recursing: unlike a
+        // binary expression, those evaluate *to* one of their operands, so an
+        // object literal on either side really is a new reference each render.
+        r"function MyComponent(props) {
+          const value = props.flag ? {} : {};
+          useCallback(() => {
+            return value;
+          }, [value]);
+        }",
+        r"function MyComponent(props) {
+          const value = props.cached || {};
+          useCallback(() => {
+            return value;
+          }, [value]);
+        }",
         r"function MyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.toString());
