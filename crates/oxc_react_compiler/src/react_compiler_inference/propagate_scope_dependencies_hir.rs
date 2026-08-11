@@ -28,6 +28,7 @@ use crate::react_compiler_hir::{
     PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
     ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
+use crate::react_compiler_optimization::dead_code_elimination::is_catch_observable_property_load;
 use oxc_span::Span;
 
 // =============================================================================
@@ -2087,6 +2088,21 @@ fn handle_function_deps<'a>(
                 }
                 _ => {
                     handle_instruction(instr, ctx, env);
+                }
+            }
+        }
+
+        // A caught throw is an observable result of a read even when its produced value is not
+        // used. Record the read's root operands as dependencies so a cached scope re-runs when
+        // the throw outcome can change. Using the roots also avoids hoisting the potentially
+        // throwing property access itself outside of the try/catch.
+        if matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }) {
+            for &instr_id in &block.instructions {
+                let instr = &func.instructions[instr_id.index()];
+                if is_catch_observable_property_load(&instr.value) {
+                    for operand in visitors::each_instruction_value_operand(&instr.value, env) {
+                        ctx.visit_operand(&operand, env);
+                    }
                 }
             }
         }
