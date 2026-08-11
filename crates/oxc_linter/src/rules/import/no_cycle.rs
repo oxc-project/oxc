@@ -10,6 +10,7 @@ use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use rayon::prelude::*;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -406,15 +407,19 @@ fn collect_cycle_diagnostics(
     let include_type_edges = target_paths.values().any(|(_, config)| !config.ignore_types);
     let cycles = graph_cycles::cycles_by_module(!include_type_edges, modules);
 
-    let directives_map = disable_directives_map.lock().expect("disable_directives_map poisoned");
     let rule = RuleLabel::new(NoCycle::PLUGIN, NoCycle::NAME);
 
     modules
-        .iter()
+        .par_iter()
         .filter_map(|(&path, records)| {
             let cycle = cycles.get(path)?;
             let (path, &(severity, config)) = target_paths.get_key_value(path)?;
-            let directives = directives_map.get(path);
+
+            let directives = disable_directives_map
+                .lock()
+                .expect("disable_directives_map poisoned")
+                .get(path)
+                .cloned();
 
             let diagnostics: Vec<OxcDiagnostic> = records
                 .iter()
@@ -437,7 +442,7 @@ fn collect_cycle_diagnostics(
                         message.span,
                         rule,
                         Severity::from(severity),
-                        directives,
+                        directives.as_ref(),
                     )
                 })
                 .collect();
