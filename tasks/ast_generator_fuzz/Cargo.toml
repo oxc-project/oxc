@@ -1,0 +1,31 @@
+[package]
+name = "oxc_ast_generator_fuzz"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[[bin]]
+name = "oxc_ast_generator_fuzz"
+test = false
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_ast_generator = { workspace = true }
+oxc_ast_visit = { workspace = true }
+oxc_codegen = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_span = { workspace = true }
+
+indicatif = { workspace = true }
+pico-args = { workspace = true }
+rand = { workspace = true }
