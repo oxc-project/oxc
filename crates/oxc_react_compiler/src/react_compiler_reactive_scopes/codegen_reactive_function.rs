@@ -3308,8 +3308,8 @@ fn ox_codegen_jsx_fbt_child_element<'a>(
     }
 }
 
-/// Build a `JSXElementName` from a tag expression following the TS compiler's
-/// identifier-reference rule (uppercase / contains-`.` names become references).
+/// Build a `JSXElementName` from a tag expression, preserving the HIR distinction between
+/// component references (identifier expressions) and builtin tags (string literals).
 fn ox_expression_to_jsx_tag<'a>(
     cx: &OxcContext<'a, '_>,
     expr: &oxc::Expression<'a>,
@@ -3317,7 +3317,11 @@ fn ox_expression_to_jsx_tag<'a>(
 ) -> Result<oxc::JSXElementName<'a>, OxcDiagnostic> {
     match expr {
         oxc::Expression::Identifier(ident) => {
-            Ok(ox_jsx_element_name_from_ident(cx, &ident.name, span))
+            Ok(oxc_ast::ast::JSXElementName::new_identifier_reference(
+                span,
+                ox_str(&cx.ast, &ident.name),
+                &cx.ast,
+            ))
         }
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_) => {
@@ -3338,23 +3342,14 @@ fn ox_expression_to_jsx_tag<'a>(
                     span, namespace, name, &cx.ast,
                 ))
             } else {
-                Ok(ox_jsx_element_name_from_ident(cx, tag_text, span))
+                Ok(oxc_ast::ast::JSXElementName::new_identifier(
+                    span,
+                    ox_str(&cx.ast, tag_text),
+                    &cx.ast,
+                ))
             }
         }
         _ => Err(invariant_err("Expected JSX tag to be an identifier or string", None)),
-    }
-}
-
-fn ox_jsx_element_name_from_ident<'a>(
-    cx: &OxcContext<'a, '_>,
-    name: &str,
-    span: Span,
-) -> oxc::JSXElementName<'a> {
-    let first_char = name.chars().next().unwrap_or('a');
-    if first_char.is_uppercase() || name.contains('.') {
-        oxc_ast::ast::JSXElementName::new_identifier_reference(span, ox_str(&cx.ast, name), &cx.ast)
-    } else {
-        oxc_ast::ast::JSXElementName::new_identifier(span, ox_str(&cx.ast, name), &cx.ast)
     }
 }
 

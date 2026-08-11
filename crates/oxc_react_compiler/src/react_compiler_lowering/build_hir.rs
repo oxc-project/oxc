@@ -4754,14 +4754,17 @@ fn lower_jsx_element_name<'a>(
     builder: &mut HirBuilder<'a, '_>,
     name: &oxc::JSXElementName<'a>,
 ) -> Result<JsxTag<'a>, OxcDiagnostic> {
-    // Lower a simple JSX tag identifier (component-vs-builtin split on case).
+    // Lower a simple JSX tag identifier. The parser has already classified the tag as an
+    // identifier reference (component) or a plain identifier (builtin), so preserve that
+    // distinction instead of inferring it again from the name.
     fn lower_tag_identifier<'a>(
         builder: &mut HirBuilder<'a, '_>,
         tag: Ident<'a>,
         span: oxc_span::Span,
         symbol: Option<SymbolId>,
+        is_reference: bool,
     ) -> Result<JsxTag<'a>, OxcDiagnostic> {
-        if tag.starts_with(|c: char| c.is_ascii_uppercase()) {
+        if is_reference {
             // Component tag: resolve as identifier and load
             let place = lower_identifier(builder, tag, span, symbol)?;
             let load_value = if builder.is_context_identifier(symbol) {
@@ -4779,15 +4782,15 @@ fn lower_jsx_element_name<'a>(
 
     match name {
         oxc::JSXElementName::Identifier(id) => {
-            lower_tag_identifier(builder, Ident::from(id.name.as_str()), id.span, None)
+            lower_tag_identifier(builder, Ident::from(id.name.as_str()), id.span, None, false)
         }
         oxc::JSXElementName::IdentifierReference(id) => {
             let symbol = builder.scope().resolve_reference(id);
-            lower_tag_identifier(builder, id.name, id.span, symbol)
+            lower_tag_identifier(builder, id.name, id.span, symbol, true)
         }
         oxc::JSXElementName::ThisExpression(this) => {
             // `<this.Foo />`-style `this` tag lowers as the identifier "this".
-            lower_tag_identifier(builder, Ident::from("this"), this.span, None)
+            lower_tag_identifier(builder, Ident::from("this"), this.span, None, false)
         }
         oxc::JSXElementName::MemberExpression(member) => {
             let place = lower_jsx_member_expression(builder, member)?;
