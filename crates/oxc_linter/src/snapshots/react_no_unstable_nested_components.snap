@@ -3,6 +3,24 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:2:39]
+ 1 │ function MyComponent() {
+ 2 │               return <Button onClick={() => <Cell />} />;
+   ·                                       ──────────────
+ 3 │             }
+   ╰────
+  help: Move this component definition out of the parent component `MyComponent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
+   ╭─[no_unstable_nested_components.tsx:2:39]
+ 1 │ function MyComponent() {
+ 2 │               return <Button onClick={() => { return <Cell />; }} />;
+   ·                                       ──────────────────────────
+ 3 │             }
+   ╰────
+  help: Move this component definition out of the parent component `MyComponent` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+
+  ⚠ react(no-unstable-nested-components): Do not define components during render.
    ╭─[no_unstable_nested_components.tsx:3:23]
  2 │                         function ParentComponent() {
  3 │ ╭─▶                       function UnstableNestedFunctionComponent() {
