@@ -47,7 +47,7 @@ interface TestCaseContent {
  * @param value - Setting value
  * @param defaultValue - Default value if setting is not present
  */
-function valueToBoolean(value: string | null, defaultValue: boolean): boolean {
+function valueToBoolean(value: string | undefined, defaultValue: boolean): boolean {
   if (value === "true") return true;
   if (value === "false") return false;
   return defaultValue;
@@ -57,7 +57,7 @@ function valueToBoolean(value: string | null, defaultValue: boolean): boolean {
  * Split comma-separated values into array
  * @param value - Setting value
  */
-function splitValueOptions(value: string | null): string[] {
+function splitValueOptions(value: string | undefined): string[] {
   if (!value) return [];
   return value.split(",").map((s) => s.trim().toLowerCase());
 }
