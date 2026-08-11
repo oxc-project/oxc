@@ -71,6 +71,7 @@ pub fn ast_meta(_args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_derive(
     Ast,
     attributes(
+        ast_gen,
         builder,
         clone_in,
         content_eq,

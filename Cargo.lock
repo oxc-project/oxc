@@ -1772,6 +1772,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_ast_generator"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_codegen",
+ "oxc_span",
+ "oxc_str",
+ "oxc_syntax",
+ "rand",
+]
+
+[[package]]
 name = "oxc_ast_macros"
 version = "0.144.0"
 dependencies = [

@@ -247,6 +247,7 @@ pub enum TSLiteral<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[ast_gen(with = "crate::custom::generate_ts_type")]
 pub enum TSType<'a> {
     // Keyword
     TSAnyKeyword(Box<'a, TSAnyKeyword>) = 0,
@@ -836,6 +837,7 @@ pub struct TSQualifiedName<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_ts_type_parameter_instantiation")]
 pub struct TSTypeParameterInstantiation<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -863,6 +865,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_ts_type_parameter")]
 pub struct TSTypeParameter<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -884,6 +887,7 @@ pub struct TSTypeParameter<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_ts_type_parameter_declaration")]
 pub struct TSTypeParameterDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -1353,6 +1357,7 @@ pub struct TSModuleBlock<'a> {
     pub span: Span,
     #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
+    #[ast_gen(with = "crate::custom::generate_block_statements")]
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -1816,6 +1821,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_ts_instantiation_expression")]
 pub struct TSInstantiationExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -1827,6 +1833,7 @@ pub struct TSInstantiationExpression<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
+#[ast_gen(with = "crate::custom::generate_import_or_export_kind")]
 pub enum ImportOrExportKind {
     /// `import { foo } from './foo'`;
     Value = 0,

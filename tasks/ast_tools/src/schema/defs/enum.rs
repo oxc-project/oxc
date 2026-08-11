@@ -11,6 +11,7 @@ use super::{
     Containers, Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
     extensions::{
         ast_builder::AstBuilderType,
+        ast_gen::AstGen,
         clone_in::CloneInType,
         content_eq::ContentEqType,
         dummy::DummyEnum,
@@ -29,11 +30,9 @@ pub struct EnumDef {
     pub name: String,
     pub plural_name: Option<String>,
     pub has_lifetime: bool,
-    #[expect(unused)]
     pub is_foreign: bool,
     pub file_id: FileId,
     pub containers: Containers,
-    #[expect(unused)]
     pub visibility: Visibility,
     // For `#[derive(...)]` attributes.
     pub derives: Vec<String>,
@@ -51,6 +50,7 @@ pub struct EnumDef {
     ///
     /// [`inherits`]: EnumDef::inherits
     pub inherited_by: Vec<TypeId>,
+    pub ast_gen: AstGen,
     pub builder: AstBuilderType,
     pub visit: VisitEnum,
     pub layout: Layout,
@@ -89,6 +89,7 @@ impl EnumDef {
             variants,
             inherits,
             inherited_by: vec![],
+            ast_gen: AstGen::default(),
             builder: AstBuilderType::default(),
             visit: VisitEnum::default(),
             layout: Layout::default(),
@@ -209,6 +210,7 @@ pub struct VariantDef {
     pub name: String,
     pub field_type_id: Option<TypeId>,
     pub discriminant: Discriminant,
+    pub ast_gen: AstGen,
     pub visit: VisitFieldOrVariant,
     pub estree: ESTreeEnumVariant,
 }
@@ -220,6 +222,7 @@ impl VariantDef {
             name,
             field_type_id,
             discriminant,
+            ast_gen: AstGen::default(),
             visit: VisitFieldOrVariant::default(),
             estree: ESTreeEnumVariant::default(),
         }

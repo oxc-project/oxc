@@ -64,6 +64,7 @@ pub struct Program<'a> {
     pub hashbang: Option<Hashbang<'a>>,
     #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
+    #[ast_gen(with = "crate::custom::generate_program_body")]
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -77,6 +78,7 @@ pub struct Program<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[ast_gen(with = "crate::custom::generate_expression")]
 pub enum Expression<'a> {
     /// See [`BooleanLiteral`] for AST node details.
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
@@ -363,6 +365,7 @@ pub enum ObjectPropertyKind<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_object_property")]
 #[estree(rename = "Property", add_fields(optional = TsFalse))]
 pub struct ObjectProperty<'a> {
     pub node_id: Cell<NodeId>,
@@ -400,6 +403,7 @@ pub enum PropertyKey<'a> {
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 pub enum PropertyKind {
     /// `a: 1` in `const obj = { a: 1 };`
+    #[ast_gen(weight = 3)]
     Init = 0,
     /// `get a() { return 1; }` in `const obj = { get a() { return 1; } };`
     Get = 1,
@@ -414,6 +418,7 @@ pub enum PropertyKind {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_template_literal")]
 pub struct TemplateLiteral<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -567,6 +572,7 @@ pub struct PrivateFieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_call_expression")]
 pub struct CallExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -597,6 +603,7 @@ pub struct CallExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_new_expression")]
 pub struct NewExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -1082,6 +1089,7 @@ pub struct ParenthesizedExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[ast_gen(with = "crate::custom::generate_statement")]
 pub enum Statement<'a> {
     // Statements
     BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
@@ -1149,6 +1157,7 @@ pub struct Hashbang<'a> {
 pub struct BlockStatement<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    #[ast_gen(with = "crate::custom::generate_block_statements")]
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1158,6 +1167,7 @@ pub struct BlockStatement<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[ast_gen(with = "crate::custom::generate_declaration")]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
     #[visit(args(flags = ScopeFlags::Function))]
@@ -1269,6 +1279,7 @@ pub struct IfStatement<'a> {
 pub struct DoWhileStatement<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    #[ast_gen(with = "crate::custom::generate_loop_body")]
     pub body: Statement<'a>,
     pub test: Expression<'a>,
 }
@@ -1282,6 +1293,7 @@ pub struct WhileStatement<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub test: Expression<'a>,
+    #[ast_gen(with = "crate::custom::generate_loop_body")]
     pub body: Statement<'a>,
 }
 
@@ -1297,6 +1309,7 @@ pub struct ForStatement<'a> {
     pub init: Option<ForStatementInit<'a>>,
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
+    #[ast_gen(with = "crate::custom::generate_loop_body")]
     pub body: Statement<'a>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1328,6 +1341,7 @@ pub struct ForInStatement<'a> {
     pub span: Span,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
+    #[ast_gen(with = "crate::custom::generate_loop_body")]
     pub body: Statement<'a>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1360,6 +1374,7 @@ pub struct ForOfStatement<'a> {
     pub r#await: bool,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
+    #[ast_gen(with = "crate::custom::generate_loop_body")]
     pub body: Statement<'a>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1423,6 +1438,7 @@ pub struct SwitchStatement<'a> {
     pub span: Span,
     pub discriminant: Expression<'a>,
     #[scope(enter_before)]
+    #[ast_gen(with = "crate::custom::generate_switch_cases")]
     pub cases: Vec<'a, SwitchCase<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1435,6 +1451,7 @@ pub struct SwitchCase<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub test: Option<Expression<'a>>,
+    #[ast_gen(with = "crate::custom::generate_switch_consequent")]
     pub consequent: Vec<'a, Statement<'a>>,
 }
 
@@ -1771,6 +1788,7 @@ pub struct BindingRestElement<'a> {
     add_ts_def = "type ParamPattern = FormalParameter | TSParameterProperty | FormalParameterRest",
     add_fields(expression = False),
 )]
+#[ast_gen(with = "crate::custom::generate_function")]
 pub struct Function<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -1850,6 +1868,7 @@ pub struct Function<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
+#[ast_gen(with = "crate::custom::generate_function_type")]
 pub enum FunctionType {
     FunctionDeclaration = 0,
     FunctionExpression = 1,
@@ -1942,6 +1961,7 @@ pub struct FormalParameter<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 #[estree(no_rename_variants, no_ts_def)]
+#[ast_gen(with = "crate::custom::generate_formal_parameter_kind")]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter = 0,
@@ -1974,6 +1994,7 @@ pub struct FormalParameterRest<'a> {
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
 #[estree(rename = "BlockStatement")]
+#[ast_gen(with = "crate::custom::generate_function_body")]
 pub struct FunctionBody<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2012,6 +2033,7 @@ pub enum ArrowFunctionBody<'a> {
     add_fields(expression = ArrowFunctionExpressionExpression, id = Null, generator = False),
     field_order(expression, r#async, type_parameters, params, return_type, body, id, generator, span),
 )]
+#[ast_gen(with = "crate::custom::generate_arrow_function")]
 pub struct ArrowFunctionExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2044,6 +2066,7 @@ pub struct ArrowFunctionExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[ast_gen(with = "crate::custom::generate_yield_expression")]
 pub struct YieldExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2260,6 +2283,7 @@ pub struct MethodDefinition<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
+#[ast_gen(with = "crate::custom::generate_method_definition_type")]
 pub enum MethodDefinitionType {
     MethodDefinition = 0,
     TSAbstractMethodDefinition = 1,
@@ -2360,6 +2384,7 @@ pub struct PropertyDefinition<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
+#[ast_gen(with = "crate::custom::generate_property_definition_type")]
 pub enum PropertyDefinitionType {
     PropertyDefinition = 0,
     TSAbstractPropertyDefinition = 1,
@@ -2413,6 +2438,7 @@ pub struct PrivateIdentifier<'a> {
 pub struct StaticBlock<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
+    #[ast_gen(with = "crate::custom::generate_block_statements")]
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -2468,6 +2494,7 @@ pub enum ModuleDeclaration<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 #[estree(no_rename_variants)]
+#[ast_gen(with = "crate::custom::generate_accessor_property_type")]
 pub enum AccessorPropertyType {
     AccessorProperty = 0,
     TSAbstractAccessorProperty = 1,

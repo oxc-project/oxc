@@ -157,6 +157,7 @@ oxc_transformer_plugins = { version = "0.144.0", path = "crates/oxc_transformer_
 oxc_traverse = { version = "0.144.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
+oxc_ast_generator = { path = "crates/oxc_ast_generator" } # Random AST generation
 oxc_config = { path = "crates/oxc_config" } # Config discovery
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core

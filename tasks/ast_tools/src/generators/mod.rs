@@ -6,6 +6,7 @@ use crate::{
 
 mod assert_layouts;
 mod ast_builder;
+mod ast_generator;
 mod ast_kind;
 #[cfg(feature = "generate-js")]
 mod estree_visit;
@@ -29,6 +30,7 @@ mod visit_js;
 
 pub use assert_layouts::AssertLayoutsGenerator;
 pub use ast_builder::AstBuilderGenerator;
+pub use ast_generator::AstGeneratorGenerator;
 pub use ast_kind::AstKindGenerator;
 #[cfg(feature = "generate-js")]
 pub use estree_visit::ESTreeVisitGenerator;

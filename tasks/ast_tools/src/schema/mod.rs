@@ -19,6 +19,7 @@ pub use meta::MetaType;
 /// Extensions to schema for specific derives / generators
 pub mod extensions {
     pub mod ast_builder;
+    pub mod ast_gen;
     pub mod clone_in;
     pub mod content_eq;
     pub mod dummy;

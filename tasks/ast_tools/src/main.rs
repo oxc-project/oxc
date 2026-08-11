@@ -219,6 +219,9 @@ const ALLOCATOR_CRATE_PATH: &str = "crates/oxc_allocator";
 /// Path to `oxc_ast` crate
 const AST_CRATE_PATH: &str = "crates/oxc_ast";
 
+/// Path to the internal random AST generator crate.
+const AST_GENERATOR_CRATE_PATH: &str = "crates/oxc_ast_generator";
+
 /// Path to `oxc_ast_visit` crate
 const AST_VISIT_CRATE_PATH: &str = "crates/oxc_ast_visit";
 
@@ -262,6 +265,7 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::AssertLayoutsGenerator,
     &generators::AstKindGenerator,
     &generators::AstBuilderGenerator,
+    &generators::AstGeneratorGenerator,
     &generators::GetIdGenerator,
     &generators::InheritVariantsGenerator,
     &generators::VisitGenerator,
