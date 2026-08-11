@@ -57,8 +57,6 @@ fn cases() {
 
 #[test]
 fn export_default_interface() {
-    // A newline must follow, or the next statement gets glued on,
-    // as it does for `export default class` / `export default function`.
     test_same("export default interface X {}\nconst y = 1;\n");
 }
 
