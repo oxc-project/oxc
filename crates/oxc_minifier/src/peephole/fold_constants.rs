@@ -973,8 +973,22 @@ impl<'a> PeepholeOptimizations {
             let quasi = &mut t.quasis[idx];
             let escaped = Self::escape_string_for_template_literal(&str);
             let next_raw = next_quasi.as_ref().map(|q| q.value.raw.as_str()).unwrap_or_default();
-            quasi.value.raw =
-                Str::from_strs_array_in([quasi.value.raw.as_str(), &escaped, next_raw], ctx);
+            let raw = quasi.value.raw.as_str();
+            let starts_with_digit = escaped
+                .as_bytes()
+                .first()
+                .or_else(|| next_raw.as_bytes().first())
+                .is_some_and(u8::is_ascii_digit);
+            let cooked_ends_with_null =
+                quasi.value.cooked.is_some_and(|cooked| cooked.as_str().ends_with('\0'));
+            quasi.value.raw = if starts_with_digit
+                && cooked_ends_with_null
+                && let Some(prefix) = raw.strip_suffix("\\0")
+            {
+                Str::from_strs_array_in([prefix, "\\x00", &escaped, next_raw], ctx)
+            } else {
+                Str::from_strs_array_in([raw, &escaped, next_raw], ctx)
+            };
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
