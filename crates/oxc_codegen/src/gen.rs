@@ -1275,7 +1275,10 @@ impl Gen for ExportDefaultDeclarationKind<'_> {
                 class.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSInterfaceDeclaration(interface) => interface.print(p, ctx),
+            Self::TSInterfaceDeclaration(interface) => {
+                interface.print(p, ctx);
+                p.print_soft_newline();
+            }
             _ => {
                 p.start_of_default_export = p.code_len();
                 self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
