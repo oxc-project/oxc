@@ -1,0 +1,47 @@
+Cargo.lock
+  s_3c7a5db6237378::t_fd01effac3ca83 1774-1785
+crates/oxc_ast_generator/src/generated.rs
+  s_3c7a5db6237378::t_b1e50e3e9f6b7c 1-222,224-315,317-330,332-840,842-1125,1127-1266,1268-1293,1295-1307,1320-1349,1351,1353-1444,1446-1543,1545-2837,2841-2851,2853-3006
+tasks/ast_tools/src/generators/ast_generator.rs
+  s_3c7a5db6237378::t_23424d9da0db9b 1-174,176-421,423-424,425-484
+tasks/ast_tools/src/schema/defs/enum.rs
+  s_3c7a5db6237378::t_730fd59d5a62ef 14,53,92,213,225
+tasks/ast_tools/src/schema/defs/struct.rs
+  s_3c7a5db6237378::t_159aeed6ea2afc 14,41,79,170,192
+tasks/ast_tools/src/schema/mod.rs
+  s_3c7a5db6237378::t_a5243087c2842d 22
+.github/generated/ast_changes_watch_list.yml
+  s_3c7a5db6237378::t_98320d789fd78c 70
+crates/oxc_ast/src/ast/js.rs
+  s_3c7a5db6237378::t_2ce3ebb358480f 80,367,405,420,1089,1277,1291,1307,1339,1372,1436,1449,1786,1866,1959,1992,2031,2280,2381,2490
+crates/oxc_ast_generator/Cargo.toml
+  s_3c7a5db6237378::t_453a54edb358d4 1-21
+crates/oxc_ast_generator/src/custom.rs
+  s_3c7a5db6237378::t_5b0c9c6fe55c07 1-166,169,171-203,204,206,209-271,273-275
+crates/oxc_ast_generator/src/lib.rs
+  s_3c7a5db6237378::t_bd80bca80ac6df 1-426
+crates/oxc_ast_macros/src/lib.rs
+  s_3c7a5db6237378::t_247508b5fb4dba 74
+tasks/ast_tools/src/generators/mod.rs
+  s_3c7a5db6237378::t_521e284f579511 9,33
+tasks/ast_tools/src/main.rs
+  s_3c7a5db6237378::t_5b3bd395ede441 222-224,268
+tasks/ast_tools/src/schema/extensions/ast_gen.rs
+  s_3c7a5db6237378::t_1abb27b8365027 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ec361b927949be7202e21eb75cfc6fbb621a79cb",
+  "prompts": {},
+  "sessions": {
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
