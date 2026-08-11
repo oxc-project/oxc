@@ -152,6 +152,11 @@ fn mangler() {
         "function _() { for (var i = 0; i < 9; i++) h(() => i); for (var j = 0; j < 9; j++) g(j); }", // captured by closure: must NOT reuse
         "function _() { for (var i = 0; i < 9; i++) {} g(i); for (var j = 0; j < 9; j++) {} }", // used after loop: must NOT reuse
         "function _() { for (var i = 0; i < 9; i++) { g(i) } for (var j; j === undefined; j++) { g(j) } }", // should NOT reuse (j is declared but used before init and must be undefined)
+        "function _() { { var i = 1; g(i); } { var j; g(j); } }", // sequential child scopes with an uninitialized var: must NOT reuse
+        "function _() { if (c) { var i = 1; g(i); } if (d) { var j; g(j); } }", // overlapping child scopes with an uninitialized var: must NOT reuse
+        "function _() { if (c) { var i = 1; g(i); } if (d) { var j = j; g(j); } }", // self-initialization in a child scope: must NOT reuse
+        "function _() { { var i = 1; g(i); } try { var j; g(j); } catch {} }", // try block with an uninitialized var: must NOT reuse
+        "function _() { { var i = 1; g(i); } switch (c) { case 0: var j = 2; case 1: g(j); } }", // switch can enter after the initializer: must NOT reuse
     ];
     let top_level_cases = [
         "function foo(a) {a}",
