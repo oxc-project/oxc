@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::Severity;
 use oxc_macros::declare_oxc_lint;
-use oxc_react_compiler::{CompilerOutputMode, EnvironmentConfig, PluginOptions};
+use oxc_react_compiler::{CompilerOutputMode, EnvironmentConfig, ErrorCategory, PluginOptions};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -131,7 +131,13 @@ impl Rule for ReactCompiler {
         } else {
             diagnostics
                 .into_iter()
-                .filter(|diagnostic| diagnostic.severity == Severity::Error)
+                .filter(|diagnostic| {
+                    // Internal invariant violations are compiler bugs, not rule
+                    // violations; the eslint plugin's `invariant` rule is off in
+                    // every preset, so the function is silently skipped.
+                    diagnostic.severity == Severity::Error
+                        && !ErrorCategory::Invariant.matches(diagnostic)
+                })
                 .collect::<Vec<_>>()
         };
 
@@ -229,6 +235,41 @@ function Component(props) {
             "
 class Foo {
   #bar() {}
+}
+",
+            None,
+        ),
+        // The compiler fails an internal invariant on this input
+        // (PruneNonEscapingScopes); the function is skipped without
+        // reporting, matching the eslint plugin, instead of crashing.
+        (
+            "
+export const Component = () => {
+  const raw = useValue();
+  return (() => {
+    try {
+      return check(raw) ? raw : null;
+    } catch {
+      return null;
+    }
+  })();
+};
+",
+            None,
+        ),
+        // The compiler fails an internal invariant on a `for` loop without a
+        // variable-declaration initializer (CodegenReactiveFunction).
+        // https://github.com/oxc-project/oxc/issues/24842
+        (
+            "
+function Component() {
+  useEffect(() => {
+    let i = 0;
+    for (; i < 3; i++) {
+      console.log(i);
+    }
+  });
+  return null;
 }
 ",
             None,
@@ -517,6 +558,35 @@ function useConditional2(props) {
             "function Component() {
                 const fbt = 'span';
                 return <fbt desc='label'>Hello</fbt>;
+            }",
+            Some(json!([{ "reportAllBailouts": true }])),
+        ),
+        // An internal invariant bail-out also surfaces under
+        // `reportAllBailouts`.
+        (
+            "export const Component = () => {
+                const raw = useValue();
+                return (() => {
+                    try {
+                        return check(raw) ? raw : null;
+                    } catch {
+                        return null;
+                    }
+                })();
+            };",
+            Some(json!([{ "reportAllBailouts": true }])),
+        ),
+        // The for-init invariant bail-out (issue #24842) also surfaces
+        // under `reportAllBailouts`.
+        (
+            "function Component() {
+                useEffect(() => {
+                    let i = 0;
+                    for (; i < 3; i++) {
+                        console.log(i);
+                    }
+                });
+                return null;
             }",
             Some(json!([{ "reportAllBailouts": true }])),
         ),

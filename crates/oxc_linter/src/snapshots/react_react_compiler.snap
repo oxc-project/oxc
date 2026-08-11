@@ -229,3 +229,30 @@ source: crates/oxc_linter/src/tester.rs
  3 │                 return <fbt desc='label'>Hello</fbt>;
    ╰────
   help: Local variables named `fbt` may conflict with the fbt plugin and are not yet supported
+
+  ⚠ react(react-compiler): Invariant: Expected a node for all scopes
+    ╭─[react_compiler.tsx:1:26]
+  1 │ ╭─▶ export const Component = () => {
+  2 │ │                   const raw = useValue();
+  3 │ │                   return (() => {
+  4 │ │                       try {
+  5 │ │                           return check(raw) ? raw : null;
+  6 │ │                       } catch {
+  7 │ │                           return null;
+  8 │ │                       }
+  9 │ │                   })();
+ 10 │ ╰─▶             };
+    ╰────
+
+  ⚠ react(react-compiler): Invariant: Expected a variable declaration
+   ╭─[react_compiler.tsx:1:1]
+ 1 │ ╭─▶ function Component() {
+ 2 │ │                   useEffect(() => {
+ 3 │ │                       let i = 0;
+ 4 │ │                       for (; i < 3; i++) {
+ 5 │ │                           console.log(i);
+ 6 │ │                       }
+ 7 │ │                   });
+ 8 │ │                   return null;
+ 9 │ ╰─▶             }
+   ╰────
