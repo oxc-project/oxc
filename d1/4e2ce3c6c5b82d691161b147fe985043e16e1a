@@ -1,0 +1,31 @@
+crates/oxc_ast_generator/src/generated.rs
+  s_3c7a5db6237378::t_f7a1da3439831e 1476,1490-1505,1691,1695-1699,1710,1714-1716,1920-1931,1939-1956,3142,3238,3255,3299,3304,3306-3307,3312,3317-3318,3322-3329,3331,3336,3342-3343,3347,3352,3364,3370
+crates/oxc_ast_generator/src/custom.rs
+  s_3c7a5db6237378::t_2b07ac2e749927 272-278,285,758,782-783,794-797,837,839-841,845,847-849,855-862,890-891,907,917-918,958-978,985
+tasks/ast_generator_fuzz/src/lib.rs
+  s_3c7a5db6237378::t_8e9348288111e6 28,47-55,57-64,66,70,76-77,114,132,136-142,146,159,265,267,317-318,364,366,416-417,471-478,488-489
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d14e2ce3c6c5b82d691161b147fe985043e16e1a",
+  "prompts": {},
+  "sessions": {
+    "s_167e4aaf3623fe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb2a6-6088-7ba0-bdd4-d3d9f14dea02",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_3c7a5db6237378": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e4f-5d6f-7d83-81dc-f7f3f0f03bb0",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
