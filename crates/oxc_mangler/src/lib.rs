@@ -658,7 +658,8 @@ impl<'a, 's> SlotAssignment<'a, 's> {
         // Scratch for intra-scope `var` slot merging (see `confined_child_branch`).
         // `group_of[i]` is the slot-group of `tmp_bindings[i]`; bindings in one group share a slot.
         let root_scope_id = scoping.root_scope_id();
-        let mut group_of: ArenaVec<usize> = ArenaVec::with_capacity_in(scoping.symbols_len(), &allocator);
+        let mut group_of: ArenaVec<usize> =
+            ArenaVec::with_capacity_in(scoping.symbols_len(), &allocator);
         let mut branch_col: HashMap<ScopeId, usize> = HashMap::new_in(allocator);
         let mut col_group: HashMap<usize, usize> = HashMap::new_in(allocator);
 
