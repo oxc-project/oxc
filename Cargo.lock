@@ -1709,20 +1709,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc-miette"
-version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "330e07b3807046e0afa8fcc94f1fe976e93831b370d148bfe1168cb53da1b913"
-dependencies = [
- "bytecount",
- "memchr",
- "owo-colors",
- "textwrap",
- "unicode-segmentation",
- "unicode-width",
-]
-
-[[package]]
 name = "oxc-schemars"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1979,11 +1965,16 @@ dependencies = [
 name = "oxc_diagnostics"
 version = "0.144.0"
 dependencies = [
+ "bytecount",
  "cow-utils",
  "memchr",
- "oxc-miette",
+ "owo-colors",
+ "oxc_span",
  "percent-encoding",
  "smallvec",
+ "textwrap",
+ "unicode-segmentation",
+ "unicode-width",
 ]
 
 [[package]]
@@ -2586,7 +2577,6 @@ name = "oxc_span"
 version = "0.144.0"
 dependencies = [
  "compact_str 0.10.0",
- "oxc-miette",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast_macros",
@@ -2876,7 +2866,6 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "oxc-miette",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",

@@ -1,8 +1,8 @@
 //! Error data types and utilities for handling/reporting them.
 //!
 //! The main type in this module is [`OxcDiagnostic`], which is used by all other oxc tools to
-//! report problems. It implements [miette]'s [`Diagnostic`] trait, making it compatible with other
-//! tooling you may be using.
+//! report problems. It implements this crate's [`Diagnostic`] trait and can be rendered by the
+//! included graphical and JSON report handlers.
 //!
 //! ```rust,ignore
 //! use oxc_diagnostics::{OxcDiagnostic, Result};
@@ -12,15 +12,13 @@
 //! }
 //! ```
 //!
-//! See the [miette] documentation for more information on how to interact with diagnostics.
-//!
 //! ## Reporting
 //! If you are writing your own tools that may produce their own errors, you can use
 //! [`DiagnosticService`] to format and render them to a string or a stream. It can receive
 //! [`Error`]s over a multi-producer, single consumer
 //!
 //! ```rust,ignore
-//! use std::{path::PathBuf, sync::Arc, thread};
+//! use std::{sync::Arc, thread};
 //! use oxc_diagnostics::{DiagnosticService, Error, OxcDiagnostic, GraphicalReportHandler, NamedSource};
 //!
 //! fn my_tool() -> Result<()> {
@@ -31,8 +29,7 @@
 //! let (mut service, sender) = DiagnosticService::new(Box::new(GraphicalReportHandler::new()));
 //!
 //! thread::spawn(move || {
-//!     let file_path_being_processed = PathBuf::from("file.txt");
-//!     let file_being_processed = Arc::new(NamedSource::new(file_path_being_processed.clone()));
+//!     let file_being_processed = Arc::new(NamedSource::new("file.txt", "source text"));
 //!
 //!     for _ in 0..10 {
 //!         if let Err(diagnostic) = my_tool() {
@@ -46,7 +43,11 @@
 //! service.run();
 //! ```
 
+mod handlers;
+mod named_source;
+mod protocol;
 mod service;
+mod source_impls;
 
 use std::{
     borrow::Cow,
@@ -57,14 +58,16 @@ use std::{
 pub mod reporter;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService};
+pub use crate::{
+    handlers::{GraphicalReportHandler, GraphicalTheme, JSONReportHandler},
+    named_source::NamedSource,
+    protocol::{Diagnostic, Severity, SourceCode},
+};
+pub use oxc_span::LabeledSpan;
 
 pub type Error = Box<dyn Diagnostic + Send + Sync>;
-pub type Severity = miette::Severity;
 
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
-
-use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
 
 fn render(diagnostic: &dyn Diagnostic) -> String {
     let mut output = String::new();

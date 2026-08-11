@@ -91,7 +91,7 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
       input = await fs.readFile(join(fixture.fixturesPath, testCase.stdin), "utf8");
     }
 
-    // Drop `CI` and `FORCE_COLOR` so oxc-miette always renders with the ASCII theme;
+    // Drop `CI` and `FORCE_COLOR` so diagnostics always render with the ASCII theme;
     // otherwise CI runs emit unicode markers that diverge from locally generated snapshots
     const { CI: _ci, FORCE_COLOR: _forceColor, ...inheritedEnv } = process.env;
 

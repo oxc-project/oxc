@@ -39,7 +39,7 @@ fn format_agent(diagnostic: &Error) -> String {
     let filename = if filename.is_empty() {
         diagnostic
             .source_code()
-            .and_then(miette::SourceCode::name)
+            .and_then(|source| source.name())
             .map_or_else(|| "<unknown>".to_string(), ToString::to_string)
     } else {
         filename

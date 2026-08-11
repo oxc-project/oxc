@@ -204,6 +204,7 @@ anyhow = "1.0" # Flexible error handling
 base64 = "0.23.0" # Base64 encoding
 bitflags = "2.13.0" # Bitflag types
 bpaf = "0.9.26" # CLI parser
+bytecount = "0.6.9" # Byte counting
 compact_str = "0.10.0" # Compact string type
 console = "0.16.4" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation
@@ -229,7 +230,6 @@ language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.6.0" # Lazy regex compilation
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.8.2" # Fast byte searching
-miette = { package = "oxc-miette", version = "4.0.0" } # Error reporting
 mimalloc-safe = "0.1.64" # Fast allocator
 natord = "1.0.9" # Natural string ordering
 nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
@@ -240,6 +240,7 @@ oxc-css-parser = "0.0.11" # CSS/SCSS/Less parser (raffia 0.12.3 fork: adds `temp
 oxc-graphql-parser = "0.0.9" # GraphQL parser (direct AST; apollo-parser 0.8.6 fork aligned with graphql-js 17 syntax)
 oxc-toml = "0.14.5" # TOML formatter
 oxc-yaml-parser = "0.0.4" # YAML 1.2 parser (comment-preserving typed AST, node naming from `yaml-unist-parser`)
+owo-colors = "4.3.0" # Terminal colors
 papaya = "0.2.4" # Concurrent hash map
 percent-encoding = "2.3.2" # URL encoding
 petgraph = { version = "0.8.3", default-features = false } # Graph data structures
@@ -263,6 +264,7 @@ similar-asserts = "2.0.0" # Test diff assertions
 smallvec = { version = "1.15.2", features = ["union", "serde"] } # Stack-allocated vectors
 sort-package-json = "0.0.14" # package.json key sorting
 tempfile = "3.27.0" # Temporary files
+textwrap = "0.16.2" # Text wrapping
 tokio = { version = "1.52.3", default-features = false } # Async runtime
 toml = { version = "1.1.2" } # TOML parsing
 tower-lsp-server = "0.23.0" # LSP server framework
