@@ -2780,6 +2780,14 @@ impl<'a, 't> ProgramWithoutBody<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
         }
     }
+
+    #[inline]
+    pub fn last_statement_address(self) -> Option<Address> {
+        let statements = unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_BODY) as *const ArenaVec<'a, Statement<'a>>)
+        };
+        statements.last().map(GetAddress::address)
+    }
 }
 
 impl<'a, 't> GetAddress for ProgramWithoutBody<'a, 't> {
@@ -5155,6 +5163,15 @@ impl<'a, 't> BlockStatementWithoutBody<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn last_statement_address(self) -> Option<Address> {
+        let statements = unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BLOCK_STATEMENT_BODY)
+                as *const ArenaVec<'a, Statement<'a>>)
+        };
+        statements.last().map(GetAddress::address)
     }
 }
 
@@ -8640,6 +8657,15 @@ impl<'a, 't> FunctionBodyWithoutStatements<'a, 't> {
                 as *const ArenaVec<'a, Directive<'a>>)
         }
     }
+
+    #[inline]
+    pub fn last_statement_address(self) -> Option<Address> {
+        let statements = unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_STATEMENTS)
+                as *const ArenaVec<'a, Statement<'a>>)
+        };
+        statements.last().map(GetAddress::address)
+    }
 }
 
 impl<'a, 't> GetAddress for FunctionBodyWithoutStatements<'a, 't> {
@@ -10388,6 +10414,15 @@ impl<'a, 't> StaticBlockWithoutBody<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_SCOPE_ID)
                 as *const Cell<Option<ScopeId>>)
         }
+    }
+
+    #[inline]
+    pub fn last_statement_address(self) -> Option<Address> {
+        let statements = unsafe {
+            &*((self.0 as *const u8).add(OFFSET_STATIC_BLOCK_BODY)
+                as *const ArenaVec<'a, Statement<'a>>)
+        };
+        statements.last().map(GetAddress::address)
     }
 }
 
@@ -16526,6 +16561,15 @@ impl<'a, 't> TSModuleBlockWithoutBody<'a, 't> {
             &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
                 as *const ArenaVec<'a, Directive<'a>>)
         }
+    }
+
+    #[inline]
+    pub fn last_statement_address(self) -> Option<Address> {
+        let statements = unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_BODY)
+                as *const ArenaVec<'a, Statement<'a>>)
+        };
+        statements.last().map(GetAddress::address)
     }
 }
 
