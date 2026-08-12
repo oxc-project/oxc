@@ -34,6 +34,9 @@ const indents = [""];
  */
 const INDENT_REGEX = /^[ \t]+$/;
 
+/** Upper bound for the process-wide indentation cache. */
+const MAX_STARTING_INDENT_LEVEL = 1_000;
+
 export class State {
   // Current output.
   // A string which is appended to as the printing process proceeds.
@@ -85,8 +88,18 @@ export class State {
   constructor(options: Options) {
     this.output = "";
 
-    let indentLevel = options.startingIndentLevel;
-    if (typeof indentLevel !== "number") indentLevel = 0;
+    let { startingIndentLevel: indentLevel } = options;
+    if (indentLevel === undefined) {
+      indentLevel = 0;
+    } else if (
+      !Number.isSafeInteger(indentLevel) ||
+      indentLevel < 0 ||
+      indentLevel > MAX_STARTING_INDENT_LEVEL
+    ) {
+      throw new RangeError(
+        "`startingIndentLevel` must be a non-negative safe integer no greater than 1000",
+      );
+    }
     this.indentLevel = indentLevel;
 
     // The `indent` option is validated here, not in the printer, and changing of it discards
