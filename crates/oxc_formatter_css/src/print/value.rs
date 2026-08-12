@@ -679,9 +679,6 @@ pub(super) fn write_value_groups<'a>(
                 // The declaration tail belongs to the LAST group only
                 let gctx = if is_last { ctx } else { ValueContext { tail_bound: None, ..ctx } };
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    if let Some(first) = group_values.first() {
-                        flush_value_comments(to_span(first.span()).start, f);
-                    }
                     write_comma_group(group_values, gctx, f);
                     if !is_last {
                         write_group_comma(comma, f);
@@ -798,10 +795,13 @@ pub(super) fn write_comma_group<'a>(
     if values.is_empty() {
         return;
     }
+    // Comments leading the FIRST value flush at this level, before any group/indent opens:
+    // `//` comment's forced hardline inside `indent(&body)` would drop the value one level deeper
+    // and break the fill run after it.
+    flush_value_comments(to_span(values[0].span()).start, f);
     // Prettier's `flattenGroups`:
     // a single-element comma group collapses to the element itself (no extra group/indent level).
     if values.len() == 1 && ctx.tail_bound.is_none() {
-        flush_value_comments(to_span(values[0].span()).start, f);
         // EXCEPT a sass interpolation:
         // route through a fill entry to get the chunk-isolated fit (see `is_single_sass_interpolation`).
         if is_single_sass_interpolation(values) {
