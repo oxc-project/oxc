@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import { join as pathJoin } from "node:path";
 
-const path = pathJoin(import.meta.dirname, "../index.js");
+const packageDir = pathJoin(import.meta.dirname, "..");
+const path = pathJoin(packageDir, "index.js");
 
 let data = fs.readFileSync(path, "utf-8");
 data = data.replace(
@@ -18,3 +19,7 @@ if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
 ` + s,
 );
 fs.writeFileSync(path, data);
+
+const browserPath = pathJoin(packageDir, "transform.wasip1-browser.js");
+const browser = fs.readFileSync(browserPath, "utf-8").replaceAll(/[ \t]+$/gmu, "");
+fs.writeFileSync(browserPath, browser);

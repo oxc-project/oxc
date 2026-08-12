@@ -100,10 +100,12 @@
     "*.d.cts",
     "napi/*/*.wasi.cjs",
     "napi/*/*.wasi-browser.js",
+    "napi/*/*.wasip1*",
     "napi/*/wasi-worker.mjs",
     "napi/*/wasi-worker-browser.mjs",
     "napi/*/src-js/*.wasi.cjs",
     "napi/*/src-js/*.wasi-browser.js",
+    "napi/*/src-js/*.wasip1*",
     "napi/*/src-js/wasi-worker.mjs",
     "napi/*/src-js/wasi-worker-browser.mjs",
     "npm/oxlint-plugins/**"

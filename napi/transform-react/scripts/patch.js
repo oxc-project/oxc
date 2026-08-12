@@ -23,3 +23,7 @@ fs.writeFileSync(path, data);
 const workerPath = pathJoin(packageDir, "wasi-worker-browser.mjs");
 const worker = fs.readFileSync(workerPath, "utf-8").replaceAll(/[ \t]+$/gmu, "");
 fs.writeFileSync(workerPath, worker);
+
+const browserPath = pathJoin(packageDir, "transform-react.wasip1-browser.js");
+const browser = fs.readFileSync(browserPath, "utf-8").replaceAll(/[ \t]+$/gmu, "");
+fs.writeFileSync(browserPath, browser);
