@@ -33,9 +33,7 @@ mod options;
 mod sourcemap_builder;
 mod str;
 
-use binary_expr_visitor::{
-    BinaryExpressionVisitor, binary_operator, is_ts_type_argument_close, is_ts_type_argument_open,
-};
+use binary_expr_visitor::BinaryExpressionVisitor;
 use comment::CommentsMap;
 use operator::Operator;
 #[cfg(feature = "sourcemap")]
@@ -767,43 +765,20 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn print_expressions(
-        &mut self,
-        items: &[Expression<'_>],
-        precedence: Precedence,
-        ctx: Context,
-    ) {
+    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
         let Some((first, rest)) = items.split_first() else {
             return;
         };
-        let last_type_argument_close = self.last_ts_type_argument_close(items, |expression| {
-            binary_operator(expression.without_parentheses()).is_some_and(is_ts_type_argument_close)
-        });
-        let first_precedence =
-            Self::ts_type_argument_precedence(first, 0, last_type_argument_close, precedence);
-        first.print_expr(self, first_precedence, ctx);
-        for (index, item) in rest.iter().enumerate() {
+        first.print_expr(self, precedence, ctx);
+        for item in rest {
             self.print_comma();
             self.print_soft_space();
-            let item_precedence = Self::ts_type_argument_precedence(
-                item,
-                index + 1,
-                last_type_argument_close,
-                precedence,
-            );
-            item.print_expr(self, item_precedence, ctx);
+            item.print_expr(self, precedence, ctx);
         }
     }
 
     fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], ctx: Context) {
         self.print_ascii_byte(b'(');
-
-        let last_type_argument_close = self.last_ts_type_argument_close(arguments, |argument| {
-            argument.as_expression().is_some_and(|expression| {
-                binary_operator(expression.without_parentheses())
-                    .is_some_and(is_ts_type_argument_close)
-            })
-        });
 
         let has_comment_before_right_paren = span.end > 0 && self.has_comment(span.end - 1);
 
@@ -812,7 +787,7 @@ impl<'a> Codegen<'a> {
 
         if has_comment {
             self.indent();
-            self.print_arguments_with_comments(arguments, last_type_argument_close, ctx);
+            self.print_list_with_comments(arguments, ctx);
             // Handle `/* comment */);`
             if !has_comment_before_right_paren
                 || (span.end > 0 && !self.print_expr_comments(span.end - 1))
@@ -822,7 +797,7 @@ impl<'a> Codegen<'a> {
             self.dedent();
             self.print_indent();
         } else {
-            self.print_argument_list(arguments, last_type_argument_close, ctx);
+            self.print_list(arguments, ctx);
         }
         // End mapping at the gen position OF `)`, not past it. Matches
         // esbuild/Babel and avoids shadowing the next AST node's start.
@@ -830,30 +805,8 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b')');
     }
 
-    fn print_argument_list(
-        &mut self,
-        arguments: &[Argument<'_>],
-        last_type_argument_close: Option<usize>,
-        ctx: Context,
-    ) {
-        let Some((first, rest)) = arguments.split_first() else {
-            return;
-        };
-        self.print_argument(first, 0, last_type_argument_close, ctx);
-        for (index, argument) in rest.iter().enumerate() {
-            self.print_comma();
-            self.print_soft_space();
-            self.print_argument(argument, index + 1, last_type_argument_close, ctx);
-        }
-    }
-
-    fn print_arguments_with_comments(
-        &mut self,
-        arguments: &[Argument<'_>],
-        last_type_argument_close: Option<usize>,
-        ctx: Context,
-    ) {
-        let Some((first, rest)) = arguments.split_first() else {
+    fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {
+        let Some((first, rest)) = items.split_first() else {
             return;
         };
         if self.print_expr_comments(first.span().start) {
@@ -862,75 +815,16 @@ impl<'a> Codegen<'a> {
             self.print_soft_newline();
             self.print_indent();
         }
-        self.print_argument(first, 0, last_type_argument_close, ctx);
-        for (index, argument) in rest.iter().enumerate() {
+        first.print(self, ctx);
+        for item in rest {
             self.print_comma();
-            if self.print_expr_comments(argument.span().start) {
+            if self.print_expr_comments(item.span().start) {
                 self.print_indent();
             } else {
                 self.print_soft_newline();
                 self.print_indent();
             }
-            self.print_argument(argument, index + 1, last_type_argument_close, ctx);
-        }
-    }
-
-    fn print_argument(
-        &mut self,
-        argument: &Argument<'_>,
-        index: usize,
-        last_type_argument_close: Option<usize>,
-        ctx: Context,
-    ) {
-        let expression = match argument {
-            Argument::SpreadElement(element) => &element.argument,
-            _ => argument.to_expression(),
-        };
-        let precedence = Self::ts_type_argument_precedence(
-            expression,
-            index,
-            last_type_argument_close,
-            Precedence::Comma,
-        );
-
-        if precedence == Precedence::Comma {
-            argument.print(self, ctx);
-            return;
-        }
-
-        match argument {
-            Argument::SpreadElement(element) => {
-                self.add_source_mapping(element.span);
-                self.print_ellipsis();
-                element.argument.print_expr(self, precedence, Context::empty());
-            }
-            _ => expression.print_expr(self, precedence, Context::empty()),
-        }
-    }
-
-    fn last_ts_type_argument_close<T>(
-        &self,
-        items: &[T],
-        is_close: impl Fn(&T) -> bool,
-    ) -> Option<usize> {
-        if self.is_typescript { items.iter().rposition(is_close) } else { None }
-    }
-
-    fn ts_type_argument_precedence(
-        expression: &Expression<'_>,
-        index: usize,
-        last_type_argument_close: Option<usize>,
-        precedence: Precedence,
-    ) -> Precedence {
-        // A comma between expressions can become a type-argument separator in TypeScript.
-        // Parenthesize each possible opener before a later closing angle token.
-        if last_type_argument_close.is_some_and(|close| index < close)
-            && binary_operator(expression.without_parentheses())
-                .is_some_and(is_ts_type_argument_open)
-        {
-            Precedence::Shift
-        } else {
-            precedence
+            item.print(self, ctx);
         }
     }
 

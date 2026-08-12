@@ -11,10 +11,7 @@ use oxc_syntax::{
 
 use crate::{
     Codegen, Context, Operator, Quote,
-    binary_expr_visitor::{
-        BinaryExpressionVisitor, Binaryish, BinaryishOperator, binary_operator,
-        is_ts_type_argument_close,
-    },
+    binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     cjs_module_lexer,
     comment::AnnotationKind,
 };
@@ -1649,12 +1646,6 @@ impl Gen for SpreadElement<'_> {
 impl Gen for ArrayExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         let is_multi_line = self.elements.len() > 2;
-        let last_type_argument_close = p.last_ts_type_argument_close(&self.elements, |element| {
-            element.as_expression().is_some_and(|expression| {
-                binary_operator(expression.without_parentheses())
-                    .is_some_and(is_ts_type_argument_close)
-            })
-        });
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
         if is_multi_line {
@@ -1670,17 +1661,7 @@ impl Gen for ArrayExpression<'_> {
             } else if i != 0 {
                 p.print_soft_space();
             }
-            if let Some(expression) = item.as_expression() {
-                let precedence = Codegen::ts_type_argument_precedence(
-                    expression,
-                    i,
-                    last_type_argument_close,
-                    Precedence::Comma,
-                );
-                expression.print_expr(p, precedence, Context::empty());
-            } else {
-                item.print(p, ctx);
-            }
+            item.print(p, ctx);
             if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
                 p.print_comma();
             }

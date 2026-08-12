@@ -67,16 +67,16 @@ fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
     }
 }
 
-pub fn binary_operator(expression: &Expression<'_>) -> Option<BinaryOperator> {
+fn binary_operator(expression: &Expression<'_>) -> Option<BinaryOperator> {
     let Expression::BinaryExpression(expression) = expression else { return None };
     Some(expression.operator)
 }
 
-pub fn is_ts_type_argument_open(operator: BinaryOperator) -> bool {
+fn is_ts_type_argument_open(operator: BinaryOperator) -> bool {
     matches!(operator, BinaryOperator::LessThan | BinaryOperator::ShiftLeft)
 }
 
-pub fn is_ts_type_argument_close(operator: BinaryOperator) -> bool {
+fn is_ts_type_argument_close(operator: BinaryOperator) -> bool {
     matches!(
         operator,
         BinaryOperator::GreaterThan
