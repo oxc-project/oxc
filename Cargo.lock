@@ -1749,9 +1749,9 @@ checksum = "71bca8630e33e93a38d8dceb0daba6f562f29215b47098a7f05e8d295227ed94"
 
 [[package]]
 name = "oxc-yaml-parser"
-version = "0.0.4"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3beb95e6d6a3d7217cbcf85e7bf88be7f0c8b6f4c697efe6ff21e3e5d4a44ef5"
+checksum = "6e7217ca01ae9b98ab99c6f7cc59640c85bbc90e341df5743e08a3ecd7d611b2"
 dependencies = [
  "oxc_allocator",
 ]
