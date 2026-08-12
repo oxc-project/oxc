@@ -16,7 +16,6 @@ use oxc_formatter_core::{
 use oxc_formatter_css::{CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
-use oxc_formatter_yaml::{ProseWrap, YamlFormatOptions};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
 
@@ -36,7 +35,6 @@ pub enum SpecOptions {
     Json(JsonFormatOptions),
     Graphql(GraphqlFormatOptions),
     Css(CssFormatOptions),
-    Yaml(YamlFormatOptions),
 }
 
 pub fn parse_spec(spec: &Path, language: TestLanguage) -> Vec<(SpecOptions, SnapshotOptions)> {
@@ -133,22 +131,12 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
-        // NOTE: The JSON-family languages (and GraphQL) each accept only their own parser's calls
+        // NOTE: Every language except JS/TS accepts only its own parser's calls
         // (the parser name is exactly `TestLanguage::as_str()`).
         // A single `format.test.js` may list several parsers (e.g. `with-comment/`),
         // so we filter per-language.
-        let is_exact_parser_language = matches!(
-            self.language,
-            TestLanguage::Json
-                | TestLanguage::Jsonc
-                | TestLanguage::Json5
-                | TestLanguage::JsonStringify
-                | TestLanguage::Graphql
-                | TestLanguage::Css
-                | TestLanguage::Scss
-                | TestLanguage::Less
-                | TestLanguage::Yaml
-        );
+        let is_exact_parser_language =
+            !matches!(self.language, TestLanguage::Js | TestLanguage::Ts);
         if is_exact_parser_language && !parsers.iter().any(|p| p == self.language.as_str()) {
             return;
         }
@@ -178,7 +166,6 @@ impl VisitMut<'_> for SpecParser {
             },
             ..Default::default()
         };
-        let mut yaml_options = YamlFormatOptions::default();
 
         // Get options
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
@@ -197,7 +184,6 @@ impl VisitMut<'_> for SpecParser {
                             } else if name == "bracketSpacing" {
                                 js_options.bracket_spacing = BracketSpacing::from(literal.value);
                                 graphql_options.bracket_spacing = literal.value.into();
-                                yaml_options.bracket_spacing = literal.value.into();
                             } else if matches!(
                                 name.as_ref(),
                                 "jsxBracketSameLine" | "bracketSameLine"
@@ -212,7 +198,6 @@ impl VisitMut<'_> for SpecParser {
                                 };
                                 json_options.single_quote = literal.value.into();
                                 css_options.single_quote = literal.value.into();
-                                yaml_options.single_quote = literal.value.into();
                             } else if name == "jsxSingleQuote" {
                                 js_options.jsx_quote_style = if literal.value {
                                     QuoteStyle::Single
@@ -263,23 +248,11 @@ impl VisitMut<'_> for SpecParser {
                                         "none" => oxc_formatter_css::TrailingCommas::Never,
                                         _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
                                     };
-                                    yaml_options.trailing_commas = match s {
-                                        "all" | "es5" => oxc_formatter_yaml::TrailingCommas::Always,
-                                        "none" => oxc_formatter_yaml::TrailingCommas::Never,
-                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
-                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
                                     core_options.line_ending =
                                         LineEnding::from_str(s).unwrap_or_default();
-                                }
-                                "proseWrap" => {
-                                    yaml_options.prose_wrap = match s {
-                                        "always" => ProseWrap::Always,
-                                        "never" => ProseWrap::Never,
-                                        _ => ProseWrap::Preserve,
-                                    };
                                 }
                                 "quoteProps" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -359,10 +332,6 @@ impl VisitMut<'_> for SpecParser {
             TestLanguage::Css | TestLanguage::Scss | TestLanguage::Less => {
                 css_options.apply_core(core_options);
                 SpecOptions::Css(css_options)
-            }
-            TestLanguage::Yaml => {
-                yaml_options.apply_core(core_options);
-                SpecOptions::Yaml(yaml_options)
             }
             TestLanguage::Js | TestLanguage::Ts => {
                 js_options.apply_core(core_options);

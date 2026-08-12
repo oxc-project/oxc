@@ -5,13 +5,16 @@ Test infrastructure shared by the formatter crates (e.g. `oxc_formatter`, `oxc_f
 - `codegen`: build-script helper — consumers call `generate_tests` from `build.rs` via `[build-dependencies]` to emit one `#[test]` per fixture file
 - `harness`: fixture runtime — consumers implement `FixtureFormatter` in `tests/fixtures/mod.rs` via `[dev-dependencies]`
 - `suite`: Prettier test-suite provisioning — `ensure_prettier_suite()` maintains the pinned suite at `prettier/` (gitignored), no separate clone step anywhere
+- `conformance` (feature `conformance`): Prettier-conformance machinery — spec parsing, snapshot matching, report building. Consumers add a `tests/conformance.rs` target with a `ConformanceConfig` + format callback and pin the report with `insta`. Feature-gated because spec parsing needs `oxc_parser`; `[build-dependencies]` consumers must never pull that into their build closure, so only `[dev-dependencies]` enable it
 
 ## Prettier suite
 
 The pin is the `prettier` version in `apps/oxfmt/package.json` — the same Prettier oxfmt bundles as the oracle, so suite and oracle cannot drift. Provisioning is degit-style: the release tarball from codeload, `tests/format/` extracted only (~40MB, no git objects), `.version` stamp written last. A warm suite is verified offline by reading the stamp; a stale one is wiped and re-extracted. Tarball extraction always yields LF content, so Windows needs no autocrlf care. CI only mounts `prettier/` as a cache volume — there is no clone step to keep in sync.
 
 - Bumping Prettier = bump `apps/oxfmt/package.json` + regenerate conformance snapshots (one change set; the suite re-provisions itself on the next run)
-- Fixture-test callers treat provisioning `Err` (offline, no curl/tar) as skip, not failure; the conformance runner fails loudly
+- Provisioning failure is a loud failure everywhere it runs (a silent skip would let conformance rot green; needs network + curl/tar)
+  - Environments that cannot provision opt out in `ci.yml`, not in crate code: CI's cross jobs (s390x/armv7) pass `-- --skip prettier_conformance`
+    - Every consumer names its conformance test fn `prettier_conformance`, that name is the contract the skip filter relies on
 - Requires `curl` and `tar` on PATH (standard on macOS, Linux, and Windows 10+)
 
 ## Dependency rule

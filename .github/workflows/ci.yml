@@ -27,7 +27,9 @@ jobs:
       - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
       - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
         with:
-          path: /home/runner/.rustup
+          path: |
+            /home/runner/.rustup
+            ./crates/oxc_formatter_tests/prettier
           cache: |
             rust
             pnpm
@@ -132,7 +134,8 @@ jobs:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
+      # `--skip prettier_conformance`: suite provisioning needs curl/tar, absent in the cross container
+      - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu -- --skip prettier_conformance
 
   test-32bit:
     if: ${{ github.ref_name == 'main' }}
@@ -149,7 +152,8 @@ jobs:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
+      # `--skip prettier_conformance`: suite provisioning needs curl/tar, absent in the cross container
+      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf -- --skip prettier_conformance
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads

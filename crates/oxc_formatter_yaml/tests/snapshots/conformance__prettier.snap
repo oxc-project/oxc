@@ -1,3 +1,7 @@
+---
+source: crates/oxc_formatter_yaml/tests/conformance.rs
+expression: report
+---
 yaml compatibility: 346/354 (97.74%), 0 files skipped
 
 # Failed

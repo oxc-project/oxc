@@ -26,7 +26,7 @@ oxc_span = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-oxc_formatter_tests = { workspace = true }
+oxc_formatter_tests = { workspace = true, features = ["conformance"] }
 oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
 

@@ -2135,8 +2135,17 @@ dependencies = [
 name = "oxc_formatter_tests"
 version = "0.62.0"
 dependencies = [
+ "cow-utils",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_visit",
  "oxc_formatter_core",
+ "oxc_parser",
+ "oxc_span",
+ "rustc-hash",
  "serde_json",
+ "similar 3.1.2",
+ "walkdir",
 ]
 
 [[package]]
@@ -2472,7 +2481,6 @@ dependencies = [
  "oxc_formatter_graphql",
  "oxc_formatter_json",
  "oxc_formatter_tests",
- "oxc_formatter_yaml",
  "oxc_parser",
  "oxc_span",
  "oxc_tasks_common",

@@ -28,9 +28,9 @@ pub type OptionSet = serde_json::Map<String, serde_json::Value>;
 ///
 /// Covers `printWidth` / `tabWidth` / `useTabs` / `endOfLine`;
 /// language-specific keys are the caller's [`FixtureFormatter::parse_options`].
-/// Fixture files are hand-authored, so parsing is lenient: unknown or invalid
-/// values are ignored. Values already set on `options` survive when the
-/// `OptionSet` doesn't mention their key (the current values seed the bundle).
+/// Fixture files are hand-authored, so parsing is lenient: unknown or invalid values are ignored.
+/// Values already set on `options` survive when the `OptionSet` doesn't mention their key
+/// (the current values seed the bundle).
 pub fn apply_core_options<O: FormatOptions>(options: &mut O, json: &OptionSet) {
     let mut core = CoreFormatOptions {
         indent_style: options.indent_style(),

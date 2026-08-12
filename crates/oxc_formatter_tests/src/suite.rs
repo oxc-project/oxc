@@ -40,9 +40,9 @@ pub fn prettier_suite_root() -> &'static Path {
 /// advisory lock on the package.json handle; within a process the result is memoized.
 ///
 /// # Errors
-/// Any download/extraction failure, as a display string. Fixture-test callers skip on
-/// `Err` so offline `cargo test` runs stay green; the conformance runner fails
-/// loudly instead.
+/// Any download/extraction failure, as a display string.
+/// Conformance callers fail loudly on `Err`
+/// (non-conformance targets never reach provisioning; see `conformance::run_conformance`'s target gate).
 pub fn ensure_prettier_suite() -> Result<&'static Path, String> {
     static RESULT: OnceLock<Result<(), String>> = OnceLock::new();
     RESULT.get_or_init(provision).clone()?;
@@ -64,17 +64,15 @@ fn provision() -> Result<(), String> {
         return Ok(());
     }
 
-    // Wipe-and-extract keeps this convergent; the stamp is written last, so a
-    // half-provisioned tree is always re-done. Only the CONTENTS are wiped: in CI
-    // the root is a cache-volume mount point, and removing it fails with EBUSY.
-    if root.exists() {
-        for entry in fs::read_dir(root).map_err(|e| format!("read {}: {e}", root.display()))? {
-            let path = entry.map_err(|e| format!("read {}: {e}", root.display()))?.path();
-            if path.is_dir() { fs::remove_dir_all(&path) } else { fs::remove_file(&path) }
-                .map_err(|e| format!("remove {}: {e}", path.display()))?;
-        }
-    } else {
-        fs::create_dir_all(root).map_err(|e| format!("create {}: {e}", root.display()))?;
+    // Wipe-and-extract keeps this convergent;
+    // the stamp is written last, so a half-provisioned tree is always re-done.
+    // Only the CONTENTS are wiped: in CI the root is a cache-volume mount point, and removing it fails with EBUSY.
+    fs::create_dir_all(root).map_err(|e| format!("create {}: {e}", root.display()))?;
+    let read_err = |e| format!("read {}: {e}", root.display());
+    for entry in fs::read_dir(root).map_err(read_err)? {
+        let path = entry.map_err(read_err)?.path();
+        if path.is_dir() { fs::remove_dir_all(&path) } else { fs::remove_file(&path) }
+            .map_err(|e| format!("remove {}: {e}", path.display()))?;
     }
 
     let tarball = std::env::temp_dir().join(format!("oxc-prettier-{version}.tar.gz"));

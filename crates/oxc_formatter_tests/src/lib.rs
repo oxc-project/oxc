@@ -8,6 +8,8 @@
 //! `oxc_formatter_core`, never on language crates, so both directions stay cycle-free.
 
 mod codegen;
+#[cfg(feature = "conformance")]
+pub mod conformance;
 mod harness;
 mod suite;
 

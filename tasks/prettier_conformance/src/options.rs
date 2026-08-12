@@ -20,7 +20,6 @@ pub enum TestLanguage {
     Css,
     Scss,
     Less,
-    Yaml,
 }
 
 impl TestLanguage {
@@ -36,7 +35,6 @@ impl TestLanguage {
             Self::Css => "css",
             Self::Scss => "scss",
             Self::Less => "less",
-            Self::Yaml => "yaml",
         }
     }
 
@@ -71,7 +69,6 @@ impl TestLanguage {
             Self::Css => vec![base.join("css")],
             Self::Scss => vec![base.join("scss")],
             Self::Less => vec![base.join("less")],
-            Self::Yaml => vec![base.join("yaml")],
         }
     }
 }

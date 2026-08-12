@@ -24,7 +24,6 @@ use oxc_formatter::JsFormatOptions;
 use oxc_formatter_css::CssFormatOptions;
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_json::JsonFormatOptions;
-use oxc_formatter_yaml::YamlFormatOptions;
 use oxc_span::SourceType;
 
 use crate::{
@@ -256,10 +255,7 @@ impl TestRunner {
                     !options.experimental_operator_position.is_start()
                         && !options.experimental_ternaries
                 }
-                SpecOptions::Json(_)
-                | SpecOptions::Graphql(_)
-                | SpecOptions::Css(_)
-                | SpecOptions::Yaml(_) => true,
+                SpecOptions::Json(_) | SpecOptions::Graphql(_) | SpecOptions::Css(_) => true,
             })
             .collect::<Vec<_>>();
 
@@ -465,7 +461,7 @@ impl TestRunner {
     }
 
     /// Dispatches by language: JS/TS via `oxc_formatter`, JSON via `oxc_formatter_json`,
-    /// GraphQL via `oxc_formatter_graphql`, YAML via `oxc_formatter_yaml`.
+    /// GraphQL via `oxc_formatter_graphql`.
     fn run_formatter(
         path: &Path,
         source_text: &str,
@@ -476,7 +472,6 @@ impl TestRunner {
             SpecOptions::Json(opts) => Self::run_json_formatter(source_text, opts),
             SpecOptions::Graphql(opts) => Self::run_graphql_formatter(source_text, opts),
             SpecOptions::Css(opts) => Self::run_css_formatter(source_text, opts),
-            SpecOptions::Yaml(opts) => Self::run_yaml_formatter(source_text, opts),
         }
     }
 
@@ -514,13 +509,6 @@ impl TestRunner {
     fn run_css_formatter(source_text: &str, format_options: CssFormatOptions) -> Option<String> {
         let allocator = Allocator::default();
         let formatted = oxc_formatter_css::format(&allocator, source_text, format_options).ok()?;
-        let printed = formatted.print().ok()?;
-        Some(printed.into_code())
-    }
-
-    fn run_yaml_formatter(source_text: &str, format_options: YamlFormatOptions) -> Option<String> {
-        let allocator = Allocator::default();
-        let formatted = oxc_formatter_yaml::format(&allocator, source_text, format_options).ok()?;
         let printed = formatted.print().ok()?;
         Some(printed.into_code())
     }
