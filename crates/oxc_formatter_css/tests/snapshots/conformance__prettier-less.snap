@@ -1,3 +1,7 @@
+---
+source: crates/oxc_formatter_css/tests/conformance.rs
+expression: report
+---
 less compatibility: 40/40 (100.00%), 7 files skipped
 
 # Failed

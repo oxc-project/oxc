@@ -127,14 +127,14 @@ Every expected output must be verified against Prettier, except fixtures pinning
 
 Compares output against Prettier's snapshots and tracks failures (not passes).
 
-Language crates own their conformance as a `tests/conformance.rs` target (via `oxc_formatter_tests::conformance`, report pinned with `insta`) — currently yaml; the remaining languages still run through the central task runner during the migration:
+Language crates own their conformance as a `tests/conformance.rs` target (via `oxc_formatter_tests::conformance`, report pinned with `insta`) — currently json/css/graphql/yaml; JS/TS still runs through the central task runner during the migration:
 
 ```sh
-# Per-crate (yaml)
-cargo test -p oxc_formatter_yaml --test conformance
-PRETTIER_FILTER=<path> cargo test -p oxc_formatter_yaml --test conformance -- --nocapture
+# Per-crate (json/css/graphql/yaml)
+cargo test -p <crate> --test conformance
+PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
 
-# Central runner (js/ts/json/css/graphql)
+# Central runner (js/ts)
 cargo run -p oxc_prettier_conformance
 cargo run -p oxc_prettier_conformance -- --filter <path>
 ```

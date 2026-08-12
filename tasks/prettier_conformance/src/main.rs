@@ -14,18 +14,7 @@ fn main() {
     let debug = args.contains("--debug");
     let filter: Option<String> = args.opt_value_from_str("--filter").unwrap();
 
-    for language in [
-        TestLanguage::Js,
-        TestLanguage::Ts,
-        TestLanguage::Json,
-        TestLanguage::Jsonc,
-        TestLanguage::Json5,
-        TestLanguage::JsonStringify,
-        TestLanguage::Graphql,
-        TestLanguage::Css,
-        TestLanguage::Scss,
-        TestLanguage::Less,
-    ] {
+    for language in [TestLanguage::Js, TestLanguage::Ts] {
         TestRunner::new(TestRunnerOptions { language, debug, filter: filter.clone() }).run();
     }
     JsdocTestRunner::new(filter, debug).run();

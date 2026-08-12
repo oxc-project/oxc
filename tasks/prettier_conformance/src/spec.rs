@@ -13,32 +13,20 @@ use oxc_formatter::{
 use oxc_formatter_core::{
     CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
 };
-use oxc_formatter_css::{CssFormatOptions, CssVariant};
-use oxc_formatter_graphql::GraphqlFormatOptions;
-use oxc_formatter_json::{JsonFormatOptions, JsonVariant, QuoteProps};
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
-
-use crate::options::TestLanguage;
 
 /// Vec<(key, value)>
 type SnapshotOptions = Vec<(String, String)>;
 
-/// Format options carried per-spec.
-///
-/// `runFormatTest(import.meta, parsers, opts)` calls in Prettier specs may target
-/// JS or JSON. We branch here so the conformance runner can dispatch to the
-/// matching formatter without sharing option structs across languages.
+/// Format options carried per-spec, parsed from `runFormatTest(import.meta, parsers, opts)` calls.
 #[derive(Clone)]
 pub enum SpecOptions {
     Js(Box<JsFormatOptions>),
-    Json(JsonFormatOptions),
-    Graphql(GraphqlFormatOptions),
-    Css(CssFormatOptions),
 }
 
-pub fn parse_spec(spec: &Path, language: TestLanguage) -> Vec<(SpecOptions, SnapshotOptions)> {
-    let mut parser = SpecParser { language, ..SpecParser::default() };
+pub fn parse_spec(spec: &Path) -> Vec<(SpecOptions, SnapshotOptions)> {
+    let mut parser = SpecParser::default();
     parser.parse(spec);
     parser.calls
 }
@@ -48,7 +36,6 @@ struct SpecParser {
     source_text: String,
     parsers: Vec<String>,
     calls: Vec<(SpecOptions, SnapshotOptions)>,
-    language: TestLanguage,
 }
 
 impl SpecParser {
@@ -131,16 +118,6 @@ impl VisitMut<'_> for SpecParser {
             return;
         }
 
-        // NOTE: Every language except JS/TS accepts only its own parser's calls
-        // (the parser name is exactly `TestLanguage::as_str()`).
-        // A single `format.test.js` may list several parsers (e.g. `with-comment/`),
-        // so we filter per-language.
-        let is_exact_parser_language =
-            !matches!(self.language, TestLanguage::Js | TestLanguage::Ts);
-        if is_exact_parser_language && !parsers.iter().any(|p| p == self.language.as_str()) {
-            return;
-        }
-
         // The four core options are collected once here and applied to the
         // selected language's options via `apply_core` after parsing.
         let mut core_options = CoreFormatOptions {
@@ -148,24 +125,6 @@ impl VisitMut<'_> for SpecParser {
             ..Default::default()
         };
         let mut js_options = JsFormatOptions::default();
-        let mut json_options = JsonFormatOptions {
-            variant: match self.language {
-                TestLanguage::Jsonc => JsonVariant::Jsonc,
-                TestLanguage::Json5 => JsonVariant::Json5,
-                TestLanguage::JsonStringify => JsonVariant::JsonStringify,
-                _ => JsonVariant::Json,
-            },
-            ..Default::default()
-        };
-        let mut graphql_options = GraphqlFormatOptions::default();
-        let mut css_options = CssFormatOptions {
-            variant: match self.language {
-                TestLanguage::Scss => CssVariant::Scss,
-                TestLanguage::Less => CssVariant::Less,
-                _ => CssVariant::Css,
-            },
-            ..Default::default()
-        };
 
         // Get options
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
@@ -183,7 +142,6 @@ impl VisitMut<'_> for SpecParser {
                                 }
                             } else if name == "bracketSpacing" {
                                 js_options.bracket_spacing = BracketSpacing::from(literal.value);
-                                graphql_options.bracket_spacing = literal.value.into();
                             } else if matches!(
                                 name.as_ref(),
                                 "jsxBracketSameLine" | "bracketSameLine"
@@ -196,8 +154,6 @@ impl VisitMut<'_> for SpecParser {
                                 } else {
                                     QuoteStyle::Double
                                 };
-                                json_options.single_quote = literal.value.into();
-                                css_options.single_quote = literal.value.into();
                             } else if name == "jsxSingleQuote" {
                                 js_options.jsx_quote_style = if literal.value {
                                     QuoteStyle::Single
@@ -238,16 +194,6 @@ impl VisitMut<'_> for SpecParser {
                                 "trailingComma" => {
                                     js_options.trailing_commas =
                                         TrailingCommas::from_str(s).unwrap();
-                                    json_options.trailing_commas = match s {
-                                        "all" | "es5" => oxc_formatter_json::TrailingCommas::Always,
-                                        "none" => oxc_formatter_json::TrailingCommas::Never,
-                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
-                                    };
-                                    css_options.trailing_commas = match s {
-                                        "all" | "es5" => oxc_formatter_css::TrailingCommas::Always,
-                                        "none" => oxc_formatter_css::TrailingCommas::Never,
-                                        _ => unreachable!("Prettier's trailingComma should be 'all' | 'es5' | 'none'"),
-                                    };
                                 }
                                 "endOfLine" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -258,11 +204,6 @@ impl VisitMut<'_> for SpecParser {
                                     // TODO: change `unwrap_or_default` to `unwrap`
                                     js_options.quote_properties =
                                         QuoteProperties::from_str(s).unwrap_or_default();
-                                    json_options.quote_props = match s {
-                                        "consistent" => QuoteProps::Consistent,
-                                        "preserve" => QuoteProps::Preserve,
-                                        _ => QuoteProps::AsNeeded,
-                                    };
                                 }
                                 "objectWrap" => {
                                     // TODO: change `unwrap_or_default` to `unwrap`
@@ -317,27 +258,8 @@ impl VisitMut<'_> for SpecParser {
         // default (80); the value is only shown in the trailing visualization line.
         snapshot_options.sort_by(|a, b| a.0.cmp(&b.0));
 
-        let options = match self.language {
-            TestLanguage::Json
-            | TestLanguage::Jsonc
-            | TestLanguage::Json5
-            | TestLanguage::JsonStringify => {
-                json_options.apply_core(core_options);
-                SpecOptions::Json(json_options)
-            }
-            TestLanguage::Graphql => {
-                graphql_options.apply_core(core_options);
-                SpecOptions::Graphql(graphql_options)
-            }
-            TestLanguage::Css | TestLanguage::Scss | TestLanguage::Less => {
-                css_options.apply_core(core_options);
-                SpecOptions::Css(css_options)
-            }
-            TestLanguage::Js | TestLanguage::Ts => {
-                js_options.apply_core(core_options);
-                SpecOptions::Js(Box::new(js_options))
-            }
-        };
+        js_options.apply_core(core_options);
+        let options = SpecOptions::Js(Box::new(js_options));
         self.calls.push((options, snapshot_options));
     }
 }
