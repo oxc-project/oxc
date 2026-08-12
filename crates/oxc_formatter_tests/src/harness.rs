@@ -17,7 +17,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{
+    CoreFormatOptions, FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth,
+};
 
 /// A single `options.json` entry: a JSON object of per-test format options.
 pub type OptionSet = serde_json::Map<String, serde_json::Value>;

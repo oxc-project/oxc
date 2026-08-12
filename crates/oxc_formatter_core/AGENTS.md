@@ -160,18 +160,11 @@ core owns the span-ordered cursor mechanics; what the items mean (comments) and 
 
 Quote-style options, comment rules, and the like are likewise consumer-owned.
 
-## Cargo features
-
-`test_harness` exposes `test_support/` (fixture test generation) to downstream crates.
-Consumers still need their own `insta` dev-dep so the recorded `source:` header points to the consumer crate.
-
 ## Verification
-
-Feature configs to check:
 
 ```sh
 cargo c -p oxc_formatter_core
-cargo c -p oxc_formatter_core --features test_harness
 ```
 
 This crate has basic tests only of its own, it is exercised through the conformance/snapshot tests of its consumers.
+The fixture-test infrastructure those consumers use lives in `crates/oxc_formatter_tests`.

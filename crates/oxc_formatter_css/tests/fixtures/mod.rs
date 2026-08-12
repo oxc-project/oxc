@@ -6,10 +6,10 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_core::test_support::{
+use oxc_formatter_css::{CssFormatOptions, CssVariant, format};
+use oxc_formatter_tests::{
     FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
 };
-use oxc_formatter_css::{CssFormatOptions, CssVariant, format};
 
 struct CssHarness;
 

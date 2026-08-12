@@ -35,9 +35,6 @@ pub mod spec;
 mod state;
 mod traits;
 
-#[cfg(feature = "test_harness")]
-pub mod test_support;
-
 pub use arguments::{Argument, Arguments};
 pub use buffer::{
     AccumulatorBuffer, Buffer, BufferExtensions, HeapVecBuffer, Inspect, PreambleBuffer, Recorded,

@@ -1,9 +1,9 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{
-    LineEnding,
-    test_support::{FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot},
+use oxc_formatter_core::LineEnding;
+use oxc_formatter_tests::{
+    FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
 };
 use oxc_formatter_yaml::{ProseWrap, YamlFormatOptions, format};
 

@@ -5,7 +5,7 @@ use oxc_formatter::{
     ArrowParentheses, BracketSameLine, BracketSpacing, JsFormatOptions, JsdocOptions,
     QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
-use oxc_formatter_core::test_support::{
+use oxc_formatter_tests::{
     FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
 };
 use oxc_span::SourceType;
