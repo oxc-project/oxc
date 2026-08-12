@@ -2,6 +2,10 @@ use crate::{test, test_same, test_target};
 
 #[test]
 fn merge_import_and_export() {
+    test(
+        "import { foo }from 'foo'; import { bar } from 'bar'; import {foo2} from 'foo'; export {foo, foo2}",
+        "export { foo, foo2 } from 'foo'; import { bar } from 'bar';",
+    );
     test("import { foo } from 'somewhere'; export { foo };", "export { foo } from 'somewhere';");
     test(
         "import { foo as bar } from 'somewhere'; export { bar as baz };",
