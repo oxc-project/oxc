@@ -1505,7 +1505,10 @@ fn lower_binding_assignment<'a>(
             let mut followups: Vec<(Place, &oxc::BindingPattern)> = Vec::new();
 
             for prop in &pattern.properties {
-                if prop.computed {
+                // Computed string literals can be normalized to static property keys. Other
+                // computed keys need to remain expressions, which destructuring does not support
+                // yet.
+                if prop.computed && !is_static_property_key(&prop.key) {
                     builder.record_error(
                         ErrorCategory::Todo
                             .diagnostic("(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern").with_label(prop.span),
@@ -1513,7 +1516,7 @@ fn lower_binding_assignment<'a>(
                     continue;
                 }
 
-                let key = match lower_object_property_key(builder, &prop.key, false)? {
+                let key = match lower_object_property_key(builder, &prop.key, prop.computed)? {
                     Some(k) => k,
                     None => continue,
                 };
@@ -2228,14 +2231,14 @@ fn lower_assignment_target<'a>(
                         }
                     }
                     oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                        if p.computed {
+                        if p.computed && !is_static_property_key(&p.name) {
                             builder.record_error(
                                 ErrorCategory::Todo
                                     .diagnostic("(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern").with_label(p.span),
                             )?;
                             continue;
                         }
-                        let key = match lower_object_property_key(builder, &p.name, false)? {
+                        let key = match lower_object_property_key(builder, &p.name, p.computed)? {
                             Some(k) => k,
                             None => continue,
                         };
@@ -5531,6 +5534,11 @@ fn lower_object_property_key<'a>(
             Ok(None)
         }
     }
+}
+
+/// Whether a computed property key can be represented without evaluating an expression.
+fn is_static_property_key(key: &oxc::PropertyKey<'_>) -> bool {
+    matches!(key, oxc::PropertyKey::StringLiteral(_))
 }
 
 /// Lower a reorderable expression. Faithful to the original
