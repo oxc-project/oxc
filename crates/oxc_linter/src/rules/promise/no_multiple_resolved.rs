@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, CallExpression, Expression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
     graph::{
@@ -707,7 +707,7 @@ impl<'a> ResolveFinder<'a> {
     }
 }
 
-impl<'a> Visit<'a> for ResolveFinder<'a> {
+impl<'a> VisitJs<'a> for ResolveFinder<'a> {
     fn leave_node(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::NewExpression(new_expr) => {

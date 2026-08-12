@@ -5,7 +5,7 @@ use oxc_ast::{
         Statement, TaggedTemplateExpression, VariableDeclarationKind,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -162,17 +162,21 @@ fn is_mutable(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
 fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
     match argument_expression {
         Expression::ArrowFunctionExpression(arrow_func) => {
-            if arrow_func.r#async
-                || arrow_func.body.statements.len() > 1
-                || arrow_func.params.has_parameter()
-            {
+            if arrow_func.r#async || arrow_func.params.has_parameter() {
                 return None;
             }
 
-            let stmt = arrow_func.body.statements.first()?;
+            if let Some(expression) = arrow_func.get_expression() {
+                return Some(expression);
+            }
+
+            let body = arrow_func.get_function_body()?;
+            if body.statements.len() > 1 {
+                return None;
+            }
+            let stmt = body.statements.first()?;
 
             match stmt {
-                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
                 Statement::ReturnStatement(return_statement) => {
                     let Some(arg_expr) = &return_statement.argument else {
                         return None;
@@ -225,7 +229,7 @@ struct CallLikeExpressionVisitor {
     contains_call_like_expression: bool,
 }
 
-impl<'a> Visit<'a> for CallLikeExpressionVisitor {
+impl<'a> VisitJs<'a> for CallLikeExpressionVisitor {
     fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
         self.contains_call_like_expression = true;
     }
@@ -253,7 +257,7 @@ impl IdentifierCollectorVisitor {
     }
 }
 
-impl<'a> Visit<'a> for IdentifierCollectorVisitor {
+impl<'a> VisitJs<'a> for IdentifierCollectorVisitor {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         self.references.insert(ident.reference_id());
     }

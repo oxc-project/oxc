@@ -15,10 +15,7 @@
 //! ```
 
 use oxc_allocator::ArenaVec;
-use oxc_ast::{
-    ast::*,
-    builder::{AstBuilder, NONE},
-};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_data_structures::stack::SparseStack;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, ast_operations::GatherNodeParts};
@@ -149,15 +146,7 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ast: &AstBuilder<'a>,
     ) {
-        let declarator = VariableDeclarator::new(
-            SPAN,
-            VariableDeclarationKind::Var,
-            ident,
-            NONE,
-            init,
-            false,
-            ast,
-        );
+        let declarator = VariableDeclarator::new(SPAN, ident, None, init, false, ast);
         self.insert_var_declarator(declarator, ast);
     }
 
@@ -169,15 +158,7 @@ impl<'a> VarDeclarationsStore<'a> {
         init: Option<Expression<'a>>,
         ast: &AstBuilder<'a>,
     ) {
-        let declarator = VariableDeclarator::new(
-            SPAN,
-            VariableDeclarationKind::Let,
-            ident,
-            NONE,
-            init,
-            false,
-            ast,
-        );
+        let declarator = VariableDeclarator::new(SPAN, ident, None, init, false, ast);
         self.insert_let_declarator(declarator, ast);
     }
 

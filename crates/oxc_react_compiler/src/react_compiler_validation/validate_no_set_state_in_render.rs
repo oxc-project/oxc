@@ -10,13 +10,14 @@
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::is_set_state_type;
 use crate::react_compiler_hir::{
-    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, Type,
+    BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, Type, TypeId,
 };
 
 pub fn validate_no_set_state_in_render(
@@ -24,7 +25,7 @@ pub fn validate_no_set_state_in_render(
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
     let mut unconditional_set_state_functions: FxHashSet<IdentifierId> = FxHashSet::default();
-    let next_block_id = env.next_block_id().0;
+    let next_block_id = env.next_block_id().index() as u32;
     let diagnostics = validate_impl(
         func,
         &env.identifiers,
@@ -42,19 +43,19 @@ pub fn validate_no_set_state_in_render(
 
 fn is_set_state_id(
     identifier_id: IdentifierId,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
-    let ident = &identifiers[identifier_id.0 as usize];
-    let ty = &types[ident.type_.0 as usize];
+    let ident = &identifiers[identifier_id];
+    let ty = &types[ident.type_];
     is_set_state_type(ty)
 }
 
 fn validate_impl(
     func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     next_block_id_counter: u32,
     enable_use_keyed_state: bool,
     unconditional_set_state_functions: &mut FxHashSet<IdentifierId>,
@@ -66,7 +67,7 @@ fn validate_impl(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
                     if unconditional_set_state_functions.contains(&place.identifier) {
@@ -81,7 +82,7 @@ fn validate_impl(
                 }
                 InstructionValue::ObjectMethod { lowered_func, .. }
                 | InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_func = &functions[lowered_func.func.0 as usize];
+                    let inner_func = &functions[lowered_func.func];
 
                     // Check if any operand references a setState.
                     // For FunctionExpression/ObjectMethod, operands are the context captures.

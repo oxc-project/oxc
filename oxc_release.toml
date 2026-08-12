@@ -8,6 +8,7 @@ versioned_files = [
   "Cargo.toml",
   "napi/parser/package.json",
   "napi/transform/package.json",
+  "napi/transform-react/package.json",
   "napi/minify/package.json",
   "npm/oxc-types/package.json",
   "npm/runtime/package.json",
@@ -36,5 +37,6 @@ versioned_files = [
   "crates/oxc_formatter_json/Cargo.toml",
   "crates/oxc_formatter_graphql/Cargo.toml",
   "crates/oxc_formatter_css/Cargo.toml",
+  "crates/oxc_formatter_yaml/Cargo.toml",
   "npm/oxfmt/package.json",
 ]

@@ -1,243 +1,354 @@
-/// Token kinds are plain `u8`s the pipeline computes them arithmetically and blends them in SIMD registers.
-pub mod token_kind {
-    pub const EOF: u8 = 0;
+macro_rules! define_token_kind {
+    ($( $variant:ident = $value:literal => $name:literal ),+ $(,)?) => {
+        /// A lexed token kind.
+        ///
+        /// The discriminants are load-bearing: `[32, 128)` is reserved for
+        /// punctuators and `>= 128` for keywords, so the pipeline can classify
+        /// with range checks and SIMD compares. They are *not* dense â€” the
+        /// pipeline computes kinds arithmetically and blends them in SIMD
+        /// registers, so it works on the raw `u8` and only the crate boundary
+        /// is typed.
+        #[repr(u8)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        pub enum TokenKind {
+            $( $variant = $value, )+
+        }
 
-    pub const IDENT: u8 = 1;
-    pub const PRIVATE_IDENT: u8 = 2;
-    pub const NUMBER: u8 = 3;
-    pub const BIGINT: u8 = 4;
-    pub const STRING: u8 = 5;
-    pub const REGEXP: u8 = 6;
-    pub const TEMPLATE_NO_SUB: u8 = 7;
-    pub const TEMPLATE_HEAD: u8 = 8;
-    pub const TEMPLATE_MIDDLE: u8 = 9;
-    pub const TEMPLATE_TAIL: u8 = 10;
+        impl TokenKind {
+            /// Every declared kind, in discriminant order.
+            pub const VARIANTS: &'static [TokenKind] = &[ $( TokenKind::$variant, )+ ];
 
-    pub const LINE_COMMENT: u8 = 11;
-    pub const BLOCK_COMMENT: u8 = 12;
-    pub const HASHBANG: u8 = 13;
-    pub const WHITESPACE: u8 = 14;
-    pub const LINE_TERMINATOR: u8 = 15;
+            /// The kind `byte` denotes, or `None` if it is not a declared discriminant.
+            #[inline]
+            #[must_use]
+            pub const fn from_u8(byte: u8) -> Option<Self> {
+                match byte {
+                    $( $value => Some(Self::$variant), )+
+                    _ => None,
+                }
+            }
 
-    pub const STRING_COOKED: u8 = 16;
-    pub const IDENT_ESCAPED: u8 = 17;
-    pub const PRIVATE_IDENT_ESCAPED: u8 = 18;
-    pub const TEMPLATE_NO_SUB_COOKED: u8 = 19;
-    pub const TEMPLATE_HEAD_COOKED: u8 = 20;
-    pub const TEMPLATE_MIDDLE_COOKED: u8 = 21;
-    pub const TEMPLATE_TAIL_COOKED: u8 = 22;
-    pub const DECIMAL: u8 = 23;
-    pub const FLOAT: u8 = 24;
-    pub const BINARY: u8 = 25;
-    pub const OCTAL: u8 = 26;
-    pub const HEX: u8 = 27;
-    pub const JSX_TEXT: u8 = 28;
-    pub const JSX_TAG_END: u8 = 29;
-    pub const JSX_LT: u8 = 30;
-    pub const LBRACE: u8 = 32;
-    pub const RBRACE: u8 = 33;
-    pub const LPAREN: u8 = 34;
-    pub const RPAREN: u8 = 35;
-    pub const LBRACKET: u8 = 36;
-    pub const RBRACKET: u8 = 37;
-    pub const DOT: u8 = 38;
-    pub const ELLIPSIS: u8 = 39;
-    pub const SEMI: u8 = 40;
-    pub const COMMA: u8 = 41;
-    pub const COLON: u8 = 42;
-    pub const QUESTION: u8 = 43;
-    pub const OPTIONAL_CHAIN: u8 = 44;
-    pub const NULLISH: u8 = 45;
-    pub const NULLISH_EQ: u8 = 46;
-    pub const ARROW: u8 = 47;
-    pub const LT: u8 = 48;
-    pub const LE: u8 = 49;
-    pub const GT: u8 = 50;
-    pub const GE: u8 = 51;
-    pub const EQ: u8 = 52;
-    pub const EQ_EQ: u8 = 53;
-    pub const EQ_EQ_EQ: u8 = 54;
-    pub const BANG: u8 = 55;
-    pub const BANG_EQ: u8 = 56;
-    pub const BANG_EQ_EQ: u8 = 57;
-    pub const PLUS: u8 = 58;
-    pub const PLUS_PLUS: u8 = 59;
-    pub const PLUS_EQ: u8 = 60;
-    pub const MINUS: u8 = 61;
-    pub const MINUS_MINUS: u8 = 62;
-    pub const MINUS_EQ: u8 = 63;
-    pub const STAR: u8 = 64;
-    pub const STAR_STAR: u8 = 65;
-    pub const STAR_EQ: u8 = 66;
-    pub const STAR_STAR_EQ: u8 = 67;
-    pub const SLASH: u8 = 68;
-    pub const SLASH_EQ: u8 = 69;
-    pub const PERCENT: u8 = 70;
-    pub const PERCENT_EQ: u8 = 71;
-    pub const AMP: u8 = 72;
-    pub const AMP_AMP: u8 = 73;
-    pub const AMP_EQ: u8 = 74;
-    pub const AMP_AMP_EQ: u8 = 75;
-    pub const PIPE: u8 = 76;
-    pub const PIPE_PIPE: u8 = 77;
-    pub const PIPE_EQ: u8 = 78;
-    pub const PIPE_PIPE_EQ: u8 = 79;
-    pub const CARET: u8 = 80;
-    pub const CARET_EQ: u8 = 81;
-    pub const TILDE: u8 = 82;
-    pub const LSHIFT: u8 = 83;
-    pub const LSHIFT_EQ: u8 = 84;
-    pub const RSHIFT: u8 = 85;
-    pub const RSHIFT_EQ: u8 = 86;
-    pub const URSHIFT: u8 = 87;
-    pub const URSHIFT_EQ: u8 = 88;
-    pub const AT: u8 = 89;
-    pub const KW_BASE: u8 = 128;
-    pub const KW_BREAK: u8 = 128;
-    pub const KW_CASE: u8 = 129;
-    pub const KW_CATCH: u8 = 130;
-    pub const KW_CLASS: u8 = 131;
-    pub const KW_CONST: u8 = 132;
-    pub const KW_CONTINUE: u8 = 133;
-    pub const KW_DEBUGGER: u8 = 134;
-    pub const KW_DEFAULT: u8 = 135;
-    pub const KW_DELETE: u8 = 136;
-    pub const KW_DO: u8 = 137;
-    pub const KW_ELSE: u8 = 138;
-    pub const KW_ENUM: u8 = 139;
-    pub const KW_EXPORT: u8 = 140;
-    pub const KW_EXTENDS: u8 = 141;
-    pub const KW_FALSE: u8 = 142;
-    pub const KW_FINALLY: u8 = 143;
-    pub const KW_FOR: u8 = 144;
-    pub const KW_FUNCTION: u8 = 145;
-    pub const KW_IF: u8 = 146;
-    pub const KW_IMPORT: u8 = 147;
-    pub const KW_IN: u8 = 148;
-    pub const KW_INSTANCEOF: u8 = 149;
-    pub const KW_NEW: u8 = 150;
-    pub const KW_NULL: u8 = 151;
-    pub const KW_RETURN: u8 = 152;
-    pub const KW_SUPER: u8 = 153;
-    pub const KW_SWITCH: u8 = 154;
-    pub const KW_THIS: u8 = 155;
-    pub const KW_THROW: u8 = 156;
-    pub const KW_TRUE: u8 = 157;
-    pub const KW_TRY: u8 = 158;
-    pub const KW_TYPEOF: u8 = 159;
-    pub const KW_VAR: u8 = 160;
-    pub const KW_VOID: u8 = 161;
-    pub const KW_WHILE: u8 = 162;
-    pub const KW_WITH: u8 = 163;
-    pub const KW_YIELD: u8 = 164;
-    pub const KW_LET: u8 = 165;
-    pub const KW_STATIC: u8 = 166;
-    pub const KW_ASYNC: u8 = 167;
-    pub const KW_AWAIT: u8 = 168;
-    pub const KW_OF: u8 = 169;
-    pub const KW_FROM: u8 = 170;
-    pub const KW_AS: u8 = 171;
+            /// The token's spelling for punctuators and keywords, else the kind's name.
+            #[inline]
+            #[must_use]
+            pub const fn name(self) -> &'static str {
+                match self {
+                    $( Self::$variant => $name, )+
+                }
+            }
+        }
+    };
+}
+
+define_token_kind! {
+    Eof = 0 => "EOF",
+
+    Ident = 1 => "IDENT",
+    PrivateIdent = 2 => "PRIVATE_IDENT",
+    Number = 3 => "NUMBER",
+    BigInt = 4 => "BIGINT",
+    String = 5 => "STRING",
+    RegExp = 6 => "REGEXP",
+    TemplateNoSub = 7 => "TEMPLATE_NO_SUB",
+    TemplateHead = 8 => "TEMPLATE_HEAD",
+    TemplateMiddle = 9 => "TEMPLATE_MIDDLE",
+    TemplateTail = 10 => "TEMPLATE_TAIL",
+
+    LineComment = 11 => "LINE_COMMENT",
+    BlockComment = 12 => "BLOCK_COMMENT",
+    Hashbang = 13 => "HASHBANG",
+    Whitespace = 14 => "WHITESPACE",
+    LineTerminator = 15 => "LINE_TERMINATOR",
+
+    StringCooked = 16 => "STRING_COOKED",
+    IdentEscaped = 17 => "IDENT_ESCAPED",
+    PrivateIdentEscaped = 18 => "PRIVATE_IDENT_ESCAPED",
+    TemplateNoSubCooked = 19 => "TEMPLATE_NO_SUB_COOKED",
+    TemplateHeadCooked = 20 => "TEMPLATE_HEAD_COOKED",
+    TemplateMiddleCooked = 21 => "TEMPLATE_MIDDLE_COOKED",
+    TemplateTailCooked = 22 => "TEMPLATE_TAIL_COOKED",
+    Decimal = 23 => "DECIMAL",
+    Float = 24 => "FLOAT",
+    Binary = 25 => "BINARY",
+    Octal = 26 => "OCTAL",
+    Hex = 27 => "HEX",
+    JsxText = 28 => "JSX_TEXT",
+    JsxTagEnd = 29 => "JSX_TAG_END",
+    JsxLt = 30 => "JSX_LT",
+
+    LBrace = 32 => "{",
+    RBrace = 33 => "}",
+    LParen = 34 => "(",
+    RParen = 35 => ")",
+    LBracket = 36 => "[",
+    RBracket = 37 => "]",
+    Dot = 38 => ".",
+    Ellipsis = 39 => "...",
+    Semi = 40 => ";",
+    Comma = 41 => ",",
+    Colon = 42 => ":",
+    Question = 43 => "?",
+    OptionalChain = 44 => "?.",
+    Nullish = 45 => "??",
+    NullishEq = 46 => "??=",
+    Arrow = 47 => "=>",
+    Lt = 48 => "<",
+    Le = 49 => "<=",
+    Gt = 50 => ">",
+    Ge = 51 => ">=",
+    Eq = 52 => "=",
+    EqEq = 53 => "==",
+    EqEqEq = 54 => "===",
+    Bang = 55 => "!",
+    BangEq = 56 => "!=",
+    BangEqEq = 57 => "!==",
+    Plus = 58 => "+",
+    PlusPlus = 59 => "++",
+    PlusEq = 60 => "+=",
+    Minus = 61 => "-",
+    MinusMinus = 62 => "--",
+    MinusEq = 63 => "-=",
+    Star = 64 => "*",
+    StarStar = 65 => "**",
+    StarEq = 66 => "*=",
+    StarStarEq = 67 => "**=",
+    Slash = 68 => "/",
+    SlashEq = 69 => "/=",
+    Percent = 70 => "%",
+    PercentEq = 71 => "%=",
+    Amp = 72 => "&",
+    AmpAmp = 73 => "&&",
+    AmpEq = 74 => "&=",
+    AmpAmpEq = 75 => "&&=",
+    Pipe = 76 => "|",
+    PipePipe = 77 => "||",
+    PipeEq = 78 => "|=",
+    PipePipeEq = 79 => "||=",
+    Caret = 80 => "^",
+    CaretEq = 81 => "^=",
+    Tilde = 82 => "~",
+    LShift = 83 => "<<",
+    LShiftEq = 84 => "<<=",
+    RShift = 85 => ">>",
+    RShiftEq = 86 => ">>=",
+    URShift = 87 => ">>>",
+    URShiftEq = 88 => ">>>=",
+    At = 89 => "@",
+
+    KwBreak = 128 => "break",
+    KwCase = 129 => "case",
+    KwCatch = 130 => "catch",
+    KwClass = 131 => "class",
+    KwConst = 132 => "const",
+    KwContinue = 133 => "continue",
+    KwDebugger = 134 => "debugger",
+    KwDefault = 135 => "default",
+    KwDelete = 136 => "delete",
+    KwDo = 137 => "do",
+    KwElse = 138 => "else",
+    KwEnum = 139 => "enum",
+    KwExport = 140 => "export",
+    KwExtends = 141 => "extends",
+    KwFalse = 142 => "false",
+    KwFinally = 143 => "finally",
+    KwFor = 144 => "for",
+    KwFunction = 145 => "function",
+    KwIf = 146 => "if",
+    KwImport = 147 => "import",
+    KwIn = 148 => "in",
+    KwInstanceof = 149 => "instanceof",
+    KwNew = 150 => "new",
+    KwNull = 151 => "null",
+    KwReturn = 152 => "return",
+    KwSuper = 153 => "super",
+    KwSwitch = 154 => "switch",
+    KwThis = 155 => "this",
+    KwThrow = 156 => "throw",
+    KwTrue = 157 => "true",
+    KwTry = 158 => "try",
+    KwTypeof = 159 => "typeof",
+    KwVar = 160 => "var",
+    KwVoid = 161 => "void",
+    KwWhile = 162 => "while",
+    KwWith = 163 => "with",
+    KwYield = 164 => "yield",
+    KwLet = 165 => "let",
+    KwStatic = 166 => "static",
+    KwAsync = 167 => "async",
+    KwAwait = 168 => "await",
+    KwOf = 169 => "of",
+    KwFrom = 170 => "from",
+    KwAs = 171 => "as",
+
     // TS-mode contextual keywords (`LexOptions::ts`) plus the strict-mode
     // reserved words; JS mode lexes all of these spellings as IDENT.
     // Contiguous after the JS block so `>= KW_BASE` range checks cover both.
-    pub const KW_ABSTRACT: u8 = 172;
-    pub const KW_ACCESSOR: u8 = 173;
-    pub const KW_ANY: u8 = 174;
-    pub const KW_ASSERTS: u8 = 175;
-    pub const KW_BIGINT: u8 = 176;
-    pub const KW_BOOLEAN: u8 = 177;
-    pub const KW_DECLARE: u8 = 178;
-    pub const KW_GLOBAL: u8 = 179;
-    pub const KW_IMPLEMENTS: u8 = 180;
-    pub const KW_INFER: u8 = 181;
-    pub const KW_INTERFACE: u8 = 182;
-    pub const KW_INTRINSIC: u8 = 183;
-    pub const KW_IS: u8 = 184;
-    pub const KW_KEYOF: u8 = 185;
-    pub const KW_MODULE: u8 = 186;
-    pub const KW_NAMESPACE: u8 = 187;
-    pub const KW_NEVER: u8 = 188;
-    pub const KW_NUMBER: u8 = 189;
-    pub const KW_OBJECT: u8 = 190;
-    pub const KW_OUT: u8 = 191;
-    pub const KW_OVERRIDE: u8 = 192;
-    pub const KW_PACKAGE: u8 = 193;
-    pub const KW_PRIVATE: u8 = 194;
-    pub const KW_PROTECTED: u8 = 195;
-    pub const KW_PUBLIC: u8 = 196;
-    pub const KW_READONLY: u8 = 197;
-    pub const KW_REQUIRE: u8 = 198;
-    pub const KW_SATISFIES: u8 = 199;
-    pub const KW_STRING: u8 = 200;
-    pub const KW_SYMBOL: u8 = 201;
-    pub const KW_TYPE: u8 = 202;
-    pub const KW_UNDEFINED: u8 = 203;
-    pub const KW_UNIQUE: u8 = 204;
-    pub const KW_UNKNOWN: u8 = 205;
-    pub const KW_USING: u8 = 206;
-    pub const INVALID: u8 = 255;
+    KwAbstract = 172 => "abstract",
+    KwAccessor = 173 => "accessor",
+    KwAny = 174 => "any",
+    KwAsserts = 175 => "asserts",
+    KwBigInt = 176 => "bigint",
+    KwBoolean = 177 => "boolean",
+    KwDeclare = 178 => "declare",
+    KwGlobal = 179 => "global",
+    KwImplements = 180 => "implements",
+    KwInfer = 181 => "infer",
+    KwInterface = 182 => "interface",
+    KwIntrinsic = 183 => "intrinsic",
+    KwIs = 184 => "is",
+    KwKeyof = 185 => "keyof",
+    KwModule = 186 => "module",
+    KwNamespace = 187 => "namespace",
+    KwNever = 188 => "never",
+    KwNumber = 189 => "number",
+    KwObject = 190 => "object",
+    KwOut = 191 => "out",
+    KwOverride = 192 => "override",
+    KwPackage = 193 => "package",
+    KwPrivate = 194 => "private",
+    KwProtected = 195 => "protected",
+    KwPublic = 196 => "public",
+    KwReadonly = 197 => "readonly",
+    KwRequire = 198 => "require",
+    KwSatisfies = 199 => "satisfies",
+    KwString = 200 => "string",
+    KwSymbol = 201 => "symbol",
+    KwType = 202 => "type",
+    KwUndefined = 203 => "undefined",
+    KwUnique = 204 => "unique",
+    KwUnknown = 205 => "unknown",
+    KwUsing = 206 => "using",
+
+    Invalid = 255 => "INVALID",
 }
 
-pub const TRIVIA_MIN: u8 = token_kind::LINE_COMMENT;
-pub const TRIVIA_MAX: u8 = token_kind::LINE_TERMINATOR;
+/// First keyword kind: every kind `>= KW_BASE` other than [`TokenKind::Invalid`] is a keyword.
+pub const KW_BASE: u8 = TokenKind::KwBreak as u8;
+const KW_MAX: u8 = TokenKind::KwUsing as u8;
+
+impl TokenKind {
+    #[inline]
+    #[must_use]
+    pub const fn as_u8(self) -> u8 {
+        self as u8
+    }
+
+    /// # Safety
+    ///
+    /// `byte` must be a declared discriminant, i.e. `TokenKind::from_u8(byte).is_some()`.
+    #[inline]
+    #[must_use]
+    pub const unsafe fn from_u8_unchecked(byte: u8) -> Self {
+        debug_assert!(Self::from_u8(byte).is_some(), "not a declared TokenKind discriminant");
+        // SAFETY: the caller guarantees `byte` is a declared discriminant, and
+        // `TokenKind` is `#[repr(u8)]`, so it shares `u8`'s layout.
+        unsafe { core::mem::transmute::<u8, Self>(byte) }
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_trivia(self) -> bool {
+        is_trivia_byte(self as u8)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_keyword(self) -> bool {
+        (self as u8) >= KW_BASE && (self as u8) <= KW_MAX
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_string(self) -> bool {
+        matches!(self, Self::String | Self::StringCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_no_sub(self) -> bool {
+        matches!(self, Self::TemplateNoSub | Self::TemplateNoSubCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_head(self) -> bool {
+        matches!(self, Self::TemplateHead | Self::TemplateHeadCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_middle(self) -> bool {
+        matches!(self, Self::TemplateMiddle | Self::TemplateMiddleCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_template_tail(self) -> bool {
+        matches!(self, Self::TemplateTail | Self::TemplateTailCooked)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_ident(self) -> bool {
+        matches!(self, Self::Ident | Self::IdentEscaped)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_private_ident(self) -> bool {
+        matches!(self, Self::PrivateIdent | Self::PrivateIdentEscaped)
+    }
+
+    #[inline]
+    #[must_use]
+    pub const fn is_numeric(self) -> bool {
+        matches!(
+            self,
+            Self::Number | Self::Decimal | Self::Float | Self::Binary | Self::Octal | Self::Hex
+        )
+    }
+}
+
+impl core::fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+/// Reinterpret raw kind bytes written by the pipeline as [`TokenKind`]s.
+///
+/// # Safety
+///
+/// Every byte in `bytes` must be a declared [`TokenKind`] discriminant. The
+/// pipeline only ever writes kinds that came from [`crate::opmap`]'s tables or
+/// from the named constants in `pipeline`, so this holds for any range the
+/// lexer has written; it does *not* hold for uninitialised arena memory.
+#[inline]
+pub(crate) const unsafe fn kinds_from_bytes(bytes: &[u8]) -> &[TokenKind] {
+    // SAFETY: `TokenKind` is `#[repr(u8)]` so it has the same size and
+    // alignment as `u8`, and the caller guarantees every byte is a declared
+    // discriminant.
+    unsafe { core::slice::from_raw_parts(bytes.as_ptr().cast::<TokenKind>(), bytes.len()) }
+}
 
 #[inline]
+pub(crate) fn debug_assert_kind_bytes(bytes: &[u8]) {
+    debug_assert!(
+        bytes.iter().all(|&b| TokenKind::from_u8(b).is_some()),
+        "lexer wrote a byte that is not a declared TokenKind discriminant"
+    );
+}
+
+pub const SPAN_SENTINELS: usize = 8;
+
+pub const TRIVIA_MIN: u8 = TokenKind::LineComment as u8;
+pub const TRIVIA_MAX: u8 = TokenKind::LineTerminator as u8;
+
+/// [`TokenKind::is_trivia`] on a raw kind byte, for the pipeline's `u8` lanes.
+#[inline]
 #[must_use]
-pub const fn is_trivia(kind: u8) -> bool {
+pub(crate) const fn is_trivia_byte(kind: u8) -> bool {
     kind.wrapping_sub(TRIVIA_MIN) <= TRIVIA_MAX - TRIVIA_MIN
-}
-
-#[inline]
-#[must_use]
-pub const fn is_string_kind(kind: u8) -> bool {
-    kind == token_kind::STRING || kind == token_kind::STRING_COOKED
-}
-
-#[inline]
-#[must_use]
-pub const fn is_template_no_sub_kind(kind: u8) -> bool {
-    kind == token_kind::TEMPLATE_NO_SUB || kind == token_kind::TEMPLATE_NO_SUB_COOKED
-}
-
-#[inline]
-#[must_use]
-pub const fn is_template_head_kind(kind: u8) -> bool {
-    kind == token_kind::TEMPLATE_HEAD || kind == token_kind::TEMPLATE_HEAD_COOKED
-}
-
-#[inline]
-#[must_use]
-pub const fn is_template_middle_kind(kind: u8) -> bool {
-    kind == token_kind::TEMPLATE_MIDDLE || kind == token_kind::TEMPLATE_MIDDLE_COOKED
-}
-
-#[inline]
-#[must_use]
-pub const fn is_template_tail_kind(kind: u8) -> bool {
-    kind == token_kind::TEMPLATE_TAIL || kind == token_kind::TEMPLATE_TAIL_COOKED
-}
-
-#[inline]
-#[must_use]
-pub const fn is_ident_kind(kind: u8) -> bool {
-    kind == token_kind::IDENT || kind == token_kind::IDENT_ESCAPED
-}
-
-#[inline]
-#[must_use]
-pub const fn is_private_ident_kind(kind: u8) -> bool {
-    kind == token_kind::PRIVATE_IDENT || kind == token_kind::PRIVATE_IDENT_ESCAPED
-}
-
-#[inline]
-#[must_use]
-pub const fn is_numeric_kind(kind: u8) -> bool {
-    kind == token_kind::NUMBER
-        || kind == token_kind::DECIMAL
-        || kind == token_kind::FLOAT
-        || kind == token_kind::BINARY
-        || kind == token_kind::OCTAL
-        || kind == token_kind::HEX
 }
 
 pub mod token_flags {
@@ -254,184 +365,8 @@ pub mod token_flags {
     pub const ASI_RESTRICTED: u16 = 1 << 10;
 }
 
-const _: () = assert!(token_kind::HASHBANG > token_kind::LINE_COMMENT);
-const _: () = assert!(token_kind::HASHBANG < token_kind::LINE_TERMINATOR);
-
-pub fn token_kind_name(kind: u8) -> &'static str {
-    use token_kind::*;
-    match kind {
-        EOF => "EOF",
-        IDENT => "IDENT",
-        PRIVATE_IDENT => "PRIVATE_IDENT",
-        NUMBER => "NUMBER",
-        BIGINT => "BIGINT",
-        STRING => "STRING",
-        STRING_COOKED => "STRING_COOKED",
-        IDENT_ESCAPED => "IDENT_ESCAPED",
-        PRIVATE_IDENT_ESCAPED => "PRIVATE_IDENT_ESCAPED",
-        TEMPLATE_NO_SUB_COOKED => "TEMPLATE_NO_SUB_COOKED",
-        TEMPLATE_HEAD_COOKED => "TEMPLATE_HEAD_COOKED",
-        TEMPLATE_MIDDLE_COOKED => "TEMPLATE_MIDDLE_COOKED",
-        TEMPLATE_TAIL_COOKED => "TEMPLATE_TAIL_COOKED",
-        DECIMAL => "DECIMAL",
-        FLOAT => "FLOAT",
-        BINARY => "BINARY",
-        OCTAL => "OCTAL",
-        HEX => "HEX",
-        JSX_TEXT => "JSX_TEXT",
-        JSX_TAG_END => "JSX_TAG_END",
-        JSX_LT => "JSX_LT",
-        REGEXP => "REGEXP",
-        TEMPLATE_NO_SUB => "TEMPLATE_NO_SUB",
-        TEMPLATE_HEAD => "TEMPLATE_HEAD",
-        TEMPLATE_MIDDLE => "TEMPLATE_MIDDLE",
-        TEMPLATE_TAIL => "TEMPLATE_TAIL",
-        LINE_COMMENT => "LINE_COMMENT",
-        BLOCK_COMMENT => "BLOCK_COMMENT",
-        HASHBANG => "HASHBANG",
-        WHITESPACE => "WHITESPACE",
-        LINE_TERMINATOR => "LINE_TERMINATOR",
-        LBRACE => "{",
-        RBRACE => "}",
-        LPAREN => "(",
-        RPAREN => ")",
-        LBRACKET => "[",
-        RBRACKET => "]",
-        DOT => ".",
-        ELLIPSIS => "...",
-        SEMI => ";",
-        COMMA => ",",
-        COLON => ":",
-        QUESTION => "?",
-        OPTIONAL_CHAIN => "?.",
-        NULLISH => "??",
-        NULLISH_EQ => "??=",
-        ARROW => "=>",
-        LT => "<",
-        LE => "<=",
-        GT => ">",
-        GE => ">=",
-        EQ => "=",
-        EQ_EQ => "==",
-        EQ_EQ_EQ => "===",
-        BANG => "!",
-        BANG_EQ => "!=",
-        BANG_EQ_EQ => "!==",
-        PLUS => "+",
-        PLUS_PLUS => "++",
-        PLUS_EQ => "+=",
-        MINUS => "-",
-        MINUS_MINUS => "--",
-        MINUS_EQ => "-=",
-        STAR => "*",
-        STAR_STAR => "**",
-        STAR_EQ => "*=",
-        STAR_STAR_EQ => "**=",
-        SLASH => "/",
-        SLASH_EQ => "/=",
-        PERCENT => "%",
-        PERCENT_EQ => "%=",
-        AMP => "&",
-        AMP_AMP => "&&",
-        AMP_EQ => "&=",
-        AMP_AMP_EQ => "&&=",
-        PIPE => "|",
-        PIPE_PIPE => "||",
-        PIPE_EQ => "|=",
-        PIPE_PIPE_EQ => "||=",
-        CARET => "^",
-        CARET_EQ => "^=",
-        TILDE => "~",
-        LSHIFT => "<<",
-        LSHIFT_EQ => "<<=",
-        RSHIFT => ">>",
-        RSHIFT_EQ => ">>=",
-        URSHIFT => ">>>",
-        URSHIFT_EQ => ">>>=",
-        AT => "@",
-        KW_BREAK => "break",
-        KW_CASE => "case",
-        KW_CATCH => "catch",
-        KW_CLASS => "class",
-        KW_CONST => "const",
-        KW_CONTINUE => "continue",
-        KW_DEBUGGER => "debugger",
-        KW_DEFAULT => "default",
-        KW_DELETE => "delete",
-        KW_DO => "do",
-        KW_ELSE => "else",
-        KW_ENUM => "enum",
-        KW_EXPORT => "export",
-        KW_EXTENDS => "extends",
-        KW_FALSE => "false",
-        KW_FINALLY => "finally",
-        KW_FOR => "for",
-        KW_FUNCTION => "function",
-        KW_IF => "if",
-        KW_IMPORT => "import",
-        KW_IN => "in",
-        KW_INSTANCEOF => "instanceof",
-        KW_NEW => "new",
-        KW_NULL => "null",
-        KW_RETURN => "return",
-        KW_SUPER => "super",
-        KW_SWITCH => "switch",
-        KW_THIS => "this",
-        KW_THROW => "throw",
-        KW_TRUE => "true",
-        KW_TRY => "try",
-        KW_TYPEOF => "typeof",
-        KW_VAR => "var",
-        KW_VOID => "void",
-        KW_WHILE => "while",
-        KW_WITH => "with",
-        KW_YIELD => "yield",
-        KW_LET => "let",
-        KW_STATIC => "static",
-        KW_ASYNC => "async",
-        KW_AWAIT => "await",
-        KW_OF => "of",
-        KW_FROM => "from",
-        KW_AS => "as",
-        KW_ABSTRACT => "abstract",
-        KW_ACCESSOR => "accessor",
-        KW_ANY => "any",
-        KW_ASSERTS => "asserts",
-        KW_BIGINT => "bigint",
-        KW_BOOLEAN => "boolean",
-        KW_DECLARE => "declare",
-        KW_GLOBAL => "global",
-        KW_IMPLEMENTS => "implements",
-        KW_INFER => "infer",
-        KW_INTERFACE => "interface",
-        KW_INTRINSIC => "intrinsic",
-        KW_IS => "is",
-        KW_KEYOF => "keyof",
-        KW_MODULE => "module",
-        KW_NAMESPACE => "namespace",
-        KW_NEVER => "never",
-        KW_NUMBER => "number",
-        KW_OBJECT => "object",
-        KW_OUT => "out",
-        KW_OVERRIDE => "override",
-        KW_PACKAGE => "package",
-        KW_PRIVATE => "private",
-        KW_PROTECTED => "protected",
-        KW_PUBLIC => "public",
-        KW_READONLY => "readonly",
-        KW_REQUIRE => "require",
-        KW_SATISFIES => "satisfies",
-        KW_STRING => "string",
-        KW_SYMBOL => "symbol",
-        KW_TYPE => "type",
-        KW_UNDEFINED => "undefined",
-        KW_UNIQUE => "unique",
-        KW_UNKNOWN => "unknown",
-        KW_USING => "using",
-        INVALID => "INVALID",
-        _ => "<unknown>",
-    }
-}
+const _: () = assert!(TokenKind::Hashbang as u8 > TokenKind::LineComment as u8);
+const _: () = assert!((TokenKind::Hashbang as u8) < TokenKind::LineTerminator as u8);
 
 /// Bit 31 of a `starts` entry: reserved "newline before this token" flag.
 /// The lexer does not set it yet, but consumers must still read offsets
@@ -513,5 +448,94 @@ impl StringSpan {
     #[must_use]
     pub const fn lone_surrogates(self) -> bool {
         (self.end_and_flags & Self::LONE_SURROGATES_MASK) != 0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind};
+    use crate::{Lexer, PAD, default_options};
+
+    #[test]
+    fn from_u8_round_trips_every_variant() {
+        for &kind in TokenKind::VARIANTS {
+            assert_eq!(TokenKind::from_u8(kind as u8), Some(kind), "{}", kind.name());
+        }
+    }
+
+    #[test]
+    fn from_u8_agrees_with_the_discriminant_for_all_256_bytes() {
+        let declared: Vec<u8> = TokenKind::VARIANTS.iter().map(|k| *k as u8).collect();
+        for byte in 0..=u8::MAX {
+            match TokenKind::from_u8(byte) {
+                Some(kind) => {
+                    assert_eq!(kind as u8, byte);
+                    assert!(declared.contains(&byte));
+                }
+                None => assert!(!declared.contains(&byte), "byte {byte} is declared but unmapped"),
+            }
+        }
+    }
+
+    #[test]
+    fn discriminants_are_unique() {
+        let mut seen = [false; 256];
+        for &kind in TokenKind::VARIANTS {
+            let byte = kind as usize;
+            assert!(!seen[byte], "duplicate discriminant {byte}");
+            seen[byte] = true;
+        }
+    }
+
+    /// The pipeline classifies by range, so the punctuator and keyword blocks
+    /// must stay where `compress` and `opmap` expect them.
+    #[test]
+    fn kind_space_layout_holds() {
+        for &kind in TokenKind::VARIANTS {
+            let byte = kind as u8;
+            if kind.is_keyword() {
+                assert!(byte >= KW_BASE, "{} below KW_BASE", kind.name());
+            }
+            if kind.is_trivia() {
+                assert!((TRIVIA_MIN..=TRIVIA_MAX).contains(&byte), "{}", kind.name());
+            }
+        }
+        assert!(TokenKind::LBrace as u8 >= 32 && (TokenKind::At as u8) < KW_BASE);
+        assert!(!TokenKind::Invalid.is_keyword());
+        assert!(TokenKind::Hashbang.is_trivia());
+    }
+
+    /// Backs the safety invariant of [`super::kinds_from_bytes`]: the lexer
+    /// never emits a byte outside the declared discriminants.
+    #[test]
+    fn every_emitted_kind_is_declared() {
+        const SOURCES: [&str; 6] = [
+            "#!/usr/bin/env node\nlet x = 0b1_0 + 0o7 + 0xFF + 1.5e3 + 9n;",
+            "class A { #p = 1; static { this.#p ??= 2; } get x() { return `a${1}b${2}c`; } }",
+            "a?.b?.[c] ?? d ||= e &&= f >>>= g; /re/gu.test('s\\u00e9'); // line\n/* block */",
+            "export default async function* f(...a) { yield* await import('m'); }",
+            "type T = { readonly [K in keyof U]?: U[K] extends infer V ? V : never };",
+            "const el = <div a='1' {...r}>text {x} <br/></div>;",
+        ];
+        for src in SOURCES {
+            let mut bytes = src.as_bytes().to_vec();
+            let n = bytes.len();
+            bytes.extend_from_slice(&[0u8; PAD]);
+            for (jsx, ts) in [(false, false), (true, false), (false, true), (true, true)] {
+                let mut opts = default_options();
+                opts.jsx = jsx;
+                opts.ts = ts;
+                let mut lexer = Lexer::new();
+                lexer.lex(&bytes, n, opts);
+                for kind in lexer.kinds() {
+                    assert_eq!(
+                        TokenKind::from_u8(*kind as u8),
+                        Some(*kind),
+                        "undeclared kind {} from {src:?}",
+                        *kind as u8
+                    );
+                }
+            }
+        }
     }
 }

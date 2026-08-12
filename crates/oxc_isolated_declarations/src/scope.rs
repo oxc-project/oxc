@@ -152,18 +152,19 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
+    fn visit_export_declaration(&mut self, decl: &ExportDeclaration<'a>) {
+        walk_declaration(self, &decl.declaration);
+    }
+
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
-        if let Some(declaration) = &decl.declaration {
-            walk_declaration(self, declaration);
-        } else if decl.source.is_none() {
-            // export { ... }
-            for specifier in &decl.specifiers {
-                if let Some(name) = specifier.local.identifier_name() {
-                    self.add_reference(name.into(), KindFlags::All);
-                }
+        for specifier in &decl.specifiers {
+            if let Some(name) = specifier.local.identifier_name() {
+                self.add_reference(name.into(), KindFlags::All);
             }
         }
     }
+
+    fn visit_export_from_declaration(&mut self, _decl: &ExportFromDeclaration<'a>) {}
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
         if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
@@ -198,10 +199,11 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
             Declaration::TSEnumDeclaration(decl) => {
                 self.add_binding(decl.id.name.into(), KindFlags::All);
             }
-            Declaration::TSModuleDeclaration(decl) => {
-                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
-                    self.add_binding(ident.name.into(), KindFlags::All);
-                }
+            Declaration::TSExternalModuleDeclaration(_) => {
+                // no binding
+            }
+            Declaration::TSNamespaceDeclaration(decl) => {
+                self.add_binding(decl.id.name.into(), KindFlags::All);
             }
             Declaration::TSGlobalDeclaration(_) => {
                 // no binding

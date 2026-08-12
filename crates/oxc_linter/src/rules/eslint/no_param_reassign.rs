@@ -1,15 +1,20 @@
 use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId};
 use oxc_span::Span;
-use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_vec,
+};
 
 fn assignment_to_param_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Assignment to function parameter '{name}'."))
@@ -23,7 +28,7 @@ fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnos
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoParamReassignConfig {
     /// When true, also check for modifications to properties of parameters.
@@ -33,6 +38,7 @@ struct NoParamReassignConfig {
     /// An array of regex patterns (as strings) for parameter names whose property modifications should be ignored.
     /// Note that this uses [Rust regex syntax](https://docs.rs/regex/latest/regex/) and so may not have all features
     /// available to JavaScript regexes.
+    #[serde(default, deserialize_with = "deserialize_regex_vec")]
     #[schemars(with = "Vec<String>", default)]
     ignore_property_modifications_for_regex: Vec<Regex>,
 }
@@ -44,7 +50,7 @@ impl NoParamReassignConfig {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoParamReassign(Box<NoParamReassignConfig>);
 
 // doc: https://github.com/eslint/eslint/blob/v9.9.1/docs/src/rules/no-param-reassign.md
@@ -81,39 +87,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoParamReassign {
-    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let mut rule = Self::default();
-        let config = &mut *rule.0;
-        let Value::Array(array) = value else { return Ok(rule) };
-        let Some(Value::Object(options)) = array.first() else { return Ok(rule) };
-
-        if let Some(Value::Bool(props)) = options.get("props") {
-            config.props = *props;
-        }
-
-        if !config.props {
-            return Ok(rule);
-        }
-
-        if let Some(Value::Array(items)) = options.get("ignorePropertyModificationsFor") {
-            for item in items {
-                if let Value::String(value) = item {
-                    config.ignore_property_modifications_for.insert(value.clone());
-                }
-            }
-        }
-
-        if let Some(Value::Array(items)) = options.get("ignorePropertyModificationsForRegex") {
-            for item in items {
-                if let Value::String(value) = item
-                    && let Ok(regex) = Regex::new(value)
-                {
-                    config.ignore_property_modifications_for_regex.push(regex);
-                }
-            }
-        }
-
-        Ok(rule)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -122,7 +97,7 @@ impl Rule for NoParamReassign {
         };
 
         let symbol_table = ctx.scoping();
-        for ident in param.pattern.get_binding_identifiers() {
+        param.pattern.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
 
             let declaration_id = symbol_table.symbol_declaration(symbol_id);
@@ -154,7 +129,7 @@ impl Rule for NoParamReassign {
                     ctx.diagnostic(assignment_to_param_property_diagnostic(name, span));
                 }
             }
-        }
+        });
     }
 }
 
@@ -361,4 +336,15 @@ fn test() {
     ];
 
     Tester::new(NoParamReassign::NAME, NoParamReassign::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn invalid_ignore_property_modifications_for_regex_is_rejected() {
+    let result = NoParamReassign::from_configuration(serde_json::json!([{
+        "props": true,
+        "ignorePropertyModificationsForRegex": ["^(unclosed"],
+    }]));
+
+    let error = result.expect_err("invalid ignorePropertyModificationsForRegex should be rejected");
+    assert_eq!(error.classify(), serde_json::error::Category::Data);
 }

@@ -2,22 +2,27 @@ import { jsTextToDoc } from "../../index";
 import type { Parser, Doc } from "prettier";
 
 export const textToDoc: Parser<Doc>["parse"] = async (embeddedSourceText, textToDocOptions) => {
-  // `_oxfmtPluginOptionsJson` is a JSON string bundled by Rust (`oxfmtrc::inject_oxfmt_plugin_payload`),
+  // `_oxfmtPluginOptionsJson` is a JSON string bundled by Rust (`to_prettier::inject_oxfmt_plugin_payload`),
   // carrying the typed `FormatConfig` + parent filepath for the Rust-side `oxc_formatter`.
-  const { parser, parentParser, filepath, _oxfmtPluginOptionsJson } = textToDocOptions;
-
-  // For (j|t)s-in-xxx, default `parser` is either `babel`, `babel-ts` or `typescript`
-  // We need to infer `SourceType::from_extension(ext)` for `oxc_formatter`.
-  // - JS: always enable JSX for js-in-xxx, it's safe
-  // - TS: `typescript` (ts-in-vue|markdown|mdx) or `babel-ts` (ts-in-vue(script generic="..."))
-  //   - In case of ts-in-md, `filepath` is overridden as `dummy.tx(x)` to distinguish TSX or TS
-  //   - NOTE: tsx-in-vue is not supported since there is no signal from Prettier to detect it
-  //     - Prettier is using `maybeJSXRe.test(sourceText)` to detect, but it's slow!
-  const isTS = parser === "typescript" || parser === "babel-ts";
-  const embeddedSourceExt = isTS ? (filepath?.endsWith(".tsx") ? "tsx" : "ts") : "jsx";
+  const { parser, parentParser, filepath, _oxfmtPluginOptionsJson, _oxfmtVueScriptLang } =
+    textToDocOptions;
 
   // Detect context from Prettier's internal flags
   const parentContext = detectParentContext(parentParser!, textToDocOptions);
+
+  // For (j|t)s-in-xxx, default `parser` is either `babel`(JS), `babel-ts` or `typescript`.
+  // We need to infer the parse grammar (`source_ext`) for `oxc_formatter`.
+  // - JS: always enable JSX for js-in-xxx, it's syntactically valid
+  // - TS: `typescript` (ts-in-vue|markdown|mdx) or `babel-ts` (ts-in-vue(script generic="..."))
+  //   - In case of ts-in-md, `filepath` is overridden as `dummy.ts(x)` to distinguish TSX or TS
+  //   - For tsx-in-vue (`<script lang="tsx">`), there is no signal from Prettier itself:
+  //     - both `lang="ts"` and `lang="tsx"` resolve to the `typescript` parser and `filepath` is the parent `.vue` file
+  //     - Nor from parsing: a JSX-free tsx block parses fine as plain ts
+  //     - So, our host pre-scans the SFC and passes `_oxfmtVueScriptLang: "tsx"` instead
+  const isTS = parser === "typescript" || parser === "babel-ts";
+  const isTSX =
+    filepath.endsWith(".tsx") || (parentContext === "vue-script" && _oxfmtVueScriptLang === "tsx");
+  const embeddedSourceExt = isTS ? (isTSX ? "tsx" : "ts") : "jsx";
 
   const docJSON = await jsTextToDoc(
     embeddedSourceExt,

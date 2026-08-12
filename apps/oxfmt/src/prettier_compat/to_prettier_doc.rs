@@ -38,7 +38,10 @@ pub fn format_elements_to_prettier_doc(
     sorted_tailwind_classes: &[String],
 ) -> Result<Value, String> {
     let mut state = ConvertState::new(sorted_tailwind_classes);
-    let children = convert_elements(elements, &mut state)?;
+    // The conversion starts at a line start (the printer's `line_width == 0`),
+    // so a leading `Space` is dropped, not flushed.
+    // (Fragment Docs are spliced mid-line by Prettier, but no fragment IR can start with a `Space`.)
+    let children = convert_elements(elements, &mut state, LineState::Hardline)?;
     let doc = normalize_array(children);
     Ok(json!({ "doc": doc, "refs": Value::Array(state.refs) }))
 }
@@ -91,7 +94,7 @@ enum StartTagInfo {
 /// otherwise the `Doc` would contain redundant spaces/lines that the printer would have suppressed.
 ///
 /// Each field corresponds to a specific printer behavior in
-/// `crates/oxc_formatter/src/formatter/printer/mod.rs`.
+/// `crates/oxc_formatter_core/src/printer/mod.rs`.
 ///
 /// NOTE: If the printer gains new runtime optimizations that affect output,
 /// this struct may need corresponding updates.
@@ -106,22 +109,33 @@ struct PrinterState {
     /// Boolean semantics naturally deduplicates consecutive spaces.
     pending_space: bool,
 
-    /// Mirrors the printer's `line_width > 0` guard for hardline emission
-    /// and `has_empty_line` flag for empty line deduplication.
-    /// See: `Printer::print_line()` in printer/mod.rs
+    /// Mirrors the printer's end-of-line state for hardline collapsing and space suppression:
+    /// its `line_width > 0` guard (`Content` vs the rest) and its `has_empty_line` cap (`Blank`).
+    /// See the `Line` and `Space` arms of `Printer::print_element` in `printer/mod.rs`.
     ///
-    /// When true, consecutive `Hard` lines are suppressed (the line is already broken).
-    /// `Empty` after a hardline emits only one additional `Hard` (the second newline).
-    ///
-    /// NOTE: Consecutive `Empty, Empty` won't fully collapse to a single empty line,
-    /// but such sequences don't occur in practice since the IR generators already
-    /// control line emission.
-    last_was_hardline: bool,
+    /// The document start is a line start (`Hardline`);
+    /// `Interned` / `BestFitting` contents convert with a `Content` (mid-line) assumption,
+    /// so element sequences crossing those boundaries are approximated;
+    /// the real IR shapes (straight-line emission) are what this mirrors faithfully.
+    line: LineState,
+}
+
+/// End-of-line state for [PrinterState::line].
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum LineState {
+    /// Content was emitted since the last line break.
+    Content,
+    /// A line break was just emitted:
+    /// further `Hard`s are suppressed (the line is already broken),
+    /// an `Empty` emits only its second newline.
+    Hardline,
+    /// A blank line was just emitted: further `Empty`s emit nothing at all.
+    Blank,
 }
 
 impl PrinterState {
-    fn new() -> Self {
-        Self { pending_space: false, last_was_hardline: false }
+    fn new(initial_line: LineState) -> Self {
+        Self { pending_space: false, line: initial_line }
     }
 
     /// Flushes the pending space (if any) by appending `" "` to the current scope's children.
@@ -137,26 +151,29 @@ impl PrinterState {
 fn convert_elements(
     elements: &[FormatElement],
     state: &mut ConvertState,
+    initial_line: LineState,
 ) -> Result<Vec<Value>, String> {
     let mut stack: Vec<StackEntry> =
         vec![StackEntry { start_tag: None, start_info: None, children: vec![] }];
-    let mut printer = PrinterState::new();
+    let mut printer = PrinterState::new(initial_line);
 
     for element in elements {
         match element {
             FormatElement::Space => {
-                printer.pending_space = true;
-                printer.last_was_hardline = false;
+                // `Space` at the start of a line is dropped, never made pending
+                if printer.line == LineState::Content {
+                    printer.pending_space = true;
+                }
             }
             FormatElement::Token { text } => {
                 printer.flush_pending_space(&mut stack)?;
                 concat_string(current_children_mut(&mut stack)?, text);
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::Text { text, .. } => {
                 printer.flush_pending_space(&mut stack)?;
                 push_text(current_children_mut(&mut stack)?, text);
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::Line(mode) => {
                 match mode {
@@ -166,48 +183,79 @@ fn convert_elements(
                         // `SoftOrSpace` subsumes it (just like the printer's boolean idempotency).
                         printer.pending_space = false;
                         push_line(current_children_mut(&mut stack)?, *mode);
+                        printer.line = LineState::Content;
                     }
                     LineMode::Soft => {
                         // Soft produces nothing in flat mode, newline in expanded.
                         // Keep `pending_space` as-is (mirroring the printer).
                         push_line(current_children_mut(&mut stack)?, *mode);
+                        printer.line = LineState::Content;
                     }
-                    LineMode::Hard | LineMode::Empty => {
+                    LineMode::Hard | LineMode::HardWithoutExpand | LineMode::Empty => {
                         printer.flush_pending_space(&mut stack)?;
-                        // Mimic the printer's `line_width > 0` guard and `has_empty_line` dedup:
-                        // - The printer only emits a newline when the line has content (`line_width > 0`).
-                        //   Consecutive `Hard, Hard` produces only one newline.
-                        // - For `Empty` after a hardline, only the second newline of `Empty` is emitted
-                        //   (the first is redundant since the line is already broken).
-                        if printer.last_was_hardline {
-                            if *mode == LineMode::Empty {
-                                push_line(current_children_mut(&mut stack)?, LineMode::Hard);
+                        // Mimic the printer's `line_width > 0` guard and `has_empty_line` cap:
+                        // the printer only emits a newline when the line has content,
+                        // so consecutive `Hard, Hard` produces only one newline;
+                        // for `Empty` after a hardline only the second newline is emitted
+                        // (the first is redundant since the line is already broken),
+                        // and nothing at all when a blank line was already emitted.
+                        match printer.line {
+                            LineState::Content => {
+                                push_line(current_children_mut(&mut stack)?, *mode);
+                                printer.line = if *mode == LineMode::Empty {
+                                    LineState::Blank
+                                } else {
+                                    LineState::Hardline
+                                };
                             }
-                            // `Hard` after `Hard` → skip (line already broken)
-                        } else {
-                            push_line(current_children_mut(&mut stack)?, *mode);
+                            LineState::Hardline => {
+                                if *mode == LineMode::Empty {
+                                    push_line(current_children_mut(&mut stack)?, LineMode::Hard);
+                                    printer.line = LineState::Blank;
+                                }
+                                // `Hard` after `Hard` → skip (line already broken)
+                            }
+                            LineState::Blank => {}
                         }
                     }
+                    LineMode::ExactLineBreaks(count) => {
+                        printer.flush_pending_space(&mut stack)?;
+                        // Exactly `count` breaks, exempt from the collapsing above
+                        // (mirrors the printer's `ExactLineBreaks` arm; `push_line`
+                        // expands this to `count` hardlines, which Prettier's own
+                        // printer never collapses).
+                        push_line(current_children_mut(&mut stack)?, *mode);
+                        // A blank is left behind from the start of a line always,
+                        // mid-line only when a break remains after the line-ending one.
+                        // NOTE: `line != Content` approximates the printer's `line_width == 0`,
+                        // they diverge right after a `Literal` (blank there, mid-line here).
+                        // Real IR always emits `ExactLineBreaks` after content, where they agree.
+                        printer.line = if printer.line != LineState::Content || count.get() > 1 {
+                            LineState::Blank
+                        } else {
+                            LineState::Hardline
+                        };
+                    }
                     LineMode::Literal => {
-                        // A literal line always prints (no `last_was_hardline` dedup) and
+                        // A literal line always prints (no hardline dedup) and
                         // preserves the pending space (the printer never trims it away),
                         // matching a `\n` embedded in `FormatElement::Text` below.
                         printer.flush_pending_space(&mut stack)?;
                         push_line(current_children_mut(&mut stack)?, *mode);
+                        printer.line = LineState::Content;
                     }
                 }
-                printer.last_was_hardline = matches!(mode, LineMode::Hard | LineMode::Empty);
             }
             // `ExpandParent` is a directive (not visible content) — it forces the parent group
             // to break. The printer treats it as a no-op (expansion is propagated at IR level).
-            // Neither `pending_space` nor `last_was_hardline` should be affected.
+            // Neither `pending_space` nor `line` should be affected.
             FormatElement::ExpandParent => {
                 current_children_mut(&mut stack)?.push(json!({"type": "break-parent"}));
             }
             FormatElement::LineSuffixBoundary => {
                 printer.flush_pending_space(&mut stack)?;
                 current_children_mut(&mut stack)?.push(json!({"type": "line-suffix-boundary"}));
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::Tag(tag) => {
                 if tag.is_start() {
@@ -262,23 +310,7 @@ fn convert_elements(
                             "Invalid formatter IR: mismatched tags (start: `{start_tag:?}`, end: `{tag:?}`)"
                         ));
                     }
-                    let is_line_suffix = matches!(entry.start_info, Some(StartTagInfo::LineSuffix));
-                    let mut doc = build_doc(entry.start_info.as_ref(), entry.children);
-
-                    // The formatter always prepends a `Space` inside `LineSuffix` for separation
-                    // from preceding code (e.g. `x = 1; // comment`).
-                    // The printer guards this with `line_width > 0`,
-                    // so the `Space` is suppressed when the line has no content yet.
-                    // When the parent scope has no preceding content (e.g. comment-only `<script>` blocks),
-                    // strip the leading space from the `lineSuffix` contents to avoid a spurious leading space.
-                    if is_line_suffix
-                        && current_children_mut(&mut stack)?.is_empty()
-                        && let Value::Object(ref mut map) = doc
-                        && let Some(contents) = map.get_mut("contents")
-                    {
-                        strip_leading_space(contents);
-                    }
-
+                    let doc = build_doc(entry.start_info.as_ref(), entry.children);
                     current_children_mut(&mut stack)?.push(doc);
                 }
             }
@@ -305,25 +337,25 @@ fn convert_elements(
                     let id = state.refs.len();
                     state.refs.push(Value::Null);
                     state.interned_to_ref.insert(key, id);
-                    let converted = convert_elements(interned, state)?;
+                    let converted = convert_shared_elements(interned, state)?;
                     state.refs[id] = normalize_array(converted);
                     id
                 };
                 current_children_mut(&mut stack)?.push(json!({ "_REF": id }));
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::BestFitting(best_fitting) => {
                 printer.flush_pending_space(&mut stack)?;
                 let doc = convert_best_fitting(best_fitting, state)?;
                 current_children_mut(&mut stack)?.push(doc);
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::TailwindClass(index) => {
                 printer.flush_pending_space(&mut stack)?;
                 if let Some(class) = state.sorted_tailwind_classes.get(*index) {
                     concat_string(current_children_mut(&mut stack)?, class);
                 }
-                printer.last_was_hardline = false;
+                printer.line = LineState::Content;
             }
             FormatElement::EmbedPlaceholder(index) => {
                 // The host splices `${expr}` for each marker before the IR is finalized,
@@ -351,6 +383,16 @@ fn convert_elements(
         || Err("Invalid formatter IR: missing root stack entry".to_string()),
         |e| Ok(e.children),
     )
+}
+
+/// Converts `Interned` / `BestFitting` contents:
+/// they are emitted once and reused at arbitrary positions,
+/// so they convert under the mid-line (`Content`) assumption.
+fn convert_shared_elements(
+    elements: &[FormatElement],
+    state: &mut ConvertState,
+) -> Result<Vec<Value>, String> {
+    convert_elements(elements, state, LineState::Content)
 }
 
 fn current_children_mut(stack: &mut [StackEntry]) -> Result<&mut Vec<Value>, String> {
@@ -421,12 +463,23 @@ fn push_line(children: &mut Vec<Value>, mode: LineMode) {
             children.push(json!({"type": "line", "hard": true}));
             children.push(json!({"type": "break-parent"}));
         }
+        LineMode::HardWithoutExpand => {
+            children.push(json!({"type": "line", "hard": true}));
+        }
         LineMode::Empty => {
             // hardline x2
             children.push(json!({"type": "line", "hard": true}));
             children.push(json!({"type": "break-parent"}));
             children.push(json!({"type": "line", "hard": true}));
             children.push(json!({"type": "break-parent"}));
+        }
+        LineMode::ExactLineBreaks(count) => {
+            // hardline x count: Prettier's own printer never collapses hardlines,
+            // so this reproduces exactly `count` breaks.
+            for _ in 0..count.get() {
+                children.push(json!({"type": "line", "hard": true}));
+                children.push(json!({"type": "break-parent"}));
+            }
         }
         LineMode::Literal => {
             push_literal_line(children);
@@ -559,7 +612,7 @@ fn convert_best_fitting(
     }
 
     if variants.len() == 1 {
-        let first_contents = normalize_array(convert_elements(variants[0], state)?);
+        let first_contents = normalize_array(convert_shared_elements(variants[0], state)?);
         return Ok(json!({"type": "group", "contents": first_contents}));
     }
 
@@ -575,14 +628,14 @@ fn convert_best_fitting(
     // get later ids; `state.refs[id]` is filled in after.
     let first_id = state.refs.len();
     state.refs.push(Value::Null);
-    let first_content = normalize_array(convert_elements(variants[0], state)?);
+    let first_content = normalize_array(convert_shared_elements(variants[0], state)?);
     state.refs[first_id] = first_content;
     let first_ref = json!({ "_REF": first_id });
 
     let mut expanded_states: Vec<Value> = Vec::with_capacity(variants.len());
     expanded_states.push(first_ref.clone());
     for v in &variants[1..] {
-        expanded_states.push(normalize_array(convert_elements(v, state)?));
+        expanded_states.push(normalize_array(convert_shared_elements(v, state)?));
     }
 
     Ok(json!({
@@ -611,24 +664,6 @@ fn children_are_only_hardlines(children: &[Value]) -> bool {
     })
 }
 
-/// Strips a leading space character from a `Value`.
-/// Handles both plain strings (`" foo"` → `"foo"`) and arrays whose first element is a string.
-fn strip_leading_space(value: &mut Value) {
-    match value {
-        Value::String(s) if s.starts_with(' ') => {
-            s.remove(0);
-        }
-        Value::Array(arr) => {
-            if let Some(Value::String(s)) = arr.first_mut()
-                && s.starts_with(' ')
-            {
-                s.remove(0);
-            }
-        }
-        _ => {}
-    }
-}
-
 /// Concatenates a string onto the last element if it's also a string,
 /// otherwise pushes a new string value.
 fn concat_string(children: &mut Vec<Value>, s: &str) {
@@ -648,5 +683,91 @@ fn normalize_array(mut arr: Vec<Value>) -> Value {
         0 => Value::String(String::new()),
         1 => arr.pop().unwrap(),
         _ => Value::Array(arr),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::num::NonZeroU32;
+
+    use oxc_formatter_core::{FormatElement, LineMode};
+    use serde_json::{Value, json};
+
+    use super::format_elements_to_prettier_doc;
+
+    fn to_doc(elements: &[FormatElement]) -> Value {
+        format_elements_to_prettier_doc(elements, &[]).unwrap()
+    }
+
+    /// Counts `{"type": "line", "hard": true}` nodes (excluding literal lines) in the Doc.
+    fn count_hardlines(doc: &Value) -> usize {
+        match doc {
+            Value::Array(items) => items.iter().map(count_hardlines).sum(),
+            Value::Object(map) => {
+                let own = usize::from(
+                    map.get("type").and_then(Value::as_str) == Some("line")
+                        && map.get("hard").and_then(Value::as_bool) == Some(true)
+                        && !map.contains_key("literal"),
+                );
+                own + map.values().map(count_hardlines).sum::<usize>()
+            }
+            _ => 0,
+        }
+    }
+
+    fn exact(count: u32) -> FormatElement<'static> {
+        FormatElement::Line(LineMode::ExactLineBreaks(NonZeroU32::new(count).unwrap()))
+    }
+    const A: FormatElement<'static> = FormatElement::Token { text: "a" };
+    const HARD: FormatElement<'static> = FormatElement::Line(LineMode::Hard);
+    const EMPTY: FormatElement<'static> = FormatElement::Line(LineMode::Empty);
+    const SPACE: FormatElement<'static> = FormatElement::Space;
+
+    #[test]
+    fn exact_line_breaks_expand_to_that_many_hardlines() {
+        let doc = to_doc(&[A, exact(3), A]);
+        assert_eq!(count_hardlines(&doc), 3);
+    }
+
+    #[test]
+    fn empty_after_mid_line_single_exact_break_adds_a_blank() {
+        // Mid-line count=1 leaves no blank behind: the following Empty may still add one.
+        let doc = to_doc(&[A, exact(1), EMPTY, A]);
+        assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    #[test]
+    fn empty_after_blank_leaving_exact_breaks_is_capped() {
+        // Mid-line count=2 leaves a blank: the following Empty adds nothing.
+        let doc = to_doc(&[A, exact(2), EMPTY, A]);
+        assert_eq!(count_hardlines(&doc), 2);
+
+        // From the start of a line even count=1 leaves a blank
+        // (no break is consumed as a line ending), capping the Empty too.
+        let doc = to_doc(&[A, HARD, exact(1), EMPTY, A]);
+        assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    #[test]
+    fn hard_after_exact_line_breaks_is_absorbed() {
+        let doc = to_doc(&[A, exact(2), HARD, A]);
+        assert_eq!(count_hardlines(&doc), 2);
+    }
+
+    #[test]
+    fn space_at_line_start_is_dropped() {
+        // e.g. a comment-only program: the IR starts with the trailing-comment `Space`,
+        // which the printer drops at `line_width == 0`.
+        let doc = to_doc(&[SPACE, A]);
+        assert_eq!(doc["doc"], "a");
+
+        let doc = to_doc(&[A, HARD, SPACE, A]);
+        assert_eq!(
+            doc["doc"],
+            json!(["a", {"type": "line", "hard": true}, {"type": "break-parent"}, "a"])
+        );
+        // The dropped space must not resurrect a hardline collapse either.
+        let doc = to_doc(&[A, HARD, SPACE, HARD, A]);
+        assert_eq!(count_hardlines(&doc), 1);
     }
 }

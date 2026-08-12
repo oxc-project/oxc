@@ -15,6 +15,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -156,7 +157,7 @@ enum BindingContext {
 
 impl NoUnderscoreDangle {
     fn is_allowed(&self, name: &str) -> bool {
-        is_always_allowed(name) || self.allow.contains(&name.to_string())
+        is_always_allowed(name) || self.allow.iter().any(|allowed| allowed == name)
     }
 
     fn report(&self, ctx: &LintContext, span: Span, name: &str) {
@@ -243,7 +244,7 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
                 };
             }
             AstKind::VariableDeclarator(declarator) => {
-                return if declarator.kind.is_using() {
+                return if variable_declaration_kind(declarator, ctx).is_using() {
                     BindingContext::Using
                 } else {
                     destructure_context.unwrap_or(BindingContext::Plain)

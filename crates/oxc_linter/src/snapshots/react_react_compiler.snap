@@ -77,16 +77,6 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState)
 
-  ⚠ react(react-compiler): MemoDependencies: Found extra memoization dependencies
-    ╭─[react_compiler.tsx:13:19]
- 12 │     }
- 13 │   }, [cond, item, init]);
-    ·                   ──┬─
-    ·                     ╰── Unnecessary dependency `init`. Values declared outside of a component/hook should not be listed as dependencies as the component will not re-render if they change
- 14 │ 
-    ╰────
-  help: Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often
-
   ⚠ react(react-compiler): Hooks: Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)
    ╭─[react_compiler.tsx:4:5]
  3 │   if (cond) {
@@ -231,6 +221,15 @@ source: crates/oxc_linter/src/tester.rs
  9 │ }
    ╰────
 
+  ⚠ react(react-compiler): CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config
+   ╭─[react_compiler.tsx:2:30]
+ 1 │ function Component() {
+ 2 │                 return <div>{CustomFactory()}</div>;
+   ·                              ───────────────
+ 3 │             }
+   ╰────
+  help: CustomFactory may be a component
+
   ⚠ react(react-compiler): Todo: Support local variables named `fbt`
    ╭─[react_compiler.tsx:2:23]
  1 │ function Component() {
@@ -239,3 +238,30 @@ source: crates/oxc_linter/src/tester.rs
  3 │                 return <fbt desc='label'>Hello</fbt>;
    ╰────
   help: Local variables named `fbt` may conflict with the fbt plugin and are not yet supported
+
+  ⚠ react(react-compiler): Invariant: Expected a node for all scopes
+    ╭─[react_compiler.tsx:1:26]
+  1 │ ╭─▶ export const Component = () => {
+  2 │ │                   const raw = useValue();
+  3 │ │                   return (() => {
+  4 │ │                       try {
+  5 │ │                           return check(raw) ? raw : null;
+  6 │ │                       } catch {
+  7 │ │                           return null;
+  8 │ │                       }
+  9 │ │                   })();
+ 10 │ ╰─▶             };
+    ╰────
+
+  ⚠ react(react-compiler): Invariant: Expected a variable declaration
+   ╭─[react_compiler.tsx:1:1]
+ 1 │ ╭─▶ function Component() {
+ 2 │ │                   useEffect(() => {
+ 3 │ │                       let i = 0;
+ 4 │ │                       for (; i < 3; i++) {
+ 5 │ │                           console.log(i);
+ 6 │ │                       }
+ 7 │ │                   });
+ 8 │ │                   return null;
+ 9 │ ╰─▶             }
+   ╰────

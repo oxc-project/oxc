@@ -403,14 +403,11 @@ fn check_no_extra_references<'a>(
 
     let symbol_id = binding_ident.symbol_id();
 
-    let references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
-
-    if references.len() != 1 {
+    let [reference_id] = ctx.scoping().get_resolved_reference_ids(symbol_id) else {
         return false;
-    }
+    };
 
-    let reference = &references[0];
-    ctx.semantic().reference_span(reference) == param_ident_span
+    ctx.semantic().reference_span(ctx.scoping().get_reference(*reference_id)) == param_ident_span
 }
 
 fn check_no_extra_references_assignment<'a>(

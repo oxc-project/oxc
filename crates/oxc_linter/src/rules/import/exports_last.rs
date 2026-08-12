@@ -74,8 +74,10 @@ fn is_exports_declaration(statement: &Statement) -> bool {
         matches!(
             declaration,
             ModuleDeclaration::ExportAllDeclaration(_)
+                | ModuleDeclaration::ExportDeclaration(_)
                 | ModuleDeclaration::ExportDefaultDeclaration(_)
                 | ModuleDeclaration::ExportNamedDeclaration(_)
+                | ModuleDeclaration::ExportFromDeclaration(_)
         )
     })
 }

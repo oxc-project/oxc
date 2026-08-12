@@ -5,15 +5,14 @@
 //! the JS-specific operations are exposed via the [`JsFormatter`] type alias and an
 //! extension trait that is blanket-implemented for the alias.
 
+use oxc_formatter_core::{Buffer, Format, FormatElements, Formatter, GroupId, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::source_text::SourceTextExt as _;
 
 use crate::formatter::{
-    Buffer, Comments, Format, Formatter, GroupId, JsFormatContext, SourceText,
-    UniqueGroupIdBuilder,
+    Comments, JsFormatContext,
     builders::{JoinNodesBuilder, Line, Space},
-    format_element::FormatElements,
     prelude::{hard_line_break, soft_line_break_or_space, space, token},
 };
 
@@ -30,7 +29,6 @@ pub trait JsFormatterExt<'buf, 'ast> {
     fn comments(&self) -> &Comments<'_>;
     fn lines_before(&self, span: Span) -> usize;
     fn group_id(&self, debug_name: &'static str) -> GroupId;
-    fn group_id_builder(&self) -> &UniqueGroupIdBuilder;
     fn join_nodes_with_soft_line<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line>;
     fn join_nodes_with_hardline<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line>;
     fn join_nodes_with_space<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Space>;
@@ -64,12 +62,6 @@ impl<'buf, 'ast> JsFormatterExt<'buf, 'ast> for Formatter<'buf, 'ast, JsFormatCo
     #[inline]
     fn group_id(&self, debug_name: &'static str) -> GroupId {
         self.state().group_id(debug_name)
-    }
-
-    /// Returns a reference to the unique group id builder for this document.
-    #[inline]
-    fn group_id_builder(&self) -> &UniqueGroupIdBuilder {
-        self.state().group_id_builder()
     }
 
     fn join_nodes_with_soft_line<'fmt>(&'fmt mut self) -> JoinNodesBuilder<'fmt, 'buf, 'ast, Line> {

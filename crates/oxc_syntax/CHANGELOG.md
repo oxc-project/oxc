@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### 🚀 Features
+
+- 7aa4739 syntax,transformer: Move JSX entity decoder to `oxc_syntax` (#24617) (camc314)
+
+### ⚡ Performance
+
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- 058a62f semantic: Track ambient contexts in `SemanticBuilder` (#24327) (camc314)
+
 ## [0.138.0] - 2026-06-29
 
 ### 🐛 Bug Fixes

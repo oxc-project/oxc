@@ -7,7 +7,6 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
-    borrow::Cow,
     iter, mem,
     path::Path,
     ptr::{self, NonNull},
@@ -64,7 +63,7 @@ mod tester;
 
 mod lint_runner;
 
-pub use crate::config::plugins::normalize_plugin_name;
+pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
     DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
@@ -81,7 +80,7 @@ pub use crate::{
         JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
+    fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -145,15 +144,6 @@ fn cmp_diagnostics_for_runtime_optimization_assertion(
         .then_with(|| left.error.url.cmp(&right.error.url))
         .then_with(|| left.span.cmp(&right.span))
         .then_with(|| left.fixes.cmp_fix_sequence(&right.fixes))
-        .then_with(|| left.section_offset.cmp(&right.section_offset))
-        .then_with(|| {
-            left.rule.as_ref().map(|rule| (rule.plugin_name.as_ref(), rule.rule_name.as_ref())).cmp(
-                &right
-                    .rule
-                    .as_ref()
-                    .map(|rule| (rule.plugin_name.as_ref(), rule.rule_name.as_ref())),
-            )
-        })
 }
 
 /// Per-thread scratch buffers for dispatching rules to AST nodes by node type.
@@ -640,7 +630,7 @@ impl Linter {
                 hashbang.span.end,
                 CommentKind::Line,
             ));
-            comments_with_hashbang.extend(original_program.comments.iter().copied());
+            comments_with_hashbang.extend_from_slice_copy(&original_program.comments);
 
             original_program.comments.clear();
 
@@ -890,19 +880,13 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(
-                        Message::new(
-                            OxcDiagnostic::error(diagnostic.message)
-                                .with_label(span)
-                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                .with_severity(severity.into()),
-                            possible_fixes,
-                        )
-                        .with_rule(MessageRule {
-                            plugin_name: Cow::Owned(plugin_name.to_string()),
-                            rule_name: Cow::Owned(rule_name.to_string()),
-                        }),
-                    );
+                    ctx_host.push_diagnostic(Message::new(
+                        OxcDiagnostic::error(diagnostic.message)
+                            .with_label(span)
+                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                            .with_severity(severity.into()),
+                        possible_fixes,
+                    ));
                 }
             }
             Err(err) => {

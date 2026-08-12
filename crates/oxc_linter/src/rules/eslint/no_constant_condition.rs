@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, Expression, Function, YieldExpression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -246,7 +246,7 @@ struct YieldBeforeLoopExitFinder {
     after_span: Option<Span>,
 }
 
-impl<'a> Visit<'a> for YieldBeforeLoopExitFinder {
+impl<'a> VisitJs<'a> for YieldBeforeLoopExitFinder {
     fn visit_yield_expression(&mut self, expr: &YieldExpression<'a>) {
         if self.after_span.is_none_or(|after_span| expr.span.start > after_span.start) {
             self.found = true;

@@ -1,3 +1,4 @@
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
 #[inline(always)]
@@ -81,12 +82,31 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
     }
     *bm.add(wb) &= !hi;
 }
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline]
 pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {
         let v = _mm256_loadu_si256(bm.add(w) as *const __m256i);
         if _mm256_testz_si256(v, v) == 0 {
+            return true;
+        }
+        w += 4;
+    }
+    while w < nw {
+        if *bm.add(w) != 0 {
+            return true;
+        }
+        w += 1;
+    }
+    false
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline]
+pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
+    let mut w = 0usize;
+    while w + 4 <= nw {
+        if (*bm.add(w) | *bm.add(w + 1) | *bm.add(w + 2) | *bm.add(w + 3)) != 0 {
             return true;
         }
         w += 4;

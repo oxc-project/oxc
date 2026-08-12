@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* a comment between a function argument and its comma stays BEFORE the comma */
+a {
+  color: rgb(1 /* c */, 2, 3);
+  color: rgb(1, /* c */ 2, 3);
+  background: url(a.png /* c */, b.png);
+  width: var(--x /* c */, 10px);
+  /* the kept var() trailing comma counts too */
+  height: var(--y /* c */,);
+  color: color-mix(in srgb /* space */, red 50% /* half */, blue);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* a comment between a function argument and its comma stays BEFORE the comma */
+a {
+  color: rgb(1 /* c */, 2, 3);
+  color: rgb(1, /* c */ 2, 3);
+  background: url(a.png /* c */, b.png);
+  width: var(--x /* c */, 10px);
+  /* the kept var() trailing comma counts too */
+  height: var(--y /* c */,);
+  color: color-mix(in srgb /* space */, red 50% /* half */, blue);
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* a comment between a function argument and its comma stays BEFORE the comma */
+a {
+  color: rgb(1 /* c */, 2, 3);
+  color: rgb(1, /* c */ 2, 3);
+  background: url(a.png /* c */, b.png);
+  width: var(--x /* c */, 10px);
+  /* the kept var() trailing comma counts too */
+  height: var(--y /* c */,);
+  color: color-mix(in srgb /* space */, red 50% /* half */, blue);
+}
+
+===================== End =====================

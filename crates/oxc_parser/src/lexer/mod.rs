@@ -11,10 +11,13 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::RegExpFlags;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 
-use crate::{UniquePromise, config::LexerConfig as Config, diagnostics};
+use crate::{
+    UniquePromise,
+    config::LexerConfig as Config,
+    diagnostics::{self, ParserDiagnostic},
+};
 
 mod byte_handlers;
 mod comment;
@@ -48,17 +51,17 @@ use trivia_builder::TriviaBuilder;
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
-    errors_snapshot: ErrorSnapshot,
+    errors_snapshot: ErrorSnapshot<'a>,
     tokens_len: usize,
     pure_comment: Option<usize>,
     has_no_side_effects_comment: bool,
 }
 
 #[derive(Debug, Clone)]
-enum ErrorSnapshot {
+enum ErrorSnapshot<'a> {
     Empty,
     Count(usize),
-    Full(Vec<OxcDiagnostic>),
+    Full(Vec<ParserDiagnostic<'a>>),
 }
 
 /// Action to take when finishing a token.
@@ -80,14 +83,14 @@ pub struct Lexer<'a, C: Config> {
 
     token: Token,
 
-    pub(crate) errors: Vec<OxcDiagnostic>,
+    pub(crate) errors: Vec<ParserDiagnostic<'a>>,
 
     /// Errors that are only emitted if the file is determined to be a Module.
     /// For `ModuleKind::Unambiguous`, HTML-like comments are allowed during lexing,
     /// but if ESM syntax is found later, these comments become invalid.
     /// If resolved to Module → emit these errors.
     /// If resolved to Script → discard these errors.
-    pub(crate) deferred_module_errors: Vec<OxcDiagnostic>,
+    pub(crate) deferred_module_errors: Vec<ParserDiagnostic<'a>>,
 
     pub(crate) trivia_builder: TriviaBuilder<'a>,
 
@@ -173,7 +176,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Get errors.
     /// Only used in benchmarks.
     #[cfg(feature = "benchmarking")]
-    pub fn errors(&self) -> &[OxcDiagnostic] {
+    pub fn errors(&self) -> &[ParserDiagnostic<'a>] {
         &self.errors
     }
 
@@ -386,7 +389,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     // ---------- Private Methods ---------- //
-    fn error(&mut self, error: OxcDiagnostic) {
+    fn error(&mut self, error: ParserDiagnostic<'a>) {
         self.errors.push(error);
     }
 
@@ -607,8 +610,16 @@ impl<'a, C: Config> Lexer<'a, C> {
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
 ///
+/// Unlike [`cold_path`], which only guides branch layout, this `#[cold]` trampoline also moves
+/// the closure's code and stack usage out of the caller's frame (unless compiler chooses to
+/// inline it). Use `cold_path` for pure branch hints. Use `cold_branch` where keeping large
+/// stack objects (e.g. an `OxcDiagnostic` return buffer) out of the hot function's stack frame
+/// is the aim.
+///
 /// "Cold trampoline function", suggested in:
 /// <https://users.rust-lang.org/t/is-cold-the-only-reliable-way-to-hint-to-branch-predictor/106509/2>
+///
+/// [`cold_path`]: oxc_data_structures::branch_hints::cold_path
 #[cold]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()

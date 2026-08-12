@@ -25,7 +25,7 @@ use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, ReplaceWith, TakeIn, Unstab
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_str::Str;
+use oxc_str::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeId};
 
 use super::{js::*, literal::*};
@@ -1042,7 +1042,7 @@ pub enum TSSignature<'a> {
 /// [playground link](https://oxc-playground.netlify.app/?code=3YCAAIC9gICAgICAgIC6nsrEgtem3AB/pQsrWlLnujiFhkHVtfeFMq5RMD7X5AzJnZ5R/ecQ5KG1FUFjzXvrxFXH0m6HpS+Ob3TC8gQXeRQygA%3D%3D)
 /// ```ts
 /// type MapOf<T> = {
-/// //   _________ parameters (vec with 1 element)
+/// //   _________ parameter
 ///     [K: string]: T
 /// //               - type_annotation
 /// }
@@ -1055,7 +1055,8 @@ pub enum TSSignature<'a> {
 pub struct TSIndexSignature<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub parameters: Vec<'a, TSIndexSignatureName<'a>>,
+    #[estree(rename = "parameters", via = TSIndexSignatureParameters)]
+    pub parameter: TSIndexSignatureName<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     pub readonly: bool,
     pub r#static: bool,
@@ -1147,8 +1148,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 pub struct TSIndexSignatureName<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(json_safe)]
-    pub name: Str<'a>,
+    pub name: Ident<'a>,
     pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 
@@ -1159,7 +1159,8 @@ pub struct TSIndexSignatureName<'a> {
 pub struct TSInterfaceHeritage<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub expression: Expression<'a>,
+    #[estree(rename = "expression", via = TSInterfaceHeritageExpression)]
+    pub type_name: TSTypeName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -1210,50 +1211,77 @@ pub enum TSTypePredicateName<'a> {
     This(Box<'a, TSThisType>) = 1,
 }
 
-/// TypeScript Module and Namespace Declarations
+/// TypeScript external module declaration.
 ///
 /// ## Examples
 /// ```ts
 /// declare module 'foo' { }
-/// // kind ^^^^^^ ^^^^^ id
+/// declare module '*.css';
 /// ```
-///
-/// ```ts
-/// namespace Foo { }
-/// declare namespace Bar { }
-/// // kind ^^^^^^^^^ ^^^ id
-/// ```
-///
-/// ## References
-/// * [TypeScript Handbook - Namespaces](https://www.typescriptlang.org/docs/handbook/2/modules.html#namespaces)
-/// * [TypeScript Handbook - Module Augmentation](https://www.typescriptlang.org/docs/handbook/declaration-merging.html#module-augmentation)
 #[ast(visit)]
 #[scope(
     flags = ScopeFlags::TsModuleBlock,
-    strict_if = self.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive),
+    strict_if = self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(via = TSModuleDeclarationConverter, add_fields(global = False))]
-pub struct TSModuleDeclaration<'a> {
+#[estree(
+    rename = "TSModuleDeclaration",
+    ts_alias = "TSModuleDeclaration",
+    via = TSExternalModuleDeclarationConverter,
+    add_ts_def = "
+        type TSModuleDeclarationKind = 'module' | 'namespace';
+
+        export interface TSModuleDeclaration extends Span {
+            type: 'TSModuleDeclaration';
+            id: BindingIdentifier | StringLiteral | TSQualifiedName;
+            body: TSModuleBlock | null;
+            kind: TSModuleDeclarationKind;
+            declare: boolean;
+            global: false;
+            parent/* IF !LINTER */?/* END IF */: Node;
+        }
+    "
+)]
+pub struct TSExternalModuleDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    /// The name of the module/namespace being declared.
-    #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
-    pub id: TSModuleDeclarationName<'a>,
+    pub id: StringLiteral<'a>,
     #[scope(enter_before)]
-    #[estree(ts_type = "TSModuleBlock | null")]
-    pub body: Option<TSModuleDeclarationBody<'a>>,
-    /// The keyword used to define this module declaration.
-    ///
-    /// ```ts
-    /// namespace Foo {}
-    /// ^^^^^^^^^
-    /// module 'foo' {}
-    /// ^^^^^^
-    /// ```
-    pub kind: TSModuleDeclarationKind,
+    pub body: Option<Box<'a, TSModuleBlock<'a>>>,
+    pub declare: bool,
+    pub scope_id: Cell<Option<ScopeId>>,
+}
+
+/// TypeScript namespace or identifier-based module declaration.
+///
+/// ## Examples
+/// ```ts
+/// module Foo { }
+/// namespace Bar { }
+/// namespace Foo.Bar { }
+/// ```
+#[ast(visit)]
+#[scope(
+    flags = ScopeFlags::TsModuleBlock,
+    strict_if = self.body.has_use_strict_directive(),
+)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "TSModuleDeclaration",
+    ts_alias = "TSModuleDeclaration",
+    via = TSNamespaceDeclarationConverter
+)]
+pub struct TSNamespaceDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub id: BindingIdentifier<'a>,
+    #[scope(enter_before)]
+    pub body: TSNamespaceDeclarationBody<'a>,
+    pub kind: TSNamespaceDeclarationKind,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1261,40 +1289,12 @@ pub struct TSModuleDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
-pub enum TSModuleDeclarationKind {
-    /// `module Foo {}`, `declare module 'foo' {}`
+#[estree(no_ts_def)]
+pub enum TSNamespaceDeclarationKind {
+    /// `module Foo {}`
     Module = 0,
     /// `namespace Foo {}`
     Namespace = 1,
-}
-
-/// The name of a TypeScript [namespace or module declaration](TSModuleDeclaration).
-///
-/// Note that it is a syntax error for namespace declarations to have a string literal name.
-/// Modules may have either kind.
-///
-/// ## Examples
-/// ```ts
-/// // TSModuleDeclarationName::StringLiteral
-/// declare module "*.css" {
-///     const styles: { [key: string]: string };
-///     export default styles;
-/// }
-/// ```
-///
-/// ```ts
-/// // TSModuleDeclarationName::Identifier
-/// namespace Foo {
-///    export const bar = 42;
-/// }
-/// ```
-#[ast(visit)]
-#[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn, ContentEq, ESTree, GetSpan, GetSpanMut)]
-#[estree(no_ts_def)]
-pub enum TSModuleDeclarationName<'a> {
-    Identifier(BindingIdentifier<'a>) = 0,
-    StringLiteral(StringLiteral<'a>) = 1,
 }
 
 #[ast(visit)]
@@ -1302,8 +1302,8 @@ pub enum TSModuleDeclarationName<'a> {
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
 #[estree(no_ts_def)]
-pub enum TSModuleDeclarationBody<'a> {
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
+pub enum TSNamespaceDeclarationBody<'a> {
+    TSNamespaceDeclaration(Box<'a, TSNamespaceDeclaration<'a>>) = 0,
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
@@ -1342,7 +1342,8 @@ pub struct TSGlobalDeclaration<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// Body block of a [`TSModuleDeclaration`] or [`TSGlobalDeclaration`].
+/// Body block of a [`TSExternalModuleDeclaration`], [`TSNamespaceDeclaration`], or
+/// [`TSGlobalDeclaration`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]

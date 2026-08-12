@@ -1,14 +1,24 @@
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 use core::arch::x86_64::*;
 
 use crate::error::diag_code;
 use crate::lanes::Lanes;
 use crate::opmap::{KW_KIND_BASE, PUNCT1_KIND_UNKNOWN};
-use crate::tables::{PH_A, PH_B, PH_T0, PH_T1, Tables, is_digit, is_id_start, is_op_char, is_word};
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+use crate::opmap::{PUNCT1, PUNCT1_NKNOWN};
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+use crate::tables::{PH_A, PH_B, PH_T0, PH_T1};
+use crate::tables::{Tables, is_id_start};
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+use crate::tables::{is_digit, is_kw_init, is_kw_init_ts, is_op_char, is_word, is_ws};
 
 use super::bitmap::{bm_clear_range, bm_next0, bm_prev1, bm_set1};
-use super::find::{load256, mm, scan_ident_esc, veq};
+use super::find::scan_ident_esc;
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+use super::find::{load256, mm, veq};
 use super::{IDENT, IDENT_ESC, NUM, PRIV_IDENT, PRIV_IDENT_ESC, WS};
 
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 #[inline(always)]
 unsafe fn vpunct1(
     v: __m256i,
@@ -26,6 +36,7 @@ unsafe fn vpunct1(
     let ctl = _mm256_cmpgt_epi8(_mm256_set1_epi8(0x20), v);
     _mm256_blendv_epi8(ord, v96, ctl)
 }
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
 pub(super) unsafe fn classify(
     t: &Tables,
     ts: bool,
@@ -47,6 +58,12 @@ pub(super) unsafe fn classify(
     let mut cs: u64 = 0;
     let mut i = 0usize;
     let mut b = 0usize;
+    // Process ceil(n/64) blocks. When n is not a multiple of 64 the final
+    // block overreads up to 63 bytes into the caller-guaranteed zeroed PAD
+    // and is masked below — this replaces the byte-at-a-time scalar tail,
+    // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
+    // near 63) and dominated small-file lexing.
+    let nb_ceil = n.div_ceil(64);
     let v_pha = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_A.as_ptr() as *const __m128i));
     let v_phb = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_B.as_ptr() as *const __m128i));
     let v_pht0 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T0.as_ptr() as *const __m128i));
@@ -67,7 +84,7 @@ pub(super) unsafe fn classify(
     let v_ones = _mm256_set1_epi8(0xffu8 as i8);
     let v_zero = _mm256_setzero_si256();
     let v_x0f = _mm256_set1_epi8(0x0f);
-    while i + 64 <= n {
+    while b < nb_ceil {
         let v0 = load256(src, i);
         let v1 = load256(src, i + 32);
         let hn0 = _mm256_and_si256(_mm256_srli_epi16::<4>(v0), v_x0f);
@@ -121,53 +138,186 @@ pub(super) unsafe fn classify(
         i += 64;
         b += 1;
     }
+    // Mask the overread positions [n, ceil) out of the last block's bitmaps.
+    // Zero PAD bytes classify as `st`=1 (non-word, non-ws => token start),
+    // which would otherwise mint spurious tokens past `n` in `compress`; the
+    // other six bitmaps are already 0 for a zero byte, but masking all seven
+    // makes the last word bit-identical to the old scalar tail's output (real
+    // bits [0, rem), zeros above) regardless of LUT contents. `kind` past `n`
+    // is never read — `compress` only visits masked `st` starts — so it needs
+    // no fixup.
+    let rem = n & 63;
+    if rem != 0 {
+        let last = nb_ceil - 1;
+        let m = (1u64 << rem) - 1;
+        *word.add(last) &= m;
+        *st.add(last) &= m;
+        *kwinit.add(last) &= m;
+        *opch.add(last) &= m;
+        *digit.add(last) &= m;
+        *dot.add(last) &= m;
+        *misc.add(last) &= m;
+    }
+}
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const FL_WORD: u32 = 0;
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const FL_WS: u32 = 1;
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const FL_DIGIT: u32 = 2;
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const FL_DOT: u32 = 3;
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const FL_OPCH: u32 = 4;
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const FL_KWINIT: u32 = 5;
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const FL_MISC: u32 = 6;
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+const fn cls_table(ts: bool) -> [u16; 256] {
+    let mut punct = [PUNCT1_KIND_UNKNOWN; 256];
+    let mut i = 0;
+    while i < PUNCT1_NKNOWN {
+        punct[PUNCT1[i].0 as usize] = PUNCT1[i].1 as u8;
+        i += 1;
+    }
+    let mut t = [0u16; 256];
+    let mut c = 0usize;
+    while c < 256 {
+        let b = c as u8;
+        let mut f = 0u16;
+        if is_word(b) {
+            f |= 1 << FL_WORD;
+        }
+        if is_ws(b) {
+            f |= 1 << FL_WS;
+        }
+        if is_digit(b) {
+            f |= 1 << FL_DIGIT;
+        }
+        if b == b'.' {
+            f |= 1 << FL_DOT;
+        }
+        if is_op_char(b) {
+            f |= 1 << FL_OPCH;
+        }
+        if (ts && is_kw_init_ts(b)) || (!ts && is_kw_init(b)) {
+            f |= 1 << FL_KWINIT;
+        }
+        if b == b'#' || b == b'\\' || b >= 0x80 {
+            f |= 1 << FL_MISC;
+        }
+        let kd = if is_ws(b) {
+            WS
+        } else if is_word(b) {
+            if is_digit(b) { NUM } else { IDENT }
+        } else {
+            punct[c]
+        };
+        t[c] = (f << 8) | kd as u16;
+        c += 1;
+    }
+    t
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+static CLS_JS: [u16; 256] = cls_table(false);
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+static CLS_TS: [u16; 256] = cls_table(true);
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline(always)]
+fn pk(fw: u64, bit: u32) -> u64 {
+    (((fw >> bit) & 0x0101_0101_0101_0101).wrapping_mul(0x0102_0408_1020_4080)) >> 56
+}
+
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+pub(super) unsafe fn classify(
+    _t: &Tables,
+    ts: bool,
+    src: *const u8,
+    n: usize,
+    word: *mut u64,
+    st: *mut u64,
+    kwinit: *mut u64,
+    opch: *mut u64,
+    digit: *mut u64,
+    dot: *mut u64,
+    misc: *mut u64,
+    kind: *mut u8,
+) {
+    let t16: &[u16; 256] = if ts { &CLS_TS } else { &CLS_JS };
+    let mut cw: u64 = 0;
+    let mut cs: u64 = 0;
+    let nbf = n / 64;
+    for b in 0..nbf {
+        let base = b * 64;
+        let (mut mw, mut ms, mut mdg, mut mdt, mut mop, mut mkw, mut mmi) =
+            (0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64);
+        let mut g = 0usize;
+        while g < 8 {
+            let p = base + g * 8;
+            let mut fw = 0u64;
+            let mut kw = 0u64;
+            let mut j = 0usize;
+            while j < 8 {
+                let v = t16[*src.add(p + j) as usize] as u64;
+                fw |= (v >> 8) << (j * 8);
+                kw |= (v & 0xff) << (j * 8);
+                j += 1;
+            }
+            core::ptr::write_unaligned(kind.add(p) as *mut u64, kw);
+            let sh = (g * 8) as u32;
+            mw |= pk(fw, FL_WORD) << sh;
+            ms |= pk(fw, FL_WS) << sh;
+            mdg |= pk(fw, FL_DIGIT) << sh;
+            mdt |= pk(fw, FL_DOT) << sh;
+            mop |= pk(fw, FL_OPCH) << sh;
+            mkw |= pk(fw, FL_KWINIT) << sh;
+            mmi |= pk(fw, FL_MISC) << sh;
+            g += 1;
+        }
+        let wprev = (mw << 1) | cw;
+        let sprev = (ms << 1) | cs;
+        *st.add(b) = (ms & !sprev) | (mw & !wprev) | (!ms & !mw);
+        cw = mw >> 63;
+        cs = ms >> 63;
+        *word.add(b) = mw;
+        *kwinit.add(b) = mkw;
+        *opch.add(b) = mop;
+        *digit.add(b) = mdg;
+        *dot.add(b) = mdt;
+        *misc.add(b) = mmi;
+    }
+    let i = nbf * 64;
     if i < n {
-        let mut w: u64 = 0;
-        let mut stw: u64 = 0;
-        let mut kwi: u64 = 0;
-        let mut opw: u64 = 0;
-        let mut dgw: u64 = 0;
-        let mut dtw: u64 = 0;
-        let mut msw: u64 = 0;
+        let b = nbf;
+        let tail = n - i;
+        let (mut w, mut stw, mut kwi, mut opw, mut dgw, mut dtw, mut msw) =
+            (0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64);
         let mut prev_word = cw & 1;
         let mut prev_ws = cs & 1;
-        let tail = n - i;
         for kk in 0..tail {
-            let c = *src.add(i + kk);
-            let isw = is_word(c);
-            let isws = crate::tables::is_ws(c);
-            if isw {
-                w |= 1u64 << kk;
-            }
-            if if ts { crate::tables::is_kw_init_ts(c) } else { crate::tables::is_kw_init(c) } {
-                kwi |= 1u64 << kk;
-            }
-            if is_op_char(c) {
-                opw |= 1u64 << kk;
-            }
-            if is_digit(c) {
-                dgw |= 1u64 << kk;
-            }
-            if c == b'.' {
-                dtw |= 1u64 << kk;
-            }
-            if c == b'#' || c == b'\\' || c >= 0x80 {
-                msw |= 1u64 << kk;
-            }
-            let start = (isws && prev_ws == 0) || (isw && prev_word == 0) || (!isws && !isw);
+            let v = t16[*src.add(i + kk) as usize];
+            let f = (v >> 8) as u64;
+            w |= ((f >> FL_WORD) & 1) << kk;
+            kwi |= ((f >> FL_KWINIT) & 1) << kk;
+            opw |= ((f >> FL_OPCH) & 1) << kk;
+            dgw |= ((f >> FL_DIGIT) & 1) << kk;
+            dtw |= ((f >> FL_DOT) & 1) << kk;
+            msw |= ((f >> FL_MISC) & 1) << kk;
+            let isw = (f >> FL_WORD) & 1;
+            let isws = (f >> FL_WS) & 1;
+            let start = (isws != 0 && prev_ws == 0)
+                || (isw != 0 && prev_word == 0)
+                || (isws == 0 && isw == 0);
             if start {
                 stw |= 1u64 << kk;
             }
-            let kd = if isws {
-                WS
-            } else if isw {
-                if is_digit(c) { NUM } else { IDENT }
-            } else {
-                t.op.punct1_ord[c as usize]
-            };
-            *kind.add(i + kk) = kd;
-            prev_word = isw as u64;
-            prev_ws = isws as u64;
+            *kind.add(i + kk) = (v & 0xff) as u8;
+            prev_word = isw;
+            prev_ws = isws;
         }
         *word.add(b) = w;
         *st.add(b) = stw;

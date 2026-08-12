@@ -58,7 +58,7 @@ export type TailwindcssOptions = SortTailwindcssConfig;
 /**
  * Define an oxfmt configuration with type inference.
  */
-export function defineConfig<T extends OxfmtConfig>(config: T): T {
+export function defineConfig<T extends OxfmtConfig>(config: T & OxfmtConfig): T {
   return config;
 }
 
@@ -93,7 +93,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     options ?? {},
     (options, code) => toFormatFileResult(formatFile({ options, code })),
     (options, code) => toNullable(formatEmbeddedCode({ options, code })),
-    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }
@@ -115,7 +115,7 @@ export async function jsTextToDoc(
     parentContext,
     () => toFormatFileResult(Promise.reject("formatFile is unavailable for jsTextToDoc")),
     (options, code) => toNullable(formatEmbeddedCode({ options, code })),
-    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }

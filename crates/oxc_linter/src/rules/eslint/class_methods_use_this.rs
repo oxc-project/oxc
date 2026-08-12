@@ -6,7 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{AccessorProperty, Expression, PropertyDefinition, TSAccessibility},
+    ast::{
+        AccessorProperty, ArrowFunctionBody, Expression, FunctionBody, PropertyDefinition,
+        TSAccessibility,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -174,6 +177,11 @@ impl Rule for ClassMethodsUseThis {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        enum FunctionLikeBody<'a, 'b> {
+            Function(&'b FunctionBody<'a>),
+            Arrow(&'b ArrowFunctionBody<'a>),
+        }
+
         let function_pair = match node.kind() {
             AstKind::AccessorProperty(accessor) => {
                 if accessor.r#static
@@ -190,11 +198,12 @@ impl Rule for ClassMethodsUseThis {
                 }
                 accessor.value.as_ref().and_then(|value| match value {
                     Expression::ArrowFunctionExpression(arrow_function) => {
-                        Some((&arrow_function.body, &accessor.key))
+                        Some((FunctionLikeBody::Arrow(&arrow_function.body), &accessor.key))
                     }
-                    Expression::FunctionExpression(function_expression) => {
-                        Some((function_expression.body.as_ref()?, &accessor.key))
-                    }
+                    Expression::FunctionExpression(function_expression) => Some((
+                        FunctionLikeBody::Function(function_expression.body.as_deref()?),
+                        &accessor.key,
+                    )),
                     _ => None,
                 })
             }
@@ -212,7 +221,7 @@ impl Rule for ClassMethodsUseThis {
                     return;
                 }
                 let Some(function_body) = method_definition.value.body.as_ref() else { return };
-                Some((function_body, &method_definition.key))
+                Some((FunctionLikeBody::Function(function_body), &method_definition.key))
             }
             AstKind::PropertyDefinition(property_definition) => {
                 if property_definition.r#static
@@ -228,12 +237,14 @@ impl Rule for ClassMethodsUseThis {
                     return;
                 }
                 property_definition.value.as_ref().and_then(|value| match value {
-                    Expression::ArrowFunctionExpression(arrow_function) => {
-                        Some((&arrow_function.body, &property_definition.key))
-                    }
-                    Expression::FunctionExpression(function_expression) => {
-                        Some((function_expression.body.as_ref()?, &property_definition.key))
-                    }
+                    Expression::ArrowFunctionExpression(arrow_function) => Some((
+                        FunctionLikeBody::Arrow(&arrow_function.body),
+                        &property_definition.key,
+                    )),
+                    Expression::FunctionExpression(function_expression) => Some((
+                        FunctionLikeBody::Function(function_expression.body.as_deref()?),
+                        &property_definition.key,
+                    )),
                     _ => None,
                 })
             }
@@ -248,7 +259,10 @@ impl Rule for ClassMethodsUseThis {
             return;
         }
         let mut finder = ThisFinder::new();
-        finder.visit_function_body(function_body);
+        match function_body {
+            FunctionLikeBody::Function(body) => finder.visit_function_body(body),
+            FunctionLikeBody::Arrow(body) => finder.visit_arrow_function_body(body),
+        }
         if !finder.has_this {
             ctx.diagnostic(class_methods_use_this_diagnostic(name.span(), name.name()));
         }
@@ -341,6 +355,7 @@ fn test() {
         ("class A { static foo = function() {} }", None),
         ("class A { static foo = () => {} }", None),
         ("class A { foo() { return class { [this.foo] = 1 }; } }", None),
+        ("class A { foo() { let x: typeof this.bar; } }", None),
         ("class A { static {} }", None),
         ("class A { accessor foo = function() {this} }", None),
         ("class A { accessor foo = () => {this} }", None),

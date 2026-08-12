@@ -16,7 +16,7 @@ use crate::{
 };
 
 pub type DiagnosticSender = mpsc::Sender<Vec<Error>>;
-pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
+type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 
 /// Listens for diagnostics sent over a [channel](DiagnosticSender) by some job, and
 /// formats/reports them to the user.
@@ -27,37 +27,33 @@ pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
 ///
 /// # Example
 /// ```rust,ignore
-/// use std::{path::PathBuf, thread};
-/// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService, GraphicalReportHandler};
+/// use std::{io, thread};
+/// use oxc_diagnostics::{OxcDiagnostic, DiagnosticService, GraphicalReportHandler};
 ///
 /// // Create a service with a graphical reporter
 /// let (mut service, sender) = DiagnosticService::new(Box::new(GraphicalReportHandler::new()));
 ///
 /// // Spawn a thread that does work and reports diagnostics
 /// thread::spawn(move || {
-///     sender.send((
-///         PathBuf::from("file.txt"),
-///         vec![Error::new(OxcDiagnostic::error("Something went wrong"))],
-///     ));
+///     sender.send(vec![OxcDiagnostic::error("Something went wrong").into()]).unwrap();
 ///
 ///     // The service will stop listening when all senders are dropped.
 ///     // No explicit termination signal is needed.
 /// });
 ///
 /// // Listen for and process messages
-/// service.run()
+/// service.run(&mut io::stdout().lock());
 /// ```
 pub struct DiagnosticService {
     reporter: Box<dyn DiagnosticReporter>,
 
-    /// Disable reporting on warnings, only errors are reported
+    /// Whether to suppress warnings and report only errors.
     quiet: bool,
 
-    /// Do not display any diagnostics
+    /// Whether to suppress all diagnostics.
     silent: bool,
 
-    /// Specify a warning threshold,
-    /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
+    /// Warning threshold used to determine the exit status.
     max_warnings: Option<usize>,
 
     receiver: DiagnosticReceiver,
@@ -113,9 +109,7 @@ impl DiagnosticService {
         self.max_warnings.is_some_and(|max_warnings| warnings_count > max_warnings)
     }
 
-    /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.
-    ///
-    /// [diagnostics]: OxcDiagnostic
+    /// Attach the source code and path to diagnostics, converting them into [`Error`]s.
     pub fn wrap_diagnostics<C: AsRef<Path>, P: AsRef<Path>>(
         cwd: C,
         path: P,
@@ -146,11 +140,8 @@ impl DiagnosticService {
     ///
     /// * When the writer fails to write
     ///
-    /// ToDo:
-    /// We are passing [`DiagnosticResult`] to the [`DiagnosticReporter`] already
-    /// currently for the GraphicalReporter there is another extra output,
-    /// which does some more things. This is the reason why we are returning it.
-    /// Let's check at first it we can easily change for the default output before removing this return.
+    /// The result is also passed to the reporter, but remains part of this API because callers use
+    /// it to determine their exit status.
     pub fn run(&mut self, writer: &mut dyn Write) -> DiagnosticResult {
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
@@ -159,21 +150,18 @@ impl DiagnosticService {
         while let Ok(diagnostics) = self.receiver.recv() {
             let mut is_minified = false;
             for diagnostic in diagnostics {
-                let severity = diagnostic.severity();
-                let is_warning = severity == Some(Severity::Warning);
-                let is_error = severity == Some(Severity::Error) || severity.is_none();
-                if is_warning || is_error {
-                    if is_warning {
+                match diagnostic.severity() {
+                    Some(Severity::Warning) => {
                         warnings_count += 1;
+                        // `--quiet` follows ESLint by suppressing warnings but not errors.
+                        if self.quiet {
+                            continue;
+                        }
                     }
-                    if is_error {
+                    Some(Severity::Error) | None => {
                         errors_count += 1;
                     }
-                    // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
-                    // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    else if self.quiet {
-                        continue;
-                    }
+                    Some(Severity::Advice) => {}
                 }
 
                 if self.silent || is_minified {
@@ -198,7 +186,7 @@ impl DiagnosticService {
                                 diagnostic.with_help(format!("{path} seems like a minified file"));
                         }
 
-                        let minified_diagnostic = Error::new(diagnostic);
+                        let minified_diagnostic = diagnostic.into();
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
                             writer
@@ -445,7 +433,7 @@ mod tests {
         }
         let (mut service, sender) =
             DiagnosticService::new(Box::new(LongLineReporter { fallback_enabled: false }));
-        sender.send(vec![Error::new(OxcDiagnostic::warn("original diagnostic"))]).unwrap();
+        sender.send(vec![OxcDiagnostic::warn("original diagnostic").into()]).unwrap();
         drop(sender);
 
         let mut output = Vec::new();

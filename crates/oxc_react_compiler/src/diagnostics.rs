@@ -18,6 +18,8 @@
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_span::Span;
 
+use crate::options::PanicThreshold;
+
 /// Error categories matching the TS `ErrorCategory` enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorCategory {
@@ -122,28 +124,16 @@ pub fn has_critical_errors(diagnostics: &[OxcDiagnostic]) -> bool {
         .any(|d| d.severity == Severity::Error && !ErrorCategory::PreserveManualMemo.matches(d))
 }
 
-/// Format a thrown diagnostic as a string matching the TS
-/// `CompilerError.toString()` output, used for the `data` field of
-/// `CompileUnexpectedThrow` events: `"<Heading>: <reason>. <description>."`.
-/// The reason is the message minus the deterministic prefix added by
-/// [`ErrorCategory::diagnostic`].
-pub fn to_string_for_event(diagnostic: &OxcDiagnostic) -> String {
-    let category = ErrorCategory::of(diagnostic);
-    let heading = match category {
-        Some("IncompatibleLibrary" | "PreserveManualMemo" | "UnsupportedSyntax") => {
-            "Compilation Skipped"
+/// Whether diagnostics should abort compilation for the configured panic threshold.
+///
+/// Config errors are always fatal, matching the upstream compiler.
+pub fn should_panic(diagnostics: &[OxcDiagnostic], panic_threshold: PanicThreshold) -> bool {
+    diagnostics.iter().any(|d| ErrorCategory::Config.matches(d))
+        || match panic_threshold {
+            PanicThreshold::AllErrors => true,
+            PanicThreshold::CriticalErrors => has_critical_errors(diagnostics),
+            PanicThreshold::None => false,
         }
-        Some(heading @ ("Invariant" | "Todo")) => heading,
-        _ => "Error",
-    };
-    let reason = category
-        .and_then(|c| diagnostic.message.strip_prefix(&format!("[ReactCompiler] {c}: ")))
-        .unwrap_or(&diagnostic.message);
-    let mut buf = format!("{heading}: {reason}");
-    if let Some(help) = &diagnostic.help {
-        buf.push_str(&format!(". {help}."));
-    }
-    buf
 }
 
 /// Owned copy of a diagnostic for the log accumulator, labelling the enclosing

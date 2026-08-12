@@ -1,0 +1,16 @@
+/* oxc#25272: interpolation combined with a PostCSS-style `key: value`
+   argument in an unknown at-rule prelude must parse (raw fallback) and
+   print verbatim, like every other unknown at-rule prelude. */
+@insert-tokens theme: 'y';
+@insert-tokens '#{$t}';
+@insert-tokens theme: '#{$t}';
+@insert-tokens theme: #{$t};
+@insert-tokens a: '#{$t}', b: '#{$u}';
+@insert-tokens a: b('#{$t}');
+@insert-tokens a: #fff;
+@insert-tokens a: '#fff';
+@mixin m($name) {
+  #{$sel} {
+    @insert-tokens theme: '#{$name}', scope: 'theme';
+  }
+}

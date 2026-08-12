@@ -88,6 +88,7 @@ declare_oxc_lint!(
     NoUnusedPrivateClassMembers,
     eslint,
     correctness,
+    pending,
     version = "0.1.1",
     short_description = "Disallow unused private class members.",
 );
@@ -249,17 +250,7 @@ fn is_value_context(parent: &AstNode, child: &AstNode, semantic: &Semantic<'_>) 
             // The right-hand side of an assignment is always in a value context (being read for assignment)
             assign_expr.right.span().contains_inclusive(child.span())
         }
-        AstKind::ExpressionStatement(_) => {
-            let grandparent = semantic.nodes().parent_node(parent.id());
-            if let AstKind::FunctionBody(_) = grandparent.kind()
-                && let AstKind::ArrowFunctionExpression(arrow) =
-                    semantic.nodes().parent_kind(grandparent.id())
-                && arrow.expression
-            {
-                return true;
-            }
-            false
-        }
+        AstKind::ArrowFunctionExpression(arrow) => arrow.is_expression(),
         AstKind::ParenthesizedExpression(_)
         | AstKind::TSAsExpression(_)
         | AstKind::TSSatisfiesExpression(_)

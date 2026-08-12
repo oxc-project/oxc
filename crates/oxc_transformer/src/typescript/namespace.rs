@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{SPAN, Span};
 use oxc_syntax::{
@@ -44,7 +44,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
 
         for stmt in program.body.take_in(ctx) {
             match stmt {
-                Statement::TSModuleDeclaration(decl) => {
+                Statement::TSExternalModuleDeclaration(decl) => {
+                    if !self.allow_namespaces {
+                        ctx.state.error(namespace_not_supported(decl.span));
+                    }
+
+                    Self::handle_external(&decl, ctx);
+                    continue;
+                }
+                Statement::TSNamespaceDeclaration(decl) => {
                     if !self.allow_namespaces {
                         ctx.state.error(namespace_not_supported(decl.span));
                     }
@@ -58,24 +66,36 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
                     }
                     continue;
                 }
-                Statement::ExportNamedDeclaration(export_decl)
-                    if export_decl.declaration.as_ref().is_some_and(|declaration| {
+                Statement::ExportDeclaration(export_decl)
+                    if {
+                        let declaration = &export_decl.declaration;
                         // Note: No need to check for `TSGlobalDeclaration` here, as it can't be exported
                         debug_assert!(!matches!(declaration, Declaration::TSGlobalDeclaration(_)));
-                        matches!(declaration, Declaration::TSModuleDeclaration(module_decl) if !module_decl.declare)
-                    }) =>
+                        matches!(declaration, Declaration::TSExternalModuleDeclaration(module_decl) if !module_decl.declare)
+                            || matches!(declaration, Declaration::TSNamespaceDeclaration(namespace_decl) if !namespace_decl.declare)
+                    } =>
                 {
-                    let Some(Declaration::TSModuleDeclaration(decl)) =
-                        export_decl.unbox().declaration
-                    else {
-                        unreachable!()
-                    };
-
-                    if !self.allow_namespaces {
-                        ctx.state.error(namespace_not_supported(decl.span));
+                    match export_decl.unbox().declaration {
+                        Declaration::TSExternalModuleDeclaration(decl) => {
+                            if !self.allow_namespaces {
+                                ctx.state.error(namespace_not_supported(decl.span));
+                            }
+                            Self::handle_external(&decl, ctx);
+                        }
+                        Declaration::TSNamespaceDeclaration(decl) => {
+                            if !self.allow_namespaces {
+                                ctx.state.error(namespace_not_supported(decl.span));
+                            }
+                            self.handle_nested(
+                                decl,
+                                /* is_export */ true,
+                                &mut new_stmts,
+                                None,
+                                ctx,
+                            );
+                        }
+                        _ => unreachable!(),
                     }
-
-                    self.handle_nested(decl, /* is_export */ true, &mut new_stmts, None, ctx);
                     continue;
                 }
                 _ => {}
@@ -89,10 +109,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace {
 }
 
 impl<'a> TypeScriptNamespace {
+    fn handle_external(decl: &TSExternalModuleDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !decl.declare {
+            ctx.state.error(ambient_module_nested(decl.span));
+        }
+    }
+
     #[expect(clippy::self_only_used_in_recursion)]
     fn handle_nested(
         &self,
-        decl: ArenaBox<'a, TSModuleDeclaration<'a>>,
+        decl: ArenaBox<'a, TSNamespaceDeclaration<'a>>,
         is_export: bool,
         parent_stmts: &mut ArenaVec<'a, Statement<'a>>,
         parent_binding: Option<&BoundIdentifier<'a>>,
@@ -102,13 +128,7 @@ impl<'a> TypeScriptNamespace {
             return;
         }
 
-        // Skip empty declaration e.g. `namespace x;`
-        let TSModuleDeclaration { span, id, body, scope_id, .. } = decl.unbox();
-
-        let TSModuleDeclarationName::Identifier(ident) = id else {
-            ctx.state.error(ambient_module_nested(span));
-            return;
-        };
+        let TSNamespaceDeclaration { span, id: ident, body, scope_id, .. } = decl.unbox();
 
         // Return early if this declaration is empty or only contains type declarations —
         // it emits no JS.
@@ -155,13 +175,9 @@ impl<'a> TypeScriptNamespace {
             }
         }
 
-        let Some(body) = body else {
-            return;
-        };
-
         let binding = BoundIdentifier::from_binding_ident(&ident);
 
-        // Reuse `TSModuleDeclaration`'s scope in transformed function
+        // Reuse `TSNamespaceDeclaration`'s scope in transformed function
         let scope_id = scope_id.get().unwrap();
         let uid_binding =
             ctx.generate_uid(&binding.name, scope_id, SymbolFlags::FunctionScopedVariable);
@@ -170,7 +186,7 @@ impl<'a> TypeScriptNamespace {
         let namespace_top_level;
 
         match body {
-            TSModuleDeclarationBody::TSModuleBlock(block) => {
+            TSNamespaceDeclarationBody::TSModuleBlock(block) => {
                 let block = block.unbox();
                 directives = block.directives;
                 namespace_top_level = block.body;
@@ -179,11 +195,10 @@ impl<'a> TypeScriptNamespace {
             //   namespace X {
             //     export namespace Y {}
             //   }
-            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => {
-                let declaration = Declaration::TSModuleDeclaration(declaration);
-                let export_named_decl =
-                    ExportNamedDeclaration::boxed_plain_declaration(SPAN, declaration, ctx);
-                let stmt = Statement::ExportNamedDeclaration(export_named_decl);
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(declaration) => {
+                let declaration = Declaration::TSNamespaceDeclaration(declaration);
+                let export_decl = ExportDeclaration::boxed(SPAN, declaration, ctx);
+                let stmt = Statement::ExportDeclaration(export_decl);
                 directives = ArenaVec::new_in(ctx);
                 namespace_top_level = ArenaVec::from_value_in(stmt, ctx);
             }
@@ -193,81 +208,77 @@ impl<'a> TypeScriptNamespace {
 
         for stmt in namespace_top_level {
             match stmt {
-                Statement::TSModuleDeclaration(decl) => {
+                Statement::TSExternalModuleDeclaration(decl) => {
+                    Self::handle_external(&decl, ctx);
+                }
+                Statement::TSNamespaceDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                 }
                 Statement::TSGlobalDeclaration(_) => {
                     // Remove it.
-                    // Note: It is legal to have a `TSGlobalDeclaration` nested within a `TSModuleDeclaration`,
-                    // where identifier is a string literal: `declare module 'foo' { global {} }`
+                    // Note: It is legal to have a `TSGlobalDeclaration` nested within an external
+                    // module: `declare module 'foo' { global {} }`.
                 }
-                Statement::ExportNamedDeclaration(export_decl) => {
-                    // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
-                    // legal syntax in TS namespaces
-                    let export_decl = export_decl.unbox();
-                    if let Some(decl) = export_decl.declaration {
-                        if decl.declare() {
-                            continue;
+                Statement::ExportDeclaration(export_decl) => {
+                    let decl = export_decl.unbox().declaration;
+                    if decl.declare() {
+                        continue;
+                    }
+                    match decl {
+                        Declaration::TSImportEqualsDeclaration(ref import_equals) => {
+                            let binding = BoundIdentifier::from_binding_ident(&import_equals.id);
+                            new_stmts.push(Statement::from(decl));
+                            Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
                         }
-                        match decl {
-                            Declaration::TSImportEqualsDeclaration(ref import_equals) => {
-                                let binding =
-                                    BoundIdentifier::from_binding_ident(&import_equals.id);
-                                new_stmts.push(Statement::from(decl));
-                                Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
-                            }
-                            Declaration::TSEnumDeclaration(ref enum_decl) => {
-                                let binding = BoundIdentifier::from_binding_ident(&enum_decl.id);
-                                new_stmts.push(Statement::from(decl));
-                                Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
-                            }
-                            Declaration::ClassDeclaration(ref class_decl) => {
-                                // Class declaration always has a binding
+                        Declaration::TSEnumDeclaration(ref enum_decl) => {
+                            let binding = BoundIdentifier::from_binding_ident(&enum_decl.id);
+                            new_stmts.push(Statement::from(decl));
+                            Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
+                        }
+                        Declaration::ClassDeclaration(ref class_decl) => {
+                            // Class declaration always has a binding
+                            let binding = BoundIdentifier::from_binding_ident(
+                                class_decl.id.as_ref().unwrap(),
+                            );
+                            new_stmts.push(Statement::from(decl));
+                            Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
+                        }
+                        Declaration::FunctionDeclaration(ref func_decl) => {
+                            if !func_decl.is_typescript_syntax() {
+                                // Function declaration always has a binding
                                 let binding = BoundIdentifier::from_binding_ident(
-                                    class_decl.id.as_ref().unwrap(),
+                                    func_decl.id.as_ref().unwrap(),
                                 );
                                 new_stmts.push(Statement::from(decl));
                                 Self::add_declaration(&uid_binding, &binding, &mut new_stmts, ctx);
                             }
-                            Declaration::FunctionDeclaration(ref func_decl) => {
-                                if !func_decl.is_typescript_syntax() {
-                                    // Function declaration always has a binding
-                                    let binding = BoundIdentifier::from_binding_ident(
-                                        func_decl.id.as_ref().unwrap(),
-                                    );
-                                    new_stmts.push(Statement::from(decl));
-                                    Self::add_declaration(
-                                        &uid_binding,
-                                        &binding,
-                                        &mut new_stmts,
-                                        ctx,
-                                    );
-                                }
-                            }
-                            Declaration::VariableDeclaration(var_decl) => {
-                                var_decl.declarations.iter().for_each(|decl| {
-                                    if !decl.kind.is_const() {
-                                        ctx.state.error(namespace_exporting_non_const(decl.span));
-                                    }
-                                });
-                                let stmts =
-                                    Self::handle_variable_declaration(var_decl, &uid_binding, ctx);
-                                new_stmts.extend(stmts);
-                            }
-                            Declaration::TSModuleDeclaration(module_decl) => {
-                                self.handle_nested(
-                                    module_decl,
-                                    /* is_export */
-                                    false,
-                                    &mut new_stmts,
-                                    Some(&uid_binding),
-                                    ctx,
-                                );
-                            }
-                            Declaration::TSTypeAliasDeclaration(_)
-                            | Declaration::TSInterfaceDeclaration(_)
-                            | Declaration::TSGlobalDeclaration(_) => {}
                         }
+                        Declaration::VariableDeclaration(var_decl) => {
+                            if !var_decl.kind.is_const() {
+                                var_decl.declarations.iter().for_each(|decl| {
+                                    ctx.state.error(namespace_exporting_non_const(decl.span));
+                                });
+                            }
+                            let stmts =
+                                Self::handle_variable_declaration(var_decl, &uid_binding, ctx);
+                            new_stmts.extend(stmts);
+                        }
+                        Declaration::TSExternalModuleDeclaration(module_decl) => {
+                            Self::handle_external(&module_decl, ctx);
+                        }
+                        Declaration::TSNamespaceDeclaration(module_decl) => {
+                            self.handle_nested(
+                                module_decl,
+                                /* is_export */
+                                false,
+                                &mut new_stmts,
+                                Some(&uid_binding),
+                                ctx,
+                            );
+                        }
+                        Declaration::TSTypeAliasDeclaration(_)
+                        | Declaration::TSInterfaceDeclaration(_)
+                        | Declaration::TSGlobalDeclaration(_) => {}
                     }
                 }
                 _ => new_stmts.push(stmt),
@@ -289,15 +300,14 @@ impl<'a> TypeScriptNamespace {
             ctx.scoping_mut().set_symbol_span(binding.symbol_id, ident.span);
             let declaration = Self::create_variable_declaration(&binding, span, ident.span, ctx);
             if is_export {
-                let export_named_decl =
-                    ExportNamedDeclaration::boxed_plain_declaration(span, declaration, ctx);
-                let stmt = Statement::ExportNamedDeclaration(export_named_decl);
+                let export_decl = ExportDeclaration::boxed(span, declaration, ctx);
+                let stmt = Statement::ExportDeclaration(export_decl);
                 parent_stmts.push(stmt);
             } else {
                 parent_stmts.push(Statement::from(declaration));
             }
         }
-        let func_body = FunctionBody::new(SPAN, directives, new_stmts, ctx);
+        let func_body = FunctionBody::boxed(SPAN, directives, new_stmts, ctx);
 
         parent_stmts.push(Self::transform_namespace(
             span,
@@ -326,12 +336,11 @@ impl<'a> TypeScriptNamespace {
         ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
-        let declarations = {
+        let decl = {
             let pattern = binding.create_spanned_binding_pattern(binding_span, ctx);
-            let decl = VariableDeclarator::new(span, kind, pattern, NONE, None, false, ctx);
-            ArenaVec::from_value_in(decl, ctx)
+            VariableDeclarator::new(span, pattern, None, None, false, ctx)
         };
-        Declaration::new_variable_declaration(span, kind, declarations, false, ctx)
+        Declaration::new_variable_declaration(span, kind, [decl], false, ctx)
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -340,7 +349,7 @@ impl<'a> TypeScriptNamespace {
         param_binding: &BoundIdentifier<'a>,
         binding: &BoundIdentifier<'a>,
         parent_binding: Option<&BoundIdentifier<'a>>,
-        func_body: FunctionBody<'a>,
+        func_body: ArenaBox<'a, FunctionBody<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
@@ -349,9 +358,14 @@ impl<'a> TypeScriptNamespace {
         let callee = {
             let params = {
                 let pattern = param_binding.create_binding_pattern(ctx);
-                let items =
-                    ArenaVec::from_value_in(FormalParameter::new_plain(SPAN, pattern, ctx), ctx);
-                FormalParameters::new(SPAN, FormalParameterKind::FormalParameter, items, NONE, ctx)
+                let item = FormalParameter::new_plain(SPAN, pattern, ctx);
+                FormalParameters::boxed(
+                    SPAN,
+                    FormalParameterKind::FormalParameter,
+                    [item],
+                    None,
+                    ctx,
+                )
             };
             let function_expr =
                 Expression::FunctionExpression(Function::boxed_plain_with_scope_id(
@@ -373,7 +387,7 @@ impl<'a> TypeScriptNamespace {
         // (function (_N) { var M; (function (_M) { var x; })(M || (M = _N.M || (_N.M = {})));})(N || (N = {}));
         //                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^
         //                                                   Nested namespace arguments         Normal namespace arguments
-        let arguments = {
+        let argument = {
             // M
             let logical_left = binding.create_read_expression(ctx);
 
@@ -393,8 +407,7 @@ impl<'a> TypeScriptNamespace {
                     binding.create_write_target(ctx)
                 };
 
-                let assign_right =
-                    Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+                let assign_right = Expression::new_object_expression(SPAN, [], ctx);
                 let op = AssignmentOperator::Assign;
                 let assign_expr =
                     Expression::new_assignment_expression(SPAN, op, assign_left, assign_right, ctx);
@@ -428,17 +441,16 @@ impl<'a> TypeScriptNamespace {
                 logical_right = Expression::new_parenthesized_expression(SPAN, logical_right, ctx);
             }
 
-            let expr = Expression::new_logical_expression(
+            Argument::new_logical_expression(
                 SPAN,
                 logical_left,
                 LogicalOperator::Or,
                 logical_right,
                 ctx,
-            );
-            ArenaVec::from_value_in(Argument::from(expr), ctx)
+            )
         };
 
-        let expr = Expression::new_call_expression(span, callee, NONE, arguments, false, ctx);
+        let expr = Expression::new_call_expression(span, callee, None, [argument], false, ctx);
         Statement::new_expression_statement(span, expr, ctx)
     }
 
@@ -547,9 +559,15 @@ impl<'a> TypeScriptNamespace {
 /// Check if the statements contain a namespace declaration
 fn has_namespace(stmts: &[Statement]) -> bool {
     stmts.iter().any(|stmt| match stmt {
-        Statement::TSModuleDeclaration(_) | Statement::TSGlobalDeclaration(_) => true,
-        Statement::ExportNamedDeclaration(decl) => {
-            matches!(decl.declaration, Some(Declaration::TSModuleDeclaration(_)))
+        Statement::TSExternalModuleDeclaration(_)
+        | Statement::TSNamespaceDeclaration(_)
+        | Statement::TSGlobalDeclaration(_) => true,
+        Statement::ExportDeclaration(decl) => {
+            matches!(
+                decl.declaration,
+                Declaration::TSExternalModuleDeclaration(_)
+                    | Declaration::TSNamespaceDeclaration(_)
+            )
         }
         _ => false,
     })

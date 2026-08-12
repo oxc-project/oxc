@@ -1,8 +1,7 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ToBigInt, ToIntegerIndex,
-    constant_evaluation::{DetermineValueType, ValueType},
+    DetermineValueType, ToBigInt, ToIntegerIndex, ValueType,
     to_numeric::ToNumeric,
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
@@ -25,7 +24,8 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             | Expression::BigIntLiteral(_)
             | Expression::NullLiteral(_)
             | Expression::RegExpLiteral(_)
-            | Expression::MetaProperty(_)
+            | Expression::ImportMeta(_)
+            | Expression::NewTarget(_)
             | Expression::ArrowFunctionExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::Super(_) => false,
@@ -47,9 +47,7 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
                 }
                 e.consequent.may_have_side_effects(ctx) || e.alternate.may_have_side_effects(ctx)
             }
-            Expression::SequenceExpression(e) => {
-                e.expressions.iter().any(|e| e.may_have_side_effects(ctx))
-            }
+            Expression::SequenceExpression(e) => e.may_have_side_effects(ctx),
             Expression::BinaryExpression(e) => e.may_have_side_effects(ctx),
             Expression::ObjectExpression(object_expr) => {
                 object_expr.properties.iter().any(|property| property.may_have_side_effects(ctx))
@@ -72,6 +70,13 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
             Expression::AssignmentExpression(e) => e.may_have_side_effects(ctx),
             Expression::UpdateExpression(e) => e.may_have_side_effects(ctx),
+            Expression::TSAsExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSNonNullExpression(_)
+            | Expression::TSInstantiationExpression(_) => {
+                self.get_inner_expression().may_have_side_effects(ctx)
+            }
             _ => true,
         }
     }
@@ -352,7 +357,7 @@ impl<'a> MayHaveSideEffects<'a> for Class<'a> {
         // Example cases: `class A extends 0 {}`, `class A extends (async function() {}) {}`
         // Considering these cases is difficult and requires to de-opt most classes with a super class.
         // To allow classes with a super class to be removed, we ignore this side effect.
-        if self.super_class.as_ref().is_some_and(|sup| {
+        if self.heritage_expression().is_some_and(|sup| {
             // `(class C extends (() => {}))` is TypeError.
             matches!(sup.without_parentheses(), Expression::ArrowFunctionExpression(_))
                 || sup.may_have_side_effects(ctx)
@@ -408,8 +413,9 @@ impl<'a> MayHaveSideEffects<'a> for MemberExpression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(e) => e.may_have_side_effects(ctx),
             MemberExpression::StaticMemberExpression(e) => e.may_have_side_effects(ctx),
-            MemberExpression::PrivateFieldExpression(_) => {
+            MemberExpression::PrivateFieldExpression(e) => {
                 ctx.property_read_side_effects() != PropertyReadSideEffects::None
+                    || e.object.may_have_side_effects(ctx)
             }
         }
     }
@@ -427,7 +433,7 @@ impl<'a> MayHaveSideEffects<'a> for ComputedMemberExpression<'a> {
             Expression::StringLiteral(s) => {
                 property_access_may_have_side_effects(&self.object, &s.value, ctx)
             }
-            Expression::TemplateLiteral(t) => t.single_quasi().is_some_and(|quasi| {
+            Expression::TemplateLiteral(t) => t.single_quasi().is_none_or(|quasi| {
                 property_access_may_have_side_effects(&self.object, &quasi, ctx)
             }),
             Expression::NumericLiteral(n) => !n.value.to_integer_index().is_some_and(|n| {
@@ -544,11 +550,22 @@ fn iife_call_may_have_side_effects<'a>(
     call: &CallExpression<'a>,
     ctx: &impl MayHaveSideEffectsContext<'a>,
 ) -> Option<bool> {
-    let (params, body) = match &call.callee {
+    let (params, body_may_have_side_effects) = match &call.callee {
         Expression::FunctionExpression(f) if !f.r#async && !f.generator => {
-            (&f.params, f.body.as_deref()?)
+            let body = f.body.as_deref()?;
+            (&f.params, body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)))
         }
-        Expression::ArrowFunctionExpression(f) if !f.r#async => (&f.params, &*f.body),
+        Expression::ArrowFunctionExpression(f) if !f.r#async => {
+            let body_may_have_side_effects = match &f.body {
+                ArrowFunctionBody::FunctionBody(b) => {
+                    b.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx))
+                }
+                match_expression!(ArrowFunctionBody) => {
+                    f.get_expression().unwrap().may_have_side_effects(ctx)
+                }
+            };
+            (&f.params, body_may_have_side_effects)
+        }
         _ => return None,
     };
 
@@ -564,7 +581,7 @@ fn iife_call_may_have_side_effects<'a>(
         return Some(true);
     }
 
-    Some(body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)))
+    Some(body_may_have_side_effects)
 }
 
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -616,7 +633,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             }
             if is_pure_global_function(name)
                 || is_pure_callable_constructor(name)
-                || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
             {
                 if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
                     return true;
@@ -893,7 +910,7 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
                     });
                 }
                 _ if is_unconditionally_pure_constructor(name)
-                    || (name == "RegExp" && is_valid_regexp(&self.arguments))
+                    || (name == "RegExp" && is_valid_regexp(&self.arguments, ctx))
                     || is_pure_collection_constructor(name, &self.arguments, ctx) =>
                 {
                     return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
@@ -1103,5 +1120,11 @@ impl<'a> MayHaveSideEffects<'a> for UpdateExpression<'a> {
         // Terser, esbuild, Rollup, and SWC all treat updates as unconditionally
         // side-effectful; match that.
         true
+    }
+}
+
+impl<'a> MayHaveSideEffects<'a> for SequenceExpression<'a> {
+    fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
+        self.expressions.iter().any(|e| e.may_have_side_effects(ctx))
     }
 }

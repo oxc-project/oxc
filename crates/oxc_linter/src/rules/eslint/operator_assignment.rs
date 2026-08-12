@@ -279,11 +279,13 @@ fn can_be_fixed(target: &AssignmentTarget) -> bool {
     }
 }
 
+/// Locates `operator` within `search_span`, the gap between the two operands.
 #[expect(clippy::cast_possible_truncation)]
-fn get_operator_span(init_span: Span, operator: &str, ctx: &LintContext) -> Span {
-    let offset = init_span.source_text(ctx.source_text()).find(operator).unwrap_or(0) as u32;
-    let start = init_span.start + offset;
-    Span::sized(start, operator.len() as u32)
+fn get_operator_span(search_span: Span, operator: &str, ctx: &LintContext) -> Span {
+    let offset = ctx
+        .find_next_token_within(search_span.start, search_span.end, operator)
+        .expect("assignment operator must be present between the operands");
+    Span::sized(search_span.start + offset, operator.len() as u32)
 }
 
 fn check_is_same_reference(left: &AssignmentTarget, right: &Expression, ctx: &LintContext) -> bool {
@@ -507,6 +509,8 @@ fn test() {
 
     let fix = vec![
         ("x = x + y", "x += y", None),
+        // a `=` inside a comment is not the operator
+        ("x /* = */ = x + y", "x /* = */ += y", None),
         ("x = x - y", "x -= y", None),
         ("x = x * y", "x *= y", None),
         ("x = x / y", "x /= y", None),

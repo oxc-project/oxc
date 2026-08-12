@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
@@ -33,11 +35,11 @@ impl DiagnosticReporter for AgentReporter {
 }
 
 fn format_agent(diagnostic: &Error) -> String {
-    let Info { start, filename, rule_id, .. } = Info::new(diagnostic);
+    let Info { start, filename, message: info_message, rule_id, .. } = Info::new(diagnostic);
     let filename = if filename.is_empty() {
         diagnostic
             .source_code()
-            .and_then(miette::SourceCode::name)
+            .and_then(|source| source.name())
             .map_or_else(|| "<unknown>".to_string(), ToString::to_string)
     } else {
         filename
@@ -48,7 +50,10 @@ fn format_agent(diagnostic: &Error) -> String {
         _ => "error",
     };
     let rule = rule_id.map_or_else(String::new, |rule_id| format!(" {rule_id}"));
-    let message = compact_message(&diagnostic.to_string());
+    // `Info` only fills in the message when the diagnostic has a resolvable label.
+    let rendered_message =
+        if info_message.is_empty() { diagnostic.to_string() } else { info_message };
+    let message = compact_message(&rendered_message);
     let help = diagnostic
         .help()
         .map(|help| format!(" help: {}", compact_message(&help)))
@@ -59,23 +64,92 @@ fn format_agent(diagnostic: &Error) -> String {
     format!("{filename}{location}: {severity}{rule}: {message}{help}\n")
 }
 
-fn compact_message(message: &str) -> String {
-    let mut compact = String::new();
+/// Collapse whitespace runs to single spaces and trim. Borrows when already compact,
+/// which is the case for nearly every rule message.
+fn compact_message(message: &str) -> Cow<'_, str> {
+    if is_already_compact(message) {
+        return Cow::Borrowed(message);
+    }
+
+    let mut compact = String::with_capacity(message.len());
     for word in message.split_whitespace() {
         if !compact.is_empty() {
             compact.push(' ');
         }
         compact.push_str(word);
     }
-    compact
+    Cow::Owned(compact)
+}
+
+/// True when every whitespace run is already a single space and there is none at either end.
+fn is_already_compact(message: &str) -> bool {
+    let mut after_space = true;
+    for c in message.chars() {
+        if c.is_whitespace() {
+            if c != ' ' || after_space {
+                return false;
+            }
+            after_space = true;
+        } else {
+            after_space = false;
+        }
+    }
+    !after_space
 }
 
 #[cfg(test)]
 mod test {
+    use std::borrow::Cow;
+
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticReporter};
     use oxc_span::Span;
 
-    use super::AgentReporter;
+    use super::{AgentReporter, compact_message};
+
+    // The borrowed fast path has to agree with the collapsing slow path on every input,
+    // or messages silently change shape depending on which branch is taken.
+    #[test]
+    fn compact_message_fast_path_matches_slow_path() {
+        fn collapse(message: &str) -> String {
+            let mut compact = String::new();
+            for word in message.split_whitespace() {
+                if !compact.is_empty() {
+                    compact.push(' ');
+                }
+                compact.push_str(word);
+            }
+            compact
+        }
+
+        for input in [
+            "",
+            " ",
+            "   ",
+            "a",
+            "already compact",
+            " leading",
+            "trailing ",
+            " both ",
+            "double  space",
+            "tab\tseparated",
+            "newline\nseparated",
+            "crlf\r\nseparated",
+            "mixed \t\n runs",
+            "non\u{a0}breaking",
+            "trailing newline\n",
+            "\nleading newline",
+            "unicode \u{2192} \u{2716} ok",
+        ] {
+            assert_eq!(compact_message(input), collapse(input), "mismatch for {input:?}");
+        }
+    }
+
+    #[test]
+    fn compact_message_borrows_only_when_already_compact() {
+        assert!(matches!(compact_message("already compact"), Cow::Borrowed(_)));
+        assert!(matches!(compact_message("double  space"), Cow::Owned(_)));
+        assert!(matches!(compact_message("trailing "), Cow::Owned(_)));
+    }
 
     #[test]
     fn reporter_error() {

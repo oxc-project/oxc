@@ -289,6 +289,14 @@ pub struct FormatConfig {
 }
 
 impl FormatConfig {
+    /// Whether embedded-language formatting is enabled by this config
+    /// (`embeddedLanguageFormatting` defaults to `"auto"`; only an explicit `"off"` disables it).
+    /// Consumers reach this through `ResolvedDispatchConfig::is_embedded_formatting_enabled`,
+    /// which owns the never-diverge invariant.
+    pub fn is_embedded_formatting_enabled(&self) -> bool {
+        !matches!(self.embedded_language_formatting, Some(EmbeddedLanguageFormattingConfig::Off))
+    }
+
     /// Whether `prettier-plugin-svelte` is enabled by this config.
     ///
     /// Enabled when `svelte` is set to `true` or an object;
@@ -618,6 +626,34 @@ impl SortGroupItemConfig {
             }
         }
     }
+
+    /// Validate the flat `groups` list's marker grammar: a `{ "newlinesBetween" }`
+    /// marker must sit BETWEEN two groups, so it may not lead, trail, or neighbor another marker.
+    ///
+    /// These are rules of this syntax (the parallel-vec target cannot even represent a violation),
+    /// so their owner is this type, mirroring `SortImportsOptions::validate` on the formatter side.
+    ///
+    /// # Errors
+    /// Returns an error naming the violated position rule.
+    pub(super) fn validate_markers(items: &[Self]) -> Result<(), String> {
+        let is_marker = |item: &Self| matches!(item, Self::NewlinesBetween(_));
+        if items.first().is_some_and(is_marker) {
+            return Err("`{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`"
+                .to_string());
+        }
+        if items.last().is_some_and(is_marker) {
+            return Err(
+                "`{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string()
+            );
+        }
+        if items.windows(2).any(|pair| is_marker(&pair[0]) && is_marker(&pair[1])) {
+            return Err(
+                "consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`"
+                    .to_string(),
+            );
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
@@ -628,17 +664,42 @@ pub struct CustomGroupItemConfig {
     /// List of glob patterns to match import sources for this group.
     pub element_name_pattern: Vec<String>,
     /// Selector to match the import kind.
-    ///
-    /// Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
-    /// `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub selector: Option<String>,
+    pub selector: Option<ImportSelectorConfig>,
     /// Modifiers to match the import characteristics.
     /// All specified modifiers must be present (AND logic).
-    ///
-    /// Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub modifiers: Option<Vec<String>>,
+    pub modifiers: Option<Vec<ImportModifierConfig>>,
+}
+
+/// Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ImportSelectorConfig {
+    Type,
+    SideEffectStyle,
+    SideEffect,
+    Style,
+    Index,
+    Sibling,
+    Parent,
+    Subpath,
+    Internal,
+    Builtin,
+    External,
+    Import,
+}
+
+/// Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ImportModifierConfig {
+    SideEffect,
+    Type,
+    Value,
+    Default,
+    Wildcard,
+    Named,
 }
 
 // ---
@@ -791,7 +852,7 @@ pub struct JsdocConfig {
     ///
     /// - Default: `"greedy"`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub line_wrapping_style: Option<String>,
+    pub line_wrapping_style: Option<LineWrappingStyleConfig>,
     /// How to format comment blocks.
     ///
     /// - `"singleLine"` — Convert to single-line `/** content */` when possible.
@@ -800,7 +861,7 @@ pub struct JsdocConfig {
     ///
     /// - Default: `"singleLine"`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub comment_line_strategy: Option<String>,
+    pub comment_line_strategy: Option<CommentLineStrategyConfig>,
     /// Add blank lines between different tag groups (e.g. between `@param` and `@returns`).
     ///
     /// - Default: `false`
@@ -826,6 +887,21 @@ pub struct JsdocConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keep_unparsable_example_indent: Option<bool>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum LineWrappingStyleConfig {
+    Greedy,
+    Balance,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum CommentLineStrategyConfig {
+    SingleLine,
+    Multiline,
+    Keep,
 }
 
 // ---

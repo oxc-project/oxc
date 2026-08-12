@@ -314,11 +314,14 @@ impl<'a> Symbol<'_, 'a> {
                 // e.g.:
                 // - `type Foo = { bar(): Foo }`
                 // - `class Foo { static factory(): Foo { return new Foo() } }`
-                AstKind::TSModuleDeclaration(_)
+                AstKind::TSExternalModuleDeclaration(_)
+                | AstKind::TSNamespaceDeclaration(_)
                 | AstKind::TSGlobalDeclaration(_)
                 | AstKind::VariableDeclaration(_)
                 | AstKind::VariableDeclarator(_)
+                | AstKind::ExportDeclaration(_)
                 | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportFromDeclaration(_)
                 | AstKind::ExportDefaultDeclaration(_)
                 | AstKind::ExportAllDeclaration(_)
                 | AstKind::Program(_)
@@ -579,10 +582,7 @@ impl<'a> Symbol<'_, 'a> {
                 }
                 AstKind::Function(f) if f.is_declaration() => break,
                 // implicit return in an arrow function
-                AstKind::ArrowFunctionExpression(f)
-                    if f.body.statements.len() == 1
-                        && !self.get_snippet(f.body.span).starts_with('{') =>
-                {
+                AstKind::ArrowFunctionExpression(f) if f.is_expression() => {
                     return false;
                 }
                 AstKind::ReturnStatement(_) => {
@@ -666,15 +666,7 @@ impl<'a> Symbol<'_, 'a> {
                 AstKind::ReturnStatement(_) => return true,
                 AstKind::ExpressionStatement(_) => {}
                 AstKind::Function(f) if f.is_expression() => {}
-                // note: intentionally not using
-                // ArrowFunctionExpression::get_expression since it returns
-                // `Some` even if
-                // 1. there are more than one statements
-                // 2. the expression is surrounded by braces
-                AstKind::ArrowFunctionExpression(f)
-                    if f.body.statements.len() == 1
-                        && !self.get_snippet(f.body.span).starts_with('{') =>
-                {
+                AstKind::ArrowFunctionExpression(f) if f.is_expression() => {
                     return true;
                 }
                 x if x.is_statement() => return false,

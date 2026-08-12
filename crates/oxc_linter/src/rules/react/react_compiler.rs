@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_diagnostics::Severity;
 use oxc_macros::declare_oxc_lint;
-use oxc_react_compiler::{CompilerOutputMode, EnvironmentConfig, PluginOptions};
+use oxc_react_compiler::{CompilerOutputMode, EnvironmentConfig, ErrorCategory, PluginOptions};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +14,7 @@ use crate::{
 /// The compiler options `eslint-plugin-react-compiler` lints with — `lint`
 /// output mode plus validations that are off by default in the compiler.
 /// Mirrors `COMPILER_OPTIONS` in the plugin's `src/shared/RunReactCompiler.ts`.
-fn react_compiler_options() -> PluginOptions {
+fn react_compiler_options(config: &ReactCompilerConfig) -> PluginOptions {
     PluginOptions {
         output_mode: Some(CompilerOutputMode::Lint),
         // Don't emit errors on Flow suppressions — Flow already gave a signal.
@@ -30,7 +30,9 @@ fn react_compiler_options() -> PluginOptions {
             validate_static_components: true,
             validate_no_freezing_known_mutable_functions: true,
             validate_no_void_use_memo: true,
-            validate_no_capitalized_calls: Some(vec![]),
+            validate_no_capitalized_calls: Some(
+                config.environment.validate_no_capitalized_calls.clone(),
+            ),
             validate_hooks_usage: true,
             validate_no_derived_computations_in_effects: true,
             ..EnvironmentConfig::default()
@@ -58,6 +60,17 @@ pub struct ReactCompilerConfig {
     /// finding a rule violation. These do not indicate incorrect code, only
     /// code that the compiler declined to optimize.
     report_all_bailouts: bool,
+
+    /// React Compiler environment options supported by this rule.
+    environment: ReactCompilerEnvironmentConfig,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReactCompilerEnvironmentConfig {
+    /// Additional capitalized global functions that are known not to be React
+    /// components. These names will not be reported by `CapitalizedCalls`.
+    validate_no_capitalized_calls: Vec<String>,
 }
 
 declare_oxc_lint!(
@@ -121,7 +134,7 @@ impl Rule for ReactCompiler {
 
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
-        let options = react_compiler_options();
+        let options = react_compiler_options(self);
 
         let result = oxc_react_compiler::lint(program, ctx.semantic(), ctx.allocator(), options);
 
@@ -131,7 +144,13 @@ impl Rule for ReactCompiler {
         } else {
             diagnostics
                 .into_iter()
-                .filter(|diagnostic| diagnostic.severity == Severity::Error)
+                .filter(|diagnostic| {
+                    // Internal invariant violations are compiler bugs, not rule
+                    // violations; the eslint plugin's `invariant` rule is off in
+                    // every preset, so the function is silently skipped.
+                    diagnostic.severity == Severity::Error
+                        && !ErrorCategory::Invariant.matches(diagnostic)
+                })
                 .collect::<Vec<_>>()
         };
 
@@ -233,6 +252,41 @@ class Foo {
 ",
             None,
         ),
+        // The compiler fails an internal invariant on this input
+        // (PruneNonEscapingScopes); the function is skipped without
+        // reporting, matching the eslint plugin, instead of crashing.
+        (
+            "
+export const Component = () => {
+  const raw = useValue();
+  return (() => {
+    try {
+      return check(raw) ? raw : null;
+    } catch {
+      return null;
+    }
+  })();
+};
+",
+            None,
+        ),
+        // The compiler fails an internal invariant on a `for` loop without a
+        // variable-declaration initializer (CodegenReactiveFunction).
+        // https://github.com/oxc-project/oxc/issues/24842
+        (
+            "
+function Component() {
+  useEffect(() => {
+    let i = 0;
+    for (; i < 3; i++) {
+      console.log(i);
+    }
+  });
+  return null;
+}
+",
+            None,
+        ),
         // ---- InvalidHooksRule-test.ts ----
         // Basic example
         (
@@ -307,6 +361,41 @@ function Component(props) {
                 return <fbt desc='label'>Hello</fbt>;
             }",
             None,
+        ),
+        // Capitalized built-in globals are not components.
+        (
+            "function Component(value) {
+                const bigInt = BigInt(value);
+                const boolean = Boolean(value);
+                const number = Number(value);
+                const string = String(value);
+                const symbol = Symbol(value);
+                const array = Array(value);
+                const object = Object(value);
+                const date = Date();
+                return <div>{String([
+                    bigInt,
+                    boolean,
+                    number,
+                    string,
+                    symbol,
+                    array,
+                    object,
+                    date,
+                ])}</div>;
+            }",
+            None,
+        ),
+        // Projects can allowlist additional capitalized global functions.
+        (
+            "function Component() {
+                return <div>{CustomFactory()}</div>;
+            }",
+            Some(json!([{
+                "environment": {
+                    "validateNoCapitalizedCalls": ["CustomFactory"]
+                }
+            }])),
         ),
     ];
 
@@ -512,11 +601,47 @@ function useConditional2(props) {
             None,
         ),
         // ---- oxlint-specific ----
+        // A custom capitalized global is reported unless it is allowlisted.
+        (
+            "function Component() {
+                return <div>{CustomFactory()}</div>;
+            }",
+            None,
+        ),
         // Bail-outs are reported when `reportAllBailouts` is enabled.
         (
             "function Component() {
                 const fbt = 'span';
                 return <fbt desc='label'>Hello</fbt>;
+            }",
+            Some(json!([{ "reportAllBailouts": true }])),
+        ),
+        // An internal invariant bail-out also surfaces under
+        // `reportAllBailouts`.
+        (
+            "export const Component = () => {
+                const raw = useValue();
+                return (() => {
+                    try {
+                        return check(raw) ? raw : null;
+                    } catch {
+                        return null;
+                    }
+                })();
+            };",
+            Some(json!([{ "reportAllBailouts": true }])),
+        ),
+        // The for-init invariant bail-out (issue #24842) also surfaces
+        // under `reportAllBailouts`.
+        (
+            "function Component() {
+                useEffect(() => {
+                    let i = 0;
+                    for (; i < 3; i++) {
+                        console.log(i);
+                    }
+                });
+                return null;
             }",
             Some(json!([{ "reportAllBailouts": true }])),
         ),

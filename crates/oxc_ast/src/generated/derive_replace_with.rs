@@ -56,7 +56,9 @@ impl<'a> ReplaceWith<'a> for CallExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for NewExpression<'a> {}
 
-impl<'a> ReplaceWith<'a> for MetaProperty<'a> {}
+impl ReplaceWith<'_> for ImportMeta {}
+
+impl ReplaceWith<'_> for NewTarget {}
 
 impl<'a> ReplaceWith<'a> for SpreadElement<'a> {}
 
@@ -190,11 +192,15 @@ impl<'a> ReplaceWith<'a> for FormalParameterRest<'a> {}
 
 impl<'a> ReplaceWith<'a> for FunctionBody<'a> {}
 
+impl<'a> ReplaceWith<'a> for ArrowFunctionBody<'a> {}
+
 impl<'a> ReplaceWith<'a> for ArrowFunctionExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for YieldExpression<'a> {}
 
 impl<'a> ReplaceWith<'a> for Class<'a> {}
+
+impl<'a> ReplaceWith<'a> for ClassHeritage<'a> {}
 
 impl<'a> ReplaceWith<'a> for ClassBody<'a> {}
 
@@ -230,7 +236,11 @@ impl<'a> ReplaceWith<'a> for ImportAttribute<'a> {}
 
 impl<'a> ReplaceWith<'a> for ImportAttributeKey<'a> {}
 
+impl<'a> ReplaceWith<'a> for ExportDeclaration<'a> {}
+
 impl<'a> ReplaceWith<'a> for ExportNamedDeclaration<'a> {}
+
+impl<'a> ReplaceWith<'a> for ExportFromDeclaration<'a> {}
 
 impl<'a> ReplaceWith<'a> for ExportDefaultDeclaration<'a> {}
 
@@ -414,11 +424,11 @@ impl<'a> ReplaceWith<'a> for TSTypePredicate<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSTypePredicateName<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclaration<'a> {}
+impl<'a> ReplaceWith<'a> for TSExternalModuleDeclaration<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationName<'a> {}
+impl<'a> ReplaceWith<'a> for TSNamespaceDeclaration<'a> {}
 
-impl<'a> ReplaceWith<'a> for TSModuleDeclarationBody<'a> {}
+impl<'a> ReplaceWith<'a> for TSNamespaceDeclarationBody<'a> {}
 
 impl<'a> ReplaceWith<'a> for TSGlobalDeclaration<'a> {}
 

@@ -68,6 +68,20 @@ function getFeatureForComponent(component) {
   return "compiler";
 }
 
+/**
+ * Build matrix entries for components.
+ * `pipeline` additionally runs the memory instrument in the same job.
+ * @param {string[]} components - Component names
+ * @returns {Array<{component: string, feature: string, mode: string}>} Matrix entries
+ */
+function buildMatrixEntries(components) {
+  return components.map((component) => ({
+    component,
+    feature: getFeatureForComponent(component),
+    mode: component === "pipeline" ? "simulation,memory" : "simulation",
+  }));
+}
+
 /** @type {Map<string, string[]>} Cache of cargo tree results keyed by feature */
 const depsCache = new Map();
 
@@ -126,26 +140,20 @@ function isComponentAffected(component, changedFiles) {
 
 /**
  * Determine which components are affected by changes
- * @returns {Promise<Array<{component: string, feature: string}>>} Array of affected component objects
+ * @returns {Promise<Array<{component: string, feature: string, mode: string}>>} Matrix entries for affected components
  */
 async function determineAffectedComponents() {
   const changedFiles = await getChangedFiles();
 
   // Manual trigger - run all benchmarks
   if (changedFiles === null) {
-    return ALL_COMPONENTS.map((component) => ({
-      component,
-      feature: getFeatureForComponent(component),
-    }));
+    return buildMatrixEntries(ALL_COMPONENTS);
   }
 
   // Check for global changes
   if (checkGlobalChanges(changedFiles)) {
     console.error("Global changes detected - will run all benchmarks");
-    return ALL_COMPONENTS.map((component) => ({
-      component,
-      feature: getFeatureForComponent(component),
-    }));
+    return buildMatrixEntries(ALL_COMPONENTS);
   }
 
   // Check benchmark and common task files - affects all components
@@ -155,10 +163,7 @@ async function determineAffectedComponents() {
     )
   ) {
     console.error("Benchmark/common task files changed - will run all benchmarks");
-    return ALL_COMPONENTS.map((component) => ({
-      component,
-      feature: getFeatureForComponent(component),
-    }));
+    return buildMatrixEntries(ALL_COMPONENTS);
   }
 
   // If no crate files changed, no benchmarks need to run
@@ -173,22 +178,17 @@ async function determineAffectedComponents() {
   for (const component of ALL_COMPONENTS) {
     console.error(`\nChecking component: ${component}`);
     if (isComponentAffected(component, changedFiles)) {
-      affectedComponents.push({
-        component,
-        feature: getFeatureForComponent(component),
-      });
+      affectedComponents.push(component);
     }
   }
 
   if (affectedComponents.length === 0) {
     console.error("\nNo components were affected by the changes");
   } else {
-    console.error(
-      `\nAffected components: ${affectedComponents.map((obj) => obj.component).join(", ")}`,
-    );
+    console.error(`\nAffected components: ${affectedComponents.join(", ")}`);
   }
 
-  return affectedComponents;
+  return buildMatrixEntries(affectedComponents);
 }
 
 /**
@@ -216,10 +216,7 @@ async function main() {
   } catch (error) {
     console.error("Error generating benchmark matrix:", error);
     // On error, run all benchmarks as a fallback
-    const fallbackMatrix = ALL_COMPONENTS.map((component) => ({
-      component,
-      feature: getFeatureForComponent(component),
-    }));
+    const fallbackMatrix = buildMatrixEntries(ALL_COMPONENTS);
     console.log(JSON.stringify(fallbackMatrix));
     process.exit(0);
   }

@@ -2,7 +2,7 @@
 //! Transform of class itself.
 
 use oxc_allocator::{Address, ArenaVec, GetAddress, TakeIn, UnstableAddress};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
@@ -72,7 +72,7 @@ impl<'a> ClassProperties<'a> {
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
-        let has_super_class = class.super_class().is_some();
+        let has_super_class = class.heritage().is_some();
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;
@@ -489,7 +489,7 @@ impl<'a> ClassProperties<'a> {
         // Insert statements before/after class
         let stmt_address = match ctx.parent() {
             parent @ (Ancestor::ExportDefaultDeclarationDeclaration(_)
-            | Ancestor::ExportNamedDeclarationDeclaration(_)) => parent.address(),
+            | Ancestor::ExportDeclarationDeclaration(_)) => parent.address(),
             // `Class` is always stored in a `Box`, so has a stable memory location
             _ => class.unstable_address(),
         };
@@ -901,7 +901,7 @@ fn create_new_weakmap<'a>(
     let symbol_id = *symbol_id
         .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), weak_map));
     let ident = ctx.create_ident_expr(SPAN, weak_map, symbol_id, ReferenceFlags::Read);
-    Expression::new_new_expression_with_pure(SPAN, ident, NONE, ArenaVec::new_in(ctx), true, ctx)
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }
 
 /// Create `new WeakSet()` expression.
@@ -909,5 +909,5 @@ fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
     let weak_set = static_ident!("WeakSet");
     let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
     let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
-    Expression::new_new_expression_with_pure(SPAN, ident, NONE, ArenaVec::new_in(ctx), true, ctx)
+    Expression::new_new_expression_with_pure(SPAN, ident, None, [], true, ctx)
 }

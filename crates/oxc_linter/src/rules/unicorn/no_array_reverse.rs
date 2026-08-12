@@ -64,7 +64,7 @@ declare_oxc_lint!(
     NoArrayReverse,
     unicorn,
     suspicious,
-    fix,
+    suggestion,
     config = NoArrayReverse,
     version = "1.15.0",
     short_description = "Prefer using `Array#toReversed()` over `Array#reverse()`.",
@@ -112,7 +112,14 @@ impl Rule for NoArrayReverse {
                 return;
             }
         }
-        ctx.diagnostic_with_fix(no_array_reverse_diagnostic(span), |fixer| {
+        // The replacement is a suggestion, not an auto-fix, matching upstream
+        // eslint-plugin-unicorn (`hasSuggestions: true`, not `fixable`): the
+        // receiver is not statically known to be an array, and non-array
+        // fluent APIs with a `reverse()` method (e.g. Dexie's
+        // `Collection#reverse()`) have no `toReversed()`, so applying the
+        // replacement blindly under `--fix` turns working code into a
+        // runtime `TypeError`.
+        ctx.diagnostic_with_suggestion(no_array_reverse_diagnostic(span), |fixer| {
             fixer.replace(span, "toReversed")
         });
     }

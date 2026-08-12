@@ -150,7 +150,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 }
 
-impl<'a> Symbol<'_, 'a> {
+impl Symbol<'_, '_> {
     /// Collect local names that are re-exported, for O(1) export checks per symbol.
     pub fn collect_exported_local_names(module_record: &ModuleRecord) -> FxHashSet<&str> {
         let mut names = FxHashSet::default();
@@ -188,7 +188,7 @@ impl<'a> Symbol<'_, 'a> {
     fn in_export_node(&self) -> bool {
         for parent in self.nodes().ancestors(self.declaration_id()) {
             match parent.kind() {
-                AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_) => {
+                AstKind::ExportDeclaration(_) | AstKind::ExportDefaultDeclaration(_) => {
                     return true;
                 }
                 AstKind::VariableDeclaration(_)
@@ -212,11 +212,6 @@ impl<'a> Symbol<'_, 'a> {
     #[inline]
     pub fn is_in_ts(&self) -> bool {
         self.semantic.source_type().is_typescript()
-    }
-
-    #[inline]
-    pub fn get_snippet(&self, span: Span) -> &'a str {
-        span.source_text(self.semantic.source_text())
     }
 }
 

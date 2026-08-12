@@ -17,6 +17,7 @@ pub mod operator;
 pub mod precedence;
 pub mod reference;
 pub mod scope;
+pub mod semantic_id;
 #[cfg(feature = "serialize")]
 mod serialize;
 pub mod symbol;

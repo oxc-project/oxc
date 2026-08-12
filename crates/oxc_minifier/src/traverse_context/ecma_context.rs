@@ -1,11 +1,10 @@
 use oxc_allocator::GetAllocator;
 use oxc_ast::ast::*;
-use oxc_compat::ESFeature;
+use oxc_compat::{ESFeature, EngineTargets};
 use oxc_ecmascript::{
     GlobalContext,
     constant_evaluation::{
-        ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, ValueType,
-        binary_operation_evaluate_value,
+        ConstantEvaluationCtx, ConstantValue, ValueType, binary_operation_evaluate_value,
     },
     side_effects::{
         MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects, is_pure_function,
@@ -19,12 +18,12 @@ use crate::{
     generated::ancestor::Ancestor,
     options::CompressOptions,
     state::MinifierState,
-    symbol_value::{FreshValueKind, SymbolValue},
+    symbol_value::{FreshValueKind, ReferenceCounts, SymbolValue},
 };
 
 use oxc_ast_visit::Visit;
 
-use super::{TraverseCtx, drop_diff::DropDiff};
+use super::{TraverseCtx, dropped_subtree_collector::DroppedSubtreeCollector};
 
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
@@ -82,12 +81,16 @@ impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
 }
 
 impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        Some(&self.options().target)
+    }
+
     fn annotations(&self) -> bool {
-        self.state.options.treeshake.annotations
+        self.options().treeshake.annotations
     }
 
     fn manual_pure_functions(&self, callee: &Expression) -> bool {
-        let pure_functions = &self.state.options.treeshake.manual_pure_functions;
+        let pure_functions = &self.options().treeshake.manual_pure_functions;
         if pure_functions.is_empty() {
             return false;
         }
@@ -95,19 +98,23 @@ impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     }
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
-        self.state.options.treeshake.property_read_side_effects
+        self.options().treeshake.property_read_side_effects
     }
 
     fn property_write_side_effects(&self) -> bool {
-        self.state.options.treeshake.property_write_side_effects
+        self.options().treeshake.property_write_side_effects
     }
 
     fn unknown_global_side_effects(&self) -> bool {
-        self.state.options.treeshake.unknown_global_side_effects
+        self.options().treeshake.unknown_global_side_effects
     }
 }
 
 impl<'a> MayHaveSideEffectsContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        MayHaveSideEffectsContext::engine_targets(*self)
+    }
+
     fn annotations(&self) -> bool {
         (*self).annotations()
     }
@@ -130,6 +137,10 @@ impl<'a> MayHaveSideEffectsContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
 }
 
 impl<'a> MayHaveSideEffectsContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        MayHaveSideEffectsContext::engine_targets(&**self)
+    }
+
     fn annotations(&self) -> bool {
         (**self).annotations()
     }
@@ -155,18 +166,30 @@ impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {}
 
 impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn options(&self) -> &CompressOptions {
-        &self.state.options
+        self.state.options()
     }
 
-    /// Check if the target engines supports a feature.
+    /// Loosely check whether target engines support a feature for syntax generation.
     ///
-    /// Returns `true` if the feature is supported.
+    /// This follows [`oxc_compat::EngineTargets::has_feature`] semantics. Side-effect analysis uses
+    /// the stricter [`oxc_compat::EngineTargets::supports_es_feature`] capability query instead.
     pub fn supports_feature(&self, feature: ESFeature) -> bool {
         !self.options().target.has_feature(feature)
     }
 
     pub fn source_type(&self) -> SourceType {
-        self.state.source_type
+        self.state.source_type()
+    }
+
+    /// Whether this run removes dead code without applying size-only rewrites.
+    pub fn is_tree_shake_only(&self) -> bool {
+        self.state.is_tree_shake_only()
+    }
+
+    /// Whether `Normalize` should seed persistent member-write metadata for a
+    /// consumer enabled by this configuration.
+    pub fn should_track_member_write_effects(&self) -> bool {
+        self.state.should_track_member_write_effects()
     }
 
     pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
@@ -180,8 +203,8 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.scoping()
             .get_reference(reference_id)
             .symbol_id()
-            .and_then(|symbol_id| self.state.symbol_values.get_symbol_value(symbol_id))
-            .filter(|sv| sv.write_references_count == 0)
+            .and_then(|symbol_id| self.state.symbols.value(symbol_id))
+            .filter(|sv| !sv.references.has_writes())
             .and_then(|sv| sv.initialized_constant.as_ref())
     }
 
@@ -189,7 +212,18 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         if e.may_have_side_effects(self) {
             None
         } else {
-            e.evaluate_value(self).map(|v| self.value_to_expr(e.span, v))
+            let v = self.eval_binary_operation(e.operator, &e.left, &e.right)?;
+            // Bail instead of materializing the shadow-safe division form:
+            // replacing `0 / 0` with `0 / 0` would set the changed flag on
+            // every pass and the fixed-point loop would never converge. The
+            // other `eval_binary_operation` callers fold bitwise operators
+            // only, whose results are always finite, so the guard lives here.
+            if let ConstantValue::Number(n) = &v
+                && self.non_finite_global_shadowed(*n)
+            {
+                return None;
+            }
+            Some(self.value_to_expr(e.span, v))
         }
     }
 
@@ -202,9 +236,41 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         binary_operation_evaluate_value(operator, left, right, self)
     }
 
+    /// Whether materializing `n` prints a global name (`NaN`, `Infinity`)
+    /// that a binding in the current scope chain captures: in
+    /// `function f() { let NaN = 1; return 0 / 0; }`, folding the division
+    /// to a NaN literal makes `f` return `1`.
+    fn non_finite_global_shadowed(&self, n: f64) -> bool {
+        let name = if n.is_nan() {
+            "NaN"
+        } else if n.is_infinite() {
+            "Infinity"
+        } else {
+            return false;
+        };
+        self.scoping().find_binding(self.scoping.current_scope_id(), name.into()).is_some()
+    }
+
+    /// `NaN` → `0 / 0`, `Infinity` → `1 / 0`, `-Infinity` → `-1 / 0`: the
+    /// same value with no capturable name attached. Used when a non-finite
+    /// constant must be materialized where its global name is shadowed.
+    fn non_finite_to_division_expr(&self, span: Span, n: f64) -> Expression<'a> {
+        let numerator = if n.is_nan() { 0.0 } else { 1.0 };
+        let mut left =
+            Expression::new_numeric_literal(span, numerator, None, NumberBase::Decimal, self);
+        if n == f64::NEG_INFINITY {
+            left = Expression::new_unary_expression(span, UnaryOperator::UnaryNegation, left, self);
+        }
+        let right = Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, self);
+        Expression::new_binary_expression(span, left, BinaryOperator::Division, right, self)
+    }
+
     pub fn value_to_expr(&self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
+                if !n.is_finite() && self.non_finite_global_shadowed(n) {
+                    return self.non_finite_to_division_expr(span, n);
+                }
                 let number_base =
                     if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
                 Expression::new_numeric_literal(span, n, None, number_base, self)
@@ -246,63 +312,64 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         constant: Option<ConstantValue<'a>>,
         kind: FreshValueKind,
         falsy_init: bool,
+        init_absent: bool,
     ) {
-        let mut exported = false;
-        if self.scoping.current_scope_id() == self.scoping().root_scope_id() {
-            for ancestor in self.ancestors() {
-                if ancestor.is_export_named_declaration()
-                    || ancestor.is_export_all_declaration()
-                    || ancestor.is_export_default_declaration()
-                {
-                    exported = true;
-                }
-            }
-        }
-
-        let mut read_references_count = 0;
-        let mut write_references_count = 0;
-        let mut member_write_target_read_count = 0;
-        for r in self.scoping().get_resolved_references(symbol_id) {
-            if r.is_read() {
-                read_references_count += 1;
-            }
-            if r.is_write() {
-                write_references_count += 1;
-            }
-            if r.flags().is_member_write_target() {
-                member_write_target_read_count += 1;
-            }
+        let mut references = ReferenceCounts::default();
+        for reference in self.scoping().get_resolved_references(symbol_id) {
+            references.record(reference.flags());
         }
 
         let scope_id = self.scoping().symbol_scope_id(symbol_id);
         let scope_flags = self.scoping().scope_flags(scope_id);
+        // Declaration traversal is source-ordered, but a nested function can
+        // consume the first declaration's facts before a later declaration of
+        // the same symbol is visited. Disable every declaration-derived fact
+        // from the outset instead of trying to repair an already-consumed value.
+        let has_multiple_value_declarations = self
+            .scoping()
+            .symbol_redeclarations(symbol_id)
+            .iter()
+            .filter(|declaration| declaration.flags.is_value())
+            .nth(1)
+            .is_some();
 
         // `constant` is the value-context value, `None` when withheld (e.g. a hoisted
         // `var` past a dirty prelude). Capture before it's moved just below.
         let value_withheld = constant.is_none();
         let initialized_constant =
-            if scope_flags.contains(ScopeFlags::DirectEval) { None } else { constant };
+            if has_multiple_value_declarations || scope_flags.contains(ScopeFlags::DirectEval) {
+                None
+            } else {
+                constant
+            };
 
         // `boolean_falsy` (see `SymbolValue::boolean_falsy`) gated to a sound subset:
-        // write-once, outside a direct-`eval` scope, and not a script's top-level
-        // global (another script could reassign it, so a 0 in-module write count
-        // doesn't prove write-once).
-        let boolean_falsy = falsy_init
-            && value_withheld
-            && write_references_count == 0
-            && !scope_flags.contains(ScopeFlags::DirectEval)
-            && !(self.source_type().is_script() && scope_id == self.scoping().root_scope_id());
+        // one value declaration, no resolved writes, outside a direct-`eval` scope,
+        // and not a script's top-level global (another script could reassign it, so
+        // a 0 in-module write count doesn't prove write-once).
+        let boolean_falsy = if has_multiple_value_declarations {
+            false
+        } else {
+            falsy_init
+                && value_withheld
+                && !references.has_writes()
+                && !scope_flags.contains(ScopeFlags::DirectEval)
+                && !(self.source_type().is_script() && scope_id == self.scoping().root_scope_id())
+        };
+
+        // See `SymbolValue::implicit_undefined` — only meaningful when the
+        // recorded constant is the hoist-produced `undefined` of `let x;`.
+        let implicit_undefined =
+            init_absent && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
 
         let symbol_value = SymbolValue {
             initialized_constant,
-            exported,
-            read_references_count,
-            write_references_count,
-            member_write_target_read_count,
-            kind,
+            implicit_undefined,
+            references,
+            kind: if has_multiple_value_declarations { FreshValueKind::None } else { kind },
             boolean_falsy,
         };
-        self.state.symbol_values.init_value(symbol_id, symbol_value);
+        self.state.symbols.init_value(symbol_id, symbol_value);
     }
 
     /// If two expressions are equal.
@@ -365,31 +432,31 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         (options.class && is_class) || (options.function && !is_class)
     }
 
-    /// Construct a `DropDiff` borrowing the per-pass dirty accumulator.
+    /// Construct a `DroppedSubtreeCollector` borrowing the per-pass change accumulator.
     /// Used by the `replace_*` / `drop_*` helpers.
     #[inline]
-    fn dirty_diff(&mut self) -> DropDiff<'a, '_> {
-        DropDiff::new(&mut self.state.dirty)
+    fn dropped_subtree_collector(&mut self) -> DroppedSubtreeCollector<'a, '_> {
+        DroppedSubtreeCollector::new(&mut self.state.pass_changes)
     }
 
     /// Replace an expression slot. Marks the pass as having mutated the AST.
     ///
     /// Prefer this over a direct `*slot = new; ctx.notice_change();` pair —
-    /// the mutation flag is private to `MinifierState`, so the typed helpers
-    /// are the only way to record the mutation (compiler-enforced).
+    /// the typed helper keeps dropped-subtree bookkeeping, the slot update,
+    /// and the pass revisit request together.
     #[inline]
     pub fn replace_expression(&mut self, slot: &mut Expression<'a>, new: Expression<'a>) {
-        self.dirty_diff().visit_expression(slot);
+        self.dropped_subtree_collector().visit_expression(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace a statement slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
-        self.dirty_diff().visit_statement(slot);
+        self.dropped_subtree_collector().visit_statement(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace an assignment-target-property slot. Marks the pass as having mutated the AST.
@@ -399,17 +466,17 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut AssignmentTargetProperty<'a>,
         new: AssignmentTargetProperty<'a>,
     ) {
-        self.dirty_diff().visit_assignment_target_property(slot);
+        self.dropped_subtree_collector().visit_assignment_target_property(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace a property-key slot. Marks the pass as having mutated the AST.
     #[inline]
     pub fn replace_property_key(&mut self, slot: &mut PropertyKey<'a>, new: PropertyKey<'a>) {
-        self.dirty_diff().visit_property_key(slot);
+        self.dropped_subtree_collector().visit_property_key(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Replace a `for-in` / `for-of` statement's `left` slot. Same contract
@@ -420,9 +487,9 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         slot: &mut ForStatementLeft<'a>,
         new: ForStatementLeft<'a>,
     ) {
-        self.dirty_diff().visit_for_statement_left(slot);
+        self.dropped_subtree_collector().visit_for_statement_left(slot);
         *slot = new;
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark the pass as having mutated the AST in place (operand swap, in-place
@@ -431,36 +498,36 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// replacement.
     #[inline]
     pub fn notice_change(&mut self) {
-        self.state.record_mutation();
+        self.state.record_ast_change();
     }
 
     /// Mark an expression subtree as about to be dropped (popped from a collection,
     /// taken out of an Option, etc.). Walks the subtree to record dead references
-    /// and dropped direct-eval calls into the per-pass `PassDirty` accumulator.
+    /// and dropped direct-eval calls into the per-pass `PassChanges` accumulator.
     ///
     /// Use this helper at every site where a subtree is being removed from the AST
     /// without an immediate slot-replacement helper (e.g. inside a `retain_mut`
     /// predicate, before `field = None`, after `vec.pop()`).
     #[inline]
     pub fn drop_expression(&mut self, expr: &Expression<'a>) {
-        self.dirty_diff().visit_expression(expr);
-        self.state.record_mutation();
+        self.dropped_subtree_collector().visit_expression(expr);
+        self.state.record_ast_change();
     }
 
     /// Mark a statement subtree as about to be dropped. Same contract as
     /// `drop_expression`.
     #[inline]
     pub fn drop_statement(&mut self, stmt: &Statement<'a>) {
-        self.dirty_diff().visit_statement(stmt);
-        self.state.record_mutation();
+        self.dropped_subtree_collector().visit_statement(stmt);
+        self.state.record_ast_change();
     }
 
     /// Mark a class element subtree as about to be dropped. Same contract as
     /// `drop_expression`.
     #[inline]
     pub fn drop_class_element(&mut self, element: &ClassElement<'a>) {
-        self.dirty_diff().visit_class_element(element);
-        self.state.record_mutation();
+        self.dropped_subtree_collector().visit_class_element(element);
+        self.state.record_ast_change();
     }
 
     /// Mark a variable declarator as about to be dropped. Walks the whole
@@ -470,7 +537,17 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     /// alive elsewhere, `take()` it out of the declarator before calling this.
     #[inline]
     pub fn drop_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
-        self.dirty_diff().visit_variable_declarator(decl);
-        self.state.record_mutation();
+        self.dropped_subtree_collector().visit_variable_declarator(decl);
+        self.state.record_ast_change();
+    }
+
+    /// Mark a switch case subtree as about to be dropped. Walks the entire case —
+    /// test expression (if present) and all statements in the consequent. Same contract
+    /// as `drop_expression`. Use this helper when removing a case from a switch statement's
+    /// case vector to properly notify the scope tracking system about dropped references.
+    #[inline]
+    pub fn drop_switch_case(&mut self, switch_case: &SwitchCase<'a>) {
+        self.dropped_subtree_collector().visit_switch_case(switch_case);
+        self.state.record_ast_change();
     }
 }

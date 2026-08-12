@@ -19,6 +19,7 @@ pub mod diag_code {
     pub const ALLOCATION_LIMIT_EXCEEDED: u16 = 17;
     pub const UNEXPECTED_CHARACTER: u16 = 18;
     pub const LINE_TERMINATOR_IN_STRING: u16 = 19;
+    pub const HTML_COMMENT_IN_MODULE: u16 = 20;
 }
 
 pub mod diag_severity {

@@ -92,8 +92,8 @@ use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitJsMut, walk_js_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
@@ -104,7 +104,12 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
+use crate::{
+    EnvOptions,
+    utils::ast_builder::{
+        arrow_function_body_as_function_body_mut, wrap_expression_in_arrow_function_iife,
+    },
+};
 use crate::{context::TraverseCtx, state::TransformState};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
@@ -291,9 +296,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             if Self::in_class_property_definition_value(ctx) {
                 let this_var = self.this_var_stack.pop();
                 let super_methods = self.super_methods_stack.pop();
+                let scope_id = arrow.scope_id();
+                let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
                 self.insert_variable_statement_at_the_top_of_statements(
-                    arrow.scope_id(),
-                    &mut arrow.body.statements,
+                    scope_id,
+                    &mut body.statements,
                     this_var,
                     None,
                     Some(super_methods),
@@ -316,8 +323,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         }
     }
 
-    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, _ctx: &mut TraverseCtx<'a>) {
-        // This covers exiting either a `Function` or an `ArrowFunctionExpression`
+    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.is_async_only() && matches!(ctx.parent(), Ancestor::FunctionBody(_)) {
+            self.arguments_needs_transform_stack.pop();
+        }
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        _body: &mut ArrowFunctionBody<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.is_async_only() {
             self.arguments_needs_transform_stack.pop();
         }
@@ -432,6 +448,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         }
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.is_disabled() {
             return;
@@ -444,12 +461,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            expr.replace_with(|expr| {
-                let Expression::ArrowFunctionExpression(arrow_function_expr) = expr else {
-                    unreachable!()
-                };
-                Self::transform_arrow_function_expression(arrow_function_expr, ctx)
-            });
+            Self::transform_arrow_function_expression_on_exit(expr, ctx);
         }
     }
 
@@ -485,6 +497,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
 }
 
 impl<'a> ArrowFunctionConverter<'a> {
+    #[inline(never)]
+    fn transform_arrow_function_expression_on_exit(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        expr.replace_with(|expr| {
+            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr else {
+                unreachable!()
+            };
+            Self::transform_arrow_function_expression(arrow_function_expr, ctx)
+        });
+    }
+
     /// Check if arrow function conversion is disabled
     fn is_disabled(&self) -> bool {
         self.mode == ArrowFunctionConverterMode::Disabled
@@ -636,17 +661,15 @@ impl<'a> ArrowFunctionConverter<'a> {
         let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
         *flags &= !ScopeFlags::Arrow;
 
-        let mut body = arrow_function_expr.body;
-
-        if arrow_function_expr.expression {
-            assert_eq!(body.statements.len(), 1);
-            let stmt = body.statements.pop().unwrap();
-            let Statement::ExpressionStatement(stmt) = stmt else { unreachable!() };
-            let stmt = stmt.unbox();
-            let return_statement =
-                Statement::new_return_statement(stmt.span, Some(stmt.expression), ctx);
-            body.statements.push(return_statement);
-        }
+        let body = match arrow_function_expr.body {
+            ArrowFunctionBody::FunctionBody(body) => body,
+            body => {
+                let expression = body.into_expression();
+                let span = expression.span();
+                let return_statement = Statement::new_return_statement(span, Some(expression), ctx);
+                FunctionBody::boxed(span, [], [return_statement], ctx)
+            }
+        };
 
         Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             arrow_function_expr.span,
@@ -656,7 +679,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             arrow_function_expr.r#async,
             false,
             arrow_function_expr.type_parameters,
-            NONE,
+            None,
             arrow_function_expr.params,
             arrow_function_expr.return_type,
             Some(body),
@@ -788,7 +811,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             arguments.push(Argument::from(assign_value.take_in(ctx)));
         }
         let call =
-            Expression::new_call_expression(expr.span(), callee, NONE, arguments, false, ctx);
+            Expression::new_call_expression(expr.span(), callee, None, arguments, false, ctx);
         Some(call)
     }
 
@@ -829,7 +852,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let callee =
             MemberExpression::new_static_member_expression(SPAN, object, property, false, ctx);
         let callee = Expression::from(callee);
-        Some(Expression::new_call_expression(call.span, callee, NONE, arguments, false, ctx))
+        Some(Expression::new_call_expression(call.span, callee, None, arguments, false, ctx))
     }
 
     /// Transform an `AssignmentExpression` whose assignment target is a `super` member expression.
@@ -913,10 +936,10 @@ impl<'a> ArrowFunctionConverter<'a> {
                 ctx.generate_uid("prop", scope_id, SymbolFlags::FunctionScopedVariable);
             let param = FormalParameter::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
+                [],
                 param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
+                None,
+                None,
                 false,
                 None,
                 false,
@@ -943,10 +966,10 @@ impl<'a> ArrowFunctionConverter<'a> {
                 ctx.generate_uid("value", scope_id, SymbolFlags::FunctionScopedVariable);
             let param = FormalParameter::new(
                 SPAN,
-                ArenaVec::new_in(ctx),
+                [],
                 param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
+                None,
+                None,
                 false,
                 None,
                 false,
@@ -968,24 +991,29 @@ impl<'a> ArrowFunctionConverter<'a> {
             );
         }
 
-        let params = FormalParameters::new(
+        let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             items,
-            NONE,
+            None,
             ctx,
         );
-        let statements =
-            ArenaVec::from_value_in(Statement::new_expression_statement(SPAN, init, ctx), ctx);
-        let body = FunctionBody::new(SPAN, ArenaVec::new_in(ctx), statements, ctx);
         let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
-            SPAN, true, false, NONE, params, NONE, body, scope_id, false, false, ctx,
+            SPAN,
+            false,
+            None,
+            params,
+            None,
+            ArrowFunctionBody::from(init),
+            scope_id,
+            false,
+            false,
+            ctx,
         );
         VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
-            NONE,
+            None,
             Some(init),
             false,
             ctx,
@@ -1160,9 +1188,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         Some(VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Var,
             arguments_var.create_binding_pattern(ctx),
-            NONE,
+            None,
             Some(init),
             false,
             ctx,
@@ -1221,9 +1248,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             Self::adjust_binding_scope(target_scope_id, &this_var, ctx);
             let variable_declarator = VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
-                NONE,
+                None,
                 init,
                 false,
                 ctx,
@@ -1259,7 +1285,7 @@ impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
     }
 }
 
-impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
+impl<'a> VisitJsMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn visit_class(&mut self, class: &mut Class<'a>) {
         // Only need to transform `super()` in:
         //
@@ -1277,8 +1303,8 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 
         // `class Inner extends super() {}`
         //                      ^^^^^^^
-        if let Some(super_class) = &mut class.super_class {
-            self.visit_expression(super_class);
+        if let Some(heritage) = &mut class.heritage {
+            self.visit_expression(&mut heritage.expression);
         }
 
         for element in &mut class.body.body {
@@ -1358,8 +1384,7 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
         expr.replace_with(|expr| {
-            let exprs = ArenaVec::from_array_in([expr, assignment], self.ctx);
-            Expression::new_sequence_expression(span, exprs, self.ctx)
+            Expression::new_sequence_expression(span, [expr, assignment], self.ctx)
         });
     }
 

@@ -8,6 +8,8 @@ export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type HtmlWhitespaceSensitivityConfig = "css" | "strict" | "ignore";
 export type JsdocUserConfig = boolean | JsdocConfig;
+export type CommentLineStrategyConfig = "singleLine" | "multiline" | "keep";
+export type LineWrappingStyleConfig = "greedy" | "balance";
 export type ObjectWrapConfig = "preserve" | "collapse";
 /**
  * A set of glob patterns.
@@ -17,6 +19,26 @@ export type GlobSet = string[];
 export type ProseWrapConfig = "always" | "never" | "preserve";
 export type QuotePropsConfig = "as-needed" | "consistent" | "preserve";
 export type SortImportsUserConfig = boolean | SortImportsConfig;
+/**
+ * Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
+ */
+export type ImportModifierConfig = "side_effect" | "type" | "value" | "default" | "wildcard" | "named";
+/**
+ * Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).
+ */
+export type ImportSelectorConfig =
+  | "type"
+  | "side_effect_style"
+  | "side_effect"
+  | "style"
+  | "index"
+  | "sibling"
+  | "parent"
+  | "subpath"
+  | "internal"
+  | "builtin"
+  | "external"
+  | "import";
 export type SortGroupItemConfig = NewlinesBetweenMarker | string | string[];
 export type SortOrderConfig = "asc" | "desc";
 export type SortPackageJsonUserConfig = boolean | SortPackageJsonConfig;
@@ -295,7 +317,7 @@ export interface JsdocConfig {
    *
    * - Default: `"singleLine"`
    */
-  commentLineStrategy?: string;
+  commentLineStrategy?: CommentLineStrategyConfig;
   /**
    * Emit `@description` tag instead of inline description.
    *
@@ -322,7 +344,7 @@ export interface JsdocConfig {
    *
    * - Default: `"greedy"`
    */
-  lineWrappingStyle?: string;
+  lineWrappingStyle?: LineWrappingStyleConfig;
   /**
    * Use fenced code blocks (```` ``` ````) instead of 4-space indentation for code without a language tag.
    *
@@ -730,17 +752,12 @@ export interface CustomGroupItemConfig {
   /**
    * Modifiers to match the import characteristics.
    * All specified modifiers must be present (AND logic).
-   *
-   * Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
    */
-  modifiers?: string[];
+  modifiers?: ImportModifierConfig[];
   /**
    * Selector to match the import kind.
-   *
-   * Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
-   * `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
    */
-  selector?: string;
+  selector?: ImportSelectorConfig;
   [k: string]: unknown;
 }
 /**

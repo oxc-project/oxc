@@ -1,5 +1,3 @@
-use core::arch::x86_64::{_MM_HINT_T0, _mm_prefetch};
-
 use crate::error::diag_code;
 use crate::lanes::Lanes;
 use crate::opmap::{KwSet, OP_QDOT};
@@ -9,6 +7,15 @@ use super::NUM;
 use super::bitmap::{bm_clear_range, bm_next0, bm_set1};
 use super::find::scan_number;
 use super::keywords::{KWB, kw_verify_batch};
+
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[inline(always)]
+fn prefetch(p: *const u8) {
+    unsafe { core::arch::x86_64::_mm_prefetch(p as *const i8, core::arch::x86_64::_MM_HINT_T0) }
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline(always)]
+fn prefetch(_p: *const u8) {}
 
 unsafe fn munch_walk(
     t: &Tables,
@@ -203,8 +210,8 @@ pub(super) unsafe fn coalesce(
         if kwc != 0 {
             let base = (w << 6) as u32;
             let cnt = kwc.count_ones() as usize;
-            _mm_prefetch(src.add(base as usize) as *const i8, _MM_HINT_T0);
-            _mm_prefetch(kind.add(base as usize) as *const i8, _MM_HINT_T0);
+            prefetch(src.add(base as usize));
+            prefetch(kind.add(base as usize) as *const u8);
             *kwpos.add(k) = base + kwc.trailing_zeros();
             kwc &= kwc.wrapping_sub(1);
             *kwpos.add(k + 1) = base + kwc.trailing_zeros();

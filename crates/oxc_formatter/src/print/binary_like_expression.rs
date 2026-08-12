@@ -6,6 +6,7 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::JsFormatter,
+    print::unary_argument_takes_comment_parens,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -146,11 +147,11 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
             | AstNodes::ForStatement(_)
-            | AstNodes::TemplateLiteral(_) => true,
+            | AstNodes::TemplateLiteral(_)
+            | AstNodes::ArrowFunctionExpression(_) => true,
             AstNodes::JSXExpressionContainer(container) => {
                 matches!(container.parent(), AstNodes::JSXAttribute(_))
             }
-            AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
             AstNodes::ConditionalExpression(conditional) => !matches!(
                 conditional.parent(),
                 AstNodes::ReturnStatement(_)
@@ -158,7 +159,8 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
                     | AstNodes::CallExpression(_)
                     | AstNodes::NewExpression(_)
                     | AstNodes::ImportExpression(_)
-                    | AstNodes::MetaProperty(_)
+                    | AstNodes::ImportMeta(_)
+                    | AstNodes::NewTarget(_)
             ),
             // For argument of `Boolean()` calls.
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
@@ -197,19 +199,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         let parent = self.parent();
         let is_inside_condition = self.is_inside_condition(parent);
 
-        // Don't indent inside of conditions because conditions add their own indent and grouping.
+        // Don't indent inside of conditions because conditions add their own indent and grouping
         if is_inside_condition {
-            return write!(
-                f,
-                [&format_with(|f| {
-                    format_flattened_logical_expression(*self, is_inside_condition, f);
-                })]
-            );
+            return format_flattened_logical_expression(*self, true, f);
         }
 
         // Add a group with a soft block indent in cases where it is necessary to parenthesize the binary expression.
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
         let is_inside_parenthesis = match parent {
+            // The unary's own comment parens already provide the group and indent
+            AstNodes::UnaryExpression(unary) if unary_argument_takes_comment_parens(unary, f) => {
+                return format_flattened_logical_expression(*self, false, f);
+            }
             AstNodes::StaticMemberExpression(_) | AstNodes::UnaryExpression(_) => true,
             _ => parent.is_call_like_callee_span(self.span()),
         };

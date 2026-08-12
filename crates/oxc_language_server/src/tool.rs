@@ -1,12 +1,12 @@
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
     ls_types::{
-        CodeActionContext, CodeActionOrCommand, Diagnostic, Pattern, Range, ServerCapabilities,
-        TextEdit, Uri, WorkspaceEdit,
+        CodeActionOrCommand, Diagnostic, MessageType, Pattern, ServerCapabilities, TextEdit, Uri,
+        WorkspaceEdit,
     },
 };
 
-use crate::{TextDocument, capabilities::Capabilities};
+use crate::{CodeActionParams, TextDocument, capabilities::Capabilities};
 
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
@@ -18,7 +18,7 @@ pub trait ToolBuilder: Send + Sync {
     }
 
     /// Build a boxed instance of the tool for the given root URI and options.
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
+    fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult;
 
     /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
     fn shutdown(&self, _root_uri: &Uri) {
@@ -73,16 +73,11 @@ pub trait Tool: Send + Sync {
         Err(ErrorCode::InvalidParams)
     }
 
-    /// Get code actions or commands provided by this tool for the given URI and range.
-    /// The tool should filter the code actions based on the provided range.
+    /// Get code actions or commands provided by this tool.
+    /// The tool should filter the code actions based on the requested range.
     /// The context can be used to further filter the code actions,
     /// for example by the `only` field which indicates that only code actions of certain kinds are requested.
-    fn get_code_actions_or_commands(
-        &self,
-        _uri: &Uri,
-        _range: &Range,
-        _context: &CodeActionContext,
-    ) -> Vec<CodeActionOrCommand> {
+    fn get_code_actions_or_commands(&self, _params: &CodeActionParams) -> Vec<CodeActionOrCommand> {
         Vec::new()
     }
 
@@ -144,6 +139,23 @@ pub trait Tool: Send + Sync {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClientMessage {
+    /// The message to be sent to the client.
+    pub message: String,
+    /// The type of message to be sent to the client (e.g., error, warning).
+    pub r#type: MessageType,
+}
+
+pub struct ToolBuildResult {
+    /// The tool that was started (linter, formatter).
+    /// It should always be started and on internal errors, fallback to the default configuration of the tool.
+    pub tool: Box<dyn Tool>,
+    /// Even if the tool started successfully, it may have encountered issues during initialization.
+    /// The `client_message` field can be used to communicate any warnings or errors to the client.
+    pub client_message: Option<ClientMessage>,
+}
+
 pub struct ToolRestartChanges {
     /// The tool that was restarted (linter, formatter).
     /// If None, no tool was restarted.
@@ -151,4 +163,7 @@ pub struct ToolRestartChanges {
     /// The patterns that were added during the tool restart
     /// Old patterns will be automatically unregistered
     pub watch_patterns: Option<Vec<Pattern>>,
+    /// Even if the tool restarted successfully, it may have encountered issues during initialization.
+    /// The `client_message` field can be used to communicate any warnings or errors to the client.
+    pub client_message: Option<ClientMessage>,
 }

@@ -76,7 +76,6 @@ declare_oxc_lint!(
     short_description = "Disallow throwing literals or non-Error objects as exceptions.",
 );
 
-const SPECIAL_IDENTIFIERS: [&str; 3] = ["undefined", "Infinity", "NaN"];
 impl Rule for NoThrowLiteral {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThrowStatement(stmt) = node.kind() else {
@@ -95,10 +94,12 @@ impl Rule for NoThrowLiteral {
                     )
                 });
             }
-            Expression::Identifier(id) if SPECIAL_IDENTIFIERS.contains(&id.name.as_str()) => {
+            Expression::Identifier(id)
+                if id.name == "undefined" && ctx.is_reference_to_global_variable(id) =>
+            {
                 ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), true));
             }
-            expr if !could_be_error(ctx, expr) => {
+            expr if !could_be_error(expr) => {
                 ctx.diagnostic(no_throw_literal_diagnostic(expr.span(), false));
             }
             _ => {}
@@ -115,8 +116,11 @@ fn test() {
         "throw new Error('error');",
         "throw Error('error');",
         "var e = new Error(); throw e;",
+        "function foo(undefined) { throw undefined; }",
         "try {throw new Error();} catch (e) {throw e;};",
         "throw a;",
+        "throw Infinity;",
+        "throw NaN;",
         "throw foo();",
         "throw new foo();",
         "throw foo.bar;",
@@ -137,11 +141,27 @@ fn test() {
         "throw obj?.foo()",    // { "ecmaVersion": 2020 }
         "throw obj?.foo() as string",
         "throw obj?.foo() satisfies Direction",
-        // local reference resolution
+        // ESLint considers any identifier capable of containing an Error.
         "const err = new Error(); throw err;",
+        "let err: Error | null = null; err = new Error('My error'); throw err;",
+        "let err: Error | null = null; throw err; err = new Error('My error');",
+        "let err: Error | undefined; err = new Error('My error'); throw err;",
+        "let err; err = new Error('My error'); throw err;",
+        "declare let err: Error; throw err;",
+        "let err: Error | undefined; if (err) { throw err; }",
+        "let err: Error | undefined; throw err; err = new Error('My error');",
+        "let err: Error | undefined; err = 'foo' as unknown as Error; throw err;",
+        "let foo = 'foo'; throw foo;",
+        "let foo = 'foo' as unknown as Error; throw foo;",
+        "function foo() {}; throw foo;",
+        "const foo = () => {}; throw foo;",
+        "class Foo {}\nthrow Foo;",
         "function main(x) { throw x; }", // cannot determine type of x
         "function main(x: any) { throw x; }",
         "function main(x: TypeError) { throw x; }",
+        "function main(x: number) { throw x; }",
+        "function main(x: string) { throw x; }",
+        "function main(x: string | number) { throw x; }",
         "async function json(stream) { try { } catch (_err) { const err = err; throw err; } }",
     ];
 
@@ -152,8 +172,6 @@ fn test() {
         "throw null;",
         "throw {};",
         "throw undefined;",
-        "throw Infinity;",
-        "throw NaN;",
         "throw 'a' + 'b';",
         "var b = new Error(); throw 'a' + b;",
         "throw foo = 'error';",
@@ -167,15 +185,6 @@ fn test() {
         "throw `${err}`;", // { "ecmaVersion": 6 }
         "throw 0 as number",
         "throw 'error' satisfies Error",
-        // local reference resolution
-        "let foo = 'foo'; throw foo;",
-        "let foo = 'foo' as unknown as Error; throw foo;",
-        "function foo() {}; throw foo;",
-        "const foo = () => {}; throw foo;",
-        "class Foo {}\nthrow Foo;",
-        "function main(x: number) { throw x; }",
-        "function main(x: string) { throw x; }",
-        "function main(x: string | number) { throw x; }",
     ];
 
     let fix = vec![

@@ -1,10 +1,7 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, Statement},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -50,6 +47,7 @@ declare_oxc_lint!(
     NoUnreadableIife,
     unicorn,
     pedantic,
+    pending,
     version = "0.0.19",
     short_description = "This rule disallows IIFEs with a parenthesized arrow function body.",
 );
@@ -66,14 +64,12 @@ impl Rule for NoUnreadableIife {
             return;
         };
 
-        if !arrow_expr.expression {
+        if !arrow_expr.is_expression() {
             return;
         }
-        let Statement::ExpressionStatement(expr_stmt) = &arrow_expr.body.statements[0] else {
-            return;
-        };
-        if matches!(expr_stmt.expression, Expression::ParenthesizedExpression(_)) {
-            ctx.diagnostic(no_unreadable_iife_diagnostic(expr_stmt.span));
+        let Some(expression) = arrow_expr.get_expression() else { return };
+        if matches!(expression, Expression::ParenthesizedExpression(_)) {
+            ctx.diagnostic(no_unreadable_iife_diagnostic(expression.span()));
         }
     }
 }

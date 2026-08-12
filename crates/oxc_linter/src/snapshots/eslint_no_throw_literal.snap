@@ -44,20 +44,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
 
-  ⚠ eslint(no-throw-literal): Do not throw undefined
-   ╭─[no_throw_literal.tsx:1:7]
- 1 │ throw Infinity;
-   ·       ────────
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Do not throw undefined
-   ╭─[no_throw_literal.tsx:1:7]
- 1 │ throw NaN;
-   ·       ───
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
   ⚠ eslint(no-throw-literal): Expected an error object to be thrown
    ╭─[no_throw_literal.tsx:1:7]
  1 │ throw 'a' + 'b';
@@ -146,62 +132,5 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_throw_literal.tsx:1:7]
  1 │ throw 'error' satisfies Error
    ·       ───────────────────────
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:1:24]
- 1 │ let foo = 'foo'; throw foo;
-   ·                        ───
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:1:44]
- 1 │ let foo = 'foo' as unknown as Error; throw foo;
-   ·                                            ───
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:1:26]
- 1 │ function foo() {}; throw foo;
-   ·                          ───
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:1:29]
- 1 │ const foo = () => {}; throw foo;
-   ·                             ───
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:2:7]
- 1 │ class Foo {}
- 2 │ throw Foo;
-   ·       ───
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:1:34]
- 1 │ function main(x: number) { throw x; }
-   ·                                  ─
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:1:34]
- 1 │ function main(x: string) { throw x; }
-   ·                                  ─
-   ╰────
-  help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.
-
-  ⚠ eslint(no-throw-literal): Expected an error object to be thrown
-   ╭─[no_throw_literal.tsx:1:43]
- 1 │ function main(x: string | number) { throw x; }
-   ·                                           ─
    ╰────
   help: Throwing literals or non-Error objects is not recommended. Use an Error object instead.

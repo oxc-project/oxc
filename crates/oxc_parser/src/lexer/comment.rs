@@ -1,12 +1,13 @@
 use memchr::memmem::Finder;
 
 use oxc_ast::CommentKind;
+use oxc_data_structures::branch_hints::cold_path;
 use oxc_syntax::line_terminator::is_line_terminator;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
-    Kind, Lexer, cold_branch,
+    Kind, Lexer,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
     source::SourcePosition,
 };
@@ -45,29 +46,28 @@ impl<'a, C: Config> Lexer<'a, C> {
                 } else {
                     // `0xE2`. Could be first byte of LS/PS, or could be some other Unicode char.
                     // Either way, Unicode is uncommon, so make this a cold branch.
-                    cold_branch(|| {
-                        // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
-                        // So safe to advance `pos` by 1 and read 2 bytes.
-                        let next2 = unsafe { pos.add(1).read2() };
-                        if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
-                            // Irregular line break
-                            self.trivia_builder
-                                .add_line_comment(self.token.start(), self.source.offset_of(pos), self.source.whole());
-                            // Advance `pos` to after this char.
-                            // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
-                            // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                            pos = unsafe { pos.add(3) };
-                            // We've found the end. Do not continue searching.
-                            false
-                        } else {
-                            // Some other Unicode char beginning with `0xE2`.
-                            // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
-                            // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
-                            // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                            pos = unsafe { pos.add(2) };
-                            true
-                        }
-                    })
+                    cold_path();
+                    // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
+                    // So safe to advance `pos` by 1 and read 2 bytes.
+                    let next2 = unsafe { pos.add(1).read2() };
+                    if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
+                        // Irregular line break
+                        self.trivia_builder
+                            .add_line_comment(self.token.start(), self.source.offset_of(pos), self.source.whole());
+                        // Advance `pos` to after this char.
+                        // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
+                        // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
+                        pos = unsafe { pos.add(3) };
+                        // We've found the end. Do not continue searching.
+                        false
+                    } else {
+                        // Some other Unicode char beginning with `0xE2`.
+                        // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
+                        // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
+                        // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
+                        pos = unsafe { pos.add(2) };
+                        true
+                    }
                 }
             },
             handle_eof: {
@@ -113,29 +113,28 @@ impl<'a, C: Config> Lexer<'a, C> {
                     } else {
                         // This is last byte in file. Continue to `handle_eof`.
                         // This is illegal in valid JS, so mark this branch cold.
-                        cold_branch(|| true)
+                        cold_path();
+                        true
                     }
                 } else if next_byte == LS_OR_PS_FIRST {
                     // `0xE2`. Could be first byte of LS/PS, or could be some other Unicode char.
                     // Either way, Unicode is uncommon, so make this a cold branch.
-                    cold_branch(|| {
-                        // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
-                        // So safe to advance `pos` by 1 and read 2 bytes.
-                        let next2 = unsafe { pos.add(1).read2() };
-                        if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
-                            // Irregular line break
-                            self.token.set_is_on_new_line(true);
-                            // Ideally we'd go on to `skip_multi_line_comment_after_line_break` here
-                            // but can't do that easily because can't use `return` in a closure.
-                            // But irregular line breaks are rare anyway.
-                        }
-                        // Either way, continue searching.
-                        // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
-                        // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
-                        // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                        pos = unsafe { pos.add(2) };
-                        true
-                    })
+                    cold_path();
+                    // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
+                    // So safe to advance `pos` by 1 and read 2 bytes.
+                    let next2 = unsafe { pos.add(1).read2() };
+                    if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
+                        // Irregular line break
+                        self.token.set_is_on_new_line(true);
+                        // Ideally we'd go on to `skip_multi_line_comment_after_line_break` here,
+                        // but irregular line breaks are rare anyway.
+                    }
+                    // Either way, continue searching.
+                    // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
+                    // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
+                    // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
+                    pos = unsafe { pos.add(2) };
+                    true
                 } else {
                     // Regular line break.
                     // No need to look for more line breaks, so switch to faster search just for `*/`.

@@ -5,7 +5,7 @@ use oxc_ast::{
         FormalParameter, Function, MethodDefinitionKind, Statement,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -114,7 +114,7 @@ struct AssignmentVisitor<'a, 'b> {
     assigned_before_constructor: FxHashSet<Str<'a>>,
 }
 
-impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
     fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
         // don't continue walking into functions as they have a different scoped "this"
     }
@@ -191,9 +191,15 @@ fn get_assignments_inside_expression<'a>(
         Expression::CallExpression(call) => {
             // Immediately Invoked Function Expression (IIFE)
 
+            if let Expression::ArrowFunctionExpression(expr) = call.callee.without_parentheses()
+                && let Some(Expression::AssignmentExpression(assignment)) = expr.get_expression()
+            {
+                assignments.push(assignment);
+            }
+
             let function_body = match call.callee.without_parentheses() {
-                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
-                Expression::FunctionExpression(expr) => expr.body.as_ref(),
+                Expression::ArrowFunctionExpression(expr) => expr.get_function_body(),
+                Expression::FunctionExpression(expr) => expr.body.as_deref(),
                 _ => None,
             };
 

@@ -130,7 +130,7 @@ impl Rule for NoUselessComputedKey {
         match node.kind() {
             AstKind::ObjectProperty(property) if property.computed => {
                 if let Some(expr) =
-                    property.key.as_expression().map(Expression::get_inner_expression)
+                    property.key.as_expression().map(Expression::without_parentheses)
                 {
                     check_computed_class_member(
                         ctx,
@@ -145,7 +145,7 @@ impl Rule for NoUselessComputedKey {
             }
             AstKind::BindingProperty(binding_prop) if binding_prop.computed => {
                 if let Some(expr) =
-                    binding_prop.key.as_expression().map(Expression::get_inner_expression)
+                    binding_prop.key.as_expression().map(Expression::without_parentheses)
                 {
                     check_computed_class_member(
                         ctx,
@@ -162,7 +162,7 @@ impl Rule for NoUselessComputedKey {
                 if self.enforce_for_class_members && prop_def.computed =>
             {
                 if let Some(expr) =
-                    prop_def.key.as_expression().map(Expression::get_inner_expression)
+                    prop_def.key.as_expression().map(Expression::without_parentheses)
                 {
                     check_computed_class_member(
                         ctx,
@@ -179,7 +179,7 @@ impl Rule for NoUselessComputedKey {
                 if self.enforce_for_class_members && method_def.computed =>
             {
                 if let Some(expr) =
-                    method_def.key.as_expression().map(Expression::get_inner_expression)
+                    method_def.key.as_expression().map(Expression::without_parentheses)
                 {
                     check_computed_class_member(
                         ctx,
@@ -335,6 +335,7 @@ fn test() {
             Some(serde_json::json!([{ "enforceForClassMembers": true }])),
         ),
         ("({ [99999999999999999n]: 0 })", None), // { "ecmaVersion": 2020 }
+        ("({ ['myKey' as CustomType]: 2 })", None),
     ];
 
     let fail = vec![

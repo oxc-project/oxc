@@ -70,4 +70,17 @@ fn test_minimize_if() {
                 return pos + 1;
         }",
     );
+
+    test(
+        "function f(){if(a)if(b)var x=1;else var y=2;return x+y}",
+        "function f(){if(a){if(b)var x=1;else var y=2}return x+y}",
+    );
+    test(
+        "function f(){if(a)if(b)if(c)var x=1;else var y=2;return x+y}",
+        "function f(){if(a&&b){if(c)var x=1;else var y=2}return x+y}",
+    );
+    test(
+        "function f(){if(!a){}else if(b)var x=1;else var y=2;return x+y}",
+        "function f(){if(a){if(b)var x=1;else var y=2}return x+y}",
+    );
 }

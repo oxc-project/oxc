@@ -14,19 +14,19 @@ use crate::opmap::{
 };
 
 #[inline(always)]
-pub fn is_ws(c: u8) -> bool {
+pub const fn is_ws(c: u8) -> bool {
     c == b' ' || c == b'\t' || c == b'\n' || c == b'\r' || c == 0x0c || c == 0x0b
 }
 #[inline(always)]
-pub fn is_digit(c: u8) -> bool {
+pub const fn is_digit(c: u8) -> bool {
     c >= b'0' && c <= b'9'
 }
 #[inline(always)]
-pub fn is_id_start(c: u8) -> bool {
+pub const fn is_id_start(c: u8) -> bool {
     (c >= b'a' && c <= b'z') || (c >= b'A' && c <= b'Z') || c == b'_' || c == b'$' || c >= 0x80
 }
 #[inline(always)]
-pub fn is_word(c: u8) -> bool {
+pub const fn is_word(c: u8) -> bool {
     is_id_start(c) || is_digit(c)
 }
 #[inline(always)]
@@ -48,20 +48,20 @@ pub fn is_glue_join(c: u8) -> bool {
 pub const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 pub const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 #[inline(always)]
-pub fn is_kw_init(c: u8) -> bool {
+pub const fn is_kw_init(c: u8) -> bool {
     (KWINIT_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 /// TS-mode variant: the JS set plus `k`/`m`/`p`/`u` (keyof, module, the
 /// p-words, unique/unknown/undefined/using). Same hi-nibble rows.
 pub const KWINIT_TS_LO: [u8; 16] = [2, 1, 3, 3, 3, 3, 3, 3, 0, 3, 0, 1, 1, 1, 1, 1];
 #[inline(always)]
-pub fn is_kw_init_ts(c: u8) -> bool {
+pub const fn is_kw_init_ts(c: u8) -> bool {
     (KWINIT_TS_LO[(c & 15) as usize] & KWINIT_HI[(c >> 4) as usize]) != 0
 }
 pub const OPCH_LO: [u8; 16] = [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 10, 3, 7, 2];
 pub const OPCH_HI: [u8; 16] = [0, 0, 1, 2, 0, 4, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0];
 #[inline(always)]
-pub fn is_op_char(c: u8) -> bool {
+pub const fn is_op_char(c: u8) -> bool {
     (OPCH_LO[(c & 15) as usize] & OPCH_HI[(c >> 4) as usize]) != 0
 }
 pub const PH_A: [u8; 16] = [4, 13, 19, 20, 0, 14, 7, 8, 10, 26, 22, 0, 29, 23, 3, 2];
@@ -77,17 +77,13 @@ pub fn punct1_hash(c: u8) -> u8 {
     if h < 16 { PH_T0[h as usize] } else { PH_T1[(h & 15) as usize] }
 }
 
-/// One 64-byte cache line per `st`-mask byte for `compress`: the 8
-/// left-packed set-bit positions as u32 lanes, then the same as a 16-byte
-/// pshufb control. Fused so each mask byte touches one line, not two tables.
 #[repr(C, align(64))]
-pub struct CompressRow {
-    pub lanes: [u32; 8],
-    pub bytes: [u8; 16],
-    pad: [u8; 16],
+pub struct PairLuts {
+    pub lut0z: [[u8; 8]; 256],
+    pub lutpad: [[u8; 32]; 256],
 }
 
-const _: () = assert!(core::mem::size_of::<CompressRow>() == 64);
+const _: () = assert!(core::mem::size_of::<[[u8; 8]; 256]>().is_multiple_of(64));
 
 pub struct Tables {
     pub op: OpMap,
@@ -101,7 +97,7 @@ pub struct Tables {
     pub wb_hi: [u8; 16],
     pub op2_pack: [u32; 256],
     pub op3_pack: [u64; 256],
-    pub comp_lut: [CompressRow; 256],
+    pub pair_luts: PairLuts,
 }
 
 impl Tables {
@@ -123,12 +119,12 @@ impl Tables {
             wb_hi: [0; 16],
             op2_pack: [0; 256],
             op3_pack: [0; 256],
-            comp_lut: [const { CompressRow { lanes: [0; 8], bytes: [0; 16], pad: [0; 16] } }; 256],
+            pair_luts: PairLuts { lut0z: [[0; 8]; 256], lutpad: [[0; 32]; 256] },
         };
         t.build_regex_kw_mask();
         t.build_op_pack();
         t.build_merged_luts();
-        t.build_lane_lut();
+        t.build_pair_luts();
         kwinit_selfcheck();
         opch_selfcheck();
         t.merged_selfcheck();
@@ -141,7 +137,7 @@ impl Tables {
         // `of` is deliberately absent: it precedes a regex only in a for-of
         // head (never written — a RegExp isn't iterable), while `instance/of/g`
         // style division is real code. Matches es-module-lexer/SWC/RESS.
-        const RX: [&str; 13] = [
+        const RX: [&str; 18] = [
             "in",
             "do",
             "new",
@@ -151,19 +147,23 @@ impl Tables {
             "yield",
             "await",
             "throw",
+            "break",
             "return",
             "typeof",
             "delete",
+            "default",
+            "extends",
+            "continue",
+            "debugger",
             "instanceof",
         ];
-        // Indexed by kind offset from KW_BASE (all 13 sit in the JS kind
         // block, offsets < 64), so the mask is set-independent.
         let mut mask = 0u64;
         for r in RX.iter() {
             let mut found: i32 = -1;
             for kw in KEYWORDS.iter() {
                 if kw.0 == *r {
-                    found = (kw.1 - KW_KIND_BASE) as i32;
+                    found = (kw.1 as u8 - KW_KIND_BASE) as i32;
                     break;
                 }
             }
@@ -256,22 +256,18 @@ impl Tables {
         }
     }
 
-    fn build_lane_lut(&mut self) {
+    fn build_pair_luts(&mut self) {
         for m in 0..256usize {
-            let row = &mut self.comp_lut[m];
             let mut k = 0usize;
             for bit in 0..8usize {
                 if (m >> bit) & 1 != 0 {
-                    row.lanes[k] = bit as u32;
-                    row.bytes[k] = bit as u8;
+                    self.pair_luts.lut0z[m][k] = bit as u8;
+                    self.pair_luts.lutpad[m][8 + k] = (bit + 8) as u8;
                     k += 1;
                 }
             }
             for j in k..8 {
-                row.lanes[j] = 0;
-            }
-            for j in k..16 {
-                row.bytes[j] = 0x80;
+                self.pair_luts.lutpad[m][8 + j] = 0x80;
             }
         }
     }

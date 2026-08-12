@@ -65,8 +65,8 @@ impl Rule for PreferNodeProtocol {
                 call.common_js_require().map(|s| (s.value, s.span))
             }
             AstKind::ImportDeclaration(import) => Some((import.source.value, import.source.span)),
-            AstKind::ExportNamedDeclaration(export) => {
-                export.source.as_ref().map(|item| (item.value, item.span))
+            AstKind::ExportFromDeclaration(export) => {
+                Some((export.source.value, export.source.span))
             }
             _ => return,
         };

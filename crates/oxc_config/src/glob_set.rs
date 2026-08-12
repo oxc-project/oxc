@@ -1,6 +1,17 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
 
+/// Validate a single glob pattern.
+///
+/// `fast_glob::glob_match` does not validate patterns,
+/// so user-written patterns must be rejected up front with this.
+///
+/// # Errors
+/// Returns the error message when the pattern is not a valid glob.
+pub fn validate_glob_pattern(pattern: &str) -> Result<(), String> {
+    fast_glob::validate(pattern).map_err(|err| format!("Invalid glob pattern `{pattern}`: {err}"))
+}
+
 /// A set of glob patterns.
 /// Patterns are matched against paths relative to the configuration file's directory.
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, JsonSchema)]
@@ -8,7 +19,7 @@ pub struct GlobSet(Vec<String>);
 
 impl<'de> Deserialize<'de> for GlobSet {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(Self::new(Vec::<String>::deserialize(deserializer)?))
+        Self::try_new(Vec::<String>::deserialize(deserializer)?).map_err(serde::de::Error::custom)
     }
 }
 
@@ -45,6 +56,16 @@ impl GlobSet {
                 })
                 .collect::<Vec<_>>(),
         )
+    }
+
+    /// Like [`Self::new`], but validates each pattern as written by the user, before normalization.
+    /// Deserialization goes through this.
+    fn try_new<S: AsRef<str>, I: IntoIterator<Item = S>>(patterns: I) -> Result<Self, String> {
+        let patterns = patterns.into_iter().collect::<Vec<_>>();
+        for pattern in &patterns {
+            validate_glob_pattern(pattern.as_ref())?;
+        }
+        Ok(Self::new(patterns))
     }
 
     pub fn is_match(&self, path: &str) -> bool {
@@ -95,5 +116,21 @@ mod test {
         let glob_set: GlobSet = from_value(json!(["../foo.js"])).unwrap();
         assert!(glob_set.is_match("../foo.js"));
         assert!(!glob_set.is_match("foo.js"));
+    }
+
+    #[test]
+    fn test_globset_invalid_pattern() {
+        // Invalid patterns must be rejected at deserialization time.
+        // Fixes https://github.com/oxc-project/oxc/issues/24612
+        let err = from_value::<GlobSet>(json!(["src/**/*.{js,ts"])).unwrap_err();
+        let message = err.to_string();
+        assert!(message.contains("Invalid glob pattern `src/**/*.{js,ts`"), "{message}");
+        assert!(message.contains("unclosed brace expansion"), "{message}");
+
+        let err = from_value::<GlobSet>(json!(["src/[abpp.js"])).unwrap_err();
+        assert!(err.to_string().contains("unclosed character class"), "{}", err.to_string());
+
+        // One invalid pattern rejects the whole set, even alongside valid ones
+        assert!(from_value::<GlobSet>(json!(["*.ts", "src/**/*.{js,ts"])).is_err());
     }
 }

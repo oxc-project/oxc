@@ -11,3 +11,12 @@ type T {
 # after last definition
 
 # blank line above me
+
+{
+  afterArgs(argumentOne: 1, argumentTwo: 2) # must NOT be claimed by argumentOne across `, ...)`
+  afterArgsLong(argumentOne: 1, argumentTwo: 2, argumentThree: 3) # long comment must not break the arguments either
+  midArgs(
+    argumentOne: 1 # directly after an argument: attaches here and keeps the list open
+    argumentTwo: 2
+  )
+}

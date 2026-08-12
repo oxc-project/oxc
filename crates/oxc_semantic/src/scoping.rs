@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn, CloneInSemanticIds};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -31,13 +31,16 @@ impl CloneIn<'_> for Redeclaration {
     type Cloned = Self;
 
     #[inline]
-    fn clone_in(&self, _allocator: &Allocator) -> Self::Cloned {
-        Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
-    }
-
-    #[inline]
-    fn clone_in_with_semantic_ids(&self, _allocator: &Allocator) -> Self::Cloned {
-        self.clone()
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &Allocator,
+    ) -> Self::Cloned {
+        Self {
+            span: self.span,
+            declaration: self.declaration.clone_in_impl(with_semantic_ids, allocator),
+            flags: self.flags,
+        }
     }
 }
 

@@ -176,17 +176,17 @@ const MUTATING_METHODS: &[&str] =
 /// so the start node's own property counts as a chain step and a first-level
 /// mutating call like `foo.reverse()` is detected; `false` starts at the member
 /// expression itself (Options API), so `this.reverse()` is not a mutation.
-fn find_mutation_span(
-    start_node: &AstNode<'_>,
-    ctx: &LintContext<'_>,
+fn find_mutation_span<'a>(
+    start_node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
     seed_start: bool,
 ) -> Option<Span> {
     let nodes = ctx.nodes();
     let mut current = start_node;
-    let mut last_static_name: Option<String> = if seed_start {
+    let mut last_static_name: Option<&str> = if seed_start {
         match start_node.kind() {
-            AstKind::StaticMemberExpression(m) => Some(m.property.name.to_string()),
-            AstKind::ComputedMemberExpression(m) => m.static_property_name().map(|s| s.to_string()),
+            AstKind::StaticMemberExpression(m) => Some(m.property.name.as_str()),
+            AstKind::ComputedMemberExpression(m) => m.static_property_name().map(|s| s.as_str()),
             _ => None,
         }
     } else {
@@ -197,7 +197,7 @@ fn find_mutation_span(
         let parent = nodes.parent_node(current.id());
         match parent.kind() {
             AstKind::StaticMemberExpression(mem) if mem.object.span() == current.span() => {
-                last_static_name = Some(mem.property.name.to_string());
+                last_static_name = Some(mem.property.name.as_str());
                 current = parent;
             }
 
@@ -205,7 +205,7 @@ fn find_mutation_span(
             // Resolve string-literal keys (e.g. `this.arr['push']`) so mutating methods are
             // detected; dynamic keys (variables) remain None and correctly produce no match.
             AstKind::ComputedMemberExpression(mem) if mem.object.span() == current.span() => {
-                last_static_name = mem.static_property_name().map(|s| s.to_string());
+                last_static_name = mem.static_property_name().map(|s| s.as_str());
                 current = parent;
             }
 
@@ -234,8 +234,7 @@ fn find_mutation_span(
 
             // Call expression — check if we are the callee
             AstKind::CallExpression(call) if call.callee.span() == current.span() => {
-                if last_static_name.as_deref().is_some_and(|name| MUTATING_METHODS.contains(&name))
-                {
+                if last_static_name.is_some_and(|name| MUTATING_METHODS.contains(&name)) {
                     return Some(call.span());
                 }
                 return None;
@@ -316,7 +315,7 @@ fn is_inside_setup_function(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
                 let Some(body) = &f.body else { return false };
                 body.span
             }
-            AstKind::ArrowFunctionExpression(f) => f.body.span,
+            AstKind::ArrowFunctionExpression(f) => f.body.span(),
             _ => return false,
         };
         // Declaration must be inside the function body (not in the parameter list)

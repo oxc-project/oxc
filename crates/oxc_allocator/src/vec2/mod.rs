@@ -552,6 +552,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// # Examples
     ///
     /// ```ignore
+    /// use std::ptr::NonNull;
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// use std::ptr;
@@ -562,7 +563,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
     ///
     /// // Pull out the various important pieces of information about `v`
-    /// let p = v.as_mut_ptr();
+    /// let p = NonNull::new(v.as_mut_ptr()).unwrap();
     /// let len = v.len();
     /// let cap = v.capacity();
     ///
@@ -572,8 +573,8 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     mem::forget(v);
     ///
     ///     // Overwrite memory with 4, 5, 6
-    ///     for i in 0..len as isize {
-    ///         ptr::write(p.offset(i), 4 + i);
+    ///     for i in 0..len {
+    ///         p.add(i).write(4 + i);
     ///     }
     ///
     ///     // Put everything back together into a Vec
@@ -582,12 +583,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// }
     /// ```
     pub unsafe fn from_raw_parts_in(
-        ptr: *mut T,
+        ptr: NonNull<T>,
         length: usize,
         capacity: usize,
         alloc: &'a A,
     ) -> Vec<'a, T, A> {
-        Vec { buf: RawVec::from_raw_parts_in(ptr, length, capacity, alloc) }
+        // SAFETY: Caller guarantees `from_raw_parts_in`'s requirements
+        let buf = unsafe { RawVec::from_raw_parts_in(ptr, length, capacity, alloc) };
+        Vec { buf }
     }
 
     /// Returns the number of elements in the vector, also referred to as its 'length'.
@@ -1458,7 +1461,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
 
     /// Appends an element to the back of a vector.
     ///
-    /// See also [`push_fast`].
+    /// See also [`push_fast`] and [`push_mut`].
     ///
     /// # Panics
     ///
@@ -1477,6 +1480,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// ```
     ///
     /// [`push_fast`]: Self::push_fast
+    /// [`push_mut`]: Self::push_mut
     #[inline]
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
@@ -1491,12 +1495,58 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         }
     }
 
+    /// Appends an element to the back of a vector, and returns a mutable reference to it.
+    ///
+    /// See also [`push_fast_mut`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the number of elements in the vector overflows a `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// let b = Bump::new();
+    ///
+    /// let mut vec = Vec::from_iter_in([1, 2], &b);
+    ///
+    /// let last = vec.push_mut(3);
+    /// assert_eq!(*last, 3);
+    /// *last += 10;
+    ///
+    /// assert_eq!(vec, [1, 2, 13]);
+    /// ```
+    ///
+    /// [`push_fast_mut`]: Self::push_fast_mut
+    #[inline]
+    #[must_use = "if you don't need a reference to the value, use `push` instead"]
+    pub fn push_mut(&mut self, value: T) -> &mut T {
+        // This will panic or abort if we would allocate > isize::MAX bytes
+        // or if the length increment would overflow for zero-sized types.
+        if self.len_u32() == self.capacity_u32() {
+            self.buf.grow_one();
+        }
+        unsafe {
+            let end = self.buf.ptr().add(self.len_usize());
+            ptr::write(end, value);
+            self.buf.increase_len(1);
+            // `end` points to the value just written, which is now within the vector's length.
+            // The returned reference borrows `self` for its whole lifetime, so the vector cannot be
+            // mutated (and therefore cannot reallocate) while the reference is alive.
+            &mut *end
+        }
+    }
+
     /// Appends an element to the back of a vector, when it's likely that there's sufficient capacity.
     ///
     /// This method is equivalent to [`push`] except that it is optimized for the case where there's
     /// capacity for at least one more element, without needing to grow.
     ///
     /// When you're dealing with a large `Vec` which grows infrequently, this method can be faster.
+    ///
+    /// See also [`push_fast_mut`].
     ///
     /// # Panics
     ///
@@ -1516,6 +1566,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// ```
     ///
     /// [`push`]: Self::push
+    /// [`push_fast_mut`]: Self::push_fast_mut
     #[inline]
     pub fn push_fast(&mut self, value: T) {
         #[expect(clippy::if_not_else)]
@@ -1544,6 +1595,73 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
             }
 
             push_slow(self, value);
+        }
+    }
+
+    /// Appends an element to the back of a vector and returns a mutable reference to it,
+    /// when it's likely that there's sufficient capacity.
+    ///
+    /// This method is equivalent to [`push_mut`] except that it is optimized for the case where
+    /// there's capacity for at least one more element, without needing to grow.
+    ///
+    /// When you're dealing with a large `Vec` which grows infrequently, this method can be faster.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the number of elements in the vector overflows a `u32`.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// let b = Bump::new();
+    ///
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
+    /// vec.pop();
+    ///
+    /// let last = vec.push_fast_mut(4);
+    /// assert_eq!(*last, 4);
+    /// *last += 10;
+    ///
+    /// assert_eq!(vec, [1, 2, 14]);
+    /// ```
+    ///
+    /// [`push_mut`]: Self::push_mut
+    #[inline]
+    #[must_use = "if you don't need a reference to the value, use `push_fast` instead"]
+    pub fn push_fast_mut(&mut self, value: T) -> &mut T {
+        #[expect(clippy::if_not_else)]
+        if self.len_u32() != self.capacity_u32() {
+            // Capacity for at least 1 more element. Write it.
+            unsafe {
+                let end = self.buf.ptr().add(self.len_usize());
+                ptr::write(end, value);
+                self.buf.increase_len(1);
+                // `end` points to the value just written, which is now within the vector's length.
+                // The returned reference borrows `self` for its whole lifetime, so the vector cannot
+                // be mutated (and therefore cannot reallocate) while the reference is alive.
+                &mut *end
+            }
+        } else {
+            // At capacity. Grow.
+            // This branch is rarely taken, so marked as `#[cold]` and `#[inline(never)]`.
+            #[cold]
+            #[inline(never)]
+            fn push_slow<'v, T, A: Alloc>(v: &'v mut Vec<'_, T, A>, value: T) -> &'v mut T {
+                // This will panic or abort if we would allocate > `isize::MAX` bytes
+                // or if the length increment would overflow for zero-sized types.
+                v.buf.grow_one();
+
+                unsafe {
+                    let end = v.buf.ptr().add(v.len_usize());
+                    ptr::write(end, value);
+                    v.buf.increase_len(1);
+                    &mut *end
+                }
+            }
+
+            push_slow(self, value)
         }
     }
 
@@ -2911,3 +3029,113 @@ mod serialize {
     }
 }
 */
+
+#[cfg(test)]
+mod tests {
+    use crate::arena::Arena;
+
+    use super::*;
+
+    #[test]
+    fn push_mut_returns_reference_to_value() {
+        let arena = Arena::new();
+        let mut vec = Vec::from_iter_in([1, 2], &arena);
+
+        let last = vec.push_mut(3);
+        assert_eq!(*last, 3);
+        *last += 10;
+
+        assert_eq!(vec, [1, 2, 13]);
+    }
+
+    #[test]
+    fn push_mut_returns_reference_to_last_element() {
+        let arena = Arena::new();
+        let mut vec = Vec::with_capacity_in(4, &arena);
+
+        // Vector is empty
+        let last: *const u32 = vec.push_mut(1);
+        assert!(ptr::eq(last, vec.last().unwrap()));
+
+        // Does not grow
+        let last: *const u32 = vec.push_mut(2);
+        assert_eq!(vec.capacity(), 4);
+        assert!(ptr::eq(last, vec.last().unwrap()));
+
+        vec.push(3);
+        vec.push(4);
+
+        // Grows
+        let last: *const u32 = vec.push_mut(5);
+        assert!(vec.capacity() > 4);
+        assert!(ptr::eq(last, vec.last().unwrap()));
+
+        assert_eq!(vec, [1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn push_mut_zst() {
+        let arena = Arena::new();
+        let mut vec: Vec<(), _> = Vec::new_in(&arena);
+
+        for _ in 0..10 {
+            let value = vec.push_mut(());
+            *value = ();
+        }
+
+        assert_eq!(vec.len(), 10);
+        assert_eq!(vec, [(); 10]);
+    }
+
+    #[test]
+    fn push_fast_mut_returns_reference_to_value() {
+        let arena = Arena::new();
+        let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
+        vec.pop();
+
+        let last = vec.push_fast_mut(4);
+        assert_eq!(*last, 4);
+        *last += 10;
+
+        assert_eq!(vec, [1, 2, 14]);
+    }
+
+    #[test]
+    fn push_fast_mut_returns_reference_to_last_element() {
+        let arena = Arena::new();
+        let mut vec = Vec::with_capacity_in(4, &arena);
+
+        // Vector is empty
+        let last: *const u32 = vec.push_fast_mut(1);
+        assert!(ptr::eq(last, vec.last().unwrap()));
+
+        // Does not grow
+        let last: *const u32 = vec.push_fast_mut(2);
+        assert_eq!(vec.capacity(), 4);
+        assert!(ptr::eq(last, vec.last().unwrap()));
+
+        vec.push(3);
+        vec.push(4);
+
+        // Grows, via the `#[cold]` slow path
+        let last: *const u32 = vec.push_fast_mut(5);
+        assert!(vec.capacity() > 4);
+        assert!(ptr::eq(last, vec.last().unwrap()));
+
+        assert_eq!(vec, [1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn push_fast_mut_zst() {
+        let arena = Arena::new();
+        let mut vec: Vec<(), _> = Vec::new_in(&arena);
+
+        for _ in 0..10 {
+            let value = vec.push_fast_mut(());
+            *value = ();
+        }
+
+        assert_eq!(vec.len(), 10);
+        assert_eq!(vec, [(); 10]);
+    }
+}

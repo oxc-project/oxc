@@ -1,5 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, SourceText, format_element};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -7,13 +8,10 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Comments, FormatElement, JoinBuilderJsExt as _, JsFormatContext, JsFormatter,
-        JsFormatterExt as _, SourceText, VecBuffer,
-        buffer::RemoveSoftLinesBuffer,
-        format_element,
+        Comments, JoinBuilderJsExt as _, JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{
-            FormatElements, Tag, empty_line, expand_parent, format_once, format_with, group,
-            soft_block_indent, soft_line_break_or_space, space,
+            FormatElements, best_fitting_variant, empty_line, expand_parent, format_once,
+            format_with, group, soft_block_indent, soft_line_break_or_space, space,
         },
         trivia::format_dangling_comments,
     },
@@ -323,7 +321,7 @@ fn should_group_first_argument(
         // fit entirely on the line or break fully. Only a single arrow
         // with a block body can be grouped to collapse the braces.
         Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
+            if arrow.is_expression() {
                 return false;
             }
         }
@@ -530,11 +528,12 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
                 && SimpleArgument::from(&expr.expression).is_simple_with_depth(1)
         }
         Expression::RegExpLiteral(_) => true,
-        Expression::CallExpression(call) => match call.arguments.len() {
-            0 => true,
-            1 => SimpleArgument::from(argument).is_simple(),
-            _ => false,
-        },
+        Expression::CallExpression(call) => {
+            call.arguments.len() <= 1 && SimpleArgument::from(argument).is_simple()
+        }
+        Expression::NewExpression(new_expr) => {
+            new_expr.arguments.len() <= 1 && SimpleArgument::from(argument).is_simple()
+        }
         _ => SimpleArgument::from(argument).is_simple(),
     }
 }
@@ -572,50 +571,6 @@ fn can_group_arrow_function_expression_argument(
     is_arrow_recursion: bool,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    let body = &arrow_function.body;
-    let return_type_annotation = &arrow_function.return_type;
-
-    // Handles cases like:
-    //
-    // app.get("/", (req, res): void => {
-    //     res.send("Hello World!");
-    // });
-    //
-    // export class Thing implements OtherThing {
-    //   do: (type: Type) => Provider<Prop> = memoize(
-    //     (type: ObjectType): Provider<Opts> => {}
-    //   );
-    // }
-    let can_group_type = return_type_annotation.as_ref().is_none_or(|any_type| {
-        match &any_type.type_annotation {
-            TSType::TSTypeReference(_) => {
-                if arrow_function.expression {
-                    return false;
-                }
-                body.statements.iter().any(|statement| match statement {
-                    #[expect(clippy::match_same_arms)]
-                    Statement::EmptyStatement(_) => {
-                        // When the body contains an empty statement, comments in
-                        // the body will get attached to that statement rather than
-                        // the body itself, so they need to be checked for comments
-                        // as well to ensure that the body is still considered
-                        // groupable when those empty statements are removed by the
-                        // printer.
-                        // TODO: it seems no difference if we comment out this line
-                        // comments.has_comments(s.span)
-                        true
-                    }
-                    _ => true,
-                }) || (body.statements.is_empty() && f.comments().has_comment_before(body.span.end))
-            }
-            _ => true,
-        }
-    });
-
-    if !can_group_type {
-        return false;
-    }
-
     arrow_function.get_expression().is_none_or(|expr| match expr {
         Expression::ObjectExpression(_)
         | Expression::ArrayExpression(_)
@@ -736,16 +691,9 @@ fn write_grouped_arguments<'a>(
     }
 
     // First write the most expanded variant because it needs `arguments`.
-    let most_expanded = {
-        let mut buffer = VecBuffer::new(f.state_mut());
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
-        format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
-
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-        buffer.into_vec().into_arena_slice()
-    };
+    let most_expanded = best_fitting_variant(f.state_mut(), |buffer| {
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, buffer);
+    });
 
     // Now reformat the first or last argument if they happen to be a function or arrow function expression.
     // Function and arrow function expression apply a custom formatting that removes soft line breaks from the parameters,
@@ -824,11 +772,7 @@ fn write_grouped_arguments<'a>(
     }
 
     // Write the second variant that forces the group of the first/last argument to expand.
-    let middle_variant = {
-        let mut buffer = VecBuffer::new(f.state_mut());
-
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
+    let middle_variant = best_fitting_variant(f.state_mut(), |buffer| {
         write!(
             buffer,
             [
@@ -860,11 +804,7 @@ fn write_grouped_arguments<'a>(
                 ")"
             ]
         );
-
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-        buffer.into_vec().into_arena_slice()
-    };
+    });
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
@@ -873,10 +813,7 @@ fn write_grouped_arguments<'a>(
         ArenaVec::from_array_in([middle_variant, most_expanded], f)
     } else {
         // Write the most flat variant with the first or last argument grouped.
-        let most_flat = {
-            let mut buffer = VecBuffer::new(f.state_mut());
-            buffer.write_element(FormatElement::Tag(Tag::StartEntry));
-
+        let most_flat = best_fitting_variant(f.state_mut(), |buffer| {
             write!(
                 buffer,
                 [
@@ -895,11 +832,7 @@ fn write_grouped_arguments<'a>(
                     ")",
                 ]
             );
-
-            buffer.write_element(FormatElement::Tag(Tag::EndEntry));
-
-            buffer.into_vec().into_arena_slice()
-        };
+        });
 
         ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f)
     };
@@ -1009,7 +942,7 @@ pub fn is_simple_module_import(
                             Expression::Identifier(ident) if ident.name.as_str() == "require" => {
                                 // `require.resolve("foo")`
                             }
-                            Expression::MetaProperty(_) => {
+                            Expression::ImportMeta(_) => {
                                 // `import.meta.resolve("foo")`
                             }
                             _ => return false,
@@ -1075,6 +1008,11 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
+            // The AMD layout only applies in statement position, matching Prettier's
+            // `parent.type === "ExpressionStatement"` check. A concise arrow body is not statement
+            // position: its parent is the `ArrowFunctionExpression`, so `() => define(...)` formats
+            // as a normal call. (oxc used to accept it, because concise bodies were wrapped in a
+            // synthetic `ExpressionStatement` before `ArrowFunctionBody` existed.)
             let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
@@ -1167,7 +1105,7 @@ fn is_react_hook_with_deps_array(
                 return false;
             }
 
-            if callback.expression {
+            if callback.is_expression() {
                 return false;
             }
 
@@ -1199,7 +1137,7 @@ fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
         return false;
     };
 
-    if arrow.expression {
+    if arrow.is_expression() {
         return false;
     }
 

@@ -9,7 +9,7 @@ use oxc_ast::{
     },
     match_expression,
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -196,10 +196,10 @@ fn has_function_return_value(func: &Function) -> bool {
 
 fn has_arrow_function_return_value(arrow_func: &ArrowFunctionExpression) -> bool {
     // If expression is true, it's an expression body (() => expr), which always returns a value
-    if arrow_func.expression {
+    if arrow_func.is_expression() {
         return true;
     }
-    find_return_value(&arrow_func.body)
+    find_return_value(arrow_func.get_function_body().unwrap())
 }
 
 fn find_return_value(body: &FunctionBody) -> bool {
@@ -218,7 +218,7 @@ impl ReturnFinder {
     }
 }
 
-impl<'a> Visit<'a> for ReturnFinder {
+impl<'a> VisitJs<'a> for ReturnFinder {
     fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
         if self.found {
             return;

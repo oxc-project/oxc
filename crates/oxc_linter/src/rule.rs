@@ -563,11 +563,6 @@ impl RuleFixMeta {
         matches!(self, Self::Fixable(_) | Self::Conditional(_))
     }
 
-    #[inline]
-    pub fn is_pending(self) -> bool {
-        matches!(self, Self::FixPending)
-    }
-
     pub fn supports_fix(self, kind: FixKind) -> bool {
         matches!(self, Self::Fixable(fix_kind) | Self::Conditional(fix_kind) if fix_kind.can_apply(kind))
     }
@@ -743,6 +738,10 @@ mod test {
         assert_rule_runs_on_node_types(
             &promise::always_return::AlwaysReturn::default(),
             &[Function, ArrowFunctionExpression],
+        );
+        assert_rule_runs_on_node_types(
+            &vue::max_props::MaxProps::default(),
+            &[CallExpression, ExportDefaultDeclaration],
         );
         assert_rule_runs_on_node_types(
             &eslint::prefer_named_capture_group::PreferNamedCaptureGroup,

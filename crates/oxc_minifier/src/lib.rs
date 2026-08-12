@@ -44,14 +44,18 @@
 //!
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
+mod compression_pass;
 mod compressor;
 pub(crate) mod generated;
+mod is_terminated;
 mod keep_var;
 mod minifier_traverse;
 mod options;
 mod peephole;
 mod state;
-mod symbol_facts;
+mod symbol_liveness;
+mod symbol_metadata;
+mod symbol_state;
 mod symbol_value;
 mod traverse_context;
 
@@ -63,6 +67,8 @@ use oxc_semantic::{Scoping, SemanticBuilder};
 use oxc_str::CompactStr;
 use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
+
+use crate::state::CompressionMode;
 
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
@@ -105,16 +111,16 @@ impl<'a> Minifier {
     }
 
     pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(false, allocator, program)
+        self.build(CompressionMode::Full, allocator, program)
     }
 
     pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(true, allocator, program)
+        self.build(CompressionMode::TreeShakeOnly, allocator, program)
     }
 
     fn build(
         self,
-        dce: bool,
+        mode: CompressionMode,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
     ) -> MinifierReturn {
@@ -126,7 +132,7 @@ impl<'a> Minifier {
                 let stats = semantic.stats();
                 let scoping = semantic.into_scoping();
                 let compressor = Compressor::new(allocator);
-                let iterations = if dce {
+                let iterations = if matches!(mode, CompressionMode::TreeShakeOnly) {
                     let options = CompressOptions {
                         target: options.target,
                         treeshake: options.treeshake,

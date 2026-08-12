@@ -151,10 +151,7 @@ impl Rule for PreferArrayFind {
                     && is_filter_call(call_expr)
                     && !matches!(
                         ctx.nodes().ancestor_kinds(node.id()).nth(1),
-                        Some(
-                            AstKind::ExportDefaultDeclaration(_)
-                                | AstKind::ExportNamedDeclaration(_)
-                        )
+                        Some(AstKind::ExportDefaultDeclaration(_) | AstKind::ExportDeclaration(_))
                     )
                     && let Some(ident) = var_decl.id.get_binding_identifier()
                 {

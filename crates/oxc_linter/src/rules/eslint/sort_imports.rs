@@ -1,7 +1,4 @@
-use std::{
-    borrow::Cow,
-    fmt::{Display, Write},
-};
+use std::fmt::{Display, Write};
 
 use cow_utils::CowUtils;
 use itertools::Itertools;
@@ -9,6 +6,7 @@ use oxc_ast::ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::Ident;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -172,15 +170,8 @@ impl SortImports {
         let previous_member_syntax_group_index =
             self.member_syntax_sort_order.get_group_index_by_import_decl(previous);
 
-        let mut current_local_member_name = get_first_local_member_name(current);
-        let mut previous_local_member_name = get_first_local_member_name(previous);
-
-        if self.ignore_case {
-            current_local_member_name = current_local_member_name
-                .map(|name| Cow::Owned(name.cow_to_ascii_lowercase().into_owned()));
-            previous_local_member_name = previous_local_member_name
-                .map(|name| Cow::Owned(name.cow_to_ascii_lowercase().into_owned()));
-        }
+        let current_local_member_name = get_first_local_member_name(current);
+        let previous_local_member_name = get_first_local_member_name(previous);
 
         // "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
         // ```js
@@ -208,7 +199,12 @@ impl SortImports {
                 // ```
                 if let Some((current_name, previous_name)) =
                     current_local_member_name.zip(previous_local_member_name)
-                    && current_name < previous_name
+                    && if self.ignore_case {
+                        current_name.as_str().cow_to_ascii_lowercase()
+                            < previous_name.as_str().cow_to_ascii_lowercase()
+                    } else {
+                        current_name.as_str() < previous_name.as_str()
+                    }
                 {
                     ctx.diagnostic(sort_imports_alphabetically_diagnostic(current.span));
                 }
@@ -422,7 +418,7 @@ impl Display for ImportKind {
     }
 }
 
-fn get_first_local_member_name<'a>(decl: &ImportDeclaration<'a>) -> Option<Cow<'a, str>> {
+fn get_first_local_member_name<'a>(decl: &ImportDeclaration<'a>) -> Option<Ident<'a>> {
     let specifiers = decl.specifiers.as_ref()?;
     specifiers.first().map(ImportDeclarationSpecifier::name)
 }

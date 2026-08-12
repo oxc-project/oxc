@@ -9,9 +9,15 @@ code || !escapeless && (true /* 1 */ || false /* 2 */)
 ------------------
 code || (!escapeless && (true /* 1 */ || false) /* 2 */);
 
+---------- Not idempotent (second pass) ----------
+code || (!escapeless && (true /* 1 */ || false)) /* 2 */;
+
 -------------------
 { printWidth: 100 }
 -------------------
 code || (!escapeless && (true /* 1 */ || false) /* 2 */);
+
+---------- Not idempotent (second pass) ----------
+code || (!escapeless && (true /* 1 */ || false)) /* 2 */;
 
 ===================== End =====================

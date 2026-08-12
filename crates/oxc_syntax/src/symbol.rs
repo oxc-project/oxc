@@ -1,15 +1,17 @@
 use bitflags::bitflags;
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 use oxc_index::define_nonmax_u32_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
 use oxc_ast_macros::ast;
 
+use crate::semantic_id::SemanticId;
+
 define_nonmax_u32_index_type! {
     #[ast]
     #[builder(default)]
-    #[clone_in(default)]
+    #[clone_in(semantic_id)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct SymbolId;
@@ -18,17 +20,14 @@ define_nonmax_u32_index_type! {
 impl<'alloc> CloneIn<'alloc> for SymbolId {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self {
-        // `clone_in` should never reach this, because `CloneIn` skips symbol_id field
-        unreachable!();
-    }
-
     #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
-        *self
+    #[inline(always)] // Because this method only delegates
+    fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
+        self.clone_id(with_semantic_ids)
     }
 }
+
+impl SemanticId for SymbolId {}
 
 define_nonmax_u32_index_type! {
     pub struct RedeclarationId;

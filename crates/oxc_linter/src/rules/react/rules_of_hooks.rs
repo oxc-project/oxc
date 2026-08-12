@@ -7,7 +7,7 @@ use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, CallExpression, Function},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId, SymbolId};
@@ -718,7 +718,7 @@ impl<'a> MayThrowBeforeHook {
     }
 }
 
-impl<'a> Visit<'a> for MayThrowBeforeHook {
+impl<'a> VisitJs<'a> for MayThrowBeforeHook {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         if self.found {
             return;
@@ -750,14 +750,14 @@ impl<'a> Visit<'a> for MayThrowBeforeHook {
     fn visit_call_expression(&mut self, expr: &oxc_ast::ast::CallExpression<'a>) {
         self.enter_node(AstKind::CallExpression(expr));
         if !self.found {
-            walk::walk_call_expression(self, expr);
+            walk_js::walk_call_expression(self, expr);
         }
     }
 
     fn visit_new_expression(&mut self, expr: &oxc_ast::ast::NewExpression<'a>) {
         self.enter_node(AstKind::NewExpression(expr));
         if !self.found {
-            walk::walk_new_expression(self, expr);
+            walk_js::walk_new_expression(self, expr);
         }
     }
 }
@@ -865,7 +865,7 @@ fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -
     })
 }
 
-/// Checks if the `node_id` is a callback argument (including JSX render props),
+/// Checks if the `node_id` is a callback argument (including constructor and JSX render props),
 /// And that function isn't a `React.memo` or `React.forwardRef`.
 /// Returns `true` if this node is a function argument/render prop and that isn't a React special function.
 /// Otherwise it would return `false`.
@@ -877,8 +877,8 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
         AstKind::CallExpression(call) => {
             !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
         }
-        // Callback passed as JSX expression: <Foo>{() => { ... }}</Foo> or <Foo render={() => { ... }} />
-        AstKind::JSXExpressionContainer(_) => true,
+        // Callback passed as an argument to a constructor or JSX render prop.
+        AstKind::NewExpression(_) | AstKind::JSXExpressionContainer(_) => true,
         _ => false,
     }
 }
@@ -1714,6 +1714,14 @@ fn test() {
               return null;
             }
         ",
+        // This matches eslint-plugin-react-hooks: callbacks in non-components are not reported.
+        r"
+            function notAComponent() {
+                return new Promise.then(() => {
+                    useState();
+                });
+            }
+        ",
     ];
 
     let pass_additional_effect_hooks = vec![(
@@ -2459,16 +2467,14 @@ fn test() {
                 }
             }
         ",
-        // TODO: This should error but doesn't.
-        // Original rule also fails to raise this error.
-        // errors: [genericError('useState')],
-        // "
-        //     function notAComponent() {
-        //         return new Promise.then(() => {
-        //             useState();
-        //         });
-        //     }
-        // " ,
+        // Invalid because hooks cannot be called inside constructor callbacks.
+        r"
+            function Component() {
+                return new Promise.then(() => {
+                    useState();
+                });
+            }
+        ",
         // https://github.com/oxc-project/oxc/issues/6651
         r"const MyComponent3 = makeComponent(function foo () { useHook(); });",
         // https://github.com/oxc-project/oxc/issues/17961

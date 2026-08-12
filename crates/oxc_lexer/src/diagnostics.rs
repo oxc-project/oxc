@@ -412,6 +412,9 @@ pub fn to_oxc_diagnostic(d: &Diagnostic, source: &str) -> OxcDiagnostic {
             diag(sev, format!("Invalid Character `{}`", offending_char(source, d))).with_label(span)
         }
         Code::INVALID_REGEXP_GRAMMAR => diag(sev, "Invalid regular expression").with_label(span),
+        Code::HTML_COMMENT_IN_MODULE => {
+            diag(sev, "HTML comments are not allowed in modules").with_label(span)
+        }
         Code::ORACLE_DEPTH_EXCEEDED => diag(sev, "Nesting depth limit exceeded").with_label(span),
         Code::ALLOCATION_LIMIT_EXCEEDED => diag(sev, "Source length exceeds 4 GiB limit"),
 

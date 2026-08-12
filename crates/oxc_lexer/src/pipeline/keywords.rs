@@ -1,10 +1,18 @@
-use core::arch::x86_64::*;
-
 use crate::opmap::KwSet;
 
 use super::IDENT;
 
 pub(super) const KWB: usize = 64;
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"))]
+#[inline(always)]
+fn bzhi(x: u64, n: u32) -> u64 {
+    unsafe { core::arch::x86_64::_bzhi_u64(x, n) }
+}
+#[cfg(not(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2")))]
+#[inline(always)]
+fn bzhi(x: u64, n: u32) -> u64 {
+    x & (u64::MAX >> (64 - n))
+}
 /// Resolve a batch of keyword candidates (positions collected by
 /// `coalesce`): exact match against the perfect-hash tables, patching
 /// `kind` from IDENT to the keyword kind on hit. `TS_KEY` selects the
@@ -34,7 +42,7 @@ pub(super) unsafe fn kw_verify_batch<const TS_KEY: bool>(
             continue;
         }
         let w8 = core::ptr::read_unaligned(src.add(p) as *const u64);
-        let z = _bzhi_u64(w8, (len << 3) as u32);
+        let z = bzhi(w8, (len << 3) as u32);
         let key = if TS_KEY {
             // Last char comes off the bzhi'd word: bits above len*8 are
             // already zero, so the shift leaves exactly that byte.

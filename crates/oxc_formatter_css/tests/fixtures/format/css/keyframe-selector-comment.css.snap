@@ -1,0 +1,96 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* KNOWN DIVERGENCE (see AGENTS.md): every output block below deviates from Prettier.
+   Prettier keeps a COMMENTED keyframe selector list verbatim on one line
+   (`60% /+ mid +/, 70%, 80% /+ late +/ {`, interior spacing included — a postcss
+   raws artifact); we format it structurally, same layout as uncommented lists:
+   one selector per line, comment-before-comma per the separator rule. */
+@keyframes k {
+  0%, 50% {
+    top: 0;
+  }
+  60% /* mid */, 70%, 80% /* late */ {
+    top: 1px;
+  }
+}
+@keyframes spaced {
+  60%   /* mid */  ,   70% ,  80%   {
+    top: 1px;
+  }
+}
+@keyframes after-comma {
+  0%, /* c2 */ 50% /* tail */ {
+    top: 0;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* KNOWN DIVERGENCE (see AGENTS.md): every output block below deviates from Prettier.
+   Prettier keeps a COMMENTED keyframe selector list verbatim on one line
+   (`60% /+ mid +/, 70%, 80% /+ late +/ {`, interior spacing included — a postcss
+   raws artifact); we format it structurally, same layout as uncommented lists:
+   one selector per line, comment-before-comma per the separator rule. */
+@keyframes k {
+  0%,
+  50% {
+    top: 0;
+  }
+  60% /* mid */,
+  70%,
+  80% /* late */ {
+    top: 1px;
+  }
+}
+@keyframes spaced {
+  60% /* mid */,
+  70%,
+  80% {
+    top: 1px;
+  }
+}
+@keyframes after-comma {
+  0%,
+  /* c2 */ 50% /* tail */ {
+    top: 0;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* KNOWN DIVERGENCE (see AGENTS.md): every output block below deviates from Prettier.
+   Prettier keeps a COMMENTED keyframe selector list verbatim on one line
+   (`60% /+ mid +/, 70%, 80% /+ late +/ {`, interior spacing included — a postcss
+   raws artifact); we format it structurally, same layout as uncommented lists:
+   one selector per line, comment-before-comma per the separator rule. */
+@keyframes k {
+  0%,
+  50% {
+    top: 0;
+  }
+  60% /* mid */,
+  70%,
+  80% /* late */ {
+    top: 1px;
+  }
+}
+@keyframes spaced {
+  60% /* mid */,
+  70%,
+  80% {
+    top: 1px;
+  }
+}
+@keyframes after-comma {
+  0%,
+  /* c2 */ 50% /* tail */ {
+    top: 0;
+  }
+}
+
+===================== End =====================

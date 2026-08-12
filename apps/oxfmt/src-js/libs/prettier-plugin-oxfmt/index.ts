@@ -12,12 +12,21 @@
 import { textToDoc } from "./text-to-doc";
 import type { Parser, Printer, Doc, SupportOptions } from "prettier";
 
+// NOTE: Custom options must be declared here,
+// or Prettier's normalization drops them before they reach `textToDoc()`.
 export const options: SupportOptions = {
   _oxfmtPluginOptionsJson: {
     category: "JavaScript",
     type: "string",
     default: "{}",
     description: "Bundled JSON string for oxfmt-plugin options",
+  },
+  _oxfmtVueScriptLang: {
+    category: "JavaScript",
+    type: "string",
+    default: "",
+    description:
+      'Effective `lang` of Vue SFC `<script>` blocks when it needs disambiguation (currently only "tsx"), scanned by the host',
   },
 };
 

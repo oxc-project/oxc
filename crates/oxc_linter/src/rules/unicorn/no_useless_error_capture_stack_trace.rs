@@ -154,7 +154,7 @@ fn get_error_subclass_if_in_constructor<'a>(
 
 fn is_error_class(class: &oxc_ast::ast::Class, ctx: &LintContext) -> bool {
     // Check if the class extends a built-in Error type
-    let Some(super_class) = &class.super_class else {
+    let Some(super_class) = class.heritage_expression() else {
         return false;
     };
 
@@ -200,11 +200,7 @@ fn is_referencing_class(
 
             false
         }
-        Expression::MetaProperty(meta)
-            if meta.meta.name == "new" && meta.property.name == "target" =>
-        {
-            true
-        }
+        Expression::NewTarget(_) => true,
         _ => {
             if let Some(member) = expr.as_member_expression()
                 && let Expression::ThisExpression(_) = member.object().get_inner_expression()

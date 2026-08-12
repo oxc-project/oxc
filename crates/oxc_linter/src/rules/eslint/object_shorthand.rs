@@ -1,5 +1,5 @@
 use itertools::Either;
-use lazy_regex::{Lazy, Regex, lazy_regex};
+use lazy_regex::Regex;
 use schemars::JsonSchema;
 
 use oxc_ast::{
@@ -226,12 +226,13 @@ fn make_function_shorthand<'a>(
 
         let property_key_span = property.key.span();
         let key_text = if property.computed {
-            let (Some(paren_start), Some(paren_end_offset)) = (
-                ctx.find_prev_token_from(property_key_span.start, "["),
-                ctx.find_next_token_from(property_key_span.end, "]"),
+            let (Some(paren_start_offset), Some(paren_end_offset)) = (
+                ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
+                ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
             ) else {
                 return fixer.noop();
             };
+            let paren_start = property.span.start + paren_start_offset;
             ctx.source_range(Span::new(paren_start, property_key_span.end + paren_end_offset + 1))
         } else {
             ctx.source_range(property_key_span)
@@ -240,10 +241,10 @@ fn make_function_shorthand<'a>(
         match fn_or_arrow_fn {
             Either::Left(func) => {
                 let next_token = if func.generator {
-                    ctx.find_next_token_from(property_key_span.end, "*")
+                    ctx.find_next_token_within(property_key_span.end, func.span.end, "*")
                         .map(|offset| offset + 1 /* "*".len() */)
                 } else {
-                    ctx.find_next_token_from(property_key_span.end, "function")
+                    ctx.find_next_token_within(property_key_span.end, func.span.end, "function")
                         .map(|offset| offset + 8 /* "function".len() */)
                 };
                 let Some(func_token) = next_token else {
@@ -256,8 +257,8 @@ fn make_function_shorthand<'a>(
             }
             Either::Right(func) => {
                 let next_token = ctx
-                    .find_prev_token_from(func.body.span.start, "=>")
-                    .map(|offset| offset + 2 /* "=>".len() */);
+                    .find_prev_token_within(func.span.start, func.body.span().start, "=>")
+                    .map(|offset| func.span.start + offset + 2 /* "=>".len() */);
                 let Some(arrow_token) = next_token else {
                     return fixer.noop();
                 };
@@ -270,8 +271,9 @@ fn make_function_shorthand<'a>(
                     func.return_type.as_ref().map_or(func.params.span.end, |p| p.span.end),
                 ));
                 let should_add_parens = if func.r#async {
-                    if let Some(async_token) = ctx.find_next_token_from(func.span.start, "async")
-                        && let Some(first) = func.params.items.first()
+                    if let Some(first) = func.params.items.first()
+                        && let Some(async_token) =
+                            ctx.find_next_token_within(func.span.start, first.span.start, "async")
                     {
                         ctx.find_next_token_within(
                             func.span.start + async_token,
@@ -315,13 +317,16 @@ fn make_function_long_form<'a>(
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let property_key_span = property.key.span();
         let key_text_range = if property.computed {
-            let (Some(paren_start), Some(paren_end_offset)) = (
-                ctx.find_prev_token_from(property_key_span.start, "["),
-                ctx.find_next_token_from(property_key_span.end, "]"),
+            let (Some(paren_start_offset), Some(paren_end_offset)) = (
+                ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
+                ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
             ) else {
                 return fixer.noop();
             };
-            Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
+            Span::new(
+                property.span.start + paren_start_offset,
+                property_key_span.end + paren_end_offset + 1,
+            )
         } else {
             property_key_span
         };
@@ -373,7 +378,7 @@ fn check_longform_methods<'a>(
     if rule.avoid_explicit_return_arrows
         && let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
         && !arrow_uses_lexical_identifiers(ctx, func)
-        && !func.expression
+        && !func.is_expression()
     {
         make_function_shorthand(ctx, property, Either::Right(func));
     }
@@ -521,10 +526,8 @@ impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_meta_property(&mut self, it: &oxc_ast::ast::MetaProperty<'a>) {
-        if it.meta.name == "new" && it.property.name == "target" {
-            self.has_lexical_identifier = true;
-        }
+    fn visit_new_target(&mut self, _it: &oxc_ast::ast::NewTarget) {
+        self.has_lexical_identifier = true;
     }
 
     fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
@@ -548,8 +551,6 @@ enum ShorthandType {
     Never,
 }
 
-static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
-
 /// Determines if the first character of the name
 /// is a capital letter.
 /// * `name` - The name of the node to evaluate.
@@ -557,11 +558,10 @@ static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
 /// Returns true if the first character of the property name is a capital letter, false if not.
 fn is_constructor<N: AsRef<str>>(name: N) -> bool {
     // Not a constructor if name has no characters apart from '_', '$' and digits e.g. '_', '$$', '_8'
-    let Some(matched) = CTOR_PREFIX_REGEX.find(name.as_ref()) else {
-        return false;
-    };
-
-    name.as_ref().chars().nth(matched.start()).is_some_and(char::is_uppercase)
+    name.as_ref()
+        .chars()
+        .find(|c| !matches!(c, '_' | '$' | '0'..='9'))
+        .is_some_and(char::is_uppercase)
 }
 
 fn is_property_value_function(property: &ObjectProperty) -> bool {
@@ -833,6 +833,10 @@ fn test() {
         ),
         (
             "({ x: () => { this; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: (): typeof this.foo => { return 1; } })",
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (

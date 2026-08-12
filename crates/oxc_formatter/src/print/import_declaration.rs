@@ -33,34 +33,34 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ImportPhase {
     }
 }
 
-/// End position of the source + optional with-clause pair formatted by
-/// [`format_import_and_export_source_with_clause`].
-pub fn import_and_export_source_with_clause_end(
-    source: &AstNode<'_, StringLiteral>,
-    with_clause: Option<&AstNode<'_, WithClause>>,
-) -> u32 {
-    with_clause.map_or(source.span.end, |with| with.span.end)
-}
-
-pub fn format_import_and_export_source_with_clause<'a>(
+/// Formats `prefix` followed by the module source and its optional with-clause,
+/// then the semicolon, moving a same-line trailing comment behind it.
+pub fn format_source_with_clause_and_semicolon<'a>(
+    prefix: &impl Format<'a, JsFormatContext<'a>>,
     source: &AstNode<'a, StringLiteral>,
     with_clause: Option<&AstNode<'a, WithClause>>,
+    span_end: u32,
     f: &mut JsFormatter<'_, 'a>,
 ) {
-    source.fmt(f);
+    let content = format_with(|f| {
+        prefix.fmt(f);
+        source.fmt(f);
 
-    if let Some(with_clause) = with_clause {
-        if f.comments().has_comment_before(with_clause.span.start) {
-            write!(f, [space()]);
+        if let Some(with_clause) = with_clause {
+            if f.comments().has_comment_before(with_clause.span.start) {
+                write!(f, [space()]);
+            }
+
+            write!(f, [with_clause]);
         }
-
-        write!(f, [with_clause]);
-    }
+    });
+    let content_end = with_clause.map_or(source.span.end, |with| with.span.end);
+    write!(f, FormatContentWithSemicolon::new(&content, content_end, span_end));
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let content = format_with(|f| {
+        let prefix = format_with(|f| {
             write!(f, ["import", space()]);
             if let Some(phase) = self.phase() {
                 write!(f, phase);
@@ -71,12 +71,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
             if let Some(specifiers) = self.specifiers() {
                 write!(f, [specifiers, space(), "from", space()]);
             }
-
-            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
         });
-        let content_end =
-            import_and_export_source_with_clause_end(self.source(), self.with_clause());
-        let decl = FormatContentWithSemicolon::new(&content, content_end, self.span.end);
+        let decl = format_with(|f| {
+            format_source_with_clause_and_semicolon(
+                &prefix,
+                self.source(),
+                self.with_clause(),
+                self.span.end,
+                f,
+            );
+        });
 
         if f.options().sort_imports.is_some() {
             write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), &decl)]);

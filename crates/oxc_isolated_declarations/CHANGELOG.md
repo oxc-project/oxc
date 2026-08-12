@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 468b970 isolated-declarations: Strip re-export attributes (#25090) (camc314)
+
+### ⚡ Performance
+
+- e07718f isolated_declarations: Avoid large types on stack (#25036) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 🐛 Bug Fixes
+
+- a2ef382 isolated-declarations: Reject `window.Symbol`  as global symbol reference (#24689) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- f17514b isolated-declarations: Emit const readonly fields as types (#24288) (camc314)
+
 ## [0.139.0] - 2026-07-06
 
 ### ⚡ Performance

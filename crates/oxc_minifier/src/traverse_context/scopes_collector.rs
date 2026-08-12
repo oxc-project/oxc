@@ -86,9 +86,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -196,9 +197,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -270,9 +272,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -331,7 +334,12 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline(always)]
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
+    fn visit_import_meta(&mut self, it: &ImportMeta) {
+        // Struct does not contain a scope. Halt traversal.
+    }
+
+    #[inline(always)]
+    fn visit_new_target(&mut self, it: &NewTarget) {
         // Struct does not contain a scope. Halt traversal.
     }
 
@@ -388,9 +396,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -614,10 +623,13 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Statement::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
             Statement::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
             Statement::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Statement::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            Statement::TSExternalModuleDeclaration(it) => {
+                self.visit_ts_external_module_declaration(it)
+            }
+            Statement::TSNamespaceDeclaration(it) => self.visit_ts_namespace_declaration(it),
             Statement::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             Statement::ExportDefaultDeclaration(it) => self.visit_export_default_declaration(it),
-            Statement::ExportNamedDeclaration(it) => self.visit_export_named_declaration(it),
+            Statement::ExportDeclaration(it) => self.visit_export_declaration(it),
             Statement::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
             _ => {
                 // Remaining variants do not contain scopes:
@@ -628,6 +640,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `TSImportEqualsDeclaration`
                 // `ImportDeclaration`
                 // `ExportAllDeclaration`
+                // `ExportNamedDeclaration`
+                // `ExportFromDeclaration`
                 // `TSNamespaceExportDeclaration`
             }
         }
@@ -659,7 +673,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Declaration::TSTypeAliasDeclaration(it) => self.visit_ts_type_alias_declaration(it),
             Declaration::TSInterfaceDeclaration(it) => self.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => self.visit_ts_enum_declaration(it),
-            Declaration::TSModuleDeclaration(it) => self.visit_ts_module_declaration(it),
+            Declaration::TSExternalModuleDeclaration(it) => {
+                self.visit_ts_external_module_declaration(it)
+            }
+            Declaration::TSNamespaceDeclaration(it) => self.visit_ts_namespace_declaration(it),
             Declaration::TSGlobalDeclaration(it) => self.visit_ts_global_declaration(it),
             _ => {
                 // Remaining variants do not contain scopes:
@@ -778,9 +795,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -979,6 +997,76 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.visit_statements(&it.statements);
     }
 
+    fn visit_arrow_function_body(&mut self, it: &ArrowFunctionBody<'a>) {
+        match it {
+            ArrowFunctionBody::FunctionBody(it) => self.visit_function_body(it),
+            ArrowFunctionBody::TemplateLiteral(it) => self.visit_template_literal(it),
+            ArrowFunctionBody::ArrayExpression(it) => self.visit_array_expression(it),
+            ArrowFunctionBody::ArrowFunctionExpression(it) => {
+                self.visit_arrow_function_expression(it)
+            }
+            ArrowFunctionBody::AssignmentExpression(it) => self.visit_assignment_expression(it),
+            ArrowFunctionBody::AwaitExpression(it) => self.visit_await_expression(it),
+            ArrowFunctionBody::BinaryExpression(it) => self.visit_binary_expression(it),
+            ArrowFunctionBody::CallExpression(it) => self.visit_call_expression(it),
+            ArrowFunctionBody::ChainExpression(it) => self.visit_chain_expression(it),
+            ArrowFunctionBody::ClassExpression(it) => self.visit_class(it),
+            ArrowFunctionBody::ConditionalExpression(it) => self.visit_conditional_expression(it),
+            ArrowFunctionBody::FunctionExpression(it) => {
+                let flags = ScopeFlags::Function;
+                self.visit_function(it, flags)
+            }
+            ArrowFunctionBody::ImportExpression(it) => self.visit_import_expression(it),
+            ArrowFunctionBody::LogicalExpression(it) => self.visit_logical_expression(it),
+            ArrowFunctionBody::NewExpression(it) => self.visit_new_expression(it),
+            ArrowFunctionBody::ObjectExpression(it) => self.visit_object_expression(it),
+            ArrowFunctionBody::ParenthesizedExpression(it) => {
+                self.visit_parenthesized_expression(it)
+            }
+            ArrowFunctionBody::SequenceExpression(it) => self.visit_sequence_expression(it),
+            ArrowFunctionBody::TaggedTemplateExpression(it) => {
+                self.visit_tagged_template_expression(it)
+            }
+            ArrowFunctionBody::UnaryExpression(it) => self.visit_unary_expression(it),
+            ArrowFunctionBody::UpdateExpression(it) => self.visit_update_expression(it),
+            ArrowFunctionBody::YieldExpression(it) => self.visit_yield_expression(it),
+            ArrowFunctionBody::PrivateInExpression(it) => self.visit_private_in_expression(it),
+            ArrowFunctionBody::JSXElement(it) => self.visit_jsx_element(it),
+            ArrowFunctionBody::JSXFragment(it) => self.visit_jsx_fragment(it),
+            ArrowFunctionBody::TSAsExpression(it) => self.visit_ts_as_expression(it),
+            ArrowFunctionBody::TSSatisfiesExpression(it) => self.visit_ts_satisfies_expression(it),
+            ArrowFunctionBody::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
+            ArrowFunctionBody::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
+            ArrowFunctionBody::TSInstantiationExpression(it) => {
+                self.visit_ts_instantiation_expression(it)
+            }
+            ArrowFunctionBody::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
+            ArrowFunctionBody::ComputedMemberExpression(it) => {
+                self.visit_computed_member_expression(it)
+            }
+            ArrowFunctionBody::StaticMemberExpression(it) => {
+                self.visit_static_member_expression(it)
+            }
+            ArrowFunctionBody::PrivateFieldExpression(it) => {
+                self.visit_private_field_expression(it)
+            }
+            _ => {
+                // Remaining variants do not contain scopes:
+                // `BooleanLiteral`
+                // `NullLiteral`
+                // `NumericLiteral`
+                // `BigIntLiteral`
+                // `RegExpLiteral`
+                // `StringLiteral`
+                // `Identifier`
+                // `Super`
+                // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
+            }
+        }
+    }
+
     #[inline]
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         self.add_scope(&it.scope_id);
@@ -1045,14 +1133,14 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ModuleDeclaration::ExportDefaultDeclaration(it) => {
                 self.visit_export_default_declaration(it)
             }
-            ModuleDeclaration::ExportNamedDeclaration(it) => {
-                self.visit_export_named_declaration(it)
-            }
+            ModuleDeclaration::ExportDeclaration(it) => self.visit_export_declaration(it),
             ModuleDeclaration::TSExportAssignment(it) => self.visit_ts_export_assignment(it),
             _ => {
                 // Remaining variants do not contain scopes:
                 // `ImportDeclaration`
                 // `ExportAllDeclaration`
+                // `ExportNamedDeclaration`
+                // `ExportFromDeclaration`
                 // `TSNamespaceExportDeclaration`
             }
         }
@@ -1119,10 +1207,18 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
+    fn visit_export_declaration(&mut self, it: &ExportDeclaration<'a>) {
+        self.visit_declaration(&it.declaration);
+    }
+
+    #[inline(always)]
     fn visit_export_named_declaration(&mut self, it: &ExportNamedDeclaration<'a>) {
-        if let Some(declaration) = &it.declaration {
-            self.visit_declaration(declaration);
-        }
+        // Struct does not contain a scope. Halt traversal.
+    }
+
+    #[inline(always)]
+    fn visit_export_from_declaration(&mut self, it: &ExportFromDeclaration<'a>) {
+        // Struct does not contain a scope. Halt traversal.
     }
 
     #[inline]
@@ -1225,9 +1321,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -1385,9 +1482,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 // `RegExpLiteral`
                 // `StringLiteral`
                 // `Identifier`
-                // `MetaProperty`
                 // `Super`
                 // `ThisExpression`
+                // `ImportMeta`
+                // `NewTarget`
             }
         }
     }
@@ -1808,7 +1906,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_index_signature(&mut self, it: &TSIndexSignature<'a>) {
-        self.visit_ts_index_signature_names(&it.parameters);
+        self.visit_ts_index_signature_name(&it.parameter);
         self.visit_ts_type_annotation(&it.type_annotation);
     }
 
@@ -1837,7 +1935,6 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_interface_heritage(&mut self, it: &TSInterfaceHeritage<'a>) {
-        self.visit_expression(&it.expression);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
@@ -1856,13 +1953,13 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
-    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
+    fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
         self.add_scope(&it.scope_id);
     }
 
-    #[inline(always)]
-    fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
-        // Enum does not contain a scope. Halt traversal.
+    #[inline]
+    fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]
