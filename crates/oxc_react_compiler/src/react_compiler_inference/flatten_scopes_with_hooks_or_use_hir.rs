@@ -58,7 +58,8 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         for instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
-                InstructionValue::CallExpression { callee, .. } => {
+                InstructionValue::CallExpression { callee, .. }
+                | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if is_hook_or_use(env, callee_ty)? {
                         // All active scopes must be pruned
