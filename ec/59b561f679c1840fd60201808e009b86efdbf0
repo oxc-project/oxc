@@ -1,0 +1,23 @@
+packages/codegen/src-js/print/options.ts
+  s_ee0243a1a11203::t_79439130a827e1 52
+packages/codegen/src-js/state.ts
+  s_ee0243a1a11203::t_4f7d8806bb8e1b 88-93
+packages/codegen/test/print.test.ts
+  s_ee0243a1a11203::t_adece5d5577747 110-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ec59b561f679c1840fd60201808e009b86efdbf0",
+  "prompts": {},
+  "sessions": {
+    "s_ee0243a1a11203": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff570-b172-7bc3-94de-65349a19cc4a",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
