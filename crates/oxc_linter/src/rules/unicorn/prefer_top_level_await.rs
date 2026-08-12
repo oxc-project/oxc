@@ -6,7 +6,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
+    rule::Rule,
+};
 
 fn prefer_top_level_await_over_promise_chain_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer top-level await over using a promise chain.").with_label(span)
@@ -159,7 +162,7 @@ impl Rule for PreferTopLevelAwait {
 
         match declaration.kind() {
             AstKind::VariableDeclarator(var_decl)
-                if var_decl.kind == VariableDeclarationKind::Const =>
+                if variable_declaration_kind(var_decl, ctx) == VariableDeclarationKind::Const =>
             {
                 let Some(init) = &var_decl.init else { return };
 

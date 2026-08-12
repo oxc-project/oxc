@@ -86,13 +86,14 @@ impl<'a> PeepholeOptimizations {
 
     pub fn should_remove_unused_declarator(
         decl: &VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
         if !Self::can_remove_unused_declarators(ctx) {
             return false;
         }
         // Unsafe to remove `using`, unable to statically determine usage of [Symbol.dispose].
-        if decl.kind.is_using() {
+        if kind.is_using() {
             return false;
         }
         match &decl.id {
@@ -143,13 +144,14 @@ impl<'a> PeepholeOptimizations {
         if !Self::can_remove_unused_declarators(ctx) {
             return Some(stmt);
         }
+        let kind = var_decl.kind;
         var_decl.declarations.retain(|decl| {
             debug_assert!(
                 decl.init.is_none(),
                 "callers must pass KeepVar output (init-less declarators); a declarator \
                  with an init would need a `drop_*` walk for its references"
             );
-            !Self::should_remove_unused_declarator(decl, ctx)
+            !Self::should_remove_unused_declarator(decl, kind, ctx)
         });
         if var_decl.declarations.is_empty() {
             return None;

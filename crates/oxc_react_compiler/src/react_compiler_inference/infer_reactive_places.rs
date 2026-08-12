@@ -141,7 +141,8 @@ pub fn infer_reactive_places(
 
                 // Hooks and `use` operator are sources of reactivity
                 match value {
-                    InstructionValue::CallExpression { callee, .. } => {
+                    InstructionValue::CallExpression { callee, .. }
+                    | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
                         let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                         if get_hook_kind_for_type(env, callee_ty)?.is_some()
                             || is_use_operator_type(callee_ty)
@@ -282,7 +283,8 @@ impl StableSidemap {
         let value = &instr.value;
 
         match value {
-            InstructionValue::CallExpression { callee, .. } => {
+            InstructionValue::CallExpression { callee, .. }
+            | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
                 let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                 if evaluates_to_stable_type_or_container(env, callee_ty) {
                     let lvalue_ty = &env.types[env.identifiers[lvalue_id].type_];
@@ -583,7 +585,8 @@ fn apply_reactive_flags_replay(
 
             // Check hooks/use
             match &instr.value {
-                InstructionValue::CallExpression { callee, .. } => {
+                InstructionValue::CallExpression { callee, .. }
+                | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some()
                         || is_use_operator_type(callee_ty)

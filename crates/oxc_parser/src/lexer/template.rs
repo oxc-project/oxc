@@ -405,8 +405,8 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.token.set_escaped(true);
     }
 
-    pub(crate) fn get_template_string(&self, span_start: u32) -> Option<&'a str> {
-        self.escaped_templates[&span_start]
+    pub(crate) fn get_template_string(&self, start: u32) -> Option<&'a str> {
+        self.escaped_templates[&start]
     }
 }
 

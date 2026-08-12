@@ -13,5 +13,31 @@
   },
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  }
+  },
+  // Exclude huge gitignored submodules and `node_modules` from rust-analyzer's file scan -
+  // it does not respect `.gitignore`.
+  // Skipping these directories (500k+ files) speeds up server startup and reduces memory use.
+  // Paths are workspace-root relative. Globs are not supported, so each is listed explicitly.
+  "rust-analyzer.files.exclude": [
+    "apps/oxfmt/node_modules",
+    "crates/oxc_formatter_tests/prettier",
+    "apps/oxlint/conformance/submodules",
+    "apps/oxlint/node_modules",
+    "apps/shared/node_modules",
+    "napi/minify/node_modules",
+    "napi/parser/node_modules",
+    "napi/playground/node_modules",
+    "napi/transform/node_modules",
+    "napi/transform-react/node_modules",
+    "node_modules",
+    "npm/oxfmt/node_modules",
+    "npm/oxlint/node_modules",
+    "tasks/e2e/node_modules",
+    "tasks/compat_data/node_modules",
+    "tasks/coverage/test262",
+    "tasks/coverage/babel",
+    "tasks/coverage/typescript",
+    "tasks/coverage/estree-conformance",
+    "tasks/transform_conformance/node_modules"
+  ]
 }

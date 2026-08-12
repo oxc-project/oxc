@@ -4,7 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/prune-no
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] VoidUseMemo: useMemo() result is unused", labels: One([LabeledSpan { label: Some("useMemo() result is unused"), span: SourceSpan { offset: SourceOffset(283), length: 7 }, primary: false }]), help: Some("This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] VoidUseMemo: useMemo() result is unused", labels: [LabeledSpan { label: Some("useMemo() result is unused"), span: Span { start: 283, end: 290 }, primary: false }], help: Some("This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 // @validatePreserveExistingMemoizationGuarantees
 import { useMemo } from "react";

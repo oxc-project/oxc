@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- e0fb2d7 minifier: Avoid unsafe return removal in labeled blocks (#25406) (Armano)
+- c49f4ce parser: Preserve terminal license comments (#25400) (camc314)
+- 697c629 minifier: Preserve Annex B labeled-function bindings in implicit-return rewrite (#25349) (Armano)
+
+### ⚡ Performance
+
+- 6529d1a minifier: Short-circuit scope check when alternate already determines result (#25318) (Armano)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- a0c7788 ast: [**BREAKING**] Change `TSIndexSignatureName::name` to `Ident` (#25150) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🚀 Features
+
+- 8541e18 ast_tools: Generate minifier scope collector (#25088) (camc314)
+- 70d6ece minifier: Fold safe integer exponentiation (#25009) (Dunqing)
+- 73fc747 minifier: Enable termination statement optimization for do while (#24921) (Armano)
+- 5eadfdb minifier: Fold safe integer division and remainder (#24981) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 6c9ee14 minifier: Preserve if-chain idempotency and correct side effects when alternate should not be moved (#25041) (Armano)
+- 8a47ff3 ecmascript: Do not treat lone-surrogate strings as constants (#25084) (Dunqing)
+- e6734a5 minifier: Fold typeof comparisons with known object strings (#25017) (Dunqing)
+- 3a9d5a5 minifier: Keep `typeof foo == ['object']` as-is (#24941) (sapphi-red)
+- fbe8d31 minifier: Respect targets when folding RegExp source (#24790) (Dunqing)
+
+### ⚡ Performance
+
+- fb402b0 minifier: Stop re-deriving printed numeric spellings (#25103) (Dunqing)
+
 ## [0.142.0] - 2026-07-27
 
 ### 🚀 Features

@@ -1,6 +1,9 @@
 use oxc_formatter_core::{
-    Buffer, MemoizeFormat, best_fitting,
-    builders::{align, expand_parent, group, hard_line_break, line_suffix, space},
+    Buffer, Format, GroupId, MemoizeFormat, best_fitting,
+    builders::{
+        align, expand_parent, group, hard_line_break, if_group_breaks, if_group_fits_on_line,
+        line_suffix, space,
+    },
     format_args, write,
 };
 use oxc_yaml_parser::ast::{Content, MappingItem, Node};
@@ -10,6 +13,7 @@ use crate::{
         Gap, classify_gap, flush_leading_comments, pending_same_line_comment, write_single_comment,
         write_trailing_same_line_comment,
     },
+    context::YamlFormatContext,
     options::ProseWrap,
     print::{YamlFormatter, column_of, format_with, to_span, write_node, write_node_or_suppressed},
 };
@@ -198,6 +202,9 @@ pub fn write_mapping_item<'a>(
     if key_is_multiline_scalar {
         write!(f, "? ");
         write!(f, align(2, &format_with(|f| write_key(item, f))));
+        // `? key # c` keeps the comment on the key's last line, not past the `:`
+        // (the source is explicit here, so the gap holds no punctuation)
+        write_trailing_same_line_comment(key_span_end, &[], f);
         write!(f, hard_line_break());
         write!(f, ": ");
         write!(f, align(2, &format_with(|f| write_value(item, f))));
@@ -217,25 +224,56 @@ pub fn write_mapping_item<'a>(
         block_collection_without_props || has_pending_comment_before(value_start, f);
 
     if hardline_separator {
-        // The separator is pinned to a hardline (block collection / comments)
-        write_key(item, f);
-        write!(f, colon);
-        // Key's same-line comment must be emitted before the line break
+        // The separator is pinned to a hardline (block collection / comments).
+        // A trailing comment drops the implicit guarantee like everywhere else
+        // (Prettier's `!hasTrailingComment(key.content)` beside its `isAbsolutelyPrintedAsSingleLineNode`).
+        if key_absolutely_single_line && !key_trailing_same_line {
+            write_key(item, f);
+            write!(f, colon);
+            let value = format_with(|f| {
+                write_node_or_suppressed(value_node, f);
+            });
+            write!(f, align(tab_width, &format_args!(hard_line_break(), value)));
+            return;
+        }
+        // A key that may break must not stay implicit: a multi-line implicit key is invalid YAML
+        let group_id = write_grouped_key(&format_with(|f| write_key(item, f)), f);
+        // The key's same-line comment:
+        // the line suffix lands at the end of whichever line the printer is on (`key: # c` flat, `? key # c` broken),
+        // so one write serves both forms;
+        // its `expand_parent` reaches an enclosing flow collection, not the closed key group.
         write_trailing_same_line_comment(key_span_end, b":", f);
-        let value = format_with(|f| {
+        // The value sits in both conditional bodies
+        let value = format_with(|f: &mut YamlFormatter<'_, 'a>| {
             write_node_or_suppressed(value_node, f);
-        });
-        write!(f, align(tab_width, &format_args!(hard_line_break(), value)));
+        })
+        .memoized();
+        // This item is multi-line by definition: expand the enclosing groups explicitly
+        // (the item's own group; also an enclosing flow collection,
+        // which only reaches this path for a key trailing comment and must break for it anyway).
+        // The separators inside the conditionals then don't propagate (see `if_group_breaks` docs).
+        write!(f, expand_parent());
+        write_explicit_value(group_id, &value, f);
+        write!(
+            f,
+            if_group_fits_on_line(&format_args!(
+                colon,
+                align(tab_width, &format_args!(hard_line_break().without_expand_parent(), value))
+            ))
+            .with_group_id(Some(group_id))
+        );
         return;
     }
 
-    // Width-dependent layout via `best_fitting!`.
-    // Variants are measured flat with early-exit at hardlines, so:
-    // - variant 1 fits = the key + `: ` + the value's FIRST line fit
+    // Width-dependent layout: two decisions, two mechanisms
+    // (Prettier's `conditionalGroup([[groupedKey, ifBreak(explicit, implicit, {groupId})]])`):
+    // - implicit vs explicit (`? key`) follows the KEY group via `if_group_breaks`:
+    //   width overflow or a forced break inside the key flips the item to the explicit form
+    // - the implicit separator (value on the key's line or hanging under it) is a `best_fitting` trial,
+    //   measured flat with early-exit at hardlines:
+    //   variant 1 fits = `: ` + the value's FIRST line fit after the key
     //   (a multiline value's own hardlines don't re-flow the key line, Prettier's `conditionalGroup` boundary;
     //   for a block scalar that first line is just the `| ` / `>` header, sans any line-suffix trailing comment)
-    // - variant 2 fits = the key fits (Prettier's groupedKey break check)
-    // Content is memoized so the comment cursor advances only once.
     let key = format_with(|f: &mut YamlFormatter<'_, 'a>| write_key(item, f)).memoized();
     // The group wrapper mirrors Prettier's `genericPrint` (`group(printNode())`)
     // and is what decides variant 1 for a multi-paragraph value:
@@ -265,26 +303,59 @@ pub fn write_mapping_item<'a>(
         return;
     }
 
+    let group_id = write_grouped_key(&key, f);
+    write_explicit_value(group_id, &value_content_fmt, f);
     write!(
         f,
-        best_fitting![
+        if_group_fits_on_line(&best_fitting![
             // Everything starting on one line
-            format_args!(key, colon, space(), align(tab_width, &value_content_fmt)),
-            // Key line + value on the next line (fits when the key fits)
+            format_args!(colon, space(), align(tab_width, &value_content_fmt)),
+            // Value on the next line
             format_args!(
-                key,
                 colon,
                 align(tab_width, &format_args!(hard_line_break(), value_content_fmt))
             ),
-            // Explicit form (key itself doesn't fit)
-            format_args!(
-                "? ",
-                align(2, &key),
-                hard_line_break(),
-                ": ",
-                align(2, &value_content_fmt)
-            ),
-        ]
+        ])
+        .with_group_id(Some(group_id))
+    );
+}
+
+/// Prettier's `groupedKey` (`group([ifBreak("? "), group(align(2, key), {id})])`):
+/// the returned id is what the value side's conditionals watch,
+/// the key group breaks on width overflow AND on a forced break inside the key (a comment-pinned flow collection),
+/// flipping the item to the explicit form.
+/// A `best_fitting` trial could not see the latter: its measurement early-exits `Yes` at the first line break.
+fn write_grouped_key<'a>(
+    key: &impl Format<'a, YamlFormatContext<'a>>,
+    f: &mut YamlFormatter<'_, 'a>,
+) -> GroupId {
+    let group_id = f.state().group_id("mappingKey");
+    write!(
+        f,
+        group(&format_args!(
+            if_group_breaks(&"? "),
+            group(&align(2, key)).with_group_id(Some(group_id))
+        ))
+    );
+    group_id
+}
+
+/// [write_grouped_key]'s companion: the explicit form's value side (line break + `: value`),
+/// printed only when the key group broke (Prettier's `ifBreak(explicitMappingValue, ..., {groupId})`).
+/// The separator must not expand anything around it (see the `if_group_breaks` docs).
+fn write_explicit_value<'a>(
+    group_id: GroupId,
+    value: &impl Format<'a, YamlFormatContext<'a>>,
+    f: &mut YamlFormatter<'_, 'a>,
+) {
+    write!(
+        f,
+        if_group_breaks(&format_args!(
+            hard_line_break().without_expand_parent(),
+            ": ",
+            align(2, value)
+        ))
+        .with_group_id(Some(group_id))
     );
 }
 

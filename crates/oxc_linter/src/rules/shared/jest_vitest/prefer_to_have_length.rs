@@ -95,15 +95,17 @@ fn check_and_fix<'a>(
     }
 
     ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
+        let matcher_end = matcher.span.end;
+        let Some(offset) = fixer.find_next_token_within(matcher_end, call_expr.span().end, "(")
+        else {
+            return fixer.noop();
+        };
+        // everything up to the `(` is replaced, so bail rather than eat a comment
+        if ctx.has_comments_between(Span::new(matcher_end, matcher_end + offset)) {
+            return fixer.noop();
+        }
         let code = build_code(fixer.source_text(), static_mem_expr, super_mem_expr);
-        let offset = u32::try_from(
-            fixer
-                .source_range(Span::new(matcher.span.end, call_expr.span().end))
-                .find('(')
-                .unwrap(),
-        )
-        .unwrap();
-        fixer.replace(Span::new(call_expr.span.start, matcher.span.end + offset), code)
+        fixer.replace(Span::new(call_expr.span.start, matcher_end + offset), code)
     });
 }
 

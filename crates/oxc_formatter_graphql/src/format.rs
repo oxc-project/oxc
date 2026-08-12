@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedContext, EmbeddedIr, Format, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
     builders::{hard_line_break, text},
     write,
 };
@@ -25,15 +25,15 @@ pub fn format<'a>(
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<Formatted<'a, GraphqlFormatContext<'a>>, OxcDiagnostic> {
-    // Checked against the original input: `parse_document` strips the BOM
-    // before copying into the arena, so spans and gap scans never see it.
-    let has_bom = source_text.starts_with('\u{feff}');
+    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
     let mut state = FormatState::new(context, allocator);
-    // TODO: Use `with_capacity` for perf, like `oxc_formatter` does
-    let mut buffer = VecBuffer::new(&mut state);
+    // Pre-allocate: measured on 1,241 real-world files (gitlab operations, github/saleor schemas),
+    // 0.4x source bytes plus a 1024-element floor for small operation documents avoided reallocation for the entire corpus.
+    let capacity = (source.len() * 2 / 5).max(1024);
+    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatGraphqlRoot { document, has_bom });
 
@@ -41,7 +41,6 @@ pub fn format<'a>(
     let context = state.into_context();
 
     let ir = Document::new(elements, Vec::new());
-    ir.propagate_expand();
 
     Ok(Formatted::new(ir, context))
 }
@@ -50,24 +49,23 @@ pub fn format<'a>(
 /// formatter's document (dispatcher path, e.g. graphql-in-js).
 ///
 /// Unlike [`format()`], this:
-/// - allocates from the shared arena in `ctx`,
+/// - allocates from the session's shared arena and `GroupId` space,
 ///   so the IR lives as long as the parent's document
 /// - emits neither a BOM nor the trailing newline (the parent owns the layout
 ///   around the embedded part, matching Prettier's `textToDoc` + `stripTrailingHardline` behavior)
-/// - skips `propagate_expand()`, which the parent runs on the merged document
 ///
 /// # Errors
 /// Same as [`format()`]: any parse error bails out.
 pub fn format_to_ir<'a>(
-    ctx: &EmbeddedContext<'a, '_>,
+    session: &FormatSession<'a>,
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
-    let allocator = ctx.allocator;
+    let allocator = session.allocator();
     let (document, source, comments) = parse_document(allocator, source_text)?;
 
     let context = GraphqlFormatContext::new(options, source, comments);
-    let mut state = FormatState::new(context, allocator);
+    let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::new(&mut state);
 
     write!(&mut buffer, FormatGraphqlEmbedded { document });
@@ -79,15 +77,13 @@ pub fn format_to_ir<'a>(
 /// Parse the source into a direct AST and collect comment trivia,
 /// bailing out on any parse error.
 ///
-/// Copies the source into the arena so every slice taken from it carries `'a`,
-/// stripping any BOM first so offset-based scans never see it
-/// (the caller re-emits it from `has_bom`).
+/// Copies the source into the arena so every slice taken from it carries `'a`.
+/// Entries own the BOM strip; this layer assumes BOM-free (see [`oxc_formatter_core::spec::split_bom`]).
 fn parse_document<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<(&'a GraphQLDocument<'a>, &'a str, &'a [Span]), OxcDiagnostic> {
-    let source: &'a str =
-        allocator.alloc_str(source_text.strip_prefix('\u{feff}').unwrap_or(source_text));
+    let source: &'a str = allocator.alloc_str(source_text);
 
     // Opt-in graphql-js 17 syntax
     let ast = Parser::new(allocator, source).experimental_fragment_arguments(true).parse();

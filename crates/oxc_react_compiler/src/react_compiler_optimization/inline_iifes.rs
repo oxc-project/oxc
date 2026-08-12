@@ -224,6 +224,7 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                         // Set block terminal to Label
                         func.body.blocks.get_mut(&block_id).unwrap().terminal = Terminal::Label {
                             block: inner_entry,
+                            block_span: None,
                             id: EvaluationOrder::UNSET,
                             fallthrough: continuation_block_id,
                             span: block_terminal_span,

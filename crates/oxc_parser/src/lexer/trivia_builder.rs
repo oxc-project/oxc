@@ -369,31 +369,34 @@ impl<'a> TriviaBuilder<'a> {
     }
 }
 
-#[expect(clippy::inline_always)]
 #[inline(always)]
 fn contains_license_or_preserve_comment(s: &str) -> bool {
+    const LICENSE_LEN: usize = b"@license".len();
+    const PRESERVE_LEN: usize = b"@preserve".len();
     let hay = s.as_bytes();
 
-    if hay.len() < 9 {
+    if hay.len() < LICENSE_LEN {
         return false;
     }
 
-    let search_len = hay.len() - 8;
+    let search_len = hay.len() - LICENSE_LEN + 1;
 
     for i in memchr_iter(b'@', &hay[..search_len]) {
         debug_assert!(i < search_len);
-        // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 1` is safe
+        debug_assert!(hay.len() - i >= LICENSE_LEN);
+        // SAFETY: `search_len` only includes candidate starts with at least `LICENSE_LEN` bytes
+        // remaining, so `i + 1` and the full `@license` range are in bounds.
         match unsafe { hay.get_unchecked(i + 1) } {
             // spellchecker:off
             b'l'
-                // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 7` is safe
-                if unsafe { hay.get_unchecked(i + 2..i + 1 + 7) } == b"icense" =>
+                // SAFETY: The candidate bound proves the full `@license` range is in bounds.
+                if unsafe { hay.get_unchecked(i + 2..i + LICENSE_LEN) } == b"icense" =>
             {
                 return true;
             }
-            b'p'
-                // SAFETY: we `i` has a max val of len of bytes - 8, so accessing `i + 8` is safe
-                if unsafe { hay.get_unchecked(i + 2..i + 1 + 8) } == b"reserve" =>
+            b'p' if hay.len() - i >= PRESERVE_LEN
+                    // SAFETY: The preceding guard proves the full `@preserve` range is in bounds.
+                    && unsafe { hay.get_unchecked(i + 2..i + PRESERVE_LEN) } == b"reserve" =>
             {
                 return true;
             }
@@ -783,10 +786,20 @@ function bar() {}";
             ("/* @license */", CommentContent::Legal),
             ("/* foo @preserve */", CommentContent::Legal),
             ("/* foo @license */", CommentContent::Legal),
+            ("/* foo @preserve*/", CommentContent::Legal),
+            ("/* foo @license*/", CommentContent::Legal),
+            ("/* foo @licensed*/", CommentContent::Legal),
+            ("/* foo @License*/", CommentContent::None),
+            // spellchecker:disable-next-line
+            ("/* foo @licens*/", CommentContent::None),
+            // spellchecker:disable-next-line
+            ("/* foo @preserv*/", CommentContent::None),
             ("/* @foo @preserve */", CommentContent::Legal),
             ("/* @foo @license */", CommentContent::Legal),
             ("/** foo @preserve */", CommentContent::JsdocLegal),
             ("/** foo @license */", CommentContent::JsdocLegal),
+            ("/** foo @license*/", CommentContent::JsdocLegal),
+            ("// foo @license", CommentContent::Legal),
             ("/** jsdoc */", CommentContent::Jsdoc),
             ("/**/", CommentContent::None),
             ("/***/", CommentContent::None),

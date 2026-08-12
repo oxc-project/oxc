@@ -288,17 +288,29 @@ fn evaluate_instruction<'a>(
                 match prim {
                     PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
                         let object = *object;
+                        let property_span = property.span;
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
                         func.instructions[instr_id.index()].value =
-                            InstructionValue::PropertyLoad { object, property: new_property, span };
+                            InstructionValue::PropertyLoad {
+                                object,
+                                property: new_property,
+                                property_span,
+                                span,
+                            };
                     }
                     PrimitiveValue::Number(n) => {
                         let object = *object;
+                        let property_span = property.span;
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
                         func.instructions[instr_id.index()].value =
-                            InstructionValue::PropertyLoad { object, property: new_property, span };
+                            InstructionValue::PropertyLoad {
+                                object,
+                                property: new_property,
+                                property_span,
+                                span,
+                            };
                     }
                     PrimitiveValue::Null
                     | PrimitiveValue::Undefined
@@ -314,6 +326,7 @@ fn evaluate_instruction<'a>(
                 match prim {
                     PrimitiveValue::String(s) if is_valid_identifier(s.as_str()) => {
                         let object = *object;
+                        let property_span = property.span;
                         let store_value = *value;
                         let span = *span;
                         let new_property = PropertyLiteral::String(Ident::from(s.as_str()));
@@ -321,12 +334,14 @@ fn evaluate_instruction<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: new_property,
+                                property_span,
                                 value: store_value,
                                 span,
                             };
                     }
                     PrimitiveValue::Number(n) => {
                         let object = *object;
+                        let property_span = property.span;
                         let store_value = *value;
                         let span = *span;
                         let new_property = PropertyLiteral::Number(*n);
@@ -334,6 +349,7 @@ fn evaluate_instruction<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: new_property,
+                                property_span,
                                 value: store_value,
                                 span,
                             };
@@ -449,7 +465,7 @@ fn evaluate_instruction<'a>(
             }
             None
         }
-        InstructionValue::PropertyLoad { object, property, span } => {
+        InstructionValue::PropertyLoad { object, property, span, .. } => {
             let object_value = read(constants, object);
             if let Some(Constant::Primitive { value: PrimitiveValue::String(ref s), .. }) =
                 object_value

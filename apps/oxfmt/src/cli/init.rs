@@ -1,9 +1,3 @@
-/// Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.
-/// # Panics
-pub fn init_miette() {
-    miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().build()))).unwrap();
-}
-
 /// Initialize Rayon global thread pool with specified number of threads.
 ///
 /// If `--threads` option is not used, or `--threads 0` is given,

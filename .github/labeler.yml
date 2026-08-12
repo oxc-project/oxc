@@ -26,8 +26,7 @@ A-editor:
 
 A-formatter:
   - changed-files:
-      - any-glob-to-any-file:
-          ["crates/oxc_formatter*/**", "tasks/prettier_conformance/**", "apps/oxfmt/**"]
+      - any-glob-to-any-file: ["crates/oxc_formatter*/**", "apps/oxfmt/**"]
 
 A-transformer:
   - changed-files:

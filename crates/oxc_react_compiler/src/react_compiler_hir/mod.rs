@@ -174,7 +174,12 @@ impl std::fmt::Display for FloatValue {
 #[derive(Debug)]
 pub struct HirFunction<'a> {
     pub span: Option<Span>,
+    pub body_span: Option<Span>,
     pub id: Option<Ident<'a>>,
+    pub id_span: Option<Span>,
+    /// The private binding created by a named function expression so its body can
+    /// refer to the function recursively.
+    pub self_binding: Option<Place>,
     pub name_hint: Option<Ident<'a>>,
     pub fn_type: ReactFunctionType,
     pub params: ArenaVec<'a, ParamPattern>,
@@ -184,8 +189,15 @@ pub struct HirFunction<'a> {
     pub instructions: ArenaVec<'a, Instruction<'a>>,
     pub generator: bool,
     pub is_async: bool,
-    pub directives: ArenaVec<'a, Str<'a>>,
+    pub directives: ArenaVec<'a, FunctionDirective<'a>>,
     pub aliasing_effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct FunctionDirective<'a> {
+    pub value: Str<'a>,
+    pub span: Span,
+    pub expression_span: Span,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -280,7 +292,9 @@ pub enum Terminal<'a> {
     If {
         test: Place,
         consequent: BlockId,
+        consequent_span: Option<Span>,
         alternate: BlockId,
+        alternate_span: Option<Span>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -302,6 +316,7 @@ pub enum Terminal<'a> {
     },
     DoWhile {
         loop_block: BlockId,
+        loop_block_span: Option<Span>,
         test: BlockId,
         fallthrough: BlockId,
         id: EvaluationOrder,
@@ -310,6 +325,7 @@ pub enum Terminal<'a> {
     While {
         test: BlockId,
         loop_block: BlockId,
+        loop_block_span: Option<Span>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -319,6 +335,7 @@ pub enum Terminal<'a> {
         test: BlockId,
         update: Option<BlockId>,
         loop_block: BlockId,
+        loop_block_span: Option<Span>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -327,6 +344,8 @@ pub enum Terminal<'a> {
         init: BlockId,
         test: BlockId,
         loop_block: BlockId,
+        loop_block_span: Option<Span>,
+        left_span: Option<Span>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -334,6 +353,8 @@ pub enum Terminal<'a> {
     ForIn {
         init: BlockId,
         loop_block: BlockId,
+        loop_block_span: Option<Span>,
+        left_span: Option<Span>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -360,6 +381,7 @@ pub enum Terminal<'a> {
     },
     Label {
         block: BlockId,
+        block_span: Option<Span>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -379,8 +401,10 @@ pub enum Terminal<'a> {
     },
     Try {
         block: BlockId,
+        block_span: Option<Span>,
         handler_binding: Option<Place>,
         handler: BlockId,
+        handler_span: Option<Span>,
         fallthrough: BlockId,
         id: EvaluationOrder,
         span: Option<Span>,
@@ -502,6 +526,7 @@ pub enum GotoVariant {
 pub struct Case {
     pub test: Option<Place>,
     pub block: BlockId,
+    pub span: Option<Span>,
 }
 
 // =============================================================================
@@ -630,7 +655,9 @@ pub enum InstructionValue<'a> {
         children: Option<ArenaVec<'a, Place>>,
         span: Option<Span>,
         opening_span: Option<Span>,
+        opening_name_span: Option<Span>,
         closing_span: Option<Span>,
+        closing_name_span: Option<Span>,
     },
     ObjectExpression {
         properties: ArenaVec<'a, ObjectPropertyOrSpread<'a>>,
@@ -647,6 +674,8 @@ pub enum InstructionValue<'a> {
     JsxFragment {
         children: ArenaVec<'a, Place>,
         span: Option<Span>,
+        opening_span: Option<Span>,
+        closing_span: Option<Span>,
     },
     RegExpLiteral {
         pattern: Str<'a>,
@@ -661,17 +690,20 @@ pub enum InstructionValue<'a> {
     PropertyStore {
         object: Place,
         property: PropertyLiteral<'a>,
+        property_span: Option<Span>,
         value: Place,
         span: Option<Span>,
     },
     PropertyLoad {
         object: Place,
         property: PropertyLiteral<'a>,
+        property_span: Option<Span>,
         span: Option<Span>,
     },
     PropertyDelete {
         object: Place,
         property: PropertyLiteral<'a>,
+        property_span: Option<Span>,
         span: Option<Span>,
     },
     ComputedStore {
@@ -701,6 +733,7 @@ pub enum InstructionValue<'a> {
     },
     FunctionExpression {
         name: Option<Ident<'a>>,
+        name_span: Option<Span>,
         name_hint: Option<Ident<'a>>,
         lowered_func: LoweredFunction,
         expr_type: FunctionExpressionType,
@@ -714,6 +747,7 @@ pub enum InstructionValue<'a> {
         // interpolations (a deliberate divergence from the TS reference).
         quasis: ArenaVec<'a, TemplateQuasi<'a>>,
         subexprs: ArenaVec<'a, Place>,
+        quasi_span: Option<Span>,
         span: Option<Span>,
     },
     TemplateLiteral {
@@ -875,6 +909,7 @@ pub enum FunctionExpressionType {
 pub struct TemplateQuasi<'a> {
     pub raw: Str<'a>,
     pub cooked: Option<Str<'a>>,
+    pub span: Span,
 }
 
 #[derive(Debug)]
@@ -1005,11 +1040,13 @@ impl std::fmt::Display for Effect {
 #[derive(Debug, Clone, Copy)]
 pub struct SpreadPattern {
     pub place: Place,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug)]
 pub struct ArrayPattern<'a> {
     pub items: ArenaVec<'a, ArrayPatternElement>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1022,6 +1059,7 @@ pub enum ArrayPatternElement {
 #[derive(Debug)]
 pub struct ObjectPattern<'a> {
     pub properties: ArenaVec<'a, ObjectPropertyOrSpread<'a>>,
+    pub span: Option<Span>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -1039,9 +1077,19 @@ pub struct ObjectProperty<'a> {
 
 #[derive(Debug, Clone, Copy)]
 pub enum ObjectPropertyKey<'a> {
-    String { name: Ident<'a> },
-    Identifier { name: Ident<'a> },
-    Computed { name: Place },
+    String { name: Ident<'a>, span: Option<Span> },
+    Identifier { name: Ident<'a>, span: Option<Span> },
+    Computed { name: Place, span: Option<Span> },
+}
+
+impl ObjectPropertyKey<'_> {
+    pub fn span(&self) -> Option<Span> {
+        match self {
+            Self::String { span, .. }
+            | Self::Identifier { span, .. }
+            | Self::Computed { span, .. } => *span,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1111,8 +1159,8 @@ pub enum JsxTag<'a> {
 
 #[derive(Debug, Clone, Copy)]
 pub enum JsxAttribute<'a> {
-    SpreadAttribute { argument: Place },
-    Attribute { name: Ident<'a>, place: Place },
+    SpreadAttribute { argument: Place, span: Option<Span> },
+    Attribute { name: Ident<'a>, name_span: Option<Span>, place: Place },
 }
 
 // =============================================================================
@@ -1410,7 +1458,10 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
     fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
         HirFunction {
             span: self.span,
+            body_span: self.body_span,
             id: self.id,
+            id_span: self.id_span,
+            self_binding: self.self_binding,
             name_hint: self.name_hint,
             fn_type: self.fn_type,
             params: self.params.clone_in_impl(sem, alloc),
@@ -1422,6 +1473,17 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
             is_async: self.is_async,
             directives: self.directives.clone_in_impl(sem, alloc),
             aliasing_effects: self.aliasing_effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
+        }
+    }
+}
+
+impl<'a> CloneIn<'a> for FunctionDirective<'a> {
+    type Cloned = FunctionDirective<'a>;
+    fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
+        FunctionDirective {
+            value: self.value.clone_in_impl(sem, alloc),
+            span: self.span,
+            expression_span: self.expression_span,
         }
     }
 }
@@ -1476,10 +1538,21 @@ impl<'a> CloneIn<'a> for Terminal<'a> {
             Terminal::Goto { block, variant, id, span } => {
                 Terminal::Goto { block: *block, variant: *variant, id: *id, span: *span }
             }
-            Terminal::If { test, consequent, alternate, fallthrough, id, span } => Terminal::If {
+            Terminal::If {
+                test,
+                consequent,
+                consequent_span,
+                alternate,
+                alternate_span,
+                fallthrough,
+                id,
+                span,
+            } => Terminal::If {
                 test: *test,
                 consequent: *consequent,
+                consequent_span: *consequent_span,
                 alternate: *alternate,
+                alternate_span: *alternate_span,
                 fallthrough: *fallthrough,
                 id: *id,
                 span: *span,
@@ -1501,42 +1574,77 @@ impl<'a> CloneIn<'a> for Terminal<'a> {
                 id: *id,
                 span: *span,
             },
-            Terminal::DoWhile { loop_block, test, fallthrough, id, span } => Terminal::DoWhile {
-                loop_block: *loop_block,
-                test: *test,
-                fallthrough: *fallthrough,
-                id: *id,
-                span: *span,
-            },
-            Terminal::While { test, loop_block, fallthrough, id, span } => Terminal::While {
-                test: *test,
-                loop_block: *loop_block,
-                fallthrough: *fallthrough,
-                id: *id,
-                span: *span,
-            },
-            Terminal::For { init, test, update, loop_block, fallthrough, id, span } => {
-                Terminal::For {
-                    init: *init,
-                    test: *test,
-                    update: *update,
+            Terminal::DoWhile { loop_block, loop_block_span, test, fallthrough, id, span } => {
+                Terminal::DoWhile {
                     loop_block: *loop_block,
+                    loop_block_span: *loop_block_span,
+                    test: *test,
                     fallthrough: *fallthrough,
                     id: *id,
                     span: *span,
                 }
             }
-            Terminal::ForOf { init, test, loop_block, fallthrough, id, span } => Terminal::ForOf {
+            Terminal::While { test, loop_block, loop_block_span, fallthrough, id, span } => {
+                Terminal::While {
+                    test: *test,
+                    loop_block: *loop_block,
+                    loop_block_span: *loop_block_span,
+                    fallthrough: *fallthrough,
+                    id: *id,
+                    span: *span,
+                }
+            }
+            Terminal::For {
+                init,
+                test,
+                update,
+                loop_block,
+                loop_block_span,
+                fallthrough,
+                id,
+                span,
+            } => Terminal::For {
                 init: *init,
                 test: *test,
+                update: *update,
                 loop_block: *loop_block,
+                loop_block_span: *loop_block_span,
                 fallthrough: *fallthrough,
                 id: *id,
                 span: *span,
             },
-            Terminal::ForIn { init, loop_block, fallthrough, id, span } => Terminal::ForIn {
+            Terminal::ForOf {
+                init,
+                test,
+                loop_block,
+                loop_block_span,
+                left_span,
+                fallthrough,
+                id,
+                span,
+            } => Terminal::ForOf {
+                init: *init,
+                test: *test,
+                loop_block: *loop_block,
+                loop_block_span: *loop_block_span,
+                left_span: *left_span,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
+            Terminal::ForIn {
+                init,
+                loop_block,
+                loop_block_span,
+                left_span,
+                fallthrough,
+                id,
+                span,
+            } => Terminal::ForIn {
                 init: *init,
                 loop_block: *loop_block,
+                loop_block_span: *loop_block_span,
+                left_span: *left_span,
                 fallthrough: *fallthrough,
                 id: *id,
                 span: *span,
@@ -1558,9 +1666,13 @@ impl<'a> CloneIn<'a> for Terminal<'a> {
                 id: *id,
                 span: *span,
             },
-            Terminal::Label { block, fallthrough, id, span } => {
-                Terminal::Label { block: *block, fallthrough: *fallthrough, id: *id, span: *span }
-            }
+            Terminal::Label { block, block_span, fallthrough, id, span } => Terminal::Label {
+                block: *block,
+                block_span: *block_span,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
             Terminal::Sequence { block, fallthrough, id, span } => Terminal::Sequence {
                 block: *block,
                 fallthrough: *fallthrough,
@@ -1576,16 +1688,25 @@ impl<'a> CloneIn<'a> for Terminal<'a> {
                     effects: effects.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
                 }
             }
-            Terminal::Try { block, handler_binding, handler, fallthrough, id, span } => {
-                Terminal::Try {
-                    block: *block,
-                    handler_binding: *handler_binding,
-                    handler: *handler,
-                    fallthrough: *fallthrough,
-                    id: *id,
-                    span: *span,
-                }
-            }
+            Terminal::Try {
+                block,
+                block_span,
+                handler_binding,
+                handler,
+                handler_span,
+                fallthrough,
+                id,
+                span,
+            } => Terminal::Try {
+                block: *block,
+                block_span: *block_span,
+                handler_binding: *handler_binding,
+                handler: *handler,
+                handler_span: *handler_span,
+                fallthrough: *fallthrough,
+                id: *id,
+                span: *span,
+            },
             Terminal::Scope { fallthrough, block, scope, id, span } => Terminal::Scope {
                 fallthrough: *fallthrough,
                 block: *block,
@@ -1675,21 +1796,28 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             InstructionValue::MetaProperty { meta, property, span } => {
                 InstructionValue::MetaProperty { meta: *meta, property: *property, span: *span }
             }
-            InstructionValue::PropertyStore { object, property, value, span } => {
+            InstructionValue::PropertyStore { object, property, property_span, value, span } => {
                 InstructionValue::PropertyStore {
                     object: *object,
                     property: *property,
+                    property_span: *property_span,
                     value: *value,
                     span: *span,
                 }
             }
-            InstructionValue::PropertyLoad { object, property, span } => {
-                InstructionValue::PropertyLoad { object: *object, property: *property, span: *span }
+            InstructionValue::PropertyLoad { object, property, property_span, span } => {
+                InstructionValue::PropertyLoad {
+                    object: *object,
+                    property: *property,
+                    property_span: *property_span,
+                    span: *span,
+                }
             }
-            InstructionValue::PropertyDelete { object, property, span } => {
+            InstructionValue::PropertyDelete { object, property, property_span, span } => {
                 InstructionValue::PropertyDelete {
                     object: *object,
                     property: *property,
+                    property_span: *property_span,
                     span: *span,
                 }
             }
@@ -1719,12 +1847,14 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             }
             InstructionValue::FunctionExpression {
                 name,
+                name_span,
                 name_hint,
                 lowered_func,
                 expr_type,
                 span,
             } => InstructionValue::FunctionExpression {
                 name: *name,
+                name_span: *name_span,
                 name_hint: *name_hint,
                 lowered_func: *lowered_func,
                 expr_type: *expr_type,
@@ -1807,14 +1937,18 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
                 children,
                 span,
                 opening_span,
+                opening_name_span,
                 closing_span,
+                closing_name_span,
             } => InstructionValue::JsxExpression {
                 tag: *tag,
                 props: props.clone_in_impl(sem, alloc),
                 children: children.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
                 span: *span,
                 opening_span: *opening_span,
+                opening_name_span: *opening_name_span,
                 closing_span: *closing_span,
+                closing_name_span: *closing_name_span,
             },
             InstructionValue::ObjectExpression { properties, span } => {
                 InstructionValue::ObjectExpression {
@@ -1828,18 +1962,27 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
                     span: *span,
                 }
             }
-            InstructionValue::JsxFragment { children, span } => InstructionValue::JsxFragment {
-                children: children.clone_in_impl(sem, alloc),
-                span: *span,
-            },
-            InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, span } => {
-                InstructionValue::TaggedTemplateExpression {
-                    tag: *tag,
-                    quasis: quasis.clone_in_impl(sem, alloc),
-                    subexprs: subexprs.clone_in_impl(sem, alloc),
+            InstructionValue::JsxFragment { children, span, opening_span, closing_span } => {
+                InstructionValue::JsxFragment {
+                    children: children.clone_in_impl(sem, alloc),
                     span: *span,
+                    opening_span: *opening_span,
+                    closing_span: *closing_span,
                 }
             }
+            InstructionValue::TaggedTemplateExpression {
+                tag,
+                quasis,
+                subexprs,
+                quasi_span,
+                span,
+            } => InstructionValue::TaggedTemplateExpression {
+                tag: *tag,
+                quasis: quasis.clone_in_impl(sem, alloc),
+                subexprs: subexprs.clone_in_impl(sem, alloc),
+                quasi_span: *quasi_span,
+                span: *span,
+            },
             InstructionValue::TemplateLiteral { subexprs, quasis, span } => {
                 InstructionValue::TemplateLiteral {
                     subexprs: subexprs.clone_in_impl(sem, alloc),
@@ -1884,14 +2027,14 @@ impl<'a> CloneIn<'a> for Pattern<'a> {
 impl<'a> CloneIn<'a> for ArrayPattern<'a> {
     type Cloned = ArrayPattern<'a>;
     fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
-        ArrayPattern { items: self.items.clone_in_impl(sem, alloc) }
+        ArrayPattern { items: self.items.clone_in_impl(sem, alloc), span: self.span }
     }
 }
 
 impl<'a> CloneIn<'a> for ObjectPattern<'a> {
     type Cloned = ObjectPattern<'a>;
     fn clone_in_impl(&self, sem: CloneInSemanticIds, alloc: &'a Allocator) -> Self {
-        ObjectPattern { properties: self.properties.clone_in_impl(sem, alloc) }
+        ObjectPattern { properties: self.properties.clone_in_impl(sem, alloc), span: self.span }
     }
 }
 

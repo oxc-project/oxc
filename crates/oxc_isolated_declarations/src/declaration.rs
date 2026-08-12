@@ -27,7 +27,7 @@ impl<'a> IsolatedDeclarations<'a> {
         } else {
             let declarations = ArenaVec::from_iter_in(
                 decl.declarations.iter().filter_map(|declarator| {
-                    self.transform_variable_declarator(declarator, check_binding)
+                    self.transform_variable_declarator(declarator, decl.kind, check_binding)
                 }),
                 self,
             );
@@ -46,6 +46,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_variable_declarator(
         &self,
         decl: &VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
         check_binding: bool,
     ) -> Option<VariableDeclarator<'a>> {
         if decl.id.is_destructuring_pattern() {
@@ -69,16 +70,14 @@ impl<'a> IsolatedDeclarations<'a> {
         if decl.type_annotation.is_none() {
             if let Some(init_expr) = &decl.init {
                 // if kind is const and it doesn't need to infer type from expression
-                if decl.kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
+                if kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
                     if let Expression::TemplateLiteral(lit) = init_expr {
                         init =
                             self.transform_template_to_string(lit).map(Expression::StringLiteral);
                     } else {
                         init = Some(init_expr.clone_in(self.allocator()));
                     }
-                } else if !decl.kind.is_const()
-                    || !matches!(init_expr, Expression::TemplateLiteral(_))
-                {
+                } else if !kind.is_const() || !matches!(init_expr, Expression::TemplateLiteral(_)) {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);
                 }
@@ -101,15 +100,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let type_annotation =
             binding_type.map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
 
-        Some(VariableDeclarator::new(
-            decl.span,
-            decl.kind,
-            id,
-            type_annotation,
-            init,
-            decl.definite,
-            self,
-        ))
+        Some(VariableDeclarator::new(decl.span, id, type_annotation, init, decl.definite, self))
     }
 
     fn transform_ts_module_block(
@@ -124,38 +115,52 @@ impl<'a> IsolatedDeclarations<'a> {
         TSModuleBlock::boxed(SPAN, [], stmts, self)
     }
 
-    pub(crate) fn transform_ts_module_declaration(
+    pub(crate) fn transform_ts_external_module_declaration(
         &mut self,
-        decl: &ArenaBox<'a, TSModuleDeclaration<'a>>,
-    ) -> ArenaBox<'a, TSModuleDeclaration<'a>> {
+        decl: &ArenaBox<'a, TSExternalModuleDeclaration<'a>>,
+    ) -> ArenaBox<'a, TSExternalModuleDeclaration<'a>> {
         if decl.declare {
             return decl.clone_in(self.allocator());
         }
 
-        let Some(body) = &decl.body else {
+        let body = decl.body.as_ref().map(|block| self.transform_ts_module_block(block));
+        TSExternalModuleDeclaration::boxed(
+            decl.span,
+            decl.id.clone_in(self.allocator()),
+            body,
+            self.is_declare(),
+            self,
+        )
+    }
+
+    pub(crate) fn transform_ts_namespace_declaration(
+        &mut self,
+        decl: &ArenaBox<'a, TSNamespaceDeclaration<'a>>,
+    ) -> ArenaBox<'a, TSNamespaceDeclaration<'a>> {
+        if decl.declare {
             return decl.clone_in(self.allocator());
-        };
+        }
 
         // Follows https://github.com/microsoft/TypeScript/pull/54134
-        let kind = TSModuleDeclarationKind::Namespace;
-        match body {
-            TSModuleDeclarationBody::TSModuleDeclaration(inner_decl) => {
-                let inner = self.transform_ts_module_declaration(inner_decl);
-                TSModuleDeclaration::boxed(
+        let kind = TSNamespaceDeclarationKind::Namespace;
+        match &decl.body {
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner_decl) => {
+                let inner = self.transform_ts_namespace_declaration(inner_decl);
+                TSNamespaceDeclaration::boxed(
                     decl.span,
                     decl.id.clone_in(self.allocator()),
-                    Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
+                    TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner),
                     kind,
                     self.is_declare(),
                     self,
                 )
             }
-            TSModuleDeclarationBody::TSModuleBlock(block) => {
+            TSNamespaceDeclarationBody::TSModuleBlock(block) => {
                 let body = self.transform_ts_module_block(block);
-                TSModuleDeclaration::boxed(
+                TSNamespaceDeclaration::boxed(
                     decl.span,
                     decl.id.clone_in(self.allocator()),
-                    Some(TSModuleDeclarationBody::TSModuleBlock(body)),
+                    TSNamespaceDeclarationBody::TSModuleBlock(body),
                     kind,
                     self.is_declare(),
                     self,
@@ -210,16 +215,19 @@ impl<'a> IsolatedDeclarations<'a> {
                     None
                 }
             }
-            Declaration::TSModuleDeclaration(decl) => {
-                if !check_binding
-                    || matches!(
-                        &decl.id,
-                        TSModuleDeclarationName::Identifier(ident)
-                            if self.scope.has_reference(&ident.name)
-                    )
-                {
-                    Some(Declaration::TSModuleDeclaration(
-                        self.transform_ts_module_declaration(decl),
+            Declaration::TSExternalModuleDeclaration(decl) => {
+                if check_binding {
+                    None
+                } else {
+                    Some(Declaration::TSExternalModuleDeclaration(
+                        self.transform_ts_external_module_declaration(decl),
+                    ))
+                }
+            }
+            Declaration::TSNamespaceDeclaration(decl) => {
+                if !check_binding || self.scope.has_reference(&decl.id.name) {
+                    Some(Declaration::TSNamespaceDeclaration(
+                        self.transform_ts_namespace_declaration(decl),
                     ))
                 } else {
                     None

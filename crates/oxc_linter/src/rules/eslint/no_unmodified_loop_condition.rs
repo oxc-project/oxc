@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{Expression, IdentifierReference},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, Reference, SymbolId};
@@ -315,7 +315,7 @@ impl<'a, 'ctx> ConditionSymbolsCollector<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
+impl<'a> VisitJs<'a> for ConditionSymbolsCollector<'a, '_> {
     fn visit_expression(&mut self, expression: &Expression<'a>) {
         let is_group_expression = matches!(
             expression,
@@ -356,7 +356,7 @@ impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
             return;
         }
 
-        walk::walk_expression(self, expression);
+        walk_js::walk_expression(self, expression);
         if is_group_expression {
             self.group_stack.pop();
         }
@@ -411,6 +411,9 @@ fn test() {
         "for (var foo = 0; foo; ++foo) { }",
         "for (var foo = 0; foo;) { ++foo }",
         "var foo = 0, bar = 0; for (bar; foo;) { ++foo }",
+        // `type_source` appears only in the type assertion and is not part of the condition.
+        "let keep_going = true; let type_source = 0;
+         while (keep_going as typeof type_source) { keep_going = false; }",
         "var foo; if (foo) { }",
         "var a = [1, 2, 3]; var len = a.length; for (var i = 0; i < len - 1; i++) {}",
     ];

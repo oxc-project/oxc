@@ -160,7 +160,8 @@ import {
   TSIndexSignatureName,
   TSInterfaceHeritage,
   TSTypePredicate,
-  TSModuleDeclaration,
+  TSExternalModuleDeclaration,
+  TSNamespaceDeclaration,
   TSGlobalDeclaration,
   TSModuleBlock,
   TSTypeLiteral,
@@ -1512,12 +1513,15 @@ function walkStatement(pos, ast, visitors) {
       walkBoxTSEnumDeclaration(pos + 8, ast, visitors);
       return;
     case 38:
-      walkBoxTSModuleDeclaration(pos + 8, ast, visitors);
+      walkBoxTSExternalModuleDeclaration(pos + 8, ast, visitors);
       return;
     case 39:
-      walkBoxTSGlobalDeclaration(pos + 8, ast, visitors);
+      walkBoxTSNamespaceDeclaration(pos + 8, ast, visitors);
       return;
     case 40:
+      walkBoxTSGlobalDeclaration(pos + 8, ast, visitors);
+      return;
+    case 41:
       walkBoxTSImportEqualsDeclaration(pos + 8, ast, visitors);
       return;
     case 64:
@@ -1591,12 +1595,15 @@ function walkDeclaration(pos, ast, visitors) {
       walkBoxTSEnumDeclaration(pos + 8, ast, visitors);
       return;
     case 38:
-      walkBoxTSModuleDeclaration(pos + 8, ast, visitors);
+      walkBoxTSExternalModuleDeclaration(pos + 8, ast, visitors);
       return;
     case 39:
-      walkBoxTSGlobalDeclaration(pos + 8, ast, visitors);
+      walkBoxTSNamespaceDeclaration(pos + 8, ast, visitors);
       return;
     case 40:
+      walkBoxTSGlobalDeclaration(pos + 8, ast, visitors);
+      return;
+    case 41:
       walkBoxTSImportEqualsDeclaration(pos + 8, ast, visitors);
       return;
     default:
@@ -2458,8 +2465,6 @@ function walkClass(pos, ast, visitors) {
   walkVecDecorator(pos + 16, ast, visitors);
   walkOptionBindingIdentifier(pos + 40, ast, visitors);
   walkOptionBoxTSTypeParameterDeclaration(pos + 72, ast, visitors);
-  walkOptionExpression(pos + 80, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 96, ast, visitors);
   walkVecTSClassImplements(pos + 104, ast, visitors);
   walkBoxClassBody(pos + 128, ast, visitors);
 
@@ -4397,7 +4402,7 @@ function walkTSInterfaceHeritage(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkTSTypeName(pos + 16, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
@@ -4433,51 +4438,55 @@ function walkTSTypePredicateName(pos, ast, visitors) {
   }
 }
 
-function walkTSModuleDeclaration(pos, ast, visitors) {
+function walkTSExternalModuleDeclaration(pos, ast, visitors) {
   const enterExit = visitors[159];
   let node,
     enter,
     exit = null;
   if (enterExit !== null) {
     ({ enter, exit } = enterExit);
-    node = new TSModuleDeclaration(pos, ast);
+    node = new TSExternalModuleDeclaration(pos, ast);
     if (enter !== null) enter(node);
   }
 
-  walkTSModuleDeclarationName(pos + 16, ast, visitors);
-  walkOptionTSModuleDeclarationBody(pos + 72, ast, visitors);
+  walkStringLiteral(pos + 16, ast, visitors);
+  walkOptionBoxTSModuleBlock(pos + 64, ast, visitors);
 
   if (exit !== null) exit(node);
 }
 
-function walkTSModuleDeclarationName(pos, ast, visitors) {
-  switch (ast.buffer[pos]) {
-    case 0:
-      walkBindingIdentifier(pos + 8, ast, visitors);
-      return;
-    case 1:
-      walkStringLiteral(pos + 8, ast, visitors);
-      return;
-    default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationName`);
+function walkTSNamespaceDeclaration(pos, ast, visitors) {
+  const enterExit = visitors[160];
+  let node,
+    enter,
+    exit = null;
+  if (enterExit !== null) {
+    ({ enter, exit } = enterExit);
+    node = new TSNamespaceDeclaration(pos, ast);
+    if (enter !== null) enter(node);
   }
+
+  walkBindingIdentifier(pos + 16, ast, visitors);
+  walkTSNamespaceDeclarationBody(pos + 48, ast, visitors);
+
+  if (exit !== null) exit(node);
 }
 
-function walkTSModuleDeclarationBody(pos, ast, visitors) {
+function walkTSNamespaceDeclarationBody(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxTSModuleDeclaration(pos + 8, ast, visitors);
+      walkBoxTSNamespaceDeclaration(pos + 8, ast, visitors);
       return;
     case 1:
       walkBoxTSModuleBlock(pos + 8, ast, visitors);
       return;
     default:
-      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationBody`);
+      throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSNamespaceDeclarationBody`);
   }
 }
 
 function walkTSGlobalDeclaration(pos, ast, visitors) {
-  const enterExit = visitors[160];
+  const enterExit = visitors[161];
   let node,
     enter,
     exit = null;
@@ -4493,7 +4502,7 @@ function walkTSGlobalDeclaration(pos, ast, visitors) {
 }
 
 function walkTSModuleBlock(pos, ast, visitors) {
-  const enterExit = visitors[161];
+  const enterExit = visitors[162];
   let node,
     enter,
     exit = null;
@@ -4509,7 +4518,7 @@ function walkTSModuleBlock(pos, ast, visitors) {
 }
 
 function walkTSTypeLiteral(pos, ast, visitors) {
-  const enterExit = visitors[162];
+  const enterExit = visitors[163];
   let node,
     enter,
     exit = null;
@@ -4525,7 +4534,7 @@ function walkTSTypeLiteral(pos, ast, visitors) {
 }
 
 function walkTSInferType(pos, ast, visitors) {
-  const enterExit = visitors[163];
+  const enterExit = visitors[164];
   let node,
     enter,
     exit = null;
@@ -4541,7 +4550,7 @@ function walkTSInferType(pos, ast, visitors) {
 }
 
 function walkTSTypeQuery(pos, ast, visitors) {
-  const enterExit = visitors[164];
+  const enterExit = visitors[165];
   let node,
     enter,
     exit = null;
@@ -4577,7 +4586,7 @@ function walkTSTypeQueryExprName(pos, ast, visitors) {
 }
 
 function walkTSImportType(pos, ast, visitors) {
-  const enterExit = visitors[165];
+  const enterExit = visitors[166];
   let node,
     enter,
     exit = null;
@@ -4609,7 +4618,7 @@ function walkTSImportTypeQualifier(pos, ast, visitors) {
 }
 
 function walkTSImportTypeQualifiedName(pos, ast, visitors) {
-  const enterExit = visitors[166];
+  const enterExit = visitors[167];
   let node,
     enter,
     exit = null;
@@ -4626,7 +4635,7 @@ function walkTSImportTypeQualifiedName(pos, ast, visitors) {
 }
 
 function walkTSFunctionType(pos, ast, visitors) {
-  const enterExit = visitors[167];
+  const enterExit = visitors[168];
   let node,
     enter,
     exit = null;
@@ -4644,7 +4653,7 @@ function walkTSFunctionType(pos, ast, visitors) {
 }
 
 function walkTSConstructorType(pos, ast, visitors) {
-  const enterExit = visitors[168];
+  const enterExit = visitors[169];
   let node,
     enter,
     exit = null;
@@ -4662,7 +4671,7 @@ function walkTSConstructorType(pos, ast, visitors) {
 }
 
 function walkTSMappedType(pos, ast, visitors) {
-  const enterExit = visitors[169];
+  const enterExit = visitors[170];
   let node,
     enter,
     exit = null;
@@ -4681,7 +4690,7 @@ function walkTSMappedType(pos, ast, visitors) {
 }
 
 function walkTSTemplateLiteralType(pos, ast, visitors) {
-  const enterExit = visitors[170];
+  const enterExit = visitors[171];
   let node,
     enter,
     exit = null;
@@ -4698,7 +4707,7 @@ function walkTSTemplateLiteralType(pos, ast, visitors) {
 }
 
 function walkTSAsExpression(pos, ast, visitors) {
-  const enterExit = visitors[171];
+  const enterExit = visitors[172];
   let node,
     enter,
     exit = null;
@@ -4715,7 +4724,7 @@ function walkTSAsExpression(pos, ast, visitors) {
 }
 
 function walkTSSatisfiesExpression(pos, ast, visitors) {
-  const enterExit = visitors[172];
+  const enterExit = visitors[173];
   let node,
     enter,
     exit = null;
@@ -4732,7 +4741,7 @@ function walkTSSatisfiesExpression(pos, ast, visitors) {
 }
 
 function walkTSTypeAssertion(pos, ast, visitors) {
-  const enterExit = visitors[173];
+  const enterExit = visitors[174];
   let node,
     enter,
     exit = null;
@@ -4749,7 +4758,7 @@ function walkTSTypeAssertion(pos, ast, visitors) {
 }
 
 function walkTSImportEqualsDeclaration(pos, ast, visitors) {
-  const enterExit = visitors[174];
+  const enterExit = visitors[175];
   let node,
     enter,
     exit = null;
@@ -4782,7 +4791,7 @@ function walkTSModuleReference(pos, ast, visitors) {
 }
 
 function walkTSExternalModuleReference(pos, ast, visitors) {
-  const enterExit = visitors[175];
+  const enterExit = visitors[176];
   let node,
     enter,
     exit = null;
@@ -4798,7 +4807,7 @@ function walkTSExternalModuleReference(pos, ast, visitors) {
 }
 
 function walkTSNonNullExpression(pos, ast, visitors) {
-  const enterExit = visitors[176];
+  const enterExit = visitors[177];
   let node,
     enter,
     exit = null;
@@ -4814,7 +4823,7 @@ function walkTSNonNullExpression(pos, ast, visitors) {
 }
 
 function walkDecorator(pos, ast, visitors) {
-  const enterExit = visitors[177];
+  const enterExit = visitors[178];
   let node,
     enter,
     exit = null;
@@ -4830,7 +4839,7 @@ function walkDecorator(pos, ast, visitors) {
 }
 
 function walkTSExportAssignment(pos, ast, visitors) {
-  const enterExit = visitors[178];
+  const enterExit = visitors[179];
   let node,
     enter,
     exit = null;
@@ -4846,7 +4855,7 @@ function walkTSExportAssignment(pos, ast, visitors) {
 }
 
 function walkTSNamespaceExportDeclaration(pos, ast, visitors) {
-  const enterExit = visitors[179];
+  const enterExit = visitors[180];
   let node,
     enter,
     exit = null;
@@ -4862,7 +4871,7 @@ function walkTSNamespaceExportDeclaration(pos, ast, visitors) {
 }
 
 function walkTSInstantiationExpression(pos, ast, visitors) {
-  const enterExit = visitors[180];
+  const enterExit = visitors[181];
   let node,
     enter,
     exit = null;
@@ -4879,7 +4888,7 @@ function walkTSInstantiationExpression(pos, ast, visitors) {
 }
 
 function walkJSDocNullableType(pos, ast, visitors) {
-  const enterExit = visitors[181];
+  const enterExit = visitors[182];
   let node,
     enter,
     exit = null;
@@ -4895,7 +4904,7 @@ function walkJSDocNullableType(pos, ast, visitors) {
 }
 
 function walkJSDocNonNullableType(pos, ast, visitors) {
-  const enterExit = visitors[182];
+  const enterExit = visitors[183];
   let node,
     enter,
     exit = null;
@@ -5329,8 +5338,12 @@ function walkBoxTSEnumDeclaration(pos, ast, visitors) {
   return walkTSEnumDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
 }
 
-function walkBoxTSModuleDeclaration(pos, ast, visitors) {
-  return walkTSModuleDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+function walkBoxTSExternalModuleDeclaration(pos, ast, visitors) {
+  return walkTSExternalModuleDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+}
+
+function walkBoxTSNamespaceDeclaration(pos, ast, visitors) {
+  return walkTSNamespaceDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
 }
 
 function walkBoxTSGlobalDeclaration(pos, ast, visitors) {
@@ -5969,12 +5982,13 @@ function walkBoxTSMethodSignature(pos, ast, visitors) {
   return walkTSMethodSignature(ast.buffer.int32[pos >> 2], ast, visitors);
 }
 
-function walkOptionTSModuleDeclarationBody(pos, ast, visitors) {
-  if (!(ast.buffer[pos] === 2)) walkTSModuleDeclarationBody(pos, ast, visitors);
-}
-
 function walkBoxTSModuleBlock(pos, ast, visitors) {
   return walkTSModuleBlock(ast.buffer.int32[pos >> 2], ast, visitors);
+}
+
+function walkOptionBoxTSModuleBlock(pos, ast, visitors) {
+  if (!(ast.buffer.int32[pos >> 2] === 0 && ast.buffer.int32[(pos >> 2) + 1] === 0))
+    walkBoxTSModuleBlock(pos, ast, visitors);
 }
 
 function walkBoxTSTypeParameter(pos, ast, visitors) {

@@ -234,17 +234,21 @@
           "markdownDescription": "Name of the custom group, used in the `groups` option."
         },
         "modifiers": {
-          "description": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic).\n\nPossible values: `\"side_effect\"`, `\"type\"`, `\"value\"`, `\"default\"`, `\"wildcard\"`, `\"named\"`",
+          "description": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic).",
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/ImportModifierConfig"
           },
-          "markdownDescription": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic).\n\nPossible values: `\"side_effect\"`, `\"type\"`, `\"value\"`, `\"default\"`, `\"wildcard\"`, `\"named\"`"
+          "markdownDescription": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic)."
         },
         "selector": {
-          "description": "Selector to match the import kind.\n\nPossible values: `\"type\"`, `\"side_effect_style\"`, `\"side_effect\"`, `\"style\"`, `\"index\"`,\n`\"sibling\"`, `\"parent\"`, `\"subpath\"`, `\"internal\"`, `\"builtin\"`, `\"external\"`, `\"import\"`",
-          "type": "string",
-          "markdownDescription": "Selector to match the import kind.\n\nPossible values: `\"type\"`, `\"side_effect_style\"`, `\"side_effect\"`, `\"style\"`, `\"index\"`,\n`\"sibling\"`, `\"parent\"`, `\"subpath\"`, `\"internal\"`, `\"builtin\"`, `\"external\"`, `\"import\"`"
+          "description": "Selector to match the import kind.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ImportSelectorConfig"
+            }
+          ],
+          "markdownDescription": "Selector to match the import kind."
         }
       }
     },
@@ -459,6 +463,38 @@
         "strict",
         "ignore"
       ]
+    },
+    "ImportModifierConfig": {
+      "description": "Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).",
+      "type": "string",
+      "enum": [
+        "side_effect",
+        "type",
+        "value",
+        "default",
+        "wildcard",
+        "named"
+      ],
+      "markdownDescription": "Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics)."
+    },
+    "ImportSelectorConfig": {
+      "description": "Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).",
+      "type": "string",
+      "enum": [
+        "type",
+        "side_effect_style",
+        "side_effect",
+        "style",
+        "index",
+        "sibling",
+        "parent",
+        "subpath",
+        "internal",
+        "builtin",
+        "external",
+        "import"
+      ],
+      "markdownDescription": "Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics)."
     },
     "JsdocConfig": {
       "type": "object",

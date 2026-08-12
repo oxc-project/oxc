@@ -28,6 +28,7 @@ use crate::react_compiler_hir::{
     PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
     ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
+use crate::react_compiler_optimization::dead_code_elimination::is_catch_observable_property_load;
 use oxc_span::Span;
 
 // =============================================================================
@@ -278,13 +279,16 @@ fn collect_temporaries_sidemap_impl<'a>(
             let used_outside = used_outside_declaring_scope.contains(&lvalue_decl_id);
 
             match &instr.value {
-                InstructionValue::PropertyLoad { object, property, span, .. } if !used_outside => {
+                InstructionValue::PropertyLoad { object, property, property_span, span }
+                    if !used_outside =>
+                {
                     if inner_fn_context.is_none() || temporaries[object.identifier].is_some() {
                         let prop = get_property(
                             object,
                             property,
                             false,
                             *span,
+                            *property_span,
                             temporaries,
                             env.allocator,
                         );
@@ -348,13 +352,15 @@ fn get_property<'a>(
     property_name: &PropertyLiteral<'a>,
     optional: bool,
     span: Option<Span>,
+    property_span: Option<Span>,
     temporaries: &TemporariesMap<'a>,
     alloc: &'a Allocator,
 ) -> ReactiveScopeDependency<'a> {
+    let property_span = property_span.or(span);
     let resolved = temporaries[object.identifier].as_ref();
     if let Some(resolved) = resolved {
         let mut path = resolved.path.clone_in(alloc);
-        path.push(DependencyPathEntry { property: *property_name, optional, span });
+        path.push(DependencyPathEntry { property: *property_name, optional, span: property_span });
         ReactiveScopeDependency {
             identifier: resolved.identifier,
             reactive: resolved.reactive,
@@ -366,7 +372,7 @@ fn get_property<'a>(
             identifier: object.identifier,
             reactive: object.reactive,
             path: ArenaVec::from_array_in(
-                [DependencyPathEntry { property: *property_name, optional, span }],
+                [DependencyPathEntry { property: *property_name, optional, span: property_span }],
                 &alloc,
             ),
             span,
@@ -458,6 +464,7 @@ struct MatchConsequentResult<'a> {
     store_local_lvalue_id: IdentifierId,
     consequent_goto: BlockId,
     property_load_span: Option<Span>,
+    property_span: Option<Span>,
 }
 
 fn match_optional_test_block<'a>(
@@ -477,8 +484,10 @@ fn match_optional_test_block<'a>(
     let instr0 = &func.instructions[consequent_block.instructions[0].index()];
     let instr1 = &func.instructions[consequent_block.instructions[1].index()];
 
-    let (property_load_object, property, property_load_span) = match &instr0.value {
-        InstructionValue::PropertyLoad { object, property, span } => (object, property, span),
+    let (property_load_object, property, property_load_span, property_span) = match &instr0.value {
+        InstructionValue::PropertyLoad { object, property, property_span, span } => {
+            (object, property, span, property_span)
+        }
         _ => return None,
     };
 
@@ -520,6 +529,7 @@ fn match_optional_test_block<'a>(
                 store_local_lvalue_id: instr1.lvalue.identifier,
                 consequent_goto: *goto_block,
                 property_load_span: *property_load_span,
+                property_span: *property_span,
             })
         }
         _ => None,
@@ -561,13 +571,13 @@ fn traverse_optional_block<'a>(
                 let curr_instr = &func.instructions[maybe_test_block.instructions[i].index()];
                 let prev_instr = &func.instructions[maybe_test_block.instructions[i - 1].index()];
                 match &curr_instr.value {
-                    InstructionValue::PropertyLoad { object, property, span, .. }
+                    InstructionValue::PropertyLoad { object, property, property_span, span }
                         if object.identifier == prev_instr.lvalue.identifier =>
                     {
                         path.push(DependencyPathEntry {
                             property: *property,
                             optional: false,
-                            span: *span,
+                            span: property_span.or(*span),
                         });
                     }
                     _ => return None,
@@ -669,7 +679,7 @@ fn traverse_optional_block<'a>(
             p.push(DependencyPathEntry {
                 property: match_result.property,
                 optional: is_optional,
-                span: match_result.property_load_span,
+                span: match_result.property_span.or(match_result.property_load_span),
             });
             p
         },
@@ -1743,9 +1753,18 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         property: &PropertyLiteral<'a>,
         optional: bool,
         span: Option<Span>,
+        property_span: Option<Span>,
         env: &mut Environment<'a>,
     ) {
-        let dep = get_property(object, property, optional, span, self.temporaries, env.allocator);
+        let dep = get_property(
+            object,
+            property,
+            optional,
+            span,
+            property_span,
+            self.temporaries,
+            env.allocator,
+        );
         self.visit_dependency(dep, env);
     }
 
@@ -1916,8 +1935,8 @@ fn handle_instruction<'a>(
     }
 
     match &instr.value {
-        InstructionValue::PropertyLoad { object, property, span, .. } => {
-            ctx.visit_property(object, property, false, *span, env);
+        InstructionValue::PropertyLoad { object, property, property_span, span } => {
+            ctx.visit_property(object, property, false, *span, *property_span, env);
         }
         InstructionValue::StoreLocal { value: val, lvalue, .. } => {
             ctx.visit_operand(val, env);
@@ -2069,6 +2088,21 @@ fn handle_function_deps<'a>(
                 }
                 _ => {
                     handle_instruction(instr, ctx, env);
+                }
+            }
+        }
+
+        // A caught throw is an observable result of a read even when its produced value is not
+        // used. Record the read's root operands as dependencies so a cached scope re-runs when
+        // the throw outcome can change. Using the roots also avoids hoisting the potentially
+        // throwing property access itself outside of the try/catch.
+        if matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }) {
+            for &instr_id in &block.instructions {
+                let instr = &func.instructions[instr_id.index()];
+                if is_catch_observable_property_load(&instr.value) {
+                    for operand in visitors::each_instruction_value_operand(&instr.value, env) {
+                        ctx.visit_operand(&operand, env);
+                    }
                 }
             }
         }

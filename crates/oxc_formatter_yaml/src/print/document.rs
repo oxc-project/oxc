@@ -7,9 +7,9 @@ use oxc_yaml_parser::ast::{Directive, Document, Root};
 
 use crate::{
     comments::{
-        Gap, SourceComment, classify_gap, flush_leading_comments, gap_upper_bound,
-        is_suppressed_last_before, write_blank_preserving_break, write_single_comment,
-        write_suppressed_node, write_trailing_same_line_comment,
+        Gap, SourceComment, classify_gap, flush_leading_comments, gap_anchor_after_consumed,
+        gap_upper_bound, is_suppressed_last_before, write_blank_preserving_break,
+        write_single_comment, write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{
         YamlFormatter,
@@ -24,7 +24,7 @@ use crate::{
 /// Returns whether the stream ends with a keep-chomped block scalar (computed here anyway),
 /// so `format()` doesn't re-walk the tree for its final newline.
 pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool {
-    let keep_chomped_tail = ends_with_keep_chomped_block(root);
+    let keep_chomped_tail = ends_with_keep_chomped_block(root, f);
     let documents = root.children.as_slice();
 
     for (i, document) in documents.iter().enumerate() {
@@ -66,7 +66,7 @@ pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool
 /// Must be taken BEFORE the end comments themselves are drained,
 /// that take advances the consumed cursor past them, corrupting the clamp.
 fn document_end_comment_anchor(document: &Document<'_>, f: &YamlFormatter<'_, '_>) -> u32 {
-    f.context().comments().gap_anchor_after_consumed(document_gap_anchor(document, f))
+    gap_anchor_after_consumed(document_gap_anchor(document, f), f)
 }
 
 /// The gap-measurement anchor after a document: its `...` marker,

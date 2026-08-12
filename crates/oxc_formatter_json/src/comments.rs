@@ -1,9 +1,7 @@
-use std::cell::Cell;
-
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
-    Buffer, Format, LINE_TERMINATORS, SourceText, arena_cow_str,
+    Buffer, Format, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
     builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
     normalize_newlines,
     spec::is_suppression_marker,
@@ -20,52 +18,8 @@ use crate::{
     print::{JsonFormatter, format_with},
 };
 
-/// Cursor over a sorted comment list that hands out unprinted slices in span order.
-///
-/// `cursor` is a [`Cell`] so the API works through `&self`, allowing simultaneous
-/// borrows alongside other context fields. The `Format` trait dispatches via `&self`,
-/// so a `&mut Comments` accessor would force every drain site to go through
-/// `f.context_mut()` and conflict with read-only context accesses.
-pub struct Comments<'a> {
-    inner: &'a [Comment],
-    cursor: Cell<usize>,
-}
-
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [Comment]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [Comment] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [Comment] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor, callers that want to mark these as
-    /// printed must call [`Self::take_before`] instead.
-    ///
-    /// Mirrors `oxc_formatter::formatter::comments::Comments::comments_before_iter`
-    /// so suppression / leading-comment checks can compose `.any(...)` / `.next()` directly and short-circuit.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = &'a Comment> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().take_while(move |c| c.span.end <= upper_bound)
-    }
-}
+/// Cursor over the sorted comment list.
+pub type Comments<'a> = SpanCursor<'a, Comment>;
 
 /// Emit a single comment, re-aligning interior `*`-prefixed lines
 /// so the stars line up with the opening `/*` regardless of the source's original indentation.
@@ -300,7 +254,7 @@ pub fn is_suppression_comment(source: SourceText<'_>, comment: &Comment) -> bool
 /// `before` is typically the next AST node's `span.start`.
 pub fn is_suppressed_before(f: &JsonFormatter<'_, '_>, before: u32) -> bool {
     let source = f.context().source_text();
-    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, c))
+    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, &c))
 }
 
 /// `Format` adapter that emits a node's leading comments, then the node's source

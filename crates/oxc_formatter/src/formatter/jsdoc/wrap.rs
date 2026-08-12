@@ -454,36 +454,32 @@ fn flush_paragraph_balance(
     }
 }
 
-/// Wrap text into lines, preserving structured content (lists, code blocks, tables, etc.)
-/// and wrapping plain paragraphs to the given max width.
-///
-/// Delegates to `format_description_mdast` for full markdown-aware formatting.
-pub fn wrap_text(
-    text: &str,
-    max_width: usize,
-    tag_string_length: usize,
-    capitalize: bool,
-    format_options: Option<&crate::JsFormatOptions>,
-    allocator: Option<&oxc_allocator::Allocator>,
-    external_callbacks: Option<&crate::external_formatter::ExternalCallbacks>,
-) -> String {
-    if text.is_empty() {
-        return String::new();
-    }
-    super::mdast_serialize::format_description_mdast(
-        text,
-        max_width,
-        tag_string_length,
-        capitalize,
-        format_options,
-        allocator,
-        external_callbacks,
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Thin harness over `format_description_mdast` with default options
+    /// on a service-less `Fragment` session.
+    fn wrap_text(
+        text: &str,
+        max_width: usize,
+        tag_string_length: usize,
+        capitalize: bool,
+    ) -> String {
+        let allocator = oxc_allocator::Allocator::default();
+        let session = oxc_formatter_core::FormatSession::new(
+            &allocator,
+            oxc_formatter_core::InputKind::Fragment,
+        );
+        crate::formatter::jsdoc::mdast_serialize::format_description_mdast(
+            text,
+            max_width,
+            tag_string_length,
+            capitalize,
+            &crate::JsFormatOptions::default(),
+            &session,
+        )
+    }
 
     // Pins the JS-`.length` semantics (see `str_width` doc):
     // the jsdoc conformance still passes even with `unicode_width`-based width.
@@ -499,7 +495,7 @@ mod tests {
 
     #[test]
     fn test_wrap_simple_text() {
-        let result = wrap_text("This is a short line", 80, 0, false, None, None, None);
+        let result = wrap_text("This is a short line", 80, 0, false);
         assert_eq!(result, "This is a short line");
     }
 
@@ -510,9 +506,6 @@ mod tests {
             40,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert_eq!(
             result,
@@ -524,8 +517,7 @@ mod tests {
 
     #[test]
     fn test_wrap_preserves_markdown_list() {
-        let result =
-            wrap_text("- item one\n- item two\n- item three", 80, 0, false, None, None, None);
+        let result = wrap_text("- item one\n- item two\n- item three", 80, 0, false);
         assert_eq!(result, "- item one\n- item two\n- item three");
     }
 
@@ -536,9 +528,6 @@ mod tests {
             40,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert_eq!(
             result,
@@ -548,42 +537,27 @@ mod tests {
 
     #[test]
     fn test_wrap_converts_code_fence_to_indented() {
-        let result = wrap_text(
-            "Some text\n```\ncode here\n  indented\n```\nMore text",
-            80,
-            0,
-            false,
-            None,
-            None,
-            None,
-        );
+        let result =
+            wrap_text("Some text\n```\ncode here\n  indented\n```\nMore text", 80, 0, false);
         // Fenced code without language tag is converted to indented code block.
         assert_eq!(result, "Some text\n\n    code here\n      indented\n\nMore text");
     }
 
     #[test]
     fn test_wrap_preserves_code_fence_with_language() {
-        let result = wrap_text(
-            "Some text\n```js\nconst x = 1;\n```\nMore text",
-            80,
-            0,
-            false,
-            None,
-            None,
-            None,
-        );
+        let result = wrap_text("Some text\n```js\nconst x = 1;\n```\nMore text", 80, 0, false);
         assert_eq!(result, "Some text\n\n```js\nconst x = 1;\n```\n\nMore text");
     }
 
     #[test]
     fn test_wrap_empty_lines() {
-        let result = wrap_text("Paragraph one\n\nParagraph two", 80, 0, false, None, None, None);
+        let result = wrap_text("Paragraph one\n\nParagraph two", 80, 0, false);
         assert_eq!(result, "Paragraph one\n\nParagraph two");
     }
 
     #[test]
     fn test_wrap_empty_text() {
-        let result = wrap_text("", 80, 0, false, None, None, None);
+        let result = wrap_text("", 80, 0, false);
         assert!(result.is_empty());
     }
 
@@ -591,8 +565,7 @@ mod tests {
     fn test_numbered_spread_list_collapses_blank_lines() {
         // Upstream prettier-plugin-jsdoc removes blank lines between list items
         // even when the source has them (spread lists).
-        let result =
-            wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false, None, None, None);
+        let result = wrap_text("1. Thing 1\n\n2. Thing 2\n\n3. Thing 3", 80, 0, false);
         assert_eq!(result, "1. Thing 1\n2. Thing 2\n3. Thing 3");
     }
 
@@ -603,9 +576,6 @@ mod tests {
             77,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert_eq!(
             result,
@@ -621,9 +591,6 @@ mod tests {
             77,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert_eq!(
             result,
@@ -639,9 +606,6 @@ mod tests {
             97,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert_eq!(
             result,
@@ -660,9 +624,6 @@ mod tests {
             77,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert_eq!(
             result,
@@ -675,9 +636,6 @@ mod tests {
             77,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert_eq!(
             result,
@@ -690,9 +648,6 @@ mod tests {
             77,
             0,
             false,
-            None,
-            None,
-            None,
         );
         assert!(
             result.contains('\n'),
@@ -704,8 +659,7 @@ mod tests {
     fn test_spread_list_collapses_blank_lines() {
         // Upstream prettier-plugin-jsdoc removes blank lines between list items
         // even when the source has them (spread lists).
-        let result =
-            wrap_text("- item one\n\n- item two\n\n- item three", 80, 0, false, None, None, None);
+        let result = wrap_text("- item one\n\n- item two\n\n- item three", 80, 0, false);
         assert_eq!(result, "- item one\n- item two\n- item three");
     }
 
@@ -715,7 +669,7 @@ mod tests {
         let input =
             "The options object:\n\n    const result = process(options);\n    console.log(result);";
         // Simulate @param {object} options: tag_str_len=22, indent_width=78
-        let result = wrap_text(input, 78, 22, false, None, None, None);
+        let result = wrap_text(input, 78, 22, false);
         // The indented code block should be preserved with 4-space indent
         assert!(
             result.contains("    const result = process(options);"),

@@ -6,10 +6,11 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_core::test_support::{
-    FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
-};
 use oxc_formatter_css::{CssFormatOptions, CssVariant, format};
+use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+
+mod options;
+use options::apply_css_options;
 
 struct CssHarness;
 
@@ -18,27 +19,7 @@ impl FixtureFormatter for CssHarness {
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = CssFormatOptions::default();
-        apply_core_options(&mut options, json);
-
-        for (key, value) in json {
-            match key.as_str() {
-                "singleQuote" => {
-                    if let Some(b) = value.as_bool() {
-                        options.single_quote = b.into();
-                    }
-                }
-                "trailingComma" => {
-                    if let Some(s) = value.as_str() {
-                        options.trailing_commas = match s {
-                            "none" => oxc_formatter_css::TrailingCommas::Never,
-                            _ => oxc_formatter_css::TrailingCommas::Always,
-                        };
-                    }
-                }
-                _ => {}
-            }
-        }
-
+        apply_css_options(&mut options, json);
         options
     }
 
@@ -59,7 +40,7 @@ impl FixtureFormatter for CssHarness {
         }
 
         let allocator = Allocator::default();
-        format(&allocator, source, options, None)
+        format(&allocator, source, options)
             .expect("format should succeed")
             .print()
             .expect("print should succeed")
@@ -70,27 +51,20 @@ impl FixtureFormatter for CssHarness {
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
 fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{
-        Document, EmbeddedContext, FormatElement, FormatOptions, Printer, TextWidth,
-    };
+    use oxc_formatter_core::{Document, FormatElement, FormatOptions, TextWidth};
 
     let allocator = Allocator::default();
-    let group_id_builder = oxc_formatter_core::UniqueGroupIdBuilder::default();
-    let ctx = EmbeddedContext {
-        allocator: &allocator,
-        group_id_builder: &group_id_builder,
-        dispatcher: None,
-    };
-    let embedded =
-        oxc_formatter_css::format_to_ir(&ctx, source, options).expect("format should succeed");
-    let document = Document::new(embedded.ir, Vec::new());
-    document.propagate_expand();
-    let (elements, tailwind_classes) = document.into_elements_and_tailwind_classes();
+    let session =
+        oxc_formatter_core::FormatSession::new(&allocator, oxc_formatter_core::InputKind::Fragment);
+    let embedded = oxc_formatter_css::format_to_ir(
+        &session, source, options, /* template_placeholders */ true,
+    )
+    .expect("format should succeed");
     // Simulate the host: replace each typed placeholder with the canonical
     // sentinel (the real host substitutes `${expr}`; tests have no expressions).
     // The printer `debug_assert`s on any surviving `EmbedPlaceholder`.
     let elements = ArenaVec::from_iter_in(
-        elements.iter().map(|element| match element {
+        embedded.ir.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
                 let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
                 FormatElement::Text {
@@ -100,14 +74,12 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
             }
             other => other.clone(),
         }),
-        &ctx.allocator,
-    )
-    .into_arena_slice();
-    let mut code =
-        Printer::with_capacity(source.len(), options.as_print_options(), &tailwind_classes)
-            .print(elements)
-            .expect("print should succeed")
-            .into_code();
+        &session.allocator(),
+    );
+    let mut code = Document::new(elements, Vec::new())
+        .print(source.len(), options.as_print_options())
+        .expect("print should succeed")
+        .into_code();
     // The embedded entry point emits no trailing newline (the parent owns it);
     // add one so snapshots stay diff-friendly.
     code.push('\n');
@@ -132,6 +104,19 @@ fn test_file(path: &Path) {
 include!(concat!(env!("OUT_DIR"), "/generated_tests.rs"));
 
 // ---
+
+/// A leading BOM is preserved (Prettier does the same).
+#[test]
+fn bom_is_preserved() {
+    let allocator = Allocator::default();
+    let formatted =
+        format(&allocator, "\u{feff}a {\n  color: red;\n}\n", CssFormatOptions::default())
+            .expect("BOM input should parse")
+            .print()
+            .expect("print should succeed")
+            .into_code();
+    assert_eq!(formatted, "\u{feff}a {\n  color: red;\n}\n");
+}
 
 /// Any parse error must surface as `Err` from the standalone `format()` entry,
 /// including oxc-css-parser's recoverable ones (top-level declarations are invalid here
@@ -167,9 +152,6 @@ fn parse_error_is_err() {
         // (postcss-selector-parser accepts and lowercases it).
         ("a:nth-child(2N-1) { color: red; }", css),
     ] {
-        assert!(
-            format(&allocator, source, options, None).is_err(),
-            "{source:?} should fail to format"
-        );
+        assert!(format(&allocator, source, options).is_err(), "{source:?} should fail to format");
     }
 }

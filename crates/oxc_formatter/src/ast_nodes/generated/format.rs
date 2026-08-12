@@ -1885,9 +1885,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Declaration<'a>> {
                     })
                     .fmt(f);
             }
-            Declaration::TSModuleDeclaration(inner) => {
+            Declaration::TSExternalModuleDeclaration(inner) => {
                 allocator
-                    .alloc(AstNode::<TSModuleDeclaration> {
+                    .alloc(AstNode::<TSExternalModuleDeclaration> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            Declaration::TSNamespaceDeclaration(inner) => {
+                allocator
+                    .alloc(AstNode::<TSNamespaceDeclaration> {
                         inner,
                         parent,
                         allocator,
@@ -2584,6 +2594,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Class<'a>> {
         }
         if needs_parentheses {
             ")".fmt(f);
+        }
+        self.format_trailing_comments(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassHeritage<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
         }
         self.format_trailing_comments(f);
     }
@@ -5122,7 +5145,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypePredicateName<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_suppressed(self.span().start);
         self.format_leading_comments(f);
@@ -5135,45 +5158,28 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclaration<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationName<'a>> {
-    #[inline]
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
-        let parent = self.parent;
-        match self.inner {
-            TSModuleDeclarationName::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<BindingIdentifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
-            }
-            TSModuleDeclarationName::StringLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
-            }
+        let is_suppressed = f.comments().is_suppressed(self.span().start);
+        self.format_leading_comments(f);
+        if is_suppressed {
+            FormatSuppressedNode(self.span()).fmt(f);
+        } else {
+            self.write(f);
         }
+        self.format_trailing_comments(f);
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationBody<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclarationBody<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
-            TSModuleDeclarationBody::TSModuleDeclaration(inner) => {
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner) => {
                 allocator
-                    .alloc(AstNode::<TSModuleDeclaration> {
+                    .alloc(AstNode::<TSNamespaceDeclaration> {
                         inner,
                         parent,
                         allocator,
@@ -5181,7 +5187,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleDeclarationBody
                     })
                     .fmt(f);
             }
-            TSModuleDeclarationBody::TSModuleBlock(inner) => {
+            TSNamespaceDeclarationBody::TSModuleBlock(inner) => {
                 allocator
                     .alloc(AstNode::<TSModuleBlock> {
                         inner,

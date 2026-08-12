@@ -6,7 +6,13 @@ import { parentPort, Worker } from "node:worker_threads";
 
 const require = createRequire(import.meta.url);
 
-const { instantiateNapiModuleSync, MessageHandler, getDefaultContext } = require("@napi-rs/wasm-runtime");
+const {
+  instantiateNapiModuleSync,
+  MessageHandler,
+  getDefaultContext,
+  emnapiAsyncWorkPlugin,
+  emnapiTSFNPlugin,
+} = require("@napi-rs/wasm-runtime");
 
 if (parentPort) {
   parentPort.on("message", (data) => {
@@ -46,6 +52,11 @@ const handler = new MessageHandler({
       childThread: true,
       wasi,
       context: emnapiContext,
+      // The wasm links a "basic" emnapi archive (no C async-work /
+      // threadsafe-function implementations), so every thread that
+      // instantiates it must provide the JavaScript implementations
+      // through the emnapi plugins.
+      plugins: [emnapiAsyncWorkPlugin, emnapiTSFNPlugin],
       overwriteImports(importObject) {
         importObject.env = {
           ...importObject.env,

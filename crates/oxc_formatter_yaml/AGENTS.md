@@ -1,5 +1,7 @@
 # Coding agent guides for `crates/oxc_formatter_yaml`
 
+Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the YAML-specific rules and translations.
+
 ## Overview
 
 Prettier compatible YAML formatter (`oxfmt`'s Tier 1 backend), using the `oxc_formatter_core` APIs.
@@ -7,10 +9,7 @@ Prettier compatible YAML formatter (`oxfmt`'s Tier 1 backend), using the `oxc_fo
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
   - See `crates/oxc_formatter_core/AGENTS.md` for the IR/pipeline details
 - Two entry points (see their docs in `src/format.rs`):
-  `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. yaml-in-markdown)
-- The canonical reference is Prettier 3.9's OUTPUT (the conformance snapshots); its source is an analysis aid, not a porting target
-  - match its layout decisions — EXCEPT where they are bugs or internally inconsistent (see below)
-  - never mirror its internal logic 1:1: pin behavior with fixtures, and keep implementation details of Prettier's code out of comments
+  - `format()` for standalone files, `format_to_ir()` for embedded use via the dispatcher (e.g. CSS front matter, JSDoc fenced blocks)
 
 ### Parser
 
@@ -22,11 +21,11 @@ The split between the scalar's own output and the inter-item gap is printer poli
 
 ### Error semantics
 
-`oxc-yaml-parser` is fail-fast (no partial AST), so `format()` / `format_to_ir()` return `Err` on any syntax error and never format a broken AST.
-The caller (oxfmt) decides what happens next.
+The shared policy applies; YAML specifics:
 
-Under-indented multi-line flow scalars (prettier#8602) are one such error.
-Prettier 3.9.5 also rejects them since its `yaml@2` upgrade, so the string corruption reported there cannot happen in either implementation.
+- `oxc-yaml-parser` is fail-fast (no partial AST), so any syntax error is an `Err`
+- Under-indented multi-line flow scalars (prettier#8602) are one such error
+  - Prettier 3.9.6 also rejects them since its `yaml@2` upgrade, so the string corruption reported there cannot happen in either implementation
 
 ### Line endings
 
@@ -44,18 +43,13 @@ Stream-tail end comments (`write_end_comments`) are the one document-layer excep
 
 ## Known divergences
 
-Follow Prettier by default.
-The exceptions (shared policy across all the formatter crates), are the cases where consistent output beats conformance percentage:
-
-- Prettier bugs acknowledged as open issues
-- behaviors that are internally inconsistent (same construct, different output depending on node kind or context)
-
-Affected conformance fixtures stay counted as failures.
-Style debates (`status:needs discussion` issues) are still followed, do not "improve" on taste for now.
-
-Current divergences:
+Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Current divergences:
 
 - anchor/tag order (prettier#19524): source order is preserved, never reordered
+- EOF blank lines: the file always ends with exactly one newline, like every other formatter crate
+  (`|+` keep-chomped verbatim tails excepted); Prettier YAML alone preserves EOF blank lines verbatim
+- keep-chomped tail at a space-only EOF line (no final newline): the line holds no line break, so it adds nothing to the kept tail;
+  - Prettier counts it and prints one newline too many, changing the value `"\n"` → `"\n\n"` (prettier#19256 is the nearest issue)
 - `# prettier-ignore` range (prettier#13008): suppresses exactly one node, never every following node
 - anchor next-line comments (prettier#10518 / #9327): structurally avoided, the positional cursor makes them the next node's leading comments
 - blank lines (prettier#15528): one unified rule:
@@ -78,42 +72,10 @@ Current divergences:
 
 ## Verification
 
-```sh
-cargo c -p oxc_formatter_yaml
-```
-
-Run `clippy` and resolve all warnings.
-
-### Fixture tests
-
-Snapshot tests driven by fixture files under `tests/fixtures/yaml/`, covering what the Prettier conformance suite does not (`# oxfmt-ignore`, divergence shapes, etc).
-`build.rs` auto-generates a test case from every `.yaml` file using the core `test_support` harness; add a case by dropping a new file into the directory.
-
-```sh
-cargo test -p oxc_formatter_yaml
-# Review / accept snapshots after intentional changes
-cargo insta review -p oxc_formatter_yaml
-```
-
-### Prettier conformance
-
-Compares output against Prettier's snapshots and tracks failures (not passes); results live in `tasks/prettier_conformance/snapshots/prettier.yaml.snap.md`.
-The `yaml` language is part of the shared conformance binary.
-
-```sh
-cargo run -p oxc_prettier_conformance
-# Debug a specific test
-cargo run -p oxc_prettier_conformance -- --filter yaml/<dir>/<file>
-```
-
-Failures must be either fixed or classified: a new failure is acceptable only when it falls under the non-follow policy above, and it must be documented there.
-
-### Manual checks
+Manual checks:
 
 ```sh
 cargo run -p oxc_formatter_yaml --example yaml_formatter [filename]
 # Dump the formatter IR
 DUMP_IR=1 cargo run -p oxc_formatter_yaml --example yaml_formatter [filename]
-# Compare with Prettier
-npx prettier --parser=yaml [filename]
 ```

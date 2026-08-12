@@ -6,7 +6,7 @@ use oxc_ast::{
         SimpleAssignmentTarget, Statement,
     },
 };
-use oxc_ast_visit::{Visit, VisitJs, walk_js};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
@@ -259,7 +259,7 @@ struct IdentifierFinder<'b> {
     found: bool,
 }
 
-impl<'a> Visit<'a> for IdentifierFinder<'_> {
+impl<'a> VisitJs<'a> for IdentifierFinder<'_> {
     fn visit_identifier_reference(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
         if ident.name == self.name {
             self.found = true;

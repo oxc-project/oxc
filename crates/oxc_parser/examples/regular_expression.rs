@@ -26,8 +26,7 @@ fn main() {
     if !parser_ret.diagnostics.is_empty() {
         println!("Parsing failed:");
         for error in parser_ret.diagnostics {
-            let error = error.with_source_code(Arc::clone(&source_text));
-            println!("{error:?}");
+            println!("{}", error.render_with_source_code(Arc::clone(&source_text)));
         }
         return;
     }
@@ -78,8 +77,7 @@ impl<'a> VisitJs<'a> for RegularExpressionVisitor {
             .parse();
 
             if let Err(error) = parsed {
-                let error = error.with_source_code(Arc::clone(&self.source_text));
-                println!("{error:?}");
+                println!("{}", error.render_with_source_code(Arc::clone(&self.source_text)));
                 return;
             }
             println!("{parsed:#?}");

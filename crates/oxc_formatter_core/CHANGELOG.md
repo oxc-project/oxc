@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+- ab12665 formatter_core: Add `hardlineWithoutBreakParent` equivalent IR (#25273) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ab52a59 formatter: Format xxx-in-js inside JSDoc js fence (#25414) (leaysgur)
+- 1a2c64a formatter,oxfmt: Apply effective print width for JSDoc fence (#25413) (leaysgur)
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+- c29b587 formatter_core: Measure decided-flat fill separator as flat during group re-measure (#25276) (leaysgur)
+
+### 📚 Documentation
+
+- 6eae5c9 formatter,oxfmt: Record embed-layer decisions in place (#25422) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+
 ## [0.61.0] - 2026-07-27
 
 ### ⚡ Performance

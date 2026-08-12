@@ -113,7 +113,6 @@ benchmark-one *args:
 coverage:
   cargo coverage
   cargo run -p oxc_transform_conformance -- --exec
-  cargo run -p oxc_prettier_conformance
 
 # Run Test262, Babel and TypeScript conformance suite
 conformance *args='':

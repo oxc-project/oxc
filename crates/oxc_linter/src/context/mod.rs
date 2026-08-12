@@ -111,31 +111,6 @@ impl<'a> LintContext<'a> {
         span.source_text(self.parent.semantic().source_text())
     }
 
-    /// Finds the next occurrence of the given token in the source code,
-    /// starting from the specified position, skipping over comments.
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
-        let source =
-            self.source_range(Span::new(start, self.parent.semantic().source_text().len() as u32));
-
-        source
-            .match_indices(token)
-            .find(|(a, _)| !self.is_inside_comment(start + *a as u32))
-            .map(|(a, _)| a as u32)
-    }
-
-    /// Finds the previous occurrence of the given token in the source code,
-    /// starting from the specified position, skipping over comments.
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn find_prev_token_from(&self, start: u32, token: &str) -> Option<u32> {
-        let source = self.source_range(Span::from(0..start));
-
-        source
-            .rmatch_indices(token)
-            .find(|(a, _)| !self.is_inside_comment(*a as u32))
-            .map(|(a, _)| a as u32)
-    }
-
     /// Finds the next occurrence of the given token within a bounded span,
     /// starting from the specified position, skipping over comments.
     ///
@@ -565,29 +540,5 @@ impl<'a> LintContext<'a> {
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
-    }
-}
-
-/// Gets the canonical display name for a plugin, given its internal short plugin name.
-///
-/// This is what is shown to users in diagnostic output (e.g. `unicorn(prefer-date-now)`).
-/// Most plugin names are returned unchanged; the exceptions are plugins whose internal
-/// name differs from the canonical name (`jsx_a11y` → `jsx-a11y`, `react_perf` →
-/// `react-perf`, `nextjs` → `next`).
-///
-/// Example:
-///
-/// ```ignore
-/// assert_eq!(plugin_display_name("react"), "react");
-/// assert_eq!(plugin_display_name("jsx_a11y"), "jsx-a11y");
-/// assert_eq!(plugin_display_name("nextjs"), "next");
-/// ```
-#[inline]
-fn plugin_display_name(plugin_name: &'static str) -> &'static str {
-    match plugin_name {
-        "jsx_a11y" => "jsx-a11y",
-        "react_perf" => "react-perf",
-        "nextjs" => "next",
-        _ => plugin_name,
     }
 }

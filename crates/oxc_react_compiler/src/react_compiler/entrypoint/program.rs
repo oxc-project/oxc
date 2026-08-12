@@ -279,6 +279,9 @@ fn get_function_name_from_id<'ast>(id: Option<&BindingIdentifier<'ast>>) -> Opti
 /// Check if an expression is a "non-node" return value (indicating the function
 /// is not a React component). This matches the TS `isNonNode` function.
 fn is_non_node(expr: &Expression) -> bool {
+    if let Expression::ParenthesizedExpression(parenthesized) = expr {
+        return is_non_node(&parenthesized.expression);
+    }
     matches!(
         expr,
         Expression::ObjectExpression(_)
@@ -1348,6 +1351,53 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         }
     }
 
+    fn walk_formal_parameters(&mut self, params: &'b FormalParameters<'ast>) {
+        for param in &params.items {
+            for decorator in &param.decorators {
+                self.walk_expression(&decorator.expression);
+            }
+            self.walk_binding_pattern(&param.pattern);
+            if let Some(initializer) = &param.initializer {
+                self.walk_expression(initializer);
+            }
+        }
+        if let Some(rest) = &params.rest {
+            for decorator in &rest.decorators {
+                self.walk_expression(&decorator.expression);
+            }
+            self.walk_binding_pattern(&rest.rest.argument);
+        }
+    }
+
+    fn walk_binding_pattern(&mut self, pattern: &'b BindingPattern<'ast>) {
+        match pattern {
+            BindingPattern::BindingIdentifier(_) => {}
+            BindingPattern::ObjectPattern(object) => {
+                for property in &object.properties {
+                    if property.computed {
+                        self.walk_property_key(&property.key);
+                    }
+                    self.walk_binding_pattern(&property.value);
+                }
+                if let Some(rest) = &object.rest {
+                    self.walk_binding_pattern(&rest.argument);
+                }
+            }
+            BindingPattern::ArrayPattern(array) => {
+                for element in array.elements.iter().flatten() {
+                    self.walk_binding_pattern(element);
+                }
+                if let Some(rest) = &array.rest {
+                    self.walk_binding_pattern(&rest.argument);
+                }
+            }
+            BindingPattern::AssignmentPattern(assignment) => {
+                self.walk_binding_pattern(&assignment.left);
+                self.walk_expression(&assignment.right);
+            }
+        }
+    }
+
     fn walk_statement(&mut self, stmt: &'b Statement<'ast>) {
         match stmt {
             Statement::BlockStatement(node) => self.walk_block(node),
@@ -1481,14 +1531,12 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
 
     fn walk_variable_declaration(&mut self, decl: &'b VariableDeclaration<'ast>) {
         for declarator in &decl.declarations {
-            // Only infer the declarator name when the init is a direct function
-            // expression, arrow, or call expression (for forwardRef/memo wrappers).
+            // Ignore parenthesis nodes when deciding whether the declarator name
+            // flows into a function expression.
             if let Some(init) = &declarator.init {
                 if matches!(
-                    init,
-                    Expression::FunctionExpression(_)
-                        | Expression::ArrowFunctionExpression(_)
-                        | Expression::CallExpression(_)
+                    init.without_parentheses(),
+                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
                 ) {
                     self.current_declarator_name = get_declarator_name(declarator);
                 }
@@ -1560,7 +1608,10 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
 
         if !skip_body {
             // Babel `fn.skip()` is only called for compiled functions; other
-            // functions are descended to find nested declarations.
+            // functions are descended to find nested declarations. Parameters
+            // are visited before the body because their defaults may contain a
+            // compilable function (for example, `Wrapper = memo(() => ...)`).
+            self.walk_formal_parameters(&func.params);
             if let Some(body) = &func.body {
                 self.walk_function_body_block(body);
             }
@@ -1598,6 +1649,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         };
 
         if !skip_body {
+            self.walk_formal_parameters(&arrow.params);
             if let Some(expression) = arrow.get_expression() {
                 self.walk_expression(expression);
             } else {
@@ -1626,20 +1678,18 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             }
             Expression::CallExpression(node) => {
                 let callee_name = get_callee_name_if_react_api(&node.callee);
-                // The declarator name only flows through forwardRef/memo calls; for
-                // any other call, clear it so nested functions don't inherit it.
-                if callee_name.is_none() {
-                    self.current_declarator_name = None;
-                }
+                // Upstream `getFunctionName` only consults a function's direct parent
+                // (declarator/assignment/property), so a declarator name never names
+                // a function nested in call arguments; forwardRef/memo callbacks are
+                // detected as anonymous functions via `parent_callee_stack` instead,
+                // which skips the component-name param/return checks.
+                self.current_declarator_name = None;
                 self.parent_callee_stack.push(callee_name);
                 self.walk_expression(&node.callee);
                 for arg in &node.arguments {
                     self.walk_argument(arg);
                 }
-                let was_react_api = self.parent_callee_stack.pop().flatten().is_some();
-                if was_react_api {
-                    self.current_declarator_name = None;
-                }
+                self.parent_callee_stack.pop();
             }
             Expression::ChainExpression(node) => self.walk_chain_element(&node.expression),
             Expression::StaticMemberExpression(node) => self.walk_expression(&node.object),
@@ -1780,6 +1830,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                 if is_method {
                     if let Expression::FunctionExpression(func) = &p.value {
                         let pushed = self.try_push_scope(func.scope_id.get());
+                        self.walk_formal_parameters(&func.params);
                         if let Some(body) = &func.body {
                             self.walk_function_body_block(body);
                         }
@@ -1961,15 +2012,16 @@ fn has_wrapper_callee_reference(scoping: &Scoping, nodes: &AstNodes, symbol_id: 
     })
 }
 
-/// The `const Foo = <fn>` name for a function/arrow node, iff the declarator's
-/// init is directly this node — the same direct-init rule the discovery walker
-/// applies. A function whose direct parent is the declarator can only be its
-/// init (wrappers like parens or TS casts introduce an intermediate parent and
-/// break the inference there too).
-fn declarator_name_for<'a>(nodes: &AstNodes<'a>, node_id: NodeId) -> Option<&'a str> {
-    match nodes.parent_kind(node_id) {
-        AstKind::VariableDeclarator(decl) => get_declarator_name(decl),
-        _ => None,
+/// The `const Foo = <fn>` name for a function/arrow node, ignoring any parenthesis
+/// nodes between the function and declarator.
+fn declarator_name_for<'a>(nodes: &AstNodes<'a>, mut node_id: NodeId) -> Option<&'a str> {
+    loop {
+        let parent = nodes.parent_node(node_id);
+        match parent.kind() {
+            AstKind::ParenthesizedExpression(_) => node_id = parent.id(),
+            AstKind::VariableDeclarator(decl) => return get_declarator_name(decl),
+            _ => return None,
+        }
     }
 }
 
@@ -2054,10 +2106,7 @@ impl<'a> CompileOutput<'a> {
 
 /// Drop comments left dangling by compilation.
 ///
-/// The compiled functions were rebuilt with fresh spans, so a comment that
-/// pointed inside one no longer lines up with any statement and codegen would
-/// re-emit it at a stale position. Keep only the comments still anchored to a
-/// top-level statement.
+/// Rewritten functions may no longer contain the statements comments were attached to.
 fn prune_inner_comments(program: &mut Program<'_>) {
     if program.comments.is_empty() {
         return;
@@ -2105,7 +2154,7 @@ fn ox_build_function<'a>(
     fn_type: FunctionType,
 ) -> ArenaBox<'a, Function<'a>> {
     Function::boxed(
-        SPAN,
+        codegen.span.unwrap_or_default(),
         fn_type,
         codegen.id.clone_in_with_semantic_ids(ast.allocator()),
         codegen.generator,
@@ -2129,7 +2178,7 @@ fn ox_build_compiled_expression<'a>(
 ) -> Expression<'a> {
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => Expression::new_arrow_function_expression(
-            SPAN,
+            codegen.span.unwrap_or_default(),
             codegen.is_async,
             None,
             codegen.params.clone_in_with_semantic_ids(ast.allocator()),
@@ -2168,7 +2217,11 @@ fn ox_replace_function<'a>(
         func.return_type = None;
         func.this_param = None;
     }
+    let source_id_span = func.id.as_ref().map(|id| id.span);
     func.id = codegen.id.clone_in_with_semantic_ids(ast.allocator());
+    if let (Some(id), Some(span)) = (&mut func.id, source_id_span) {
+        id.span = span;
+    }
     func.params = params;
     func.body = Some(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
     func.generator = codegen.generator;
@@ -2203,18 +2256,19 @@ fn ox_build_gated_const_decl<'a>(
     ast: &AstBuilder<'a>,
     gating_expression: &Expression<'a>,
     name: &str,
+    name_span: Span,
+    declaration_span: Span,
 ) -> Statement<'a> {
     let declarator = VariableDeclarator::new(
-        SPAN,
-        VariableDeclarationKind::Const,
-        BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
+        declaration_span,
+        BindingPattern::new_binding_identifier(name_span, ox_atom(ast, name), ast),
         None,
         Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
         false,
         ast,
     );
     Statement::new_variable_declaration(
-        SPAN,
+        declaration_span,
         VariableDeclarationKind::Const,
         [declarator],
         false,
@@ -2265,6 +2319,8 @@ enum OxcVisitMode<'a, 'b> {
     FindOriginalFn { scope_id: ScopeId, found: Option<Expression<'a>> },
 }
 
+type GatedStatementMatch<'a> = (Option<(Ident<'a>, Span)>, Option<Span>);
+
 impl<'a> OxcVisitor<'a, '_> {
     /// In [`OxcVisitMode::ReplaceWithGated`]: if `stmt` is the target function
     /// declaration (bare, `export`-wrapped, or `export default`), substitute
@@ -2283,28 +2339,29 @@ impl<'a> OxcVisitor<'a, '_> {
         let scope_id = *scope_id;
         let gating_expression = *gating_expression;
         // FunctionDeclaration → `const Foo = gating() ? ... : ...;`
-        let replace_name: Option<Option<Ident<'a>>> = match &*stmt {
+        let replacement: Option<GatedStatementMatch<'a>> = match &*stmt {
             Statement::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
-                Some(f.id.as_ref().map(|id| id.name))
+                Some((f.id.as_ref().map(|id| (id.name, id.span)), None))
             }
             Statement::ExportDeclaration(e) => match &e.declaration {
                 Declaration::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
-                    Some(f.id.as_ref().map(|id| id.name))
+                    Some((f.id.as_ref().map(|id| (id.name, id.span)), Some(e.span)))
                 }
                 _ => None,
             },
             _ => None,
         };
-        if let Some(name) = replace_name {
-            let name = name.as_deref().unwrap_or("anonymous");
-            let is_export = matches!(stmt, Statement::ExportDeclaration(_));
-            let const_decl = ox_build_gated_const_decl(ast, gating_expression, name);
-            if is_export {
+        if let Some((name, export_span)) = replacement {
+            let (name, name_span) =
+                name.map_or(("anonymous", SPAN), |(name, span)| (name.as_str(), span));
+            let const_decl =
+                ox_build_gated_const_decl(ast, gating_expression, name, name_span, SPAN);
+            if let Some(export_span) = export_span {
                 let decl = match const_decl {
                     Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
                     _ => unreachable!(),
                 };
-                *stmt = Statement::new_export_declaration(SPAN, decl, ast);
+                *stmt = Statement::new_export_declaration(export_span, decl, ast);
             } else {
                 *stmt = const_decl;
             }
@@ -2316,12 +2373,20 @@ impl<'a> OxcVisitor<'a, '_> {
             && let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration
             && f.scope_id.get() == Some(scope_id)
         {
-            if let Some(id) = f.id.as_ref().map(|id| id.name) {
-                *stmt = ox_build_gated_const_decl(ast, gating_expression, id.as_str());
-                *export_default_name = Some(id);
+            let export_span = e.span;
+            let id = f.id.as_ref().map(|id| (id.name, id.span));
+            if let Some((name, name_span)) = id {
+                *stmt = ox_build_gated_const_decl(
+                    ast,
+                    gating_expression,
+                    name.as_str(),
+                    name_span,
+                    export_span,
+                );
+                *export_default_name = Some(name);
             } else {
                 *stmt = Statement::new_export_default_declaration(
-                    SPAN,
+                    export_span,
                     ExportDefaultDeclarationKind::from(
                         gating_expression.clone_in_with_semantic_ids(ast.allocator()),
                     ),
@@ -2358,7 +2423,7 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                 }
                 if func.scope_id.get() == Some(*scope_id) {
                     let f = Function::boxed(
-                        SPAN,
+                        func.span,
                         FunctionType::FunctionExpression,
                         func.id.clone_in_with_semantic_ids(ast.allocator()),
                         func.generator,
@@ -2751,15 +2816,8 @@ fn ox_add_imports_to_program<'a>(
                 false,
                 ast,
             );
-            let declarator = VariableDeclarator::new(
-                SPAN,
-                VariableDeclarationKind::Const,
-                object_pattern,
-                None,
-                Some(require_call),
-                false,
-                ast,
-            );
+            let declarator =
+                VariableDeclarator::new(SPAN, object_pattern, None, Some(require_call), false, ast);
             let decl = VariableDeclaration::boxed(
                 SPAN,
                 VariableDeclarationKind::Const,
@@ -2839,24 +2897,23 @@ pub fn compile_program<'a>(
     // Compute output mode once, up front
     let output_mode = CompilerOutputMode::from_opts(&options);
 
-    // The compiler's own validations cover the safety concerns represented by the
-    // React Hooks ESLint rules. Match Babel by only consulting ESLint suppressions
-    // when either validation is disabled.
-    let eslint_rules = (!options.environment.validate_exhaustive_memoization_dependencies
-        || !options.environment.validate_hooks_usage)
-        .then(|| {
-            options.eslint_suppression_rules.clone().unwrap_or_else(|| {
-                DEFAULT_ESLINT_SUPPRESSIONS.iter().map(|s| s.to_string()).collect()
-            })
-        });
-
-    // Find program-level suppressions from comments
-    let suppressions = find_program_suppressions(
-        &program.comments,
-        program.source_text,
-        eslint_rules.as_deref(),
-        options.flow_suppressions,
-    );
+    // Match babel-plugin-react-compiler 1.0.0: ESLint suppressions are an explicit
+    // function-level opt-out, independent of the compiler's internal validations.
+    let suppressions = if let Some(eslint_rules) = options.eslint_suppression_rules.as_deref() {
+        find_program_suppressions(
+            &program.comments,
+            program.source_text,
+            eslint_rules,
+            options.flow_suppressions,
+        )
+    } else {
+        find_program_suppressions(
+            &program.comments,
+            program.source_text,
+            DEFAULT_ESLINT_SUPPRESSIONS,
+            options.flow_suppressions,
+        )
+    };
 
     // Check for module-scope opt-out directive
     let has_module_scope_opt_out = find_directive_disabling_memoization(

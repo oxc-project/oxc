@@ -84,7 +84,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         decl.kind = VariableDeclarationKind::Const;
 
         let variable_declarator = decl.declarations.first_mut().unwrap();
-        variable_declarator.kind = VariableDeclarationKind::Const;
 
         let variable_declarator_binding_ident =
             variable_declarator.id.get_binding_identifier().unwrap();
@@ -107,7 +106,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             variable_decl_kind,
             [VariableDeclarator::new(
                 SPAN,
-                variable_decl_kind,
                 binding_pattern,
                 None,
                 Some(temp_id.create_read_expression(ctx)),
@@ -432,7 +430,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 VariableDeclarationKind::Var,
                                 [VariableDeclarator::new(
                                     span,
-                                    VariableDeclarationKind::Var,
                                     var_id.create_spanned_binding_pattern(span, ctx),
                                     None,
                                     Some(expr),
@@ -477,7 +474,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                 | Declaration::TSTypeAliasDeclaration(_)
                                 | Declaration::TSInterfaceDeclaration(_)
                                 | Declaration::TSEnumDeclaration(_)
-                                | Declaration::TSModuleDeclaration(_)
+                                | Declaration::TSExternalModuleDeclaration(_)
+                                | Declaration::TSNamespaceDeclaration(_)
                                 // Note: `TSGlobalDeclaration` cannot be exported
                                 | Declaration::TSImportEqualsDeclaration(_)
                             ) {
@@ -523,10 +521,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                     var_decl.kind = VariableDeclarationKind::Var;
                                     let mut export_specifiers = ArenaVec::new_in(ctx);
 
-                                    for decl in &mut var_decl.declarations {
-                                        decl.kind = VariableDeclarationKind::Var;
-                                    }
-
                                     var_decl.bound_names(&mut |ident| {
                                         *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
                                             SymbolFlags::FunctionScopedVariable;
@@ -569,7 +563,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             var_declaration.kind = VariableDeclarationKind::Var;
 
                             for decl in &mut var_declaration.declarations {
-                                decl.kind = VariableDeclarationKind::Var;
                                 decl.id.bound_names(&mut |c| {
                                     *ctx.scoping_mut().symbol_flags_mut(c.symbol_id()) =
                                         SymbolFlags::FunctionScopedVariable;
@@ -748,7 +741,6 @@ impl<'a> ExplicitResourceManagement<'a> {
                             VariableDeclarationKind::Var,
                             [VariableDeclarator::new(
                                 SPAN,
-                                VariableDeclarationKind::Var,
                                 using_ctx.create_binding_pattern(ctx),
                                 None,
                                 Some(Expression::new_call_expression(
@@ -883,7 +875,6 @@ impl<'a> ExplicitResourceManagement<'a> {
             VariableDeclarationKind::Var,
             [VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 using_ctx.create_binding_pattern(ctx),
                 None,
                 Some(Expression::new_call_expression(SPAN, callee, None, [], false, ctx)),
@@ -1014,7 +1005,6 @@ impl<'a> ExplicitResourceManagement<'a> {
             VariableDeclarationKind::Var,
             [VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 binding.create_spanned_binding_pattern(original_span, ctx),
                 None,
                 Some(class_expr),

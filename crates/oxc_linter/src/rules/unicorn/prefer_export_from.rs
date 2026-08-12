@@ -9,7 +9,8 @@ use oxc_ast::{
     ast::{
         BindingPattern, ExportFromDeclaration, ExportSpecifier, ImportAttributeKey,
         ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName,
-        Statement, VariableDeclarationKind, VariableDeclarator, WithClause, WithClauseKeyword,
+        Program, Statement, VariableDeclarationKind, VariableDeclarator, WithClause,
+        WithClauseKeyword,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -104,16 +105,8 @@ impl Rule for PreferExportFrom {
                 return;
             }
 
-            let corresponding_export: Option<&ExportFromDeclaration> =
-                find_corresponding_export(ctx, import_decl);
-
             let symbol_to_specifier_specs = Self::get_symbol_to_specifier(import_decl);
-            self.check_re_export(
-                ctx,
-                &symbol_to_specifier_specs,
-                import_decl,
-                corresponding_export,
-            );
+            self.check_re_export(ctx, &symbol_to_specifier_specs, import_decl);
         }
     }
 }
@@ -144,10 +137,15 @@ impl PreferExportFrom {
         ctx: &LintContext<'a>,
         symbol_to_specifier: &FxIndexMap<SymbolId, SpecifierSpec<'a>>,
         import_decl: &'a ImportDeclaration<'a>,
-        re_export_decl: Option<&'a ExportFromDeclaration<'a>>,
     ) {
         let (locally_used_specifiers, violations) =
             self.analyze_import_usage(ctx, symbol_to_specifier, import_decl);
+
+        if violations.is_empty() {
+            return;
+        }
+
+        let re_export_decl = find_corresponding_export(ctx, import_decl);
 
         let source = import_decl.source.value.as_str();
         let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
@@ -910,8 +908,7 @@ impl PreferExportFrom {
         is_namespace: bool,
     ) {
         let last_specifier = re_export.specifiers.last();
-        let last_export_span =
-            Self::get_last_export_span(last_specifier, re_export_source_text, re_export);
+        let last_export_span = Self::get_last_export_span(fixer, last_specifier, re_export);
         let processed_exports_str = Self::get_processed_exports_str(exports_str, re_export);
 
         if is_namespace {
@@ -935,17 +932,19 @@ impl PreferExportFrom {
         }
     }
     fn get_last_export_span(
+        fixer: RuleFixer<'_, '_>,
         last_specifier: Option<&ExportSpecifier>,
-        re_export_source_text: &str,
         re_export: &ExportFromDeclaration,
     ) -> Span {
         if let Some(specifier) = last_specifier {
             specifier.span()
         } else {
-            let index = re_export_source_text.find('{').unwrap_or(0);
-            let start = re_export.span().start;
-            let end = start + u32::try_from(index).unwrap_or_default() + 1;
-            Span::new(start, end)
+            // the new specifiers go just after the `{` of `export {} from '...'`
+            let span = re_export.span();
+            let offset = fixer
+                .find_next_token_within(span.start, span.end, "{")
+                .expect("export-from declaration span must contain an opening brace");
+            Span::new(span.start, span.start + offset + 1)
         }
     }
 
@@ -969,9 +968,12 @@ impl PreferExportFrom {
             let new_import_str =
                 Self::build_new_import_declaration(ctx, import_decl, retained_specifiers);
             if let Some(item) = re_export_decl {
-                let last_export_span = Self::get_last_export_span(item.specifiers.last(), "", item);
-                let replacement_str = format!(", {exports_str}");
-                rule_fixes.push(fixer.insert_text_after_range(last_export_span, replacement_str));
+                let last_specifier = item.specifiers.last();
+                let last_export_span = Self::get_last_export_span(fixer, last_specifier, item);
+                // with no existing specifier the insertion point is the `{`, so no comma
+                let comma = if last_specifier.is_some() { ", " } else { "" };
+                let insert_text = format!("{comma}{exports_str}");
+                rule_fixes.push(fixer.insert_text_after_range(last_export_span, insert_text));
                 rule_fixes.push(fixer.replace(import_decl.span(), new_import_str));
             } else {
                 let new_import_replacement_str = format!("{new_import_str}{replacement_str}");
@@ -1147,6 +1149,7 @@ fn find_corresponding_export<'a>(
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
     let source = import_decl.source.value.as_str();
+    let program = ctx.nodes().program();
 
     for requested_module in ctx.module_record().requested_modules.get(source)? {
         if requested_module.is_import {
@@ -1154,7 +1157,7 @@ fn find_corresponding_export<'a>(
         }
 
         let Some(export_decl) =
-            find_export_named_declaration_by_span(ctx, requested_module.statement_span)
+            find_export_named_declaration_by_span(program, requested_module.statement_span)
         else {
             continue;
         };
@@ -1174,17 +1177,14 @@ fn find_corresponding_export<'a>(
 }
 
 fn find_export_named_declaration_by_span<'a>(
-    ctx: &LintContext<'a>,
+    program: &'a Program<'a>,
     span: Span,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
-    ctx.nodes().iter().find_map(|node| {
-        if let AstKind::ExportFromDeclaration(export_decl) = node.kind()
-            && export_decl.span() == span
-        {
-            Some(export_decl)
-        } else {
-            None
-        }
+    program.body.iter().find_map(|statement| {
+        let Statement::ExportFromDeclaration(export_decl) = statement else {
+            return None;
+        };
+        (export_decl.span() == span).then_some(export_decl.as_ref())
     })
 }
 
@@ -1408,6 +1408,16 @@ fn test() {
         r#"import { foo } from "foo";
             export { foo };
             export type { bar } from "foo";"#,
+        // Multiple imports find their corresponding direct re-export.
+        r#"import { a } from "a";
+            import { b } from "b";
+            import { c } from "c";
+            export { existingA } from "a";
+            export { existingB } from "b";
+            export { existingC } from "c";
+            export { a };
+            export { b };
+            export { c };"#,
         r#"import { foo } from "foo";
             export { foo };
             export { type bar } from "foo";"#,
@@ -1493,6 +1503,17 @@ fn test() {
     ];
 
     let fix = vec![
+        // the `{` inside the comment is not the start of the specifier list; the
+        // exported name used to be swallowed into the comment
+        (
+            "import {foo} from 'foo';\nexport {foo};\nexport /* { */ {} from 'foo';",
+            "export /* { */ {foo} from 'foo';",
+        ),
+        // merging into an empty re-export: the insertion point is the `{`, so no leading comma
+        (
+            "import {foo, bar} from 'foo';\nexport {foo};\nconsole.log(bar);\nexport {} from 'foo';",
+            "import {bar} from 'foo';\n\nconsole.log(bar);\nexport {foo} from 'foo';",
+        ),
         (
             "import defaultExport from 'foo';
             export default defaultExport;",

@@ -103,6 +103,18 @@ pub fn infer_mutation_aliasing_effects<'a>(
         initial_state.define(ctx_place.identifier, value_id);
     }
 
+    if let Some(self_binding) = func.self_binding {
+        let value_id = ValueId::new();
+        initial_state.initialize(
+            value_id,
+            AbstractValue {
+                kind: ValueKind::Mutable,
+                reason: ReasonSet::single(ValueReason::Other),
+            },
+        );
+        initial_state.define(self_binding.identifier, value_id);
+    }
+
     let param_kind: AbstractValue = if is_function_expression {
         AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) }
     } else {
@@ -1095,7 +1107,8 @@ fn find_non_mutated_destructure_spreads(
                     // Properties must be frozen since the original value was frozen
                 }
                 InstructionValue::CallExpression { callee, .. }
-                | InstructionValue::MethodCall { property: callee, .. } => {
+                | InstructionValue::MethodCall { property: callee, .. }
+                | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some() {
                         if !is_ref_or_ref_value_for_id(env, lvalue_id) {
@@ -2067,6 +2080,24 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: *await_value });
             effects.push(AliasingEffect::Capture { from: *await_value, into: *lvalue });
         }
+        InstructionValue::TaggedTemplateExpression { tag, subexprs, span, .. } => {
+            // A tagged template is a function call whose first argument is the
+            // call-site's frozen template object, followed by the interpolated
+            // expressions. There is no HIR place for the implicit template object,
+            // so preserve its parameter position with a hole.
+            let mut args = ArenaVec::new_in(&alloc);
+            args.push(PlaceOrSpreadOrHole::Hole);
+            args.extend(subexprs.iter().copied().map(PlaceOrSpreadOrHole::Place));
+            effects.push(AliasingEffect::Apply {
+                receiver: *tag,
+                function: *tag,
+                mutates_function: true,
+                args,
+                into: *lvalue,
+                signature: Some(env.identifiers[tag.identifier].type_),
+                span: *span,
+            });
+        }
         InstructionValue::NewExpression { callee, args, span } => {
             effects.push(AliasingEffect::Apply {
                 receiver: *callee,
@@ -2390,8 +2421,7 @@ fn compute_signature_for_instruction<'a>(
             });
         }
         // All primitive-creating instructions
-        InstructionValue::TaggedTemplateExpression { .. }
-        | InstructionValue::BinaryExpression { .. }
+        InstructionValue::BinaryExpression { .. }
         | InstructionValue::Debugger { .. }
         | InstructionValue::JSXText { .. }
         | InstructionValue::MetaProperty { .. }
@@ -2464,7 +2494,7 @@ fn compute_effects_for_legacy_signature<'a>(
             match arg {
                 PlaceOrSpreadOrHole::Hole => continue,
                 PlaceOrSpreadOrHole::Place(place)
-                | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
+                | PlaceOrSpreadOrHole::Spread(SpreadPattern { place, .. }) => {
                     effects.push(AliasingEffect::ImmutableCapture { from: *place, into: *lvalue });
                 }
             }
@@ -2515,7 +2545,7 @@ fn compute_effects_for_legacy_signature<'a>(
         match arg {
             PlaceOrSpreadOrHole::Hole => continue,
             PlaceOrSpreadOrHole::Place(place)
-            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
+            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place, .. }) => {
                 let is_spread = matches!(arg, PlaceOrSpreadOrHole::Spread(_));
                 let sig_effect = if !is_spread && i < signature.positional_params.len() {
                     signature.positional_params[i]
@@ -2585,7 +2615,7 @@ fn are_arguments_immutable_and_non_mutating(
         match arg {
             PlaceOrSpreadOrHole::Hole => continue,
             PlaceOrSpreadOrHole::Place(place)
-            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
+            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place, .. }) => {
                 // Check if it's a function type with a known signature
                 let is_place = matches!(arg, PlaceOrSpreadOrHole::Place(_));
                 if is_place {
@@ -2676,7 +2706,7 @@ fn compute_effects_for_aliasing_signature_config<'a>(
         match arg {
             PlaceOrSpreadOrHole::Hole => continue,
             PlaceOrSpreadOrHole::Place(place)
-            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
+            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place, .. }) => {
                 if i < config.params.len() && !matches!(arg, PlaceOrSpreadOrHole::Spread(_)) {
                     substitutions.insert(config.params[i].to_string(), vec![*place]);
                 } else if let Some(rest) = config.rest {
@@ -2918,7 +2948,7 @@ fn compute_effects_for_aliasing_signature<'a>(
         match arg {
             PlaceOrSpreadOrHole::Hole => continue,
             PlaceOrSpreadOrHole::Place(place)
-            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place }) => {
+            | PlaceOrSpreadOrHole::Spread(SpreadPattern { place, .. }) => {
                 let is_spread = matches!(arg, PlaceOrSpreadOrHole::Spread(_));
                 if !is_spread && i < signature.params.len() {
                     substitutions.insert(signature.params[i], vec![*place]);
@@ -3087,6 +3117,7 @@ fn compute_effects_for_aliasing_signature<'a>(
                                 {
                                     apply_args.push(PlaceOrSpreadOrHole::Spread(SpreadPattern {
                                         place: *place,
+                                        span: sp.span,
                                     }));
                                 }
                             }

@@ -320,10 +320,15 @@ mod tests {
             .get_binding(semantic.scoping().root_scope_id(), static_ident!("a"))
             .unwrap();
 
-        let decl = semantic.symbol_declaration(top_level_a);
-        match decl.kind() {
-            AstKind::VariableDeclarator(decl) => {
-                assert_eq!(decl.kind, VariableDeclarationKind::Let);
+        let declarator_node = semantic.symbol_declaration(top_level_a);
+        match declarator_node.kind() {
+            AstKind::VariableDeclarator(_) => {
+                let AstKind::VariableDeclaration(declaration) =
+                    semantic.nodes().parent_kind(declarator_node.id())
+                else {
+                    unreachable!();
+                };
+                assert_eq!(declaration.kind, VariableDeclarationKind::Let);
             }
             kind => panic!("Expected VariableDeclarator for 'let', got {kind:?}"),
         }

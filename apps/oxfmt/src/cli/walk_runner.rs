@@ -27,7 +27,7 @@ pub struct WalkRunner {
     options: FormatCommand,
     cwd: PathBuf,
     #[cfg(feature = "napi")]
-    external_formatter: Option<crate::core::ExternalFormatter>,
+    external_services: Option<crate::core::ExternalServices>,
     #[cfg(feature = "napi")]
     js_config_loader: Option<JsConfigLoaderCb>,
 }
@@ -42,7 +42,7 @@ impl WalkRunner {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
             #[cfg(feature = "napi")]
-            external_formatter: None,
+            external_services: None,
             #[cfg(feature = "napi")]
             js_config_loader: None,
         }
@@ -50,11 +50,11 @@ impl WalkRunner {
 
     #[cfg(feature = "napi")]
     #[must_use]
-    pub fn with_external_formatter(
+    pub fn with_external_services(
         mut self,
-        external_formatter: Option<crate::core::ExternalFormatter>,
+        external_services: Option<crate::core::ExternalServices>,
     ) -> Self {
-        self.external_formatter = external_formatter;
+        self.external_services = external_services;
         self
     }
 
@@ -66,7 +66,7 @@ impl WalkRunner {
     }
 
     /// # Panics
-    /// Panics if `napi` feature is enabled but external_formatter is not set.
+    /// Panics if `napi` feature is enabled but external_services is not set.
     pub fn run(self) -> CliRunResult {
         // stdio is blocked by `LineWriter`, use a `BufWriter` to reduce syscalls.
         // See https://github.com/rust-lang/rust/issues/60673
@@ -111,15 +111,12 @@ impl WalkRunner {
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
         if let Err(err) = tokio::task::block_in_place(|| {
-            self.external_formatter
+            self.external_services
                 .as_ref()
-                .expect("External formatter must be set when `napi` feature is enabled")
+                .expect("External services must be set when `napi` feature is enabled")
                 .init(num_of_threads)
         }) {
-            utils::print_and_flush(
-                stderr,
-                &format!("Failed to setup external formatter.\n{err}\n"),
-            );
+            utils::print_and_flush(stderr, &format!("Failed to setup external services.\n{err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }
 
@@ -151,7 +148,7 @@ impl WalkRunner {
         // Create `SourceFormatter` instance
         let source_formatter = SourceFormatter::new(num_of_threads);
         #[cfg(feature = "napi")]
-        let source_formatter = source_formatter.with_external_formatter(self.external_formatter);
+        let source_formatter = source_formatter.with_external_services(self.external_services);
 
         let cwd_for_format = cwd.clone();
         // Clone `tx_error` so both the walk threads and the format service can report errors
@@ -227,7 +224,7 @@ impl WalkRunner {
             // and when colors are disabled, every style is empty and renders nothing.
             // `ListDifferent` mode output is meant for piping, keep it style-free.
             let warning_style = matches!(format_mode, OutputMode::Check)
-                .then(|| GraphicalTheme::default().styles.warning);
+                .then(|| GraphicalTheme::default().warning_style());
             let mut output = String::new();
             for (idx, (path, elapsed)) in changed_paths.into_iter().enumerate() {
                 if idx != 0 {

@@ -159,6 +159,11 @@ pub fn inject_parser(opts: &mut Value, parser_name: &str) {
     as_object_mut(opts).insert("parser".to_string(), Value::String(parser_name.to_string()));
 }
 
+/// Inject `printWidth` key, overriding the configured one.
+pub fn inject_print_width(opts: &mut Value, print_width: usize) {
+    as_object_mut(opts).insert("printWidth".to_string(), Value::from(print_width));
+}
+
 /// Inject `filepath` key.
 ///
 /// Some plugins (Tailwind sorter, etc.) depend on it.
@@ -201,6 +206,15 @@ pub fn inject_tailwind_plugin_payload(opts: &mut Value, config: &FormatConfig) {
         map.insert("tailwindPreserveDuplicates".to_string(), Value::from(v));
     }
     map.insert("_useTailwindPlugin".to_string(), Value::Number(1.into()));
+}
+
+/// Build the Prettier options JSON shared by the embedded callbacks and the Tailwind sorter:
+/// resolved config + `filepath` + the Tailwind plugin payload (which the JS-side sorter resolves the class order from).
+pub fn build_prettier_options(config: &FormatConfig, path: &Path) -> Value {
+    let mut prettier_options = to_prettier(config);
+    inject_filepath(&mut prettier_options, path);
+    inject_tailwind_plugin_payload(&mut prettier_options, config);
+    prettier_options
 }
 
 /// Inject Svelte plugin keys derived from `config.svelte`.

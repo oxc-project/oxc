@@ -71,7 +71,7 @@
 
 ## html-in-js
 
-### Option 1: 165/192 (85.94%)
+### Option 1: 168/194 (86.60%)
 
 ```json
 {"printWidth":80}
@@ -80,7 +80,6 @@
 | File | Note |
 | :--- | :--- |
 | [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md) | We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently |
-| [externals/prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/externals__prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
 | [externals/webawesome/badge/badge.ts](diffs/html-in-js/externals__webawesome__badge__badge.ts.md) |  |
 | [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md) |  |
 | [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md) |  |
@@ -107,7 +106,7 @@
 | [externals/webawesome/tag/tag.ts](diffs/html-in-js/externals__webawesome__tag__tag.ts.md) |  |
 | [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md) |  |
 
-### Option 2: 178/192 (92.71%)
+### Option 2: 181/194 (93.30%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
@@ -116,7 +115,6 @@
 | File | Note |
 | :--- | :--- |
 | [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md) | We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently |
-| [externals/prettier/js/multiparser-html/issue-10691.js](diffs/html-in-js/externals__prettier__js__multiparser-html__issue-10691.js.md) | js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs |
 | [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md) |  |
 | [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md) |  |
 | [externals/webawesome/carousel/carousel.ts](diffs/html-in-js/externals__webawesome__carousel__carousel.ts.md) |  |

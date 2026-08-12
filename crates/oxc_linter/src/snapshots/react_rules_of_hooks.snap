@@ -1119,6 +1119,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
 
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:4:21]
+ 3 │                 return new Promise.then(() => {
+ 4 │                     useState();
+   ·                     ─────┬────
+   ·                          ╰── This Hook call is inside a nested callback.
+ 5 │                 });
+   ╰────
+
   ⚠ react-hooks(rules-of-hooks): React Hook "useHook" is called in function "foo" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:1:54]
  1 │ const MyComponent3 = makeComponent(function foo () { useHook(); });

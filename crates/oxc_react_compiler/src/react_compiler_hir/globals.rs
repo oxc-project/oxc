@@ -1711,9 +1711,11 @@ const TYPED_GLOBAL_OBJECTS: &[GlobalObjectDef] = &[
 
 /// Simple global functions returning Primitive.
 const PRIMITIVE_GLOBAL_FNS: &[&str] = &[
+    "BigInt",
     "Boolean",
     "Number",
     "String",
+    "Symbol",
     "parseInt",
     "parseFloat",
     "isNaN",

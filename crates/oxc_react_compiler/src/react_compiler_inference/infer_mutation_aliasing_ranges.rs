@@ -469,6 +469,15 @@ pub fn infer_mutation_aliasing_ranges<'a>(
 
     let should_record_errors = !is_function_expression && env.enable_validations();
 
+    // A named function expression's private name is an entry value just like
+    // its parameters and context. Keep it in the local graph so effects that
+    // capture or mutate the function through its recursive name are not lost.
+    // It is intentionally excluded from `function_effects` below because the
+    // private name is not an externally visible parameter or context value.
+    if let Some(self_binding) = &func.self_binding {
+        state.create(self_binding, NodeValue::Object);
+    }
+
     // Create nodes for params, context vars, and return
     for param in &func.params {
         let place = match param {

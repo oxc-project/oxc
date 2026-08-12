@@ -235,9 +235,14 @@ pub trait PreferExpectAssertionsRuleImpl {
                 );
             }
             JestGeneralFnKind::Test => {
+                let is_parameterized = general
+                    .members
+                    .iter()
+                    .any(|member| member.is_name_equal("each") || member.is_name_equal("for"));
                 self.check_test(
                     call_expr,
                     node.id(),
+                    is_parameterized,
                     file_expect_prefix,
                     covered_describe_ids,
                     ctx,
@@ -293,6 +298,7 @@ pub trait PreferExpectAssertionsRuleImpl {
         &self,
         call_expr: &'a CallExpression<'a>,
         test_node_id: NodeId,
+        is_parameterized: bool,
         file_expect_prefix: &str,
         covered_describe_ids: &[NodeId],
         ctx: &LintContext<'a>,
@@ -313,14 +319,25 @@ pub trait PreferExpectAssertionsRuleImpl {
             return;
         }
 
-        let Some(expected_resolved) = self.resolve_expect(callback, file_expect_prefix, ctx) else {
+        let expected_resolved = if is_parameterized {
+            self.resolve_expect_for_parameterized_test(call_expr, callback, file_expect_prefix, ctx)
+        } else {
+            self.resolve_expect(callback, file_expect_prefix, ctx)
+        };
+        let Some(expected_resolved) = expected_resolved else {
             ctx.diagnostic(expect_shadowed_by_parameter(call_expr.callee.span()));
             return;
         };
 
         let prefix = expected_resolved.as_ref();
 
-        if self.has_options() && !self.should_check_node(body, is_async_callback(callback), prefix)
+        if self.has_options()
+            && !self.should_check_node_with_file_expect(
+                body,
+                is_async_callback(callback),
+                prefix,
+                file_expect_prefix,
+            )
         {
             return;
         }
@@ -388,6 +405,15 @@ pub trait PreferExpectAssertionsRuleImpl {
         file_expect_prefix: &'r str,
         ctx: &LintContext<'a>,
     ) -> Option<Cow<'r, str>>;
+    fn resolve_expect_for_parameterized_test<'a, 'r>(
+        &self,
+        _call_expr: &CallExpression<'a>,
+        callback: &Expression<'a>,
+        file_expect_prefix: &'r str,
+        ctx: &LintContext<'a>,
+    ) -> Option<Cow<'r, str>> {
+        self.resolve_expect(callback, file_expect_prefix, ctx)
+    }
     fn report_have_expect_assertions(
         &self,
         span: Span,
@@ -397,6 +423,15 @@ pub trait PreferExpectAssertionsRuleImpl {
     );
 
     fn should_check_node(&self, body: CallbackBody<'_>, is_async: bool, prefix: &str) -> bool;
+    fn should_check_node_with_file_expect(
+        &self,
+        body: CallbackBody<'_>,
+        is_async: bool,
+        prefix: &str,
+        _file_expect_prefix: &str,
+    ) -> bool {
+        self.should_check_node(body, is_async, prefix)
+    }
 }
 
 fn is_covered_by_hook(

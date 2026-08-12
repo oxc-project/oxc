@@ -226,12 +226,13 @@ fn make_function_shorthand<'a>(
 
         let property_key_span = property.key.span();
         let key_text = if property.computed {
-            let (Some(paren_start), Some(paren_end_offset)) = (
-                ctx.find_prev_token_from(property_key_span.start, "["),
-                ctx.find_next_token_from(property_key_span.end, "]"),
+            let (Some(paren_start_offset), Some(paren_end_offset)) = (
+                ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
+                ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
             ) else {
                 return fixer.noop();
             };
+            let paren_start = property.span.start + paren_start_offset;
             ctx.source_range(Span::new(paren_start, property_key_span.end + paren_end_offset + 1))
         } else {
             ctx.source_range(property_key_span)
@@ -240,10 +241,10 @@ fn make_function_shorthand<'a>(
         match fn_or_arrow_fn {
             Either::Left(func) => {
                 let next_token = if func.generator {
-                    ctx.find_next_token_from(property_key_span.end, "*")
+                    ctx.find_next_token_within(property_key_span.end, func.span.end, "*")
                         .map(|offset| offset + 1 /* "*".len() */)
                 } else {
-                    ctx.find_next_token_from(property_key_span.end, "function")
+                    ctx.find_next_token_within(property_key_span.end, func.span.end, "function")
                         .map(|offset| offset + 8 /* "function".len() */)
                 };
                 let Some(func_token) = next_token else {
@@ -256,8 +257,8 @@ fn make_function_shorthand<'a>(
             }
             Either::Right(func) => {
                 let next_token = ctx
-                    .find_prev_token_from(func.body.span().start, "=>")
-                    .map(|offset| offset + 2 /* "=>".len() */);
+                    .find_prev_token_within(func.span.start, func.body.span().start, "=>")
+                    .map(|offset| func.span.start + offset + 2 /* "=>".len() */);
                 let Some(arrow_token) = next_token else {
                     return fixer.noop();
                 };
@@ -270,8 +271,9 @@ fn make_function_shorthand<'a>(
                     func.return_type.as_ref().map_or(func.params.span.end, |p| p.span.end),
                 ));
                 let should_add_parens = if func.r#async {
-                    if let Some(async_token) = ctx.find_next_token_from(func.span.start, "async")
-                        && let Some(first) = func.params.items.first()
+                    if let Some(first) = func.params.items.first()
+                        && let Some(async_token) =
+                            ctx.find_next_token_within(func.span.start, first.span.start, "async")
                     {
                         ctx.find_next_token_within(
                             func.span.start + async_token,
@@ -315,13 +317,16 @@ fn make_function_long_form<'a>(
     ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let property_key_span = property.key.span();
         let key_text_range = if property.computed {
-            let (Some(paren_start), Some(paren_end_offset)) = (
-                ctx.find_prev_token_from(property_key_span.start, "["),
-                ctx.find_next_token_from(property_key_span.end, "]"),
+            let (Some(paren_start_offset), Some(paren_end_offset)) = (
+                ctx.find_prev_token_within(property.span.start, property_key_span.start, "["),
+                ctx.find_next_token_within(property_key_span.end, property.span.end, "]"),
             ) else {
                 return fixer.noop();
             };
-            Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
+            Span::new(
+                property.span.start + paren_start_offset,
+                property_key_span.end + paren_end_offset + 1,
+            )
         } else {
             property_key_span
         };
@@ -828,6 +833,10 @@ fn test() {
         ),
         (
             "({ x: () => { this; } })",
+            Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ x: (): typeof this.foo => { return 1; } })",
             Some(serde_json::json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
