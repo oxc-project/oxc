@@ -18,8 +18,8 @@ use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        arrow_function_body_contains_jsx, arrow_function_returns_jsx, expression_contains_jsx,
-        function_contains_jsx, function_returns_jsx, is_create_element_call, is_es6_component,
+        arrow_function_body_contains_jsx, arrow_function_returns, expression_contains_jsx,
+        function_contains_jsx, function_returns, is_create_element_call, is_es6_component,
         is_hoc_call, is_react_component_name, is_react_hook,
     },
 };
@@ -195,7 +195,7 @@ impl NoUnstableNestedComponents {
         if is_component_in_prop {
             // Returning JSX, not merely containing it: a handler that calls
             // showToast(<Toast />) produces nothing and is not a component.
-            if function_returns_jsx(func) {
+            if function_returns(func, ctx).has_jsx() {
                 return Some(ComponentCandidate { span: func.span, is_component_in_prop });
             }
             return None;
@@ -225,7 +225,7 @@ impl NoUnstableNestedComponents {
 
         let is_component_in_prop = is_component_declared_in_prop(node, ctx);
         if is_component_in_prop {
-            if !arrow_function_returns_jsx(&arrow.body) {
+            if !arrow_function_returns(arrow, ctx).has_jsx() {
                 return None;
             }
             return Some(ComponentCandidate { span: arrow.span, is_component_in_prop });
