@@ -2,6 +2,7 @@
 //!
 //! Runs a language formatter over the Prettier repository's own test suite (`tests/format/<dir>`)
 //! and compares the output byte-for-byte against Prettier's committed jest snapshots.
+//! Every output is also re-formatted; files whose second pass differs are tracked in the report's `# Not idempotent` section.
 //! Language specifics arrive through [`ConformanceConfig`] (which fixture dirs, which parser names, what to ignore)
 //! and the `format` callback (spec options → typed options → formatted output),
 //! so this module never depends on a language crate.
@@ -107,6 +108,7 @@ where
     let mut total_tested_file_count = 0;
     let mut total_failed_file_count = 0;
     let mut total_skipped_files = vec![];
+    let mut total_non_idempotent_files = vec![];
     let mut failed_reports = String::new();
     failed_reports.push_str("# Failed\n");
     failed_reports.push('\n');
@@ -121,10 +123,11 @@ where
         };
 
         total_tested_file_count += inputs.len();
-        total_failed_file_count += results.failed_files.len();
-        total_skipped_files.extend(results.skipped_files);
+        total_failed_file_count += results.failed.len();
+        total_skipped_files.extend(results.skipped);
+        total_non_idempotent_files.extend(results.non_idempotent);
 
-        for (path, (failed, passed, ratio)) in results.failed_files {
+        for (path, (failed, passed, ratio)) in results.failed {
             writeln!(
                 failed_reports,
                 "| {} | {}{} | {:.2}% |",
@@ -154,6 +157,13 @@ where
         report.push_str("\n# Skipped (parse error, TODO: should be ignored or supported)\n\n");
         for path in &total_skipped_files {
             writeln!(report, "- {}", report_path(path, &format_root)).unwrap();
+        }
+    }
+    if !total_non_idempotent_files.is_empty() {
+        report.push_str("\n# Not idempotent\n\n");
+        for (path, parse_failed) in &total_non_idempotent_files {
+            let note = if *parse_failed { " (second pass failed to parse)" } else { "" };
+            writeln!(report, "- {}{note}", report_path(path, &format_root)).unwrap();
         }
     }
 
@@ -242,9 +252,12 @@ fn collect_test_files(
 #[derive(Default)]
 struct SnapshotResults {
     /// `(path, (failed_count, passed_count, diff_ratio))` per file with at least one mismatch
-    failed_files: Vec<(PathBuf, (usize, usize, f32))>,
+    failed: Vec<(PathBuf, (usize, usize, f32))>,
     /// Files the formatter failed to parse for at least one options combination
-    skipped_files: Vec<PathBuf>,
+    skipped: Vec<PathBuf>,
+    /// `(path, second_pass_parse_failed)` per file
+    /// whose re-formatted output differs from the first pass for at least one options combination
+    non_idempotent: Vec<(PathBuf, bool)>,
 }
 
 /// Run the formatter and compare the output with the Prettier's snapshot.
@@ -288,6 +301,8 @@ where
 
         let mut failed_count = 0;
         let mut skipped_count = 0;
+        let mut non_idempotent_count = 0;
+        let mut second_pass_parse_failed = false;
         let mut total_diff_ratio = 0.0;
         // Check every combination of options!
         for call in &spec_calls {
@@ -308,15 +323,26 @@ where
                 continue;
             };
 
-            let actual = replace_escape_and_eol(
+            // Idempotency: re-formatting the raw output must reproduce it.
+            // Checked before snapshot escaping/EOL visualization.
+            // A second pass that fails to parse is the stronger violation
+            // (the output's own parser rejects it) and is annotated separately in the report.
+            let reformatted = format(path, &actual, &call.options);
+            let idempotent = reformatted.as_deref() == Some(actual.as_str());
+            if !idempotent {
+                non_idempotent_count += 1;
+                second_pass_parse_failed |= reformatted.is_none();
+            }
+
+            let escaped = replace_escape_and_eol(
                 &actual,
                 expected.contains("LF>") || expected.contains("<CR"),
             );
 
-            let result = expected == actual;
+            let result = expected == escaped;
             if !result {
                 failed_count += 1;
-                total_diff_ratio += TextDiff::from_lines(&expected, &actual).ratio();
+                total_diff_ratio += TextDiff::from_lines(&expected, &escaped).ratio();
             }
 
             if debug {
@@ -334,7 +360,16 @@ where
                     println!("Passed ✅");
                 } else {
                     println!("Failed ❌");
-                    print_text_diff(&TextDiff::from_lines(&expected, &actual));
+                    print_text_diff(&TextDiff::from_lines(&expected, &escaped));
+                }
+                if !idempotent {
+                    match &reformatted {
+                        Some(reformatted) => {
+                            println!("Not idempotent ⚠️ (second pass differs)");
+                            print_text_diff(&TextDiff::from_lines(&actual, reformatted));
+                        }
+                        None => println!("Not idempotent 💥 (second pass failed to parse)"),
+                    }
                 }
                 println!();
             }
@@ -345,13 +380,16 @@ where
             let passed_count = total_count - failed_count;
             #[expect(clippy::cast_precision_loss)]
             let max_diff_ratio = total_count as f32;
-            results.failed_files.push((
+            results.failed.push((
                 path.clone(),
                 (failed_count, passed_count, total_diff_ratio / max_diff_ratio),
             ));
         }
         if skipped_count != 0 {
-            results.skipped_files.push(path.clone());
+            results.skipped.push(path.clone());
+        }
+        if non_idempotent_count != 0 {
+            results.non_idempotent.push((path.clone(), second_pass_parse_failed));
         }
     }
 

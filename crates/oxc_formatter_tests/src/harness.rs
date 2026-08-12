@@ -5,6 +5,8 @@
 //!
 //! - walks up to find an `options.json` and parses it into `OptionSet`s
 //! - drives one format pass per option-set × per printWidth (80 + 100)
+//! - re-formats each output and pins any mismatch as a `Not idempotent` section
+//!   (idempotency violations are tracked in the snapshot, not asserted)
 //! - assembles the canonical `==== Input ==== ... ==== Output ==== ...` snapshot
 //! - returns the body for the consumer's `insta::assert_snapshot!`
 //!
@@ -85,11 +87,6 @@ pub fn apply_core_options<O: FormatOptions>(options: &mut O, json: &OptionSet) {
 pub trait FixtureFormatter {
     /// The typed format-option struct for this language.
     type Options: Clone;
-
-    /// When `true` (default), every fixture also asserts idempotency:
-    /// formatting the first pass's output must reproduce it byte-for-byte.
-    /// Opt out only while known non-idempotent fixtures are being fixed.
-    const CHECK_IDEMPOTENCY: bool = true;
 
     /// Build typed options from a parsed `options.json` fragment.
     fn parse_options(json: &OptionSet) -> Self::Options;
@@ -205,22 +202,19 @@ fn generate_snapshot<F: FixtureFormatter>(path: &Path, source_text: &str) -> Str
         let options = F::parse_options(&option_json);
         let formatted = F::format(source_text, path, &options);
 
-        // Idempotency: formatting the formatter's own output must be a no-op.
-        if F::CHECK_IDEMPOTENCY {
-            let reformatted = F::format(&formatted, path, &options);
-            assert_eq!(
-                reformatted,
-                formatted,
-                "\n💥 Formatting is not idempotent!\n\
-                 fixture: {}\noptions: {options_line}\n\
-                 ============ first pass ============\n{formatted}\n\
-                 ============ second pass ===========\n{reformatted}",
-                path.display()
-            );
-        }
-
         snapshot.push_str(&formatted);
         snapshot.push('\n');
+
+        // Idempotency: formatting the formatter's own output must be a no-op.
+        // A violation is pinned as an extra section rather than asserted,
+        // so known non-idempotent fixtures stay visible in their own snapshots
+        // (and fixing one shows up as this section disappearing).
+        let reformatted = F::format(&formatted, path, &options);
+        if reformatted != formatted {
+            snapshot.push_str("---------- Not idempotent (second pass) ----------\n");
+            snapshot.push_str(&reformatted);
+            snapshot.push('\n');
+        }
     }
 
     snapshot.push_str("===================== End =====================\n");

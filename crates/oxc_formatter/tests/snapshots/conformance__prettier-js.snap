@@ -70,3 +70,24 @@ js compatibility: 774/810 (95.56%), 23 files skipped
 - js/import-attributes/multi-types.js
 - js/new-target/outside-functions.js
 - jsx/expression-with-types/expression.js
+
+# Not idempotent
+
+- js/arrays/numbers-negative-comment-after-minus.js
+- js/arrays/numbers-with-holes.js
+- js/arrows/arrow-chain-with-trailing-comments.js
+- js/comments/return-statement.js
+- js/comments/between-head-and-body/between-head-and-body.js
+- js/comments/between-head-and-body/empty-statement.js
+- js/comments/first-argument/first-argument.js
+- js/comments/while-like/if.js
+- js/comments/while-like/while.js
+- js/comments/while-like/with.js
+- js/for/9812-2.js
+- js/for/continue-and-break-comment-without-blocks.js
+- js/function/issue-12967.js
+- js/object-prop-break-in/short-keys.js
+- js/sequence-expression/parenthesized-trailing-comment-unstable.js
+- js/sequence-expression/parenthesized.js
+- jsx/comments/in-attributes.js
+- jsx/spread/child.js

@@ -62,3 +62,15 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 - typescript/module/keyword.ts
 - typescript/namespace/invalid-await.ts
 - typescript/type-parameters-arguments/const.ts
+
+# Not idempotent
+
+- jsx/comments/in-attributes.js
+- jsx/spread/child.js
+- typescript/as/comments/17407.ts
+- typescript/as/comments/18160.ts
+- typescript/call/callee-comments.ts
+- typescript/intersection/consistent-with-flow/single-member.ts
+- typescript/method-chain/object/issue-17239.ts
+- typescript/satisfies-operators/comments-unstable.ts
+- typescript/union/consistent-with-flow/single-type.ts

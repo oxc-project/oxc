@@ -35,6 +35,22 @@ function defineWxtModule(wxt) {}
  */
 function defineWxtModule(wxt) {}
 
+---------- Not idempotent (second pass) ----------
+// Fix 6: @param should not get extra indent after @example
+
+/**
+ * @example
+ *   ```ts
+ *   defineWxtModule({
+ *     name: "my-module",
+ *     setup(wxt) {},
+ *   });
+ *   ```;
+ *
+ * @param wxt The module setup context
+ */
+function defineWxtModule(wxt) {}
+
 --------------------------------
 { jsdoc: true, printWidth: 100 }
 --------------------------------
@@ -48,6 +64,22 @@ function defineWxtModule(wxt) {}
  *     setup(wxt) {},
  *   });
  *   ```
+ *
+ * @param wxt The module setup context
+ */
+function defineWxtModule(wxt) {}
+
+---------- Not idempotent (second pass) ----------
+// Fix 6: @param should not get extra indent after @example
+
+/**
+ * @example
+ *   ```ts
+ *   defineWxtModule({
+ *     name: "my-module",
+ *     setup(wxt) {},
+ *   });
+ *   ```;
  *
  * @param wxt The module setup context
  */

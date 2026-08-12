@@ -21,3 +21,7 @@ scss compatibility: 86/90 (95.56%), 6 files skipped
 - scss/math/3945.scss
 - scss/no-semicolon/url.scss
 - scss/parens/parens.scss
+
+# Not idempotent
+
+- scss/parens/2.scss
