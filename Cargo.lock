@@ -1694,9 +1694,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "5.0.0"
+version = "5.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c062affffef6263560b9d85e83e2e9753af4384be3fb80ce3127840c6adc361b"
+checksum = "456720daa870e4f69f8d29fded1c8deea82da4780a6b8553baa160eb0cd8d864"
 dependencies = [
  "js-sys",
  "libc",
