@@ -221,6 +221,15 @@ source: crates/oxc_linter/src/tester.rs
  9 │ }
    ╰────
 
+  ⚠ react(react-compiler): CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config
+   ╭─[react_compiler.tsx:2:30]
+ 1 │ function Component() {
+ 2 │                 return <div>{CustomFactory()}</div>;
+   ·                              ───────────────
+ 3 │             }
+   ╰────
+  help: CustomFactory may be a component
+
   ⚠ react(react-compiler): Todo: Support local variables named `fbt`
    ╭─[react_compiler.tsx:2:23]
  1 │ function Component() {

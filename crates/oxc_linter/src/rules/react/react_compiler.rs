@@ -14,7 +14,7 @@ use crate::{
 /// The compiler options `eslint-plugin-react-compiler` lints with — `lint`
 /// output mode plus validations that are off by default in the compiler.
 /// Mirrors `COMPILER_OPTIONS` in the plugin's `src/shared/RunReactCompiler.ts`.
-fn react_compiler_options() -> PluginOptions {
+fn react_compiler_options(config: &ReactCompilerConfig) -> PluginOptions {
     PluginOptions {
         output_mode: Some(CompilerOutputMode::Lint),
         // Don't emit errors on Flow suppressions — Flow already gave a signal.
@@ -30,7 +30,9 @@ fn react_compiler_options() -> PluginOptions {
             validate_static_components: true,
             validate_no_freezing_known_mutable_functions: true,
             validate_no_void_use_memo: true,
-            validate_no_capitalized_calls: Some(vec![]),
+            validate_no_capitalized_calls: Some(
+                config.environment.validate_no_capitalized_calls.clone(),
+            ),
             validate_hooks_usage: true,
             validate_no_derived_computations_in_effects: true,
             ..EnvironmentConfig::default()
@@ -58,6 +60,17 @@ pub struct ReactCompilerConfig {
     /// finding a rule violation. These do not indicate incorrect code, only
     /// code that the compiler declined to optimize.
     report_all_bailouts: bool,
+
+    /// React Compiler environment options supported by this rule.
+    environment: ReactCompilerEnvironmentConfig,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReactCompilerEnvironmentConfig {
+    /// Additional capitalized global functions that are known not to be React
+    /// components. These names will not be reported by `CapitalizedCalls`.
+    validate_no_capitalized_calls: Vec<String>,
 }
 
 declare_oxc_lint!(
@@ -121,7 +134,7 @@ impl Rule for ReactCompiler {
 
     fn run_once(&self, ctx: &LintContext) {
         let program = ctx.nodes().program();
-        let options = react_compiler_options();
+        let options = react_compiler_options(self);
 
         let result = oxc_react_compiler::lint(program, ctx.semantic(), ctx.allocator(), options);
 
@@ -349,6 +362,41 @@ function Component(props) {
             }",
             None,
         ),
+        // Capitalized built-in globals are not components.
+        (
+            "function Component(value) {
+                const bigInt = BigInt(value);
+                const boolean = Boolean(value);
+                const number = Number(value);
+                const string = String(value);
+                const symbol = Symbol(value);
+                const array = Array(value);
+                const object = Object(value);
+                const date = Date();
+                return <div>{String([
+                    bigInt,
+                    boolean,
+                    number,
+                    string,
+                    symbol,
+                    array,
+                    object,
+                    date,
+                ])}</div>;
+            }",
+            None,
+        ),
+        // Projects can allowlist additional capitalized global functions.
+        (
+            "function Component() {
+                return <div>{CustomFactory()}</div>;
+            }",
+            Some(json!([{
+                "environment": {
+                    "validateNoCapitalizedCalls": ["CustomFactory"]
+                }
+            }])),
+        ),
     ];
 
     let fail = vec![
@@ -553,6 +601,13 @@ function useConditional2(props) {
             None,
         ),
         // ---- oxlint-specific ----
+        // A custom capitalized global is reported unless it is allowlisted.
+        (
+            "function Component() {
+                return <div>{CustomFactory()}</div>;
+            }",
+            None,
+        ),
         // Bail-outs are reported when `reportAllBailouts` is enabled.
         (
             "function Component() {
