@@ -50,7 +50,7 @@ impl PartialLoaderKind {
         }
     }
 
-    fn parse<'a>(self, source_text: &'a str) -> Vec<JavaScriptSource<'a>> {
+    fn parse(self, source_text: &str) -> Vec<JavaScriptSource<'_>> {
         match self {
             Self::Vue => VuePartialLoader::new(source_text).parse(),
             Self::Astro => AstroPartialLoader::new(source_text).parse(),
@@ -58,7 +58,7 @@ impl PartialLoaderKind {
         }
     }
 
-    fn parse_for_external_linter<'a>(self, source_text: &'a str) -> Vec<JavaScriptSource<'a>> {
+    fn parse_for_external_linter(self, source_text: &str) -> Vec<JavaScriptSource<'_>> {
         match self {
             Self::Vue => VuePartialLoader::new(source_text).parse_for_external_linter(),
             Self::Astro | Self::Svelte => self.parse(source_text),
