@@ -153,6 +153,23 @@ fn record_dynamic_hook_usage_error(
     Ok(())
 }
 
+fn validate_hook_call(
+    callee: &Place,
+    is_unconditional: bool,
+    value_kinds: &mut ValueKinds,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    let callee_kind = get_kind_for_place(callee, value_kinds, &env.identifiers);
+    let is_hook_callee = callee_kind == Kind::KnownHook || callee_kind == Kind::PotentialHook;
+    if is_hook_callee && !is_unconditional {
+        record_conditional_hook_error(callee, value_kinds, errors_by_span, env)?;
+    } else if callee_kind == Kind::PotentialHook {
+        record_dynamic_hook_usage_error(callee, errors_by_span, env)?;
+    }
+    Ok(())
+}
+
 /// Validates hooks usage rules for a function.
 pub fn validate_hooks_usage(
     func: &HirFunction,
@@ -261,19 +278,13 @@ pub fn validate_hooks_usage(
                     value_kinds[lvalue_id] = Some(kind);
                 }
                 InstructionValue::CallExpression { callee, args, .. } => {
-                    let callee_kind = get_kind_for_place(callee, &value_kinds, &env.identifiers);
-                    let is_hook_callee =
-                        callee_kind == Kind::KnownHook || callee_kind == Kind::PotentialHook;
-                    if is_hook_callee && !unconditional_blocks.contains(&block.id) {
-                        record_conditional_hook_error(
-                            callee,
-                            &mut value_kinds,
-                            &mut errors_by_span,
-                            env,
-                        )?;
-                    } else if callee_kind == Kind::PotentialHook {
-                        record_dynamic_hook_usage_error(callee, &mut errors_by_span, env)?;
-                    }
+                    validate_hook_call(
+                        callee,
+                        unconditional_blocks.contains(&block.id),
+                        &mut value_kinds,
+                        &mut errors_by_span,
+                        env,
+                    )?;
                     // Visit all operands except callee
                     for arg in args {
                         let place = match arg {
@@ -284,19 +295,13 @@ pub fn validate_hooks_usage(
                     }
                 }
                 InstructionValue::MethodCall { receiver, property, args, .. } => {
-                    let callee_kind = get_kind_for_place(property, &value_kinds, &env.identifiers);
-                    let is_hook_callee =
-                        callee_kind == Kind::KnownHook || callee_kind == Kind::PotentialHook;
-                    if is_hook_callee && !unconditional_blocks.contains(&block.id) {
-                        record_conditional_hook_error(
-                            property,
-                            &mut value_kinds,
-                            &mut errors_by_span,
-                            env,
-                        )?;
-                    } else if callee_kind == Kind::PotentialHook {
-                        record_dynamic_hook_usage_error(property, &mut errors_by_span, env)?;
-                    }
+                    validate_hook_call(
+                        property,
+                        unconditional_blocks.contains(&block.id),
+                        &mut value_kinds,
+                        &mut errors_by_span,
+                        env,
+                    )?;
                     // Visit receiver and args (not property)
                     visit_place(receiver, &value_kinds, &mut errors_by_span, env)?;
                     for arg in args {
@@ -305,6 +310,20 @@ pub fn validate_hooks_usage(
                             PlaceOrSpread::Spread(s) => &s.place,
                         };
                         visit_place(place, &value_kinds, &mut errors_by_span, env)?;
+                    }
+                }
+                InstructionValue::TaggedTemplateExpression { tag, subexprs, .. } => {
+                    validate_hook_call(
+                        tag,
+                        unconditional_blocks.contains(&block.id),
+                        &mut value_kinds,
+                        &mut errors_by_span,
+                        env,
+                    )?;
+                    // The tag is the callee and was validated above. Interpolations
+                    // are ordinary operands and may not reference hooks as values.
+                    for subexpr in subexprs {
+                        visit_place(subexpr, &value_kinds, &mut errors_by_span, env)?;
                     }
                 }
                 InstructionValue::Destructure { lvalue, value, .. } => {
@@ -401,6 +420,9 @@ fn visit_function_expression(
                 }
                 InstructionValue::MethodCall { property, .. } => {
                     items.push(Item::Call(property.identifier, property.span));
+                }
+                InstructionValue::TaggedTemplateExpression { tag, .. } => {
+                    items.push(Item::Call(tag.identifier, tag.span));
                 }
                 _ => {}
             }

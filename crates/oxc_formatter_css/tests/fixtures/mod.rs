@@ -6,10 +6,11 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_core::test_support::{
-    FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
-};
 use oxc_formatter_css::{CssFormatOptions, CssVariant, format};
+use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+
+mod options;
+use options::apply_css_options;
 
 struct CssHarness;
 
@@ -18,27 +19,7 @@ impl FixtureFormatter for CssHarness {
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = CssFormatOptions::default();
-        apply_core_options(&mut options, json);
-
-        for (key, value) in json {
-            match key.as_str() {
-                "singleQuote" => {
-                    if let Some(b) = value.as_bool() {
-                        options.single_quote = b.into();
-                    }
-                }
-                "trailingComma" => {
-                    if let Some(s) = value.as_str() {
-                        options.trailing_commas = match s {
-                            "none" => oxc_formatter_css::TrailingCommas::Never,
-                            _ => oxc_formatter_css::TrailingCommas::Always,
-                        };
-                    }
-                }
-                _ => {}
-            }
-        }
-
+        apply_css_options(&mut options, json);
         options
     }
 

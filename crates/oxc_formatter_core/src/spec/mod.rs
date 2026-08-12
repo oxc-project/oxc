@@ -2,7 +2,7 @@
 //!
 //! These implement formatting behavior common to multiple language formatters.
 //! Our output currently targets Prettier compatibility,
-//! but the layer is defined by what it is (a pure, language-agnostic behavior), not by Prettier.
+//! but the domain is defined by what it is (a pure, language-agnostic behavior), not by Prettier.
 //!
 //! Membership is decided by three gates, NOT by "is it shared".
 //! Every item must pass all:

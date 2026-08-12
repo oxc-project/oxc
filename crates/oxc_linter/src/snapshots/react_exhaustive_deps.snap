@@ -2,6 +2,36 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
+  ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function MyComponent(props) {
+ 2 │           const value = props.flag ? {} : {};
+   ·                 ──┬──
+   ·                   ╰── `value` is declared here
+ 3 │           useCallback(() => {
+ 4 │             return value;
+ 5 │           }, [value]);
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
+  ⚠ react-hooks(exhaustive-deps): React hook useCallback depends on `value`, which changes every render
+   ╭─[exhaustive_deps.tsx:5:15]
+ 1 │ function MyComponent(props) {
+ 2 │           const value = props.cached || {};
+   ·                 ──┬──
+   ·                   ╰── `value` is declared here
+ 3 │           useCallback(() => {
+ 4 │             return value;
+ 5 │           }, [value]);
+   ·               ──┬──
+   ·                 ╰── it will always cause this hook to re-evaluate
+ 6 │         }
+   ╰────
+  help: Try memoizing this variable with `useRef` or `useCallback`.
+
   ⚠ react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {

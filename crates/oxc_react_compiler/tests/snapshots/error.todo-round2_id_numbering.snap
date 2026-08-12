@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-round2_id_numbering.js
 ---
 Parse errors:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected a semicolon or an implicit semicolon after a statement, but found none", labels: [LabeledSpan { label: None, span: SourceSpan { offset: 265, length: 0 }, primary: false }], help: Some("Try inserting a semicolon here"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected a semicolon or an implicit semicolon after a statement, but found none", labels: [LabeledSpan { label: None, span: Span { start: 265, end: 265 }, primary: false }], help: Some("Try inserting a semicolon here"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

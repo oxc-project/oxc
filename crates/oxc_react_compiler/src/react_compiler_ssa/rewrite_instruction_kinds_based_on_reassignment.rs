@@ -144,6 +144,13 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         }
     }
 
+    // Seed with the private name of a named function expression. The binding is
+    // created by the function expression itself, so stores to it are reassignments.
+    if let Some(place) = &func.self_binding {
+        let ident = &env.identifiers[place.identifier];
+        declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
+    }
+
     // Process all blocks
     let block_keys: Vec<_> = func.body.blocks.keys().cloned().collect();
     for (block_index, block_id) in block_keys.iter().enumerate() {

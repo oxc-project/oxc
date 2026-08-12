@@ -364,3 +364,9 @@ fn test() {
     .with_jest_plugin(true)
     .test();
 }
+
+#[test]
+fn invalid_assert_function_pattern_errors_in_from_configuration() {
+    let invalid = serde_json::json!([{ "assertFunctionNames": ["["] }]);
+    assert!(ExpectExpect::from_configuration(invalid).is_err());
+}

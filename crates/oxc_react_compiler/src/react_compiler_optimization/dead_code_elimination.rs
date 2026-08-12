@@ -21,7 +21,7 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     ArrayPatternElement, BlockId, BlockKind, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionId, InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern,
+    InstructionId, InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern, Terminal,
 };
 
 /// Implements dead-code elimination, eliminating instructions whose values are unused.
@@ -151,6 +151,12 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
                         reference(&mut state, &env.identifiers, place.identifier);
                     }
                 } else if is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier)
+                    // Throwing is observable inside try/catch even when the produced value is
+                    // unused. Keep the instruction until its MaybeThrow edge is proven dead.
+                    || (matches!(
+                        block.terminal,
+                        Terminal::MaybeThrow { handler: Some(_), .. }
+                    ) && is_catch_observable_property_load(&instr.value))
                     || !pruneable_value(&instr.value, &state, env)
                 {
                     reference(&mut state, &env.identifiers, instr.lvalue.identifier);
@@ -187,6 +193,11 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
     }
 
     state
+}
+
+/// Property loads are read-only for DCE, but can throw and transfer control to a catch handler.
+pub(crate) fn is_catch_observable_property_load(value: &InstructionValue) -> bool {
+    matches!(value, InstructionValue::PropertyLoad { .. } | InstructionValue::ComputedLoad { .. })
 }
 
 /// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).

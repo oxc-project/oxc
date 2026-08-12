@@ -18227,11 +18227,38 @@
     "ReactCompilerConfig": {
       "type": "object",
       "properties": {
+        "environment": {
+          "description": "React Compiler environment options supported by this rule.",
+          "default": {
+            "validateNoCapitalizedCalls": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReactCompilerEnvironmentConfig"
+            }
+          ],
+          "markdownDescription": "React Compiler environment options supported by this rule."
+        },
         "reportAllBailouts": {
           "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReactCompilerEnvironmentConfig": {
+      "type": "object",
+      "properties": {
+        "validateNoCapitalizedCalls": {
+          "description": "Additional capitalized global functions that are known not to be React\ncomponents. These names will not be reported by `CapitalizedCalls`.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional capitalized global functions that are known not to be React\ncomponents. These names will not be reported by `CapitalizedCalls`."
         }
       },
       "additionalProperties": false

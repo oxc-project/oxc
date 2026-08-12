@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 77/77 (100.00%)
 Positive Passed: 77/77 (100.00%)
-Negative Passed: 159/159 (100.00%)
+Negative Passed: 161/161 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval-ambient.ts:2:13]
@@ -3804,6 +3804,18 @@ Negative Passed: 159/159 (100.00%)
    ·     ────────────────
    ╰────
   help: Wrap this with parenthesis
+
+  × Expected `]` but found `EOF`
+   ╭─[misc/fail/oxc-23670.ts:2:1]
+ 1 │ <[m?,
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-23681.js:4:7]
+ 3 │ var prefix = 'fas';
+ 4 │ export()s.height = height;
+   ·       ─
+   ╰────
 
   × Expected 'with' in import type options
     ╭─[misc/fail/oxc-2394.ts:20:22]

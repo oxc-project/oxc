@@ -5117,12 +5117,23 @@ export interface PreferFunctionComponent {
 }
 export interface ReactCompilerConfig {
   /**
+   * React Compiler environment options supported by this rule.
+   */
+  environment?: ReactCompilerEnvironmentConfig;
+  /**
    * Also report compiler bail-outs — places where React Compiler skipped a
    * component or hook (for example because of unsupported syntax) without
    * finding a rule violation. These do not indicate incorrect code, only
    * code that the compiler declined to optimize.
    */
   reportAllBailouts?: boolean;
+}
+export interface ReactCompilerEnvironmentConfig {
+  /**
+   * Additional capitalized global functions that are known not to be React
+   * components. These names will not be reported by `CapitalizedCalls`.
+   */
+  validateNoCapitalizedCalls?: string[];
 }
 export interface SelfClosingComp {
   /**

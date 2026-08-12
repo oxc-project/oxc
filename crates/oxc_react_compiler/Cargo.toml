@@ -49,7 +49,7 @@ smallvec = { workspace = true }
 [dev-dependencies]
 # The example and integration tests parse source and print the compiled program; the
 # library itself takes an already-parsed `Program` and never parses or codegens.
-oxc_codegen = { workspace = true }
+oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_parser = { workspace = true }
 
 # Snapshot testing of the compiler over the upstream fixture corpus (tests/snapshot.rs).

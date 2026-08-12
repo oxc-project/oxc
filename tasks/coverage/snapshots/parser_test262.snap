@@ -1,4 +1,4 @@
-commit: b363f29d
+commit: be13516f
 
 parser_test262 Summary:
 AST Parsed     : 47435/47435 (100.00%)
@@ -4045,14 +4045,6 @@ Negative Passed: 4651/4651 (100.00%)
     ·     ────
     ╰────
 
-  × A rest parameter or binding pattern may not have a trailing comma.
-    ╭─[test262/test/language/expressions/assignment/dstr/array-rest-elision-invalid.js:24:9]
- 23 │ 
- 24 │ 0, [...x,] = [];
-    ·         ─
-    ╰────
-  help: Remove the trailing comma here
-
   × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
  24 │ 
@@ -4209,6 +4201,15 @@ Negative Passed: 4651/4651 (100.00%)
     ·               ─────
     ╰────
   note: This identifier is reserved in strict mode code
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/assignment/dstr/obj-rest-before-comma-invalid.js:25:12]
+ 24 │ 
+ 25 │ 0, {...rest,} = {}
+    ·            ─
+ 26 │ ;
+    ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/expressions/assignment/dstr/obj-rest-not-last-element-invalid.js:25:5]
@@ -36691,14 +36692,6 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ────
     ╰────
 
-  × A rest parameter or binding pattern may not have a trailing comma.
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-elision-invalid.js:33:11]
- 32 │ 
- 33 │ for ([...x,] in [[]]) ;
-    ·           ─
-    ╰────
-  help: Remove the trailing comma here
-
   × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
  33 │ 
@@ -36855,6 +36848,15 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
     ╰────
   note: This identifier is reserved in strict mode code
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/for-in/dstr/obj-rest-before-comma-invalid.js:34:14]
+ 33 │ 
+ 34 │ for ({...rest,} in [{}
+    ·              ─
+ 35 │ ]) ;
+    ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-in/dstr/obj-rest-not-last-element-invalid.js:34:7]
@@ -37230,14 +37232,6 @@ Negative Passed: 4651/4651 (100.00%)
     ·       ────
     ╰────
 
-  × A rest parameter or binding pattern may not have a trailing comma.
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-elision-invalid.js:33:11]
- 32 │ 
- 33 │ for ([...x,] of [[]]) ;
-    ·           ─
-    ╰────
-  help: Remove the trailing comma here
-
   × Invalid rest element target in destructuring assignment
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
  33 │ 
@@ -37518,6 +37512,15 @@ Negative Passed: 4651/4651 (100.00%)
     ·                 ─────
     ╰────
   note: This identifier is reserved in strict mode code
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/for-of/dstr/obj-rest-before-comma-invalid.js:34:14]
+ 33 │ 
+ 34 │ for ({...rest,} of [{}
+    ·              ─
+ 35 │ ]) ;
+    ╰────
+  help: Remove the trailing comma here
 
   × Spread must be last element
     ╭─[test262/test/language/statements/for-of/dstr/obj-rest-not-last-element-invalid.js:34:7]

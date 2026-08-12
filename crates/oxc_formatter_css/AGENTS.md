@@ -249,6 +249,8 @@ Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Notabl
   - Less lookups (`@config[@key]`) are unaffected: the typed lookup rule wins and keeps printing structurally
   - With the name GLUED to the `(` (`--viewport-medium(width<=50rem)`)
   - Prettier keeps the whole prelude verbatim (ONE `media-type` token)
+  - With the name spaced, Prettier still only collapses whitespace RUNS in the prelude (`(  width  >=500px )` → `(width >=500px)`, glue kept);
+    - we print the structured form either way, identical to the same query inside `@media`, where Prettier agrees
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
   - We parse it structurally and FORMAT it (spacing/hex/number normalization)
   - Prettier keeps it verbatim, postcss swallows the run as an opaque prelude string it can't format, so `color   :   red` / `#FFFFFF` survive unformatted
@@ -319,9 +321,9 @@ The harness snapshots both `--print-width 80` and `100`; verify fixtures at both
 
 ### Prettier conformance
 
-At the current version (v3.9.6), the divergences of seven files have been confirmed and are intentional (see "Known divergences"):
+At the current version (v3.9.6), the divergences of eight files have been confirmed and are intentional (see "Known divergences"):
 
-- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
+- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`
 - SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:

@@ -1,11 +1,12 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{
-    LineEnding,
-    test_support::{FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot},
-};
-use oxc_formatter_yaml::{ProseWrap, YamlFormatOptions, format};
+use oxc_formatter_core::LineEnding;
+use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+use oxc_formatter_yaml::{YamlFormatOptions, format};
+
+mod options;
+use options::apply_yaml_options;
 
 struct YamlHarness;
 
@@ -14,42 +15,7 @@ impl FixtureFormatter for YamlHarness {
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = YamlFormatOptions::default();
-        apply_core_options(&mut options, json);
-
-        for (key, value) in json {
-            match key.as_str() {
-                "proseWrap" => {
-                    if let Some(s) = value.as_str() {
-                        options.prose_wrap = match s {
-                            "always" => ProseWrap::Always,
-                            "never" => ProseWrap::Never,
-                            _ => ProseWrap::Preserve,
-                        };
-                    }
-                }
-                "singleQuote" => {
-                    if let Some(b) = value.as_bool() {
-                        options.single_quote = b.into();
-                    }
-                }
-                "bracketSpacing" => {
-                    if let Some(b) = value.as_bool() {
-                        options.bracket_spacing = b.into();
-                    }
-                }
-                "trailingComma" => {
-                    if let Some(s) = value.as_str() {
-                        options.trailing_commas = if s == "none" {
-                            oxc_formatter_yaml::TrailingCommas::Never
-                        } else {
-                            oxc_formatter_yaml::TrailingCommas::Always
-                        };
-                    }
-                }
-                _ => {}
-            }
-        }
-
+        apply_yaml_options(&mut options, json);
         options
     }
 

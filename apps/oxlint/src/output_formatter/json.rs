@@ -2,12 +2,11 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_str::CompactStr;
 
-use miette::JSONReportHandler;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_diagnostics::{
-    Error,
+    Error, JSONReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::{RuleCategory, rules::RULES};

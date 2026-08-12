@@ -2106,10 +2106,7 @@ impl<'a> CompileOutput<'a> {
 
 /// Drop comments left dangling by compilation.
 ///
-/// The compiled functions were rebuilt with fresh spans, so a comment that
-/// pointed inside one no longer lines up with any statement and codegen would
-/// re-emit it at a stale position. Keep only the comments still anchored to a
-/// top-level statement.
+/// Rewritten functions may no longer contain the statements comments were attached to.
 fn prune_inner_comments(program: &mut Program<'_>) {
     if program.comments.is_empty() {
         return;
@@ -2157,7 +2154,7 @@ fn ox_build_function<'a>(
     fn_type: FunctionType,
 ) -> ArenaBox<'a, Function<'a>> {
     Function::boxed(
-        SPAN,
+        codegen.span.unwrap_or_default(),
         fn_type,
         codegen.id.clone_in_with_semantic_ids(ast.allocator()),
         codegen.generator,
@@ -2181,7 +2178,7 @@ fn ox_build_compiled_expression<'a>(
 ) -> Expression<'a> {
     match original_kind {
         OriginalFnKind::ArrowFunctionExpression => Expression::new_arrow_function_expression(
-            SPAN,
+            codegen.span.unwrap_or_default(),
             codegen.is_async,
             None,
             codegen.params.clone_in_with_semantic_ids(ast.allocator()),
@@ -2220,7 +2217,11 @@ fn ox_replace_function<'a>(
         func.return_type = None;
         func.this_param = None;
     }
+    let source_id_span = func.id.as_ref().map(|id| id.span);
     func.id = codegen.id.clone_in_with_semantic_ids(ast.allocator());
+    if let (Some(id), Some(span)) = (&mut func.id, source_id_span) {
+        id.span = span;
+    }
     func.params = params;
     func.body = Some(codegen.body.clone_in_with_semantic_ids(ast.allocator()));
     func.generator = codegen.generator;
@@ -2255,17 +2256,19 @@ fn ox_build_gated_const_decl<'a>(
     ast: &AstBuilder<'a>,
     gating_expression: &Expression<'a>,
     name: &str,
+    name_span: Span,
+    declaration_span: Span,
 ) -> Statement<'a> {
     let declarator = VariableDeclarator::new(
-        SPAN,
-        BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, name), ast),
+        declaration_span,
+        BindingPattern::new_binding_identifier(name_span, ox_atom(ast, name), ast),
         None,
         Some(gating_expression.clone_in_with_semantic_ids(ast.allocator())),
         false,
         ast,
     );
     Statement::new_variable_declaration(
-        SPAN,
+        declaration_span,
         VariableDeclarationKind::Const,
         [declarator],
         false,
@@ -2314,7 +2317,21 @@ enum OxcVisitMode<'a, 'b> {
     /// (a declaration becomes a `FunctionExpression`), for
     /// [`ox_clone_original_fn_as_expression`]. Mutates nothing.
     FindOriginalFn { scope_id: ScopeId, found: Option<Expression<'a>> },
+    /// Insert outlined function declarations immediately after the statement
+    /// declaring the function with scope `scope_id`, in whatever statement
+    /// list that statement lives (program body, function body, nested block),
+    /// for [`ox_insert_outlined_after`]. Mirrors Babel
+    /// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals,
+    /// which inserts into the enclosing statement list at any nesting depth.
+    InsertOutlinedAfter {
+        scope_id: ScopeId,
+        /// Declarations to insert; drained on insertion, so leftovers mean
+        /// the original statement was not found.
+        decls: Vec<Statement<'a>>,
+    },
 }
+
+type GatedStatementMatch<'a> = (Option<(Ident<'a>, Span)>, Option<Span>);
 
 impl<'a> OxcVisitor<'a, '_> {
     /// In [`OxcVisitMode::ReplaceWithGated`]: if `stmt` is the target function
@@ -2334,28 +2351,29 @@ impl<'a> OxcVisitor<'a, '_> {
         let scope_id = *scope_id;
         let gating_expression = *gating_expression;
         // FunctionDeclaration → `const Foo = gating() ? ... : ...;`
-        let replace_name: Option<Option<Ident<'a>>> = match &*stmt {
+        let replacement: Option<GatedStatementMatch<'a>> = match &*stmt {
             Statement::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
-                Some(f.id.as_ref().map(|id| id.name))
+                Some((f.id.as_ref().map(|id| (id.name, id.span)), None))
             }
             Statement::ExportDeclaration(e) => match &e.declaration {
                 Declaration::FunctionDeclaration(f) if f.scope_id.get() == Some(scope_id) => {
-                    Some(f.id.as_ref().map(|id| id.name))
+                    Some((f.id.as_ref().map(|id| (id.name, id.span)), Some(e.span)))
                 }
                 _ => None,
             },
             _ => None,
         };
-        if let Some(name) = replace_name {
-            let name = name.as_deref().unwrap_or("anonymous");
-            let is_export = matches!(stmt, Statement::ExportDeclaration(_));
-            let const_decl = ox_build_gated_const_decl(ast, gating_expression, name);
-            if is_export {
+        if let Some((name, export_span)) = replacement {
+            let (name, name_span) =
+                name.map_or(("anonymous", SPAN), |(name, span)| (name.as_str(), span));
+            let const_decl =
+                ox_build_gated_const_decl(ast, gating_expression, name, name_span, SPAN);
+            if let Some(export_span) = export_span {
                 let decl = match const_decl {
                     Statement::VariableDeclaration(d) => Declaration::VariableDeclaration(d),
                     _ => unreachable!(),
                 };
-                *stmt = Statement::new_export_declaration(SPAN, decl, ast);
+                *stmt = Statement::new_export_declaration(export_span, decl, ast);
             } else {
                 *stmt = const_decl;
             }
@@ -2367,12 +2385,20 @@ impl<'a> OxcVisitor<'a, '_> {
             && let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &e.declaration
             && f.scope_id.get() == Some(scope_id)
         {
-            if let Some(id) = f.id.as_ref().map(|id| id.name) {
-                *stmt = ox_build_gated_const_decl(ast, gating_expression, id.as_str());
-                *export_default_name = Some(id);
+            let export_span = e.span;
+            let id = f.id.as_ref().map(|id| (id.name, id.span));
+            if let Some((name, name_span)) = id {
+                *stmt = ox_build_gated_const_decl(
+                    ast,
+                    gating_expression,
+                    name.as_str(),
+                    name_span,
+                    export_span,
+                );
+                *export_default_name = Some(name);
             } else {
                 *stmt = Statement::new_export_default_declaration(
-                    SPAN,
+                    export_span,
                     ExportDefaultDeclarationKind::from(
                         gating_expression.clone_in_with_semantic_ids(ast.allocator()),
                     ),
@@ -2403,13 +2429,19 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                 }
             }
             OxcVisitMode::ReplaceWithGated { .. } => {}
+            OxcVisitMode::InsertOutlinedAfter { decls, .. } => {
+                // Prune the walk once the declarations have been inserted.
+                if decls.is_empty() {
+                    return;
+                }
+            }
             OxcVisitMode::FindOriginalFn { scope_id, found } => {
                 if found.is_some() {
                     return;
                 }
                 if func.scope_id.get() == Some(*scope_id) {
                     let f = Function::boxed(
-                        SPAN,
+                        func.span,
                         FunctionType::FunctionExpression,
                         func.id.clone_in_with_semantic_ids(ast.allocator()),
                         func.generator,
@@ -2446,6 +2478,12 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
                 }
             }
             OxcVisitMode::ReplaceWithGated { .. } => {}
+            OxcVisitMode::InsertOutlinedAfter { decls, .. } => {
+                // Prune the walk once the declarations have been inserted.
+                if decls.is_empty() {
+                    return;
+                }
+            }
             OxcVisitMode::FindOriginalFn { scope_id, found } => {
                 if found.is_some() {
                     return;
@@ -2463,6 +2501,23 @@ impl<'a> oxc_ast_visit::VisitMut<'a> for OxcVisitor<'a, '_> {
     }
 
     fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+        if let OxcVisitMode::InsertOutlinedAfter { scope_id, decls } = &mut self.mode {
+            if decls.is_empty() {
+                return;
+            }
+            let scope_id = *scope_id;
+            if let Some(idx) = stmts.iter().position(|s| ox_declares_fn_with_scope(s, scope_id)) {
+                // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
+                // anchored at the same original node, so repeated insertions reverse the
+                // emitted order. Insert each at `idx + 1` to reproduce that.
+                for stmt in std::mem::take(decls) {
+                    stmts.insert(idx + 1, stmt);
+                }
+                return;
+            }
+            oxc_ast_visit::walk_mut::walk_statements(self, stmts);
+            return;
+        }
         if !matches!(self.mode, OxcVisitMode::ReplaceWithGated { .. }) {
             oxc_ast_visit::walk_mut::walk_statements(self, stmts);
             return;
@@ -2626,10 +2681,12 @@ fn ox_transform_program<'a>(
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
     // in TS `Program.ts`:
     //   - FunctionDeclaration originals: inserted as a sibling immediately after the
-    //     original function (Babel `insertAfter`).
+    //     original function (Babel `insertAfter`), however deeply nested it is.
     //   - (Arrow)FunctionExpression originals: appended at the end of the program
     //     body (Babel `pushContainer('body', ...)`), since inserting as a sibling
-    //     would corrupt the parent expression.
+    //     would corrupt the parent expression. For a nested original this can hoist
+    //     the outlined function past bindings it references — upstream has the same
+    //     behavior, so we reproduce it rather than diverge.
     let mut appended_outlined_decls: Vec<Statement<'a>> = Vec::new();
 
     // Substitute every non-gated compiled function into its original in a single
@@ -2662,12 +2719,16 @@ fn ox_transform_program<'a>(
             }
         }
 
-        if let Some(ref gating_config) = replacement.gating {
-            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
+        // Insert outlined declarations before applying gating: upstream inserts
+        // them during the compile-queue loop, before any original is replaced,
+        // so they anchor to the original statement — gating rewrites it into a
+        // `const`, which no longer matches the function's scope.
+        if !sibling_outlined_decls.is_empty() {
+            ox_insert_outlined_after(ast, program, replacement.fn_scope_id, sibling_outlined_decls);
         }
 
-        if !sibling_outlined_decls.is_empty() {
-            ox_insert_outlined_after(program, replacement.fn_scope_id, sibling_outlined_decls);
+        if let Some(ref gating_config) = replacement.gating {
+            ox_apply_gated_conditional(ast, program, replacement, gating_config, context);
         }
     }
 
@@ -2683,44 +2744,49 @@ fn ox_transform_program<'a>(
     ox_add_imports_to_program(ast, program, context);
 }
 
-/// Insert outlined function declarations immediately after the top-level statement
-/// that declares the function with scope `scope_id`. Mirrors Babel's
-/// `originalFn.insertAfter(...)` for `FunctionDeclaration` originals. The statement
-/// may be a bare `FunctionDeclaration` or one wrapped in an `export`.
+/// Insert outlined function declarations immediately after the statement that
+/// declares the function with scope `scope_id`, in whatever statement list
+/// that statement lives (program body, a function body, a nested block).
+/// Mirrors Babel's `originalFn.insertAfter(...)` for `FunctionDeclaration`
+/// originals, which inserts into the enclosing statement list at any nesting
+/// depth. Placement matters for correctness: an outlined function may reference
+/// bindings of the functions enclosing the original (free variables of the
+/// compiled function are plain loads/stores in its HIR, so outlining does not
+/// count them as context), and every name visible to the original is also
+/// visible at its sibling position — but not necessarily at module scope. The
+/// statement may be a bare `FunctionDeclaration` or one wrapped in an `export`.
 fn ox_insert_outlined_after<'a>(
+    ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
     scope_id: ScopeId,
     outlined_decls: Vec<Statement<'a>>,
 ) {
-    let matches = |stmt: &Statement<'a>| -> bool {
-        let is_target = |f: &Function<'a>| -> bool { f.scope_id.get() == Some(scope_id) };
-        match stmt {
-            Statement::FunctionDeclaration(f) => is_target(f),
-            Statement::ExportDeclaration(e) => {
-                matches!(&e.declaration, Declaration::FunctionDeclaration(f) if is_target(f))
-            }
-            Statement::ExportDefaultDeclaration(e) => {
-                matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if is_target(f))
-            }
-            _ => false,
-        }
+    let mut visitor = OxcVisitor {
+        ast,
+        mode: OxcVisitMode::InsertOutlinedAfter { scope_id, decls: outlined_decls },
     };
+    oxc_ast_visit::VisitMut::visit_program(&mut visitor, program);
+    let OxcVisitMode::InsertOutlinedAfter { decls, .. } = visitor.mode else { unreachable!() };
+    // A `FunctionDeclaration` sits directly in a statement list everywhere in
+    // module code, so the walk finds it; the exception is sloppy-mode annex-B
+    // positions (`if (c) function F() {}`), where we degrade to appending at
+    // the top level rather than dropping the functions.
+    program.body.extend(decls);
+}
 
-    let index = program.body.iter().position(matches);
-    match index {
-        Some(idx) => {
-            // Babel inserts each outlined function via `originalFn.insertAfter(...)`,
-            // anchored at the same original node, so repeated insertions reverse the
-            // emitted order. Insert each at `idx + 1` to reproduce that.
-            for stmt in outlined_decls {
-                program.body.insert(idx + 1, stmt);
-            }
+/// Whether `stmt` declares the function with scope `scope_id` — a bare
+/// `FunctionDeclaration` or one wrapped in an `export` / `export default`.
+fn ox_declares_fn_with_scope(stmt: &Statement<'_>, scope_id: ScopeId) -> bool {
+    let is_target = |f: &Function<'_>| -> bool { f.scope_id.get() == Some(scope_id) };
+    match stmt {
+        Statement::FunctionDeclaration(f) => is_target(f),
+        Statement::ExportDeclaration(e) => {
+            matches!(&e.declaration, Declaration::FunctionDeclaration(f) if is_target(f))
         }
-        None => {
-            // Function is nested (not a direct program-body statement); fall back to
-            // appending at the top level.
-            program.body.extend(outlined_decls);
+        Statement::ExportDefaultDeclaration(e) => {
+            matches!(&e.declaration, ExportDefaultDeclarationKind::FunctionDeclaration(f) if is_target(f))
         }
+        _ => false,
     }
 }
 

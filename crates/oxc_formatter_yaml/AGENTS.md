@@ -48,6 +48,8 @@ Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Curren
 - anchor/tag order (prettier#19524): source order is preserved, never reordered
 - EOF blank lines: the file always ends with exactly one newline, like every other formatter crate
   (`|+` keep-chomped verbatim tails excepted); Prettier YAML alone preserves EOF blank lines verbatim
+- keep-chomped tail at a space-only EOF line (no final newline): the line holds no line break, so it adds nothing to the kept tail;
+  - Prettier counts it and prints one newline too many, changing the value `"\n"` → `"\n\n"` (prettier#19256 is the nearest issue)
 - `# prettier-ignore` range (prettier#13008): suppresses exactly one node, never every following node
 - anchor next-line comments (prettier#10518 / #9327): structurally avoided, the positional cursor makes them the next node's leading comments
 - blank lines (prettier#15528): one unified rule:

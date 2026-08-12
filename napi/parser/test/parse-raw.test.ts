@@ -80,7 +80,7 @@ const benchFixtureUrls = [
   // Real world app tsx (415KB) — excalidraw App.tsx (master @ f6d85bc8)
   "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
   // Real world content-heavy app jsx (3K)
-  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/RadixUIAdoptionSection.jsx",
   // Heavy with classes (554K)
   "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
   // ES5 (3.9M)

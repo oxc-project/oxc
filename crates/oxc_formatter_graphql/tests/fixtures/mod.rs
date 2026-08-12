@@ -1,10 +1,11 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::test_support::{
-    FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
-};
 use oxc_formatter_graphql::{GraphqlFormatOptions, format};
+use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+
+mod options;
+use options::apply_graphql_options;
 
 struct GraphqlHarness;
 
@@ -13,16 +14,7 @@ impl FixtureFormatter for GraphqlHarness {
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = GraphqlFormatOptions::default();
-        apply_core_options(&mut options, json);
-
-        for (key, value) in json {
-            if key.as_str() == "bracketSpacing"
-                && let Some(b) = value.as_bool()
-            {
-                options.bracket_spacing = b.into();
-            }
-        }
-
+        apply_graphql_options(&mut options, json);
         options
     }
 

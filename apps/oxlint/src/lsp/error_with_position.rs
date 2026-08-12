@@ -67,7 +67,7 @@ impl TryFrom<RuleCustomizationSeverity> for DiagnosticSeverity {
     }
 }
 
-fn miette_severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
+fn severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
     match value {
         Severity::Error => DiagnosticSeverity::ERROR,
         Severity::Warning => DiagnosticSeverity::WARNING,
@@ -85,10 +85,10 @@ pub fn message_to_lsp_diagnostic(
             // filter off rules early
             DiagnosticSeverity::try_from(severity).ok()?
         } else {
-            miette_severity_to_lsp_severity(message.error.severity)
+            severity_to_lsp_severity(message.error.severity)
         }
     } else {
-        miette_severity_to_lsp_severity(message.error.severity)
+        severity_to_lsp_severity(message.error.severity)
     };
 
     let related_information = if message.error.labels.is_empty() {

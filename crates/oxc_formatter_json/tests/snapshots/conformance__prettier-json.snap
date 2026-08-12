@@ -1,0 +1,10 @@
+---
+source: crates/oxc_formatter_json/tests/conformance.rs
+expression: report
+---
+json compatibility: 20/20 (100.00%), 0 files skipped
+
+# Failed
+
+| Spec path | Failed or Passed | Match ratio |
+| :-------- | :--------------: | :---------: |

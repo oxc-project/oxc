@@ -58,7 +58,8 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         for instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
-                InstructionValue::CallExpression { callee, .. } => {
+                InstructionValue::CallExpression { callee, .. }
+                | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if is_hook_or_use(env, callee_ty)? {
                         // All active scopes must be pruned
@@ -108,7 +109,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         {
             // This was a scope just for a hook call, which doesn't need memoization.
             // Flatten it away. We rely on PruneUnusedLabels to do the actual flattening.
-            Terminal::Label { block: scope_block, fallthrough, id: eval_id, span }
+            Terminal::Label { block: scope_block, block_span: None, fallthrough, id: eval_id, span }
         } else {
             Terminal::PrunedScope { block: scope_block, fallthrough, scope, id: eval_id, span }
         };

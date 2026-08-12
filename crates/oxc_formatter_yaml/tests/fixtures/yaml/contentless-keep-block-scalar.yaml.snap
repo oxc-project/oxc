@@ -1,0 +1,60 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# A `|+` scalar with no content line keeps exactly its one trailing newline;
+# counting the next entry's indentation as a blank would change the value
+# from "\n" to "\n\n" (oxc#25484).
+example:
+  - |+
+
+  - .
+explicit-indent:
+  - |+2
+
+  - .
+nested:
+  keep: |+
+
+  next: ok
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# A `|+` scalar with no content line keeps exactly its one trailing newline;
+# counting the next entry's indentation as a blank would change the value
+# from "\n" to "\n\n" (oxc#25484).
+example:
+  - |+
+
+  - .
+explicit-indent:
+  - |2+
+
+  - .
+nested:
+  keep: |+
+
+  next: ok
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# A `|+` scalar with no content line keeps exactly its one trailing newline;
+# counting the next entry's indentation as a blank would change the value
+# from "\n" to "\n\n" (oxc#25484).
+example:
+  - |+
+
+  - .
+explicit-indent:
+  - |2+
+
+  - .
+nested:
+  keep: |+
+
+  next: ok
+
+===================== End =====================

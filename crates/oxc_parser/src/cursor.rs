@@ -523,9 +523,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return None;
             }
             self.advance(separator);
-            if self.cur_kind() == close {
+            let kind = self.cur_kind();
+            if kind == close {
                 let trailing_separator = self.prev_token_end - 1;
                 return Some(trailing_separator);
+            }
+            if matches!(kind, Kind::Eof | Kind::Undetermined) {
+                return None;
             }
             let element = parse_element(self);
             list.push(element);
@@ -605,6 +609,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     if rest.is_some() && !self.ctx.has_ambient() {
                         self.error(diagnostics::rest_element_trailing_comma(comma_span));
                     }
+                    break;
+                }
+                if matches!(kind, Kind::Eof | Kind::Undetermined) {
                     break;
                 }
             }

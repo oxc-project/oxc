@@ -550,7 +550,7 @@ pub fn lower<'a>(
     // Note: `id` param may include inferred names (e.g., from `const Foo = () => {}`),
     // but the HIR function's `id` field should only include the function's own AST id
     // (FunctionDeclaration.id or FunctionExpression.id, NOT arrow functions).
-    let (params, body, generator, is_async, span, ast_id) = match func {
+    let (params, body, generator, is_async, span, ast_id, ast_id_span) = match func {
         FunctionNode::Function(f) => {
             let body_ref = f.body.as_deref().expect("component function has a body");
             (
@@ -560,6 +560,7 @@ pub fn lower<'a>(
                 f.r#async,
                 f.span,
                 f.id.as_ref().map(|id| id.name),
+                f.id.as_ref().map(|id| id.span),
             )
         }
         FunctionNode::Arrow(arrow) => {
@@ -567,7 +568,7 @@ pub fn lower<'a>(
                 || FunctionBody::Block(arrow.get_function_body().unwrap()),
                 FunctionBody::Expression,
             );
-            (arrow.params.as_ref(), body, false, arrow.r#async, arrow.span, None)
+            (arrow.params.as_ref(), body, false, arrow.r#async, arrow.span, None, None)
         }
     };
 
@@ -588,6 +589,7 @@ pub fn lower<'a>(
         params,
         body,
         ast_id,
+        ast_id_span,
         generator,
         is_async,
         span,
@@ -616,6 +618,7 @@ fn lower_inner<'a>(
     params: &oxc::FormalParameters<'a>,
     body: FunctionBody<'_, 'a>,
     id: Option<Ident<'a>>,
+    id_span: Option<Span>,
     generator: bool,
     is_async: bool,
     span: Span,
@@ -658,6 +661,21 @@ fn lower_inner<'a>(
             span: *ctx_span,
         });
     }
+
+    // A named function expression has a private binding in its own scope. It is
+    // initialized to the function object when the function is created, rather
+    // than by an instruction in the body, so retain it as an entry definition.
+    // Function declarations resolve through their enclosing scope and continue
+    // to use the normal local/context lowering paths.
+    let self_binding = if let Some(name) = id
+        && let Some(symbol_id) = scope.get_binding(function_scope, name.as_str())
+        && scope.decl_kind(symbol_id) == DeclKind::FunctionExpression
+    {
+        let identifier = builder.resolve_binding_with_span(name, symbol_id, id_span)?;
+        Some(Place { identifier, effect: Effect::Unknown, reactive: false, span: id_span })
+    } else {
+        None
+    };
 
     // Process parameters.
     let mut hir_params = ArenaVec::new_in(&alloc);
@@ -721,7 +739,7 @@ fn lower_inner<'a>(
         let param_span = param.span;
         let place = build_temporary_place(&mut builder, Some(param_span));
         promote_temporary(&mut builder, place.identifier);
-        hir_params.push(ParamPattern::Place(place));
+        hir_params.push(ParamPattern::Place(Place { span: None, ..place }));
         let value = if let Some(initializer) = &param.initializer {
             lower_default_to_temp(&mut builder, param_span, initializer, place)?
         } else {
@@ -743,7 +761,7 @@ fn lower_inner<'a>(
     if let Some(rest) = &params.rest {
         let rest_span = rest.span;
         let place = build_temporary_place(&mut builder, Some(rest_span));
-        hir_params.push(ParamPattern::Spread(SpreadPattern { place }));
+        hir_params.push(ParamPattern::Spread(SpreadPattern { place, span: Some(rest_span) }));
         lower_binding_assignment(
             &mut builder,
             rest_span,
@@ -755,6 +773,7 @@ fn lower_inner<'a>(
     }
 
     // Lower the body
+    let mut body_span = None;
     let mut directives = ArenaVec::new_in(&alloc);
     match body {
         FunctionBody::Expression(expr) => {
@@ -772,8 +791,15 @@ fn lower_inner<'a>(
             );
         }
         FunctionBody::Block(block) => {
-            directives =
-                ArenaVec::from_iter_in(block.directives.iter().map(|d| d.expression.value), &alloc);
+            body_span = Some(block.span);
+            directives = ArenaVec::from_iter_in(
+                block.directives.iter().map(|d| FunctionDirective {
+                    value: d.expression.value,
+                    span: d.span,
+                    expression_span: d.expression.span,
+                }),
+                &alloc,
+            );
             // A function body shares the function's scope (the scope cell lives on
             // the function node, not the block), so pass it as the scope override.
             lower_block_statement_with_scope(&mut builder, &block.statements, function_scope)?;
@@ -806,7 +832,10 @@ fn lower_inner<'a>(
     Ok((
         HirFunction {
             span: Some(span),
+            body_span,
             id,
+            id_span,
+            self_binding,
             name_hint: None,
             fn_type: if is_top_level { env.fn_type } else { ReactFunctionType::Other },
             params: hir_params,
@@ -902,6 +931,7 @@ enum MemberProperty<'a> {
 struct LoweredMemberExpression<'a> {
     object: Place,
     property: MemberProperty<'a>,
+    property_span: Option<Span>,
     value: InstructionValue<'a>,
 }
 
@@ -922,15 +952,22 @@ fn lower_member_expression_impl<'a>(
     match member {
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
+            let property_span = Some(m.property.span);
             let object = match lowered_object {
                 Some(obj) => obj,
                 None => lower_expression_to_temporary(builder, &m.object)?,
             };
             let prop_literal = PropertyLiteral::String(m.property.name);
-            let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
+            let value = InstructionValue::PropertyLoad {
+                object,
+                property: prop_literal,
+                property_span,
+                span,
+            };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
+                property_span,
                 value,
             })
         }
@@ -942,11 +979,18 @@ fn lower_member_expression_impl<'a>(
             };
             // A numeric computed index is treated as a PropertyLoad (matches TS).
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
+                let property_span = Some(lit.span);
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
-                let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
+                let value = InstructionValue::PropertyLoad {
+                    object,
+                    property: prop_literal,
+                    property_span,
+                    span,
+                };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
+                    property_span,
                     value,
                 });
             }
@@ -955,6 +999,7 @@ fn lower_member_expression_impl<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
+                property_span: property.span,
                 value,
             })
         }
@@ -974,6 +1019,7 @@ fn lower_member_expression_impl<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(Ident::empty())),
+                property_span: None,
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
             })
         }
@@ -982,7 +1028,7 @@ fn lower_member_expression_impl<'a>(
 
 /// Build a HIR `TemplateQuasi` from an oxc `TemplateElement`.
 fn template_quasi_from_oxc<'a>(q: &oxc::TemplateElement<'a>) -> TemplateQuasi<'a> {
-    TemplateQuasi { raw: q.value.raw, cooked: q.value.cooked }
+    TemplateQuasi { raw: q.value.raw, cooked: q.value.cooked, span: q.span }
 }
 
 /// Lower the `import` keyword callee of an `ImportExpression`. The original Babel
@@ -1091,12 +1137,19 @@ fn lower_member_expression_from_simple_target<'a>(
     match target {
         oxc::SimpleAssignmentTarget::StaticMemberExpression(m) => {
             let span = Some(m.span);
+            let property_span = Some(m.property.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
             let prop_literal = PropertyLiteral::String(m.property.name);
-            let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
+            let value = InstructionValue::PropertyLoad {
+                object,
+                property: prop_literal,
+                property_span,
+                span,
+            };
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(prop_literal),
+                property_span,
                 value,
             })
         }
@@ -1104,11 +1157,18 @@ fn lower_member_expression_from_simple_target<'a>(
             let span = Some(m.span);
             let object = lower_expression_to_temporary(builder, &m.object)?;
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
+                let property_span = Some(lit.span);
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
-                let value = InstructionValue::PropertyLoad { object, property: prop_literal, span };
+                let value = InstructionValue::PropertyLoad {
+                    object,
+                    property: prop_literal,
+                    property_span,
+                    span,
+                };
                 return Ok(LoweredMemberExpression {
                     object,
                     property: MemberProperty::Literal(prop_literal),
+                    property_span,
                     value,
                 });
             }
@@ -1117,6 +1177,7 @@ fn lower_member_expression_from_simple_target<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Computed(property),
+                property_span: property.span,
                 value,
             })
         }
@@ -1131,6 +1192,7 @@ fn lower_member_expression_from_simple_target<'a>(
             Ok(LoweredMemberExpression {
                 object,
                 property: MemberProperty::Literal(PropertyLiteral::String(Ident::empty())),
+                property_span: None,
                 value: InstructionValue::Primitive { value: PrimitiveValue::Undefined, span },
             })
         }
@@ -1150,7 +1212,8 @@ fn lower_arguments<'a>(
         match arg {
             oxc::Argument::SpreadElement(spread) => {
                 let place = lower_expression_to_temporary(builder, &spread.argument)?;
-                result.push(PlaceOrSpread::Spread(SpreadPattern { place }));
+                result
+                    .push(PlaceOrSpread::Spread(SpreadPattern { place, span: Some(spread.span) }));
             }
             _ => {
                 let expr = arg.as_expression().expect("non-spread argument is an expression");
@@ -1390,14 +1453,17 @@ fn lower_binding_assignment<'a>(
                                 builder.scope().resolve_binding_identifier(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
-                                    items
-                                        .push(ArrayPatternElement::Spread(SpreadPattern { place }));
+                                    items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                        place,
+                                        span: Some(rest.span),
+                                    }));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
                                     let temp = build_temporary_place(builder, Some(rest.span));
                                     promote_temporary(builder, temp.identifier);
                                     items.push(ArrayPatternElement::Spread(SpreadPattern {
                                         place: temp,
+                                        span: Some(rest.span),
                                     }));
                                     followups.push((temp, &rest.argument));
                                 }
@@ -1406,14 +1472,20 @@ fn lower_binding_assignment<'a>(
                         } else {
                             let temp = build_temporary_place(builder, Some(rest.span));
                             promote_temporary(builder, temp.identifier);
-                            items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
+                            items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                place: temp,
+                                span: Some(rest.span),
+                            }));
                             followups.push((temp, &rest.argument));
                         }
                     }
                     _ => {
                         let temp = build_temporary_place(builder, Some(rest.span));
                         promote_temporary(builder, temp.identifier);
-                        items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
+                        items.push(ArrayPatternElement::Spread(SpreadPattern {
+                            place: temp,
+                            span: Some(rest.span),
+                        }));
                         followups.push((temp, &rest.argument));
                     }
                 }
@@ -1449,7 +1521,10 @@ fn lower_binding_assignment<'a>(
             let mut followups: Vec<(Place, &oxc::BindingPattern)> = Vec::new();
 
             for prop in &pattern.properties {
-                if prop.computed {
+                // Computed string literals can be normalized to static property keys. Other
+                // computed keys need to remain expressions, which destructuring does not support
+                // yet.
+                if prop.computed && !is_static_property_key(&prop.key) {
                     builder.record_error(
                         ErrorCategory::Todo
                             .diagnostic("(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern").with_label(prop.span),
@@ -1457,7 +1532,7 @@ fn lower_binding_assignment<'a>(
                     continue;
                 }
 
-                let key = match lower_object_property_key(builder, &prop.key, false)? {
+                let key = match lower_object_property_key(builder, &prop.key, prop.computed)? {
                     Some(k) => k,
                     None => continue,
                 };
@@ -1538,7 +1613,7 @@ fn lower_binding_assignment<'a>(
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     properties.push(ObjectPropertyOrSpread::Spread(
-                                        SpreadPattern { place },
+                                        SpreadPattern { place, span: Some(rest.span) },
                                     ));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
@@ -1554,6 +1629,7 @@ fn lower_binding_assignment<'a>(
                             promote_temporary(builder, temp.identifier);
                             properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
                                 place: temp,
+                                span: Some(rest.span),
                             }));
                             followups.push((temp, &rest.argument));
                         }
@@ -1738,6 +1814,7 @@ fn lower_member_assignment_target<'a>(
                 InstructionValue::PropertyStore {
                     object,
                     property: PropertyLiteral::String(member.property.name),
+                    property_span: Some(member.property.span),
                     value,
                     span: Some(span),
                 },
@@ -1754,6 +1831,7 @@ fn lower_member_assignment_target<'a>(
                     InstructionValue::PropertyStore {
                         object,
                         property: PropertyLiteral::Number(FloatValue::new(num.value)),
+                        property_span: Some(num.span),
                         value,
                         span: Some(span),
                     },
@@ -1992,14 +2070,17 @@ fn lower_assignment_target<'a>(
                                 builder.scope().resolve_reference(id),
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
-                                    items
-                                        .push(ArrayPatternElement::Spread(SpreadPattern { place }));
+                                    items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                        place,
+                                        span: Some(rest.span),
+                                    }));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
                                     let temp = build_temporary_place(builder, Some(rest.span));
                                     promote_temporary(builder, temp.identifier);
                                     items.push(ArrayPatternElement::Spread(SpreadPattern {
                                         place: temp,
+                                        span: Some(rest.span),
                                     }));
                                     followups.push((temp, FollowupTarget::Target(&rest.target)));
                                 }
@@ -2008,14 +2089,20 @@ fn lower_assignment_target<'a>(
                         } else {
                             let temp = build_temporary_place(builder, Some(rest.span));
                             promote_temporary(builder, temp.identifier);
-                            items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
+                            items.push(ArrayPatternElement::Spread(SpreadPattern {
+                                place: temp,
+                                span: Some(rest.span),
+                            }));
                             followups.push((temp, FollowupTarget::Target(&rest.target)));
                         }
                     }
                     _ => {
                         let temp = build_temporary_place(builder, Some(rest.span));
                         promote_temporary(builder, temp.identifier);
-                        items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp }));
+                        items.push(ArrayPatternElement::Spread(SpreadPattern {
+                            place: temp,
+                            span: Some(rest.span),
+                        }));
                         followups.push((temp, FollowupTarget::Target(&rest.target)));
                     }
                 }
@@ -2090,7 +2177,10 @@ fn lower_assignment_target<'a>(
             for prop in &pattern.properties {
                 match prop {
                     oxc::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(p) => {
-                        let key = ObjectPropertyKey::Identifier { name: p.binding.name };
+                        let key = ObjectPropertyKey::Identifier {
+                            name: p.binding.name,
+                            span: Some(p.binding.span),
+                        };
                         let id = &p.binding;
                         if let Some(default) = &p.init {
                             // `{foo = d}` — Babel shorthand AssignmentPattern. Lower
@@ -2157,14 +2247,14 @@ fn lower_assignment_target<'a>(
                         }
                     }
                     oxc::AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                        if p.computed {
+                        if p.computed && !is_static_property_key(&p.name) {
                             builder.record_error(
                                 ErrorCategory::Todo
                                     .diagnostic("(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern").with_label(p.span),
                             )?;
                             continue;
                         }
-                        let key = match lower_object_property_key(builder, &p.name, false)? {
+                        let key = match lower_object_property_key(builder, &p.name, p.computed)? {
                             Some(k) => k,
                             None => continue,
                         };
@@ -2251,7 +2341,7 @@ fn lower_assignment_target<'a>(
                             )? {
                                 Some(IdentifierForAssignment::Place(place)) => {
                                     properties.push(ObjectPropertyOrSpread::Spread(
-                                        SpreadPattern { place },
+                                        SpreadPattern { place, span: Some(rest.span) },
                                     ));
                                 }
                                 Some(IdentifierForAssignment::Global { .. }) => {
@@ -2267,6 +2357,7 @@ fn lower_assignment_target<'a>(
                             promote_temporary(builder, temp.identifier);
                             properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
                                 place: temp,
+                                span: Some(rest.span),
                             }));
                             followups.push((temp, FollowupTarget::Target(&rest.target)));
                         }
@@ -2928,17 +3019,16 @@ fn lower_function_to_value<'a>(
     func: FunctionNode<'_, 'a>,
     expr_type: FunctionExpressionType,
 ) -> Result<InstructionValue<'a>, OxcDiagnostic> {
-    let span = match func {
-        FunctionNode::Arrow(arrow) => Some(arrow.span),
-        FunctionNode::Function(f) => Some(f.span),
-    };
-    let name = match func {
-        FunctionNode::Function(f) => f.id.as_ref().map(|id| id.name),
-        FunctionNode::Arrow(_) => None,
+    let (span, name, name_span) = match func {
+        FunctionNode::Arrow(arrow) => (Some(arrow.span), None, None),
+        FunctionNode::Function(f) => {
+            (Some(f.span), f.id.as_ref().map(|id| id.name), f.id.as_ref().map(|id| id.span))
+        }
     };
     let lowered_func = lower_function(builder, func)?;
     Ok(InstructionValue::FunctionExpression {
         name,
+        name_span,
         name_hint: None,
         lowered_func,
         expr_type,
@@ -2953,13 +3043,13 @@ fn lower_function<'a>(
     func: FunctionNode<'_, 'a>,
 ) -> Result<LoweredFunction, OxcDiagnostic> {
     // Extract function parts from the AST node
-    let (params, body, id, generator, is_async, func_span) = match func {
+    let (params, body, id, id_span, generator, is_async, func_span) = match func {
         FunctionNode::Arrow(arrow) => {
             let body = arrow.get_expression().map_or_else(
                 || FunctionBody::Block(arrow.get_function_body().unwrap()),
                 FunctionBody::Expression,
             );
-            (arrow.params.as_ref(), body, None, false, arrow.r#async, arrow.span)
+            (arrow.params.as_ref(), body, None, None, false, arrow.r#async, arrow.span)
         }
         FunctionNode::Function(f) => {
             let body_ref = f.body.as_deref().expect("function expression has a body");
@@ -2967,6 +3057,7 @@ fn lower_function<'a>(
                 f.params.as_ref(),
                 FunctionBody::Block(body_ref),
                 f.id.as_ref().map(|id| id.name),
+                f.id.as_ref().map(|id| id.span),
                 f.generator,
                 f.r#async,
                 f.span,
@@ -3001,6 +3092,7 @@ fn lower_function<'a>(
         params,
         body,
         id,
+        id_span,
         generator,
         is_async,
         func_span,
@@ -3062,6 +3154,7 @@ fn lower_function_declaration<'a>(
         func_decl.params.as_ref(),
         FunctionBody::Block(body_ref),
         func_decl.id.as_ref().map(|id| id.name),
+        func_decl.id.as_ref().map(|id| id.span),
         func_decl.generator,
         func_decl.r#async,
         span,
@@ -3086,6 +3179,7 @@ fn lower_function_declaration<'a>(
     // Emit FunctionExpression instruction
     let fn_value = InstructionValue::FunctionExpression {
         name: func_name,
+        name_span: func_decl.id.as_ref().map(|id| id.span),
         name_hint: None,
         lowered_func,
         expr_type: FunctionExpressionType::FunctionDeclaration,
@@ -3234,6 +3328,7 @@ fn lower_function_for_object_method<'a>(
     let (hir_func, child_used_names, child_bindings) = lower_inner(
         params,
         FunctionBody::Block(body),
+        None,
         None,
         generator,
         is_async,
@@ -3413,11 +3508,13 @@ fn lower_expression<'a>(
                         unary.argument.without_parentheses().as_member_expression()
                     {
                         let lowered = lower_member_expression(builder, member)?;
+                        let property_span = lowered.property_span;
                         match lowered.property {
                             MemberProperty::Literal(property) => {
                                 Ok(InstructionValue::PropertyDelete {
                                     object: lowered.object,
                                     property,
+                                    property_span,
                                     span,
                                 })
                             }
@@ -3698,6 +3795,7 @@ fn lower_expression<'a>(
         }
         oxc::Expression::TaggedTemplateExpression(tagged) => {
             let span = Some(tagged.span);
+            let quasi_span = Some(tagged.quasi.span);
             // Upstream React Compiler bails on any interpolation here; the oxc port
             // instead lowers the tag plus every quasi and every `${...}`
             // subexpression (mirroring `TemplateLiteral`). This is a deliberate
@@ -3731,7 +3829,13 @@ fn lower_expression<'a>(
                 tagged.quasi.quasis.iter().map(template_quasi_from_oxc),
                 &alloc,
             );
-            Ok(InstructionValue::TaggedTemplateExpression { tag, quasis, subexprs, span })
+            Ok(InstructionValue::TaggedTemplateExpression {
+                tag,
+                quasis,
+                subexprs,
+                quasi_span,
+                span,
+            })
         }
         oxc::Expression::AwaitExpression(await_expr) => {
             let span = Some(await_expr.span);
@@ -3842,6 +3946,7 @@ fn lower_expression<'a>(
                         lower_member_expression_from_simple_target(builder, &update.argument)?;
                     let object = lowered.object;
                     let lowered_property = lowered.property;
+                    let property_span = lowered.property_span;
                     let prev_value = lower_value_to_temporary(builder, lowered.value)?;
 
                     let one = lower_value_to_temporary(
@@ -3870,6 +3975,7 @@ fn lower_expression<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: prop_literal,
+                                property_span,
                                 value: updated,
                                 span: member_span,
                             },
@@ -4046,7 +4152,10 @@ fn lower_expression<'a>(
                     }
                     oxc::ObjectPropertyKind::SpreadProperty(spread) => {
                         let place = lower_expression_to_temporary(builder, &spread.argument)?;
-                        properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern { place }));
+                        properties.push(ObjectPropertyOrSpread::Spread(SpreadPattern {
+                            place,
+                            span: Some(spread.span),
+                        }));
                     }
                 }
             }
@@ -4063,7 +4172,10 @@ fn lower_expression<'a>(
                     }
                     oxc::ArrayExpressionElement::SpreadElement(spread) => {
                         let place = lower_expression_to_temporary(builder, &spread.argument)?;
-                        elements.push(ArrayElement::Spread(SpreadPattern { place }));
+                        elements.push(ArrayElement::Spread(SpreadPattern {
+                            place,
+                            span: Some(spread.span),
+                        }));
                     }
                     _ => {
                         let expr = element.to_expression();
@@ -4190,6 +4302,7 @@ fn lower_assignment_expression<'a>(
                             InstructionValue::PropertyStore {
                                 object,
                                 property: PropertyLiteral::String(member.property.name),
+                                property_span: Some(member.property.span),
                                 value: right,
                                 span: left_span,
                             },
@@ -4203,6 +4316,7 @@ fn lower_assignment_expression<'a>(
                                 InstructionValue::PropertyStore {
                                     object,
                                     property: PropertyLiteral::Number(FloatValue::new(num.value)),
+                                    property_span: Some(num.span),
                                     value: right,
                                     span: left_span,
                                 },
@@ -4367,6 +4481,7 @@ fn lower_assignment_expression<'a>(
                 let lowered = lower_member_expression_from_simple_target(builder, simple)?;
                 let object = lowered.object;
                 let lowered_property = lowered.property;
+                let property_span = lowered.property_span;
                 let current_value = lower_value_to_temporary(builder, lowered.value)?;
                 let right = lower_expression_to_temporary(builder, &assign.right)?;
                 let result = lower_value_to_temporary(
@@ -4382,6 +4497,7 @@ fn lower_assignment_expression<'a>(
                     MemberProperty::Literal(prop_literal) => Ok(InstructionValue::PropertyStore {
                         object,
                         property: prop_literal,
+                        property_span,
                         value: result,
                         span: member_span,
                     }),
@@ -4418,7 +4534,9 @@ fn lower_jsx_element_expr<'a>(
 ) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = Some(jsx_element.span);
     let opening_span = Some(jsx_element.opening_element.span);
+    let opening_name_span = Some(jsx_element.opening_element.name.span());
     let closing_span = jsx_element.closing_element.as_ref().map(|c| c.span);
+    let closing_name_span = jsx_element.closing_element.as_ref().map(|c| c.name.span());
 
     // Lower the tag name
     let tag = lower_jsx_element_name(builder, &jsx_element.opening_element.name)?;
@@ -4430,7 +4548,7 @@ fn lower_jsx_element_expr<'a>(
         match attr_item {
             oxc::JSXAttributeItem::SpreadAttribute(spread) => {
                 let argument = lower_expression_to_temporary(builder, &spread.argument)?;
-                props.push(JsxAttribute::SpreadAttribute { argument });
+                props.push(JsxAttribute::SpreadAttribute { argument, span: Some(spread.span) });
             }
             oxc::JSXAttributeItem::Attribute(attr) => {
                 // Get the attribute name
@@ -4509,7 +4627,11 @@ fn lower_jsx_element_expr<'a>(
                     }
                 };
 
-                props.push(JsxAttribute::Attribute { name: prop_name, place: value });
+                props.push(JsxAttribute::Attribute {
+                    name: prop_name,
+                    name_span: Some(attr.name.span()),
+                    place: value,
+                });
             }
         }
     }
@@ -4611,7 +4733,9 @@ fn lower_jsx_element_expr<'a>(
         children: if children.is_empty() { None } else { Some(children) },
         span,
         opening_span,
+        opening_name_span,
         closing_span,
+        closing_name_span,
     })
 }
 
@@ -4622,6 +4746,8 @@ fn lower_jsx_fragment_expr<'a>(
     jsx_fragment: &oxc::JSXFragment<'a>,
 ) -> Result<InstructionValue<'a>, OxcDiagnostic> {
     let span = Some(jsx_fragment.span);
+    let opening_span = Some(jsx_fragment.opening_fragment.span);
+    let closing_span = Some(jsx_fragment.closing_fragment.span);
 
     // Lower children
     let alloc = builder.environment().allocator;
@@ -4636,7 +4762,7 @@ fn lower_jsx_fragment_expr<'a>(
         &alloc,
     );
 
-    Ok(InstructionValue::JsxFragment { children, span })
+    Ok(InstructionValue::JsxFragment { children, span, opening_span, closing_span })
 }
 
 /// Lower a JSX element name into a `JsxTag`. Faithful translation of the original
@@ -4647,14 +4773,17 @@ fn lower_jsx_element_name<'a>(
     builder: &mut HirBuilder<'a, '_>,
     name: &oxc::JSXElementName<'a>,
 ) -> Result<JsxTag<'a>, OxcDiagnostic> {
-    // Lower a simple JSX tag identifier (component-vs-builtin split on case).
+    // Lower a simple JSX tag identifier. The parser has already classified the tag as an
+    // identifier reference (component) or a plain identifier (builtin), so preserve that
+    // distinction instead of inferring it again from the name.
     fn lower_tag_identifier<'a>(
         builder: &mut HirBuilder<'a, '_>,
         tag: Ident<'a>,
         span: oxc_span::Span,
         symbol: Option<SymbolId>,
+        is_reference: bool,
     ) -> Result<JsxTag<'a>, OxcDiagnostic> {
-        if tag.starts_with(|c: char| c.is_ascii_uppercase()) {
+        if is_reference {
             // Component tag: resolve as identifier and load
             let place = lower_identifier(builder, tag, span, symbol)?;
             let load_value = if builder.is_context_identifier(symbol) {
@@ -4672,15 +4801,15 @@ fn lower_jsx_element_name<'a>(
 
     match name {
         oxc::JSXElementName::Identifier(id) => {
-            lower_tag_identifier(builder, Ident::from(id.name.as_str()), id.span, None)
+            lower_tag_identifier(builder, Ident::from(id.name.as_str()), id.span, None, false)
         }
         oxc::JSXElementName::IdentifierReference(id) => {
             let symbol = builder.scope().resolve_reference(id);
-            lower_tag_identifier(builder, id.name, id.span, symbol)
+            lower_tag_identifier(builder, id.name, id.span, symbol, true)
         }
         oxc::JSXElementName::ThisExpression(this) => {
             // `<this.Foo />`-style `this` tag lowers as the identifier "this".
-            lower_tag_identifier(builder, Ident::from("this"), this.span, None)
+            lower_tag_identifier(builder, Ident::from("this"), this.span, None, false)
         }
         oxc::JSXElementName::MemberExpression(member) => {
             let place = lower_jsx_member_expression(builder, member)?;
@@ -4746,6 +4875,7 @@ fn lower_jsx_member_expression<'a>(
     let value = InstructionValue::PropertyLoad {
         object,
         property: PropertyLiteral::String(Ident::from(prop_name)),
+        property_span: Some(expr.property.span),
         span: expr_span,
     };
     lower_value_to_temporary(builder, value)
@@ -4785,23 +4915,29 @@ fn lower_jsx_element<'a>(
             // Since the fbt transform runs after, preserve all whitespace
             // in FBT subtrees as is.
             let value = if builder.fbt_depth > 0 {
-                Some(match decoded {
-                    Cow::Borrowed(text) => Str::from(text),
-                    Cow::Owned(ref text) => {
-                        Str::from_str_in(text, &builder.environment().allocator)
-                    }
-                })
+                Some((
+                    match decoded {
+                        Cow::Borrowed(text) => Str::from(text),
+                        Cow::Owned(ref text) => {
+                            Str::from_str_in(text, &builder.environment().allocator)
+                        }
+                    },
+                    0,
+                ))
             } else {
-                trim_jsx_text(&decoded)
-                    .map(|text| Str::from_str_in(&text, &builder.environment().allocator))
+                trim_jsx_text(&decoded).map(|(text, start)| {
+                    (Str::from_str_in(&text, &builder.environment().allocator), start)
+                })
             };
             match value {
                 None => Ok(None),
-                Some(value) => {
-                    let span = Some(text.span);
+                Some((value, start)) => {
+                    let mut span = text.span;
+                    span.start +=
+                        source_offset_for_decoded_jsx_text(text.value.as_str(), start) as u32;
                     let place = lower_value_to_temporary(
                         builder,
-                        InstructionValue::JSXText { value, span },
+                        InstructionValue::JSXText { value, span: Some(span) },
                     )?;
                     Ok(Some(place))
                 }
@@ -5111,7 +5247,7 @@ fn split_line_endings(s: &str) -> Vec<&str> {
 
 /// Trims whitespace according to the JSX spec.
 /// Implementation ported from Babel's cleanJSXElementLiteralChild.
-fn trim_jsx_text(original: &str) -> Option<String> {
+fn trim_jsx_text(original: &str) -> Option<(String, usize)> {
     // Split on \r\n, \n, or \r to handle all line ending styles (matching TS split(/\r\n|\n|\r/))
     let lines: Vec<&str> = split_line_endings(original);
 
@@ -5126,6 +5262,8 @@ fn trim_jsx_text(original: &str) -> Option<String> {
     }
 
     let mut str = String::new();
+    let mut first_retained_offset = None;
+    let mut line_offset = 0;
 
     for (i, line) in lines.iter().enumerate() {
         let is_first_line = i == 0;
@@ -5134,10 +5272,13 @@ fn trim_jsx_text(original: &str) -> Option<String> {
 
         // Replace rendered whitespace tabs with spaces
         let mut trimmed_line = line.cow_replace('\t', " ").into_owned();
+        let mut leading_trimmed = 0;
 
         // Trim whitespace touching a newline (leading whitespace on non-first lines)
         if !is_first_line {
+            let original_len = trimmed_line.len();
             trimmed_line = trimmed_line.trim_start_matches(' ').to_string();
+            leading_trimmed = original_len - trimmed_line.len();
         }
 
         // Trim whitespace touching an endline (trailing whitespace on non-last lines)
@@ -5146,14 +5287,63 @@ fn trim_jsx_text(original: &str) -> Option<String> {
         }
 
         if !trimmed_line.is_empty() {
+            first_retained_offset.get_or_insert(line_offset + leading_trimmed);
             if !is_last_non_empty_line {
                 trimmed_line.push(' ');
             }
             str.push_str(&trimmed_line);
         }
+
+        line_offset += line.len();
+        if !is_last_line {
+            line_offset += if original.as_bytes().get(line_offset) == Some(&b'\r')
+                && original.as_bytes().get(line_offset + 1) == Some(&b'\n')
+            {
+                2
+            } else {
+                1
+            };
+        }
     }
 
-    if str.is_empty() { None } else { Some(str) }
+    first_retained_offset.map(|offset| (str, offset))
+}
+
+fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usize {
+    // Decoded entities can make a byte offset in the normalized value differ
+    // from the corresponding offset in the raw JSX source.
+    if target_offset == 0 || !source.contains('&') {
+        return target_offset;
+    }
+
+    let mut source_offset = 0;
+    let mut decoded_offset = 0;
+
+    while decoded_offset < target_offset && source_offset < source.len() {
+        let remaining = &source[source_offset..];
+        if let Some(entity) = remaining.strip_prefix('&')
+            && let Some(end) = entity.find(';')
+        {
+            let word = &entity[..end];
+            if !word.contains('&')
+                && let Some(decoded) = decode_jsx_entity(word)
+            {
+                let decoded_len = decoded.len_utf8();
+                if decoded_offset + decoded_len > target_offset {
+                    return source_offset;
+                }
+                decoded_offset += decoded_len;
+                source_offset += end + 2;
+                continue;
+            }
+        }
+
+        let char_len = remaining.chars().next().unwrap().len_utf8();
+        decoded_offset += char_len;
+        source_offset += char_len;
+    }
+
+    source_offset
 }
 
 /// Decode XML/HTML entities in JSX text (`&amp;` → `&`, `&gt;` → `>`, `&#123;`
@@ -5186,16 +5376,7 @@ fn decode_jsx_entities(s: &str) -> Cow<'_, str> {
         out.push_str(&s[prev..start]);
         prev = end + 1;
         let word = &s[start + 1..end];
-        let decoded = if let Some(num) = word.strip_prefix('#') {
-            if let Some(hex) = num.strip_prefix(['x', 'X']) {
-                u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
-            } else {
-                num.parse::<u32>().ok().and_then(char::from_u32)
-            }
-        } else {
-            oxc_syntax::xml_entities::XML_ENTITIES.get(word).copied()
-        };
-        match decoded {
+        match decode_jsx_entity(word) {
             Some(c) => out.push(c),
             // Not a recognized entity — keep the `&…;` literal.
             None => {
@@ -5207,6 +5388,18 @@ fn decode_jsx_entities(s: &str) -> Cow<'_, str> {
     }
     out.push_str(&s[prev..]);
     Cow::Owned(out)
+}
+
+fn decode_jsx_entity(word: &str) -> Option<char> {
+    if let Some(num) = word.strip_prefix('#') {
+        if let Some(hex) = num.strip_prefix(['x', 'X']) {
+            u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+        } else {
+            num.parse::<u32>().ok().and_then(char::from_u32)
+        }
+    } else {
+        oxc_syntax::xml_entities::XML_ENTITIES.get(word).copied()
+    }
 }
 
 /// Get the Babel-style type name of an oxc `Expression` node. Mirrors the
@@ -5292,7 +5485,7 @@ fn lower_object_method<'a>(
     }
 
     let key = lower_object_property_key(builder, &method.key, method.computed)?
-        .unwrap_or(ObjectPropertyKey::String { name: Ident::empty() });
+        .unwrap_or(ObjectPropertyKey::String { name: Ident::empty(), span: None });
 
     let func = match &method.value {
         oxc::Expression::FunctionExpression(func) => func,
@@ -5323,23 +5516,25 @@ fn lower_object_property_key<'a>(
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
-        oxc::PropertyKey::StringLiteral(lit) => {
-            Ok(Some(ObjectPropertyKey::String { name: Ident::from(lit.value.as_str()) }))
-        }
+        oxc::PropertyKey::StringLiteral(lit) => Ok(Some(ObjectPropertyKey::String {
+            name: Ident::from(lit.value.as_str()),
+            span: Some(lit.span),
+        })),
         oxc::PropertyKey::StaticIdentifier(ident) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name }))
+            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name, span: Some(ident.span) }))
         }
         oxc::PropertyKey::Identifier(ident) if !computed => {
-            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name }))
+            Ok(Some(ObjectPropertyKey::Identifier { name: ident.name, span: Some(ident.span) }))
         }
         oxc::PropertyKey::NumericLiteral(lit) if !computed => {
             Ok(Some(ObjectPropertyKey::Identifier {
                 name: format_ident!(builder.environment().allocator, "{}", lit.value),
+                span: Some(lit.span),
             }))
         }
         _ if computed => {
             let place = lower_expression_to_temporary(builder, key.to_expression())?;
-            Ok(Some(ObjectPropertyKey::Computed { name: place }))
+            Ok(Some(ObjectPropertyKey::Computed { name: place, span: Some(key.span()) }))
         }
         _ => {
             let span = match key {
@@ -5355,6 +5550,11 @@ fn lower_object_property_key<'a>(
             Ok(None)
         }
     }
+}
+
+/// Whether a computed property key can be represented without evaluating an expression.
+fn is_static_property_key(key: &oxc::PropertyKey<'_>) -> bool {
+    matches!(key, oxc::PropertyKey::StringLiteral(_))
 }
 
 /// Lower a reorderable expression. Faithful to the original
@@ -5525,6 +5725,13 @@ fn is_reorderable_expression(
     }
 }
 
+fn source_block_span(stmt: &oxc::Statement<'_>) -> Option<Span> {
+    match stmt {
+        oxc::Statement::BlockStatement(block) => Some(block.span),
+        _ => None,
+    }
+}
+
 fn lower_statement<'a>(
     builder: &mut HirBuilder<'a, '_>,
     stmt: &oxc::Statement<'a>,
@@ -5596,7 +5803,7 @@ fn lower_statement<'a>(
             let continuation_id = continuation_block.id;
 
             // Block for the consequent (if the test is truthy)
-            let consequent_span = Some(if_stmt.consequent.span());
+            let consequent_span = source_block_span(&if_stmt.consequent);
             let consequent_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 lower_statement(builder, &if_stmt.consequent, None, parent_scope)?;
                 Ok(Terminal::Goto {
@@ -5608,8 +5815,8 @@ fn lower_statement<'a>(
             })?;
 
             // Block for the alternate (if the test is not truthy)
+            let alternate_span = if_stmt.alternate.as_ref().and_then(source_block_span);
             let alternate_block = if let Some(alternate) = &if_stmt.alternate {
-                let alternate_span = Some(alternate.span());
                 builder.try_enter(BlockKind::Block, |builder, _block_id| {
                     lower_statement(builder, alternate, None, parent_scope)?;
                     Ok(Terminal::Goto {
@@ -5629,7 +5836,9 @@ fn lower_statement<'a>(
                 Terminal::If {
                     test,
                     consequent: consequent_block,
+                    consequent_span,
                     alternate: alternate_block,
+                    alternate_span,
                     fallthrough: continuation_id,
                     id: EvaluationOrder::UNSET,
                     span,
@@ -5701,7 +5910,7 @@ fn lower_statement<'a>(
 
             // Loop body block
             let continue_target = update_block_id.unwrap_or(test_block_id);
-            let body_span = Some(for_stmt.body.span());
+            let body_span = source_block_span(&for_stmt.body);
             let body_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(label, continue_target, continuation_id, |builder| {
                     lower_statement(builder, &for_stmt.body, None, parent_scope)?;
@@ -5721,6 +5930,7 @@ fn lower_statement<'a>(
                     test: test_block_id,
                     update: update_block_id,
                     loop_block: body_block,
+                    loop_block_span: body_span,
                     fallthrough: continuation_id,
                     id: EvaluationOrder::UNSET,
                     span,
@@ -5775,7 +5985,7 @@ fn lower_statement<'a>(
             let continuation_id = continuation_block.id;
 
             // Loop body
-            let body_span = Some(while_stmt.body.span());
+            let body_span = source_block_span(&while_stmt.body);
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(label, conditional_id, continuation_id, |builder| {
                     lower_statement(builder, &while_stmt.body, None, parent_scope)?;
@@ -5793,6 +6003,7 @@ fn lower_statement<'a>(
                 Terminal::While {
                     test: conditional_id,
                     loop_block,
+                    loop_block_span: body_span,
                     fallthrough: continuation_id,
                     id: EvaluationOrder::UNSET,
                     span,
@@ -5824,7 +6035,7 @@ fn lower_statement<'a>(
             let continuation_id = continuation_block.id;
 
             // Loop body, executed at least once unconditionally prior to exit
-            let body_span = Some(do_while_stmt.body.span());
+            let body_span = source_block_span(&do_while_stmt.body);
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(label, conditional_id, continuation_id, |builder| {
                     lower_statement(builder, &do_while_stmt.body, None, parent_scope)?;
@@ -5841,6 +6052,7 @@ fn lower_statement<'a>(
             builder.terminate_with_continuation(
                 Terminal::DoWhile {
                     loop_block,
+                    loop_block_span: body_span,
                     test: conditional_id,
                     fallthrough: continuation_id,
                     id: EvaluationOrder::UNSET,
@@ -5865,12 +6077,13 @@ fn lower_statement<'a>(
         }
         oxc::Statement::ForInStatement(for_in) => {
             let span = Some(for_in.span);
+            let left_span = for_in.left.span();
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
             let init_block = builder.reserve(BlockKind::Loop);
             let init_block_id = init_block.id;
 
-            let body_span = Some(for_in.body.span());
+            let body_span = source_block_span(&for_in.body);
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(label, init_block_id, continuation_id, |builder| {
                     lower_statement(builder, &for_in.body, None, parent_scope)?;
@@ -5888,6 +6101,8 @@ fn lower_statement<'a>(
                 Terminal::ForIn {
                     init: init_block_id,
                     loop_block,
+                    loop_block_span: body_span,
+                    left_span: Some(left_span),
                     fallthrough: continuation_id,
                     id: EvaluationOrder::UNSET,
                     span,
@@ -5896,7 +6111,6 @@ fn lower_statement<'a>(
             );
 
             // Lower the init: NextPropertyOf + assignment
-            let left_span = for_in.left.span();
             let next_property = lower_value_to_temporary(
                 builder,
                 InstructionValue::NextPropertyOf { value, span: Some(left_span) },
@@ -5924,6 +6138,7 @@ fn lower_statement<'a>(
         }
         oxc::Statement::ForOfStatement(for_of) => {
             let span = Some(for_of.span);
+            let left_span = for_of.left.span();
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
             let init_block = builder.reserve(BlockKind::Loop);
@@ -5940,7 +6155,7 @@ fn lower_statement<'a>(
                 return Ok(());
             }
 
-            let body_span = Some(for_of.body.span());
+            let body_span = source_block_span(&for_of.body);
             let loop_block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                 builder.loop_scope(label, init_block_id, continuation_id, |builder| {
                     lower_statement(builder, &for_of.body, None, parent_scope)?;
@@ -5959,6 +6174,8 @@ fn lower_statement<'a>(
                     init: init_block_id,
                     test: test_block_id,
                     loop_block,
+                    loop_block_span: body_span,
+                    left_span: Some(left_span),
                     fallthrough: continuation_id,
                     id: EvaluationOrder::UNSET,
                     span,
@@ -5982,7 +6199,6 @@ fn lower_statement<'a>(
             );
 
             // Test block: IteratorNext, assign, branch
-            let left_span = for_of.left.span();
             let advance_iterator = lower_value_to_temporary(
                 builder,
                 InstructionValue::IteratorNext {
@@ -6063,7 +6279,7 @@ fn lower_statement<'a>(
                     None
                 };
 
-                cases.push(Case { test, block });
+                cases.push(Case { test, block, span: case_span });
                 fallthrough = block;
             }
 
@@ -6072,7 +6288,7 @@ fn lower_statement<'a>(
 
             // If no default case, add one that jumps to continuation
             if !has_default {
-                cases.push(Case { test: None, block: continuation_id });
+                cases.push(Case { test: None, block: continuation_id, span: None });
             }
 
             let test = lower_expression_to_temporary(builder, &switch_stmt.discriminant)?;
@@ -6220,8 +6436,10 @@ fn lower_statement<'a>(
             builder.terminate_with_continuation(
                 Terminal::Try {
                     block: try_block,
+                    block_span: try_body_span,
                     handler_binding: handler_binding_info.map(|(place, _)| place),
                     handler: handler_block,
+                    handler_span: Some(handler_clause.body.span),
                     fallthrough: continuation_id,
                     id: EvaluationOrder::UNSET,
                     span,
@@ -6277,7 +6495,7 @@ fn lower_statement<'a>(
                     // All other statements create a continuation block to allow `break`
                     let continuation_block = builder.reserve(BlockKind::Block);
                     let continuation_id = continuation_block.id;
-                    let body_span = Some(labeled_stmt.body.span());
+                    let body_span = source_block_span(&labeled_stmt.body);
                     let block = builder.try_enter(BlockKind::Block, |builder, _block_id| {
                         builder.label_scope(label_name, continuation_id, |builder| {
                             lower_statement(builder, &labeled_stmt.body, None, parent_scope)?;
@@ -6294,6 +6512,7 @@ fn lower_statement<'a>(
                     builder.terminate_with_continuation(
                         Terminal::Label {
                             block,
+                            block_span: body_span,
                             fallthrough: continuation_id,
                             id: EvaluationOrder::UNSET,
                             span,

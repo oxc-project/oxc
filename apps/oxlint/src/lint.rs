@@ -12,7 +12,9 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_config::GitignoreChecker;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
+};
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
@@ -112,7 +114,7 @@ impl CliRunner {
         };
 
         let handler = if cfg!(any(test, feature = "testing")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+            GraphicalReportHandler::new_themed(GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
         };
@@ -2383,7 +2385,7 @@ mod suppression {
     #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
     fn test_prunning_errors_update_the_file_when_errors_are_decreased() {
         SuppressionTester::new()
-            .with_cwd("with_arg_and_decreased_errors")
+            .with_cwd("with_arg_and_decreased_errors_prune")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)

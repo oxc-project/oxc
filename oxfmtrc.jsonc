@@ -28,6 +28,8 @@
     "apps/oxfmt/src-js/config.generated.ts",
     "apps/oxlint/conformance/submodules/**",
     "napi/parser/src-js/bindings.js",
+    "tasks/codegen_conformance/index.js",
+    "tasks/codegen_conformance/index.d.ts",
     "napi/playground/playground.wasi-browser.js",
     "napi/{transform,transform-react,minify,playground}/index.js",
     "napi/{transform,transform-react,minify,playground}/index.d.ts",

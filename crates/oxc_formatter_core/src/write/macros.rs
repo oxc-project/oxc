@@ -1,0 +1,278 @@
+/// Constructs the parameters for other formatting macros.
+///
+/// This macro functions by taking a list of objects implementing [crate::Format]. It canonicalize the
+/// arguments into a single type.
+///
+/// This macro produces a value of type [crate::Arguments]. This value can be passed to
+/// the macros within [crate]. [`write!`](crate::write!) is proxied through this one.
+/// This macro avoids heap allocations.
+///
+/// You can use the [`Arguments`] value that `format_args!` returns in  `Format` contexts
+/// as seen below.
+///
+/// ```text
+/// use biome_formatter::{SimpleFormatContext, format, format_args};
+/// use biome_formatter::prelude::*;
+///
+/// # fn main()  {
+/// let formatted = format!(SimpleFormatContext::default(), [
+///     format_args!(token("Hello World"))
+/// ])?;
+///
+/// assert_eq!("Hello World", formatted.print()?.as_code());
+/// # Ok(())
+/// # }
+/// ```
+///
+/// [`Format`]: crate::Format
+/// [`Arguments`]: crate::Arguments
+#[macro_export]
+macro_rules! format_args {
+    ($($value:expr),+ $(,)?) => {
+        $crate::Arguments::new(&[
+            $(
+                $crate::Argument::new(&$value)
+            ),+
+        ])
+    }
+}
+
+/// Writes formatted data into a buffer.
+///
+/// This macro accepts a 'buffer' and a list of format arguments. Each argument will be formatted
+/// and the result will be passed to the buffer. The writer may be any value with a `write_fmt` method;
+/// generally this comes from an implementation of the [crate::Buffer] trait.
+///
+/// # Examples
+///
+/// ```text
+/// use biome_formatter::prelude::*;
+/// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, write};
+///
+/// # fn main()  {
+/// let mut state = FormatState::new(SimpleFormatContext::default());
+/// let mut buffer = VecBuffer::new(&mut state);
+/// write!(&mut buffer, [token("Hello"), space()])?;
+/// write!(&mut buffer, [token("World")])?;
+///
+/// assert_eq!(
+///     buffer.into_vec(),
+///     vec![
+///         FormatElement::Token { text: "Hello" },
+///         FormatElement::Space,
+///         FormatElement::Token { text: "World" },
+///     ]
+///  );
+/// #  Ok(())
+/// # }
+/// ```
+#[macro_export]
+macro_rules! write {
+    ($dst:expr, [$($arg:expr),+ $(,)?]) => {{
+        let result = $dst.write_fmt($crate::format_args!($($arg),+));
+        result
+    }};
+    ($dst:expr, $arg:expr) => {{
+        let result = $dst.write_fmt($crate::format_args!($arg));
+        result
+    }}
+}
+
+/// Provides multiple different alternatives and the printer picks the first one that fits.
+///
+/// Use this as last resort because it requires that the printer must try all variants in the worst case.
+/// The passed variants must be in the following order:
+/// * First: The variant that takes up most space horizontally
+/// * Last: The variant that takes up the least space horizontally by splitting the content over multiple lines.
+///
+/// ## Examples
+///
+/// ```text
+/// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
+/// use biome_formatter::prelude::*;
+///
+/// # fn main()  {
+/// let formatted = format!(
+///     SimpleFormatContext::default(),
+///     [
+///         token("aVeryLongIdentifier"),
+///         best_fitting!(
+///             // Everything fits on a single line
+///             format_args!(
+///                 token("("),
+///                 group(&format_args![
+///                     token("["),
+///                         soft_block_indent(&format_args![
+///                         token("1,"),
+///                         soft_line_break_or_space(),
+///                         token("2,"),
+///                         soft_line_break_or_space(),
+///                         token("3"),
+///                     ]),
+///                     token("]")
+///                 ]),
+///                 token(")")
+///             ),
+///
+///             // Breaks after `[`, but prints all elements on a single line
+///             format_args!(
+///                 token("("),
+///                 token("["),
+///                 block_indent(&token("1, 2, 3")),
+///                 token("]"),
+///                 token(")"),
+///             ),
+///
+///             // Breaks after `[` and prints each element on a single line
+///             format_args!(
+///                 token("("),
+///                 block_indent(&format_args![
+///                     token("["),
+///                     block_indent(&format_args![
+///                         token("1,"),
+///                         hard_line_break(),
+///                         token("2,"),
+///                         hard_line_break(),
+///                         token("3"),
+///                     ]),
+///                     token("]"),
+///                 ]),
+///                 token(")")
+///             )
+///         )
+///     ]
+/// )?;
+///
+/// let document = formatted.into_final_document();
+///
+/// // Takes the first variant if everything fits on a single line
+/// assert_eq!(
+///     "aVeryLongIdentifier([1, 2, 3])",
+///     Formatted::new(document.clone(), SimpleFormatContext::default())
+///         .print()?
+///         .as_code()
+/// );
+///
+/// // It takes the second if the first variant doesn't fit on a single line. The second variant
+/// // has some additional line breaks to make sure inner groups don't break
+/// assert_eq!(
+///     "aVeryLongIdentifier([\n\t1, 2, 3\n])",
+///     Formatted::new(document.clone(), SimpleFormatContext::new(SimpleFormatOptions { line_width: 21.try_into().unwrap(), ..SimpleFormatOptions::default() }))
+///         .print()?
+///         .as_code()
+/// );
+///
+/// // Prints the last option as last resort
+/// assert_eq!(
+///     "aVeryLongIdentifier(\n\t[\n\t\t1,\n\t\t2,\n\t\t3\n\t]\n)",
+///     Formatted::new(document.clone(), SimpleFormatContext::new(SimpleFormatOptions { line_width: 20.try_into().unwrap(), ..SimpleFormatOptions::default() }))
+///         .print()?
+///         .as_code()
+/// );
+/// # Ok(())
+/// # }
+/// ```
+///
+/// ### Enclosing group with `should_expand: true`
+///
+/// ```text
+/// use biome_formatter::{Formatted, LineWidth, format, format_args, SimpleFormatOptions};
+/// use biome_formatter::prelude::*;
+///
+/// # fn main()  {
+/// let formatted = format!(
+///     SimpleFormatContext::default(),
+///     [
+///         best_fitting!(
+///             // Prints the method call on the line but breaks the array.
+///             format_args!(
+///                 token("expect(a).toMatch("),
+///                 group(&format_args![
+///                     token("["),
+///                     soft_block_indent(&format_args![
+///                         token("1,"),
+///                         soft_line_break_or_space(),
+///                         token("2,"),
+///                         soft_line_break_or_space(),
+///                         token("3"),
+///                     ]),
+///                     token("]")
+///                 ]).should_expand(true),
+///                 token(")")
+///             ),
+///
+///             // Breaks after `(`
+///            format_args!(
+///                 token("expect(a).toMatch("),
+///                 group(&soft_block_indent(
+///                     &group(&format_args![
+///                         token("["),
+///                         soft_block_indent(&format_args![
+///                             token("1,"),
+///                             soft_line_break_or_space(),
+///                             token("2,"),
+///                             soft_line_break_or_space(),
+///                             token("3"),
+///                         ]),
+///                         token("]")
+///                     ]).should_expand(true),
+///                 )).should_expand(true),
+///                 token(")")
+///             ),
+///         )
+///     ]
+/// )?;
+///
+/// let document = formatted.into_final_document();
+///
+/// assert_eq!(
+///     "expect(a).toMatch([\n\t1,\n\t2,\n\t3\n])",
+///     Formatted::new(document.clone(), SimpleFormatContext::default())
+///         .print()?
+///         .as_code()
+/// );
+///
+/// # Ok(())
+/// # }
+/// ```
+///
+/// The first variant fits because all its content up to the first line break fit on the line without exceeding
+/// the configured print width.
+///
+/// ## Complexity
+/// Be mindful of using this IR element as it has a considerable performance penalty:
+/// * There are multiple representation for the same content. This results in increased memory usage
+///   and traversal time in the printer.
+/// * The worst case complexity is that the printer tires each variant. This can result in quadratic
+///   complexity if used in nested structures.
+///
+/// ## Behavior
+/// This IR is similar to Prettier's `conditionalGroup`. The printer measures each variant, except the [`MostExpanded`], in [`Flat`] mode
+/// to find the first variant that fits and prints this variant in [`Flat`] mode. If no variant fits, then
+/// the printer falls back to printing the [`MostExpanded`] variant in `[`Expanded`] mode.
+///
+/// The definition of *fits* differs to groups in that the printer only tests if it is possible to print
+/// the content up to the first non-soft line break without exceeding the configured print width.
+/// This definition differs from groups as that non-soft line breaks make group expand.
+///
+/// A consequence of that first-line measurement:
+/// variant selection CANNOT depend on whether a variant's own content breaks,
+/// a variant holding a forced break (a hard line, an expanded group) is still selected when its first line fits.
+/// To flip layouts on "does this content break",
+/// put the content in a [group with an id](crate::builders::IfGroupBreaks::with_group_id)
+/// and switch with [crate::builders::if_group_breaks] instead.
+///
+/// [crate::builders::BestFitting] acts as an expansion boundary:
+/// an expanding element inside a variant never expands the groups enclosing the [crate::builders::BestFitting]
+/// (see `Document::propagate_expand`), it is the ONLY boundary;
+/// conditional content tags are transparent to propagation.
+///
+/// [`Flat`]: crate::format_element::PrintMode::Flat
+/// [`Expanded`]: crate::format_element::PrintMode::Expanded
+/// [`MostExpanded`]: crate::format_element::BestFittingElement::most_expanded
+#[macro_export]
+macro_rules! best_fitting {
+    ($least_expanded:expr, $($tail:expr),+ $(,)?) => {
+        $crate::builders::BestFitting::from_arguments_unchecked($crate::format_args!($least_expanded, $($tail),+))
+    };
+}
