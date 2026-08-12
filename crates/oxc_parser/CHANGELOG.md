@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-12
+
+### 🐛 Bug Fixes
+
+- 73acba9 parser: Preserve fatal errors during await reparse (#25541) (Boshen)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES
