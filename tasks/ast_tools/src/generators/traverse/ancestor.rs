@@ -106,6 +106,35 @@ pub fn generate_ancestor(schema: &Schema) -> TokenStream {
                 });
             }
 
+            let field_name = field.name();
+            if field_name == "body" || field_name == "statements" {
+                let field_type = field.type_def(schema);
+                if let TypeDef::Vec(vec_def) = field_type {
+                    let inner_type = vec_def.inner_type(schema);
+                    if inner_type.name() == "Statement" {
+                        let type_snake_name = struct_def.snake_name();
+                        let type_screaming_name = type_snake_name.cow_to_ascii_uppercase();
+                        let field_offset = format_ident!(
+                            "OFFSET_{}_{}",
+                            type_screaming_name,
+                            field_name.cow_to_ascii_uppercase()
+                        );
+
+                        let field_ty = field.type_def(schema).ty(schema);
+                        methods_code.extend(quote! {
+                            ///@@line_break
+                            #[inline]
+                            pub fn last_statement_address(self) -> Option<Address> {
+                                let statements = unsafe {
+                                    &*((self.0 as *const u8).add(#field_offset) as *const #field_ty)
+                                };
+                                statements.last().map(GetAddress::address)
+                            }
+                        });
+                    }
+                }
+            }
+
             // Lifetimes for Without struct
             let lifetimes = if has_lifetime { quote!(<'a, 't>) } else { quote!(<'t>) };
 

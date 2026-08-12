@@ -167,7 +167,7 @@ fn test_while_continue_optimization() {
     test("while(true){if(a()){continue;}else{continue;} b();}", "for(;;)a();");
     test(
         "while(true){d();if(a()){continue;}else if(b()){c();continue;}else{continue;}}",
-        "for(;;)d(),!a()&&b()&&c();",
+        "for(;;)d(),a()||b()&&c();",
     );
 
     test("while(true)while(a())continue;", "for(;;)for(;a(););");

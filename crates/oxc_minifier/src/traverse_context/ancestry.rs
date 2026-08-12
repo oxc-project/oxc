@@ -1,5 +1,6 @@
 use std::mem::transmute;
 
+use oxc_allocator::GetAddress;
 use oxc_data_structures::stack::NonEmptyStack;
 
 use crate::generated::ancestor::{Ancestor, AncestorType};
@@ -129,6 +130,27 @@ impl<'a> TraverseAncestry<'a> {
     #[inline]
     pub fn ancestors_depth(&self) -> usize {
         self.stack.len()
+    }
+
+    #[inline]
+    pub fn is_last_in_statement_list(&self, level: usize) -> bool {
+        if level == 0 {
+            return false;
+        }
+
+        let current = self.ancestor(level - 1);
+        let parent = self.ancestor(level);
+
+        let Some(last_statement_address) = (match parent {
+            Ancestor::ProgramBody(program) => program.last_statement_address(),
+            Ancestor::FunctionBodyStatements(body) => body.last_statement_address(),
+            Ancestor::BlockStatementBody(block) => block.last_statement_address(),
+            _ => None,
+        }) else {
+            return false;
+        };
+
+        last_statement_address == current.address()
     }
 }
 

@@ -2034,7 +2034,8 @@ impl<'a> PeepholeOptimizations {
                             return true;
                         }
                         Ancestor::BlockStatementBody(_)
-                            if skip_first_transparent_body && index == 0 => {}
+                            if (skip_first_transparent_body && index == 0)
+                                || ctx.is_last_in_statement_list(index) => {}
                         Ancestor::IfStatementConsequent(_)
                         | Ancestor::IfStatementAlternate(_)
                         | Ancestor::LabeledStatementBody(_) => {}
@@ -2052,7 +2053,8 @@ impl<'a> PeepholeOptimizations {
                                 && do_while.test().get_side_free_boolean_value(ctx) == Some(false);
                         }
                         Ancestor::BlockStatementBody(_)
-                            if skip_first_transparent_body && index == 0 => {}
+                            if (skip_first_transparent_body && index == 0)
+                                || ctx.is_last_in_statement_list(index) => {}
                         Ancestor::LabeledStatementBody(label_stmt) => {
                             if let Some(label) = &stmt.label {
                                 return label.name == label_stmt.label().name;
@@ -2066,7 +2068,21 @@ impl<'a> PeepholeOptimizations {
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
-                ctx.parent().is_function_body()
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
+                        Ancestor::BlockStatementBody(_) if ctx.is_last_in_statement_list(index) => {
+                        }
+                        Ancestor::FunctionBodyStatements(_) => {
+                            return (skip_first_transparent_body && index == 0)
+                                || ctx.is_last_in_statement_list(index);
+                        }
+                        Ancestor::IfStatementConsequent(_)
+                        | Ancestor::IfStatementAlternate(_)
+                        | Ancestor::LabeledStatementBody(_) => {}
+                        _ => return false,
+                    }
+                }
+                false
             }
             _ => false,
         }
