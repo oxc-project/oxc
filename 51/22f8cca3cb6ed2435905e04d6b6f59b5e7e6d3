@@ -1,0 +1,19 @@
+apps/oxlint/test/fixtures/vue_actual_ranges_json/output.snap.md
+  s_155ae82a12acf2::t_4a2f2da6382fb1 6-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5122f8cca3cb6ed2435905e04d6b6f59b5e7e6d3",
+  "prompts": {},
+  "sessions": {
+    "s_155ae82a12acf2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff543-f21d-7270-8037-ad2b1a05b375",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
