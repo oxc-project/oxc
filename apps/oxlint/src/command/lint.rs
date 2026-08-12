@@ -32,7 +32,13 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub warning_options: WarningOptions,
 
-    #[bpaf(external)]
+    #[bpaf(
+        external,
+        guard(
+            |options| options.output_file_format.is_none() || options.output_file.is_some(),
+            "--output-file-format requires --output-file"
+        )
+    )]
     pub output_options: OutputOptions,
 
     /// List all the rules that are currently registered
@@ -294,10 +300,18 @@ pub struct WarningOptions {
 /// Output
 #[derive(Debug, Clone, Bpaf)]
 pub struct OutputOptions {
-    /// Use a specific output format. Possible values:
+    /// Use a specific format for stdout. Possible values:
     /// `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`, `stylish`, `unix`
     #[bpaf(long, short, fallback_with(default_output_format), hide_usage)]
     pub format: OutputFormat,
+
+    /// Also write the lint report to a file. Create parent directories if needed.
+    #[bpaf(long("output-file"), short('o'), argument("PATH"), hide_usage)]
+    pub output_file: Option<PathBuf>,
+
+    /// Format for `--output-file`. Accepts the same values as `--format` and defaults to the stdout format.
+    #[bpaf(long, argument("FORMAT"), hide_usage)]
+    pub output_file_format: Option<OutputFormat>,
 
     #[bpaf(
         long("debug"),
@@ -733,6 +747,15 @@ mod lint_options {
 
         let options = get_lint_options("-f agent");
         assert_eq!(options.output_options.format, OutputFormat::Agent);
+    }
+
+    #[test]
+    fn output_file_format_requires_path() {
+        let error = lint_command()
+            .run_inner(&["--output-file-format", "json", "src"])
+            .unwrap_err()
+            .unwrap_stderr();
+        assert!(error.contains("--output-file-format requires --output-file"), "{error}");
     }
 
     #[test]
