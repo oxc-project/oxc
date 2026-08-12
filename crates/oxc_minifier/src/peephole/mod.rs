@@ -396,7 +396,7 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::minimize_statements(stmts, ctx);
+        Self::minimize_statements(stmts, ctx, true);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
