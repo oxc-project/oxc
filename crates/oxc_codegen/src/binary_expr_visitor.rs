@@ -67,6 +67,24 @@ fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
     }
 }
 
+fn binary_operator(expression: &Expression<'_>) -> Option<BinaryOperator> {
+    let Expression::BinaryExpression(expression) = expression else { return None };
+    Some(expression.operator)
+}
+
+fn is_ts_type_argument_open(operator: BinaryOperator) -> bool {
+    matches!(operator, BinaryOperator::LessThan | BinaryOperator::ShiftLeft)
+}
+
+fn is_ts_type_argument_close(operator: BinaryOperator) -> bool {
+    matches!(
+        operator,
+        BinaryOperator::GreaterThan
+            | BinaryOperator::ShiftRight
+            | BinaryOperator::ShiftRightZeroFill
+    )
+}
+
 impl BinaryishOperator {
     fn r#gen(self, p: &mut Codegen) {
         match self {
@@ -214,11 +232,39 @@ impl<'a> BinaryExpressionVisitor<'a> {
                     self.left_precedence = Precedence::Call;
                 }
             }
+            BinaryishOperator::Binary(
+                BinaryOperator::GreaterThan
+                | BinaryOperator::ShiftRight
+                | BinaryOperator::ShiftRightZeroFill,
+            ) if p.is_typescript
+                && binary_operator(e.left()).is_some_and(is_ts_type_argument_open) =>
+            {
+                // TypeScript can reinterpret `<...>`, `<...>>`, and `<...>>>` as type
+                // arguments. Make the left child bind less tightly so it is grouped.
+                self.left_precedence = Precedence::Shift;
+            }
+            BinaryishOperator::Binary(BinaryOperator::LessThan | BinaryOperator::ShiftLeft)
+                if p.is_typescript
+                    && binary_operator(e.right()).is_some_and(is_ts_type_argument_close) =>
+            {
+                // A right shift can be re-lexed into multiple generic closers. Make the
+                // right child bind less tightly so the current opener cannot consume it.
+                self.right_precedence = Precedence::Shift;
+            }
             BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd) => {
                 // Without parentheses, `|` or `&` becomes part of the type in
                 // `(value satisfies Type) | other` or `(value satisfies Type) & other`.
                 if matches!(e.left(), Expression::TSSatisfiesExpression(_)) {
                     self.left_precedence = Precedence::Compare;
+                }
+
+                if p.is_typescript {
+                    if binary_operator(e.left()).is_some_and(is_ts_type_argument_open) {
+                        self.left_precedence = Precedence::Shift;
+                    }
+                    if binary_operator(e.right()).is_some_and(is_ts_type_argument_open) {
+                        self.right_precedence = Precedence::Shift;
+                    }
                 }
             }
 
