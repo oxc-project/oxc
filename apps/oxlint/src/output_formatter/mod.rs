@@ -10,23 +10,35 @@ mod stylish;
 mod unix;
 mod xml_utils;
 
-use std::str::FromStr;
-use std::time::Duration;
+use std::{
+    borrow::Cow,
+    cell::RefCell,
+    error::Error as StdError,
+    fmt::{self, Debug, Display},
+    rc::Rc,
+    str::FromStr,
+    sync::Arc,
+    time::Duration,
+};
+
+use oxc_diagnostics::{
+    Diagnostic, Error, SourceCode,
+    reporter::{DiagnosticReporter, DiagnosticResult},
+};
+use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
+use oxc_span::LabeledSpan;
+use rustc_hash::FxHashSet;
+
+use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
 use agent::AgentOutputFormatter;
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
-use oxc_linter::{OxlintSuppressionFileAction, RuleTimingRecord};
-use rustc_hash::FxHashSet;
 use sarif::SarifOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
-
-use oxc_diagnostics::reporter::DiagnosticReporter;
-
-use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum OutputFormat {
@@ -146,11 +158,33 @@ trait InternalFormatter {
 
 pub struct OutputFormatter {
     internal: Box<dyn InternalFormatter>,
+    additional: Option<AdditionalOutputFormatter>,
+}
+
+struct AdditionalOutputFormatter {
+    internal: Box<dyn InternalFormatter>,
+    output: Rc<RefCell<String>>,
+    silent_primary: bool,
 }
 
 impl OutputFormatter {
     pub fn new(format: OutputFormat) -> Self {
-        Self { internal: Self::get_internal_formatter(format) }
+        Self { internal: Self::get_internal_formatter(format), additional: None }
+    }
+
+    pub fn new_with_additional_output(
+        format: OutputFormat,
+        additional_format: OutputFormat,
+        silent_primary: bool,
+    ) -> Self {
+        Self {
+            internal: Self::get_internal_formatter(format),
+            additional: Some(AdditionalOutputFormatter {
+                internal: Self::get_internal_formatter(additional_format),
+                output: Rc::default(),
+                silent_primary,
+            }),
+        }
     }
 
     fn get_internal_formatter(format: OutputFormat) -> Box<dyn InternalFormatter> {
@@ -176,21 +210,179 @@ impl OutputFormatter {
 
     /// At the end of the Lint command we may output extra information.
     pub fn lint_command_info(&self, lint_command_info: &LintCommandInfo) -> Option<String> {
+        if let Some(additional) = &self.additional
+            && let Some(output) = additional.internal.lint_command_info(lint_command_info)
+        {
+            additional.output.borrow_mut().push_str(&output);
+        }
         self.internal.lint_command_info(lint_command_info)
     }
 
     /// Returns the [`DiagnosticReporter`] which then will be used by [`DiagnosticService`](oxc_diagnostics::DiagnosticService)
     /// See [`InternalFormatter::get_diagnostic_reporter`] for more details.
     pub fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
-        self.internal.get_diagnostic_reporter()
+        let primary = self.internal.get_diagnostic_reporter();
+        if let Some(additional) = &self.additional {
+            Box::new(AdditionalOutputReporter {
+                primary,
+                additional: additional.internal.get_diagnostic_reporter(),
+                output: Rc::clone(&additional.output),
+                silent_primary: additional.silent_primary,
+            })
+        } else {
+            primary
+        }
+    }
+
+    pub fn take_additional_output(&self) -> Option<String> {
+        self.additional.as_ref().map(|additional| {
+            let mut output = additional.output.borrow_mut();
+            std::mem::take(&mut *output)
+        })
+    }
+}
+
+struct AdditionalOutputReporter {
+    primary: Box<dyn DiagnosticReporter>,
+    additional: Box<dyn DiagnosticReporter>,
+    output: Rc<RefCell<String>>,
+    silent_primary: bool,
+}
+
+impl DiagnosticReporter for AdditionalOutputReporter {
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+        if let Some(output) = self.additional.finish(result) {
+            self.output.borrow_mut().push_str(&output);
+        }
+
+        self.primary.finish(result)
+    }
+
+    fn supports_minified_file_fallback(&self) -> bool {
+        // The additional formatter must receive every original diagnostic. The service-level
+        // fallback replaces diagnostics based on primary output and can make the file incomplete.
+        false
+    }
+
+    fn render_error(&mut self, error: Error) -> Option<String> {
+        let error: Arc<dyn Diagnostic + Send + Sync> = error.into();
+        let primary_output = if self.silent_primary {
+            None
+        } else {
+            self.primary.render_error(Box::new(SharedDiagnostic(Arc::clone(&error))))
+        };
+
+        if let Some(output) = self.additional.render_error(Box::new(SharedDiagnostic(error))) {
+            self.output.borrow_mut().push_str(&output);
+        }
+
+        primary_output
+    }
+}
+
+struct SharedDiagnostic(Arc<dyn Diagnostic + Send + Sync>);
+
+impl Debug for SharedDiagnostic {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Debug::fmt(self.0.as_ref(), formatter)
+    }
+}
+
+impl Display for SharedDiagnostic {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Display::fmt(self.0.as_ref(), formatter)
+    }
+}
+
+impl StdError for SharedDiagnostic {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        self.0.source()
+    }
+}
+
+impl Diagnostic for SharedDiagnostic {
+    fn code(&self) -> Option<Cow<'_, str>> {
+        self.0.code()
+    }
+
+    fn severity(&self) -> Option<oxc_diagnostics::Severity> {
+        self.0.severity()
+    }
+
+    fn help(&self) -> Option<Cow<'_, str>> {
+        self.0.help()
+    }
+
+    fn note(&self) -> Option<Cow<'_, str>> {
+        self.0.note()
+    }
+
+    fn url(&self) -> Option<Cow<'_, str>> {
+        self.0.url()
+    }
+
+    fn source_code(&self) -> Option<&dyn SourceCode> {
+        self.0.source_code()
+    }
+
+    fn labels(&self) -> &[LabeledSpan] {
+        self.0.labels()
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::tester::Tester;
+    use std::time::Duration;
+
+    use oxc_diagnostics::{DiagnosticService, NamedSource, OxcDiagnostic};
+    use oxc_linter::OxlintSuppressionFileAction;
+    use oxc_span::Span;
+
+    use crate::{
+        output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
+        tester::Tester,
+    };
 
     const TEST_CWD: &str = "fixtures/cli/output_formatter_diagnostic";
+
+    #[test]
+    fn writes_the_same_diagnostic_in_two_formats() {
+        let formatter = OutputFormatter::new_with_additional_output(
+            OutputFormat::Default,
+            OutputFormat::Json,
+            false,
+        );
+        let (mut service, sender) = DiagnosticService::new(formatter.get_diagnostic_reporter());
+        sender
+            .send(vec![
+                OxcDiagnostic::warn("test warning")
+                    .with_label(Span::new(0, 8))
+                    .with_source_code(NamedSource::new("test.js", "debugger;")),
+            ])
+            .unwrap();
+        drop(sender);
+
+        let mut stdout = Vec::new();
+        service.run(&mut stdout);
+        let info = LintCommandInfo {
+            number_of_files: 1,
+            number_of_rules: Some(1),
+            threads_count: 1,
+            start_time: Duration::ZERO,
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
+            rule_timings: None,
+        };
+        stdout.extend(formatter.lint_command_info(&info).unwrap().bytes());
+
+        let stdout = String::from_utf8(stdout).unwrap();
+        assert!(stdout.contains("test warning"));
+
+        let additional = formatter.take_additional_output().unwrap();
+        let report: serde_json::Value = serde_json::from_str(&additional).unwrap();
+        let diagnostics = report["diagnostics"].as_array().unwrap();
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0]["message"], "test warning");
+    }
 
     #[test]
     fn test_output_formatter_diagnostic_formats() {
