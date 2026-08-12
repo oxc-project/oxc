@@ -13,6 +13,8 @@ pub struct VuePartialLoader<'a> {
     source_text: &'a str,
 }
 
+pub(super) const EXTENSION: &str = "vue";
+
 impl<'a> VuePartialLoader<'a> {
     pub fn new(source_text: &'a str) -> Self {
         Self { source_text }
