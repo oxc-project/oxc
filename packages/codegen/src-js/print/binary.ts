@@ -44,8 +44,7 @@ export function printBinaryish(
   precedence: number,
   ctx: number,
 ): void {
-  // The pending outer levels are threaded through `parent` rather than a separate stack array,
-  // so a non-nested operand allocates nothing extra
+  // The pending outer levels are threaded through `parent` rather than a separate stack array.
   let v: BinaryVisitor | null = {
     e: node,
     precedence,

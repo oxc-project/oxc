@@ -523,13 +523,13 @@ and making a single JS-Rust-JS round-trip, with the sourcemap generation (VLQ en
 
 WASM might also be a good option for this.
 
-### No allocation in the binary walk
+### No separate stack in the binary walk
 
 `printBinaryish` walks the left spine of a binary/logical chain iteratively. `a + b + c + d` nests as deep
 as it is long, so recursion would put the stack at the mercy of the input.
 
-Rust does the same, but with an explicit `Stack` on `Codegen`. Here the pending levels are threaded
-through a `parent` field on the visitor object, so a non-nested operand allocates nothing extra.
+Rust does the same, but with an explicit `Stack` on `Codegen`. Here each level has a small visitor
+object, and pending outer levels are threaded through its `parent` field rather than a separate stack array.
 
 ### Lookup tables are `__proto__: null`
 
