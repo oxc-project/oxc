@@ -41,11 +41,13 @@ unicode-width = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-oxc_formatter_tests = { workspace = true }
+oxc_formatter_tests = { workspace = true, features = ["conformance"] }
 oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+similar = { workspace = true }
+walkdir = { workspace = true }
 
 [build-dependencies]
 oxc_formatter_tests = { workspace = true }

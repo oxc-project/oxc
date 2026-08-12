@@ -533,8 +533,8 @@ jobs:
         id: filter
         uses: ./.github/actions/check-changes
         with:
-          packages: oxc_coverage,oxc_transform_conformance,oxc_prettier_conformance
-          paths: tasks/coverage/,tasks/common/,tasks/transform_conformance/,tasks/prettier_conformance/,pnpm-lock.yaml
+          packages: oxc_coverage,oxc_transform_conformance
+          paths: tasks/coverage/,tasks/common/,tasks/transform_conformance/,pnpm-lock.yaml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -549,9 +549,7 @@ jobs:
       - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
         if: steps.filter.outputs.changed == 'true'
         with:
-          path: |
-            /home/runner/.rustup
-            ./crates/oxc_formatter_tests/prettier
+          path: /home/runner/.rustup
           cache: |
             rust
             pnpm

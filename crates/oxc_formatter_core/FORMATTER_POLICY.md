@@ -127,17 +127,15 @@ Every expected output must be verified against Prettier, except fixtures pinning
 
 Compares output against Prettier's snapshots and tracks failures (not passes).
 
-Language crates own their conformance as a `tests/conformance.rs` target (via `oxc_formatter_tests::conformance`, report pinned with `insta`) — currently json/css/graphql/yaml; JS/TS still runs through the central task runner during the migration:
+Every language crate owns its conformance as a `tests/conformance.rs` target (via `oxc_formatter_tests::conformance`, report pinned with `insta`), part of the crate's regular `cargo test`:
 
 ```sh
-# Per-crate (json/css/graphql/yaml)
 cargo test -p <crate> --test conformance
+# Debug a specific test
 PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
-
-# Central runner (js/ts)
-cargo run -p oxc_prettier_conformance
-cargo run -p oxc_prettier_conformance -- --filter <path>
 ```
+
+JSDoc formatting is covered by plain fixture-pair tests in `oxc_formatter` (`--test jsdoc`, committed input/expected pairs — a mismatch is a failing test, not a tracked report entry).
 
 Failures must be either fixed or classified under "Known divergences".
 

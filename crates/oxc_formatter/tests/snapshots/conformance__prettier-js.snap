@@ -1,3 +1,7 @@
+---
+source: crates/oxc_formatter/tests/conformance.rs
+expression: report
+---
 js compatibility: 774/810 (95.56%), 23 files skipped
 
 # Failed

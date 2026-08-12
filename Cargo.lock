@@ -2065,8 +2065,10 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "similar 3.1.2",
  "smallvec",
  "unicode-width",
+ "walkdir",
 ]
 
 [[package]]
@@ -2465,27 +2467,6 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "oxc_prettier_conformance"
-version = "0.0.0"
-dependencies = [
- "cow-utils",
- "oxc_allocator",
- "oxc_ast",
- "oxc_ast_visit",
- "oxc_formatter",
- "oxc_formatter_core",
- "oxc_formatter_tests",
- "oxc_parser",
- "oxc_span",
- "oxc_tasks_common",
- "pico-args",
- "rustc-hash",
- "serde_json",
- "similar 3.1.2",
- "walkdir",
 ]
 
 [[package]]

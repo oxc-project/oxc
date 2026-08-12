@@ -41,8 +41,8 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 ### Format JSDoc (`formatter/jsdoc/`)
 
 - Derived from `prettier-plugin-jsdoc`, but not fully compatible
-- See `prettier_conformance/jsdoc` for the covered behavior
-  - See also prettier_conformance/jsdoc/upstream-jsdoc-bugs.md
+- See `tests/jsdoc/fixtures` for the covered behavior
+  - See also `tests/jsdoc/upstream-jsdoc-bugs.md`
 
 ### Sort Tailwind CSS
 

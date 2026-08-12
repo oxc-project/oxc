@@ -155,7 +155,6 @@ cargo test -p <crate_name>             # Test specific crate
 cargo coverage -- parser               # Parser conformance
 cargo coverage -- transformer          # Transformer conformance
 cargo run -p oxc_transform_conformance # Transformer Babel tests
-cargo run -p oxc_prettier_conformance  # Formatter Prettier tests
 
 # NAPI packages
 pnpm test                              # Test all Node.js bindings
@@ -185,12 +184,12 @@ fn test() {
 }
 ```
 
-#### oxc_formatter
+#### oxc_formatter (and other `oxc_formatter_*` language crates)
 
-- **Prettier conformance** only (no unit tests)
-- **Command**: `cargo run -p oxc_prettier_conformance`
-- **Debug**: Add `-- --filter <name>`
-- Compares output with Prettier's snapshots
+- **Fixture tests** (`tests/fixtures/`) and **Prettier conformance** (`tests/conformance.rs`), both part of `cargo test`
+- **Command**: `cargo test -p <crate>` (conformance only: `--test conformance`)
+- **Debug**: `PRETTIER_FILTER=<name> cargo test -p <crate> --test conformance -- --nocapture`
+- Conformance compares output with Prettier's snapshots (suite self-provisioned by `oxc_formatter_tests`); reports are pinned with `insta`
 
 #### oxc_minifier
 

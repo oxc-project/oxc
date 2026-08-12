@@ -50,6 +50,7 @@ const SNAPSHOT_FILE_NAME: &str = "format.test.js.snap";
 
 /// Spec dirs every language skips: parser error message snapshots
 /// (added in Prettier v3.9.1) are not a formatter concern.
+/// Matched against the suite-relative path, like every ignore entry.
 const UNIVERSAL_IGNORE: &str = "/_errors_/";
 
 /// Language-specific wiring for [`run_conformance`].
@@ -96,7 +97,7 @@ where
     let filter = env::var("PRETTIER_FILTER").ok();
     if let Some(filter) = filter.as_deref() {
         for dir in &test_dirs {
-            let inputs = collect_test_files(dir, config.ignore, Some(filter));
+            let inputs = collect_test_files(dir, &format_root, config.ignore, Some(filter));
             if !inputs.is_empty() {
                 test_snapshots(config, &mut format, dir, &inputs, true);
             }
@@ -113,7 +114,7 @@ where
     failed_reports.push_str("| Spec path | Failed or Passed | Match ratio |\n");
     failed_reports.push_str("| :-------- | :--------------: | :---------: |\n");
     for dir in &test_dirs {
-        let inputs = collect_test_files(dir, config.ignore, None);
+        let inputs = collect_test_files(dir, &format_root, config.ignore, None);
         // `None`: no spec call targets this language config (shared dir, or every combination skipped).
         // The files were never exercised, keep them out of the totals instead of counting them as passed.
         let Some(results) = test_snapshots(config, &mut format, dir, &inputs, false) else {
@@ -208,8 +209,17 @@ fn collect_test_dirs(fixture_roots: &[PathBuf]) -> Vec<PathBuf> {
     test_dirs
 }
 
-/// Read all test files in the directory with applying ignore + filter
-fn collect_test_files(dir: &Path, ignore: &[&str], filter: Option<&str>) -> Vec<PathBuf> {
+/// Read all test files in the directory with applying ignore + filter.
+///
+/// Ignore/filter substrings match against the SUITE-RELATIVE path (`/`-separated):
+/// matching the absolute path would let the checkout location leak in (a repo
+/// under e.g. `.../cursor-work/` would silently ignore everything via `"cursor"`).
+fn collect_test_files(
+    dir: &Path,
+    format_root: &Path,
+    ignore: &[&str],
+    filter: Option<&str>,
+) -> Vec<PathBuf> {
     let mut test_files: Vec<PathBuf> = WalkDir::new(dir)
         .min_depth(1)
         .max_depth(1)
@@ -218,11 +228,11 @@ fn collect_test_files(dir: &Path, ignore: &[&str], filter: Option<&str>) -> Vec<
         .filter(|e| !e.file_type().is_dir())
         .filter(|e| e.path().file_name().is_none_or(|name| name != FORMAT_TEST_SPEC_NAME))
         .filter(|e| {
-            let path = e.path().to_string_lossy();
-            let path = path.cow_replace('\\', "/");
-            !path.contains(UNIVERSAL_IGNORE) && !ignore.iter().any(|s| path.contains(s))
+            let path = report_path(e.path(), format_root);
+            !path.contains(UNIVERSAL_IGNORE)
+                && !ignore.iter().any(|s| path.contains(s))
+                && filter.is_none_or(|name| path.contains(name))
         })
-        .filter(|e| filter.is_none_or(|name| e.path().to_string_lossy().contains(name)))
         .map(|e| e.path().to_path_buf())
         .collect();
     test_files.sort_unstable();
@@ -349,7 +359,8 @@ where
     Some(results)
 }
 
-fn print_text_diff(diff: &TextDiff<'_, '_, str>) {
+/// Prints a line diff with `-`/`+`/` ` gutters (debug output for conformance-style tests).
+pub fn print_text_diff(diff: &TextDiff<'_, '_, str>) {
     for change in diff.iter_all_changes() {
         let sign = match change.tag() {
             ChangeTag::Delete => "-",

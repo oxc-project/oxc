@@ -14,7 +14,8 @@ The pin is the `prettier` version in `apps/oxfmt/package.json` — the same Pret
 - Bumping Prettier = bump `apps/oxfmt/package.json` + regenerate conformance snapshots (one change set; the suite re-provisions itself on the next run)
 - Provisioning failure is a loud failure everywhere it runs (a silent skip would let conformance rot green; needs network + curl/tar)
   - Environments that cannot provision opt out in `ci.yml`, not in crate code: CI's cross jobs (s390x/armv7) pass `-- --skip prettier_conformance`
-    - Every consumer names its conformance test fn `prettier_conformance`, that name is the contract the skip filter relies on
+    - Every suite-provisioning consumer names its conformance test fn `prettier_conformance*`, that name prefix is the contract the skip filter relies on
+    - The inverse holds too: tests over COMMITTED fixtures (e.g. `oxc_formatter`'s `jsdoc` fixture-pair test) deliberately avoid the prefix so cross targets still run them
 - Requires `curl` and `tar` on PATH (standard on macOS, Linux, and Windows 10+)
 
 ## Dependency rule
