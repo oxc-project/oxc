@@ -177,6 +177,9 @@ pub struct HirFunction<'a> {
     pub body_span: Option<Span>,
     pub id: Option<Ident<'a>>,
     pub id_span: Option<Span>,
+    /// The private binding created by a named function expression so its body can
+    /// refer to the function recursively.
+    pub self_binding: Option<Place>,
     pub name_hint: Option<Ident<'a>>,
     pub fn_type: ReactFunctionType,
     pub params: ArenaVec<'a, ParamPattern>,
@@ -1458,6 +1461,7 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
             body_span: self.body_span,
             id: self.id,
             id_span: self.id_span,
+            self_binding: self.self_binding,
             name_hint: self.name_hint,
             fn_type: self.fn_type,
             params: self.params.clone_in_impl(sem, alloc),

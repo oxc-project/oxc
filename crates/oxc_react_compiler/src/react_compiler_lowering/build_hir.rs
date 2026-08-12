@@ -662,6 +662,21 @@ fn lower_inner<'a>(
         });
     }
 
+    // A named function expression has a private binding in its own scope. It is
+    // initialized to the function object when the function is created, rather
+    // than by an instruction in the body, so retain it as an entry definition.
+    // Function declarations resolve through their enclosing scope and continue
+    // to use the normal local/context lowering paths.
+    let self_binding = if let Some(name) = id
+        && let Some(symbol_id) = scope.get_binding(function_scope, name.as_str())
+        && scope.decl_kind(symbol_id) == DeclKind::FunctionExpression
+    {
+        let identifier = builder.resolve_binding_with_span(name, symbol_id, id_span)?;
+        Some(Place { identifier, effect: Effect::Unknown, reactive: false, span: id_span })
+    } else {
+        None
+    };
+
     // Process parameters.
     let mut hir_params = ArenaVec::new_in(&alloc);
     for param in &params.items {
@@ -820,6 +835,7 @@ fn lower_inner<'a>(
             body_span,
             id,
             id_span,
+            self_binding,
             name_hint: None,
             fn_type: if is_top_level { env.fn_type } else { ReactFunctionType::Other },
             params: hir_params,

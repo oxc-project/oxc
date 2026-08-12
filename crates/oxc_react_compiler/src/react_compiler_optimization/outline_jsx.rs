@@ -453,6 +453,7 @@ fn emit_outlined_fn<'a>(
         body_span: None,
         id: None,
         id_span: None,
+        self_binding: None,
         name_hint: None,
         fn_type: ReactFunctionType::Other,
         params: ArenaVec::from_array_in([ParamPattern::Place(props_obj)], &env.allocator),

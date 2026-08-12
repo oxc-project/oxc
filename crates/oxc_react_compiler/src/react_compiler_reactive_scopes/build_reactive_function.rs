@@ -42,6 +42,7 @@ pub fn build_reactive_function<'a>(
         body_span: hir.body_span,
         id: hir.id,
         id_span: hir.id_span,
+        self_binding: hir.self_binding,
         name_hint: hir.name_hint,
         params: hir.params.iter().copied().collect(),
         generator: hir.generator,

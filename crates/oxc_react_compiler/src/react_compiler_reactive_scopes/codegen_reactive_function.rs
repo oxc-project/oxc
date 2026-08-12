@@ -449,6 +449,13 @@ fn ox_codegen_reactive_function<'a>(
     cx: &mut OxcContext<'a, '_>,
     func: &ReactiveFunction<'a>,
 ) -> Result<OxcCompiledFunction<'a>, OxcDiagnostic> {
+    // A named function expression declares its private name in its own scope.
+    if let Some(place) = &func.self_binding {
+        let ident = &cx.env.identifiers[place.identifier];
+        cx.temp.insert(ident.declaration_id, None);
+        cx.declare(place.identifier);
+    }
+
     // Register parameters
     for param in &func.params {
         let place = match param {
@@ -2848,7 +2855,12 @@ fn ox_codegen_function_expression<'a>(
             }
         }
         _ => {
-            let id = name.as_ref().map(|n| {
+            let renamed_name = reactive_fn
+                .self_binding
+                .as_ref()
+                .map(|place| ox_identifier_name(cx.env, place.identifier))
+                .transpose()?;
+            let id = renamed_name.as_ref().or(name.as_ref()).map(|n| {
                 oxc_ast::ast::BindingIdentifier::new(
                     name_span.unwrap_or(span),
                     ox_str(&cx.ast, n),
