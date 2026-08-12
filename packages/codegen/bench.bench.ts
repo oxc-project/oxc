@@ -17,11 +17,11 @@ import { printSync as oxcPrintSync } from "./dist/index.js";
 // `TestFiles::minimal()` from `tasks/common/src/test_file.rs`, which the Rust `codegen` benchmark
 // uses, plus 2 larger pure-JS files from `TestFiles::minifier()` for throughput on real bundles.
 const FIXTURE_URLS = [
-  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/RadixUIAdoptionSection.jsx",
   "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
   "https://cdn.jsdelivr.net/gh/excalidraw/excalidraw@f6d85bc80fe328e8f472636eb0d541f7bb891aa0/packages/excalidraw/components/App.tsx",
   "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
-  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@ac5609a8fe9ae8d1a1de0f2ef251d562630c77e0/kitchen-sink.tsx",
+  "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@cd3bc3d431452b640f5dfcabbc22a8d8a388f393/kitchen-sink.tsx",
   "https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.js",
   "https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js",
 ];
