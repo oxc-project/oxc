@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 774/810 (95.56%), 23 files skipped
+js compatibility: 776/810 (95.80%), 23 files skipped
 
 # Failed
 
@@ -11,10 +11,9 @@ js compatibility: 774/810 (95.56%), 23 files skipped
 | js/arrows/issue-17421.js | 💥💥 | 90.43% |
 | js/assignment-comments/indentable-block-comment.js | 💥 | 12.50% |
 | js/call/no-argument/no-arguments.js | 💥 | 57.53% |
-| js/comments/15661.js | 💥💥 | 43.53% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/if.js | 💥💥 | 97.99% |
-| js/comments/return-statement-2.js | 💥💥 | 77.78% |
+| js/comments/return-statement-2.js | 💥💥 | 87.32% |
 | js/comments/return-statement.js | 💥💥 | 97.25% |
 | js/comments/tagged-template-literal.js | 💥💥 | 89.66% |
 | js/comments/between-head-and-body/between-head-and-body.js | 💥 | 33.10% |
@@ -37,13 +36,12 @@ js compatibility: 774/810 (95.56%), 23 files skipped
 | js/if/comment-between-condition-and-body.js | 💥 | 92.11% |
 | js/if/if_comments.js | 💥 | 91.89% |
 | js/if/condition-break/boolean-expression.js | 💥 | 94.03% |
-| js/if/condition-break/unary-expression.js | 💥 | 59.59% |
+| js/if/condition-break/unary-expression.js | 💥 | 61.38% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
-| js/logical-expressions/in-unary-expression.js | 💥 | 33.33% |
+| js/logical-expressions/in-unary-expression.js | 💥 | 79.49% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
-| js/unary-expression/comments.js | 💥 | 96.47% |
 
 # Skipped (parse error, TODO: should be ignored or supported)
 

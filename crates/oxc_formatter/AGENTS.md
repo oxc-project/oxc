@@ -149,10 +149,14 @@ Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
 ## Known divergences
 
 Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
-Entries documented in this file so far — both of the comment-attachment-artifact class, details in "Comment placement invariants" above; this is not yet an exhaustive audit against the conformance snapshots:
+Entries documented in this file so far (all of the comment-attachment-artifact class, details in "Comment placement invariants" above) is not yet an exhaustive audit against the conformance snapshots:
 
 - A comment after a trailing array hole stays in place; Prettier relocates it backward across commas to the last real element
 - Asymmetric attachment like `export type T = string /* c */;` (comment moved behind `;` only in the exported form): one uniform rule instead of emulating the asymmetry
+- A trailing comment before a closing paren never breaks the operand chain: `!(a &&\n b // c)` collapses to `a && b // c`, as both formatters already do in every other paren-surviving position (return/throw argument, call argument, assignment, arrow body)
+  - Prettier preserves the source break only in the unary position and only when the last operand was alone on its source line (attachment binds the comment to that operand)
+  - Internal inconsistency plus source-layout sensitivity, overridden by the uniform rule
+  - Conditions are a separate shared rule (logical operands always break)
 
 ## Verification
 
