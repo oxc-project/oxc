@@ -72,9 +72,12 @@ Handle Warnings
                               your project
 
 Output
-    -f, --format=ARG          Use a specific output format. Possible values: `checkstyle`,
-                              `default`, `agent`, `github`, `gitlab`, `json`, `junit`, `sarif`,
-                              `stylish`, `unix`
+    -f, --format=ARG          Use a specific output format. When `--output-file` is set, this format
+                              is written to the file and stdout keeps its default format. Possible
+                              values: `checkstyle`, `default`, `agent`, `github`, `gitlab`, `json`,
+                              `junit`, `sarif`, `stylish`, `unix`
+    -o, --output-file=PATH    Write the formatted lint report to a file while keeping the default
+                              format on stdout
         --debug=OPTIONS       Enable debug output options. Options are comma-separated. Possible
                               values:
                                * `files` - Print the list of files that will be linted, then exit.
