@@ -73,15 +73,14 @@ pub struct ConformanceConfig<'a> {
 /// Runs the conformance comparison and returns the report to snapshot,
 /// or `None` when `PRETTIER_FILTER` is set (debug mode prints diffs instead).
 ///
-/// Provisioning needs network + curl/tar. Environments without them (CI's
-/// cross-compiled s390x/armv7 jobs) opt out in ci.yml via
-/// `-- --skip prettier_conformance` — which is why every consumer names its
-/// test fn `prettier_conformance`.
+/// Provisioning needs network + curl/tar.
+/// Environments without them (CI's cross-compiled s390x/armv7 jobs) opt out in `ci.yml` via `-- --skip prettier_conformance`.
+/// Which is why every consumer's test fn name starts with `prettier_conformance`.
 ///
 /// # Panics
-/// Panics when the suite cannot be provisioned (network/curl/tar failure) and on
-/// malformed suite content (unreadable spec/snapshot files); neither is a
-/// formatter bug, and a silent skip would let conformance rot green.
+/// Panics when the suite cannot be provisioned (network/curl/tar failure)
+/// and on malformed suite content (unreadable spec/snapshot files);
+/// neither is a formatter bug, and a silent skip would let conformance rot green.
 pub fn run_conformance<F>(config: &ConformanceConfig, mut format: F) -> Option<String>
 where
     F: FnMut(&Path, &str, &OptionSet) -> Option<String>,

@@ -1,8 +1,7 @@
 //! Prettier conformance for CSS / SCSS / Less.
 //!
 //! Compares output against the Prettier suite's `tests/format/{css,scss,less}` snapshots
-//! via `oxc_formatter_tests::conformance`; each dialect pins its failure report with `insta`
-//! (update after intentional changes: `cargo insta review`).
+//! via `oxc_formatter_tests::conformance`; each dialect pins its failure report with `insta`.
 //!
 //! Debug a specific test: `PRETTIER_FILTER=<substring> cargo test -p oxc_formatter_css --test conformance -- --nocapture`
 
@@ -32,8 +31,8 @@ const CSS: ConformanceConfig = ConformanceConfig {
         // range formatting / IDE cursor, not whole-file formatting
         "css/range/",
         "css/cursor/",
-        // TODO: Excluded ACCIDENTALLY by the central runner's generic "range" substring
-        // (this is a regular whole-file test that currently fails);
+        // TODO: A regular whole-file test that currently fails (~91% match);
+        // ignored until triaged - fix or classify under "Known divergences".
         "css/stylefmt-repo/media-queries-ranges/",
     ],
     skip_spec: None,

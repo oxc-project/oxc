@@ -1,9 +1,7 @@
 //! Prettier option-set → `GraphqlFormatOptions` mapping.
 //!
-//! Shared by the fixture harness (`fixtures/mod.rs`) and the conformance target
-//! (`conformance.rs`) via `#[path]` — integration-test targets are separate
-//! crates, so each compiles this file; the SOURCE is the single copy that keeps
-//! the two parsers from drifting.
+//! Shared by the fixture harness and the conformance target via `#[path]`
+//! (one source, no drift; see `oxc_formatter_tests`'s AGENTS.md).
 
 use oxc_formatter_graphql::GraphqlFormatOptions;
 use oxc_formatter_tests::{OptionSet, apply_core_options};

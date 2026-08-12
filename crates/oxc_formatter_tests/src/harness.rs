@@ -6,7 +6,7 @@
 //! - walks up to find an `options.json` and parses it into `OptionSet`s
 //! - drives one format pass per option-set × per printWidth (80 + 100)
 //! - assembles the canonical `==== Input ==== ... ==== Output ==== ...` snapshot
-//! - hands the result to `insta::assert_snapshot!`
+//! - returns the body for the consumer's `insta::assert_snapshot!`
 //!
 //! Each formatter crate provides language-specific behavior by implementing
 //! [`FixtureFormatter`].

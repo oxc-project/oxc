@@ -1,8 +1,7 @@
 //! Prettier conformance for JS / TS (+ JSX).
 //!
 //! Compares output against the Prettier suite's `tests/format/{js,jsx,typescript}` snapshots
-//! via `oxc_formatter_tests::conformance`; js and ts pin their failure reports with `insta`
-//! (update after intentional changes: `cargo insta review`).
+//! via `oxc_formatter_tests::conformance`; js and ts pin their failure reports with `insta`.
 //!
 //! Debug a specific test: `PRETTIER_FILTER=<substring> cargo test -p oxc_formatter --test conformance -- --nocapture`
 
@@ -132,10 +131,10 @@ const JS: ConformanceConfig = ConformanceConfig {
     skip_spec: Some(skip_unsupported_options),
 };
 
-// There is no `tsx` directory, just check `jsx/` works with TS;
-// `SourceType` variant is derived from each spec file's extension.
 const TS: ConformanceConfig = ConformanceConfig {
     language: "ts",
+    // There is no `tsx` directory, just check `jsx/` works with TS;
+    // `SourceType` variant is derived from each spec file's extension.
     fixture_roots: &["typescript", "jsx"],
     exact_parser: None,
     ignore: IGNORE,
@@ -162,8 +161,7 @@ fn format_js(path: &Path, source_text: &str, spec: &OptionSet) -> Option<String>
     Some(formatted.print().ok()?.into_code())
 }
 
-/// Deeply nested fixtures overflow libtest's default 2MiB test-thread stack
-/// (the old task runner formatted on the 8MiB main thread);
+/// Deeply nested fixtures overflow libtest's default 2MiB test-thread stack;
 /// run on a dedicated big-stack thread instead.
 fn with_big_stack<T: Send + 'static>(f: impl FnOnce() -> T + Send + 'static) -> T {
     std::thread::Builder::new().stack_size(16 * 1024 * 1024).spawn(f).unwrap().join().unwrap()

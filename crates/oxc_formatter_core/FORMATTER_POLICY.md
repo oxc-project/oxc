@@ -142,9 +142,3 @@ Failures must be either fixed or classified under "Known divergences".
 ### Embedded conformance (`apps/oxfmt`)
 
 The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt. Requires a dev build first.
-
-```sh
-pnpm --dir apps/oxfmt build-dev
-pnpm --dir apps/oxfmt test
-pnpm --dir apps/oxfmt conformance
-```

@@ -141,7 +141,7 @@ Modify examples in `crates/<crate_name>/examples/` to test specific scenarios.
 Oxc uses multiple testing approaches tailored to each crate:
 
 - **Unit/Integration tests**: Standard Rust tests in `tests/` directories
-- **Conformance tests**: Against external suites (Test262, Babel, TypeScript, Prettier)
+- **Conformance tests**: Against external suites (Test262, Babel, TypeScript)
 - **Snapshot tests**: Track failures and expected outputs using `insta`
 
 ### Quick Test Commands
@@ -247,7 +247,7 @@ just test-transform --filter <path>             # Filter tests
 
 **CRITICAL**: These external test suites are the CORE of Oxc's testing strategy, providing thousands of real-world test cases from mature JavaScript ecosystem projects. They ensure Oxc correctly handles the full complexity of JavaScript/TypeScript.
 
-Git submodules managed via `just submodules`:
+Suites cloned via `just submodules`:
 
 | Submodule            | Description                                                                                                                                        | Location                            | Used by Crates                                           |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------- |
@@ -255,8 +255,6 @@ Git submodules managed via `just submodules`:
 | `babel`              | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`              | parser, semantic, codegen, transformer, minifier         |
 | `typescript`         | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`         | parser, semantic, codegen, transformer, estree           |
 | `estree-conformance` | **ESTree Conformance Tests**<br>Test262, TypeScript, and acorn-jsx suites adapted for ESTree format validation, ensuring correct AST structure     | `tasks/coverage/estree-conformance` | estree                                                   |
-
-The **Prettier Formatting Tests** suite (`crates/oxc_formatter_tests/prettier`, used by formatter conformance) is NOT managed by `just submodules`: `oxc_formatter_tests` self-provisions it on demand, pinned by the `prettier` version in `apps/oxfmt/package.json` (the same Prettier oxfmt bundles as the oracle).
 
 **These suites provide:**
 
@@ -274,6 +272,7 @@ These test suites are pre-cloned and ready to search:
 - **Test262** (`tasks/coverage/test262/`) - ECMAScript spec compliance
 - **Babel** (`tasks/coverage/babel/`) - Parsing and transformation edge cases
 - **TypeScript** (`tasks/coverage/typescript/`) - TypeScript syntax and semantics
+- **Prettier** (`crates/oxc_formatter_tests/prettier/`) - Formatting expectations (self-provisioned on first conformance run)
 
 NOTE: These suites are script-cloned and fully gitignored. ripgrep respects `.gitignore`, so a plain `rg` inside them silently returns nothing.
 Use `rg --no-ignore` (or `-u`) when searching them.
@@ -305,18 +304,18 @@ Tests are TypeScript files in each package's `test/` directory.
 
 ### Where to Add Tests
 
-| Crate                 | Location                                |
-| --------------------- | --------------------------------------- |
-| Parser                | `tasks/coverage/misc/pass/` or `fail/`  |
-| Linter                | Inline in rule files                    |
-| Formatter             | Prettier conformance suite              |
-| Minifier              | `tests/` subdirectories                 |
-| Transformer           | `tests/integrations/` or Babel fixtures |
-| Codegen               | `tests/integration/`                    |
-| Isolated Declarations | `tests/fixtures/*.ts`                   |
-| Semantic              | `tests/` directory                      |
-| NAPI packages         | `test/` directory (Vitest)              |
-| Language Server       | Inline and `/fixtures`                  |
+| Crate                 | Location                                 |
+| --------------------- | ---------------------------------------- |
+| Parser                | `tasks/coverage/misc/pass/` or `fail/`   |
+| Linter                | Inline in rule files                     |
+| Formatter             | `tests/fixtures/` in the formatter crate |
+| Minifier              | `tests/` subdirectories                  |
+| Transformer           | `tests/integrations/` or Babel fixtures  |
+| Codegen               | `tests/integration/`                     |
+| Isolated Declarations | `tests/fixtures/*.ts`                    |
+| Semantic              | `tests/` directory                       |
+| NAPI packages         | `test/` directory (Vitest)               |
+| Language Server       | Inline and `/fixtures`                   |
 
 ### Linter Codegen Changes
 

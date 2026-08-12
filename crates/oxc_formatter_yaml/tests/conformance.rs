@@ -1,7 +1,7 @@
 //! Prettier conformance for YAML.
 //!
 //! Compares output against the Prettier suite's `tests/format/yaml` snapshots via `oxc_formatter_tests::conformance`;
-//! the failure report is pinned with `insta` (update after intentional changes: `cargo insta review`).
+//! the failure report is pinned with `insta`.
 //!
 //! Debug a specific test: `PRETTIER_FILTER=<substring> cargo test -p oxc_formatter_yaml --test conformance -- --nocapture`
 
@@ -58,5 +58,5 @@ fn format_yaml(_path: &Path, source_text: &str, spec: &OptionSet) -> Option<Stri
 #[test]
 fn prettier_conformance() {
     let Some(report) = run_conformance(&CONFIG, format_yaml) else { return };
-    insta::assert_snapshot!("prettier", report);
+    insta::assert_snapshot!("prettier-yaml", report);
 }

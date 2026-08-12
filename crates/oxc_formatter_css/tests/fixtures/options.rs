@@ -1,10 +1,9 @@
 //! Prettier option-set → `CssFormatOptions` mapping.
 //!
-//! Shared by the fixture harness (`fixtures/mod.rs`) and the conformance target
-//! (`conformance.rs`) via `#[path]` — integration-test targets are separate
-//! crates, so each compiles this file; the SOURCE is the single copy that keeps
-//! the two parsers from drifting. The dialect (`variant`) is NOT set here: the
-//! fixture harness derives it from the file extension, conformance from its config.
+//! Shared by the fixture harness and the conformance target via `#[path]`
+//! (one source, no drift; see `oxc_formatter_tests`'s AGENTS.md).
+//! The dialect (`variant`) is NOT set here: the fixture harness derives it from the file extension,
+//! conformance from its config.
 
 use oxc_formatter_css::{CssFormatOptions, TrailingCommas};
 use oxc_formatter_tests::{OptionSet, apply_core_options};

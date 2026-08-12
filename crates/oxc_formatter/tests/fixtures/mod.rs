@@ -37,7 +37,7 @@ impl FixtureFormatter for JsHarness {
 
 fn test_file(path: &Path) {
     // `insta::assert_snapshot!` is invoked from this file so the snapshot's
-    // `source:` header records this path (matching the pre-harness layout).
+    // `source:` header records this consumer crate, not the shared harness.
     let snap = build_fixture_snapshot::<JsHarness>(path);
     insta::with_settings!({
         snapshot_path => snap.path,

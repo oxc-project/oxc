@@ -1,8 +1,7 @@
 //! Prettier conformance for the JSON family (json / jsonc / json5 / json-stringify).
 //!
 //! Compares output against the Prettier suite's `tests/format/json` snapshots via
-//! `oxc_formatter_tests::conformance`; each variant pins its failure report with `insta`
-//! (update after intentional changes: `cargo insta review`).
+//! `oxc_formatter_tests::conformance`; each variant pins its failure report with `insta`.
 //!
 //! The `json/json` and `json/with-comment` dirs are shared between variants: each
 //! `format.test.js` call lists its own parser, and `exact_parser` keeps only the

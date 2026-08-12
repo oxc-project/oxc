@@ -1,11 +1,7 @@
 //! Prettier option-set → `JsFormatOptions` mapping.
 //!
-//! Shared by the fixture harness (`fixtures/mod.rs`) and the conformance target
-//! (`conformance.rs`) via `#[path]` — integration-test targets are separate
-//! crates, so each compiles this file; the SOURCE is the single copy that keeps
-//! the two parsers from drifting. The `jsdoc` key only appears in fixture
-//! `options.json` files (Prettier specs never pass it); the `objectWrap` /
-//! `singleAttributePerLine` / `experimental*` keys only appear in specs.
+//! Shared by the fixture harness and the conformance target via `#[path]`
+//! (one source, no drift; see `oxc_formatter_tests`'s AGENTS.md).
 
 use std::str::FromStr;
 
@@ -102,7 +98,10 @@ pub fn apply_js_options(options: &mut JsFormatOptions, json: &OptionSet) {
                         OperatorPosition::from_str(s).unwrap_or_default();
                 }
             }
-            "jsdoc" if value.is_object() => {
+            // NOTE: Not a Prettier option
+            // fixture test only toggle enabling JSDoc formatting for the fixtures under `js/jsdoc/`.
+            // Deliberately a bool, an object form not yet supported.
+            "jsdoc" if value.as_bool() == Some(true) => {
                 options.jsdoc = Some(JsdocOptions::default());
             }
             _ => {}

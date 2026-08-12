@@ -29,20 +29,19 @@ pub fn prettier_suite_root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/prettier"))
 }
 
-/// Ensures the suite at [`prettier_suite_root`] matches the pinned Prettier version
-/// and returns the root. Convergent:
+/// Ensures the suite at [`prettier_suite_root`] matches the pinned Prettier version and returns the root.
+/// Convergent:
 ///
 /// - `.version` stamp matches the pin: return immediately — no network, no subprocess
-/// - missing / stale (version bumped): wipe, download the release tarball from
-///   codeload, extract `tests/format`, stamp
+/// - missing / stale (version bumped): wipe, download the release tarball from codeload, extract `tests/format`, stamp
 ///
-/// Cross-process exclusion (parallel test binaries, e.g. under nextest) uses an
-/// advisory lock on the package.json handle; within a process the result is memoized.
+/// Cross-process exclusion (parallel test binaries, e.g. under nextest) uses an advisory lock on the `package.json` handle;
+/// within a process the result is memoized.
 ///
 /// # Errors
 /// Any download/extraction failure, as a display string.
-/// Conformance callers fail loudly on `Err`
-/// (non-conformance targets never reach provisioning; see `conformance::run_conformance`'s target gate).
+/// Conformance callers fail loudly on `Err`;
+/// environments that cannot provision opt out in `ci.yml` via `-- --skip prettier_conformance`.
 pub fn ensure_prettier_suite() -> Result<&'static Path, String> {
     static RESULT: OnceLock<Result<(), String>> = OnceLock::new();
     RESULT.get_or_init(provision).clone()?;

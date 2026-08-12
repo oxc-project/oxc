@@ -1,13 +1,7 @@
 //! Prettier option-set → `JsonFormatOptions` mapping.
 //!
-//! Shared by the fixture harness (`fixtures/mod.rs`) and the conformance target
-//! (`conformance.rs`) via `#[path]` — integration-test targets are separate
-//! crates, so each compiles this file; the SOURCE is the single copy that keeps
-//! the two parsers from drifting. The `variant` key only appears in fixture
-//! `options.json` files (conformance selects the variant via its config);
-//! `objectWrap`/`bracketSpacing` never appeared in the central runner's JSON
-//! mapping, but enabling them is verified conformance-snapshot-neutral, and any
-//! future divergence would fail visibly against Prettier's snapshots.
+//! Shared by the fixture harness and the conformance target via `#[path]`
+//! (one source, no drift; see `oxc_formatter_tests`'s AGENTS.md).
 
 use oxc_formatter_json::{
     BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
@@ -21,6 +15,8 @@ pub fn apply_json_options(options: &mut JsonFormatOptions, json: &OptionSet) {
 
     for (key, value) in json {
         match key.as_str() {
+            // Fixture-only key: conformance selects the variant via its config
+            // (Prettier specs never pass `variant`).
             "variant" => {
                 if let Some(s) = value.as_str() {
                     options.variant = match s {

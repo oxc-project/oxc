@@ -1,8 +1,7 @@
 //! Prettier conformance for GraphQL.
 //!
 //! Compares output against the Prettier suite's `tests/format/graphql` snapshots via
-//! `oxc_formatter_tests::conformance`; the failure report is pinned with `insta`
-//! (update after intentional changes: `cargo insta review`).
+//! `oxc_formatter_tests::conformance`; the failure report is pinned with `insta`.
 //!
 //! Debug a specific test: `PRETTIER_FILTER=<substring> cargo test -p oxc_formatter_graphql --test conformance -- --nocapture`
 
@@ -53,5 +52,5 @@ fn format_graphql(_path: &Path, source_text: &str, spec: &OptionSet) -> Option<S
 #[test]
 fn prettier_conformance() {
     let Some(report) = run_conformance(&CONFIG, format_graphql) else { return };
-    insta::assert_snapshot!("prettier", report);
+    insta::assert_snapshot!("prettier-graphql", report);
 }
