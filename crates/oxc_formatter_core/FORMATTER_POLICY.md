@@ -30,7 +30,7 @@ Each crate's `AGENTS.md` holds only language-specific rules and the crate-local 
 - Implementation strategies legitimately differ (e.g. Prettier pre-classifies comments per context; we decide on the spot with positional cursors)
   - Compatibility is judged on bytes out, not code shape
 - Before matching a mismatch, always consider whether it is a Prettier bug or artifact (see "Known divergences")
-- The oracle version is the one pinned by the conformance submodule and `apps/oxfmt` bundles; fixtures are verified against it
+- The oracle version is the `prettier` pinned in `apps/oxfmt/package.json`: the bundle, the conformance suite (via `oxc_formatter_tests`), and fixture verification all derive from that one version
   - The LATEST Prettier is still worth consulting as a forward-looking aid: whether a bug we diverged on has been fixed upstream, or a behavior is about to change
   - When the pin catches up to an upstream fix, converge and drop the divergence entry
 

@@ -215,7 +215,6 @@ jobs:
         if: steps.filter.outputs.changed == 'true'
         with:
           babel: false
-          prettier: false
           node-compat-table: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
@@ -320,8 +319,8 @@ jobs:
       - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
-          # Cache `~/.degit` to reuse degit's tarball cache across CI runs
-          path: /home/runner/.degit
+          # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.js)
+          path: ./apps/oxfmt/conformance/fixtures/externals
       - if: steps.filter-conformance.outputs.changed == 'true'
         name: Download conformance fixtures
         run: pnpm --filter "./apps/oxfmt" download-fixtures
@@ -367,7 +366,6 @@ jobs:
         if: steps.filter.outputs.changed == 'true'
         with:
           babel: false
-          prettier: false
           node-compat-table: false
       - if: steps.filter.outputs.changed == 'true'
         name: Run tests
@@ -547,7 +545,9 @@ jobs:
       - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
         if: steps.filter.outputs.changed == 'true'
         with:
-          path: /home/runner/.rustup
+          path: |
+            /home/runner/.rustup
+            ./crates/oxc_formatter_tests/prettier
           cache: |
             rust
             pnpm

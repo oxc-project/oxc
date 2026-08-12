@@ -250,13 +250,14 @@ just test-transform --filter <path>             # Filter tests
 
 Git submodules managed via `just submodules`:
 
-| Submodule            | Description                                                                                                                                        | Location                              | Used by Crates                                           |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `test262`            | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification                 | `tasks/coverage/test262`              | parser, semantic, codegen, transformer, minifier, estree |
-| `babel`              | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`                | parser, semantic, codegen, transformer, minifier         |
-| `typescript`         | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`           | parser, semantic, codegen, transformer, estree           |
-| `prettier`           | **Prettier Formatting Tests**<br>Prettier's comprehensive formatting test suite, ensuring code formatting matches industry standards               | `tasks/prettier_conformance/prettier` | formatter (conformance)                                  |
-| `estree-conformance` | **ESTree Conformance Tests**<br>Test262, TypeScript, and acorn-jsx suites adapted for ESTree format validation, ensuring correct AST structure     | `tasks/coverage/estree-conformance`   | estree                                                   |
+| Submodule            | Description                                                                                                                                        | Location                            | Used by Crates                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------- |
+| `test262`            | **ECMAScript Conformance Suite**<br>Official JavaScript test suite from TC39, testing compliance with the ECMAScript specification                 | `tasks/coverage/test262`            | parser, semantic, codegen, transformer, minifier, estree |
+| `babel`              | **Babel Test Suite**<br>Comprehensive transformation and parsing tests from the Babel compiler, covering modern JavaScript features and edge cases | `tasks/coverage/babel`              | parser, semantic, codegen, transformer, minifier         |
+| `typescript`         | **TypeScript Test Suite**<br>Microsoft's TypeScript compiler tests, ensuring correct handling of TypeScript syntax and semantics                   | `tasks/coverage/typescript`         | parser, semantic, codegen, transformer, estree           |
+| `estree-conformance` | **ESTree Conformance Tests**<br>Test262, TypeScript, and acorn-jsx suites adapted for ESTree format validation, ensuring correct AST structure     | `tasks/coverage/estree-conformance` | estree                                                   |
+
+The **Prettier Formatting Tests** suite (`crates/oxc_formatter_tests/prettier`, used by formatter conformance) is NOT managed by `just submodules`: `oxc_formatter_tests` self-provisions it on demand, pinned by the `prettier` version in `apps/oxfmt/package.json` (the same Prettier oxfmt bundles as the oracle).
 
 **These suites provide:**
 
@@ -274,7 +275,6 @@ These test suites are pre-cloned and ready to search:
 - **Test262** (`tasks/coverage/test262/`) - ECMAScript spec compliance
 - **Babel** (`tasks/coverage/babel/`) - Parsing and transformation edge cases
 - **TypeScript** (`tasks/coverage/typescript/`) - TypeScript syntax and semantics
-- **Prettier** (`tasks/prettier_conformance/prettier/`) - Formatting expectations
 
 NOTE: These suites are script-cloned and fully gitignored. ripgrep respects `.gitignore`, so a plain `rg` inside them silently returns nothing.
 Use `rg --no-ignore` (or `-u`) when searching them.

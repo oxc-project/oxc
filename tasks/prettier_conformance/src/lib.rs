@@ -50,7 +50,10 @@ fn root() -> PathBuf {
 }
 
 fn fixtures_root() -> PathBuf {
-    root().join("prettier").join("tests").join("format")
+    oxc_formatter_tests::ensure_prettier_suite()
+        .expect("failed to provision the Prettier suite")
+        .join("tests")
+        .join("format")
 }
 
 fn snap_root() -> PathBuf {
