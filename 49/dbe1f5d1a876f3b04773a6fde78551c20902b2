@@ -1,0 +1,19 @@
+packages/codegen/README.md
+  s_6b5aa3ca33a1b5::t_09df1c68493d8d 3,5-7,9-10,12,14-20,22,26-58,61,64,66-75,81-83,85,89-121,123,125-127,131-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "49dbe1f5d1a876f3b04773a6fde78551c20902b2",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
