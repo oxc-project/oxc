@@ -2384,7 +2384,8 @@ export interface NoHooksConfig {
 export interface NoLargeSnapshotsConfig {
   /**
    * A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
-   * Snapshot names can be specified as regular expressions.
+   * Each snapshot name is interpreted as a Rust regular expression. If it is not a valid regular
+   * expression, it is matched as an exact literal string instead.
    */
   allowedSnapshots?: {
     [k: string]: string[] | undefined;
