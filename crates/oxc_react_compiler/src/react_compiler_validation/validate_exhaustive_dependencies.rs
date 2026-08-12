@@ -619,6 +619,7 @@ fn collect_dependencies<'a>(
                             span: decl_lv.place.span,
                         },
                     );
+                    locals.insert(decl_lv.place.identifier);
                 }
                 InstructionValue::StoreContext { lvalue: store_lv, value: store_val, .. } => {
                     visit_candidate_dependency(

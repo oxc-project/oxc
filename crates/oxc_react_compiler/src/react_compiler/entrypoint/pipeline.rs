@@ -15,7 +15,7 @@ use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
-use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
 use crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir;
@@ -243,7 +243,10 @@ fn run_pipeline<'a>(
 
     infer_reactive_places(&mut hir, &mut env)?;
 
-    if env.enable_validations() {
+    if env.enable_validations()
+        && (env.config.validate_exhaustive_memoization_dependencies
+            || env.config.validate_exhaustive_effect_dependencies != ExhaustiveEffectDepsMode::Off)
+    {
         validate_exhaustive_dependencies(&mut hir, &mut env)?;
     }
 
