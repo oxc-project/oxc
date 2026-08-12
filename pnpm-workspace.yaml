@@ -20,7 +20,7 @@ catalog:
   eslint: 10.8.0
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.23
-  rolldown: 1.2.3
+  rolldown: 1.2.4
   tsdown: 0.22.14
   vite-plus: 0.2.9
   vitest: 4.1.10
