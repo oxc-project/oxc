@@ -5,8 +5,8 @@ use oxc_span::SourceType;
 use crate::{
     snapshot, snapshot_options,
     tester::{
-        default_options, test_idempotency, test_options_with_source_type, test_same, test_tsx,
-        test_with_parse_options,
+        default_options, test, test_idempotency, test_options_with_source_type, test_same,
+        test_tsx, test_with_parse_options,
     },
 };
 
@@ -85,6 +85,10 @@ fn comparison_must_not_become_type_arguments() {
 
     test_same("(a < b) | c;\n");
     test_same("a & (b << c);\n");
+
+    test_same("foo((a < b), c > (d, e));\n");
+    test_same("[(a < b), c > (d, e)];\n");
+    test("((a < b), c > (d, e));", "(a < b), c > (d, e);\n");
 }
 
 #[test]
