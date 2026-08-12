@@ -21,10 +21,6 @@ impl<'a, C> Formatted<'a, C> {
         &self.document
     }
 
-    pub fn document_mut(&mut self) -> &mut Document<'a> {
-        &mut self.document
-    }
-
     /// Consumes `self` and returns the finalized document:
     /// group expansion is propagated across the whole IR, including any embedded IR merged into it.
     ///

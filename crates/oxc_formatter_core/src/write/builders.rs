@@ -10,11 +10,11 @@ use oxc_allocator::ArenaVec;
 use crate::{
     Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, FormatState,
     Formatter, GroupId, HeapVecBuffer,
-    format::write,
     format_element::{
         self, LineMode, PrintMode, TextWidth,
         tag::{self, Condition, DedentMode, GroupMode, LabelId, Tag},
     },
+    write,
 };
 
 use Tag::{
@@ -923,7 +923,7 @@ impl<C> std::fmt::Debug for IndentIfGroupBreaks<'_, '_, C> {
 // ---------------------------------------------------------------------------
 
 /// The first variant is the most flat, and the last is the most expanded variant.
-/// See [`best_fitting!`] macro for a more in-detail documentation
+/// See [`crate::best_fitting!`] macro for a more in-detail documentation
 #[derive(Copy, Clone)]
 pub struct BestFitting<'fmt, 'ast, C> {
     variants: Arguments<'fmt, 'ast, C>,

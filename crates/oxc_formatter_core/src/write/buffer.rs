@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
-    Argument, Arguments, Format, FormatElement, FormatState,
+    Arguments, FormatElement, FormatState,
     format_element::{
         Interned, LineMode, PrintMode,
         tag::{Condition, Tag},
@@ -47,7 +47,7 @@ pub trait Buffer<'ast, C> {
     /// Used by streaming IR transforms (currently `SortImportsTransform`)
     /// to splice a reordered chunk back into the buffer.
     /// Only the vector-backed buffers (`VecBuffer`, `HeapVecBuffer`, `AccumulatorBuffer`) support this;
-    /// the wrapper buffers (`PreambleBuffer`, `Inspect`, `RemoveSoftLinesBuffer`) are only ever active
+    /// the wrapper buffer (`RemoveSoftLinesBuffer`) is only ever active
     /// inside inner-expression contexts, never on the call stack while a streaming chunk is being flushed,
     /// so they implement this as `unreachable!()`.
     fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]);
@@ -352,101 +352,6 @@ impl<'ast, C> Buffer<'ast, C> for AccumulatorBuffer<'_, 'ast, C> {
     }
 }
 
-/// This struct wraps an existing buffer and emits a preamble text when the first text is written.
-///
-/// This can be useful if you, for example, want to write some content if what gets written next isn't empty.
-pub struct PreambleBuffer<'a, 'buf, C, Preamble> {
-    /// The wrapped buffer
-    inner: &'buf mut dyn Buffer<'a, C>,
-
-    /// The pre-amble to write once the first content gets written to this buffer.
-    preamble: Preamble,
-
-    /// Whether some content (including the pre-amble) has been written at this point.
-    empty: bool,
-}
-
-impl<'ast, 'buf, C, Preamble> PreambleBuffer<'ast, 'buf, C, Preamble> {
-    pub fn new(inner: &'buf mut dyn Buffer<'ast, C>, preamble: Preamble) -> Self {
-        Self { inner, preamble, empty: true }
-    }
-
-    /// Returns `true` if the preamble has been written, `false` otherwise.
-    pub fn did_write_preamble(&self) -> bool {
-        !self.empty
-    }
-}
-
-impl<'ast, C, Preamble> Buffer<'ast, C> for PreambleBuffer<'ast, '_, C, Preamble>
-where
-    Preamble: Format<'ast, C>,
-{
-    fn write_element(&mut self, element: FormatElement<'ast>) {
-        if self.empty {
-            let preamble_ref = &self.preamble;
-            let arg = Argument::new(&preamble_ref);
-            self.inner.write_fmt(Arguments::new(std::slice::from_ref(&arg)));
-            self.empty = false;
-        }
-
-        self.inner.write_element(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'ast>] {
-        self.inner.elements()
-    }
-
-    fn state(&self) -> &FormatState<'ast, C> {
-        self.inner.state()
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
-        self.inner.state_mut()
-    }
-
-    fn replace_end(&mut self, _start: usize, _replacement: &[FormatElement<'ast>]) {
-        unreachable!()
-    }
-}
-
-/// Buffer that allows you inspecting elements as they get written to the formatter.
-pub struct Inspect<'ast, 'inner, C, Inspector> {
-    inner: &'inner mut dyn Buffer<'ast, C>,
-    inspector: Inspector,
-}
-
-impl<'ast, 'inner, C, Inspector> Inspect<'ast, 'inner, C, Inspector> {
-    fn new(inner: &'inner mut dyn Buffer<'ast, C>, inspector: Inspector) -> Self {
-        Self { inner, inspector }
-    }
-}
-
-impl<'a, C, Inspector> Buffer<'a, C> for Inspect<'a, '_, C, Inspector>
-where
-    Inspector: FnMut(&FormatElement),
-{
-    fn write_element(&mut self, element: FormatElement<'a>) {
-        (self.inspector)(&element);
-        self.inner.write_element(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'a>] {
-        self.inner.elements()
-    }
-
-    fn state(&self) -> &FormatState<'a, C> {
-        self.inner.state()
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'a, C> {
-        self.inner.state_mut()
-    }
-
-    fn replace_end(&mut self, _start: usize, _replacement: &[FormatElement<'a>]) {
-        unreachable!()
-    }
-}
-
 /// A Buffer that removes any soft line breaks.
 ///
 /// * Removes [`lines`](FormatElement::Line) with the mode [`Soft`](LineMode::Soft).
@@ -661,15 +566,6 @@ impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
 }
 
 pub trait BufferExtensions<'ast, C>: Buffer<'ast, C> + Sized {
-    /// Returns a new buffer that calls the passed inspector for every element that gets written to the output
-    #[must_use]
-    fn inspect<'inner, F>(&'inner mut self, inspector: F) -> Inspect<'ast, 'inner, C, F>
-    where
-        F: FnMut(&FormatElement),
-    {
-        Inspect::new(self, inspector)
-    }
-
     /// Starts a recording that gives you access to all elements that have been written between the start
     /// and end of the recording.
     #[must_use]

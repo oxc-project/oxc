@@ -5,7 +5,7 @@ use std::{
 
 /// Unique identification for a group.
 ///
-/// See [crate::Formatter::group_id] on how to get a unique id.
+/// See [`UniqueGroupIdBuilder`] for how ids are handed out.
 ///
 /// The debug name lives in a side table (see `debug_names` below),
 /// not an inline field, to keep the layout of [crate::FormatElement] (which embeds `GroupId` through `Tag`) identical in debug and release builds.

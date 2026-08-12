@@ -68,7 +68,7 @@ A separate string-out channel (the session's `string_embedder` service, NOT the 
   - everything else stays verbatim
   - the embedder carries the caller's effective print width; both branches honor it (native via `PrintWidth` override, Prettier via `printWidth` in the options JSON), so a fence prints at the same width a JS/TS snippet in the same position would (see `upstream-jsdoc-bugs.md` #11 for the deliberate divergence from upstream's flat `printWidth - 4`)
 
-NOTE: The string-out channel outlives the md/html/angular rewrites; its full exit criterion is owned by `oxc_formatter_core`'s AGENTS.md (layer (4)).
+NOTE: The string-out channel outlives the md/html/angular rewrites; its full exit criterion is owned by `oxc_formatter_core`'s AGENTS.md (domain (4)).
 The half owned here: JSDoc's string-out is NOT structural, fences can move to IR-out (session dispatch inside the comment IR) once the printer grows a per-line prefix mechanism for the `*` continuation, deferred for verification time, not by design.
 
 #### Tailwind CSS class sorting

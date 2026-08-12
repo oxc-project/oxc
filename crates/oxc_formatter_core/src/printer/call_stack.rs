@@ -21,10 +21,10 @@ pub(super) struct StackFrame {
 
 /// Stores arguments passed to `print_element` call, holding the state specific to printing an element.
 /// E.g. the `indent` depends on the token the Printer's currently processing. That's why
-/// it must be stored outside of the [PrinterState] that stores the state common to all elements.
+/// it must be stored outside of the [`PrinterState`](super::PrinterState) that stores the state common to all elements.
 ///
 /// The state is passed by value, which is why it's important that it isn't storing any heavy
-/// data structures. Such structures should be stored on the [PrinterState] instead.
+/// data structures. Such structures should be stored on the [`PrinterState`](super::PrinterState) instead.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub(super) struct PrintElementArgs {
     mode: PrintMode,
@@ -51,10 +51,10 @@ impl Default for PrintElementArgs {
     }
 }
 
-/// Call stack that stores the [PrintElementCallArgs].
+/// Call stack that stores the [`PrintElementArgs`].
 ///
-/// New [PrintElementCallArgs] are pushed onto the stack for every [`start`](Tag::is_start) [`Tag`](FormatElement::Tag)
-/// and popped when reaching the corresponding [`end`](Tag::is_end) [`Tag`](FormatElement::Tag).
+/// New [`PrintElementArgs`] are pushed onto the stack for every [`start`](crate::Tag::is_start) [`Tag`](crate::FormatElement::Tag)
+/// and popped when reaching the corresponding [`end`](crate::Tag::is_end) [`Tag`](crate::FormatElement::Tag).
 pub(super) trait CallStack {
     type Stack: Stack<StackFrame> + Debug;
 
@@ -118,13 +118,13 @@ pub(super) trait CallStack {
         }
     }
 
-    /// Creates a new stack frame for a [FormatElement::Tag] of `kind` with `args` as the call arguments.
+    /// Creates a new stack frame for a [`FormatElement::Tag`](crate::FormatElement::Tag) of `kind` with `args` as the call arguments.
     fn push(&mut self, kind: TagKind, args: PrintElementArgs) {
         self.stack_mut().push(StackFrame { kind: StackFrameKind::Tag(kind), args });
     }
 }
 
-/// Call stack used for printing the [FormatElement]s
+/// Call stack used for printing the [`FormatElement`](crate::FormatElement)s
 #[derive(Debug, Clone)]
 pub(super) struct PrintCallStack(Vec<StackFrame>);
 
@@ -180,7 +180,7 @@ impl<'a> CallStack for FitsCallStack<'a> {
 
 /// Suffix stack that stores the indention.
 ///
-/// When ElementKind is [suffix], push the current indention onto the SuffixStack.
+/// When ElementKind is `suffix`, push the current indention onto the SuffixStack.
 pub(super) trait SuffixStack {
     type SuffixStack: Stack<Indention> + Debug;
     fn suffix_stack_mut(&mut self) -> &mut Self::SuffixStack;
@@ -191,9 +191,9 @@ pub(super) trait SuffixStack {
 
 /// Indent stack that stores the history of indention.
 ///
-/// When the element kind is [indent] or [align], push the current indentation onto the stack of indentations.
-/// When the element kind is [dedent], pop the last item from the indentations stack and push it onto the temp_indentations stack.
-/// When the element kind is [end_dedent], pop the last item from the temp_indentations stack and push it onto the indentations stack.
+/// When the element kind is `indent` or `align`, push the current indentation onto the stack of indentations.
+/// When the element kind is `dedent`, pop the last item from the indentations stack and push it onto the temp_indentations stack.
+/// When the element kind is `end_dedent`, pop the last item from the temp_indentations stack and push it onto the indentations stack.
 pub(super) trait IndentStack {
     type Stack: Stack<Indention> + Debug;
     type HistoryStack: Stack<Indention> + Debug;
@@ -249,7 +249,7 @@ pub(super) trait IndentStack {
     }
 }
 
-/// Indent stack used for storing indetion history when printing the [FormatElement]s
+/// Indent stack used for storing indention history when printing the [`FormatElement`](crate::FormatElement)s
 #[derive(Debug, Clone)]
 pub(super) struct PrintIndentStack {
     indentions: Vec<Indention>,

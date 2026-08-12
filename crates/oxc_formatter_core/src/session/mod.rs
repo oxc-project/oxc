@@ -1,5 +1,7 @@
 //! Per-run execution unit shared by a root formatter and its embedded children.
 
+pub mod embedded;
+
 use std::sync::Arc;
 
 use oxc_allocator::Allocator;

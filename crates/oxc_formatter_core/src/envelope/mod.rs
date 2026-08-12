@@ -1,5 +1,5 @@
 //! Front matter WRITING shared by document-envelope hosts (CSS today, Markdown later);
-//! detection stays in [`crate::spec::front_matter`] (pure text mechanics),
+//! detection stays in [`crate::spec::parse_front_matter`] (pure text mechanics),
 //! this module owns the IR side: dispatching the block's body through the session and composing the frame.
 //!
 //! Core encodes no language meaning: a host opts in by calling, and its embeddable set arrives as data.
@@ -11,7 +11,7 @@ use oxc_allocator::ArenaVec;
 use crate::{
     Buffer as _, BufferExtensions as _, FormatContext, FormatElement, Formatter, TailwindCollector,
     builders::{hard_line_break, text},
-    embedded::dispatch_fragment_ir,
+    dispatch_fragment_ir,
     spec::FrontMatter,
     write,
 };

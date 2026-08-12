@@ -8,7 +8,7 @@ use crate::{FormatElement, FormatSession, GroupId, InputKind, format_element::In
 ///
 /// This structure is different from [crate::Formatter] in that the formatting infrastructure
 /// creates a new [crate::Formatter] for every [`crate::write!`] call, whereas this structure stays alive
-/// for the whole process of formatting a root with [crate::format!].
+/// for the whole format run.
 pub struct FormatState<'ast, C> {
     context: C,
     /// The shared execution unit of this format run; see [`FormatSession`].

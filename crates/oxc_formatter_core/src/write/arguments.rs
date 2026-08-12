@@ -2,7 +2,7 @@ use std::{ffi::c_void, marker::PhantomData};
 
 use crate::{Buffer, Format, Formatter};
 
-/// Mono-morphed type to format an object. Used by the [crate::format!], [crate::format_args!], and
+/// Mono-morphed type to format an object. Used by the [crate::format_args!] and
 /// [crate::write!] macros.
 ///
 /// This struct is similar to a dynamic dispatch (using `dyn Format`) because it stores a pointer to the value.

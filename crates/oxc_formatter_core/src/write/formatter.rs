@@ -5,12 +5,11 @@ use std::borrow::Cow;
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
-    Argument, Arguments, Buffer, FormatContext, FormatElement, FormatSession, FormatState,
-    ScratchBuffer,
-    buffer::HeapVecBuffer,
+    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatSession, FormatState,
+    HeapVecBuffer, ScratchBuffer,
     builders::{FillBuilder, JoinBuilder},
-    format::{Format, write},
     format_element::Interned,
+    write,
 };
 
 /// Interns an exactly-sized element sequence, the single place encoding the interning policy:

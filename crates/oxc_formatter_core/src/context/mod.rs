@@ -1,3 +1,6 @@
+pub mod options;
+pub mod simple;
+
 use crate::{CoreFormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, PrinterOptions};
 
 /// Language-agnostic formatting context trait.

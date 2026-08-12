@@ -4,8 +4,8 @@
 /// arguments into a single type.
 ///
 /// This macro produces a value of type [crate::Arguments]. This value can be passed to
-/// the macros within [crate]. All other formatting macros ([`format!`](crate::format!),
-/// [`write!`](crate::write!)) are proxied through this one. This macro avoids heap allocations.
+/// the macros within [crate]. [`write!`](crate::write!) is proxied through this one.
+/// This macro avoids heap allocations.
 ///
 /// You can use the [`Arguments`] value that `format_args!` returns in  `Format` contexts
 /// as seen below.
@@ -74,46 +74,6 @@ macro_rules! write {
     }};
     ($dst:expr, $arg:expr) => {{
         let result = $dst.write_fmt($crate::format_args!($arg));
-        result
-    }}
-}
-
-/// Writes formatted data into the given buffer and prints all written elements for a quick and dirty debugging.
-///
-/// An example:
-///
-/// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::{FormatState, VecBuffer};
-///
-/// # fn main()  {
-/// let mut state = FormatState::new(SimpleFormatContext::default());
-/// let mut buffer = VecBuffer::new(&mut state);
-///
-/// dbg_write!(buffer, [token("Hello")])?;
-/// // ^-- prints: [src/main.rs:7][0] = StaticToken("Hello")
-///
-/// assert_eq!(buffer.into_vec(), vec![FormatElement::Token { text: "Hello" }]);
-/// # Ok(())
-/// # }
-/// ```
-///
-/// Note that the macro is intended as debugging tool and therefore you should avoid having
-/// uses of it in version control for long periods (other than in tests and similar). Format output
-/// from production code is better done with `[write!]`
-#[macro_export]
-macro_rules! dbg_write {
-    ($dst:expr, [$($arg:expr),+ $(,)?]) => {{
-        use $crate::BufferExtensions;
-        let mut count = 0;
-        let mut inspect = $dst.inspect(|element: &FormatElement| {
-            std::eprintln!(
-                "[{}:{}][{}] = {element:#?}",
-                std::file!(), std::line!(), count
-            );
-            count += 1;
-        });
-        let result = inspect.write_fmt($crate::format_args!($($arg),+));
         result
     }}
 }
@@ -302,8 +262,8 @@ macro_rules! dbg_write {
 /// put the content in a [group with an id](crate::builders::IfGroupBreaks::with_group_id)
 /// and switch with [crate::builders::if_group_breaks] instead.
 ///
-/// [crate::BestFitting] acts as an expansion boundary:
-/// an expanding element inside a variant never expands the groups enclosing the [crate::BestFitting]
+/// [crate::builders::BestFitting] acts as an expansion boundary:
+/// an expanding element inside a variant never expands the groups enclosing the [crate::builders::BestFitting]
 /// (see `Document::propagate_expand`), it is the ONLY boundary;
 /// conditional content tags are transparent to propagation.
 ///

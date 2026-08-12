@@ -44,14 +44,6 @@ impl<'a> Document<'a> {
         (self.elements, self.sorted_tailwind_classes)
     }
 
-    /// Replaces the document's format elements with new ones.
-    ///
-    /// If you have modified the elements and want to update the document,
-    /// use this method to set the new elements.
-    pub fn replace_elements(&mut self, elements: ArenaVec<'a, FormatElement<'a>>) {
-        self.elements = elements.into_arena_slice();
-    }
-
     /// Finalizes and prints the document: propagates group expansion once
     /// (`Self::propagate_expand`) and hands the elements to the `Printer`.
     ///
@@ -85,8 +77,8 @@ impl<'a> Document<'a> {
 }
 
 impl Document<'_> {
-    /// Sets [`expand`](tag::Group::expand) to [`GroupMode::Propagated`] if the group contains any of:
-    /// * a group with [`expand`](tag::Group::expand) set to [GroupMode::Propagated] or [GroupMode::Expand].
+    /// Sets a group's [`mode`](crate::tag::Group::mode) to [`crate::GroupMode::Propagated`] if the group contains any of:
+    /// * a group whose [`mode`](crate::tag::Group::mode) is [`crate::GroupMode::Propagated`] or [`crate::GroupMode::Expand`].
     /// * a non-soft [line break](FormatElement::Line) whose [`LineMode::will_break()`](super::LineMode::will_break) is true.
     /// * a multiline [FormatElement::Text] whose `TextWidth` is not marked `without_expand_parent`.
     /// * a [FormatElement::ExpandParent]

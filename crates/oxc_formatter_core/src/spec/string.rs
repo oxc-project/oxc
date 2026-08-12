@@ -11,7 +11,7 @@ use std::borrow::Cow;
 ///
 /// `raw_content` should be the body between the quotes (e.g. for `'foo'` pass `foo`).
 /// The quote is a raw byte rather than a named type:
-/// this layer owns no quote-style vocabulary, each formatter passes its own option's byte.
+/// this domain owns no quote-style vocabulary, each formatter passes its own option's byte.
 pub fn normalize_string(
     raw_content: &str,
     preferred_quote: u8,
