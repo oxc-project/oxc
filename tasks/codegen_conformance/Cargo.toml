@@ -1,0 +1,40 @@
+[package]
+name = "oxc_codegen_conformance"
+version = "0.0.0"
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description = "Node API binding around `oxc_parser` + `oxc_codegen`, used as the reference output for the `oxc-codegen` package's conformance tests."
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+test = false
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true }
+oxc_codegen = { workspace = true }
+oxc_napi = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_syntax = { workspace = true }
+
+napi = { workspace = true }
+napi-derive = { workspace = true }
+
+[build-dependencies]
+napi-build = { workspace = true }
+
+# `napi` is not named in the source - the `#[napi]` macro expands to code which uses it, which
+# `cargo-shear` cannot see through.
+[package.metadata.cargo-shear]
+ignored = ["napi"]

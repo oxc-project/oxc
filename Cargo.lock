@@ -1908,6 +1908,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_codegen_conformance"
+version = "0.0.0"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_visit",
+ "oxc_codegen",
+ "oxc_napi",
+ "oxc_parser",
+ "oxc_syntax",
+]
+
+[[package]]
 name = "oxc_compat"
 version = "0.144.0"
 dependencies = [

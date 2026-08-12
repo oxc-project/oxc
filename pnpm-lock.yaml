@@ -402,6 +402,36 @@ importers:
 
   npm/runtime: {}
 
+  packages/codegen:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.1.0
+      cross-env:
+        specifier: 'catalog:'
+        version: 10.1.0
+      oxc-codegen-conformance:
+        specifier: workspace:*
+        version: link:../../tasks/codegen_conformance
+      oxc-parser:
+        specifier: workspace:*
+        version: link:../../napi/parser
+      rolldown:
+        specifier: 1.2.4
+        version: 1.2.4
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.22.14(@arethetypeswrong/core@0.18.5)(publint@0.3.23)(tsx@4.23.9)(typescript@6.0.3)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.10(@types/node@24.1.0)(@vitest/browser-playwright@4.1.10)(@vitest/browser-preview@4.1.10)(happy-dom@20.0.11)(vite@7.3.0(@types/node@24.1.0)(lightningcss@1.33.0)(terser@5.44.1)(tsx@4.23.9))
+
+  tasks/codegen_conformance:
+    devDependencies:
+      '@napi-rs/cli':
+        specifier: 'catalog:'
+        version: 3.8.6(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.0.2)(emnapi@2.0.0-alpha.3)
+
   tasks/compat_data:
     devDependencies:
       degit:

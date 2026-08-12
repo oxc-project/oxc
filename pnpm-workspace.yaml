@@ -1,8 +1,10 @@
 packages:
   - apps/*
   - napi/*
+  - packages/*
   - wasm/*
   - npm/*
+  - tasks/codegen_conformance
   - tasks/e2e
   - tasks/transform_conformance
   - tasks/compat_data
