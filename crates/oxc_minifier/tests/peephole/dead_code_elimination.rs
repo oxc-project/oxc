@@ -1061,3 +1061,31 @@ fn dce_keeps_implicitly_observable_bindings() {
         options,
     );
 }
+
+#[test]
+fn dce_inline_template_literal_does_not_create_octal_escape() {
+    // https://github.com/rolldown/rolldown/issues/10661
+    test(
+        r"export function makeKey(messageId, correlationId) { return `${messageId}\0${correlationId}\0${0}`; }",
+        r"export function makeKey(messageId, correlationId) { return `${messageId}\0${correlationId}\x000`; }",
+    );
+
+    // An escaped backslash before `0` is not a null escape, so this boundary is safe to fold.
+    test(
+        r"export function makeKey(messageId) { return `${messageId}\\0${0}`; }",
+        r"export function makeKey(messageId) { return `${messageId}\\00`; }",
+    );
+
+    // Empty folds can expose the same boundary directly or across adjacent expressions.
+    test(
+        r"export function makeKey(messageId) { return `${messageId}\0${''}0`; }",
+        r"export function makeKey(messageId) { return `${messageId}\x000`; }",
+    );
+    test(
+        r"export function makeKey(messageId) { return `${messageId}\0${''}${0}`; }",
+        r"export function makeKey(messageId) { return `${messageId}\x000`; }",
+    );
+
+    // Expressions with side effects must still remain interpolation expressions.
+    test_same(r"export function makeKey(messageId) { return `${messageId}\0${sideEffect()}`; }");
+}
