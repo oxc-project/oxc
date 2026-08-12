@@ -1,5 +1,6 @@
 ---
 source: tasks/website_formatter/src/json_schema.rs
+assertion_line: 30
 expression: snapshot
 ---
 ---
@@ -666,7 +667,7 @@ all conditions must be met for an import to match the custom group (AND logic).
 - Default: `[]`
 
 
-####### overrides[n].options.sortImports.customGroups[n]
+###### overrides[n].options.sortImports.customGroups[n]
 
 type: `object`
 
@@ -674,7 +675,7 @@ type: `object`
 
 
 
-######## overrides[n].options.sortImports.customGroups[n].elementNamePattern
+###### overrides[n].options.sortImports.customGroups[n].elementNamePattern
 
 type: `string[]`
 
@@ -683,7 +684,7 @@ default: `[]`
 List of glob patterns to match import sources for this group.
 
 
-######## overrides[n].options.sortImports.customGroups[n].groupName
+###### overrides[n].options.sortImports.customGroups[n].groupName
 
 type: `string`
 
@@ -692,7 +693,7 @@ default: `""`
 Name of the custom group, used in the `groups` option.
 
 
-######## overrides[n].options.sortImports.customGroups[n].modifiers
+###### overrides[n].options.sortImports.customGroups[n].modifiers
 
 type: `array`
 
@@ -701,7 +702,7 @@ Modifiers to match the import characteristics.
 All specified modifiers must be present (AND logic).
 
 
-######### overrides[n].options.sortImports.customGroups[n].modifiers[n]
+###### overrides[n].options.sortImports.customGroups[n].modifiers[n]
 
 type: `"side_effect" | "type" | "value" | "default" | "wildcard" | "named"`
 
@@ -709,7 +710,7 @@ type: `"side_effect" | "type" | "value" | "default" | "wildcard" | "named"`
 Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).
 
 
-######## overrides[n].options.sortImports.customGroups[n].selector
+###### overrides[n].options.sortImports.customGroups[n].selector
 
 type: `"type" | "side_effect_style" | "side_effect" | "style" | "index" | "sibling" | "parent" | "subpath" | "internal" | "builtin" | "external" | "import"`
 
@@ -781,7 +782,7 @@ Also, you can override the global `newlinesBetween` setting for specific group b
 by including a `{ "newlinesBetween": boolean }` marker object in the `groups` list at the desired position.
 
 
-####### overrides[n].options.sortImports.groups[n]
+###### overrides[n].options.sortImports.groups[n]
 
 type: `object | array | string`
 
@@ -789,7 +790,7 @@ type: `object | array | string`
 
 
 
-######## overrides[n].options.sortImports.groups[n].newlinesBetween
+###### overrides[n].options.sortImports.groups[n].newlinesBetween
 
 type: `boolean`
 
