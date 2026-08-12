@@ -1,0 +1,25 @@
+packages/codegen/DESIGN.md
+  s_ee0243a1a11203::t_b059ec5d51e709 52
+packages/codegen/README.md
+  s_ee0243a1a11203::t_ece8af06ee2f47 63-75
+packages/codegen/bench.bench.ts
+  s_ee0243a1a11203::t_1faa8ce17eda40 95
+packages/codegen/package.json
+  s_ee0243a1a11203::t_28852810d7729b 52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e65f95c6e5dee4d1cea3ff698c4f247ff7fbda37",
+  "prompts": {},
+  "sessions": {
+    "s_ee0243a1a11203": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff570-b172-7bc3-94de-65349a19cc4a",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
