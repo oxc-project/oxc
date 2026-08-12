@@ -13,8 +13,7 @@ import type { State } from "../state.ts";
 /**
  * Write the indentation for the current level, or the pending single space in place of it.
  *
- * Comment printing and inline statement bodies ask for a space where an indent would go,
- * which keeps `if (x) foo()` on one line.
+ * Inline statement bodies ask for a space where an indent would go, which keeps `if (x) foo()` on one line.
  */
 export function printIndent(state: State): void {
   if (state.pendingIndentAsSpace) {

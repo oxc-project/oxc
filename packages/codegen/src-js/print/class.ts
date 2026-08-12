@@ -108,7 +108,7 @@ export function printClass(node: ESTree.Class, state: State): void {
 }
 
 /**
- * Print a run of decorators, one per line, parenthesizing any whose expression needs it.
+ * Print a run of decorators separated by spaces, parenthesizing any whose expression needs it.
  */
 export function printDecorators(decorators: ESTree.Decorator[], state: State): void {
   const { length } = decorators;
