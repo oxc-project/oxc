@@ -338,6 +338,146 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// Check whether two import declarations can be merged.
+    fn can_merge_imports(first: &ImportDeclaration<'a>, second: &ImportDeclaration<'a>) -> bool {
+        if first.source.value != second.source.value
+            || first.phase != second.phase
+            || first.import_kind != second.import_kind
+            || first.import_kind.is_type()
+            || first.with_clause.content_ne(&second.with_clause)
+        {
+            return false;
+        }
+
+        // Additional default specifiers can be represented as named imports of
+        // `default`. Namespace and named specifiers cannot coexist.
+        let mut default_count = 0;
+        let mut has_namespace = false;
+        let mut has_named = false;
+        for specifier in first
+            .specifiers
+            .iter()
+            .flat_map(|specifiers| specifiers.iter())
+            .chain(second.specifiers.iter().flat_map(|specifiers| specifiers.iter()))
+        {
+            match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(_) => has_named = true,
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => default_count += 1,
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                    if has_namespace {
+                        return false;
+                    }
+                    has_namespace = true;
+                }
+            }
+        }
+        !(has_namespace && (has_named || default_count > 1))
+    }
+
+    /// Convert a default import into a named import of the module's `default`
+    /// export. This allows multiple default bindings in one import clause.
+    fn default_to_named_import(
+        default_specifier: ImportDeclarationSpecifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> ImportDeclarationSpecifier<'a> {
+        let ImportDeclarationSpecifier::ImportDefaultSpecifier(default_specifier) =
+            default_specifier
+        else {
+            unreachable!();
+        };
+        let ImportDefaultSpecifier { span, local, .. } = default_specifier.unbox();
+        ImportDeclarationSpecifier::new_import_specifier(
+            span,
+            ModuleExportName::IdentifierName(IdentifierName::new(span, "default", ctx)),
+            local,
+            ImportOrExportKind::Value,
+            ctx,
+        )
+    }
+
+    /// Merge import declarations that load the same module request.
+    ///
+    /// ```js
+    /// import { foo } from "module";
+    /// import { bar } from "other";
+    /// import { baz } from "module";
+    /// // becomes
+    /// import { foo, baz } from "module";
+    /// import { bar } from "other";
+    /// ```
+    pub fn merge_imports(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        let mut import_cache: ArenaHashMap<'a, &'a str, ArenaVec<'a, usize>> =
+            ArenaHashMap::new_in(ctx.allocator());
+        let mut merges = ArenaVec::new_in(ctx);
+
+        // Merge into the target immediately so later declarations are checked
+        // against the combined import clause. Keep every unmerged declaration
+        // in a source group because import attributes, phases, and type/value
+        // mode may differ between declarations with the same source string.
+        for statement_index in 0..stmts.len() {
+            let Statement::ImportDeclaration(import_decl) = stmts.get(statement_index).unwrap()
+            else {
+                continue;
+            };
+            let candidates = import_cache
+                .entry(import_decl.source.value.as_str())
+                .or_insert_with(|| ArenaVec::new_in(ctx));
+            let target_index = candidates.iter().find_map(|&target_index| {
+                let Some(Statement::ImportDeclaration(target)) = stmts.get(target_index) else {
+                    return None;
+                };
+                Self::can_merge_imports(target, import_decl).then_some(target_index)
+            });
+
+            let Some(target_index) = target_index else {
+                candidates.push(statement_index);
+                continue;
+            };
+
+            {
+                let source_stmt = stmts.get(statement_index).unwrap();
+                ctx.drop_statement(source_stmt);
+            }
+            let Statement::ImportDeclaration(source_import) =
+                stmts.get_mut(statement_index).unwrap()
+            else {
+                unreachable!();
+            };
+            let Some(mut source_specifiers) = source_import.specifiers.take() else {
+                merges.push((target_index, statement_index));
+                continue;
+            };
+
+            let Statement::ImportDeclaration(target_import) = stmts.get_mut(target_index).unwrap()
+            else {
+                unreachable!();
+            };
+            let target_specifiers =
+                target_import.specifiers.get_or_insert_with(|| ArenaVec::new_in(ctx));
+            let target_has_default = target_specifiers.iter().any(|specifier| {
+                matches!(specifier, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
+            });
+            if let Some(default_index) = source_specifiers.iter().position(|specifier| {
+                matches!(specifier, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
+            }) {
+                let default_specifier = source_specifiers.remove(default_index);
+                if target_has_default {
+                    target_specifiers.push(Self::default_to_named_import(default_specifier, ctx));
+                } else {
+                    target_specifiers.insert(0, default_specifier);
+                }
+            }
+            target_specifiers.append(&mut source_specifiers);
+            merges.push((target_index, statement_index));
+        }
+
+        // Remove imports in reverse order so removing a later import does not
+        // shift the indices of any merge that is still waiting to be applied.
+        for &(_, source_index) in merges.iter().rev() {
+            stmts.remove(source_index);
+        }
+    }
+
     /// Check whether an import can be merged with a local named export.
     fn can_merge_import_export(
         import_decl: &ImportDeclaration<'a>,
