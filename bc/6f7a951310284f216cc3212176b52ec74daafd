@@ -1,0 +1,23 @@
+packages/codegen/src-js/print/class.ts
+  s_5b6f793b074bf8::t_99cb010b0d1387 111
+packages/codegen/src-js/print/indent.ts
+  s_5b6f793b074bf8::t_34411aabd61555 16
+packages/codegen/tsdown.config.ts
+  s_5b6f793b074bf8::t_3971a4faa8a20c 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bc6f7a951310284f216cc3212176b52ec74daafd",
+  "prompts": {},
+  "sessions": {
+    "s_5b6f793b074bf8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6f1-ae8f-7f80-b166-bc56878b8923",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
