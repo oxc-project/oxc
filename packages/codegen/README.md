@@ -47,7 +47,7 @@ Returns a string containing the code for the AST `node`.
 | Option                | Type                 | Default | Description                                     |
 | :-------------------- | :------------------- | :------ | :---------------------------------------------- |
 | `indent`              | `string`             | `"\t"`  | Indentation - spaces and/or tabs only           |
-| `startingIndentLevel` | `number`             | `0`     | Indent level to start from                      |
+| `startingIndentLevel` | `number`             | `0`     | Starting indent level, from `0` to `1000`       |
 | `jsx`                 | `boolean`            | `false` | `.tsx` mode - lone type parameters print `<T,>` |
 | `ts`                  | `boolean`            | `false` | AST may contain TypeScript syntax               |
 | `sourceMap`           | `SourceMapGenerator` | -       | If present, source mappings are emitted into it |
