@@ -1,0 +1,19 @@
+packages/codegen/test/utils/common.ts
+  s_150d8b49e098d9::t_0ec0a6b7dea116 90-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b4d404b43865e0a3d7f7480524c7444afa93ec0e",
+  "prompts": {},
+  "sessions": {
+    "s_150d8b49e098d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff720-472d-7273-906b-1118f98b4c2c",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
