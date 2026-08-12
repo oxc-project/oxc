@@ -14,8 +14,8 @@
   "main": "index.js",
   "scripts": {
     "build-dev": "napi build --esm --platform",
-    "build-test": "pnpm run build-dev --profile coverage",
-    "build": "pnpm run build-dev --release"
+    "build-test": "pnpm run build-dev --profile codegen-conformance",
+    "build": "pnpm run build-test"
   },
   "devDependencies": {
     "@napi-rs/cli": "catalog:"
