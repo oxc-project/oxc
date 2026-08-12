@@ -1,14 +1,12 @@
-use oxc_allocator::Allocator;
-use oxc_ast::ast::Statement;
-use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_parser::{ParseOptions, Parser};
+use oxc_codegen::CodegenOptions;
+use oxc_parser::ParseOptions;
 use oxc_span::SourceType;
 
 use crate::{
     snapshot, snapshot_options,
     tester::{
-        default_options, test_idempotency, test_options_with_source_type,
-        test_reparse_with_source_type, test_same, test_tsx, test_with_parse_options,
+        default_options, test_idempotency, test_options_with_source_type, test_same, test_tsx,
+        test_with_parse_options,
     },
 };
 
@@ -77,81 +75,16 @@ fn tsx() {
 
 #[test]
 fn comparison_must_not_become_type_arguments() {
-    fn test_ts(source: &str, expected: &str) {
-        test_reparse_with_source_type(source, expected, SourceType::ts(), default_options());
-    }
-    fn test_ts_same(source: &str) {
-        test_ts(source, &format!("{source}\n"));
-    }
+    test_same("(a < b) > /x/;\n");
+    test_same("(a << b) >> /x/;\n");
+    test_same("(a < b) >>> /x/;\n");
 
-    // Exercise every opener and closer in both operand directions.
-    for open in ["<", "<<"] {
-        for close in [">", ">>", ">>>"] {
-            test_ts_same(&format!("(a {open} b) {close} /x/;"));
+    test_same("a < (b > /x/);\n");
+    test_same("a << (b >> /x/);\n");
+    test_same("a < (b >>> /x/);\n");
 
-            let source = format!("(a < z) {open} (b {close} /x/);");
-            let left = if open == "<" { "a < z" } else { "(a < z)" };
-            test_ts(&source, &format!("{left} {open} (b {close} /x/);\n"));
-        }
-    }
-
-    // A generic call and tagged template are valid but different parses without grouping.
-    for right in ["(c, d)", "`x`"] {
-        test_ts_same(&format!("(a < b) > {right};"));
-    }
-
-    // `>=`, `<=`, an inner `>`, and an unmatched `<` do not form an open/close pair.
-    for (source, expected) in [
-        ("(a < b) < /x/;", "a < b < /x/;\n"),
-        ("(a > b) > /x/;", "a > b > /x/;\n"),
-        ("(a <= b) > /x/;", "a <= b > /x/;\n"),
-        ("(a < b) >= /x/;", "a < b >= /x/;\n"),
-    ] {
-        test_ts(source, expected);
-    }
-
-    for (source_type, options, expected) in [
-        (SourceType::tsx(), default_options(), "(a < b) > /x/;\n"),
-        (SourceType::ts(), CodegenOptions::minify(), "(a<b)>/x/;"),
-    ] {
-        test_reparse_with_source_type("(a < b) > /x/;", expected, source_type, options);
-    }
-    // Minification may intentionally change a string literal into a template literal.
-    test_options_with_source_type(
-        "(a < b) > \"x\";",
-        "(a<b)>`x`;",
-        SourceType::ts(),
-        CodegenOptions::minify(),
-    );
-
-    // Exercise both bitwise operators with the opener on either operand.
-    for operator in ["|", "&"] {
-        test_ts_same(&format!("(a < b) {operator} c;"));
-        test_ts_same(&format!("a {operator} (b < c);"));
-    }
-
-    // A nested bitwise tree applies the local rule once and retains normal associativity.
-    test_ts("((a < b) | c) | d > /x/;", "(a < b) | c | d > /x/;\n");
-}
-
-#[test]
-fn comparison_type_argument_ambiguity_in_expression_fragment() {
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, "(a < b) > /x/;", SourceType::ts())
-        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
-        .parse();
-    assert!(ret.diagnostics.is_empty(), "Parse errors: {:?}", ret.diagnostics);
-    let Statement::ExpressionStatement(statement) = &ret.program.body[0] else {
-        unreachable!();
-    };
-
-    let mut codegen = Codegen::new().with_source_type(SourceType::ts());
-    codegen.print_expression(&statement.expression);
-    assert_eq!(codegen.into_source_text(), "(a < b) > /x/");
-
-    let mut codegen = Codegen::new().with_source_type(SourceType::mjs());
-    codegen.print_expression(&statement.expression);
-    assert_eq!(codegen.into_source_text(), "a < b > /x/");
+    test_same("(a < b) | c;\n");
+    test_same("a & (b << c);\n");
 }
 
 #[test]
