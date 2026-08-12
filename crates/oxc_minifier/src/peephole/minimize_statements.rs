@@ -105,7 +105,7 @@ impl<'a> PeepholeOptimizations {
 
         // Drop a trailing unconditional jump statement if applicable
         if let Some(last_stmt) = stmts.last()
-            && Self::can_remove_termination_statement(last_stmt, ctx)
+            && Self::can_remove_termination_statement(last_stmt, true, ctx)
         {
             let dropped = stmts.pop().unwrap();
             ctx.drop_statement(&dropped);
@@ -610,7 +610,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&previous.consequent);
                 }
 
-                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
+                if Self::can_remove_termination_statement(&if_stmt.consequent, true, ctx) {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
                     // If so, inverting the branch condition and nesting statements after
@@ -1935,10 +1935,16 @@ impl<'a> PeepholeOptimizations {
     /// - Bare `return` statements that terminate a function body
     /// - Unlabeled `break` statements that terminate a `do...while` body whose test is statically `false`
     ///
+    /// skip_first_transparent_body: is used to ignore the first block Statement if we checked it before
+    ///
     /// Limitations:
     /// A single wrapping block is also transparent (caller guarantees it is the last statement),
     /// but deeper nested block (statements) are not — we cannot verify they are last in their parent.
-    fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    pub fn can_remove_termination_statement(
+        stmt: &Statement<'a>,
+        skip_first_transparent_body: bool,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
@@ -1951,7 +1957,8 @@ impl<'a> PeepholeOptimizations {
                         | Ancestor::DoWhileStatementBody(_) => {
                             return true;
                         }
-                        Ancestor::BlockStatementBody(_) if index == 0 => {}
+                        Ancestor::BlockStatementBody(_)
+                            if skip_first_transparent_body && index == 0 => {}
                         Ancestor::IfStatementConsequent(_)
                         | Ancestor::IfStatementAlternate(_)
                         | Ancestor::LabeledStatementBody(_) => {}
@@ -1967,7 +1974,8 @@ impl<'a> PeepholeOptimizations {
                         Ancestor::DoWhileStatementBody(do_while) => {
                             return do_while.test().get_side_free_boolean_value(ctx) == Some(false);
                         }
-                        Ancestor::BlockStatementBody(_) if index == 0 => {}
+                        Ancestor::BlockStatementBody(_)
+                            if skip_first_transparent_body && index == 0 => {}
                         Ancestor::IfStatementConsequent(_)
                         | Ancestor::IfStatementAlternate(_)
                         | Ancestor::LabeledStatementBody(_) => {}
