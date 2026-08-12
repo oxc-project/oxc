@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/unicorn/prefer_node_protocol.rs
+  s_c76bc64956f92f::t_95c438b99470d3 76,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "41e62ebbd3a3380c2722d458f364c6626da28d50",
+  "prompts": {},
+  "sessions": {
+    "s_c76bc64956f92f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6b4-510b-77f2-9b6c-c10b385e5245",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
