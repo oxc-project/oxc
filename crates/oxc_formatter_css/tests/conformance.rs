@@ -31,9 +31,6 @@ const CSS: ConformanceConfig = ConformanceConfig {
         // range formatting / IDE cursor, not whole-file formatting
         "css/range/",
         "css/cursor/",
-        // TODO: A regular whole-file test that currently fails (~91% match);
-        // ignored until triaged - fix or classify under "Known divergences".
-        "css/stylefmt-repo/media-queries-ranges/",
     ],
     skip_spec: None,
 };
