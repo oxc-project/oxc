@@ -1,0 +1,23 @@
+crates/oxc_codegen/tests/integration/js.rs
+  s_061691b6efb6b5::t_1f74c9beb6d8f7 32-33,46
+crates/oxc_codegen/tests/integration/snapshots/ts.snap
+  s_061691b6efb6b5::t_3292c3050f07ca 312
+crates/oxc_codegen/src/gen.rs
+  s_061691b6efb6b5::t_215d978d0ce220 926
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5d63921c1dbff13681962cd235225aa94c09dbc2",
+  "prompts": {},
+  "sessions": {
+    "s_061691b6efb6b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffad6-9120-7051-ae03-ebfcfa07cd42",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
