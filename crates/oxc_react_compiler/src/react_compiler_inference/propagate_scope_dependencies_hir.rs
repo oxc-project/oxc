@@ -28,7 +28,7 @@ use crate::react_compiler_hir::{
     PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
     ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
-use crate::react_compiler_optimization::dead_code_elimination::is_catch_observable_property_load;
+use crate::react_compiler_optimization::dead_code_elimination::find_semantic_only_caught_instructions;
 use oxc_span::Span;
 
 // =============================================================================
@@ -1747,6 +1747,24 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
         self.visit_dependency(dep, env);
     }
 
+    fn visit_operand_root(&mut self, place: &Place, env: &mut Environment<'a>) {
+        let dep = self.temporaries[place.identifier]
+            .as_ref()
+            .map(|resolved| ReactiveScopeDependency {
+                identifier: resolved.identifier,
+                reactive: resolved.reactive,
+                path: ArenaVec::new_in(&env.allocator),
+                span: resolved.span,
+            })
+            .unwrap_or_else(|| ReactiveScopeDependency {
+                identifier: place.identifier,
+                reactive: place.reactive,
+                path: ArenaVec::new_in(&env.allocator),
+                span: place.span,
+            });
+        self.visit_dependency(dep, env);
+    }
+
     fn visit_property(
         &mut self,
         object: &Place,
@@ -1860,6 +1878,9 @@ fn visit_inner_function_blocks<'a>(
     ctx: &mut DependencyCollectionContext<'a, '_>,
     env: &mut Environment<'a>,
 ) {
+    let semantic_only_caught_instructions =
+        find_semantic_only_caught_instructions(&env.functions[func_id], env);
+
     // Clone inner function's instructions and block structure to avoid
     // borrow conflicts when mutating env through handle_instruction.
     let inner_instrs = env.functions[func_id].instructions.clone_in(env.allocator);
@@ -1907,7 +1928,12 @@ fn visit_inner_function_blocks<'a>(
                     visit_inner_function_blocks(lowered_func.func, ctx, env);
                 }
                 _ => {
-                    handle_instruction(inner_instr, ctx, env);
+                    handle_instruction(
+                        inner_instr,
+                        semantic_only_caught_instructions.as_ref().is_some_and(|loads| loads[iid]),
+                        ctx,
+                        env,
+                    );
                 }
             }
         }
@@ -1923,12 +1949,22 @@ fn visit_inner_function_blocks<'a>(
 
 fn handle_instruction<'a>(
     instr: &Instruction<'a>,
+    semantic_only_caught_instruction: bool,
     ctx: &mut DependencyCollectionContext<'a, '_>,
     env: &mut Environment<'a>,
 ) {
     let id = instr.id;
     let scope_stack_copy = ctx.scope_stack.clone();
     ctx.declare(instr.lvalue.identifier, Decl { id, scope_stack: scope_stack_copy }, env);
+
+    if semantic_only_caught_instruction {
+        // The operation must remain inside the try/catch, so use its root operands as
+        // dependencies instead of hoisting the potentially throwing operation into a cache guard.
+        for operand in visitors::each_instruction_value_operand(&instr.value, env) {
+            ctx.visit_operand_root(&operand, env);
+        }
+        return;
+    }
 
     if ctx.is_deferred_dependency_instr(instr) {
         return;
@@ -1999,6 +2035,7 @@ fn collect_dependencies<'a>(
     temporaries: &TemporariesMap<'a>,
     processed_instrs_in_optional: &FxHashSet<ProcessedInstr>,
 ) -> FxIndexMap<ScopeId, Vec<ReactiveScopeDependency<'a>>> {
+    let semantic_only_caught_instructions = find_semantic_only_caught_instructions(func, env);
     let mut ctx = DependencyCollectionContext::new(
         env.identifiers.len(),
         temporaries,
@@ -2027,7 +2064,13 @@ fn collect_dependencies<'a>(
 
     let mut traversal = ScopeBlockTraversal::new();
 
-    handle_function_deps(func, env, &mut ctx, &mut traversal);
+    handle_function_deps(
+        func,
+        env,
+        semantic_only_caught_instructions.as_ref(),
+        &mut ctx,
+        &mut traversal,
+    );
 
     ctx.deps
 }
@@ -2035,6 +2078,7 @@ fn collect_dependencies<'a>(
 fn handle_function_deps<'a>(
     func: &HirFunction<'a>,
     env: &mut Environment<'a>,
+    semantic_only_caught_instructions: Option<&IndexVec<InstructionId, bool>>,
     ctx: &mut DependencyCollectionContext<'a, '_>,
     traversal: &mut ScopeBlockTraversal,
 ) {
@@ -2087,22 +2131,13 @@ fn handle_function_deps<'a>(
                     ctx.inner_fn_context = prev_inner;
                 }
                 _ => {
-                    handle_instruction(instr, ctx, env);
-                }
-            }
-        }
-
-        // A caught throw is an observable result of a read even when its produced value is not
-        // used. Record the read's root operands as dependencies so a cached scope re-runs when
-        // the throw outcome can change. Using the roots also avoids hoisting the potentially
-        // throwing property access itself outside of the try/catch.
-        if matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }) {
-            for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.index()];
-                if is_catch_observable_property_load(&instr.value) {
-                    for operand in visitors::each_instruction_value_operand(&instr.value, env) {
-                        ctx.visit_operand(&operand, env);
-                    }
+                    handle_instruction(
+                        instr,
+                        semantic_only_caught_instructions
+                            .is_some_and(|instructions| instructions[instr_id]),
+                        ctx,
+                        env,
+                    );
                 }
             }
         }
