@@ -302,6 +302,15 @@ const PURE_PRIMITIVE_FN: MethodDef = MethodDef {
     ..MethodDef::DEFAULT
 };
 
+/// `Symbol()` returns a primitive with unique identity. Model the result as
+/// identity-bearing internally so escaping symbols are memoized.
+const SYMBOL_FN: MethodDef = MethodDef {
+    rest_param: Some(Effect::Read),
+    return_type: TypeDef::Poly,
+    return_value_kind: ValueKind::Mutable,
+    ..MethodDef::DEFAULT
+};
+
 /// Shorthand for a function freezing its arguments and returning a frozen value.
 const FREEZE_ARGS_FN: MethodDef = MethodDef {
     rest_param: Some(Effect::Freeze),
@@ -1715,7 +1724,6 @@ const PRIMITIVE_GLOBAL_FNS: &[&str] = &[
     "Boolean",
     "Number",
     "String",
-    "Symbol",
     "parseInt",
     "parseFloat",
     "isNaN",
@@ -1757,6 +1765,10 @@ fn build_typed_globals(
         typed_globals.push((Ident::from(*name), f.clone()));
         globals.insert(Ident::from(*name), f);
     }
+
+    let symbol = add_method(shapes, &SYMBOL_FN, None, false);
+    typed_globals.push((Ident::from("Symbol"), symbol.clone()));
+    globals.insert(Ident::from("Symbol"), symbol);
 
     // Primitive globals
     typed_globals.push((Ident::from("Infinity"), Type::Primitive));
