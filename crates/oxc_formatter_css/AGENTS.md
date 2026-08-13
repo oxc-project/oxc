@@ -58,8 +58,9 @@ they are collected via `ParserBuilder::comments()` into a positional cursor over
 
 - Statement-level comments: flushed before each statement (`flush_leading_comments`);
   consecutive same-line comments stay glued (`*/ /*!`), but a comment is always followed by a line break before a node
-- Value-level comments: flushed inside fill entries before the component they precede (`flush_value_comments`);
-  `//` comments expand the parent group and force a hardline after
+- Value-level comments: block comments between fill runs are standalone fill items (own-line or not);
+  the rest (leads before the first component, own-line `//`) flush at the next entry's head (`flush_value_comments`),
+  where `//` comments expand the parent group and force a hardline after
 - Trailing (`value /* c */;`): flushed by `write_declaration` with the source gap before `;` preserved
 - After each statement, the sequence DISCARDS unclaimed comments inside the statement span
   (cursor must never point before a printed position)
@@ -79,7 +80,9 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
 - The positional cursor makes ownership a bounds discipline, not an attachment one:
   - a flush's upper bound must never extend past the next piece of user content,
   - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
-- Line-boundary rule in CSS terms: `//` comments force a hardline after; own-line comments stay own-line
+- Line-boundary rule in CSS terms: `//` comments force a hardline after;
+  - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
+    - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
 
 ### Line endings
 
