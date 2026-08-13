@@ -214,6 +214,36 @@ describe("numbers", () => {
   ]);
 });
 
+// String printing has a deliberately broad fast path. In particular, a `<` by itself is harmless;
+// only the case-insensitive `</script` sequence must be broken up for safe inline-script output.
+describe("strings", () => {
+  checkCases([
+    ["harmless less-than", e(str("a < b; <div> is text")), '("a < b; <div> is text");\n'],
+    ["script close tag", e(str("</script")), '("<\\/script");\n'],
+    ["mixed-case script close tag", e(str("</ScRiPt")), '("<\\/ScRiPt");\n'],
+    // This is a prefix check, matching the HTML parser behavior and the previous slow-path test.
+    ["script close tag prefix", e(str("</scripture")), '("<\\/scripture");\n'],
+    [
+      "quote and controls",
+      e(str('"\\\0' + "1\n\r\u0007\u000b\f\u001b\u00a0\u2028\u2029")),
+      '("\\\"\\\\\\x001\\n\\r\\x07\\v\\f\\x1B\\xA0\\u2028\\u2029");\n',
+    ],
+    ["paired surrogate", e(str("\ud83d\ude00")), '("😀");\n'],
+    ["lone high surrogate", e(str("\ud800")), '("\\ud800");\n'],
+    ["lone low surrogate", e(str("\udc00")), '("\\udc00");\n'],
+  ]);
+
+  test("template literal quasis also escape script close tags", () => {
+    const { program: parsed, errors } = parseSync(
+      "fixture.js",
+      "const value = `before </ScRiPt> after`;",
+      PARSE_OPTIONS,
+    );
+    if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);
+    expect(printSync(parsed)).toBe("const value = `before <\\/ScRiPt> after`;\n");
+  });
+});
+
 // A negative bigint is parenthesized where the position binds tighter than a prefix operator, the
 // same rule `printNumericLiteral` follows. `-1n` parses as a unary minus around a positive literal,
 // so a `BigIntLiteral` whose text starts with `-` never comes from a parser and this whole branch
