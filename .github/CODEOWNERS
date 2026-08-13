@@ -77,6 +77,12 @@ pnpm-lock.yaml
 /tasks/benchmark/benches/react_compiler.rs @Boshen
 /.github/workflows/release_napi_transform_react.yml @Boshen
 
+# Relay transform (@Boshen)
+
+/crates/oxc_relay @Boshen
+/napi/transform-relay @Boshen
+/.github/workflows/release_napi_transform_relay.yml @Boshen
+
 # Core infrastructure crates (@overlookmotel)
 
 /crates/oxc_allocator @overlookmotel

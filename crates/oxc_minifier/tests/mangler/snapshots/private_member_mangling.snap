@@ -86,6 +86,26 @@ class Outer {
 	}
 }
 
+class HasOuterBrand {} class MissingOuterBrand {} class Outer { #x; create(o) { return class Inner extends (#x in o ? HasOuterBrand : MissingOuterBrand) { #x; }; } }
+class HasOuterBrand {}
+class MissingOuterBrand {}
+class Outer {
+	#e;
+	create(e) {
+		return class t extends (#e in e ? HasOuterBrand : MissingOuterBrand) {
+			#t;
+		};
+	}
+}
+
+class Outer extends (class Inner { #a; #e; }) { #a; }
+class Outer extends class e {
+	#e;
+	#t;
+} {
+	#e;
+}
+
 class Foo { publicField = 1; #privateField = 2; getSum() { return this.publicField + this.#privateField; } }
 class Foo {
 	publicField = 1;
