@@ -923,9 +923,7 @@ impl Gen for ImportDeclaration<'_> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                p.print_ascii_byte(b'"');
-                p.print_str(self.source.value.as_str());
-                p.print_ascii_byte(b'"');
+                p.print_string_literal(&self.source, false);
                 if let Some(with_clause) = &self.with_clause {
                     p.print_hard_space();
                     with_clause.print(p, ctx);
