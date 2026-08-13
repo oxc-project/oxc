@@ -1,0 +1,23 @@
+Cargo.lock
+  s_1946eb094faf21::t_b25a845ac71ed7 1908
+crates/oxc_codegen/Cargo.toml
+  s_1946eb094faf21::t_2cb42cf8d9c179 37
+crates/oxc_codegen/src/comment.rs
+  s_1946eb094faf21::t_19115fb003a79e 4,15-17,78-80,172,284-291
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c0bd5ccfd3834064d238a2ff5a747fd6a12a4baf",
+  "prompts": {},
+  "sessions": {
+    "s_1946eb094faf21": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb44-a91b-7612-b164-72e61fb73b2f",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
