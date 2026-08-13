@@ -923,9 +923,7 @@ impl Gen for ImportDeclaration<'_> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                p.print_ascii_byte(b'"');
-                p.print_str(self.source.value.as_str());
-                p.print_ascii_byte(b'"');
+                p.print_string_literal(&self.source, false);
                 if let Some(with_clause) = &self.with_clause {
                     p.print_hard_space();
                     with_clause.print(p, ctx);
@@ -2542,7 +2540,6 @@ impl Gen for Class<'_> {
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         let ctx = ctx.and_forbid_call(false);
         p.wrap(wrap, |p| {
-            p.enter_class();
             p.print_decorators(&self.decorators, ctx);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -2576,6 +2573,7 @@ impl Gen for Class<'_> {
                 p.print_list(&self.implements, ctx);
             }
             p.print_soft_space();
+            p.enter_class();
             self.body.print(p, ctx);
             p.needs_semicolon = false;
             p.exit_class();

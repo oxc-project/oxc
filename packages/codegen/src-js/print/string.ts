@@ -7,20 +7,20 @@ import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
- * Characters which may need escaping or special handling.
+ * Characters or sequences which may need escaping or special handling.
  *
  * The quote is fixed to `"` in pretty mode, so `'` and `` ` `` are deliberately absent -
  * they are never escaped, and must not drag a string onto the slow path.
  */
 const STRING_ESCAPE_REGEX =
   // eslint-disable-next-line no-control-regex
-  /[\0\x07\b\v\f\n\r\x1B\\"<\u2028\u2029\xA0\uD800-\uDFFF]/;
+  /[\0\x07\b\v\f\n\r\x1B\\"\u2028\u2029\xA0\uD800-\uDFFF]|<\/script/i;
 
 /**
  * Print a string literal, quotes and all.
  *
  * Pretty mode always uses double quotes, matching Oxc's default options, so there is no quote to choose.
- * Almost no string needs escaping, so the scan for characters which do is all that happens on the common path.
+ * Almost no string needs escaping, so the scan for characters or sequences which do is all that happens on the common path.
  */
 export function printString(state: State, value: string, node: ESTree.Node): void {
   // Quote is fixed - double, matching `oxc_codegen`'s default option

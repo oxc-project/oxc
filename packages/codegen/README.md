@@ -1,75 +1,127 @@
 # oxc-codegen
 
-A fast JavaScript code generator from an [ESTree](https://github.com/estree/estree)-compliant AST,
-written in TypeScript.
+Fast, synchronous code generation for JavaScript and TypeScript ASTs.
 
-It is a faithful port of Oxc's Rust [`oxc_codegen`](https://github.com/oxc-project/oxc/tree/main/crates/oxc_codegen)
-crate (pretty-printing mode). Output is byte-identical to `oxc_codegen` with default options
-(tab indentation, double quotes, comments off).
+`oxc-codegen` turns an [ESTree](https://github.com/estree/estree) or
+[TS-ESTree](https://typescript-eslint.io/packages/typescript-estree/) AST into formatted source
+code. It supports JavaScript, JSX, TypeScript, and TSX.
 
-Unlike the rest of Oxc's JS packages, this package contains no Rust and no native bindings.
-It is pure JavaScript, and consumes an AST which already lives on the JS side, so doesn't need
-to serialize it across a JS/native boundary. This is the key to `oxc-codegen`'s speed -
-along with many optimizations to hit JS engines' fast paths.
+The printer is a port of Oxc's Rust `oxc_codegen` crate. With the default options, both printers
+produce byte-identical output: tab indentation, double-quoted strings, and no comments.
 
-See [DESIGN.md](https://github.com/oxc-project/oxc/blob/main/packages/codegen/DESIGN.md) for more details
-on the implementation, and what makes it fast.
+## Installation
 
-100% tests passing against Test262, Acorn-JSX, and TypeScript conformance suites (62,000 tests in total).
-
-## Usage
-
-```js
-import { parseSync } from "oxc-parser";
-import { printSync } from "oxc-codegen";
-
-const { program } = parseSync("foo.js", "let x = 1");
-console.log(printSync(program));
+```sh
+npm install oxc-codegen
 ```
 
-## Supported language variants
+`oxc-codegen` is ESM-only and requires Node.js `^20.19.0` or `>=22.12.0`.
 
-- JS
-- JSX
-- TS
-- TSX
+## Quick start
+
+Pair it with [`oxc-parser`](https://www.npmjs.com/package/oxc-parser) to parse and print source code:
+
+```js
+import { printSync } from "oxc-codegen";
+import { parseSync } from "oxc-parser";
+
+const { program } = parseSync("input.js", "const answer=6*7");
+const code = printSync(program);
+
+console.log(code);
+// const answer = 6 * 7;
+```
+
+You can also print a manually constructed AST:
+
+```js
+const program = {
+  type: "Program",
+  sourceType: "script",
+  body: [
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "CallExpression",
+        callee: {
+          type: "MemberExpression",
+          object: { type: "Identifier", name: "console" },
+          property: { type: "Identifier", name: "log" },
+          computed: false,
+          optional: false,
+        },
+        arguments: [{ type: "Literal", value: "Hello!" }],
+        optional: false,
+      },
+    },
+  ],
+};
+
+console.log(printSync(program));
+// console.log("Hello!");
+```
+
+### TypeScript and TSX
+
+Set `ts` when the AST can contain TypeScript nodes. For TSX, set both `ts` and `jsx`:
+
+```js
+const { program } = parseSync("component.tsx", "const Box = <T,>(value: T) => <div>{value}</div>");
+
+const code = printSync(program, {
+  ts: true,
+  jsx: true,
+});
+```
 
 ## API
 
 ### `printSync(node, options?)`
 
-Returns a string containing the code for the AST `node`.
+```ts
+function printSync(node: Node, options?: Options): string;
+```
 
-`node` must be a whole AST (`Program` node) or a statement node.
+Prints a complete `Program` or a single statement and returns the generated source code.
 
 ### Options
 
-| Option                | Type                 | Default | Description                                     |
-| :-------------------- | :------------------- | :------ | :---------------------------------------------- |
-| `indent`              | `string`             | `"\t"`  | Indentation - spaces and/or tabs only           |
-| `startingIndentLevel` | `number`             | `0`     | Starting indent level, from `0` to `1000`       |
-| `jsx`                 | `boolean`            | `false` | `.tsx` mode - lone type parameters print `<T,>` |
-| `ts`                  | `boolean`            | `false` | AST may contain TypeScript syntax               |
-| `sourceMap`           | `SourceMapGenerator` | -       | If present, source mappings are emitted into it |
+| Option                | Type      | Default | Description                                                      |
+| :-------------------- | :-------- | :------ | :--------------------------------------------------------------- |
+| `indent`              | `string`  | `"\t"`  | Non-empty string of spaces and/or tabs used for one indent level |
+| `startingIndentLevel` | `number`  | `0`     | Starting indent level, from `0` to `1000`                        |
+| `jsx`                 | `boolean` | `false` | Enable TSX-safe printing for ambiguous TypeScript syntax         |
+| `ts`                  | `boolean` | `false` | Select the printer that supports TypeScript nodes                |
 
-## Missing features
+## Why pure JavaScript?
 
-- There is currently no support for printing comments.
-- Pretty-printing only, no compact/minified output.
-- Source map support is only lightly tested, and API is likely to change.
+Most Oxc packages use native bindings. This package deliberately does not: when an AST already
+lives in JavaScript, passing the entire object graph across a JS/native boundary can cost more than
+printing it in place. `oxc-codegen` avoids that serialization and uses specialized printer builds
+for JavaScript and TypeScript workloads.
+
+See [DESIGN.md](https://github.com/oxc-project/oxc/blob/main/packages/codegen/DESIGN.md) for the
+implementation details and performance constraints.
+
+## Current limitations
+
+- Comments are not printed.
+- Minified output is not supported.
 
 ## Benchmarks
 
-| fixture                    |   bytes |       Oxc |
-| :------------------------- | ------: | --------: |
-| tiny.js                    |      26 |  0.0001ms |
-| RadixUIAdoptionSection.jsx |    2518 |  0.0033ms |
-| react.development.js       |   72141 |  0.1138ms |
-| binder.ts                  |  193077 |  0.2472ms |
-| App.tsx                    |  415340 |  0.7490ms |
-| lodash.js                  |  544096 |  0.4995ms |
-| kitchen-sink.tsx           |  732222 |  2.5682ms |
-| antd.js                    | 6683633 | 11.3914ms |
+Representative time per `printSync` call:
 
-Numbers above are from one machine and are not a regression baseline - the `antd.js` figures in
-particular move by over 10% run to run.
+| Fixture                      |     Bytes |       Time |
+| :--------------------------- | --------: | ---------: |
+| `tiny.js`                    |        26 |  0.0001 ms |
+| `RadixUIAdoptionSection.jsx` |     2,518 |  0.0033 ms |
+| `react.development.js`       |    72,141 |  0.1138 ms |
+| `binder.ts`                  |   193,077 |  0.2472 ms |
+| `App.tsx`                    |   415,340 |  0.7490 ms |
+| `lodash.js`                  |   544,096 |  0.4995 ms |
+| `kitchen-sink.tsx`           |   732,222 |  2.5682 ms |
+| `antd.js`                    | 6,683,633 | 11.3914 ms |
+
+These figures come from one machine and are illustrative, not a regression baseline. Results—most
+noticeably for large fixtures such as `antd.js`—vary between runs.

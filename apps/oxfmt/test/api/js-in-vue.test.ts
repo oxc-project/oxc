@@ -217,6 +217,65 @@ const pick = <U = T,>(x: U) => x;
     expect(result.errors).toStrictEqual([]);
   });
 
+  // https://github.com/oxc-project/oxc/issues/25568
+  it("should not add a blank line after a dangling comment in an empty object", async () => {
+    // The IR's hardline (comment terminator) + softline (before `}`) must print as a single break,
+    // like the Rust printer's newline suppression at a line start.
+    const input = `
+<script setup>
+const a = {
+  // x
+}
+</script>
+`;
+    const result = await format("a.vue", input);
+
+    expect(result.code).toBe(`<script setup>
+const a = {
+  // x
+};
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // https://github.com/oxc-project/oxc/issues/25569
+  it("should dedent template literal interpolation to root inside a function", async () => {
+    // The IR's dedent-to-root must survive the Doc conversion
+    // (JSON cannot represent the `-Infinity` Prettier expects; it is restored JS-side).
+    const input = `
+<script setup>
+const f = () => {
+  s.value = \`
+\${items ? Object.entries(items).map(([k, v]) => k + v).join("") : ""}
+\`
+}
+</script>
+`;
+    const result = await format("a.vue", input, { printWidth: 80 });
+
+    // Format again to verify idempotency
+    const result2 = await format("a.vue", result.code, { printWidth: 80 });
+
+    expect(result.code).toBe(`<script setup>
+const f = () => {
+  s.value = \`
+\${
+  items
+    ? Object.entries(items)
+        .map(([k, v]) => k + v)
+        .join("")
+    : ""
+}
+\`;
+};
+</script>
+`);
+    expect(result.errors).toStrictEqual([]);
+    expect(result2.code).toBe(result.code);
+    expect(result2.errors).toStrictEqual([]);
+  });
+
   it("should not indent a comment-only script block", async () => {
     // The comment's leading IR `Space` must be dropped at the line start,
     // like the Rust printer does, or `/**` gains a spurious leading space.

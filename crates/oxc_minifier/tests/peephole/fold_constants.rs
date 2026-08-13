@@ -1313,6 +1313,29 @@ fn test_associative_fold_constants_with_variables() {
     fold("alert(12 & x & 20)", "alert(x & 4)");
 }
 
+// https://github.com/rolldown/rolldown/issues/10656
+#[test]
+fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'y' + p;",
+    );
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'x' + ('y' + p);",
+    );
+
+    // A large string with one read is still inlineable and foldable.
+    test(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const b = 'y' + p;",
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const b = 'yPAYLOADpayload0123456789PAYLOADpayload0123456789';",
+    );
+
+    // Small tracked strings remain cheap enough to inline and fold.
+    test(
+        "const p = 'abc'; export const a = atob(p); export const b = 'y' + p;",
+        "const p = 'abc'; export const a = atob('abc'); export const b = 'yabc';",
+    );
+}
+
 #[test]
 fn test_to_number() {
     fold("x = +''", "x = 0");

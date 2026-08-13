@@ -12,7 +12,7 @@ import constFunctionsPlugin from "./tsdown_plugins/const_functions.ts";
 const isEnabled = (env: string | undefined) => env === "true" || env === "1";
 
 // When run with `pnpm run build-dev`, generate a debug build with extra assertions.
-// This is the build to run the conformance suites against - see `conformance/run.mjs`.
+// This is the build prepared by `pnpm run build-test` for conformance tests.
 // It replaces the release build in `dist`, so rebuild with `pnpm run build` before benchmarking.
 const DEBUG = isEnabled(process.env.DEBUG);
 

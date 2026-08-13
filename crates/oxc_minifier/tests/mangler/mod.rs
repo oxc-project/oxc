@@ -199,6 +199,11 @@ fn private_member_mangling() {
         "class Outer { #outerField = 1; inner() { return class Inner { #innerField = 2; get() { return this.#innerField; } }; } }",
         "class Outer { #shared = 1; getInner() { let self = this; return class { method() { return self.#shared; } }; } }",
         "class Outer { #shared = 1; getInner() { return class { #shared = 2; method() { return this.#shared; } }; } }",
+        // Private names in a class heritage expression resolve in the enclosing class scope.
+        "class HasOuterBrand {} class MissingOuterBrand {} class Outer { #x; create(o) { return class Inner extends (#x in o ? HasOuterBrand : MissingOuterBrand) { #x; }; } }",
+        // Classes in a heritage expression receive their private-member mappings before the
+        // outer class, matching semantic traversal order.
+        "class Outer extends (class Inner { #a; #e; }) { #a; }",
         // Mixed public and private
         "class Foo { publicField = 1; #privateField = 2; getSum() { return this.publicField + this.#privateField; } }",
         // Test same names across different classes should reuse mangled names
@@ -339,8 +344,8 @@ fn reserved_names() {
                  ? t(exports)
                  : t((e.lib = {}));
          })(this, function (exports) {
-             function t(e) { return e; }
-             exports.queue = t;
+             function e(e) { return e; }
+             exports.queue = e;
          });",
         &options,
     );
@@ -353,9 +358,9 @@ fn reserved_names() {
              exports.other = helper;
          })(m, m.exports);",
         "(function (module, exports) {
-             function t(e) { return e; }
-             module.exports.helper = t;
-             exports.other = t;
+             function e(e) { return e; }
+             module.exports.helper = e;
+             exports.other = e;
          })(m, m.exports);",
         &options,
     );
@@ -372,6 +377,17 @@ fn reserved_names() {
              e.queue = t;
          });",
         &MangleOptions::default(),
+    );
+}
+
+#[test]
+fn non_mangleable_symbols_do_not_consume_slots() {
+    let options = MangleOptions { debug: true, ..MangleOptions::default() };
+
+    test(
+        "var A, B; { use(A); let x; } { use(B); let y; }",
+        "var A, B; { use(A); let slot_0; } { use(B); let slot_0; }",
+        &options,
     );
 }
 

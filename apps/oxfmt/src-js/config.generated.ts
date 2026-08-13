@@ -376,6 +376,7 @@ export interface OxfmtOverrideConfig {
   files: GlobSet;
   /**
    * Format options to apply for matched files.
+   * Accepts the same options as the top-level format options.
    */
   options?: FormatConfig;
   [k: string]: unknown;

@@ -87,6 +87,8 @@ export function checkFixture(
       lang,
       sourceType,
       astType,
+      // Conformance tests require Node.js 22+ for raw transfer. This is a test-harness
+      // requirement, not `oxc-codegen`'s runtime engine floor.
       // @ts-expect-error `experimentalRawTransfer` is experimental, so is not in `ParserOptions`
       experimentalRawTransfer: true,
     });

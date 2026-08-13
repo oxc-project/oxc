@@ -8,7 +8,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
-use oxc_semantic::Semantic;
+use oxc_semantic::{IsGlobalReference, Semantic};
 use oxc_span::Span;
 
 #[cfg(debug_assertions)]
@@ -168,7 +168,7 @@ impl<'a> LintContext<'a> {
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         let name = ident.name.as_str();
-        self.scoping().root_unresolved_references().contains_key(name)
+        ident.is_global_reference(self.scoping())
             && !self.globals().get(name).is_some_and(|value| *value == GlobalValue::Off)
     }
 

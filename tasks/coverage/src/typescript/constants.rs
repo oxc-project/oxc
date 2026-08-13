@@ -125,6 +125,7 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "1216", // Identifier expected. '__esModule' is reserved as an exported marker when transforming ECMAScript modules.
     "1218", // Export assignment is not supported when '--module' flag is 'system'.
     "1238", // Unable to resolve signature of class decorator when called as an expression.
+    "1239", // Unable to resolve signature of parameter decorator when called as an expression.
     "1240", // Unable to resolve signature of property decorator when called as an expression.
     "1241", // Unable to resolve signature of method decorator when called as an expression.
     "1250", // Function declarations are not allowed inside blocks in strict mode when targeting 'ES5'.

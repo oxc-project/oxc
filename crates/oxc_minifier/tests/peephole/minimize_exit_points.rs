@@ -12,8 +12,8 @@ fn test_break_optimization() {
     test("f:while(a())break f;", "f:for(;a();)break f;");
     test_same("f:for(x in a())break f");
 
-    test("f:{while(a())break;}", "f:for(;a();)break;");
-    test("f:{for(x in a())break}", "f:for(x in a())break;");
+    test("f:{while(a())break;}", "f:{for(;a();)break;}");
+    test("f:{for(x in a())break}", "f:{for(x in a())break;}");
 
     test("f:try{break f;}catch(e){break f;}", "f:try{break f}catch{break f}"); // ;
     test(
@@ -27,6 +27,30 @@ fn test_break_optimization() {
     test("function f() { a: { break a; } }", "function f() {}");
     test_same("function f() { a: { b(); break a; } c(); }");
     test_same("function f() { a: { b(); return; } c(); }");
+}
+
+#[test]
+fn test_labeled_continue_optimization() {
+    test("a:while(true)continue a;", "a:for(;;)continue a;"); // a:for(;;);
+    test(
+        "x:while(x)y:while(y){if(a)continue x;if(b)continue x;}",
+        "x:for(;x;)y:for(;y;)if(a||b)continue x;",
+    );
+    test(
+        "x:while(x)y:while(y){if(a)continue y;if(b)continue y;}",
+        "x:for(;x;)y:for(;y;)if(a||b)continue y;",
+    ); // x:for(;x;)y:for(;y;)a||b;
+    test(
+        "x:while(x)y:while(y){if(a)continue x;if(b)continue y}",
+        "x:for(;x;)y:for(;y;){if(a)continue x;if(b)continue y}",
+    ); // x:for(;x;)y:for(;y;){if(a)continue x;b}
+    // SyntaxError: Illegal continue statement: 'a' does not denote an iteration statement
+    test_same("a:if(a()){b();continue a}");
+    // SyntaxError: Illegal continue statement: no surrounding iteration statement
+    test_same("a:{for(let i=0;i<10;i++)continue a}");
+    test("f:{if(true){a();continue f;}else;b();}", "f:{a();continue f}");
+    // SyntaxError: Undefined label 'a'
+    test_same("for(let i=0;i<10;i++)continue a;");
 }
 
 #[test]

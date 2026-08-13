@@ -420,7 +420,7 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     //   legacy_octalEscapeSequence
     //   non_octal_decimal_escape_sequence
     // It is a Syntax Error if the source text matched by this production is strict mode code.
-    if !ctx.strict_mode() {
+    if !ctx.strict_mode() || matches!(ctx.ancestry().parent_kind(), AstKind::JSXAttribute(_)) {
         return;
     }
     let raw = lit.span.source_text(ctx.source_text);

@@ -34,7 +34,3 @@ css compatibility: 145/151 (96.03%), 17 files skipped
 - css/selector-list/selectors.css
 - css/selector-string/string.css
 - css/stylefmt-repo/ie-hacks/ie-hacks.css
-
-# Not idempotent
-
-- css/comments/17479.css

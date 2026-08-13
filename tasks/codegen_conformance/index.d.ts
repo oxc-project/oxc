@@ -8,6 +8,10 @@
  *
  * Comments are not printed. `oxc-codegen` does not print comments, and the ESTree AST the JS side
  * works from carries no comment data anyway.
+ *
+ * # Errors
+ *
+ * Returns any panics as errors to avoid aborting the whole Node process.
  */
 export declare function codegen(filename: string, sourceText: string, options?: Options | undefined | null): string | null
 

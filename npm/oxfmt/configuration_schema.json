@@ -626,14 +626,14 @@
           "markdownDescription": "Glob patterns to match files for this override."
         },
         "options": {
-          "description": "Format options to apply for matched files.",
+          "description": "Format options to apply for matched files.\nAccepts the same options as the top-level format options.",
           "default": {},
           "allOf": [
             {
               "$ref": "#/definitions/FormatConfig"
             }
           ],
-          "markdownDescription": "Format options to apply for matched files."
+          "markdownDescription": "Format options to apply for matched files.\nAccepts the same options as the top-level format options."
         }
       }
     },

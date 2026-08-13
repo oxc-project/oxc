@@ -37,6 +37,7 @@ A-transformer:
             "tasks/transform_conformance/**",
             "napi/transform/**",
             "napi/transform-react/**",
+            "napi/transform-relay/**",
           ]
 
 A-linter:

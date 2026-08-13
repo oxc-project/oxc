@@ -379,6 +379,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             };
             rest.argument = DESER[BindingPattern]( POS_OFFSET<FormalParameterRest>.rest.argument );
             if (IS_TS) {
+                rest.decorators = DESER[Vec<Decorator>](POS_OFFSET<FormalParameterRest>.decorators);
                 rest.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<FormalParameterRest>.type_annotation
                 );
@@ -418,7 +419,7 @@ impl ESTree for FormalParameterRest<'_> {
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("decorators", &rest.decorators);
         state.serialize_field("argument", &rest.rest.argument);
         state.serialize_ts_field("optional", &false);
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);

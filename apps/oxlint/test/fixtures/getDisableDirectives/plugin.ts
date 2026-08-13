@@ -34,6 +34,21 @@ const rule: Rule = {
     assert(nextLineDirectivesCount > 0, "Expected next-line directives");
     assert(enableDirectivesCount > 0, "Expected enable directives");
 
+    const expectedRulelessDirectives = [
+      { type: "disable", value: "", justification: "rule-less oxlint block" },
+      { type: "enable", value: "", justification: "rule-less oxlint enable" },
+      { type: "disable", value: "", justification: "rule-less eslint block" },
+      { type: "enable", value: "", justification: "rule-less eslint enable" },
+      { type: "disable-next-line", value: "", justification: "rule-less oxlint next-line" },
+      { type: "disable-next-line", value: "", justification: "rule-less eslint next-line" },
+      { type: "disable-line", value: "", justification: "rule-less oxlint line" },
+      { type: "disable-line", value: "", justification: "rule-less eslint line" },
+    ];
+    const rulelessDirectives = directives
+      .filter(({ justification }) => justification.startsWith("rule-less"))
+      .map(({ type, value, justification }) => ({ type, value, justification }));
+    assert.deepStrictEqual(rulelessDirectives, expectedRulelessDirectives);
+
     // Test that all directives have required fields
     for (const directive of directives) {
       assert(
@@ -52,7 +67,7 @@ const rule: Rule = {
         `  line: ${lineDirectivesCount}\n` +
         `  next-line: ${nextLineDirectivesCount}\n` +
         `  enable: ${enableDirectivesCount}`,
-      node: sourceCode.ast,
+      node: sourceCode.ast.body[0],
     });
 
     return {};
