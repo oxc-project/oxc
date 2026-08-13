@@ -339,8 +339,8 @@ fn reserved_names() {
                  ? t(exports)
                  : t((e.lib = {}));
          })(this, function (exports) {
-             function t(e) { return e; }
-             exports.queue = t;
+             function e(e) { return e; }
+             exports.queue = e;
          });",
         &options,
     );
@@ -353,9 +353,9 @@ fn reserved_names() {
              exports.other = helper;
          })(m, m.exports);",
         "(function (module, exports) {
-             function t(e) { return e; }
-             module.exports.helper = t;
-             exports.other = t;
+             function e(e) { return e; }
+             module.exports.helper = e;
+             exports.other = e;
          })(m, m.exports);",
         &options,
     );
@@ -372,6 +372,17 @@ fn reserved_names() {
              e.queue = t;
          });",
         &MangleOptions::default(),
+    );
+}
+
+#[test]
+fn non_mangleable_symbols_do_not_consume_slots() {
+    let options = MangleOptions { debug: true, ..MangleOptions::default() };
+
+    test(
+        "var A, B; { use(A); let x; } { use(B); let y; }",
+        "var A, B; { use(A); let slot_0; } { use(B); let slot_0; }",
+        &options,
     );
 }
 
