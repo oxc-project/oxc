@@ -1,0 +1,21 @@
+crates/oxc_semantic/src/scoping.rs
+  s_8a4081bb1aec6f::t_c45c96f382d3df 377-392
+crates/oxc_mangler/src/lib.rs
+  s_8a4081bb1aec6f::t_af05cd714aa6e0 850-851
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8659acdd172ba4bf3b3e0d5eca6d031d6455955b",
+  "prompts": {},
+  "sessions": {
+    "s_8a4081bb1aec6f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb8a-d4a7-73f2-a1b8-4c2b51c8cc20",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
