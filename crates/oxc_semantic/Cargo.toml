@@ -19,6 +19,10 @@ workspace = true
 [lib]
 doctest = true
 
+[[example]]
+name = "cfg"
+required-features = ["cfg"]
+
 [dependencies]
 oxc_allocator = { workspace = true, features = ["bitset"] }
 oxc_ast = { workspace = true }
