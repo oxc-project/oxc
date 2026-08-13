@@ -5,8 +5,8 @@
 
 //! Prunes `MaybeThrow` terminals for blocks that can provably never throw.
 //!
-//! Currently very conservative: only affects blocks with primitives or
-//! array/object literals. Even a variable reference could throw due to TDZ.
+//! Currently conservative: only removes handlers when every instruction is known not to throw.
+//! Even a variable reference could throw due to TDZ.
 //!
 //! Analogous to TS `Optimization/PruneMaybeThrows.ts`.
 
@@ -17,7 +17,8 @@ use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::{
-    BlockId, FunctionId, HirFunction, Instruction, InstructionValue, Terminal,
+    ArrayElement, BlockId, FunctionId, HirFunction, InstructionValue, ObjectPropertyKey,
+    ObjectPropertyOrSpread, Terminal,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
@@ -98,7 +99,7 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<IndexVec<BlockId, O
         let can_throw = block
             .instructions
             .iter()
-            .any(|instr_id| instruction_may_throw(&instructions[instr_id.index()]));
+            .any(|instr_id| value_may_throw(&instructions[instr_id.index()].value));
 
         if !can_throw {
             let source = terminal_mapping[block.id].unwrap_or(block.id);
@@ -117,11 +118,40 @@ fn prune_maybe_throws_impl(func: &mut HirFunction) -> Option<IndexVec<BlockId, O
     if mapped_any { Some(terminal_mapping) } else { None }
 }
 
-fn instruction_may_throw(instr: &Instruction) -> bool {
-    !matches!(
-        &instr.value,
-        InstructionValue::Primitive { .. }
-            | InstructionValue::ArrayExpression { .. }
-            | InstructionValue::ObjectExpression { .. }
-    )
+/// Returns whether evaluating an instruction value can throw.
+///
+/// Operand evaluation is represented by separate HIR instructions, so plain array/object
+/// construction is safe once its operands exist. Spreads and computed object keys remain part of
+/// the construction operation and can invoke user code.
+pub(crate) fn value_may_throw(value: &InstructionValue) -> bool {
+    match value {
+        InstructionValue::DeclareLocal { .. }
+        | InstructionValue::DeclareContext { .. }
+        | InstructionValue::Primitive { .. }
+        | InstructionValue::JSXText { .. }
+        | InstructionValue::TypeCastExpression { .. }
+        | InstructionValue::ObjectMethod { .. }
+        | InstructionValue::FunctionExpression { .. }
+        | InstructionValue::RegExpLiteral { .. }
+        | InstructionValue::MetaProperty { .. }
+        | InstructionValue::Debugger { .. }
+        | InstructionValue::StartMemoize { .. }
+        | InstructionValue::FinishMemoize { .. } => false,
+        InstructionValue::StoreLocal { lvalue, .. }
+        | InstructionValue::StoreContext { lvalue, .. } => {
+            lvalue.kind == crate::react_compiler_hir::InstructionKind::Reassign
+        }
+        InstructionValue::ArrayExpression { elements, .. } => {
+            elements.iter().any(|element| matches!(element, ArrayElement::Spread(_)))
+        }
+        InstructionValue::ObjectExpression { properties, .. } => {
+            properties.iter().any(|property| match property {
+                ObjectPropertyOrSpread::Property(property) => {
+                    matches!(property.key, ObjectPropertyKey::Computed { .. })
+                }
+                ObjectPropertyOrSpread::Spread(_) => true,
+            })
+        }
+        _ => true,
+    }
 }
