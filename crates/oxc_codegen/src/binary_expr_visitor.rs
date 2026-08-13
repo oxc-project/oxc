@@ -73,16 +73,28 @@ fn binary_operator(expression: &Expression<'_>) -> Option<BinaryOperator> {
 }
 
 fn is_ts_type_argument_open(operator: BinaryOperator) -> bool {
-    matches!(operator, BinaryOperator::LessThan | BinaryOperator::ShiftLeft)
+    ts_type_argument_open_count(operator) > 0
 }
 
 fn is_ts_type_argument_close(operator: BinaryOperator) -> bool {
-    matches!(
-        operator,
-        BinaryOperator::GreaterThan
-            | BinaryOperator::ShiftRight
-            | BinaryOperator::ShiftRightZeroFill
-    )
+    ts_type_argument_close_count(operator) > 0
+}
+
+fn ts_type_argument_open_count(operator: BinaryOperator) -> u8 {
+    match operator {
+        BinaryOperator::LessThan => 1,
+        BinaryOperator::ShiftLeft => 2,
+        _ => 0,
+    }
+}
+
+fn ts_type_argument_close_count(operator: BinaryOperator) -> u8 {
+    match operator {
+        BinaryOperator::GreaterThan => 1,
+        BinaryOperator::ShiftRight => 2,
+        BinaryOperator::ShiftRightZeroFill => 3,
+        _ => 0,
+    }
 }
 
 impl BinaryishOperator {
@@ -243,13 +255,28 @@ impl<'a> BinaryExpressionVisitor<'a> {
                 // arguments. Make the left child bind less tightly so it is grouped.
                 self.left_precedence = Precedence::Shift;
             }
-            BinaryishOperator::Binary(BinaryOperator::LessThan | BinaryOperator::ShiftLeft)
-                if p.is_typescript
-                    && binary_operator(e.right()).is_some_and(is_ts_type_argument_close) =>
+            BinaryishOperator::Binary(
+                operator @ (BinaryOperator::LessThan | BinaryOperator::ShiftLeft),
+            ) if p.is_typescript
+                && binary_operator(e.right()).is_some_and(is_ts_type_argument_close) =>
             {
                 // A right shift can be re-lexed into multiple generic closers. Make the
                 // right child bind less tightly so the current opener cannot consume it.
                 self.right_precedence = Precedence::Shift;
+
+                // If the left child supplies an earlier opener and the right child has
+                // enough closing angles to reach it, isolate the entire earlier chain too.
+                // For example, `a < b < (c >> (d, e))` can otherwise be reparsed as a
+                // generic call instead of the original comparisons and shift.
+                if let Some(left_operator) = binary_operator(e.left())
+                    && let Some(close_operator) = binary_operator(e.right())
+                    && ts_type_argument_open_count(left_operator) > 0
+                    && ts_type_argument_close_count(close_operator)
+                        >= ts_type_argument_open_count(left_operator)
+                            + ts_type_argument_open_count(operator)
+                {
+                    self.left_precedence = Precedence::Shift;
+                }
             }
             BinaryishOperator::Binary(BinaryOperator::BitwiseOR | BinaryOperator::BitwiseAnd) => {
                 // Without parentheses, `|` or `&` becomes part of the type in
