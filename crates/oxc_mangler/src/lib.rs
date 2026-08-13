@@ -319,14 +319,35 @@ impl<'t> Mangler<'t> {
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
 
+    /// Mangles `program` using an existing semantic model.
+    ///
     /// # Panics
     ///
-    /// Panics if the child_ids does not exist in scope_tree.
+    /// Panics if `semantic` was not built with full AST nodes and class-table metadata, or if it
+    /// was built for a different program.
     pub fn build_with_semantic(
         self,
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
+        assert!(
+            !semantic.nodes().is_empty(),
+            "Mangler::build_with_semantic requires a Semantic built with \
+             SemanticBuilder::with_build_nodes(true)"
+        );
+        assert!(
+            std::ptr::eq(semantic.nodes().program(), program),
+            "Mangler::build_with_semantic requires Semantic and Program from the same build"
+        );
+        let class_count =
+            semantic.nodes().iter().filter(|node| node.kind().as_class_body().is_some()).count();
+        assert_eq!(
+            semantic.classes().len(),
+            class_count,
+            "Mangler::build_with_semantic requires a Semantic built with \
+             SemanticBuilder::with_class_table(true)"
+        );
+
         let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
         if self.options.debug {
             self.build_with_semantic_impl(semantic, program, debug_name);
