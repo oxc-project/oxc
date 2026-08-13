@@ -763,9 +763,8 @@ fn children_are_only_hardlines(children: &[Value]) -> bool {
 }
 
 /// Whether the doc (sub)tree contains a dedent-to-root (`align` with `n: null`).
-/// Debug-only backstop for the `hasRootDedent` contract
-/// (see the `debug_assert_eq` in [format_elements_to_prettier_doc]).
-#[cfg(debug_assertions)]
+/// Debug-only backstop for the `hasRootDedent` contract (see the `debug_assert_eq` in [format_elements_to_prettier_doc]).
+/// Not `#[cfg(debug_assertions)]`: `debug_assert_eq!` type-checks its args even when off.
 fn contains_root_dedent(value: &Value) -> bool {
     match value {
         Value::Array(items) => items.iter().any(contains_root_dedent),
