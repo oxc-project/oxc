@@ -1611,10 +1611,14 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
             // functions are descended to find nested declarations. Parameters
             // are visited before the body because their defaults may contain a
             // compilable function (for example, `Wrapper = memo(() => ...)`).
+            // The enclosing call identifies only its direct function argument;
+            // nested functions must not inherit `memo` / `forwardRef` context.
+            self.parent_callee_stack.push(None);
             self.walk_formal_parameters(&func.params);
             if let Some(body) = &func.body {
                 self.walk_function_body_block(body);
             }
+            self.parent_callee_stack.pop();
         }
 
         if pushed {
@@ -1649,6 +1653,9 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
         };
 
         if !skip_body {
+            // The enclosing call identifies only its direct function argument;
+            // nested functions must not inherit `memo` / `forwardRef` context.
+            self.parent_callee_stack.push(None);
             self.walk_formal_parameters(&arrow.params);
             if let Some(expression) = arrow.get_expression() {
                 self.walk_expression(expression);
@@ -1657,6 +1664,7 @@ impl<'a, 'b, 'ast> DiscoveryWalker<'a, 'b, 'ast> {
                     self.walk_statement(stmt);
                 }
             }
+            self.parent_callee_stack.pop();
         }
 
         if pushed {
