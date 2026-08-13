@@ -267,6 +267,11 @@ Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Notabl
   - Prettier double-indents it (closing `)` floating between levels) when the nearest
     at-rule ancestor is a control directive (`@if`/`@else`/`@for`/`@each`/`@while`; selector blocks in between don't shield)
     = identical source, different indent per context
+- SCSS: A comment-preceded block map value also prints at the normal nested-map indent
+  - Prettier double-indents it (`+6` body / `+4` `)`)
+  - Its dedent applies only when the pair doc is a plain `group(indent(fill))`, and a leading comment changes the doc shape
+  - Comment presence must not change layout; same dedent-skip artifact class as the entries above
+    (paren-block KEYS still keep the pair indent, matching Prettier: that trigger is content, not trivia)
 - SCSS: The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list (semantics)
   - `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else
   - Prettier 3.9.6 changes `key: ($a + $b)` from a number to a list,

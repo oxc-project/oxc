@@ -2,14 +2,16 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-scss compatibility: 86/90 (95.56%), 6 files skipped
+scss compatibility: 84/90 (93.33%), 6 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | scss/comments/4878.scss | 💥 | 89.39% |
+| scss/map/comment.scss | 💥💥 | 73.91% |
 | scss/map/function-argument/functional-argument.scss | 💥 | 96.00% |
+| scss/parens/2.scss | 💥 | 75.00% |
 | scss/parens/issue-16594.scss | 💥 | 71.43% |
 | scss/variables/apply-rule.scss | 💥 | 87.88% |
 
@@ -21,7 +23,3 @@ scss compatibility: 86/90 (95.56%), 6 files skipped
 - scss/math/3945.scss
 - scss/no-semicolon/url.scss
 - scss/parens/parens.scss
-
-# Not idempotent
-
-- scss/parens/2.scss
