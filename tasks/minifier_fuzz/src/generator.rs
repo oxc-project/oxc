@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use rand::{RngExt, SeedableRng, rngs::StdRng};
 
 const MAX_EXPRESSION_DEPTH: usize = 3;
@@ -6,6 +8,8 @@ const MAX_EXPRESSION_DEPTH: usize = 3;
 ///
 /// Like Terser's ufuzz generator, programs have bounded loops and a shared call
 /// budget. They only observe behavior through the final `console.log` call.
+///
+/// <https://github.com/terser/terser/blob/v5.50.0/test/ufuzz.js>
 pub fn generate(seed: u64) -> String {
     Generator::new(seed).program()
 }
@@ -37,14 +41,14 @@ impl Generator {
         );
 
         for function_index in 0..2 {
-            source.push_str(&format!("function f{function_index}(p0, p1) {{\n"));
+            let _ = writeln!(source, "function f{function_index}(p0, p1) {{");
             source.push_str("if (--_calls_ < 0) return 0;\n");
             let context = StatementContext { in_function: true, loop_depth: 0 };
             for _ in 0..self.range(1..=3) {
                 source.push_str(&self.statement(3, context));
             }
             let return_expression = self.expression(MAX_EXPRESSION_DEPTH);
-            source.push_str(&format!("return {return_expression};\n}}\n"));
+            let _ = writeln!(source, "return {return_expression};\n}}");
         }
 
         let context = StatementContext { in_function: false, loop_depth: 0 };
@@ -62,7 +66,7 @@ impl Generator {
         }
 
         match self.range(0..12) {
-            0 | 1 | 2 => self.simple_statement(),
+            0..=2 => self.simple_statement(),
             3 => {
                 let condition = self.expression(2);
                 let consequent = self.statement(depth - 1, context);

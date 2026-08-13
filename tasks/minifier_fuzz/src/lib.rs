@@ -14,6 +14,11 @@ pub struct Minified {
     pub iterations: u8,
 }
 
+/// Compress `source` with `CompressOptions::smallest()` and print it back out.
+///
+/// # Errors
+///
+/// Returns a message when the generated source fails to parse or fails semantic analysis.
 pub fn minify(source: &str) -> Result<Minified, String> {
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, SourceType::script()).parse();

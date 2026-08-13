@@ -1,6 +1,6 @@
 # Minifier semantic fuzzer
 
-This task follows the central idea of Terser's `ufuzz`: generate deterministic,
+This task follows the central idea of Terser's [`ufuzz`](https://github.com/terser/terser/blob/v5.50.0/test/ufuzz.js): generate deterministic,
 self-contained programs with bounded loops and calls, execute the original and
 compressed forms, and compare their observable behavior.
 

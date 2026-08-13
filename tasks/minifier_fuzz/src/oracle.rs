@@ -124,20 +124,20 @@ impl Oracle {
         Self { timeout_ms }
     }
 
-    pub fn compare(&self, original: &str, minified: &str) -> Comparison {
+    pub fn compare(self, original: &str, minified: &str) -> Comparison {
         self.compare_many(&[(original, minified)]).pop().unwrap_or_else(|| {
             Comparison::HarnessError { message: "Node.js oracle returned no result".into() }
         })
     }
 
-    pub fn compare_many(&self, cases: &[(&str, &str)]) -> Vec<Comparison> {
+    pub fn compare_many(self, cases: &[(&str, &str)]) -> Vec<Comparison> {
         let request = Request {
             cases: cases.iter().map(|(original, minified)| Case { original, minified }).collect(),
             timeout_ms: self.timeout_ms,
         };
         let input = match serde_json::to_vec(&request) {
             Ok(input) => input,
-            Err(error) => return harness_errors(cases.len(), error.to_string()),
+            Err(error) => return harness_errors(cases.len(), &error.to_string()),
         };
 
         let mut child = match Command::new("node")
@@ -149,24 +149,21 @@ impl Oracle {
             .spawn()
         {
             Ok(child) => child,
-            Err(error) => return harness_errors(cases.len(), error.to_string()),
+            Err(error) => return harness_errors(cases.len(), &error.to_string()),
         };
 
         if let Some(mut stdin) = child.stdin.take()
             && let Err(error) = stdin.write_all(&input)
         {
-            return harness_errors(cases.len(), error.to_string());
+            return harness_errors(cases.len(), &error.to_string());
         }
 
         let output = match child.wait_with_output() {
             Ok(output) => output,
-            Err(error) => return harness_errors(cases.len(), error.to_string()),
+            Err(error) => return harness_errors(cases.len(), &error.to_string()),
         };
         if !output.status.success() {
-            return harness_errors(
-                cases.len(),
-                String::from_utf8_lossy(&output.stderr).into_owned(),
-            );
+            return harness_errors(cases.len(), &String::from_utf8_lossy(&output.stderr));
         }
 
         match serde_json::from_slice::<Vec<PairOutcome>>(&output.stdout) {
@@ -175,13 +172,13 @@ impl Oracle {
             }
             Ok(outcomes) => harness_errors(
                 cases.len(),
-                format!(
+                &format!(
                     "Node.js oracle returned {} results for {} cases",
                     outcomes.len(),
                     cases.len()
                 ),
             ),
-            Err(error) => harness_errors(cases.len(), error.to_string()),
+            Err(error) => harness_errors(cases.len(), &error.to_string()),
         }
     }
 }
@@ -197,6 +194,6 @@ fn classify(pair: PairOutcome) -> Comparison {
     }
 }
 
-fn harness_errors(count: usize, message: String) -> Vec<Comparison> {
-    (0..count).map(|_| Comparison::HarnessError { message: message.clone() }).collect()
+fn harness_errors(count: usize, message: &str) -> Vec<Comparison> {
+    vec![Comparison::HarnessError { message: message.to_owned() }; count]
 }

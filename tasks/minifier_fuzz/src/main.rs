@@ -1,3 +1,4 @@
+#![expect(clippy::print_stdout, clippy::print_stderr)]
 use std::{error::Error, path::PathBuf};
 
 use oxc_minifier_fuzz::campaign::{CampaignOptions, CampaignResult, run, save_failure};
@@ -22,6 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if !remaining.is_empty() {
         return Err(format!("unexpected arguments: {remaining:?}").into());
     }
+    options.validate()?;
 
     match run(&options) {
         CampaignResult::Completed(summary) => {
@@ -32,6 +34,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                 summary.skipped,
                 summary.max_minifier_iterations
             );
+            // A campaign that compared nothing must not look like a pass. The
+            // option validation above covers the known cause, but the generator
+            // could also drift into emitting only programs that throw.
+            if options.iterations > 0 && summary.checked == 0 {
+                return Err(format!(
+                    "no seed was compared: all {} seeds were skipped",
+                    summary.skipped
+                )
+                .into());
+            }
             Ok(())
         }
         CampaignResult::Failed { summary, failure } => {
@@ -64,8 +76,8 @@ fn print_help() {
          Options:\n\
            --seed <N>          first seed (default: 0)\n\
            --iterations <N>    number of seeds (default: 1000)\n\
-           --timeout-ms <N>    VM timeout per program (default: 100)\n\
-           --batch-size <N>    programs per Node.js process (default: 100)\n\
+           --timeout-ms <N>    VM timeout per program, 1..=4294967295 (default: 100)\n\
+           --batch-size <N>    programs per Node.js process, at least 1 (default: 100)\n\
            --save-dir <PATH>   mismatch artifacts (default: target/minifier-fuzz)\n"
     );
 }

@@ -19,6 +19,33 @@ pub struct CampaignOptions {
     pub batch_size: usize,
 }
 
+impl CampaignOptions {
+    /// Reject settings that would make the campaign silently test nothing.
+    ///
+    /// # Errors
+    ///
+    /// Returns a human-readable message when an option is outside its usable range.
+    ///
+    /// Node's `vm` timeout must be a positive integer that fits in a `u32`.
+    /// Outside that range `runInNewContext` throws `ERR_OUT_OF_RANGE` *before*
+    /// evaluating the program, which the oracle cannot distinguish from the
+    /// generated program throwing on its own. Every seed would then be skipped
+    /// and the campaign would report success without having compared anything.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.timeout_ms == 0 || self.timeout_ms > u64::from(u32::MAX) {
+            return Err(format!(
+                "--timeout-ms must be between 1 and {}, got {}",
+                u32::MAX,
+                self.timeout_ms
+            ));
+        }
+        if self.batch_size == 0 {
+            return Err("--batch-size must be at least 1".to_owned());
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CampaignSummary {
     pub checked: u64,
@@ -61,7 +88,7 @@ pub fn run(options: &CampaignOptions) -> CampaignResult {
 
     while batch_start < end_seed {
         let batch_end = batch_start.saturating_add(batch_size as u64).min(end_seed);
-        let mut programs = Vec::with_capacity((batch_end - batch_start) as usize);
+        let mut programs = Vec::with_capacity(batch_size);
         for seed in batch_start..batch_end {
             let original = generate(seed);
             let minified = match minify(&original) {
@@ -112,6 +139,11 @@ pub fn run(options: &CampaignOptions) -> CampaignResult {
     CampaignResult::Completed(summary)
 }
 
+/// Write the original source, the minified source and a JSON report for a mismatch.
+///
+/// # Errors
+///
+/// Returns any I/O error from creating `directory` or writing the artifacts.
 pub fn save_failure(failure: &Failure, directory: &Path) -> io::Result<Vec<PathBuf>> {
     fs::create_dir_all(directory)?;
     let stem = format!("seed-{}", failure.seed);
@@ -129,6 +161,31 @@ pub fn save_failure(failure: &Failure, directory: &Path) -> io::Result<Vec<PathB
 #[cfg(test)]
 mod tests {
     use super::{CampaignOptions, CampaignResult, run};
+
+    #[test]
+    fn rejects_timeout_outside_node_range() {
+        // `0` is the dangerous one: `vm.runInNewContext` throws
+        // `ERR_OUT_OF_RANGE` before running the program, the oracle records it
+        // as "the original threw", and every seed is skipped.
+        for timeout_ms in [0, u64::from(u32::MAX) + 1] {
+            let options = CampaignOptions { timeout_ms, ..default_options() };
+            assert!(options.validate().is_err(), "expected {timeout_ms} to be rejected");
+        }
+    }
+
+    #[test]
+    fn rejects_zero_batch_size() {
+        assert!(CampaignOptions { batch_size: 0, ..default_options() }.validate().is_err());
+    }
+
+    #[test]
+    fn accepts_usable_options() {
+        assert!(default_options().validate().is_ok());
+    }
+
+    fn default_options() -> CampaignOptions {
+        CampaignOptions { start_seed: 0, iterations: 10, timeout_ms: 100, batch_size: 10 }
+    }
 
     #[test]
     fn small_campaign_completes() {
