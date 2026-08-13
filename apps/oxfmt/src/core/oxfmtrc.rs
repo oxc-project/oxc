@@ -43,6 +43,7 @@ pub struct OxfmtOverrideConfig {
     #[serde(default, skip_serializing_if = "GlobSet::is_empty")]
     pub exclude_files: GlobSet,
     /// Format options to apply for matched files.
+    /// Accepts the same options as the top-level format options.
     #[serde(default)]
     pub options: FormatConfig,
 }
