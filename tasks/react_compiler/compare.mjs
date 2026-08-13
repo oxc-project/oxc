@@ -10,6 +10,10 @@ import { transformSync as oxcCodegenSync } from "oxc-transform";
 import { transformSync as oxcReactCompilerSync } from "oxc-transform-react";
 
 const SOURCE_EXTENSIONS = new Set([".jsx", ".tsx"]);
+const DEFAULT_ESLINT_SUPPRESSION_RULES_V1 = [
+  "react-hooks/exhaustive-deps",
+  "react-hooks/rules-of-hooks",
+];
 
 const args = process.argv.slice(2);
 if (args.length !== 1) {
@@ -21,6 +25,19 @@ const directory = resolve(invocationDirectory, args[0]);
 if (!(await stat(directory)).isDirectory()) {
   throw new Error(`Not a directory: ${directory}`);
 }
+const reactCompilerOptions = {
+  compilationMode: "infer",
+  panicThreshold: "none",
+  target: "19",
+  eslintSuppressionRules: DEFAULT_ESLINT_SUPPRESSION_RULES_V1,
+  flowSuppressions: true,
+  ignoreUseNoForget: false,
+  sources: [directory],
+  environment: {
+    validateExhaustiveMemoizationDependencies: false,
+    validateHooksUsage: true,
+  },
+};
 
 const filenames = await findSourceFiles(directory);
 let differenceCount = 0;
@@ -70,7 +87,7 @@ async function findSourceFiles(root) {
 }
 
 function transformWithBabel(filename, sourceText) {
-  const plugins = [[reactCompiler, {}]];
+  const plugins = [[reactCompiler, reactCompilerOptions]];
   if (extname(filename).toLowerCase() === ".tsx") {
     plugins.push([
       transformTypescript,
@@ -104,7 +121,9 @@ function transformWithBabel(filename, sourceText) {
 }
 
 function transformWithOxc(filename, sourceText) {
-  const result = oxcReactCompilerSync(filename, sourceText);
+  const result = oxcReactCompilerSync(filename, sourceText, {
+    reactCompiler: reactCompilerOptions,
+  });
   assertNoErrors(result, "oxc-transform-react failed");
   assert(result.code, "oxc-transform-react did not produce code");
   return result.code;

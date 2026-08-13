@@ -5,6 +5,12 @@ the local `oxc-transform-react` NAPI package for every `.jsx` and `.tsx` file in
 a directory. Both pipelines run React Compiler first, remove TypeScript syntax,
 and lower JSX with the automatic runtime.
 
+Both React Compiler implementations receive the same explicit options. The
+comparison uses the v1 defaults for ESLint suppression rules and disables
+exhaustive manual-memo dependency validation, which was not enabled by default
+in v1. The scanned directory is passed as `sources` so dependency directories
+are handled consistently by both implementations.
+
 Before comparing, the Babel output is parsed and printed by `oxc-transform`
 with no transforms enabled. This ensures both outputs use Oxc code generation
 and removes printer-only differences.
