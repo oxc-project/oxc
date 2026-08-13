@@ -1,0 +1,21 @@
+crates/oxc_linter/src/rules/eslint/no_promise_executor_return.rs
+  s_04d1c255fdbf51::t_d2d83c7145df49 264
+crates/oxc_linter/src/context/mod.rs
+  s_04d1c255fdbf51::t_81e94dc063f55c 11,171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "711a5c796c0b1a9d41f8a9fb9306d48a2095ffd9",
+  "prompts": {},
+  "sessions": {
+    "s_04d1c255fdbf51": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffbca-5424-7070-92de-1a9d89c4e84d",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
