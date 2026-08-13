@@ -15,8 +15,8 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    ArrowFunctionExpression, ExportAllDeclaration, ExportFromDeclaration, FormalParameterRest,
-    Function, ImportDeclaration, WithClauseKeyword,
+    ArrowFunctionExpression, ExportAllDeclaration, ExportFromDeclaration, Function,
+    ImportDeclaration, WithClauseKeyword,
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
@@ -144,14 +144,6 @@ impl<'a> VisitMut<'a> for Normalize {
             arrow.pife = false;
         }
         walk_mut::walk_arrow_function_expression(self, arrow);
-    }
-
-    /// A rest parameter's decorators are `#[estree(skip)]`ped - ESTree types them as
-    /// an always-empty array on `RestElement` - so the JS side never sees them.
-    /// Decorators on the other parameters do come through, and are left alone.
-    fn visit_formal_parameter_rest(&mut self, rest: &mut FormalParameterRest<'a>) {
-        rest.decorators.clear();
-        walk_mut::walk_formal_parameter_rest(self, rest);
     }
 
     /// ESTree cannot distinguish `import "m"` from `import {} from "m"` - `specifiers` is `[]` for both.

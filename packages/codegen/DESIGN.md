@@ -564,7 +564,6 @@ so that arm can run.
 - `import "m";` versus `import {} from "m";`
 - An absent `with` clause versus an empty `with {}`
 - `assert {...}` versus `with {...}`
-- A rest parameter's decorators (a deficiency in `oxc-parser`, fixable, not blocked by ESTree spec)
 
 The conformance harness normalizes the Rust AST down to what ESTree can express before printing,
 rather than expecting the JS side to reproduce information it was never given.
