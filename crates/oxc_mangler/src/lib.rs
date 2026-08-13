@@ -393,7 +393,7 @@ impl<'t> Mangler<'t> {
         // ── Phase 2: assign slots — give bindings that can share a name the same slot. ──
         let slots = SlotAssignment::compute(allocator, scoping, ast_nodes, &constraints);
         // ── Phase 3: rank slots by reference frequency (hottest first). ──
-        let ranking = SlotRanking::tally(allocator, scoping, &constraints, &slots);
+        let ranking = SlotRanking::tally(allocator, scoping, &slots);
         // ── Phase 4: generate that many short, collision-free names. ──
         let names =
             NameTable::generate(allocator, scoping, &constraints, &ranking, &slots, generate_name);
@@ -503,7 +503,8 @@ struct Constraints<'a, 's> {
 
 /// Phase 2 output — each symbol's slot, plus the names a direct `eval` can see.
 struct SlotAssignment<'a, 's> {
-    /// `slots[symbol] == slot`, or `SLOT_UNASSIGNED` for symbols that keep their name.
+    /// `slots[symbol] == slot` for symbols that will be renamed, or `SLOT_UNASSIGNED` for all
+    /// other symbols.
     slots: ArenaVec<'a, Slot>,
     total_slots: usize,
     /// Names of bindings in direct-`eval` scopes — they keep their names, nothing may shadow them.
@@ -549,7 +550,7 @@ impl<'a, 's> Constraints<'a, 's> {
 
     /// Whether a binding with this name must keep it.
     ///
-    /// `inline(always)`: called per symbol in `SlotRanking::tally`'s hot loop — the
+    /// `inline(always)`: called per symbol in `SlotAssignment::compute`'s hot loop — the
     /// empty-`reserved` fast path must compile down to the plain `is_special_name`
     /// check plus one predictable branch.
     #[expect(clippy::inline_always, reason = "hot path")]
@@ -559,6 +560,9 @@ impl<'a, 's> Constraints<'a, 's> {
     }
 
     /// Whether `symbol_id` will receive a mangled name.
+    ///
+    /// Every symbol assigned a slot is a candidate, so the slot assignment becomes the final
+    /// rename set.
     #[inline]
     fn is_mangle_candidate(&self, symbol_id: SymbolId, scoping: &Scoping) -> bool {
         let scope_id = scoping.symbol_scope_id(symbol_id);
@@ -673,6 +677,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 
             let scope_id_index = scope_id.index();
             for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
+                debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
                 slots[symbol_id.index()] = assigned_slot;
 
                 // `var` is hoisted, so include the scope where it is declared
@@ -744,12 +749,7 @@ impl<'a, 's> SlotAssignment<'a, 's> {
 
 impl<'a> SlotRanking<'a> {
     /// Phase 3: count references per candidate slot and sort hottest-first.
-    fn tally(
-        allocator: &'a Allocator,
-        scoping: &Scoping,
-        constraints: &Constraints,
-        slots: &SlotAssignment,
-    ) -> Self {
+    fn tally(allocator: &'a Allocator, scoping: &Scoping, slots: &SlotAssignment) -> Self {
         let mut frequencies = ArenaVec::from_iter_in(
             repeat_with(|| SlotFrequency::new(allocator)).take(slots.total_slots),
             &allocator,
@@ -760,9 +760,6 @@ impl<'a> SlotRanking<'a> {
                 continue;
             }
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if !constraints.is_mangle_candidate(symbol_id, scoping) {
-                continue;
-            }
             let index = slot as usize;
             frequencies[index].slot = slot;
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
