@@ -4,7 +4,7 @@ pub mod oracle;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -16,10 +16,14 @@ pub struct Minified {
 
 /// Compress `source` with `CompressOptions::smallest()` and print it back out.
 ///
+/// With `mangle`, bindings are renamed as well, which also exercises the
+/// mangler's scope analysis. Generated programs only observe behavior through
+/// their final `console.log`, so renaming must not change the comparison.
+///
 /// # Errors
 ///
 /// Returns a message when the generated source fails to parse or fails semantic analysis.
-pub fn minify(source: &str) -> Result<Minified, String> {
+pub fn minify(source: &str, mangle: bool) -> Result<Minified, String> {
     let allocator = Allocator::default();
     let parsed = Parser::new(&allocator, source, SourceType::script()).parse();
     if parsed.panicked || !parsed.diagnostics.is_empty() {
@@ -28,7 +32,7 @@ pub fn minify(source: &str) -> Result<Minified, String> {
 
     let mut program = parsed.program;
     let result = Minifier::new(MinifierOptions {
-        mangle: None,
+        mangle: mangle.then(|| MangleOptions { top_level: Some(true), ..MangleOptions::default() }),
         compress: Some(CompressOptions::smallest()),
     })
     .minify(&allocator, &mut program);
@@ -97,11 +101,20 @@ mod tests {
 
     #[test]
     fn generated_programs_keep_their_observable_behavior_after_minification() {
+        check_generated_programs(false);
+    }
+
+    #[test]
+    fn generated_programs_keep_their_observable_behavior_after_mangling() {
+        check_generated_programs(true);
+    }
+
+    fn check_generated_programs(mangle: bool) {
         let programs: Vec<_> = (0..25)
             .map(|seed| {
                 let original = generate(seed);
-                let minified =
-                    minify(&original).unwrap_or_else(|error| panic!("seed {seed}: {error}"));
+                let minified = minify(&original, mangle)
+                    .unwrap_or_else(|error| panic!("seed {seed}: {error}"));
                 (seed, original, minified.code)
             })
             .collect();
@@ -115,7 +128,7 @@ mod tests {
         {
             assert!(
                 matches!(comparison, Comparison::Equivalent { .. }),
-                "seed {seed}: {comparison:#?}\noriginal:\n{original}\nminified:\n{minified}"
+                "seed {seed} (mangle={mangle}): {comparison:#?}\noriginal:\n{original}\nminified:\n{minified}"
             );
         }
     }

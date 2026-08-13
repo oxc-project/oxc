@@ -17,6 +17,7 @@ pub struct CampaignOptions {
     pub iterations: u64,
     pub timeout_ms: u64,
     pub batch_size: usize,
+    pub mangle: bool,
 }
 
 impl CampaignOptions {
@@ -106,7 +107,7 @@ pub fn run(options: &CampaignOptions) -> CampaignResult {
         let mut programs = Vec::with_capacity(capacity);
         for seed in batch_start..batch_end {
             let original = generate(seed);
-            let minified = match minify(&original) {
+            let minified = match minify(&original, options.mangle) {
                 Ok(minified) => minified,
                 Err(message) => {
                     return CampaignResult::MinifierError { seed, source: original, message };
@@ -200,12 +201,8 @@ mod tests {
     fn batch_size_larger_than_the_seed_range_does_not_over_allocate() {
         // Reserving `batch_size` up front aborts with a capacity overflow long
         // before the single requested seed is generated.
-        let result = run(&CampaignOptions {
-            start_seed: 0,
-            iterations: 1,
-            timeout_ms: 100,
-            batch_size: usize::MAX,
-        });
+        let result =
+            run(&CampaignOptions { iterations: 1, batch_size: usize::MAX, ..default_options() });
         assert!(matches!(result, CampaignResult::Completed(summary) if summary.checked == 1));
     }
 
@@ -220,17 +217,18 @@ mod tests {
     }
 
     fn default_options() -> CampaignOptions {
-        CampaignOptions { start_seed: 0, iterations: 10, timeout_ms: 100, batch_size: 10 }
-    }
-
-    #[test]
-    fn small_campaign_completes() {
-        let result = run(&CampaignOptions {
+        CampaignOptions {
             start_seed: 0,
             iterations: 10,
             timeout_ms: 100,
             batch_size: 10,
-        });
+            mangle: false,
+        }
+    }
+
+    #[test]
+    fn small_campaign_completes() {
+        let result = run(&default_options());
         assert!(matches!(
             result,
             CampaignResult::Completed(summary) if summary.checked == 10 && summary.skipped == 0

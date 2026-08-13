@@ -10,11 +10,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Ok(());
     }
 
+    let mangle = args.contains("--mangle");
     let options = CampaignOptions {
         start_seed: args.opt_value_from_str("--seed")?.unwrap_or(0),
         iterations: args.opt_value_from_str("--iterations")?.unwrap_or(1_000),
         timeout_ms: args.opt_value_from_str("--timeout-ms")?.unwrap_or(100),
         batch_size: args.opt_value_from_str("--batch-size")?.unwrap_or(100),
+        mangle,
     };
     let save_dir: PathBuf = args
         .opt_value_from_os_str("--save-dir", |value| Ok::<_, &'static str>(PathBuf::from(value)))?
@@ -78,6 +80,7 @@ fn print_help() {
            --iterations <N>    number of seeds (default: 1000)\n\
            --timeout-ms <N>    VM timeout per program, 1..=4294967295 (default: 100)\n\
            --batch-size <N>    programs per Node.js process, at least 1 (default: 100)\n\
+           --mangle            also mangle names (default: compression only)\n\
            --save-dir <PATH>   mismatch artifacts (default: target/minifier-fuzz)\n"
     );
 }
