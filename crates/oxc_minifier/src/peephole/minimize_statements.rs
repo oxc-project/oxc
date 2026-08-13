@@ -115,7 +115,99 @@ impl<'a> PeepholeOptimizations {
             let dropped = new_stmts.pop().unwrap();
             ctx.drop_statement(&dropped);
         }
+        Self::drain_dirty_declarators(&mut new_stmts, ctx);
         *stmts = new_stmts;
+    }
+
+    /// Consume symbols whose last live reference was removed during this pass
+    /// and retry declarations owned by this statement list. Statement indices
+    /// remain stable while the queue drains: empty declarations are retained as
+    /// placeholders and removed only after all queued work is complete.
+    ///
+    /// The dirty-symbol journal is append-only. Removing one declarator may
+    /// append symbols referenced by its initializer, allowing an arbitrarily
+    /// ordered acyclic declaration chain to collapse without another full-AST
+    /// traversal. The journal and index are local to this compressor / list;
+    /// neither requires shared mutable state for future parallel traversal.
+    fn drain_dirty_declarators(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        if ctx.state.pass_changes.dirty_symbols.is_empty() {
+            return;
+        }
+
+        let mut declaration_count = 0;
+        let mut owns_dirty_symbol = false;
+        for stmt in stmts.iter() {
+            let Statement::VariableDeclaration(var_decl) = stmt else { continue };
+            for decl in &var_decl.declarations {
+                let BindingPattern::BindingIdentifier(ident) = &decl.id else { continue };
+                declaration_count += 1;
+                owns_dirty_symbol |=
+                    ident.symbol_id.get().is_some_and(|id| ctx.symbol_became_unused(id));
+            }
+        }
+        if !owns_dirty_symbol {
+            return;
+        }
+
+        // A sorted flat index avoids one heap allocation per symbol while
+        // still supporting multiple declarations for a redeclared symbol.
+        let mut declarations_by_symbol =
+            ArenaVec::<(SymbolId, usize)>::with_capacity_in(declaration_count, ctx);
+        for (statement_index, stmt) in stmts.iter().enumerate() {
+            let Statement::VariableDeclaration(var_decl) = stmt else { continue };
+            for decl in &var_decl.declarations {
+                let BindingPattern::BindingIdentifier(ident) = &decl.id else { continue };
+                let Some(symbol_id) = ident.symbol_id.get() else { continue };
+                declarations_by_symbol.push((symbol_id, statement_index));
+            }
+        }
+        declarations_by_symbol.sort_unstable_by_key(|(symbol_id, statement_index)| {
+            (symbol_id.index(), *statement_index)
+        });
+        declarations_by_symbol.dedup();
+
+        let mut cursor = 0;
+        while cursor < ctx.state.pass_changes.dirty_symbols.len() {
+            let symbol_id = ctx.state.pass_changes.dirty_symbols[cursor];
+            cursor += 1;
+            let symbol_index = symbol_id.index();
+            let start = declarations_by_symbol
+                .partition_point(|(candidate, _)| candidate.index() < symbol_index);
+            let end = declarations_by_symbol
+                .partition_point(|(candidate, _)| candidate.index() <= symbol_index);
+
+            for &(_, statement_index) in &declarations_by_symbol[start..end] {
+                let Statement::VariableDeclaration(var_decl) = &mut stmts[statement_index] else {
+                    continue;
+                };
+                let kind = var_decl.kind;
+                var_decl.declarations.retain_mut(|decl| {
+                    if !Self::should_remove_unused_declarator(decl, kind, ctx) {
+                        return true;
+                    }
+
+                    // Reuse the ordinary unused-expression reducer. If it
+                    // leaves an observable residue, keep the declarator for
+                    // the normal statement pipeline to lower on the next pass;
+                    // any reductions already made remain valid AST progress.
+                    if let Some(mut init) = decl.init.take() {
+                        if !Self::remove_unused_expression(&mut init, ctx) {
+                            decl.init = Some(init);
+                            return true;
+                        }
+                        ctx.drop_expression(&init);
+                    }
+                    ctx.drop_variable_declarator(decl);
+                    false
+                });
+            }
+        }
+
+        // All semantic references in emptied declarations were already routed
+        // through the typed drop helpers above.
+        stmts.retain(|stmt| {
+            !matches!(stmt, Statement::VariableDeclaration(decl) if decl.declarations.is_empty())
+        });
     }
 
     /// Some parsers cannot parse long conditional expressions.

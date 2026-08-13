@@ -17,8 +17,7 @@ impl<'a> PeepholeOptimizations {
     /// because some runtime semantics can observe a binding independently of
     /// resolved references.
     pub(super) fn symbol_is_unused_by_count(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        !ctx.state.symbols.is_implicitly_observable(symbol_id)
-            && ctx.scoping().symbol_is_unused(symbol_id)
+        !ctx.state.symbols.is_implicitly_observable(symbol_id) && ctx.symbol_is_unused(symbol_id)
     }
 
     /// Function declarations additionally consume graph deadness, allowing
