@@ -1,0 +1,25 @@
+crates/oxc_mangler/src/lib.rs
+  s_d8d5369871a973::t_ea645143c8f6ce 1-4,10,414-445,447-451
+crates/oxc_minifier/tests/mangler/snapshots/private_member_mangling.snap
+  s_d8d5369871a973::t_11b227aa8bb8dd 50-61
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_d8d5369871a973::t_a07574f8bdc7ae 3,5,14,16,36,38,69,71
+crates/oxc_minifier/tests/mangler/mod.rs
+  s_d8d5369871a973::t_d18d183f93f6bd 198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "30b9c063b9ab604202a485786097d25d3fee9b5f",
+  "prompts": {},
+  "sessions": {
+    "s_d8d5369871a973": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb4e-ac13-7612-8a07-7fd688d7de0c",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
