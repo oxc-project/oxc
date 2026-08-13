@@ -42,6 +42,17 @@ impl CampaignOptions {
         if self.batch_size == 0 {
             return Err("--batch-size must be at least 1".to_owned());
         }
+        // The campaign walks the half-open range `start_seed .. start_seed +
+        // iterations`. Letting that end saturate at `u64::MAX` would quietly
+        // check fewer seeds than were asked for and still report success.
+        if self.iterations > 0 && self.start_seed.checked_add(self.iterations).is_none() {
+            return Err(format!(
+                "--seed plus --iterations must not exceed {}, got {} + {}",
+                u64::MAX,
+                self.start_seed,
+                self.iterations
+            ));
+        }
         Ok(())
     }
 }
@@ -88,7 +99,11 @@ pub fn run(options: &CampaignOptions) -> CampaignResult {
 
     while batch_start < end_seed {
         let batch_end = batch_start.saturating_add(batch_size as u64).min(end_seed);
-        let mut programs = Vec::with_capacity(batch_size);
+        // Reserve for the seeds this batch actually covers. `batch_size` is
+        // user-supplied and can dwarf the requested range, and reserving that
+        // instead aborts the process with a capacity overflow.
+        let capacity = usize::try_from(batch_end - batch_start).unwrap_or(batch_size);
+        let mut programs = Vec::with_capacity(capacity);
         for seed in batch_start..batch_end {
             let original = generate(seed);
             let minified = match minify(&original) {
@@ -171,6 +186,27 @@ mod tests {
             let options = CampaignOptions { timeout_ms, ..default_options() };
             assert!(options.validate().is_err(), "expected {timeout_ms} to be rejected");
         }
+    }
+
+    #[test]
+    fn rejects_seed_range_overflow() {
+        // Saturating at `u64::MAX` would silently run fewer seeds than asked for.
+        let options =
+            CampaignOptions { start_seed: u64::MAX - 1, iterations: 2, ..default_options() };
+        assert!(options.validate().is_err());
+    }
+
+    #[test]
+    fn batch_size_larger_than_the_seed_range_does_not_over_allocate() {
+        // Reserving `batch_size` up front aborts with a capacity overflow long
+        // before the single requested seed is generated.
+        let result = run(&CampaignOptions {
+            start_seed: 0,
+            iterations: 1,
+            timeout_ms: 100,
+            batch_size: usize::MAX,
+        });
+        assert!(matches!(result, CampaignResult::Completed(summary) if summary.checked == 1));
     }
 
     #[test]
