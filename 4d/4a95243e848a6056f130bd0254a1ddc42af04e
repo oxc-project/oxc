@@ -1,0 +1,29 @@
+crates/oxc_semantic/tests/integration/enum_values.rs
+  s_e5bd83064381a4::t_fbeabad1290f07 107-112
+crates/oxc_semantic/src/ts_enum/eval.rs
+  s_9fffd301ae31f9::t_40edaba4008e3c 24-29,142,148-150,315-317,323-328,333-336,339
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4d4a95243e848a6056f130bd0254a1ddc42af04e",
+  "prompts": {},
+  "sessions": {
+    "s_9fffd301ae31f9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb8e-c227-7ac3-9ef9-109daed45d80",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e5bd83064381a4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffb8a-68bc-7952-985d-51d04a752765",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
