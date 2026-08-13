@@ -33,8 +33,10 @@ const BASE54_CHARS: Aligned64 =
 /// Get the shortest mangled name for a given n.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
 //
-// Maximum length of string is 6 (`xKrTKr` for `u32::MAX`), but set `CAPACITY` as 7,
-// so the total size of `InlineString` is 8, including the `u8` length field.
+// The maximum output length is 6 bytes (`xKrTKr` for `u32::MAX`). After the first
+// character, `num` is at most `u32::MAX / 54 == 79_536_431`; applying
+// `(num - 1) / 64` five times reduces it to zero. Set the capacity to 7 so the total
+// size of `InlineString` is 8 bytes, including the `u8` length field.
 // Then initializing the `InlineString` is a single instruction, and with luck it'll sit in a register
 // throughout this function.
 #[expect(clippy::items_after_statements)]
@@ -47,7 +49,7 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
     // <https://tc39.es/ecma262/#prod-IdentifierStart>
     const FIRST_BASE: usize = 54;
     let byte = BASE54_CHARS.0[num % FIRST_BASE];
-    // SAFETY: All `BASE54_CHARS` are ASCII. This is first byte we push, so can't be out of bounds.
+    // SAFETY: All `BASE54_CHARS` are ASCII, and `str` is empty with capacity 7.
     unsafe { str.push_unchecked(byte) };
     num /= FIRST_BASE;
 
@@ -57,8 +59,8 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
     while num > 0 {
         num -= 1;
         let byte = BASE54_CHARS.0[num % REST_BASE];
-        // SAFETY: All `BASE54_CHARS` are ASCII.
-        // String for `u64::MAX` is `ZrN6rN6rN6r` (11 bytes), so cannot push more than `CAPACITY` (12).
+        // SAFETY: All `BASE54_CHARS` are ASCII. This loop pushes at most five trailing bytes,
+        // so `str` has fewer than 6 bytes before every push, within its capacity of 7.
         unsafe { str.push_unchecked(byte) };
         num /= REST_BASE;
     }
