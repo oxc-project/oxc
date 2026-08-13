@@ -246,6 +246,10 @@ minsize:
   cargo minsize
   just allocs
 
+# Fuzz minifier semantics against execution in Node.js
+fuzz-minifier *args='':
+  cargo run -p oxc_minifier_fuzz --release -- {{args}}
+
 # Update memory allocation snapshots
 allocs:
   cargo allocs
