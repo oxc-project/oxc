@@ -41,8 +41,7 @@ fn jsdoc() {
     let mut failures = Vec::new();
 
     for (input_path, expected_path) in collect_fixture_pairs() {
-        let rel_path =
-            input_path.strip_prefix(fixtures_root()).unwrap().to_string_lossy().into_owned();
+        let rel_path = normalized_rel_path(&input_path);
 
         let source_text = fs::read_to_string(&input_path).unwrap();
         let expected = fs::read_to_string(&expected_path).unwrap();
@@ -107,7 +106,7 @@ fn collect_fixture_pairs() -> Vec<(PathBuf, PathBuf)> {
             continue;
         }
 
-        let rel_path = path.strip_prefix(fixtures_root()).unwrap().to_string_lossy();
+        let rel_path = normalized_rel_path(path);
         if IGNORED_FIXTURES.iter().any(|ignored| rel_path == *ignored) {
             continue;
         }
@@ -117,6 +116,12 @@ fn collect_fixture_pairs() -> Vec<(PathBuf, PathBuf)> {
 
     pairs.sort_unstable();
     pairs
+}
+
+/// `/`-separated path relative to the fixtures root, so `IGNORED_FIXTURES`
+/// matching and failure listings behave the same on Windows.
+fn normalized_rel_path(path: &Path) -> String {
+    oxc_tasks_common::normalize_path(path.strip_prefix(fixtures_root()).unwrap())
 }
 
 /// Load per-fixture JsdocOptions and format overrides.
