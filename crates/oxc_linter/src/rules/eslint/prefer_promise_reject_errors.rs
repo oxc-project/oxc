@@ -140,6 +140,7 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
     }
 
     if call_expr.arguments.is_empty()
+        || matches!(&call_expr.arguments[0], Argument::SpreadElement(_))
         || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(e))
         || is_undefined(&call_expr.arguments[0], ctx)
     {
@@ -319,6 +320,14 @@ fn test() {
         // evaluates either to a falsy value of `foo` (which, then, cannot be an Error object), or to `5`
         ("Promise.reject(foo && 5)", None),
         ("Promise.reject(foo &&= 5)", None),
+        // Spread arguments
+        ("Promise.reject(...args)", None),
+        (
+            "new Promise((resolve, reject) => {
+                somePromise.catch((...args) => reject(...args));
+            })",
+            None,
+        ),
         ("new Promise(function (resolve, ...rest) { rest[0](5); });", None),
         ("new Promise(function (...rest) { rest[1](5); });", None),
         ("new Promise(function (...rest) { (rest[1])(5); });", None),
