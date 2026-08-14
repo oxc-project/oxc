@@ -107,13 +107,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add missing aria props `aria-checked` to the element with `switch` role.
 
-  ⚠ jsx-a11y(role-has-required-aria-props): `switch` role is missing required aria props `aria-checked`.
-   ╭─[role_has_required_aria_props.tsx:1:24]
- 1 │ <input type='checkbox' role='switch' />
-   ·                        ─────────────
-   ╰────
-  help: Add missing aria props `aria-checked` to the element with `switch` role.
-
   ⚠ jsx-a11y(role-has-required-aria-props): `heading` role is missing required aria props `aria-level`.
    ╭─[role_has_required_aria_props.tsx:1:6]
  1 │ <div role='heading' />
