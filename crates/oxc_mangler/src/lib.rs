@@ -853,9 +853,8 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
                 symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter())
             {
                 // A slot can be shared by several symbols (cross-scope reuse); rename them all.
-                for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
-                }
+                scoping
+                    .set_symbol_names(&symbol_to_rename.symbol_ids, Ident::from(new_name.as_str()));
             }
         }
     }
