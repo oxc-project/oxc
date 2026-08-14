@@ -1,0 +1,29 @@
+crates/oxc_linter/src/disable_directives.rs
+  s_0a771dcbd86206::t_061f28d8b92578 619,671,676-678,1503-1547,1797-1798
+crates/oxc_linter/src/rules/react/jsx_no_comment_textnodes.rs
+  s_0034098a40b3a0::t_7f8f634cd2bc70 232-253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f8fd9ec99fd3d858227bad38680d3adff05b6a81",
+  "prompts": {},
+  "sessions": {
+    "s_0034098a40b3a0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06cb-7200-9efa-bb18745ac27b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_0a771dcbd86206": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-07bd-7c92-82be-bd7feb300368",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
