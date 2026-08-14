@@ -1395,6 +1395,14 @@ fn ox_codegen_instruction_nullable<'a>(
 ) -> Result<Option<oxc::Statement<'a>>, OxcDiagnostic> {
     if let ReactiveValue::Instruction(ref value) = instr.value {
         match value {
+            InstructionValue::LoadContext { is_compound_assignment_result: true, .. }
+                if instr.lvalue.is_none() =>
+            {
+                // The assignment itself was already emitted. This synthetic load exists so
+                // analysis can track the compound assignment's result, but an expression
+                // statement does not use that result.
+                return Ok(None);
+            }
             InstructionValue::StoreLocal { .. }
             | InstructionValue::StoreContext { .. }
             | InstructionValue::Destructure { .. }

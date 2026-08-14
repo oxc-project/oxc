@@ -585,6 +585,9 @@ pub enum InstructionValue<'a> {
     LoadContext {
         place: Place,
         span: Option<Span>,
+        /// This load materializes the value of a preceding compound assignment.
+        /// Keep it through analysis, but omit it during codegen when its result is unused.
+        is_compound_assignment_result: bool,
     },
     DeclareLocal {
         lvalue: LValue,
@@ -1748,8 +1751,12 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             InstructionValue::LoadLocal { place, span } => {
                 InstructionValue::LoadLocal { place: *place, span: *span }
             }
-            InstructionValue::LoadContext { place, span } => {
-                InstructionValue::LoadContext { place: *place, span: *span }
+            InstructionValue::LoadContext { place, span, is_compound_assignment_result } => {
+                InstructionValue::LoadContext {
+                    place: *place,
+                    span: *span,
+                    is_compound_assignment_result: *is_compound_assignment_result,
+                }
             }
             InstructionValue::DeclareLocal { lvalue, span } => {
                 InstructionValue::DeclareLocal { lvalue: *lvalue, span: *span }
