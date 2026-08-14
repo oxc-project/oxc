@@ -524,7 +524,7 @@ fn compute_minimal_text_edit<'a>(
 // Almost the same as `cli::walk::load_ignore_paths`, but does not handle custom ignore files.
 //
 // NOTE: `.gitignore` is intentionally NOT included here.
-// LSP document is explicitly formatted by the user. (See "Ignore model" in AGENTS.md)
+// An LSP document is explicitly formatted by the user.
 fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
     let path = cwd.join(".prettierignore");
     if path.exists() { vec![path] } else { vec![] }
