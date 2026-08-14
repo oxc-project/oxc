@@ -98,23 +98,29 @@ pub struct ManglerReturn {
 /// ## Example
 ///
 /// ```rust,ignore
-/// use oxc_codegen::{Codegen, CodegenOptions};
-/// use oxc_ast::ast::Program;
+/// use oxc_codegen::Codegen;
 /// use oxc_parser::Parser;
 /// use oxc_allocator::Allocator;
 /// use oxc_span::SourceType;
-/// use oxc_mangler::{MangleOptions, Mangler};
+/// use oxc_mangler::{MangleOptions, Mangler, ManglerReturn};
 ///
 /// let allocator = Allocator::default();
 /// let source = "const result = 1 + 2;";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
 /// assert!(parsed.diagnostics.is_empty());
 ///
-/// let mangled_symbols = Mangler::new()
-///     .with_options(MangleOptions { top_level: true, debug: true })
+/// let ManglerReturn { scoping, class_private_mappings } = Mangler::new()
+///     .with_options(MangleOptions {
+///         top_level: Some(true),
+///         debug: true,
+///         ..MangleOptions::default()
+///     })
 ///     .build(&parsed.program);
 ///
-/// let js = Codegen::new().with_symbol_table(mangled_symbols).build(&parsed.program);
+/// let js = Codegen::new()
+///     .with_scoping(Some(scoping))
+///     .with_private_member_mappings(Some(class_private_mappings))
+///     .build(&parsed.program);
 /// // this will be `const a = 1 + 2;` if debug = false
 /// assert_eq!(js.code, "const slot_0 = 1 + 2;\n");
 /// ```
@@ -847,9 +853,8 @@ impl<'a, const CAPACITY: usize> NameTable<'a, CAPACITY> {
                 symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter())
             {
                 // A slot can be shared by several symbols (cross-scope reuse); rename them all.
-                for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
-                }
+                scoping
+                    .set_symbol_names(&symbol_to_rename.symbol_ids, Ident::from(new_name.as_str()));
             }
         }
     }
