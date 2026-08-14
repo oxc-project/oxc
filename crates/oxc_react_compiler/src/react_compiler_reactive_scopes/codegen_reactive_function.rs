@@ -3321,8 +3321,11 @@ fn ox_codegen_jsx_fbt_child_element<'a>(
     }
 }
 
-/// Build a `JSXElementName` from a tag expression, preserving the HIR distinction between
-/// component references (identifier expressions) and builtin tags (string literals).
+/// Build a `JSXElementName` from a tag expression.
+///
+/// JSX determines whether an identifier tag is intrinsic from its spelling. React Compiler may
+/// rewrite a component reference to a lowercase identifier, so reconstruct that distinction here
+/// instead of preserving the expression kind from HIR.
 fn ox_expression_to_jsx_tag<'a>(
     cx: &OxcContext<'a, '_>,
     expr: &oxc::Expression<'a>,
@@ -3330,11 +3333,12 @@ fn ox_expression_to_jsx_tag<'a>(
 ) -> Result<oxc::JSXElementName<'a>, OxcDiagnostic> {
     match expr {
         oxc::Expression::Identifier(ident) => {
-            Ok(oxc_ast::ast::JSXElementName::new_identifier_reference(
-                span,
-                ox_str(&cx.ast, &ident.name),
-                &cx.ast,
-            ))
+            let name = ox_str(&cx.ast, &ident.name);
+            if ident.name.as_bytes().first().is_some_and(u8::is_ascii_lowercase) {
+                Ok(oxc_ast::ast::JSXElementName::new_identifier(span, name, &cx.ast))
+            } else {
+                Ok(oxc_ast::ast::JSXElementName::new_identifier_reference(span, name, &cx.ast))
+            }
         }
         oxc::Expression::StaticMemberExpression(_)
         | oxc::Expression::ComputedMemberExpression(_) => {
