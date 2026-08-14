@@ -1,0 +1,47 @@
+apps/oxlint/fixtures/cli/issue_25624/.oxlintrc.json
+  s_0a771dcbd86206::t_ca4213e4675594 1-5
+apps/oxlint/fixtures/cli/issue_25624/PortalPaywall.stories.tsx
+  s_0a771dcbd86206::t_98a217bf06b646 1-2
+apps/oxlint/fixtures/cli/issue_25624/PortalPaywall.tsx
+  s_0a771dcbd86206::t_1f495ea75c9626 1-2
+apps/oxlint/src/lint.rs
+  s_2a81ccd359eebb::t_27cbfb2d34a6de 760,1262-1275
+crates/oxc_linter/fixtures/import/portal-paywall.tsx
+  s_0a771dcbd86206::t_be7496fb1f7bd4 1-2
+crates/oxc_linter/src/rules/import/no_named_as_default.rs
+  s_e01355fba8b00f::t_901f39d38c318e 7,94,118-120,128,191-192,212-216,229-230
+crates/oxc_linter/src/snapshots/import_no_named_as_default.snap
+  s_0a771dcbd86206::t_9798171655ace8 53-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "38ab63641f7138fa217b80f67c95c50d7733c734",
+  "prompts": {},
+  "sessions": {
+    "s_0a771dcbd86206": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-07bd-7c92-82be-bd7feb300368",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_2a81ccd359eebb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f7-79a0-b54f-af7ad1555116",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e01355fba8b00f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06d9-71e0-b420-042c76e481ed",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
