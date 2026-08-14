@@ -1142,6 +1142,8 @@ fn test_fold_exponential() {
 /// `Number::exponentiate` is not IEEE 754 `pow`. It returns `NaN` whenever the
 /// exponent is `NaN`, and whenever the base has magnitude `1` and the exponent
 /// is infinite — both cases where `pow` is specified to return `1`.
+///
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
 #[test]
 fn test_fold_exponential_disagrees_with_ieee_pow() {
     fold("x = 1 ** Infinity", "x = NaN");

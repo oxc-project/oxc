@@ -270,6 +270,8 @@ fn binary_operation_evaluate_value_to<'a>(
             // `NaN`, and when the base has magnitude `1` and the exponent is
             // infinite. Only the exponent-is-zero case is shared, and `powf`
             // already agrees there.
+            // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
+            // <https://tc39.es/ecma262/#sec-numeric-types-number-exponentiate>
             #[expect(clippy::float_cmp)]
             let base_is_one = lval.abs() == 1.0;
             let result = if rval.is_nan() || (base_is_one && rval.is_infinite()) {
