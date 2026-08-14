@@ -1,0 +1,19 @@
+apps/oxlint/src/lint.rs
+  s_b38ece9ad5d8c2::t_6f0340f2ec6adf 760
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "570a98806750566c72f6be92ba49c2e8efb80d55",
+  "prompts": {},
+  "sessions": {
+    "s_b38ece9ad5d8c2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-86e201b55e14",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
