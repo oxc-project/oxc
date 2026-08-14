@@ -14701,7 +14701,7 @@
       "type": "object",
       "properties": {
         "allowedSnapshots": {
-          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions.",
+          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead.",
           "default": {},
           "type": "object",
           "additionalProperties": {
@@ -14710,11 +14710,11 @@
               "type": "string"
             }
           },
-          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions."
+          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead."
         },
         "inlineMaxSize": {
           "description": "Maximum number of lines allowed for inline snapshots.",
-          "default": 50,
+          "default": null,
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0,
