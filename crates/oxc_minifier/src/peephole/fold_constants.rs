@@ -733,11 +733,6 @@ impl<'a> PeepholeOptimizations {
         if left.operator != op {
             return None;
         }
-
-        // The rotation folds `e.right` into a constant together with one of the
-        // left child's operands, dropping both expressions. An operand can be
-        // constant-evaluable and still have a side effect — `[(y = 9), 1].length`
-        // is `2` but assigns `y` — so neither discarded side may carry one.
         if e.right.may_have_side_effects(ctx) {
             return None;
         }
