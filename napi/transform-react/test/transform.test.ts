@@ -28,6 +28,24 @@ describe("transformSync", () => {
     expect(result.code).toContain("@license MIT");
   });
 
+  it("honors JSX pragmas after React Compiler adds imports", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `/** @jsxRuntime automatic */
+/** @jsxImportSource custom-runtime */
+export function Component({ value }: { value: string }) {
+  return <div>{value}</div>;
+}
+`,
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain('from "custom-runtime/jsx-runtime"');
+    expect(result.code).not.toContain('from "react/jsx-runtime"');
+  });
+
   it("forwards React Compiler options", () => {
     const target = transformSync("Component.tsx", fixture, {
       reactCompiler: { target: "18" },

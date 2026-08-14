@@ -2685,6 +2685,16 @@ fn ox_transform_program<'a>(
     replacements: &[OxcReplacement<'a>],
     context: &mut ProgramContext,
 ) {
+    // Anchor generated top-level imports immediately before the first source
+    // statement. Keep the span empty so the imports remain unmapped. The
+    // preceding offset also keeps them distinct from comments attached to the
+    // first statement, while avoiding `SPAN` (`0..0`), which makes later
+    // transforms mistake them for source text at the beginning of the file.
+    let import_span = program
+        .body
+        .first()
+        .map_or(SPAN, |statement| Span::empty(statement.span().start.saturating_sub(1)));
+
     // Outlined function declarations are placed differently depending on the
     // original function's syntactic kind, mirroring `insertNewOutlinedFunctionNode`
     // in TS `Program.ts`:
@@ -2749,7 +2759,7 @@ fn ox_transform_program<'a>(
         context.add_memo_cache_import();
     }
 
-    ox_add_imports_to_program(ast, program, context);
+    ox_add_imports_to_program(ast, program, context, import_span);
 }
 
 /// Insert outlined function declarations immediately after the statement that
@@ -2805,6 +2815,7 @@ fn ox_add_imports_to_program<'a>(
     ast: &AstBuilder<'a>,
     program: &mut Program<'a>,
     context: &ProgramContext,
+    import_span: Span,
 ) {
     if !context.has_pending_imports() {
         return;
@@ -2835,20 +2846,21 @@ fn ox_add_imports_to_program<'a>(
         if let Some(&idx) = existing_import_indices.get(module_name.as_str()) {
             // Merge into the existing import declaration.
             if let Statement::ImportDeclaration(import) = &mut program.body[idx] {
+                let specifier_span = Span::empty(import.span.start);
                 let specifiers = import.specifiers.get_or_insert_with(|| ArenaVec::new_in(ast));
                 for spec in &sorted_imports {
-                    specifiers.push(ox_make_import_specifier(ast, spec));
+                    specifiers.push(ox_make_import_specifier(ast, spec, specifier_span));
                 }
             }
         } else if is_module {
             // ESM: import { imported as local, ... } from 'module'
             let mut specifiers = ArenaVec::new_in(ast);
             for spec in &sorted_imports {
-                specifiers.push(ox_make_import_specifier(ast, spec));
+                specifiers.push(ox_make_import_specifier(ast, spec, import_span));
             }
-            let source = StringLiteral::new(SPAN, ox_atom(ast, module_name), None, ast);
+            let source = StringLiteral::new(import_span, ox_atom(ast, module_name), None, ast);
             let import = ImportDeclaration::boxed(
-                SPAN,
+                import_span,
                 Some(specifiers),
                 source,
                 None,
@@ -2861,25 +2873,37 @@ fn ox_add_imports_to_program<'a>(
             // CommonJS: const { imported: local, ... } = require('module')
             let mut props = ArenaVec::new_in(ast);
             for spec in &sorted_imports {
-                let key =
-                    PropertyKey::new_static_identifier(SPAN, ox_atom(ast, &spec.imported), ast);
-                let value =
-                    BindingPattern::new_binding_identifier(SPAN, ox_atom(ast, &spec.name), ast);
-                props.push(BindingProperty::new(SPAN, key, value, false, false, ast));
+                let key = PropertyKey::new_static_identifier(
+                    import_span,
+                    ox_atom(ast, &spec.imported),
+                    ast,
+                );
+                let value = BindingPattern::new_binding_identifier(
+                    import_span,
+                    ox_atom(ast, &spec.name),
+                    ast,
+                );
+                props.push(BindingProperty::new(import_span, key, value, false, false, ast));
             }
-            let object_pattern = BindingPattern::new_object_pattern(SPAN, props, None, ast);
+            let object_pattern = BindingPattern::new_object_pattern(import_span, props, None, ast);
             let require_call = Expression::new_call_expression(
-                SPAN,
-                Expression::new_identifier(SPAN, "require", ast),
+                import_span,
+                Expression::new_identifier(import_span, "require", ast),
                 None,
-                [Argument::new_string_literal(SPAN, ox_atom(ast, module_name), None, ast)],
+                [Argument::new_string_literal(import_span, ox_atom(ast, module_name), None, ast)],
                 false,
                 ast,
             );
-            let declarator =
-                VariableDeclarator::new(SPAN, object_pattern, None, Some(require_call), false, ast);
+            let declarator = VariableDeclarator::new(
+                import_span,
+                object_pattern,
+                None,
+                Some(require_call),
+                false,
+                ast,
+            );
             let decl = VariableDeclaration::boxed(
-                SPAN,
+                import_span,
                 VariableDeclarationKind::Const,
                 [declarator],
                 false,
@@ -2900,11 +2924,12 @@ fn ox_add_imports_to_program<'a>(
 fn ox_make_import_specifier<'a>(
     ast: &AstBuilder<'a>,
     spec: &super::imports::NonLocalImportSpecifier,
+    span: Span,
 ) -> ImportDeclarationSpecifier<'a> {
-    let imported = ModuleExportName::new_identifier_name(SPAN, ox_atom(ast, &spec.imported), ast);
-    let local = BindingIdentifier::new(SPAN, ox_atom(ast, &spec.name), ast);
+    let imported = ModuleExportName::new_identifier_name(span, ox_atom(ast, &spec.imported), ast);
+    let local = BindingIdentifier::new(span, ox_atom(ast, &spec.name), ast);
     ImportDeclarationSpecifier::new_import_specifier(
-        SPAN,
+        span,
         imported,
         local,
         ImportOrExportKind::Value,
