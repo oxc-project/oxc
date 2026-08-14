@@ -8855,6 +8855,9 @@
         "unicorn/consistent-template-literal-escape": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/consistent-tuple-labels": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/custom-error-definition": {
           "$ref": "#/definitions/RuleNoConfig"
         },

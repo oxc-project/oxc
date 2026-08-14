@@ -1,0 +1,103 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:24]
+ 1 │ type Foo = [a: string, number];
+   ·                        ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:13]
+ 1 │ type Foo = [string, b: number];
+   ·             ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:47]
+ 1 │ type Foo = [a: string, b: number, c: boolean, d];
+   ·                                               ─
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:24]
+ 1 │ type Foo = [a: string, number, c: boolean];
+   ·                        ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:24]
+ 1 │ type Foo = [a: string, number, boolean];
+   ·                        ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:32]
+ 1 │ type Foo = [a: string, number, boolean];
+   ·                                ───────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:25]
+ 1 │ type Foo = [a?: string, number?];
+   ·                         ───────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[consistent_tuple_labels.tsx:1:13]
+ 1 │ type Foo = [string?, b: number];
+   ·             ───┬───  ────┬────
+   ·                │         ╰── Required element here
+   ·                ╰── Optional element seen here
+   ╰────
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:13]
+ 1 │ type Foo = [string, ...rest: number[]];
+   ·             ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:24]
+ 1 │ type Foo = [a: string, ...number[]];
+   ·                        ───────────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[consistent_tuple_labels.tsx:1:13]
+ 1 │ type Foo = [a?: string, number];
+   ·             ─────┬────  ───┬──
+   ·                  │         ╰── Required element here
+   ·                  ╰── Optional element seen here
+   ╰────
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:33]
+ 1 │ type Foo = readonly [a: string, number];
+   ·                                 ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:25]
+ 1 │ type Foo = [[a: number, number]];
+   ·                         ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
+
+  ⚠ unicorn(consistent-tuple-labels): This tuple element should have a label, just like the other elements.
+   ╭─[consistent_tuple_labels.tsx:1:40]
+ 1 │ type Foo = [a: string, /* unlabeled */ number];
+   ·                                        ──────
+   ╰────
+  help: Add a label to this element, or remove the labels from the other elements.
