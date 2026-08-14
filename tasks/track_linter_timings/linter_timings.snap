@@ -513,7 +513,7 @@ typescript/no-unnecessary-type-constraint                  |    362
 typescript/no-unsafe-declaration-merging                   |    500
 typescript/no-unsafe-function-type                         |  13199
 typescript/no-useless-empty-export                         |      5
-typescript/no-var-requires                                 |  24652
+typescript/no-var-requires                                 |  62606
 typescript/no-wrapper-object-types                         |  13199
 typescript/parameter-properties                            |   1070
 typescript/prefer-as-const                                 |  12866
