@@ -365,6 +365,14 @@ fn lower_block_statement_inner<'a>(
                     Some(entry.span)
                 })
                 .collect();
+            refs_in_stmt.extend(builder.identifier_spans().type_binding_spans().iter().filter_map(
+                |&(type_binding_id, span)| {
+                    (scope.symbol_ident(type_binding_id) == *name
+                        && span.start >= stmt_start
+                        && span.start < stmt_end)
+                        .then_some(span)
+                },
+            ));
             // For hoisted bindings (function declarations) outside their own
             // declaration statement, the declaration site itself counts as a
             // reference (Babel's binding references include the declaration).

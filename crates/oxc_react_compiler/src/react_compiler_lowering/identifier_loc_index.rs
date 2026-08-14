@@ -73,6 +73,11 @@ pub struct IdentifierLocIndex {
     /// Declaration (binding) identifier spans, keyed by their `symbol_id` cell.
     /// First declaration wins for redeclared symbols.
     decl_spans: FxHashMap<SymbolId, Span>,
+    /// Binding identifiers inside TS type subtrees. Babel's hoisting traversal
+    /// can treat function-type parameter names as references to a same-named
+    /// runtime binding, so retain their semantic identity and location for the
+    /// hoisting pass without exposing them to the other identifier analyses.
+    type_binding_spans: Vec<(SymbolId, Span)>,
 }
 
 impl IdentifierLocIndex {
@@ -82,6 +87,10 @@ impl IdentifierLocIndex {
 
     pub fn declaration_span(&self, symbol_id: SymbolId) -> Option<Span> {
         self.decl_spans.get(&symbol_id).copied()
+    }
+
+    pub fn type_binding_spans(&self) -> &[(SymbolId, Span)] {
+        &self.type_binding_spans
     }
 }
 
@@ -149,6 +158,9 @@ impl<'a> Visit<'a> for IdentifierLocVisitor {
         // never BindingIdentifier, so type-parameter declaration names (`<T>`) and
         // other binding positions inside type subtrees must not be recorded.
         if self.type_depth > 0 {
+            if let Some(symbol_id) = it.symbol_id.get() {
+                self.index.type_binding_spans.push((symbol_id, it.span));
+            }
             return;
         }
         self.record_declaration(it);

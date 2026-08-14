@@ -1,0 +1,40 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/hoist-type-function-parameter-binding.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer" @panicThreshold:"none"
+import { useEffect, useState } from "react";
+export function Component(t0) {
+	const $ = _c(7);
+	const { source } = t0;
+	let t1;
+	if ($[0] !== source) {
+		t1 = (setData) => setData(source);
+		$[0] = source;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const callback = t1;
+	const data = useState(source)[0];
+	let t2;
+	if ($[2] !== callback || $[3] !== data) {
+		t2 = () => callback(() => data);
+		$[2] = callback;
+		$[3] = data;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	let t3;
+	if ($[5] !== data) {
+		t3 = [data];
+		$[5] = data;
+		$[6] = t3;
+	} else {
+		t3 = $[6];
+	}
+	useEffect(t2, t3);
+	return data;
+}
