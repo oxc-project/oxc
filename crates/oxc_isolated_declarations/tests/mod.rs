@@ -55,3 +55,28 @@ fn snapshots() {
         });
     });
 }
+
+fn transform_json(source_text: &str) -> String {
+    let allocator = Allocator::default();
+    let parser_ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse_expression();
+    let expression = parser_ret.expect("Failed to parse JSON");
+
+    let id_ret =
+        IsolatedDeclarations::new(&allocator, IsolatedDeclarationsOptions { strip_internal: true })
+            .build_json(&expression, source_text);
+    let code = Codegen::new().build(&id_ret.program).code;
+
+    format!("```\n==================== .D.TS ====================\n\n{code}\n\n")
+}
+
+#[test]
+fn json_snapshots() {
+    insta::glob!("fixtures/json/*.json", |path| {
+        let source_text = fs::read_to_string(path).unwrap();
+        let snapshot = transform_json(&source_text);
+        let name = path.file_stem().unwrap().to_str().unwrap();
+        insta::with_settings!({ prepend_module_to_snapshot => false, snapshot_suffix => "", omit_expression => true }, {
+            insta::assert_snapshot!(name, snapshot);
+        });
+    });
+}
