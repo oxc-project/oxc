@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/react/no_this_in_sfc.rs
+  s_0b8b11c893033b::t_167221f0f52b52 135-136,384-395
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a94d7c308640a370fb521f412064b418a8164be9",
+  "prompts": {},
+  "sessions": {
+    "s_0b8b11c893033b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59ea-78b1-a856-63728bc50bc5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
