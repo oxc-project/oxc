@@ -3,7 +3,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 -------------------------------------------------------------------------------------
 72.14 kB   | 23.11 kB   | 23.70 kB   | 8.34 kB    | 8.54 kB    |          2 | react.development.js 
 
-173.90 kB  | 59.34 kB   | 59.82 kB   | 19.15 kB   | 19.33 kB   |          2 | moment.js  
+173.90 kB  | 59.34 kB   | 59.82 kB   | 19.14 kB   | 19.33 kB   |          2 | moment.js  
 
 287.63 kB  | 89.20 kB   | 90.07 kB   | 30.90 kB   | 31.95 kB   |          2 | jquery.js  
 
