@@ -9,7 +9,9 @@ Both React Compiler implementations receive the same explicit options. The
 comparison uses the v1 defaults for ESLint suppression rules and disables
 exhaustive manual-memo dependency validation, which was not enabled by default
 in v1. The scanned directory is passed as `sources` so dependency directories
-are handled consistently by both implementations.
+are handled consistently by both implementations. Babel's TypeScript transform
+also enables `allowDeclareFields` so uninitialized class fields use the same
+emit behavior as Oxc.
 
 Before comparing, the Babel output is parsed and printed by `oxc-transform`
 with no transforms enabled. This ensures both outputs use Oxc code generation

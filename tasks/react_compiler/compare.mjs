@@ -14,6 +14,12 @@ const DEFAULT_ESLINT_SUPPRESSION_RULES_V1 = [
   "react-hooks/exhaustive-deps",
   "react-hooks/rules-of-hooks",
 ];
+const BABEL_TYPESCRIPT_OPTIONS = {
+  allExtensions: true,
+  isTSX: true,
+  // Match Oxc's default TypeScript emit for uninitialized class fields.
+  allowDeclareFields: true,
+};
 
 const args = process.argv.slice(2);
 if (args.length !== 1) {
@@ -89,13 +95,7 @@ async function findSourceFiles(root) {
 function transformWithBabel(filename, sourceText) {
   const plugins = [[reactCompiler, reactCompilerOptions]];
   if (extname(filename).toLowerCase() === ".tsx") {
-    plugins.push([
-      transformTypescript,
-      {
-        allExtensions: true,
-        isTSX: true,
-      },
-    ]);
+    plugins.push([transformTypescript, BABEL_TYPESCRIPT_OPTIONS]);
   }
   plugins.push([transformReactJsx, { runtime: "automatic" }]);
 
