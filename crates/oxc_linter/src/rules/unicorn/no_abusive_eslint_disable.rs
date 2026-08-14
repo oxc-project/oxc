@@ -2,14 +2,27 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, disable_directives::RuleCommentType, rule::Rule};
+use crate::{
+    context::LintContext,
+    disable_directives::{DirectivePrefix, RuleCommentType},
+    rule::Rule,
+};
 
-fn no_abusive_eslint_disable_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "Unexpected `eslint-disable` comment that does not specify any rules to disable.",
-    )
-    .with_help("Specify the rules you want to disable.")
-    .with_label(span)
+fn no_abusive_eslint_disable_diagnostic(
+    span: Span,
+    directive_prefix: DirectivePrefix,
+) -> OxcDiagnostic {
+    let message = match directive_prefix {
+        DirectivePrefix::Eslint => {
+            "Unexpected `eslint-disable` comment that does not specify any rules to disable."
+        }
+        DirectivePrefix::Oxlint => {
+            "Unexpected `oxlint-disable` comment that does not specify any rules to disable."
+        }
+    };
+    OxcDiagnostic::warn(message)
+        .with_help("Specify the rules you want to disable.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -82,12 +95,18 @@ impl Rule for NoAbusiveEslintDisable {
         for comment in ctx.disable_directives().disable_rule_comments() {
             match &comment.r#type {
                 RuleCommentType::All => {
-                    ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
+                    ctx.diagnostic(no_abusive_eslint_disable_diagnostic(
+                        comment.span,
+                        comment.directive_prefix,
+                    ));
                 }
                 RuleCommentType::Single(rules) => {
                     for rule in rules {
                         if !is_valid_rule_name(&rule.rule_name) {
-                            ctx.diagnostic(no_abusive_eslint_disable_diagnostic(comment.span));
+                            ctx.diagnostic(no_abusive_eslint_disable_diagnostic(
+                                comment.span,
+                                comment.directive_prefix,
+                            ));
                         }
                     }
                 }
@@ -135,6 +154,10 @@ fn test() {
         eval(); // eslint-disable-line
         ",
         r"
+        /* oxlint-disable no-abusive-eslint-disable */
+        eval(); // oxlint-disable-line
+        ",
+        r"
         foo();
         // eslint-disable-line no-eval
         eval();
@@ -161,6 +184,7 @@ fn test() {
         // eslint-disable-next-line @scopewithoutplugin
         eval();
         ",
+        "// oxlint-disable-next-line @scopewithoutplugin\neval();",
         "eval(); // eslint-disable-line",
         "eval(); // oxlint-disable-line",
         r"
