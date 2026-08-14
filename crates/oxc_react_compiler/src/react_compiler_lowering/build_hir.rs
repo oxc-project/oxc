@@ -3800,14 +3800,16 @@ fn lower_expression<'a>(
         oxc::Expression::TaggedTemplateExpression(tagged) => {
             let span = Some(tagged.span);
             let quasi_span = Some(tagged.quasi.span);
-            // Upstream React Compiler bails on any interpolation here; the oxc port
-            // instead lowers the tag plus every quasi and every `${...}`
-            // subexpression (mirroring `TemplateLiteral`). This is a deliberate
-            // divergence from the TS reference.
-            //
-            // We still bail when any quasi's cooked value differs from its raw value
-            // (e.g. escape sequences or graphql templates), matching upstream's
-            // single-quasi behavior — the HIR only round-trips raw==cooked quasis.
+            if !tagged.quasi.expressions.is_empty() {
+                builder.record_error(
+                    ErrorCategory::Todo
+                        .diagnostic("(BuildHIR::lowerExpression) Handle tagged template with interpolations")
+                        .with_labels(span),
+                )?;
+                return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
+            }
+            // Bail when the quasi's cooked value differs from its raw value (e.g.
+            // escape sequences or graphql templates), matching upstream behavior.
             if tagged.quasi.quasis.iter().any(|q| {
                 q.value.raw.as_str() != q.value.cooked.map(|c| c.to_string()).unwrap_or_default()
             }) {
