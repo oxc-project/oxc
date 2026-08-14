@@ -271,7 +271,9 @@ impl TransformOptions {
         filename: &str,
     ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions), OxcDiagnostic> {
         let react_compiler = match self.react_compiler {
-            None | Some(Either::A(true)) => Some(PluginOptions::default()),
+            None | Some(Either::A(true)) => {
+                (!filename.contains("node_modules")).then(PluginOptions::default)
+            }
             Some(Either::A(false)) => None,
             Some(Either::B(options)) => options.resolve(filename)?,
         };
@@ -297,10 +299,10 @@ impl TransformOptions {
 
 impl ReactCompilerOptions {
     fn resolve(self, filename: &str) -> Result<Option<PluginOptions>, OxcDiagnostic> {
-        let enabled = self
-            .sources
-            .as_ref()
-            .is_none_or(|sources| sources.iter().any(|source| filename.contains(source.as_str())));
+        let enabled = self.sources.as_ref().map_or_else(
+            || !filename.contains("node_modules"),
+            |sources| sources.iter().any(|source| filename.contains(source.as_str())),
+        );
         enabled.then(|| self.into_plugin_options()).transpose()
     }
 

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { transform, transformSync } from "../index";
@@ -14,6 +16,11 @@ export function Component(props: Props) {
   return <button onClick={() => setCount(count + 1)}>{props.text}: {count}</button>;
 }
 `;
+
+const sourceFilterFixture = readFileSync(
+  new URL("./fixtures/source-filter-component.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("transformSync", () => {
   it("runs React Compiler before TypeScript and JSX transforms", () => {
@@ -166,6 +173,26 @@ export function Component({ value }: { value: string }) {
     expect(result.code).not.toContain("react/compiler-runtime");
     expect(result.code).not.toContain("interface Props");
     expect(result.code).not.toContain("<button");
+  });
+
+  it.each([
+    ["omitted options", undefined],
+    ["boolean shorthand", { reactCompiler: true }],
+    ["empty options", { reactCompiler: {} }],
+  ] as const)("skips node_modules with %s", (_, options) => {
+    const filename = "node_modules/example/Component.tsx";
+    const skipped = transformSync(filename, sourceFilterFixture, options);
+    expect(skipped.errors).toEqual([]);
+    expect(skipped.code).not.toContain("react/compiler-runtime");
+  });
+
+  it("allows node_modules through an explicit source", () => {
+    const filename = "node_modules/example/Component.tsx";
+    const compiled = transformSync(filename, sourceFilterFixture, {
+      reactCompiler: { sources: ["node_modules/example/"] },
+    });
+    expect(compiled.errors).toEqual([]);
+    expect(compiled.code).toContain("react/compiler-runtime");
   });
 
   it("keeps imports used by compiled computed keys", () => {
