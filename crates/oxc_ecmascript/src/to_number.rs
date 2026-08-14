@@ -31,11 +31,6 @@ impl<'a> ToNumber<'a> for Expression<'a> {
             },
             Expression::StringLiteral(lit) => Some(lit.value.as_str().string_to_number()),
             Expression::UnaryExpression(unary) if unary.operator.is_not() => {
-                // `!x` is `ToBoolean(x)` negated, so it must be derived from
-                // `ToBoolean`, never from `ToNumber`. The two disagree whenever
-                // `ToNumber(x) == 0` differs from `!ToBoolean(x)`: `NaN` is
-                // falsy but does not number to `0`, while `"0"`, `" "` and `[]`
-                // all number to `0` yet are truthy.
                 let boolean = unary.argument.to_boolean(ctx)?;
                 Some(if boolean { 0.0 } else { 1.0 })
             }
