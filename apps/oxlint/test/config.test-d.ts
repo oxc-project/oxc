@@ -13,3 +13,9 @@ defineConfig({
     ],
   },
 });
+
+defineConfig({
+  rules: {
+    "no-restricted-globals": ["warn", ...restrictedGlobals],
+  },
+});
