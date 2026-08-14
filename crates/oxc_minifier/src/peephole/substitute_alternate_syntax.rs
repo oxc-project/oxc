@@ -277,8 +277,10 @@ impl<'a> PeepholeOptimizations {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
                     && e.right().value_type(ctx).is_number()
                     // The right operand is evaluated between the argument of `+`
-                    // and the conversion the operator performs on it, so a side
-                    // effect there can tell the two apart. See the note below.
+                    // and the conversion the operator performs on it, so it must
+                    // neither affect that conversion nor observe it. A value
+                    // known at compile time can do neither. See the note below.
+                    && e.right().evaluate_value(ctx).is_some()
                     && !e.right().may_have_side_effects(ctx)
             }
             Ancestor::BinaryExpressionRight(e) => {
@@ -321,13 +323,23 @@ impl<'a> PeepholeOptimizations {
     ///
     /// What it does change is *when* the conversion happens. Step 1 runs while
     /// evaluating `+a`, before `n` is evaluated at all; step 2 runs after. So
-    /// `n` must not have a side effect the conversion of `a` can observe:
+    /// evaluating `n` must neither affect the conversion of `a`:
     ///
     /// ```js
     /// var xs = [];
     /// (+xs) - (xs.push(1), 0); // 0, converted while `xs` was still empty
     /// xs - (xs.push(1), 0);    // 1, converted after `xs` grew
     /// ```
+    ///
+    /// nor observe it:
+    ///
+    /// ```js
+    /// let x = 0, a = { valueOf() { x = 1; return 2 } };
+    /// (+a) - (x ? 1 : 0);      // 1, `x` read after `valueOf` set it
+    /// a - (x ? 1 : 0);         // 2, `x` read before
+    /// ```
+    ///
+    /// Requiring `n` to have a value known at compile time rules out both.
     ///
     /// For `n - +a` the ordering holds regardless: `n` is evaluated first
     /// either way, and step 3 is a no-op because `n` is already a number, so
