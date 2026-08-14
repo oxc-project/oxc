@@ -1,0 +1,205 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:8]
+ 1 │ foo && foo
+   ·        ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:8]
+ 1 │ foo || foo
+   ·        ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:15]
+ 1 │ foo && bar && bar
+   ·               ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:15]
+ 1 │ foo || bar || bar
+   ·               ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:10]
+ 1 │ (foo) && (foo)
+   ·          ─────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:9]
+ 1 │ this && this
+   ·         ────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:12]
+ 1 │ foo.bar && foo.bar
+   ·            ───────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:12]
+ 1 │ foo.bar || foo.bar
+   ·            ───────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:16]
+ 1 │ foo.bar.baz && foo.bar.baz
+   ·                ───────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:19]
+ 1 │ foo && bar.baz && bar.baz
+   ·                   ───────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:13]
+ 1 │ this.foo && this.foo
+   ·             ────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:48]
+ 1 │ class Foo {#foo; method() {return this.#foo && this.#foo;}}
+   ·                                                ─────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:54]
+ 1 │ class Foo extends Bar {method() {return super.foo && super.foo;}}
+   ·                                                      ─────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:13]
+ 1 │ foo[bar] && foo[bar]
+   ·             ────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:15]
+ 1 │ foo["bar"] || foo.bar
+   ·               ───────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:21]
+ 1 │ (foo as boolean) && (foo as boolean)
+   ·                     ────────────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:17]
+ 1 │ (foo as Foo) && (foo as Bar)
+   ·                 ────────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:8]
+ 1 │ foo && (foo as Foo)
+   ·        ────────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  × Unexpected token
+   ╭─[no_duplicate_logical_operands.tsx:1:29]
+ 1 │ (<boolean>foo) && (<boolean>foo)
+   ·                             ────
+   ╰────
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:9]
+ 1 │ foo! || foo!
+   ·         ────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:9]
+ 1 │ foo! && foo
+   ·         ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:8]
+ 1 │ foo && foo!
+   ·        ────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:28]
+ 1 │ (foo satisfies boolean) && (foo satisfies boolean)
+   ·                            ───────────────────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:8]
+ 1 │ foo && (foo satisfies Foo)
+   ·        ───────────────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:19]
+ 1 │ foo /* keep */ && foo
+   ·                   ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:19]
+ 1 │ foo && /* keep */ foo
+   ·                   ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:26]
+ 1 │ foo && bar /* keep */ && bar
+   ·                          ───
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:8]
+ 1 │ foo && (foo /* keep */)
+   ·        ────────────────
+   ╰────
+  help: Remove the duplicate operand.
+
+  ⚠ unicorn(no-duplicate-logical-operands): This operand duplicates the left operand.
+   ╭─[no_duplicate_logical_operands.tsx:1:21]
+ 1 │ (foo /* keep */) && foo
+   ·                     ───
+   ╰────
+  help: Remove the duplicate operand.
