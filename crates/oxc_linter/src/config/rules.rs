@@ -444,12 +444,13 @@ impl JsonSchema for OxlintRules {
                                 array.items.is_none() || array.additional_items.is_none(),
                                 "Expected rule to not contain items and additionalItems at the same time"
                             );
-                            if let Some(ref additional_items) = array.additional_items {
+                            if array.additional_items.is_some() {
+                                // Options may come from an empty spread, while the severity-only
+                                // form is already valid through `RuleNoConfig`.
                                 array.items = Some(SingleOrVec::Vec(vec![
                                     r#gen.subschema_for::<AllowWarnDeny>(),
-                                    *additional_items.clone(),
                                 ]));
-                                array.min_items = Some(2);
+                                array.min_items = Some(1);
                                 array.max_items = None;
                                 return Schema::Object(obj);
                             }
