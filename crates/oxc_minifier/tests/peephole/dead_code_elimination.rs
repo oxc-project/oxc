@@ -1178,8 +1178,8 @@ fn remove_dead_object_spread_of_local_literal() {
         "const Proto = { [TypeId]: TypeId, m() {} }; ({ ...Proto }); ({ ...Proto });",
         "TypeId, TypeId;",
     );
-    // Transitive, one cleanup round per quiet boundary: removing `P2`'s copies
-    // kills its declarator, which makes `P1`'s copy inside it dead in turn.
+    // Transitive: removing `P2`'s copies kills its declarator, which makes
+    // `P1`'s copy inside it dead in the next local cleanup round.
     test("const P1 = { a: 1 }; const P2 = { ...P1, b: 2 }; ({ ...P2 }); ({ ...P2 });", "");
     // The copies sit in dead declarator initializers, mixed with data keys.
     test("const P = { a: 1 }; const X = { ...P, t: 1 }; const Y = { ...P, u: 2 };", "");
@@ -1207,13 +1207,57 @@ fn remove_layered_object_spread_chain() {
     );
 }
 
-// A symbol whose every copy sits in a USED initializer passes the census but
-// has nothing removable, so it is never published. Were it published, the
-// cleanup pass would remove nothing, be quiet, and re-derive the identical
-// census — retrying until the iteration guard. Two guards stop that: the
-// publish filter here, and the terminal rule that a cleanup pass which changed
-// nothing ends the loop. `Q` is read twice so single-use inlining does not
-// dissolve the shape first.
+#[test]
+fn object_spread_cleanup_discards_stale_candidates() {
+    // Candidates describe one quiet-pass boundary. `P` qualifies before `A`
+    // is removed, but its copies only become discarded after ordinary DCE
+    // removes `f` and `Q`; the following boundary must re-census `P`.
+    test_source_type(
+        "const P = { a: 1 }; const Q = { ...P, ...P }; const f = () => console.log(Q); const A = { m() { f(); } }; ({ ...A }); ({ ...A });",
+        "",
+        SourceType::mjs(),
+    );
+}
+
+#[test]
+fn object_spread_cleanup_refreshes_liveness() {
+    // Removing `P` also removes the only external edge into this recursive
+    // function component. The cleanup boundary must refresh liveness so both
+    // functions disappear in the same compressor run.
+    test_source_type(
+        "function a() { b(); } function b() { a(); } const P = { m() { a(); } }; ({ ...P }); ({ ...P });",
+        "",
+        SourceType::mjs(),
+    );
+}
+
+#[test]
+fn object_spread_cleanup_tracks_nested_scope() {
+    // The cleanup walk must carry the function scope instead of consulting the
+    // Program scope while removing nested declarations in script mode.
+    test_source_type(
+        "function run() { const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; const P4 = { ...P3, ...P3 }; const P5 = { ...P4, ...P4 }; const P6 = { ...P5, ...P5 }; const P7 = { ...P6, ...P6 }; ({ ...P7 }); ({ ...P7 }); } run();",
+        "function run() {} run();",
+        SourceType::script(),
+    );
+}
+
+#[test]
+fn object_spread_cleanup_drops_declarator_references() {
+    // Dropping the whole declarator must also prune references in its TypeScript
+    // annotation, not only references in its initializer.
+    test_source_type(
+        "export function run() { const X = Symbol('x'); const P: { [X]: number } = { [X]: 1 }; ({ ...P }); ({ ...P }); }",
+        "export function run() {}",
+        SourceType::ts(),
+    );
+}
+
+// A symbol whose every copy sits in a USED initializer passes the census, but
+// the cleanup traversal has nothing removable. A no-change round is terminal,
+// so publishing this harmless candidate cannot retry until the iteration
+// guard. `Q` is read twice so single-use inlining does not dissolve the shape
+// first.
 #[test]
 fn keep_object_spread_in_used_initializer() {
     test(

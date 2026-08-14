@@ -15,7 +15,7 @@
 //!   ├─ changed → discard this pass's marks and continue
 //!   └─ quiet   → census against the settled references
 //!                  ↓
-//!               publish candidates, run one cleanup pass
+//!               publish candidates, run the cleanup batch
 //!                  ↓
 //!               removals reopen ordinary DCE
 //! ```
@@ -38,16 +38,16 @@
 use oxc_allocator::{Allocator, BitSet, Vec as ArenaVec};
 #[cfg(debug_assertions)]
 use oxc_ast_visit::Visit;
-use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 
 use oxc_ast::ast::*;
 use oxc_semantic::Scoping;
-use oxc_syntax::{reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId};
+use oxc_syntax::{scope::ScopeFlags, symbol::SymbolId};
 
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
 use crate::{
-    TraverseCtx, generated::ancestor::Ancestor, peephole::PeepholeOptimizations,
+    ReusableTraverseCtx, Traverse, TraverseCtx, generated::ancestor::Ancestor,
+    minifier_traverse::traverse_mut_with_ctx, peephole::PeepholeOptimizations,
     symbol_value::FreshValueKind,
 };
 
@@ -87,9 +87,14 @@ impl<'a> SpreadCleanup<'a> {
         }
     }
 
-    /// Discard the previous pass's marks. Called at the start of every pass.
+    /// Discard all facts from the previous ordinary-pass boundary.
+    ///
+    /// Candidates remain live across the removal rounds that immediately
+    /// follow one quiet pass, but must never survive into the next ordinary
+    /// pass: that pass can expose new uses which invalidate the old census.
     pub fn begin_pass(&mut self) {
         self.marks.clear();
+        self.candidates.clear();
     }
 }
 
@@ -164,8 +169,8 @@ fn mark_time_proof_holds(symbol_id: SymbolId, ctx: &TraverseCtx<'_>) -> bool {
         .any(|scope_id| scoping.scope_flags(scope_id).is_function())
 }
 
-/// Publish the symbols whose dead object-copy spreads the next pass may remove,
-/// and report whether there are any.
+/// Publish the symbols whose dead object-copy spreads the immediate cleanup
+/// batch may remove, and report whether there are any.
 ///
 /// Called only at a quiet-pass boundary, after `finish_pass` has flushed the
 /// pass's changes, so `Scoping` lists exactly the references the settled AST
@@ -191,18 +196,15 @@ pub fn settle_candidates(
     #[cfg_attr(not(debug_assertions), expect(unused_variables))] program: &Program<'_>,
     ctx: &mut TraverseCtx<'_>,
 ) -> bool {
-    // Arena-allocated so a boundary costs no system allocation; the marked
-    // symbols must be read out before `candidates` can be written to.
-    let mut marked_symbols = ArenaVec::new_in(&*ctx);
-    for index in ctx.state.spread_cleanup.marks.ones() {
-        if let Some(symbol_id) =
-            ctx.scoping().get_reference(ReferenceId::from_usize(index)).symbol_id()
-        {
-            marked_symbols.push(symbol_id);
-        }
+    if ctx.state.spread_cleanup.marks.is_empty() {
+        return false;
     }
     let mut found_candidates = false;
-    for symbol_id in marked_symbols {
+    // Scanning dense symbol IDs avoids allocating a temporary symbol list and
+    // is no broader than scanning the reference-sized mark bitset. The census
+    // itself rejects symbols without at least one marked live reference.
+    for index in 0..ctx.scoping().symbols_len() {
+        let symbol_id = SymbolId::from_usize(index);
         if !ctx.state.spread_cleanup.candidates.contains(symbol_id.index())
             && is_candidate(symbol_id, ctx)
         {
@@ -272,18 +274,20 @@ fn is_candidate(symbol_id: SymbolId, ctx: &TraverseCtx<'_>) -> bool {
     if liveness.is_implicitly_observable(symbol_id) {
         return false;
     }
-    scoping
-        .get_resolved_reference_ids(symbol_id)
-        .iter()
-        .all(|reference_id| ctx.state.spread_cleanup.marks.contains(reference_id.index()))
+    let mut reference_ids = scoping.get_resolved_reference_ids(symbol_id).iter();
+    reference_ids.next().is_some_and(|reference_id| {
+        ctx.state.spread_cleanup.marks.contains(reference_id.index())
+            && reference_ids
+                .all(|reference_id| ctx.state.spread_cleanup.marks.contains(reference_id.index()))
+    })
 }
 
 /// One round of the boundary's removal batch: delete the dead object copies the
 /// census just proved, and report whether anything went.
 ///
-/// This is a restricted walk, not a peephole pass. Nothing else transforms
-/// while it runs, so the candidate set cannot be invalidated underneath it, and
-/// the two shapes it removes are the only ones it knows:
+/// This is a restricted scope-aware traversal, not a peephole pass. Nothing
+/// else transforms while it runs, so the candidate set cannot be invalidated
+/// underneath it, and the two shapes it removes are the only ones it knows:
 ///
 /// - an expression statement whose value is discarded and whose every effect is
 ///   a candidate copy or an effect-free property;
@@ -296,36 +300,47 @@ fn is_candidate(symbol_id: SymbolId, ctx: &TraverseCtx<'_>) -> bool {
 /// between them so the next round sees current counts — until a round removes
 /// nothing. References only ever shrink, so it terminates, and a census member
 /// stays a member: every remaining reference was already a mark.
-pub fn remove_dead_copies<'a>(program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
-    let mut batch = RemovalBatch { ctx, removed: false };
-    batch.visit_program(program);
+pub fn remove_dead_copies<'a>(
+    program: &mut Program<'a>,
+    ctx: &mut ReusableTraverseCtx<'a>,
+) -> bool {
+    let mut batch = RemovalBatch { removed: false };
+    traverse_mut_with_ctx(&mut batch, program, ctx);
     batch.removed
 }
 
-struct RemovalBatch<'a, 'b> {
-    ctx: &'b mut TraverseCtx<'a>,
+struct RemovalBatch {
     removed: bool,
 }
 
-impl<'a> VisitJsMut<'a> for RemovalBatch<'a, '_> {
-    fn visit_statements(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
-        walk_js_mut::walk_statements(self, statements);
-        statements.retain_mut(|statement| !self.statement_is_dead(statement));
+impl<'a> Traverse<'a> for RemovalBatch {
+    fn exit_statements(
+        &mut self,
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        statements.retain_mut(|statement| !self.statement_is_dead(statement, ctx));
     }
 }
 
-impl<'a> RemovalBatch<'a, '_> {
-    fn statement_is_dead(&mut self, statement: &mut Statement<'a>) -> bool {
+impl RemovalBatch {
+    fn statement_is_dead<'a>(
+        &mut self,
+        statement: &mut Statement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
         match statement {
             Statement::ExpressionStatement(statement) => {
-                if !self.strip_discarded_expression(&mut statement.expression) {
+                if !self.strip_discarded_expression(&mut statement.expression, ctx) {
                     return false;
                 }
-                self.ctx.drop_expression(&statement.expression);
+                ctx.drop_expression(&statement.expression);
                 self.removed = true;
                 true
             }
-            Statement::VariableDeclaration(declaration) => self.strip_dead_declarators(declaration),
+            Statement::VariableDeclaration(declaration) => {
+                self.strip_dead_declarators(declaration, ctx)
+            }
             _ => false,
         }
     }
@@ -343,10 +358,14 @@ impl<'a> RemovalBatch<'a, '_> {
     /// statements into sequences, so a copy routinely ends up beside operands
     /// that must stay; stripping per operand rather than testing the whole
     /// statement is what keeps those removals.
-    fn strip_discarded_expression(&mut self, expression: &mut Expression<'a>) -> bool {
+    fn strip_discarded_expression<'a>(
+        &mut self,
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
         match expression {
             Expression::ObjectExpression(object) => {
-                if object.properties.iter().all(|property| self.property_is_dead(property)) {
+                if object.properties.iter().all(|property| Self::property_is_dead(property, ctx)) {
                     // The caller drops the literal whole, references included.
                     return true;
                 }
@@ -355,26 +374,25 @@ impl<'a> RemovalBatch<'a, '_> {
                 // one `drop_expression` prunes exactly the reference that goes.
                 object.properties.retain(|property| {
                     let ObjectPropertyKind::SpreadProperty(spread) = property else { return true };
-                    if !self.is_candidate_copy(&spread.argument) {
+                    if !Self::is_candidate_copy(&spread.argument, ctx) {
                         return true;
                     }
-                    self.ctx.drop_expression(&spread.argument);
+                    ctx.drop_expression(&spread.argument);
                     self.removed = true;
                     false
                 });
                 false
             }
             Expression::SequenceExpression(sequence) => {
-                let mut retained = ArenaVec::new_in(&*self.ctx);
-                for mut operand in sequence.expressions.drain(..) {
-                    if self.strip_discarded_expression(&mut operand) {
-                        self.ctx.drop_expression(&operand);
+                sequence.expressions.retain_mut(|operand| {
+                    if self.strip_discarded_expression(operand, ctx) {
+                        ctx.drop_expression(operand);
                         self.removed = true;
+                        false
                     } else {
-                        retained.push(operand);
+                        true
                     }
-                }
-                sequence.expressions = retained;
+                });
                 sequence.expressions.is_empty()
             }
             _ => false,
@@ -383,33 +401,36 @@ impl<'a> RemovalBatch<'a, '_> {
 
     /// The non-mutating form, for an initializer that is about to be dropped
     /// whole rather than rewritten in place.
-    fn discarded_expression_is_dead(&self, expression: &Expression<'a>) -> bool {
+    fn discarded_expression_is_dead<'a>(
+        expression: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         match expression {
             Expression::ObjectExpression(object) => {
-                object.properties.iter().all(|property| self.property_is_dead(property))
+                object.properties.iter().all(|property| Self::property_is_dead(property, ctx))
             }
             Expression::SequenceExpression(sequence) => sequence
                 .expressions
                 .iter()
-                .all(|expression| self.discarded_expression_is_dead(expression)),
+                .all(|expression| Self::discarded_expression_is_dead(expression, ctx)),
             _ => false,
         }
     }
 
-    fn property_is_dead(&self, property: &ObjectPropertyKind<'a>) -> bool {
+    fn property_is_dead<'a>(property: &ObjectPropertyKind<'a>, ctx: &TraverseCtx<'a>) -> bool {
         if let ObjectPropertyKind::SpreadProperty(spread) = property
-            && self.is_candidate_copy(&spread.argument)
+            && Self::is_candidate_copy(&spread.argument, ctx)
         {
             return true;
         }
-        !property.may_have_side_effects(self.ctx)
+        !property.may_have_side_effects(ctx)
     }
 
-    fn is_candidate_copy(&self, argument: &Expression<'a>) -> bool {
+    fn is_candidate_copy<'a>(argument: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let Expression::Identifier(ident) = argument else { return false };
         let Some(reference_id) = ident.reference_id.get() else { return false };
-        self.ctx.scoping().get_reference(reference_id).symbol_id().is_some_and(|symbol_id| {
-            self.ctx.state.spread_cleanup.candidates.contains(symbol_id.index())
+        ctx.scoping().get_reference(reference_id).symbol_id().is_some_and(|symbol_id| {
+            ctx.state.spread_cleanup.candidates.contains(symbol_id.index())
         })
     }
 
@@ -420,18 +441,25 @@ impl<'a> RemovalBatch<'a, '_> {
     /// `using` and configuration guards); requiring the initializer to be dead
     /// on top is what keeps this from discarding effects ordinary DCE would
     /// have preserved by rewriting the declarator into an expression statement.
-    fn strip_dead_declarators(&mut self, declaration: &mut VariableDeclaration<'a>) -> bool {
-        if !PeepholeOptimizations::can_remove_unused_declarators(self.ctx) {
+    fn strip_dead_declarators<'a>(
+        &mut self,
+        declaration: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        if !PeepholeOptimizations::can_remove_unused_declarators(ctx) {
             return false;
         }
+        let kind = declaration.kind;
         declaration.declarations.retain_mut(|declarator| {
-            let Some(init) = &declarator.init else { return true };
-            if !PeepholeOptimizations::should_remove_unused_declarator(declarator, self.ctx)
-                || !self.discarded_expression_is_dead(init)
+            if !PeepholeOptimizations::should_remove_unused_declarator(declarator, kind, ctx)
+                || !declarator
+                    .init
+                    .as_ref()
+                    .is_some_and(|init| Self::discarded_expression_is_dead(init, ctx))
             {
                 return true;
             }
-            self.ctx.drop_expression(init);
+            ctx.drop_variable_declarator(declarator);
             self.removed = true;
             false
         });
