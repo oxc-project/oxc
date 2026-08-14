@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/typescript/explicit_module_boundary_types.rs
+  s_be50fa1e85b57f::t_54f65349fff006 313-314,319-325,365-369,381-382,509-526,909-920,1740-1750
+crates/oxc_linter/src/snapshots/typescript_explicit_module_boundary_types.snap
+  s_9809fcdb215774::t_6874389638d5df 27,29-38,160,162,167,169,252,255,261,264,270,273,279,282,314,317,382,385,400,403,418,421,436,439,634,637,652,655,661,664-665,853-857
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0e45dbd24259e1b0ef47b5c55d206eb01214ed69",
+  "prompts": {},
+  "sessions": {
+    "s_9809fcdb215774": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59af-7823-bd68-8dc01cf2e5c9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_be50fa1e85b57f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-0718-74e0-98e3-9eef81aef982",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
