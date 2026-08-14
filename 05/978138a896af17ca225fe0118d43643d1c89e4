@@ -1,0 +1,57 @@
+npm/oxlint/configuration_schema.json
+  s_9695f3b2c013ee::t_30a7260684273f 16131,16137
+crates/oxc_linter/src/rules/eslint/no_unused_vars/options.rs
+  s_9695f3b2c013ee::t_6238f7ba61fa5d 39-42,270,274,279-281,301,304,334,347,363,747-748,750-751,753-756,776,787,858
+crates/oxc_linter/src/snapshots/eslint_no_unused_vars@oxc-arguments.snap
+  s_693b6214ced0d1::t_9521ab72108a78 13-20
+crates/oxc_linter/src/rules/eslint/no_unused_vars/tests/oxc.rs
+  s_0a771dcbd86206::t_40f73f73a3c251 1092,1156
+crates/oxc_linter/src/rules/eslint/no_unused_vars/fixers/fix_conflicts.rs
+  s_0a771dcbd86206::t_662cfd6ff55f9f 42
+crates/oxc_linter/src/rules/eslint/no_unused_vars/diagnostic.rs
+  s_2a81ccd359eebb::t_6f11ffb0e8da3f 45,119-123
+tasks/website_linter/src/rules/snapshots/docs_rule_pages.snap
+  s_693b6214ced0d1::t_e6a7913fa435ff 228-231
+crates/oxc_linter/src/rules/eslint/no_unused_vars/ignored.rs
+  s_0a771dcbd86206::t_0410a7d71ce9c1 424-425,455
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "05978138a896af17ca225fe0118d43643d1c89e4",
+  "prompts": {},
+  "sessions": {
+    "s_0a771dcbd86206": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-07bd-7c92-82be-bd7feb300368",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_2a81ccd359eebb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f7-79a0-b54f-af7ad1555116",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_693b6214ced0d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffc1-edd6-7d80-b5ba-634466fd223b",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_9695f3b2c013ee": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-8704ee7ed7b2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
