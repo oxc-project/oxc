@@ -30,9 +30,9 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties,
-    QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
-    default_internal_patterns,
+    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, OperatorPosition,
+    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
+    default_groups, default_internal_patterns,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
@@ -515,6 +515,12 @@ impl Oxc {
             if let Ok(expand) = normalized.parse::<Expand>() {
                 format_options.expand = expand;
             }
+        }
+
+        if let Some(ref operator_position) = options.experimental_operator_position
+            && let Ok(position) = operator_position.parse::<OperatorPosition>()
+        {
+            format_options.operator_position = position;
         }
 
         if let Some(ref sort_imports_config) = options.sort_imports {

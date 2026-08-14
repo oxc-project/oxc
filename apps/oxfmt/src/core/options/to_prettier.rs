@@ -8,8 +8,9 @@ use oxc_formatter_core::LineWidth;
 
 use super::super::oxfmtrc::{
     ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
-    HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, ProseWrapConfig, QuotePropsConfig,
-    SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig, TrailingCommaConfig,
+    HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, OperatorPositionConfig, ProseWrapConfig,
+    QuotePropsConfig, SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig,
+    TrailingCommaConfig,
 };
 
 /// Build base Prettier-compatible options from a typed `FormatConfig`.
@@ -104,6 +105,15 @@ pub fn to_prettier(config: &FormatConfig) -> Value {
     }
     if let Some(v) = config.single_attribute_per_line {
         obj.insert("singleAttributePerLine".to_string(), Value::from(v));
+    }
+    if let Some(v) = config.experimental_operator_position {
+        obj.insert(
+            "experimentalOperatorPosition".to_string(),
+            Value::from(match v {
+                OperatorPositionConfig::Start => "start",
+                OperatorPositionConfig::End => "end",
+            }),
+        );
     }
     if let Some(v) = config.embedded_language_formatting {
         obj.insert(
@@ -376,6 +386,7 @@ mod tests_to_prettier {
                 "arrowParens": "avoid",
                 "quoteProps": "consistent",
                 "objectWrap": "collapse",
+                "experimentalOperatorPosition": "start",
                 "embeddedLanguageFormatting": "off",
                 "proseWrap": "always",
                 "htmlWhitespaceSensitivity": "ignore",
@@ -391,6 +402,7 @@ mod tests_to_prettier {
         assert_eq!(obj.get("arrowParens"), Some(&Value::from("avoid")));
         assert_eq!(obj.get("quoteProps"), Some(&Value::from("consistent")));
         assert_eq!(obj.get("objectWrap"), Some(&Value::from("collapse")));
+        assert_eq!(obj.get("experimentalOperatorPosition"), Some(&Value::from("start")));
         assert_eq!(obj.get("embeddedLanguageFormatting"), Some(&Value::from("off")));
         assert_eq!(obj.get("proseWrap"), Some(&Value::from("always")));
         assert_eq!(obj.get("htmlWhitespaceSensitivity"), Some(&Value::from("ignore")));
@@ -423,7 +435,6 @@ mod tests_to_prettier {
             "jsdoc",
             "overrides",
             "ignorePatterns",
-            "experimentalOperatorPosition",
             "experimentalTernaries",
         ] {
             assert!(!obj.contains_key(key), "Key `{key}` must NOT be in Prettier options");

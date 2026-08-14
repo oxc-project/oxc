@@ -1,0 +1,200 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A leading own-line comment on an operand stays on its own line
+// (above the operator with `start`).
+x = aaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbb &&
+// own line comment
+cccccccccccccccccccccccccc;
+
+// `start` only: Prettier emits a double space before the flushed trailing line
+// comment here (`bbbb  // same line`, a separator-space artifact); we
+// deliberately emit a single one (see "Known divergences").
+y = aaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbb && // same line
+// own line comment
+cccccccccccccccccccccccccc;
+
+// Same interplay through the right-nested (rebalanced) chain path.
+z = aaaaaaaaaaaaaaaaaaaaaa && ( // same line
+// own line comment
+bbbbbbbbbbbbbbbbbbbbbbbb && cccccccccccccccccccccccccc);
+
+// A type-cast comment is never hoisted, even when it ends its source line:
+// it must stay attached to its parenthesized target.
+var w = bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb || /** @type {string} */
+    (cccccccccccccccccccccccccc);
+
+// A blank line before the hoisted comment collapses, like Prettier
+// (union types preserve it instead, also like Prettier).
+v = aaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbb &&
+
+// own line after blank
+cccccccccccccccccccccccccc;
+
+==================== Output ====================
+---------------------------------------------------------
+{ experimentalOperatorPosition: "start", printWidth: 80 }
+---------------------------------------------------------
+// A leading own-line comment on an operand stays on its own line
+// (above the operator with `start`).
+x =
+  aaaaaaaaaaaaaaaaaaaaaa
+  && bbbbbbbbbbbbbbbbbbbbbbbb
+  // own line comment
+  && cccccccccccccccccccccccccc;
+
+// `start` only: Prettier emits a double space before the flushed trailing line
+// comment here (`bbbb  // same line`, a separator-space artifact); we
+// deliberately emit a single one (see "Known divergences").
+y =
+  aaaaaaaaaaaaaaaaaaaaaa
+  && bbbbbbbbbbbbbbbbbbbbbbbb // same line
+  // own line comment
+  && cccccccccccccccccccccccccc;
+
+// Same interplay through the right-nested (rebalanced) chain path.
+z =
+  aaaaaaaaaaaaaaaaaaaaaa // same line
+  // own line comment
+  && bbbbbbbbbbbbbbbbbbbbbbbb
+  && cccccccccccccccccccccccccc;
+
+// A type-cast comment is never hoisted, even when it ends its source line:
+// it must stay attached to its parenthesized target.
+var w =
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  || /** @type {string} */
+  (cccccccccccccccccccccccccc);
+
+// A blank line before the hoisted comment collapses, like Prettier
+// (union types preserve it instead, also like Prettier).
+v =
+  aaaaaaaaaaaaaaaaaaaaaa
+  && bbbbbbbbbbbbbbbbbbbbbbbb
+  // own line after blank
+  && cccccccccccccccccccccccccc;
+
+----------------------------------------------------------
+{ experimentalOperatorPosition: "start", printWidth: 100 }
+----------------------------------------------------------
+// A leading own-line comment on an operand stays on its own line
+// (above the operator with `start`).
+x =
+  aaaaaaaaaaaaaaaaaaaaaa
+  && bbbbbbbbbbbbbbbbbbbbbbbb
+  // own line comment
+  && cccccccccccccccccccccccccc;
+
+// `start` only: Prettier emits a double space before the flushed trailing line
+// comment here (`bbbb  // same line`, a separator-space artifact); we
+// deliberately emit a single one (see "Known divergences").
+y =
+  aaaaaaaaaaaaaaaaaaaaaa
+  && bbbbbbbbbbbbbbbbbbbbbbbb // same line
+  // own line comment
+  && cccccccccccccccccccccccccc;
+
+// Same interplay through the right-nested (rebalanced) chain path.
+z =
+  aaaaaaaaaaaaaaaaaaaaaa // same line
+  // own line comment
+  && bbbbbbbbbbbbbbbbbbbbbbbb
+  && cccccccccccccccccccccccccc;
+
+// A type-cast comment is never hoisted, even when it ends its source line:
+// it must stay attached to its parenthesized target.
+var w =
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb || /** @type {string} */ (cccccccccccccccccccccccccc);
+
+// A blank line before the hoisted comment collapses, like Prettier
+// (union types preserve it instead, also like Prettier).
+v =
+  aaaaaaaaaaaaaaaaaaaaaa
+  && bbbbbbbbbbbbbbbbbbbbbbbb
+  // own line after blank
+  && cccccccccccccccccccccccccc;
+
+-------------------------------------------------------
+{ experimentalOperatorPosition: "end", printWidth: 80 }
+-------------------------------------------------------
+// A leading own-line comment on an operand stays on its own line
+// (above the operator with `start`).
+x =
+  aaaaaaaaaaaaaaaaaaaaaa &&
+  bbbbbbbbbbbbbbbbbbbbbbbb &&
+  // own line comment
+  cccccccccccccccccccccccccc;
+
+// `start` only: Prettier emits a double space before the flushed trailing line
+// comment here (`bbbb  // same line`, a separator-space artifact); we
+// deliberately emit a single one (see "Known divergences").
+y =
+  aaaaaaaaaaaaaaaaaaaaaa &&
+  bbbbbbbbbbbbbbbbbbbbbbbb && // same line
+  // own line comment
+  cccccccccccccccccccccccccc;
+
+// Same interplay through the right-nested (rebalanced) chain path.
+z =
+  aaaaaaaaaaaaaaaaaaaaaa && // same line
+  // own line comment
+  bbbbbbbbbbbbbbbbbbbbbbbb &&
+  cccccccccccccccccccccccccc;
+
+// A type-cast comment is never hoisted, even when it ends its source line:
+// it must stay attached to its parenthesized target.
+var w =
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb ||
+  /** @type {string} */
+  (cccccccccccccccccccccccccc);
+
+// A blank line before the hoisted comment collapses, like Prettier
+// (union types preserve it instead, also like Prettier).
+v =
+  aaaaaaaaaaaaaaaaaaaaaa &&
+  bbbbbbbbbbbbbbbbbbbbbbbb &&
+  // own line after blank
+  cccccccccccccccccccccccccc;
+
+--------------------------------------------------------
+{ experimentalOperatorPosition: "end", printWidth: 100 }
+--------------------------------------------------------
+// A leading own-line comment on an operand stays on its own line
+// (above the operator with `start`).
+x =
+  aaaaaaaaaaaaaaaaaaaaaa &&
+  bbbbbbbbbbbbbbbbbbbbbbbb &&
+  // own line comment
+  cccccccccccccccccccccccccc;
+
+// `start` only: Prettier emits a double space before the flushed trailing line
+// comment here (`bbbb  // same line`, a separator-space artifact); we
+// deliberately emit a single one (see "Known divergences").
+y =
+  aaaaaaaaaaaaaaaaaaaaaa &&
+  bbbbbbbbbbbbbbbbbbbbbbbb && // same line
+  // own line comment
+  cccccccccccccccccccccccccc;
+
+// Same interplay through the right-nested (rebalanced) chain path.
+z =
+  aaaaaaaaaaaaaaaaaaaaaa && // same line
+  // own line comment
+  bbbbbbbbbbbbbbbbbbbbbbbb &&
+  cccccccccccccccccccccccccc;
+
+// A type-cast comment is never hoisted, even when it ends its source line:
+// it must stay attached to its parenthesized target.
+var w =
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb || /** @type {string} */ (cccccccccccccccccccccccccc);
+
+// A blank line before the hoisted comment collapses, like Prettier
+// (union types preserve it instead, also like Prettier).
+v =
+  aaaaaaaaaaaaaaaaaaaaaa &&
+  bbbbbbbbbbbbbbbbbbbbbbbb &&
+  // own line after blank
+  cccccccccccccccccccccccccc;
+
+===================== End =====================

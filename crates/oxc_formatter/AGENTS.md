@@ -149,7 +149,7 @@ Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
 ## Known divergences
 
 Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
-Entries documented in this file so far (all of the comment-attachment-artifact class, details in "Comment placement invariants" above) is not yet an exhaustive audit against the conformance snapshots:
+The entries documented so far are not yet an exhaustive audit against the conformance snapshots:
 
 - A comment after a trailing array hole stays in place; Prettier relocates it backward across commas to the last real element
 - Asymmetric attachment like `export type T = string /* c */;` (comment moved behind `;` only in the exported form): one uniform rule instead of emulating the asymmetry
@@ -157,6 +157,10 @@ Entries documented in this file so far (all of the comment-attachment-artifact c
   - Prettier preserves the source break only in the unary position and only when the last operand was alone on its source line (attachment binds the comment to that operand)
   - Internal inconsistency plus source-layout sensitivity, overridden by the uniform rule
   - Conditions are a separate shared rule (logical operands always break)
+- `experimentalOperatorPosition: "start"`, binary-like chains: a single space before the previous operand's flushed trailing line comment (`prev // c`); Prettier emits two (`prev  // c`)
+  - Artifact of its comment-extraction doc surgery: an unconditional separator space that its end-of-line trimming can only remove when no line-suffix comment flushes behind it
+- `experimentalOperatorPosition: "start"`, intersection types: a leading own-line comment stays own-line, above the leading `&`; Prettier prints it behind `& `, losing its own-line-ness and idempotency (the second pass inlines the type with the comment behind `;`)
+  - Binary-like chains hoist the comment in both formatters; one uniform rule (and the own-line invariant) over Prettier's internal inconsistency
 
 ## Verification
 

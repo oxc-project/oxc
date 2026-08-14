@@ -20,7 +20,7 @@ ts compatibility: 624/659 (94.69%), 16 files skipped
 | typescript/conformance/types/union/unionTypeCallSignatures.ts | 💥 | 85.25% |
 | typescript/conformance/types/union/unionTypeConstructSignatures.ts | 💥 | 91.62% |
 | typescript/conformance/types/union/unionTypeIndexSignature.ts | 💥 | 83.64% |
-| typescript/intersection/intersection-parens.ts | 💥💥 | 85.64% |
+| typescript/intersection/intersection-parens.ts | 💥💥💥 | 85.46% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 67.44% |
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 78.00% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
