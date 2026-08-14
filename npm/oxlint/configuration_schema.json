@@ -14648,7 +14648,7 @@
       "properties": {
         "skipComments": {
           "description": "Whether to skip irregular whitespace in comments.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to skip irregular whitespace in comments."
         },
