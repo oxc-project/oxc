@@ -160,6 +160,44 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
     }
 }
 
+/// Leading comments of the node at `span`, hoisted above a leading operator
+/// (binary-like chains and intersection types under `operatorPosition: start`).
+/// Union `|` chains apply the same rule with trailing-style rendering instead:
+/// Prettier preserves a blank line before the hoisted comment there,
+/// while collapsing it in the chains served here (see the note in `union_type.rs`).
+///
+/// Writes only when an own-line comment is pending,
+/// keeping it own-line instead of trailing the operator (`&& `);
+/// otherwise same-line comments stay with the operand, after the operator.
+#[inline]
+pub const fn format_hoisted_leading_comments(span: Span) -> FormatHoistedLeadingComments {
+    FormatHoistedLeadingComments(span)
+}
+
+/// See [`format_hoisted_leading_comments`].
+#[derive(Debug, Copy, Clone)]
+pub struct FormatHoistedLeadingComments(Span);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatHoistedLeadingComments {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let hoist = {
+            let comments = f.comments();
+            comments.has_leading_own_line_comment(self.0.start)
+                && !comments
+                    .comments_before_iter(self.0.start)
+                    // Type-cast comments are never hoisted, even when it ends its source line
+                    // ```js
+                    // b || /** @type {string} */
+                    // (c)
+                    // ```
+                    .any(|comment| comments.is_type_cast_comment(comment))
+        };
+        if hoist {
+            FormatLeadingComments::Node(self.0).fmt(f);
+        }
+    }
+}
+
 /// Formats the trailing comments of `node`.
 #[inline]
 pub const fn format_trailing_comments<'a>(
