@@ -993,6 +993,20 @@ fn dce_remove_unused_class_identifier_heritage_under_assumptions() {
 }
 
 #[test]
+fn dce_keeps_inferred_class_name_for_executing_class() {
+    // The static block observes the name assigned by `var MyStore = class {}`.
+    // DCE must not turn this into a bare anonymous class expression.
+    test_same("var MyStore = class { static { console.log(this.name) } };");
+    test_same("var MyStore = (class { static { console.log(this.name) } });");
+    test(
+        "var MyStore = (0, class { static { console.log(this.name) } });",
+        // this can be compressed to `class { static { console.log(this.name) } }`
+        "var MyStore = class { static { console.log(this.name) } };",
+    );
+    test_same("var MyStore = class { static foo = console.log(this.name) };");
+}
+
+#[test]
 #[ignore = "TODO: extend recursive reachability to mutual declarators and classes"]
 fn dce_recursive_unused_mutual_declarators_and_classes() {
     test("const a = () => b(); const b = () => a();", "");

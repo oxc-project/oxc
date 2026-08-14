@@ -152,7 +152,7 @@ impl ScopedWalker {
                 }
                 // Also, the walker never filters gitignored walk roots.
                 // (including roots inside a gitignored directory)
-                if gitignore_checker.is_gitignored(path, &self.cwd) {
+                if gitignore_checker.is_gitignored_walk_root(path, &self.cwd) {
                     continue;
                 }
 

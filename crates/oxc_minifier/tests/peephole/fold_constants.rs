@@ -1635,3 +1635,19 @@ mod bigint {
         fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
     }
 }
+
+/// Rotating `(k1 op x) op right` into `x op (k1 op right)` drops `k1` and
+/// `right`, so it is only sound when neither has side effects. `[expr].length`
+/// evaluates to a constant while still running `expr`.
+#[test]
+fn test_fold_left_child_op_keeps_side_effects() {
+    fold_same("(3 ^ x) ^ [(y = 9), 1].length");
+    fold_same("(x ^ 3) ^ [(y = 9), 1].length");
+    fold_same("(3 | x) | [(y = 9), 1].length");
+    fold_same("(3 & x) & [(y = 9), 1].length");
+    fold_same("(3 ^ [(y = 9), 1].length) ^ x");
+    fold_same("([(y = 9), 1].length ^ x) ^ 3");
+    fold_same("(x ^ [(y = 9), 1].length) ^ 3");
+    // Still folds when nothing has side effects.
+    fold("(3 ^ x) ^ [1, 1].length", "x ^ 1");
+}

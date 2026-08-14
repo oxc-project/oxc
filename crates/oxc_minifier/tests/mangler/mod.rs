@@ -195,6 +195,9 @@ fn private_member_mangling() {
         "class Foo { #method() { return 1; } publicMethod() { return this.#method(); } }",
         "class Foo { #field; #method() { return this.#field; } get() { return this.#method(); } }",
         "class Foo { #x; check() { return #x in this; } }",
+        "class Outer { get #x() {} set #x(value) {} #longName; nested() { return class { #nestedName; }; } }",
+        "class Outer { get #x() {} #longName; nested() { return class { #nestedName; }; } }",
+        "class Outer { set #x(value) {} #longName; nested() { return class { #nestedName; }; } }",
         // Nested classes
         "class Outer { #outerField = 1; inner() { return class Inner { #innerField = 2; get() { return this.#innerField; } }; } }",
         "class Outer { #shared = 1; getInner() { let self = this; return class { method() { return self.#shared; } }; } }",

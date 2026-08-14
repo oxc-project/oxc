@@ -194,7 +194,7 @@ impl CliRunner {
         // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
         // not git's. (Aligns with during walk filtering behavior)
         let mut gitignore_checker = GitignoreChecker::new();
-        paths.retain(|p| !gitignore_checker.is_gitignored(p, &self.cwd));
+        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
 
         // If explicit paths were provided but all have been filtered,
         // or the default cwd target is gitignored, return early.
@@ -860,13 +860,16 @@ mod test {
         let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&[]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
 
-        // Explicitly passed gitignored targets are skipped too;
-        // `--no-ignore` only disables Oxlint's own ignore sources, not git's.
-        let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&["index.ts"]);
+        // Explicitly passed gitignored directories are skipped too.
+        let (_, result) = Tester::new().with_cwd(repo_path).test_output(&["sub/generated/pkg"]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
-        let (_, result) =
-            Tester::new().with_cwd(pkg_path).test_output(&["--no-ignore", "index.ts"]);
-        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // But an explicitly named file is linted even when gitignored;
+        // `.gitignore` only scopes discovery.
+        let (stdout, result) =
+            Tester::new().with_cwd(pkg_path).test_output(&["-D", "no-debugger", "index.ts"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
     }
 
     #[cfg(unix)]

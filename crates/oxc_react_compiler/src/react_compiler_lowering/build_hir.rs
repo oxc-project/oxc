@@ -3461,7 +3461,11 @@ fn lower_expression<'a>(
             let symbol = builder.scope().resolve_reference(ident);
             let place = lower_identifier(builder, ident.name, ident.span, symbol)?;
             if builder.is_context_identifier(symbol) {
-                Ok(InstructionValue::LoadContext { place, span })
+                Ok(InstructionValue::LoadContext {
+                    place,
+                    span,
+                    is_compound_assignment_result: false,
+                })
             } else {
                 Ok(InstructionValue::LoadLocal { place, span })
             }
@@ -4417,7 +4421,11 @@ fn lower_assignment_expression<'a>(
                 let left_place = lower_value_to_temporary(
                     builder,
                     if is_context_identifier {
-                        InstructionValue::LoadContext { place: left_place, span: Some(ident_span) }
+                        InstructionValue::LoadContext {
+                            place: left_place,
+                            span: Some(ident_span),
+                            is_compound_assignment_result: false,
+                        }
                     } else {
                         InstructionValue::LoadLocal { place: left_place, span: Some(ident_span) }
                     },
@@ -4450,7 +4458,11 @@ fn lower_assignment_expression<'a>(
                                     span,
                                 },
                             )?;
-                            Ok(InstructionValue::LoadContext { place, span })
+                            Ok(InstructionValue::LoadContext {
+                                place,
+                                span,
+                                is_compound_assignment_result: true,
+                            })
                         } else {
                             lower_value_to_temporary(
                                 builder,
@@ -4787,7 +4799,11 @@ fn lower_jsx_element_name<'a>(
             // Component tag: resolve as identifier and load
             let place = lower_identifier(builder, tag, span, symbol)?;
             let load_value = if builder.is_context_identifier(symbol) {
-                InstructionValue::LoadContext { place, span: Some(span) }
+                InstructionValue::LoadContext {
+                    place,
+                    span: Some(span),
+                    is_compound_assignment_result: false,
+                }
             } else {
                 InstructionValue::LoadLocal { place, span: Some(span) }
             };
@@ -4893,7 +4909,11 @@ fn lower_jsx_member_object_identifier<'a>(
 ) -> Result<Place, OxcDiagnostic> {
     let place = lower_identifier(builder, name, span, symbol)?;
     let load_value = if builder.is_context_identifier(symbol) {
-        InstructionValue::LoadContext { place, span: *expr_span }
+        InstructionValue::LoadContext {
+            place,
+            span: *expr_span,
+            is_compound_assignment_result: false,
+        }
     } else {
         InstructionValue::LoadLocal { place, span: *expr_span }
     };
