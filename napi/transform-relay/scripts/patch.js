@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import { join as pathJoin } from "node:path";
 
+import { disableReusedWorkers } from "../../disable-reused-workers.mjs";
+
 const packageDir = pathJoin(import.meta.dirname, "..");
+disableReusedWorkers(pathJoin(packageDir, "transform-relay.wasi-browser.js"));
+
 const path = pathJoin(packageDir, "index.js");
 
 let data = fs.readFileSync(path, "utf-8");
