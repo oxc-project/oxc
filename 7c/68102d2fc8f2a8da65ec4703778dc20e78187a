@@ -1,0 +1,19 @@
+napi/parser/scripts/build-browser-bundle.js
+  s_7cdb1eac05a22f::t_3d3b6a2efba0e2 41-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7c68102d2fc8f2a8da65ec4703778dc20e78187a",
+  "prompts": {},
+  "sessions": {
+    "s_7cdb1eac05a22f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ffdad-fbf7-7ba0-945c-5d47d6f65187",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
