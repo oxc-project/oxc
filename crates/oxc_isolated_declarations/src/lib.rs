@@ -529,9 +529,13 @@ impl<'a> IsolatedDeclarations<'a> {
         let ident = &decl.id;
         let TSNamespaceDeclarationBody::TSModuleBlock(block) = &decl.body else { return };
         for stmt in &block.body {
-            let Statement::ExportDeclaration(decl) = stmt else { continue };
-            match &decl.declaration {
-                Declaration::VariableDeclaration(var) => {
+            let declaration = match stmt {
+                Statement::ExportDeclaration(decl) => Some(&decl.declaration),
+                _ if decl.declare => stmt.as_declaration(),
+                _ => None,
+            };
+            match declaration {
+                Some(Declaration::VariableDeclaration(var)) => {
                     for declarator in &var.declarations {
                         if let Some(name) = declarator.id.get_identifier_name() {
                             assignable_properties
@@ -541,7 +545,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                 }
-                Declaration::FunctionDeclaration(func) => {
+                Some(Declaration::FunctionDeclaration(func)) => {
                     if let Some(name) = func.name() {
                         assignable_properties
                             .entry(ident.name.as_str())
@@ -549,7 +553,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             .insert(name.into());
                     }
                 }
-                Declaration::ClassDeclaration(cls) => {
+                Some(Declaration::ClassDeclaration(cls)) => {
                     if let Some(id) = cls.id.as_ref() {
                         assignable_properties
                             .entry(ident.name.as_str())
@@ -557,7 +561,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             .insert(id.name.into());
                     }
                 }
-                Declaration::TSEnumDeclaration(decl) => {
+                Some(Declaration::TSEnumDeclaration(decl)) => {
                     assignable_properties
                         .entry(ident.name.as_str())
                         .or_default()
