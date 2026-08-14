@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/eslint/no_multi_assign.rs
+  s_6cfb8702907768::t_0e3c0684e04361 121-125,132-136,146-148,196,234-250
+crates/oxc_linter/src/snapshots/eslint_no_multi_assign.snap
+  s_1b0f87b691d924::t_be869466edf15e 161-210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e6428ec0018ff018ff3cf585fbe48e594829950f",
+  "prompts": {},
+  "sessions": {
+    "s_1b0f87b691d924": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-59f9-72c2-aad3-db8ddcd32482",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_6cfb8702907768": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-86c3eb354e1f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
