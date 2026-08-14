@@ -158,3 +158,53 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Separate each assignment into its own statement
+
+  ⚠ eslint(no-multi-assign): Do not use chained assignment
+   ╭─[no_multi_assign.tsx:5:46]
+ 4 │                 run() {
+ 5 │                     const currentLoadHash = (this.hash = {})
+   ·                                              ──────────────
+ 6 │                     const loadComplete = (this.done = true)
+   ╰────
+  help: Separate each assignment into its own statement
+
+  ⚠ eslint(no-multi-assign): Do not use chained assignment
+   ╭─[no_multi_assign.tsx:6:43]
+ 5 │                     const currentLoadHash = (this.hash = {})
+ 6 │                     const loadComplete = (this.done = true)
+   ·                                           ────────────────
+ 7 │                     let a, b, c
+   ╰────
+  help: Separate each assignment into its own statement
+
+  ⚠ eslint(no-multi-assign): Do not use chained assignment
+   ╭─[no_multi_assign.tsx:8:25]
+ 7 │                     let a, b, c
+ 8 │                     a = b = c = 1
+   ·                         ─────────
+ 9 │                     return [currentLoadHash, loadComplete, a, b, c]
+   ╰────
+  help: Separate each assignment into its own statement
+
+  ⚠ eslint(no-multi-assign): Do not use chained assignment
+   ╭─[no_multi_assign.tsx:8:29]
+ 7 │                     let a, b, c
+ 8 │                     a = b = c = 1
+   ·                             ─────
+ 9 │                     return [currentLoadHash, loadComplete, a, b, c]
+   ╰────
+  help: Separate each assignment into its own statement
+
+  ⚠ eslint(no-multi-assign): Do not use chained assignment
+   ╭─[no_multi_assign.tsx:1:20]
+ 1 │ class C { field = (foo = 0) }
+   ·                    ───────
+   ╰────
+  help: Separate each assignment into its own statement
+
+  ⚠ eslint(no-multi-assign): Do not use chained assignment
+   ╭─[no_multi_assign.tsx:1:16]
+ 1 │ let a, b; a = (b = 1)
+   ·                ─────
+   ╰────
+  help: Separate each assignment into its own statement
