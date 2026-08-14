@@ -1,0 +1,29 @@
+crates/oxc_linter/src/rules/eslint/array_callback_return/mod.rs
+  s_c6371b487f182d::t_f48917396d8ddc 48-57,61,64,66-68,76,101,105,107,294,297,306,309,318,321,673-683,723-731
+crates/oxc_linter/src/snapshots/eslint_array_callback_return.snap
+  s_b38ece9ad5d8c2::t_d1a5ea9ac50255 153,163-164,170-184,324-325,334-335,400-401,410-411
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ec5dc79ed90449753bee47d4f8d1dd28311ff8aa",
+  "prompts": {},
+  "sessions": {
+    "s_b38ece9ad5d8c2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffad-3f2f-7922-9dce-86e201b55e14",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_c6371b487f182d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffc5-463c-74a0-a4da-013a725503d9",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
