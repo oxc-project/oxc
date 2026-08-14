@@ -14217,7 +14217,7 @@
       "properties": {
         "allowIndirect": {
           "description": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain."
         }
