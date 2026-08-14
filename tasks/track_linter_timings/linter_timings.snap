@@ -207,7 +207,7 @@ import/no-empty-named-blocks                               |    103
 import/no-mutable-exports                                  |     64
 import/no-named-as-default                                 |      7
 import/no-named-as-default-member                          |      7
-import/no-named-default                                    |      7
+import/no-named-default                                    |    103
 import/no-named-export                                     |     68
 import/no-namespace                                        |      7
 import/no-nodejs-modules                                   |  62734

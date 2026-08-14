@@ -146,8 +146,9 @@ impl RuleRunner for crate::rules::import::no_named_as_default_member::NoNamedAsD
 }
 
 impl RuleRunner for crate::rules::import::no_named_default::NoNamedDefault {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ImportDeclaration]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::import::no_named_export::NoNamedExport {
