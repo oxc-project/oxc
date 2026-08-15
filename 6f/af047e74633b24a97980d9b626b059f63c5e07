@@ -1,0 +1,39 @@
+packages/codegen/DESIGN.md
+  s_0415f6eb50ea9e::t_204ec40dc05b25 508-510,513-515,577-579
+packages/codegen/README.md
+  s_0415f6eb50ea9e::t_b59efbd8ee278a 106
+packages/codegen/src-js/print/source_map.ts
+  s_0415f6eb50ea9e::t_d1c1fc1e024f56 14-17,21-23,47-53,87,91-126
+packages/codegen/src-js/print/write.ts
+  s_6b5aa3ca33a1b5::t_c36bf94c5b4b41 355-367,377-383,398,400-410,420,424-429,432-435,438-441,444-447,504,506,514-529
+packages/codegen/src-js/state.ts
+  s_6b5aa3ca33a1b5::t_bd3ae19af1b721 89-90
+packages/codegen/test/source-maps.test.ts
+  s_0415f6eb50ea9e::t_80b1659a888e28 8-9,292,298,301-306,357,388
+packages/codegen/test/utils/common.ts
+  s_0415f6eb50ea9e::t_40b2a05d34e199 177-178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6faf047e74633b24a97980d9b626b059f63c5e07",
+  "prompts": {},
+  "sessions": {
+    "s_0415f6eb50ea9e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a006b7-f43a-7b41-be52-8324edc0f468",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
