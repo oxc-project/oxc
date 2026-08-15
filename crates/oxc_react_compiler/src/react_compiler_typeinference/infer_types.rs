@@ -10,7 +10,7 @@
 
 use std::mem::replace;
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
@@ -29,7 +29,7 @@ use crate::react_compiler_hir::{
     IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue, JsxAttribute,
     JsxTag, LoweredFunction, ManualMemoDependencyRoot, NonLocalBinding, ObjectPropertyKey,
     ObjectPropertyOrSpread, ParamPattern, Pattern, PlaceOrSpread, PropertyLiteral,
-    PropertyNameKind, ReactFunctionType, Terminal, Type, TypeId,
+    PropertyNameKind, ReactFunctionType, Terminal, Type, TypeId, UnaryOperator,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 use oxc_ast::ast::BinaryOperator;
@@ -474,17 +474,26 @@ fn generate_instruction_types<'a>(
             unifier.unify(left, Type::Primitive, shapes)?;
         }
 
-        InstructionValue::UnaryExpression { .. } => {
+        InstructionValue::UnaryExpression { operator, value, .. } => {
+            if *operator == UnaryOperator::TypeOf {
+                unifier.mark_typeof_operand(value.identifier);
+            }
             unifier.unify(left, Type::Primitive, shapes)?;
         }
 
         InstructionValue::LoadLocal { place, .. } => {
+            unifier.record_load_alias(instr.lvalue.identifier, place.identifier);
             set_name(names, instr.lvalue.identifier, &identifiers[place.identifier]);
             let place_type = get_type(place.identifier, identifiers);
             unifier.unify(left, place_type, shapes)?;
         }
 
-        InstructionValue::DeclareContext { .. } | InstructionValue::LoadContext { .. } => {
+        InstructionValue::LoadContext { place, .. } => {
+            unifier.record_load_alias(instr.lvalue.identifier, place.identifier);
+            // Intentionally skip type inference for most context variables
+        }
+
+        InstructionValue::DeclareContext { .. } => {
             // Intentionally skip type inference for most context variables
         }
 
@@ -512,10 +521,15 @@ fn generate_instruction_types<'a>(
             operator, left: bin_left, right: bin_right, ..
         } => {
             if is_primitive_binary_op(operator) {
-                let left_operand_type = get_type(bin_left.identifier, identifiers);
-                unifier.unify(left_operand_type, Type::Primitive, shapes)?;
-                let right_operand_type = get_type(bin_right.identifier, identifiers);
-                unifier.unify(right_operand_type, Type::Primitive, shapes)?;
+                // A `typeof` use can act as a control-flow type guard. Our type
+                // inference is flow-insensitive, so constraints learned from a
+                // guarded branch must not propagate to sibling branches.
+                for operand in [bin_left, bin_right] {
+                    if !unifier.is_typeof_operand(operand.identifier) {
+                        let operand_type = get_type(operand.identifier, identifiers);
+                        unifier.unify(operand_type, Type::Primitive, shapes)?;
+                    }
+                }
             }
             unifier.unify(left, Type::Primitive, shapes)?;
         }
@@ -1171,6 +1185,8 @@ fn apply_instruction_operands<'a>(
 
 struct Unifier<'a> {
     substitutions: FxHashMap<TypeId, Type<'a>>,
+    load_aliases: FxHashMap<IdentifierId, IdentifierId>,
+    typeof_operands: FxHashSet<IdentifierId>,
     enable_treat_ref_like_identifiers_as_refs: bool,
     enable_treat_set_identifiers_as_state_setters: bool,
     custom_hook_type: Option<Type<'a>>,
@@ -1184,10 +1200,34 @@ impl<'a> Unifier<'a> {
     ) -> Self {
         Unifier {
             substitutions: FxHashMap::default(),
+            load_aliases: FxHashMap::default(),
+            typeof_operands: FxHashSet::default(),
             enable_treat_ref_like_identifiers_as_refs,
             enable_treat_set_identifiers_as_state_setters,
             custom_hook_type,
         }
+    }
+
+    fn record_load_alias(&mut self, lvalue: IdentifierId, value: IdentifierId) {
+        self.load_aliases.insert(lvalue, value);
+    }
+
+    fn resolve_load_root(&self, mut identifier: IdentifierId) -> IdentifierId {
+        while let Some(&next) = self.load_aliases.get(&identifier) {
+            if next == identifier {
+                break;
+            }
+            identifier = next;
+        }
+        identifier
+    }
+
+    fn mark_typeof_operand(&mut self, identifier: IdentifierId) {
+        self.typeof_operands.insert(self.resolve_load_root(identifier));
+    }
+
+    fn is_typeof_operand(&self, identifier: IdentifierId) -> bool {
+        self.typeof_operands.contains(&self.resolve_load_root(identifier))
     }
 
     fn unify(
