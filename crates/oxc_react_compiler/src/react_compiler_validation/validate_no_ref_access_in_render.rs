@@ -422,12 +422,8 @@ fn collect_temporaries_sidemap(
                     env.define(lvalue.place.identifier, temp);
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
-                    // JSX ref attributes infer their values as ref-like, including callback
-                    // member expressions. Keep such a property result separate from its receiver
-                    // so `refs.setReference` does not make sibling properties look like ref values.
-                    if is_ref_type(instr.lvalue.identifier, identifiers, types)
-                        || (is_ref_type(object.identifier, identifiers, types)
-                            && property.is_string("current"))
+                    if is_ref_type(object.identifier, identifiers, types)
+                        && property.is_string("current")
                     {
                         continue;
                     }
