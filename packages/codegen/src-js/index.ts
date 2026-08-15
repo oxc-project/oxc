@@ -55,7 +55,7 @@ const PRINTER_PATHS = [
 const printers: (PrintModule["printSync"] | null)[] = [null, null, null, null];
 
 /**
- * Print `node`, returning the generated code.
+ * Print `node`, returning an object including the generated code.
  *
  * @param node - AST node to print, a `Program` or a single statement
  * @param options - Printing options (optional)

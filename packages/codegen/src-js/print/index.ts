@@ -18,7 +18,7 @@ import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
- * Print `node`, returning the generated code.
+ * Print `node`, returning an object including the generated code.
  *
  * One of these exists per build. The package entry point picks the build and calls it -
  * callers of the package never reach this directly.
