@@ -9049,6 +9049,9 @@
         "unicorn/no-document-cookie": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-duplicate-logical-operands": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-empty-file": {
           "$ref": "#/definitions/RuleNoConfig"
         },
