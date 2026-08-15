@@ -89,6 +89,7 @@ pub fn report_missing_padding_after_jest_block<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
     name: &str,
+    reports_own_padding_before: impl Fn(&str) -> bool,
 ) {
     let scope_node = ctx.nodes().get_node(ctx.scoping().get_node_id(node.scope_id()));
     let spans = match scope_node.kind() {
@@ -109,9 +110,11 @@ pub fn report_missing_padding_after_jest_block<'a>(
         return;
     };
 
-    // When the next statement is another block of the same kind, it reports this very gap through
-    // its own "before" check. Reporting from both sides would flag one missing blank line twice.
-    if is_call_to(next_statement, name) {
+    // When the next statement is another block this same rule covers, it reports this very gap
+    // through its own "before" check. Reporting from both sides would flag one missing blank line
+    // twice. The caller decides what "same block" means: `afterAll` matches only itself, while the
+    // test rule covers `test`, `it` and their variants, which are interchangeable here.
+    if is_covered_call(next_statement, &reports_own_padding_before) {
         return;
     }
 
@@ -178,13 +181,13 @@ fn get_statement_spans_after_node<'a, 'b>(
     Some((statements[index].span(), next.span(), next))
 }
 
-/// Whether `statement` is a bare call to `name`, i.e. another block of the same kind.
-fn is_call_to(statement: &Statement, name: &str) -> bool {
+/// Whether `statement` is a bare call to a block the caller's rule reports padding for.
+fn is_covered_call(statement: &Statement, is_covered: &impl Fn(&str) -> bool) -> bool {
     let Statement::ExpressionStatement(expr_statement) = statement else {
         return false;
     };
     let Expression::CallExpression(call_expr) = &expr_statement.expression else {
         return false;
     };
-    call_expr.callee.get_identifier_reference().is_some_and(|ident| ident.name == name)
+    call_expr.callee.get_identifier_reference().is_some_and(|ident| is_covered(&ident.name))
 }

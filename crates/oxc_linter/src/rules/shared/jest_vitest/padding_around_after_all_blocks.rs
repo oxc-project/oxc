@@ -55,5 +55,5 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
         return;
     }
     report_missing_padding_before_jest_block(node, ctx, name);
-    report_missing_padding_after_jest_block(node, ctx, name);
+    report_missing_padding_after_jest_block(node, ctx, name, |next| next == "afterAll");
 }

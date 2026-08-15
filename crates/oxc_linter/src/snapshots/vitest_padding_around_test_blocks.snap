@@ -43,6 +43,15 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Make sure there is an empty new line before the it block
 
+  ⚠ vitest(padding-around-test-blocks): Missing padding after it block
+    ╭─[padding_around_test_blocks.tsx:17:9]
+ 16 │      it('is another bar w/ it', () => {
+ 17 │      });
+    ·         ▲
+ 18 │      test.skip('skipping', () => {}); // Another comment
+    ╰────
+  help: Make sure there is an empty new line after the it block
+
   ⚠ vitest(padding-around-test-blocks): Missing padding before it block
     ╭─[padding_around_test_blocks.tsx:19:6]
  18 │      test.skip('skipping', () => {}); // Another comment
@@ -88,6 +97,15 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Make sure there is an empty new line before the test block
 
+  ⚠ vitest(padding-around-test-blocks): Missing padding after test block
+    ╭─[padding_around_test_blocks.tsx:18:38]
+ 17 │      });
+ 18 │      test.skip('skipping', () => {}); // Another comment
+    ·                                      ▲
+ 19 │      it.skip('skipping too', () => {});
+    ╰────
+  help: Make sure there is an empty new line after the test block
+
   ⚠ vitest(padding-around-test-blocks): Missing padding before test block
     ╭─[padding_around_test_blocks.tsx:21:2]
  20 │  });
@@ -105,3 +123,19 @@ source: crates/oxc_linter/src/tester.rs
  6 │     });
    ╰────
   help: Make sure there is an empty new line before the it block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding after test block
+   ╭─[padding_around_test_blocks.tsx:1:23]
+ 1 │ test('foo', () => {});
+   ·                       ▲
+ 2 │ const thing = 123;
+   ╰────
+  help: Make sure there is an empty new line after the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding after it block
+   ╭─[padding_around_test_blocks.tsx:1:21]
+ 1 │ it('foo', () => {});
+   ·                     ▲
+ 2 │ describe('bar', () => {});
+   ╰────
+  help: Make sure there is an empty new line after the it block
