@@ -217,6 +217,7 @@ if (DEBUG) {
  * @param last - Category of the last character of `code`
  */
 export function write(state: State, code: string, last: Category): void {
+  debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
   state.last = last;
@@ -263,6 +264,7 @@ export function writeNoLast(state: State, code: string): void {
  * @param node - Node this text came from
  */
 export function writeWithMap(state: State, code: string, last: Category, node: MappableNode): void {
+  debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
   if (SOURCEMAPS && node.loc != null) {
@@ -344,8 +346,6 @@ const IDENT_CONTINUE_REGEX = /[\p{ID_Continue}$\u200C\u200D]/u;
  */
 function debugAssertCategoryMatches(state: State, code: string, last: Category): void {
   if (!DEBUG) return;
-
-  debugAssert(code.length > 0, "`code` should not be an empty string");
 
   const ch = code.at(-1)!;
 
