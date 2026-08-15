@@ -627,6 +627,7 @@ fn evaluate_instruction<'a>(
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::FinishMemoize { .. } => None,
     }
 }

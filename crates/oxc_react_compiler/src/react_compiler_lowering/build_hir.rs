@@ -18,6 +18,7 @@ use oxc_allocator::CloneIn;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast as oxc;
 use oxc_ast::ast::BinaryOperator;
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str, format_ident, static_ident};
@@ -3375,7 +3376,8 @@ fn gather_captured_context(
     > = rustc_hash::FxHashMap::default();
 
     for symbol_id in scope.symbols() {
-        // Skip type-only bindings
+        // Inline enums are opaque pass-through nodes, matching upstream's
+        // `UnsupportedNode`, so their bindings are not context operands.
         if matches!(
             scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration | DeclKind::TSEnumDeclaration
@@ -3449,6 +3451,46 @@ fn capture_scopes(
         current = scope.scope_parent(scope_id);
     }
     result
+}
+
+struct TSEnumCaptureVisitor<'b, 'a> {
+    scope: &'b ScopeResolver<'b, 'a>,
+    captured_scopes: FxIndexSet<ScopeId>,
+    found: bool,
+}
+
+impl<'a> Visit<'a> for TSEnumCaptureVisitor<'_, 'a> {
+    fn visit_identifier_reference(&mut self, ident: &oxc::IdentifierReference<'a>) {
+        if self.found {
+            return;
+        }
+        self.found = self.scope.resolve_reference(ident).is_some_and(|symbol_id| {
+            self.captured_scopes.contains(&self.scope.symbol_scope(symbol_id))
+        });
+    }
+}
+
+/// Whether preserving an enum as an opaque node would hide a capture from the
+/// nested function's HIR. Top-level component enums cannot capture component
+/// state, and module bindings are outside the captured scope range.
+fn ts_enum_has_captured_reference<'a>(
+    builder: &HirBuilder<'a, '_>,
+    declaration: &oxc::TSEnumDeclaration<'a>,
+) -> bool {
+    let function_scope = builder.function_scope();
+    if function_scope == builder.component_scope() {
+        return false;
+    }
+    let Some(parent_scope) = builder.scope().scope_parent(function_scope) else {
+        return false;
+    };
+    let mut visitor = TSEnumCaptureVisitor {
+        scope: builder.scope(),
+        captured_scopes: capture_scopes(builder.scope(), parent_scope, builder.component_scope()),
+        found: false,
+    };
+    visitor.visit_ts_enum_declaration(declaration);
+    visitor.found
 }
 
 fn lower_expression<'a>(
@@ -5681,8 +5723,10 @@ fn is_reorderable_expression(
                 match builder.scope().resolve_reference(ident) {
                     None => true, // global
                     Some(symbol_id) => {
-                        // Module-scope bindings (ModuleLocal, imports) are safe to reorder
+                        // Module-scope bindings (ModuleLocal, imports) and inline enum
+                        // objects are safe to read while lowering reorderable case tests.
                         builder.scope().symbol_scope(symbol_id) == builder.scope().program_scope()
+                            || builder.scope().decl_kind(symbol_id) == DeclKind::TSEnumDeclaration
                     }
                 }
             } else {
@@ -6568,12 +6612,37 @@ fn lower_statement<'a>(
                     .diagnostic("JavaScript `import` and `export` statements may only appear at the top level of a module").with_label(stmt.span()),
             )?;
         }
-        oxc::Statement::TSEnumDeclaration(_) => {
-            // Inline TS `enum` has runtime semantics but no HIR representation, and
-            // the compiled body is rebuilt from HIR. Flag the function to be skipped
-            // (silently, no diagnostic) once lowering finishes, rather than dropping
-            // the enum from the output. Other functions in the file are unaffected.
-            builder.environment_mut().skip_compilation = true;
+        oxc::Statement::TSEnumDeclaration(enum_decl) => {
+            let binding_scope = enum_decl
+                .id
+                .symbol_id
+                .get()
+                .map(|symbol_id| builder.scope().symbol_scope(symbol_id));
+            let loses_lexical_scope = binding_scope.is_some_and(|scope_id| {
+                builder.scope().scope_kind(scope_id) != ScopeKind::Function
+            });
+
+            // Opaque statements are emitted into the flattened HIR statement stream.
+            // Skip compilation when that would erase an enum's lexical block, or
+            // when an enum-only reference would hide a nested-function capture.
+            // This retains upstream's operand-free UnsupportedNode representation
+            // without changing the source program's runtime semantics.
+            if loses_lexical_scope || ts_enum_has_captured_reference(builder, enum_decl) {
+                builder.environment_mut().skip_compilation = true;
+            }
+
+            // Upstream preserves inline enums as an opaque `UnsupportedNode`.
+            // Keep the declaration as a pass-through HIR instruction with an
+            // unnamed temporary result; its binding and initializers deliberately
+            // remain outside HIR analysis.
+            let span = Some(enum_decl.span);
+            let allocator = builder.environment().allocator;
+            let declaration =
+                allocator.alloc(enum_decl.as_ref().clone_in_with_semantic_ids(allocator));
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::TSEnumDeclaration { declaration, span },
+            )?;
         }
         _ => {
             // Remaining statements are skipped: bodyless FunctionDeclaration

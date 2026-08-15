@@ -85,6 +85,7 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. } => {}
     }
@@ -274,6 +275,7 @@ pub fn each_instruction_value_operand_with_functions(
             result.push(*decl);
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
@@ -1014,6 +1016,7 @@ pub fn for_each_instruction_value_operand_mut(
             f(decl);
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }

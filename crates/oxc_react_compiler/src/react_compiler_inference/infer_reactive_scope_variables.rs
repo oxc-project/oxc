@@ -199,6 +199,7 @@ fn may_allocate(value: &InstructionValue, lvalue_type_is_primitive: bool) -> boo
         | InstructionValue::JsxFragment { .. }
         | InstructionValue::NewExpression { .. }
         | InstructionValue::ObjectExpression { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::ObjectMethod { .. }
         | InstructionValue::FunctionExpression { .. } => true,
     }

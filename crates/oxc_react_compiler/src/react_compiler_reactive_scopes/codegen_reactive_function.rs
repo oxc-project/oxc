@@ -361,6 +361,19 @@ enum LvalueRef<'a> {
     Pattern(&'a Pattern<'a>),
 }
 
+struct BindingReferenceRenamer<'a, 'env> {
+    allocator: &'a oxc_allocator::Allocator,
+    renames: &'env FxHashMap<oxc_syntax::reference::ReferenceId, Ident<'env>>,
+}
+
+impl<'a> oxc_ast_visit::VisitMut<'a> for BindingReferenceRenamer<'a, '_> {
+    fn visit_identifier_reference(&mut self, reference: &mut oxc::IdentifierReference<'a>) {
+        if let Some(renamed) = reference.reference_id.get().and_then(|id| self.renames.get(&id)) {
+            reference.name = renamed.as_str().into_in(self.allocator);
+        }
+    }
+}
+
 fn ox_number<'a>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
     value: f64,
@@ -388,20 +401,26 @@ fn ox_reemit_ts_type<'a>(cx: &OxcContext<'a, '_>, ty: &oxc::TSType<'_>) -> oxc::
         return ty.clone_in_with_semantic_ids(cx.ast.allocator());
     }
 
-    struct Renamer<'a, 'env> {
-        allocator: &'a oxc_allocator::Allocator,
-        renames: &'env FxHashMap<oxc_syntax::reference::ReferenceId, Ident<'env>>,
-    }
-    impl<'a> oxc_ast_visit::VisitMut<'a> for Renamer<'a, '_> {
-        fn visit_identifier_reference(&mut self, it: &mut oxc::IdentifierReference<'a>) {
-            if let Some(renamed) = it.reference_id.get().and_then(|id| self.renames.get(&id)) {
-                it.name = renamed.as_str().into_in(self.allocator);
-            }
-        }
-    }
     let mut cloned = ty.clone_in_with_semantic_ids(cx.ast.allocator());
-    let mut renamer = Renamer { allocator: cx.ast.allocator(), renames: &cx.env.renames };
+    let mut renamer =
+        BindingReferenceRenamer { allocator: cx.ast.allocator(), renames: &cx.env.renames };
     oxc_ast_visit::VisitMut::visit_ts_type(&mut renamer, &mut cloned);
+    cloned
+}
+
+/// Re-emit an opaque TypeScript enum pass-through node. Binding renames are
+/// applied because, unlike Babel, oxc's semantic renames do not mutate the
+/// preserved source AST in place.
+fn ox_reemit_ts_enum_declaration<'a>(
+    cx: &OxcContext<'a, '_>,
+    declaration: &oxc::TSEnumDeclaration<'_>,
+) -> oxc::TSEnumDeclaration<'a> {
+    let mut cloned = declaration.clone_in_with_semantic_ids(cx.ast.allocator());
+    if !cx.env.renames.is_empty() {
+        let mut renamer =
+            BindingReferenceRenamer { allocator: cx.ast.allocator(), renames: &cx.env.renames };
+        oxc_ast_visit::VisitMut::visit_ts_enum_declaration(&mut renamer, &mut cloned);
+    }
     cloned
 }
 
@@ -1425,6 +1444,13 @@ fn ox_codegen_instruction_nullable<'a>(
                     &cx.ast,
                 )));
             }
+            InstructionValue::TSEnumDeclaration { declaration, .. } => {
+                let declaration = ox_reemit_ts_enum_declaration(cx, declaration);
+                return Ok(Some(oxc::Statement::TSEnumDeclaration(oxc_allocator::Box::new_in(
+                    declaration,
+                    &cx.ast,
+                ))));
+            }
             InstructionValue::ObjectMethod { span, .. } => {
                 invariant(
                     instr.lvalue.is_some(),
@@ -2245,6 +2271,7 @@ fn ox_codegen_base_instruction_value<'a>(
         InstructionValue::StartMemoize { .. }
         | InstructionValue::FinishMemoize { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::DeclareLocal { .. }
         | InstructionValue::DeclareContext { .. }
         | InstructionValue::Destructure { .. }

@@ -2423,6 +2423,7 @@ fn compute_signature_for_instruction<'a>(
         // All primitive-creating instructions
         InstructionValue::BinaryExpression { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::JSXText { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::Primitive { .. }
