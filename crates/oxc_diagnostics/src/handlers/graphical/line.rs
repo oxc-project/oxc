@@ -12,6 +12,7 @@
 
 use std::str::{CharIndices, from_utf8};
 
+use smallvec::SmallVec;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
@@ -203,7 +204,7 @@ impl GraphicalReportHandler {
     }
 
     /// Splits already-scanned span contents into [`Line`]s.
-    pub(super) fn get_lines<'a>(context_data: &SpanContents<'a>) -> Vec<Line<'a>> {
+    pub(super) fn get_lines<'a>(context_data: &SpanContents<'a>) -> SmallVec<[Line<'a>; 3]> {
         let context = from_utf8(context_data.data()).expect("Bad utf8 detected");
         let mut line = context_data.line();
         let base = context_data.span().start as usize;
@@ -213,7 +214,7 @@ impl GraphicalReportHandler {
         // Cap the hint by byte length because custom sources own this metadata.
         let capacity =
             context_data.line_count().saturating_sub(context_data.line()).max(1).min(bytes.len());
-        let mut lines = Vec::with_capacity(capacity);
+        let mut lines = SmallVec::with_capacity(capacity);
         let mut start = 0;
         for newline in memchr::memchr_iter(b'\n', bytes) {
             let end = newline + 1;
