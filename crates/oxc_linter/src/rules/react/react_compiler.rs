@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_diagnostics::Severity;
+use oxc_diagnostics::{OxcCode, Severity};
 use oxc_macros::declare_oxc_lint;
 use oxc_react_compiler::{CompilerOutputMode, EnvironmentConfig, ErrorCategory, PluginOptions};
 use schemars::JsonSchema;
@@ -160,10 +160,17 @@ impl Rule for ReactCompiler {
             if is_flow_suppressed(&diagnostic, &suppressed_lines, ctx.source_text()) {
                 continue;
             }
-            // The rule code already identifies the source, so the prefix is noise here.
-            if let Some(message) = diagnostic.message.strip_prefix("[ReactCompiler] ") {
-                diagnostic.message = Cow::Owned(message.to_string());
+
+            // `LintContext` supplies the Oxlint rule code and primary rule URL. Preserve the
+            // React Compiler's category-specific guidance as additional context.
+            if let Some(guidance_url) = diagnostic.url.take() {
+                let guidance = format!("Additional guidance: {guidance_url}");
+                diagnostic.note = Some(Cow::Owned(match diagnostic.note.take() {
+                    Some(note) => format!("{note}. {guidance}"),
+                    None => guidance,
+                }));
             }
+            diagnostic.code = OxcCode::default();
             ctx.diagnostic(diagnostic);
         }
     }

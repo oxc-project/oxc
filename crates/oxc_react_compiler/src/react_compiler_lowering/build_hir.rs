@@ -38,7 +38,7 @@ fn validate_ts_this_parameter(
         return Ok(());
     };
     if matches!(scope.binding_kind(symbol_id), AstBindingKind::Param) {
-        return Err(diagnostics::reserved_identifier("this"));
+        return Err(diagnostics::reserved_identifier("this", Some(scope.symbol_span(symbol_id))));
     }
     Ok(())
 }
@@ -675,7 +675,10 @@ fn lower_inner<'a>(
             && let oxc::BindingPattern::BindingIdentifier(ident) = &param.pattern
         {
             if is_always_reserved_word(ident.name.as_str()) {
-                return Err(diagnostics::reserved_identifier(ident.name.as_str()));
+                return Err(diagnostics::reserved_identifier(
+                    ident.name.as_str(),
+                    Some(ident.span),
+                ));
             }
             let param_span = ident.span;
             let mut binding = builder.resolve_identifier(

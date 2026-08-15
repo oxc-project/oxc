@@ -26,8 +26,6 @@ pub fn validate_no_capitalized_calls(
     let mut capital_load_globals: FxHashMap<IdentifierId, Ident> = FxHashMap::default();
     let mut capitalized_properties: FxHashMap<IdentifierId, Ident> = FxHashMap::default();
 
-    let reason = "Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config";
-
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
@@ -49,11 +47,7 @@ pub fn validate_no_capitalized_calls(
                 InstructionValue::CallExpression { callee, span, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
-                        env.record_error(diagnostics::capitalized_call(
-                            reason,
-                            callee_name,
-                            *span,
-                        ))?;
+                        env.record_error(diagnostics::capitalized_call(callee_name, *span))?;
                         continue;
                     }
                 }
@@ -68,7 +62,7 @@ pub fn validate_no_capitalized_calls(
                 InstructionValue::MethodCall { property, span, .. } => {
                     let property_id = property.identifier;
                     if let Some(prop_name) = capitalized_properties.get(&property_id) {
-                        env.record_error(diagnostics::capitalized_call(reason, prop_name, *span))?;
+                        env.record_error(diagnostics::capitalized_call(prop_name, *span))?;
                     }
                 }
                 _ => {}

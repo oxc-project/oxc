@@ -686,7 +686,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         if is_always_reserved_word(name.as_str()) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(diagnostics::reserved_identifier(name.as_str()));
+            return Err(diagnostics::reserved_identifier(name.as_str(), span));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...

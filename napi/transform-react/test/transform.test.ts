@@ -210,7 +210,7 @@ export function Component({ value }: { value: string }) {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
       severity: "Warning",
-      message: expect.stringContaining("Suppression:"),
+      message: "React rule suppression prevents optimization",
     });
     expect(result.code).not.toContain("react/compiler-runtime");
     expect(result.code).not.toContain("_c(");
@@ -229,7 +229,7 @@ export function Component({ value }: { value: string }) {
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].severity).toBe("Warning");
-    expect(result.errors[0].message).toContain("Suppression:");
+    expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     expect(result.code).not.toContain("react/compiler-runtime");
   });
 
@@ -273,7 +273,7 @@ export function Component({ value }: { value: string }) {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
       severity: "Warning",
-      message: "IncompatibleLibrary: Use of incompatible library",
+      message: "Use of incompatible library",
     });
     expect(result.errors.some((error) => error.message.includes("Unexpected error"))).toBe(false);
     expect(result.code).toContain("react/compiler-runtime");
@@ -315,7 +315,7 @@ export function Component({ value }: { value: string }) {
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].severity).toBe("Warning");
-    expect(result.errors[0].message).toContain("Suppression:");
+    expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).not.toContain("props: { text: string }");
     expect(result.code).not.toContain("<span");
@@ -342,7 +342,7 @@ export function Component({ value }: { value: string }) {
       expect(result.code).toBe("");
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].severity).toBe("Error");
-      expect(result.errors[0].message).toContain("Suppression:");
+      expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     },
   );
 
@@ -362,7 +362,7 @@ export function Component({ value }: { value: string }) {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
       severity: "Warning",
-      message: "IncompatibleLibrary: Use of incompatible library",
+      message: "Use of incompatible library",
     });
   });
 

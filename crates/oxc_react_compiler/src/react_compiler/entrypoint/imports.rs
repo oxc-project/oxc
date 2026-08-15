@@ -235,7 +235,10 @@ pub fn validate_restricted_imports(
         if let Statement::ImportDeclaration(import) = stmt
             && restricted.contains(import.source.value.as_str())
         {
-            diagnostics.push(diagnostics::blocklisted_import(import.source.value.as_str()));
+            diagnostics.push(diagnostics::blocklisted_import(
+                import.source.value.as_str(),
+                import.source.span,
+            ));
         }
     }
 

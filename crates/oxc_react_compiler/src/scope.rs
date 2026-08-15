@@ -5,7 +5,7 @@ use oxc_ast::ast::{
     PropertyKind,
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolFlags;
@@ -194,6 +194,10 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
 
     pub fn symbol_name(&self, symbol_id: SymbolId) -> &'s str {
         self.scoping().symbol_name(symbol_id)
+    }
+
+    pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
+        self.scoping().symbol_span(symbol_id)
     }
 
     /// The symbol's name as an arena-lifetime `Ident`, copied into the arena.

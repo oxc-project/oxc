@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-reassign-const.js
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "Syntax: Cannot reassign a `const` variable", labels: [LabeledSpan { label: None, span: Span { start: 40, end: 41 }, primary: false }], help: Some("`x` is declared as const"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot reassign a `const` variable", labels: [LabeledSpan { label: Some("Cannot reassign `x`"), span: Span { start: 40, end: 41 }, primary: true }], help: Some("`x` is declared as const"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Syntax") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
 
 No changes.

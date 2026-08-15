@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-hoisting-setstate.j
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "Immutability: Cannot access variable before it is declared", labels: [LabeledSpan { label: Some("`setState` accessed before it is declared"), span: Span { start: 766, end: 774 }, primary: false }, LabeledSpan { label: Some("`setState` is declared here"), span: Span { start: 801, end: 809 }, primary: false }], help: Some("`setState` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot access variable before it is declared", labels: [LabeledSpan { label: Some("`setState` accessed before it is declared"), span: Span { start: 766, end: 774 }, primary: true }, LabeledSpan { label: Some("`setState` is declared here"), span: Span { start: 801, end: 809 }, primary: false }], help: Some("`setState` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
 
 No changes.
