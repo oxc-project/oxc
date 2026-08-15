@@ -609,6 +609,7 @@ pub use crate::rules::unicorn::consistent_empty_array_spread::ConsistentEmptyArr
 pub use crate::rules::unicorn::consistent_existence_index_check::ConsistentExistenceIndexCheck as UnicornConsistentExistenceIndexCheck;
 pub use crate::rules::unicorn::consistent_function_scoping::ConsistentFunctionScoping as UnicornConsistentFunctionScoping;
 pub use crate::rules::unicorn::consistent_template_literal_escape::ConsistentTemplateLiteralEscape as UnicornConsistentTemplateLiteralEscape;
+pub use crate::rules::unicorn::consistent_tuple_labels::ConsistentTupleLabels as UnicornConsistentTupleLabels;
 pub use crate::rules::unicorn::custom_error_definition::CustomErrorDefinition as UnicornCustomErrorDefinition;
 pub use crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces as UnicornEmptyBraceSpaces;
 pub use crate::rules::unicorn::error_message::ErrorMessage as UnicornErrorMessage;
@@ -1329,6 +1330,7 @@ pub enum RuleEnum {
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
     ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp),
+    UnicornConsistentTupleLabels(UnicornConsistentTupleLabels),
     UnicornCatchErrorName(UnicornCatchErrorName),
     UnicornConsistentAssert(UnicornConsistentAssert),
     UnicornConsistentDateClone(UnicornConsistentDateClone),
@@ -2237,7 +2239,8 @@ const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID + 1usize;
-const UNICORN_CATCH_ERROR_NAME_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
+const UNICORN_CONSISTENT_TUPLE_LABELS_ID: usize = REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID + 1usize;
+const UNICORN_CATCH_ERROR_NAME_ID: usize = UNICORN_CONSISTENT_TUPLE_LABELS_ID + 1usize;
 const UNICORN_CONSISTENT_ASSERT_ID: usize = UNICORN_CATCH_ERROR_NAME_ID + 1usize;
 const UNICORN_CONSISTENT_DATE_CLONE_ID: usize = UNICORN_CONSISTENT_ASSERT_ID + 1usize;
 const UNICORN_CONSISTENT_EMPTY_ARRAY_SPREAD_ID: usize = UNICORN_CONSISTENT_DATE_CLONE_ID + 1usize;
@@ -2685,7 +2688,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 849usize] = [
+static RULE_NAMES: [&str; 850usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3144,6 +3147,7 @@ static RULE_NAMES: [&str; 849usize] = [
     ReactPerfJsxNoNewArrayAsProp::NAME,
     ReactPerfJsxNoNewFunctionAsProp::NAME,
     ReactPerfJsxNoNewObjectAsProp::NAME,
+    UnicornConsistentTupleLabels::NAME,
     UnicornCatchErrorName::NAME,
     UnicornConsistentAssert::NAME,
     UnicornConsistentDateClone::NAME,
@@ -4073,6 +4077,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => REACT_PERF_JSX_NO_NEW_OBJECT_AS_PROP_ID,
+            Self::UnicornConsistentTupleLabels(_) => UNICORN_CONSISTENT_TUPLE_LABELS_ID,
             Self::UnicornCatchErrorName(_) => UNICORN_CATCH_ERROR_NAME_ID,
             Self::UnicornConsistentAssert(_) => UNICORN_CONSISTENT_ASSERT_ID,
             Self::UnicornConsistentDateClone(_) => UNICORN_CONSISTENT_DATE_CLONE_ID,
@@ -5079,6 +5084,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::CATEGORY,
+            Self::UnicornConsistentTupleLabels(_) => UnicornConsistentTupleLabels::CATEGORY,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::CATEGORY,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::CATEGORY,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::CATEGORY,
@@ -6079,6 +6085,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::FIX,
+            Self::UnicornConsistentTupleLabels(_) => UnicornConsistentTupleLabels::FIX,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::FIX,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::FIX,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::FIX,
@@ -7167,6 +7174,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::documentation()
             }
+            Self::UnicornConsistentTupleLabels(_) => UnicornConsistentTupleLabels::documentation(),
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::documentation(),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::documentation(),
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::documentation(),
@@ -9051,6 +9059,10 @@ impl RuleEnum {
                 ReactPerfJsxNoNewObjectAsProp::config_schema(generator)
                     .or_else(|| ReactPerfJsxNoNewObjectAsProp::schema(generator))
             }
+            Self::UnicornConsistentTupleLabels(_) => {
+                UnicornConsistentTupleLabels::config_schema(generator)
+                    .or_else(|| UnicornConsistentTupleLabels::schema(generator))
+            }
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::config_schema(generator)
                 .or_else(|| UnicornCatchErrorName::schema(generator)),
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::config_schema(generator)
@@ -10656,6 +10668,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewObjectAsProp(_) => "react_perf",
+            Self::UnicornConsistentTupleLabels(_) => "unicorn",
             Self::UnicornCatchErrorName(_) => "unicorn",
             Self::UnicornConsistentAssert(_) => "unicorn",
             Self::UnicornConsistentDateClone(_) => "unicorn",
@@ -12606,6 +12619,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.to_configuration(),
+            Self::UnicornConsistentTupleLabels(rule) => rule.to_configuration(),
             Self::UnicornCatchErrorName(rule) => rule.to_configuration(),
             Self::UnicornConsistentAssert(rule) => rule.to_configuration(),
             Self::UnicornConsistentDateClone(rule) => rule.to_configuration(),
@@ -13462,6 +13476,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run(node, ctx),
+            Self::UnicornConsistentTupleLabels(rule) => rule.run(node, ctx),
             Self::UnicornCatchErrorName(rule) => rule.run(node, ctx),
             Self::UnicornConsistentAssert(rule) => rule.run(node, ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run(node, ctx),
@@ -14328,6 +14343,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_once(ctx),
+            Self::UnicornConsistentTupleLabels(rule) => rule.run_once(ctx),
             Self::UnicornCatchErrorName(rule) => rule.run_once(ctx),
             Self::UnicornConsistentAssert(rule) => rule.run_once(ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run_once(ctx),
@@ -15267,6 +15283,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornConsistentTupleLabels(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornCatchErrorName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornConsistentAssert(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornConsistentDateClone(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16178,6 +16195,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.should_run(ctx),
+            Self::UnicornConsistentTupleLabels(rule) => rule.should_run(ctx),
             Self::UnicornCatchErrorName(rule) => rule.should_run(ctx),
             Self::UnicornConsistentAssert(rule) => rule.should_run(ctx),
             Self::UnicornConsistentDateClone(rule) => rule.should_run(ctx),
@@ -17221,6 +17239,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewObjectAsProp(_) => {
                 ReactPerfJsxNoNewObjectAsProp::IS_TSGOLINT_RULE
             }
+            Self::UnicornConsistentTupleLabels(_) => UnicornConsistentTupleLabels::IS_TSGOLINT_RULE,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::IS_TSGOLINT_RULE,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::IS_TSGOLINT_RULE,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::IS_TSGOLINT_RULE,
@@ -18364,6 +18383,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::VERSION,
+            Self::UnicornConsistentTupleLabels(_) => UnicornConsistentTupleLabels::VERSION,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::VERSION,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::VERSION,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::VERSION,
@@ -19408,6 +19428,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::HAS_CONFIG,
+            Self::UnicornConsistentTupleLabels(_) => UnicornConsistentTupleLabels::HAS_CONFIG,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::HAS_CONFIG,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::HAS_CONFIG,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::HAS_CONFIG,
@@ -20431,6 +20452,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::INFO,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::INFO,
             Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::INFO,
+            Self::UnicornConsistentTupleLabels(_) => UnicornConsistentTupleLabels::INFO,
             Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::INFO,
             Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::INFO,
             Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::INFO,
@@ -21333,6 +21355,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.types_info(),
+            Self::UnicornConsistentTupleLabels(rule) => rule.types_info(),
             Self::UnicornCatchErrorName(rule) => rule.types_info(),
             Self::UnicornConsistentAssert(rule) => rule.types_info(),
             Self::UnicornConsistentDateClone(rule) => rule.types_info(),
@@ -22186,6 +22209,7 @@ impl RuleEnum {
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewObjectAsProp(rule) => rule.run_info(),
+            Self::UnicornConsistentTupleLabels(rule) => rule.run_info(),
             Self::UnicornCatchErrorName(rule) => rule.run_info(),
             Self::UnicornConsistentAssert(rule) => rule.run_info(),
             Self::UnicornConsistentDateClone(rule) => rule.run_info(),
@@ -23131,6 +23155,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewObjectAsProp(ReactPerfJsxNoNewObjectAsProp::default()),
+        RuleEnum::UnicornConsistentTupleLabels(UnicornConsistentTupleLabels::default()),
         RuleEnum::UnicornCatchErrorName(UnicornCatchErrorName::default()),
         RuleEnum::UnicornConsistentAssert(UnicornConsistentAssert::default()),
         RuleEnum::UnicornConsistentDateClone(UnicornConsistentDateClone::default()),
