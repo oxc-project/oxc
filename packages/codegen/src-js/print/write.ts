@@ -217,14 +217,15 @@ if (DEBUG) {
  * @param last - Category of the last character of `code`
  */
 export function write(state: State, code: string, last: Category): void {
-  if (DEBUG) {
-    debugAssertCategoryMatches(state, code, last);
-    state.lastIsStale = false;
-    state.lastCharWritten = code[code.length - 1];
-  }
+  debugAssertCategoryMatches(state, code, last);
 
   state.last = last;
   state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
+  }
 }
 
 /**
@@ -240,12 +241,12 @@ export function write(state: State, code: string, last: Category): void {
  * @param code - Text to append, which unlike `write` may be empty
  */
 export function writeNoLast(state: State, code: string): void {
+  state.output += code;
+
   if (DEBUG) {
     state.lastIsStale = true;
     if (code.length > 0) state.lastCharWritten = code[code.length - 1];
   }
-
-  state.output += code;
 }
 
 /**
@@ -262,11 +263,7 @@ export function writeNoLast(state: State, code: string): void {
  * @param node - Node this text came from
  */
 export function writeWithMap(state: State, code: string, last: Category, node: MappableNode): void {
-  if (DEBUG) {
-    debugAssertCategoryMatches(state, code, last);
-    state.lastIsStale = false;
-    state.lastCharWritten = code[code.length - 1];
-  }
+  debugAssertCategoryMatches(state, code, last);
 
   if (SOURCEMAPS && node.loc != null) {
     debugAssert(
@@ -282,6 +279,11 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
 
   state.last = last;
   state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
+  }
 }
 
 /**
@@ -308,12 +310,12 @@ export function writeWithMapNoLast(state: State, code: string, node: MappableNod
     state.mapNames.push(node.name);
   }
 
+  state.output += code;
+
   if (DEBUG) {
     state.lastIsStale = true;
     if (code.length > 0) state.lastCharWritten = code[code.length - 1];
   }
-
-  state.output += code;
 }
 
 /**
