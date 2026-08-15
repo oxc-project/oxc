@@ -24,9 +24,9 @@ use crate::react_compiler_hir::visitors::{ScopeBlockInfo, ScopeBlockTraversal};
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, DeclarationId, DependencyPathEntry, EvaluationOrder, FunctionId,
     GotoVariant, HirFunction, IdentifierId, Instruction, InstructionId, InstructionKind,
-    InstructionValue, JsxAttribute, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place,
-    PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
-    ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
+    InstructionValue, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place, PropertyLiteral,
+    ReactFunctionType, ReactiveScopeDeclaration, ReactiveScopeDependency, ScopeId, Terminal, Type,
+    is_ref_value_type, is_use_ref_type, visitors,
 };
 use crate::react_compiler_optimization::dead_code_elimination::find_semantic_only_caught_instructions;
 use oxc_span::Span;
@@ -909,8 +909,6 @@ struct CollectHoistableContext<'a, 'e> {
     temporaries: &'e TemporariesMap<'a>,
     known_immutable_identifiers: &'e FxHashSet<IdentifierId>,
     hoistable_from_optionals: &'e FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
-    nested_fn_immutable_context: Option<&'e FxHashSet<IdentifierId>>,
-    assumed_invoked_fns: &'e FxHashSet<FunctionId>,
 }
 
 fn is_immutable_at_instr(
@@ -919,9 +917,6 @@ fn is_immutable_at_instr(
     env: &Environment,
     ctx: &CollectHoistableContext,
 ) -> bool {
-    if let Some(nested_ctx) = ctx.nested_fn_immutable_context {
-        return nested_ctx.contains(&identifier_id);
-    }
     let ident = &env.identifiers[identifier_id];
     let mutable_at_instr =
         ident.mutable_range.end > ident.mutable_range.start + 1 && ident.scope.is_some() && {
@@ -961,150 +956,15 @@ fn get_maybe_non_null_in_instruction<'a>(
     }
 }
 
-/// Corresponds to TS `getAssumedInvokedFunctions`.
-/// Returns the set of LoweredFunction FunctionIds that are assumed to be invoked.
-/// The `temporaries` map is shared across recursive calls (matching TS behavior where
-/// the same Map is passed to recursive invocations for inner functions).
-fn get_assumed_invoked_functions(func: &HirFunction, env: &Environment) -> FxHashSet<FunctionId> {
-    let mut temporaries: FxHashMap<IdentifierId, (FunctionId, FxHashSet<FunctionId>)> =
-        FxHashMap::default();
-    get_assumed_invoked_functions_impl(func, env, &mut temporaries)
-}
-
-fn get_assumed_invoked_functions_impl(
-    func: &HirFunction,
-    env: &Environment,
-    temporaries: &mut FxHashMap<IdentifierId, (FunctionId, FxHashSet<FunctionId>)>,
-) -> FxHashSet<FunctionId> {
-    let mut hoistable: FxHashSet<FunctionId> = FxHashSet::default();
-
-    // Step 1: Collect identifier to function expression mappings
-    for (_block_id, block) in &func.body.blocks {
-        for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.index()];
-            match &instr.value {
-                InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    temporaries
-                        .insert(instr.lvalue.identifier, (lowered_func.func, FxHashSet::default()));
-                }
-                InstructionValue::StoreLocal { value: val, lvalue, .. } => {
-                    if let Some(entry) = temporaries.get(&val.identifier).cloned() {
-                        temporaries.insert(lvalue.place.identifier, entry);
-                    }
-                }
-                InstructionValue::LoadLocal { place, .. } => {
-                    if let Some(entry) = temporaries.get(&place.identifier).cloned() {
-                        temporaries.insert(instr.lvalue.identifier, entry);
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
-
-    // Step 2: Forward pass to analyze assumed function calls
-    for (_block_id, block) in &func.body.blocks {
-        for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.index()];
-            match &instr.value {
-                InstructionValue::CallExpression { callee, args, .. } => {
-                    let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
-                    let maybe_hook = env.get_hook_kind_for_type(callee_ty).ok().flatten();
-                    if let Some(entry) = temporaries.get(&callee.identifier) {
-                        // Direct calls
-                        hoistable.insert(entry.0);
-                    } else if maybe_hook.is_some() {
-                        // Assume arguments to all hooks are safe to invoke
-                        for arg in args {
-                            if let PlaceOrSpread::Place(p) = arg
-                                && let Some(entry) = temporaries.get(&p.identifier)
-                            {
-                                hoistable.insert(entry.0);
-                            }
-                        }
-                    }
-                }
-                InstructionValue::JsxExpression { props, children, .. } => {
-                    // Assume JSX attributes and children are safe to invoke
-                    for prop in props {
-                        if let JsxAttribute::Attribute { place, .. } = prop
-                            && let Some(entry) = temporaries.get(&place.identifier)
-                        {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                    if let Some(children) = children {
-                        for child in children {
-                            if let Some(entry) = temporaries.get(&child.identifier) {
-                                hoistable.insert(entry.0);
-                            }
-                        }
-                    }
-                }
-                InstructionValue::JsxFragment { children, .. } => {
-                    for child in children {
-                        if let Some(entry) = temporaries.get(&child.identifier) {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                }
-                InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    // Recursively traverse into other function expressions
-                    // TS passes the shared temporaries map to the recursive call
-                    let inner_func = &env.functions[lowered_func.func];
-                    let lambdas_called =
-                        get_assumed_invoked_functions_impl(inner_func, env, temporaries);
-                    if let Some(entry) = temporaries.get_mut(&instr.lvalue.identifier) {
-                        for called in lambdas_called {
-                            entry.1.insert(called);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // Assume directly returned functions are safe to call
-        if let Terminal::Return { value, .. } = &block.terminal
-            && let Some(entry) = temporaries.get(&value.identifier)
-        {
-            hoistable.insert(entry.0);
-        }
-    }
-
-    // Step 3: Propagate assumed-invoked status through mayInvoke chains
-    let mut changed = true;
-    while changed {
-        changed = false;
-        // Two-phase: collect then insert
-        let mut to_add = Vec::new();
-        for (func_id, may_invoke) in temporaries.values() {
-            if hoistable.contains(func_id) {
-                for &called in may_invoke {
-                    if !hoistable.contains(&called) {
-                        to_add.push(called);
-                    }
-                }
-            }
-        }
-        for id in to_add {
-            changed = true;
-            hoistable.insert(id);
-        }
-        if !changed {
-            break;
-        }
-    }
-
-    hoistable
-}
-
 fn collect_non_nulls_in_blocks<'a>(
     func: &HirFunction<'a>,
     env: &Environment<'a>,
     ctx: &CollectHoistableContext<'a, '_>,
     registry: &mut PropertyPathRegistry<'a>,
 ) -> FxHashMap<BlockId, BlockInfo> {
+    // Only reads executed by this function establish that a property path is non-null here.
+    // Reads inside nested functions may be deferred or skipped entirely, so using them would
+    // make cache guards evaluate potentially throwing paths before the nested function runs.
     // Known non-null identifiers (e.g. component props)
     let mut known_non_null: BTreeSet<usize> = BTreeSet::new();
     if func.fn_type == ReactFunctionType::Component
@@ -1163,46 +1023,6 @@ fn collect_non_nulls_in_blocks<'a>(
                             let node_idx = registry.get_or_create_property(&sub_dep);
                             assumed.insert(node_idx);
                         }
-                    }
-                }
-            }
-
-            // Handle assumed-invoked inner functions
-            if let InstructionValue::FunctionExpression { lowered_func, .. } = &instr.value
-                && ctx.assumed_invoked_fns.contains(&lowered_func.func)
-            {
-                let inner_func = &env.functions[lowered_func.func];
-                // Build nested fn immutable context
-                let nested_fn_immutable_context: FxHashSet<IdentifierId> = if let Some(existing) =
-                    ctx.nested_fn_immutable_context
-                {
-                    // Already in a nested fn context, use existing
-                    existing.clone()
-                } else {
-                    inner_func
-                        .context
-                        .iter()
-                        .filter(|place| is_immutable_at_instr(place.identifier, instr.id, env, ctx))
-                        .map(|place| place.identifier)
-                        .collect()
-                };
-                let inner_assumed = get_assumed_invoked_functions(inner_func, env);
-                let inner_ctx = CollectHoistableContext {
-                    temporaries: ctx.temporaries,
-                    known_immutable_identifiers: &FxHashSet::default(),
-                    hoistable_from_optionals: ctx.hoistable_from_optionals,
-                    nested_fn_immutable_context: Some(&nested_fn_immutable_context),
-                    assumed_invoked_fns: &inner_assumed,
-                };
-                let inner_nodes =
-                    collect_non_nulls_in_blocks(inner_func, env, &inner_ctx, registry);
-                // Propagate non-null from inner function
-                let inner_working = propagate_non_null(inner_func, &inner_nodes, registry);
-                // Get hoistables from inner function's entry block (after propagation)
-                let inner_entry = inner_func.body.entry;
-                if let Some(inner_set) = inner_working.get(&inner_entry) {
-                    for &node_idx in inner_set {
-                        assumed.insert(node_idx);
                     }
                 }
             }
@@ -1374,7 +1194,6 @@ fn collect_hoistable_and_propagate<'a>(
     hoistable_from_optionals: &FxHashMap<BlockId, ReactiveScopeDependency<'a>>,
 ) -> (FxHashMap<BlockId, BTreeSet<usize>>, PropertyPathRegistry<'a>) {
     let mut registry = PropertyPathRegistry::new(env.allocator);
-    let assumed_invoked_fns = get_assumed_invoked_functions(func, env);
     let known_immutable_identifiers: FxHashSet<IdentifierId> = if func.fn_type
         == ReactFunctionType::Component
         || func.fn_type == ReactFunctionType::Hook
@@ -1394,8 +1213,6 @@ fn collect_hoistable_and_propagate<'a>(
         temporaries,
         known_immutable_identifiers: &known_immutable_identifiers,
         hoistable_from_optionals,
-        nested_fn_immutable_context: None,
-        assumed_invoked_fns: &assumed_invoked_fns,
     };
 
     let nodes = collect_non_nulls_in_blocks(func, env, &ctx, &mut registry);

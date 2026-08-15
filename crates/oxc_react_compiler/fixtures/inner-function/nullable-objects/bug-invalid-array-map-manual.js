@@ -1,4 +1,5 @@
 function useFoo({arr1, arr2}) {
+  // When arr1 is empty, the callback does not run and arr2 may be null without throwing.
   const cb = e => arr2[0].value + e.value;
   const y = [];
   for (let i = 0; i < arr1.length; i++) {
