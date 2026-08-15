@@ -15,7 +15,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_element_type, has_jsx_prop_ignore_case},
+    utils::{get_element_type, get_jsx_element_name, has_jsx_prop_ignore_case},
 };
 
 fn missing_href_attribute<S: AsRef<str>>(span: Span, valid_attrs: &[S]) -> OxcDiagnostic {
@@ -169,7 +169,11 @@ impl Rule for AnchorIsValid {
             // Don't eagerly get `span` here, to avoid that work unless rule fails
             let get_span = || jsx_el.opening_element.name.span();
 
-            let href_names = self.href_names(ctx);
+            // The *written* tag, not the mapped element type: `settings.react.linkComponents`
+            // is keyed by the component name, which `get_element_type` has already resolved
+            // to `a` via `settings.jsx-a11y.components`.
+            let tag_name = get_jsx_element_name(&jsx_el.opening_element.name);
+            let href_names = self.href_names(ctx, &tag_name);
             let mut has_href = false;
             let mut has_invalid_href = false;
             let mut has_spread_attr = false;
@@ -230,7 +234,7 @@ impl Rule for AnchorIsValid {
 }
 
 impl AnchorIsValid {
-    fn href_names(&self, ctx: &LintContext<'_>) -> Vec<CompactStr> {
+    fn href_names(&self, ctx: &LintContext<'_>, element_name: &str) -> Vec<CompactStr> {
         let mut href_names: Vec<CompactStr> = ctx
             .settings()
             .jsx_a11y
@@ -238,6 +242,13 @@ impl AnchorIsValid {
             .get("href")
             .map_or_else(|| vec![CompactStr::new("href")], Clone::clone);
         href_names.extend(self.special_link.iter().cloned());
+        // A router `Link` declares its destination prop through `settings.react.linkComponents`,
+        // which is where a React project already states it (and what `react/jsx-no-script-url`
+        // reads). Without this, mapping the component to `a` through `settings.jsx-a11y.components`
+        // makes this rule demand an `href` the component never takes.
+        if let Some(link_attrs) = ctx.settings().react.get_link_component_attrs(element_name) {
+            href_names.extend(link_attrs.iter().cloned());
+        }
         href_names
     }
 
@@ -366,6 +377,22 @@ fn test() {
         })
     }
 
+    /// The reporter's config from <https://github.com/oxc-project/oxc/issues/25231>: the router
+    /// `Link` is mapped to `a` for jsx-a11y, and its destination prop is declared once, where a
+    /// React project already declares it.
+    fn link_components_settings() -> serde_json::Value {
+        serde_json::json!({
+            "settings": {
+                "react": {
+                    "linkComponents": [{ "name": "Link", "linkAttribute": "to" }]
+                },
+                "jsx-a11y": {
+                    "components": { "Link": "a" }
+                }
+            }
+        })
+    }
+
     // https://raw.githubusercontent.com/jsx-eslint/eslint-plugin-jsx-a11y/main/__tests__/src/rules/anchor-is-valid-test.js
     let pass = vec![
         (r"<Anchor />", None, None),
@@ -407,6 +434,9 @@ fn test() {
         (r"<Link href='#foo' />", None, Some(components_settings())),
         (r"<Link to='https://example.com' />", None, Some(attributes_settings())),
         (r"<Link to={dest} />", None, Some(attributes_settings())),
+        // Issue: <https://github.com/oxc-project/oxc/issues/25231>
+        (r"<Link to='/somewhere' />", None, Some(link_components_settings())),
+        (r"<Link to={dest} />", None, Some(link_components_settings())),
         (r"<a {...props} />", Some(special_link()), None),
         (r"<a hrefLeft='foo' />", Some(special_link()), None),
         (r"<a hrefLeft={foo} />", Some(special_link()), None),
@@ -617,6 +647,10 @@ fn test() {
         (r"<Link href='#' onClick={() => void 0} />", None, Some(components_settings())),
         (r"<Link />", None, Some(attributes_settings())),
         (r"<Link to='#' />", None, Some(attributes_settings())),
+        // Issue: <https://github.com/oxc-project/oxc/issues/25231>: the declared attribute makes
+        // the anchor valid, it does not stop the other aspects from being checked.
+        (r"<Link />", None, Some(link_components_settings())),
+        (r"<Link to='#' />", None, Some(link_components_settings())),
         (r"<a hrefLeft={undefined} />", Some(special_link()), None),
         (r"<a hrefLeft />", Some(special_link()), None),
         (r"<a hrefLeft={null} />", Some(special_link()), None),
