@@ -23,11 +23,13 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * One of these exists per build. The package entry point picks the build and calls it -
  * callers of the package never reach this directly.
  *
+ * The result is an object so that further outputs (a source map) can be added without a breaking change.
+ *
  * @param state - Created by the entry point, so that all 4 builds share one class and so one object shape
  * @param options - The same options `state` was created from, for the parts only this build acts on
- * @returns Generated code
+ * @returns Object holding the generated code
  */
-export function printSync(node: ESTree.Node, state: State, options: Options): string {
+export function printSync(node: ESTree.Node, state: State, options: Options): { code: string } {
   if (node.type === "Program") {
     printProgram(node, state);
   } else {
@@ -45,7 +47,7 @@ export function printSync(node: ESTree.Node, state: State, options: Options): st
     emitMappings(state, options.sourceMap);
   }
 
-  return state.output;
+  return { code: state.output };
 }
 
 export type { Mapping, Options, Position, SourceMapGenerator } from "./options.ts";

@@ -97,7 +97,7 @@ export function checkFixture(
     // rather than a printer one, and saying so is more use than a diff of printed output.
     expect(errors, "Rust parsed this fixture cleanly but `oxc-parser` did not").toEqual([]);
 
-    const actual = printSync(program, { ts, jsx });
+    const actual = printSync(program, { ts, jsx }).code;
     expect(actual, `preserveParens: ${preserveParens}`).toBe(expected);
     checked = true;
   }

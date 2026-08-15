@@ -26,7 +26,7 @@ import { printSync } from "oxc-codegen";
 import { parseSync } from "oxc-parser";
 
 const { program } = parseSync("input.js", "const answer=6*7");
-const code = printSync(program);
+const { code } = printSync(program);
 
 console.log(code);
 // const answer = 6 * 7;
@@ -57,7 +57,7 @@ const program = {
   ],
 };
 
-console.log(printSync(program));
+console.log(printSync(program).code);
 // console.log("Hello!");
 ```
 
@@ -68,7 +68,7 @@ Set `ts` when the AST can contain TypeScript nodes. For TSX, set both `ts` and `
 ```js
 const { program } = parseSync("component.tsx", "const Box = <T,>(value: T) => <div>{value}</div>");
 
-const code = printSync(program, {
+const { code } = printSync(program, {
   ts: true,
   jsx: true,
 });
@@ -79,7 +79,7 @@ const code = printSync(program, {
 ### `printSync(node, options?)`
 
 ```ts
-function printSync(node: Node, options?: Options): string;
+function printSync(node: Node, options?: Options): { code: string };
 ```
 
 Prints a complete `Program` or a single statement and returns the generated source code.
