@@ -12,7 +12,7 @@ use std::fmt;
 use owo_colors::OwoColorize;
 
 use super::handler::{GraphicalReportHandler, LinkStyle};
-use crate::{Diagnostic, Severity};
+use crate::{Diagnostic, Severity, source_impls::SpanScanner};
 
 impl GraphicalReportHandler {
     /// Render a [`Diagnostic`].
@@ -25,10 +25,82 @@ impl GraphicalReportHandler {
         f: &mut impl fmt::Write,
         diagnostic: &dyn Diagnostic,
     ) -> fmt::Result {
+        let source = diagnostic.source_code();
+        let mut scanner = source.map(|source| SpanScanner::new(source.data(), 1, 1));
+        let source_name = source.and_then(|source| source.name());
+        self.render_report_with_scanner(f, diagnostic, scanner.as_mut(), source_name)
+    }
+
+    /// Render [`Diagnostic`]s in order, reusing line indexes for shared sources.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when writing the rendered reports fails.
+    pub fn render_reports<'a>(
+        &self,
+        f: &mut impl fmt::Write,
+        diagnostics: impl IntoIterator<Item = &'a dyn Diagnostic>,
+    ) -> fmt::Result {
+        let mut scanner: Option<SpanScanner<'a>> = None;
+        for diagnostic in diagnostics {
+            let source = diagnostic.source_code();
+            match source {
+                Some(source)
+                    if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
+                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
+                None => scanner = None,
+            }
+            let source_name = source.and_then(|source| source.name());
+            self.render_report_with_scanner(f, diagnostic, scanner.as_mut(), source_name)?;
+        }
+        Ok(())
+    }
+
+    /// Render [`Diagnostic`]s until `keep` rejects a rendered report.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when writing the rendered reports fails.
+    pub fn render_reports_until<'a>(
+        &self,
+        diagnostics: impl IntoIterator<Item = &'a dyn Diagnostic>,
+        keep: &mut dyn FnMut(&dyn Diagnostic, &str) -> bool,
+    ) -> fmt::Result {
+        let mut scanner: Option<SpanScanner<'a>> = None;
+        let mut output = String::new();
+        for diagnostic in diagnostics {
+            let source = diagnostic.source_code();
+            match source {
+                Some(source)
+                    if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
+                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
+                None => scanner = None,
+            }
+            let source_name = source.and_then(|source| source.name());
+            output.clear();
+            self.render_report_with_scanner(
+                &mut output,
+                diagnostic,
+                scanner.as_mut(),
+                source_name,
+            )?;
+            if !keep(diagnostic, &output) {
+                break;
+            }
+        }
+        Ok(())
+    }
+
+    fn render_report_with_scanner(
+        &self,
+        f: &mut impl fmt::Write,
+        diagnostic: &dyn Diagnostic,
+        scanner: Option<&mut SpanScanner<'_>>,
+        source_name: Option<&str>,
+    ) -> fmt::Result {
         writeln!(f)?;
         self.render_title(f, diagnostic)?;
-        let src = diagnostic.source_code();
-        self.render_snippets(f, diagnostic, src)?;
+        self.render_snippets(f, diagnostic, scanner, source_name)?;
         self.render_footer(f, diagnostic)?;
         Ok(())
     }
@@ -221,7 +293,50 @@ impl GraphicalReportHandler {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
+    use oxc_span::Span;
+
     use super::*;
+    use crate::{Error, GraphicalTheme, NamedSource, OxcDiagnostic};
+
+    #[test]
+    fn batch_render_matches_individual_reports() {
+        let source =
+            Arc::new(NamedSource::new("input.ts", "first();\nsecond();\nthird();\nfourth();\n"));
+        let other_source = Arc::new(NamedSource::new("other.ts", "alpha();\nbeta();\n"));
+        let diagnostics: Vec<Error> = vec![
+            OxcDiagnostic::warn("later")
+                .with_label(Span::new(29, 35))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::error("multi-label")
+                .with_labels([Span::new(0, 5), Span::new(19, 24)])
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::warn("earlier")
+                .with_label(Span::new(9, 15))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::error("without source").into(),
+            OxcDiagnostic::warn("different source")
+                .with_label(Span::new(9, 13))
+                .with_source_code(other_source),
+        ];
+        let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none()).with_links(false);
+
+        let mut expected = String::new();
+        for diagnostic in &diagnostics {
+            handler.render_report(&mut expected, diagnostic.as_ref()).unwrap();
+        }
+
+        let mut actual = String::new();
+        handler
+            .render_reports(
+                &mut actual,
+                diagnostics.iter().map(|diagnostic| diagnostic.as_ref() as &dyn Diagnostic),
+            )
+            .unwrap();
+
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     #[cfg_attr(

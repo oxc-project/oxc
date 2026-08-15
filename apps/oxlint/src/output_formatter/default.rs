@@ -130,6 +130,33 @@ impl DiagnosticReporter for GraphicalReporter {
         self.handler.render_report(&mut output, error.as_ref()).unwrap();
         Some(output)
     }
+
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        let mut output = String::new();
+        self.handler
+            .render_reports(
+                &mut output,
+                errors.iter().map(|error| error.as_ref() as &dyn oxc_diagnostics::Diagnostic),
+            )
+            .unwrap();
+        emit(&output);
+    }
+
+    fn render_errors_until(
+        &mut self,
+        errors: Vec<Error>,
+        keep: &mut dyn FnMut(Option<&str>, &str) -> bool,
+    ) {
+        self.handler
+            .render_reports_until(
+                errors.iter().map(|error| error.as_ref() as &dyn oxc_diagnostics::Diagnostic),
+                &mut |diagnostic, rendered| {
+                    let source_name = diagnostic.source_code().and_then(|source| source.name());
+                    keep(source_name, rendered)
+                },
+            )
+            .unwrap();
+    }
 }
 
 pub(super) fn get_diagnostic_result_output(result: &DiagnosticResult) -> String {

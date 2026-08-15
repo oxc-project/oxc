@@ -18,7 +18,7 @@ use super::{
     span::{FancySpan, LabelRenderMode},
 };
 use crate::{
-    Diagnostic, LabeledSpan, SourceCode,
+    Diagnostic, LabeledSpan,
     source_impls::{SpanContents, SpanScanner},
 };
 
@@ -27,18 +27,15 @@ impl GraphicalReportHandler {
         &self,
         f: &mut impl fmt::Write,
         diagnostic: &dyn Diagnostic,
-        opt_source: Option<&dyn SourceCode>,
+        scanner: Option<&mut SpanScanner<'_>>,
+        source_name: Option<&str>,
     ) -> fmt::Result {
-        let Some(source) = opt_source else { return Ok(()) };
+        let Some(scanner) = scanner else { return Ok(()) };
         let labels = diagnostic.labels();
         if labels.is_empty() {
             return Ok(());
         }
 
-        // Share one forward scan across every span lookup below (one per label
-        // plus one per merge attempt).
-        let mut scanner = SpanScanner::new(source.data(), 1, 1);
-        let source_name = source.name();
         let mut read = |span| scanner.read_span(span);
 
         if let [label] = labels {

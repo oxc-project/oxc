@@ -54,6 +54,32 @@ pub trait DiagnosticReporter {
         true
     }
 
+    /// Render diagnostics in order, delegating to [`render_error`](Self::render_error) by default.
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        for error in errors {
+            if let Some(rendered) = self.render_error(error) {
+                emit(&rendered);
+            }
+        }
+    }
+
+    /// Render diagnostics until `keep` rejects a rendered report.
+    fn render_errors_until(
+        &mut self,
+        errors: Vec<Error>,
+        keep: &mut dyn FnMut(Option<&str>, &str) -> bool,
+    ) {
+        for error in errors {
+            let source_name =
+                error.source_code().and_then(|source| source.name()).map(ToString::to_string);
+            if let Some(rendered) = self.render_error(error)
+                && !keep(source_name.as_deref(), &rendered)
+            {
+                break;
+            }
+        }
+    }
+
     /// Render a diagnostic into this reporter's desired format. For example, a JSONLinesReporter
     /// might return a stringified JSON object on a single line. Returns [`None`] to skip reporting
     /// of this diagnostic.
