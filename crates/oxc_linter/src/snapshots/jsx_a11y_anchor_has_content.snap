@@ -46,6 +46,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
    ╭─[anchor_has_content.tsx:1:1]
+ 1 │ <Anchor />
+   · ──────────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:1]
+ 1 │ <Anchor><TextWrapper aria-hidden /></Anchor>
+   · ────────────────────────────────────────────
+   ╰────
+  help: Provide screen reader accessible content when using `a` elements.
+
+  ⚠ jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
+   ╭─[anchor_has_content.tsx:1:1]
  1 │ <Link />
    · ────────
    ╰────

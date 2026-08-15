@@ -1,39 +1,19 @@
-use oxc_ast::{
-    AstKind,
-    ast::{AssignmentTarget, Expression, MemberExpression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_global_exports_assignment_target, is_global_module_exports},
+};
 
 fn no_exports_assign(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected assignment to 'exports'.")
         .with_label(span)
         .with_help("Use 'module.exports' instead.")
-}
-
-fn is_exports(node: &AssignmentTarget, ctx: &LintContext) -> bool {
-    let AssignmentTarget::AssignmentTargetIdentifier(id) = node else {
-        return false;
-    };
-    id.is_global_reference_name(static_ident!("exports"), ctx.scoping())
-}
-
-fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool {
-    let Some(mem_expr) = expr else {
-        return false;
-    };
-
-    let Some(obj_id) = mem_expr.object().get_identifier_reference() else {
-        return false;
-    };
-
-    mem_expr.static_property_name() == Some("exports")
-        && obj_id.is_global_reference_name(static_ident!("module"), ctx.scoping())
 }
 
 #[derive(Debug, Default, Clone)]
@@ -86,18 +66,24 @@ impl Rule for NoExportsAssign {
             return;
         };
 
-        if !is_exports(&assign_expr.left, ctx) {
+        if !is_global_exports_assignment_target(&assign_expr.left, ctx) {
             return;
         }
 
         if let Expression::AssignmentExpression(assign_expr) = &assign_expr.right
-            && is_module_exports(assign_expr.left.as_member_expression(), ctx)
+            && assign_expr
+                .left
+                .as_member_expression()
+                .is_some_and(|member| is_global_module_exports(member, ctx))
         {
             return;
         }
 
         if let AstKind::AssignmentExpression(assign_expr) = ctx.nodes().parent_kind(node.id())
-            && is_module_exports(assign_expr.left.as_member_expression(), ctx)
+            && assign_expr
+                .left
+                .as_member_expression()
+                .is_some_and(|member| is_global_module_exports(member, ctx))
         {
             return;
         }

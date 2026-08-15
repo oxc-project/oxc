@@ -14,6 +14,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use crate::{
     AstNode,
     ast_util::get_declaration_of_variable,
+    ast_util::variable_declaration_kind,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::is_regexp_callee,
@@ -326,7 +327,7 @@ fn resolve_const_initializer<'a>(
     let declaration = get_declaration_of_variable(ident, ctx.semantic())?;
     let AstKind::VariableDeclarator(decl) = declaration.kind() else { return None };
 
-    if !decl.kind.is_const() || !decl.id.is_binding_identifier() {
+    if !variable_declaration_kind(decl, ctx).is_const() || !decl.id.is_binding_identifier() {
         return None;
     }
 

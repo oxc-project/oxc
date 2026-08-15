@@ -124,7 +124,7 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
                 Expression::new_template_literal(
                     lit.span,
                     ArenaVec::from_iter_in(lit.quasis.iter().cloned(), ctx),
-                    ArenaVec::new_in(ctx),
+                    [],
                     ctx,
                 )
             });

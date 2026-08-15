@@ -23,9 +23,9 @@
 -      *
 -    ) {
 +  slot[name]:not(
-+    [name="skip-to-content"],
-+    [name="navigation-toggle"]
-+  )::slotted(*) {
++      [name="skip-to-content"],
++      [name="navigation-toggle"]
++    )::slotted(*) {
      display: flex;
      background-color: var(--wa-color-surface-default);
    }
@@ -60,9 +60,9 @@ export default css`
   }
 
   slot[name]:not(
-    [name="skip-to-content"],
-    [name="navigation-toggle"]
-  )::slotted(*) {
+      [name="skip-to-content"],
+      [name="navigation-toggle"]
+    )::slotted(*) {
     display: flex;
     background-color: var(--wa-color-surface-default);
   }

@@ -13,8 +13,9 @@ use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::Diagnostics;
 
-use crate::diagnostics::ErrorCategory;
-use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag, Span};
+use crate::diagnostics;
+use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
+use oxc_span::Span;
 
 /// Validates that components used in JSX are not dynamically created during render.
 ///
@@ -37,7 +38,7 @@ pub fn validate_static_components(func: &HirFunction) -> Diagnostics {
 
         // Process instructions
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue_id = instr.lvalue.identifier;
             let value = &instr.value;
 
@@ -63,17 +64,8 @@ pub fn validate_static_components(func: &HirFunction) -> Diagnostics {
                 InstructionValue::JsxExpression { tag: JsxTag::Place(tag_place), .. } => {
                     if let Some(location) = known_dynamic_components.get(&tag_place.identifier) {
                         let location = *location;
-                        let diagnostic = ErrorCategory::StaticComponents
-                            .diagnostic("Cannot create components during render")
-                            .with_help("Components created during render will reset their state each time they are created. Declare components outside of render")
-                            .with_labels(
-                                tag_place
-                                    .span
-                                    .map(|s| s.label("This component is created during render")),
-                            )
-                            .and_labels(location.map(
-                                |s| s.label("The component is created during render here"),
-                            ));
+                        let diagnostic =
+                            diagnostics::static_component_during_render(tag_place.span, location);
                         error.push(diagnostic);
                     }
                 }

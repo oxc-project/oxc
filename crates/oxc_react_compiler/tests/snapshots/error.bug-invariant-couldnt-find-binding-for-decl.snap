@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.bug-invariant-couldnt-find-
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: (BuildHIR::lowerAssignment) Could not find binding for declaration.", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(124), length: 6 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Invariant: (BuildHIR::lowerAssignment) Could not find binding for declaration.", labels: [LabeledSpan { label: None, span: Span { start: 124, end: 130 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

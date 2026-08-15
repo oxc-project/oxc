@@ -23,15 +23,20 @@ jobs:
         with:
           cache-key: warm
           tools: cargo-release-oxc
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
       - run: cargo ck
       - run: cargo release-oxc publish --release crates --dry-run # zizmor: ignore[use-trusted-publishing]
+      - name: Check Codegen package
+        run: |
+          pnpm --filter oxc-codegen build
+          pnpm publish packages/codegen --dry-run --provenance --access public --no-git-checks
 
   prepare:
     if: github.repository == 'oxc-project/oxc'
     name: Prepare Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -48,7 +53,7 @@ jobs:
           cargo release-oxc update --changelog --release crates
           echo "CRATES_VERSION=$(cat ./target/CRATES_VERSION)" >> $GITHUB_OUTPUT
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
 
       # Run NAPI-RS build, because NAPI-RS uses version from `package.json` in the bindings file,
       # which is committed to the repo. The version has just been bumped in previous step.
@@ -58,6 +63,8 @@ jobs:
           pnpm --filter oxc-minify run build-dev
           pnpm --filter oxc-parser run build-dev
           pnpm --filter oxc-transform run build-dev
+          pnpm --filter oxc-transform-react run build-dev
+          pnpm --filter oxc-transform-relay run build-dev
 
       - name: Update Cargo.lock
         run: cargo check

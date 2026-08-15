@@ -23,7 +23,6 @@ doctest = false
 
 [dependencies]
 oxc = { workspace = true, features = ["full"] }
-oxc_ast = { workspace = true, features = ["disable_old_builder"] }
 oxc_tasks_common = { workspace = true }
 oxc_tasks_transform_checker = { workspace = true }
 
@@ -31,7 +30,3 @@ cow-utils = { workspace = true }
 indexmap = { workspace = true }
 pico-args = { workspace = true }
 walkdir = { workspace = true }
-
-# `oxc_ast` is a feature-only dependency, to enable its `disable_old_builder` feature
-[package.metadata.cargo-shear]
-ignored = ["oxc_ast"]

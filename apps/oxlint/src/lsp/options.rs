@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 use serde_json::Value;
 
-use oxc_linter::FixKind;
+use oxc_linter::{FixKind, normalize_rule_name};
 use tracing::error;
 
 #[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, JsonSchema)]
@@ -130,7 +130,7 @@ impl<'de> Deserialize<'de> for RulesCustomization {
                 error!("failed to deserialize customization for rule {rule_name}, skipping.");
                 continue;
             };
-            rules.insert(rule_name.clone(), customization);
+            rules.insert(normalize_rule_name(rule_name), customization);
         }
 
         Ok(Self { rules })
@@ -300,6 +300,21 @@ mod test {
         let eqeqeq = &rules_customization.rules["eqeqeq"];
         assert_eq!(eqeqeq.severity, Some(RuleCustomizationSeverity::Warn));
         assert_eq!(eqeqeq.autofix, None);
+    }
+
+    #[test]
+    fn test_rule_customization_normalizes_rule_name() {
+        let options = LintOptions::try_from(json!({
+            "rulesCustomization": {
+                "eslint/no-unused-vars": {
+                    "severity": "error"
+                }
+            }
+        }))
+        .unwrap();
+
+        let rules_customization = options.rules_customization.unwrap();
+        assert!(rules_customization.rules.contains_key("no-unused-vars"));
     }
 
     #[test]

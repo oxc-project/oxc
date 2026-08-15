@@ -30,12 +30,12 @@
       "markdownDescription": "Environments enable and disable collections of global variables."
     },
     "extends": {
-      "description": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones.",
+      "description": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones.",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Paths of configuration files that this configuration file extends (inherits from). The files\nare resolved relative to the location of the configuration file that contains the `extends`\nproperty. The configuration files are merged from the first to the last, with the last file\noverriding the previous ones."
+      "markdownDescription": "Configurations that this configuration file extends (inherits from).\n\nIn `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration\nfile, resolved relative to the location of the configuration file that contains the\n`extends` property.\n\nIn `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and\npass the configuration object directly:\n\n```ts\nimport { defineConfig } from \"oxlint\";\nimport baseConfig from \"./base-config.ts\";\n\nexport default defineConfig({ extends: [baseConfig] });\n```\n\nConfigurations are merged from the first to the last, with the last configuration\noverriding the previous ones."
     },
     "globals": {
       "description": "Enabled or disabled specific global variables.",
@@ -668,6 +668,21 @@
             "type": "string"
           },
           "markdownDescription": "List of ambiguous words or phrases that should be flagged in anchor text."
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnchorHasContentConfig": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "description": "Additional custom component names to treat as anchor elements.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional custom component names to treat as anchor elements."
         }
       },
       "additionalProperties": false
@@ -2034,6 +2049,15 @@
       },
       "additionalProperties": false
     },
+    "DescriptionFormatConfig": {
+      "type": "object",
+      "properties": {
+        "descriptionFormat": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "Destructure": {
       "oneOf": [
         {
@@ -2091,13 +2115,7 @@
           "$ref": "#/definitions/RequireDescription"
         },
         {
-          "type": "object",
-          "properties": {
-            "descriptionFormat": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
+          "$ref": "#/definitions/DescriptionFormatConfig"
         }
       ]
     },
@@ -2534,6 +2552,29 @@
         },
         "guard-for-in": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "id-denylist": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "additionalItems": {
+                "type": "string"
+              },
+              "minItems": 2,
+              "uniqueItems": true
+            }
+          ]
         },
         "id-length": {
           "anyOf": [
@@ -3350,7 +3391,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "jest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -3523,6 +3581,26 @@
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "jsdoc/no-blank-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoBlankBlocks"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/no-defaults": {
           "anyOf": [
             {
@@ -3544,7 +3622,24 @@
           ]
         },
         "jsdoc/require-param": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/RequireParamConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/require-param-description": {
           "anyOf": [
@@ -3700,7 +3795,24 @@
           ]
         },
         "jsx-a11y/anchor-has-content": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AnchorHasContentConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsx-a11y/anchor-is-valid": {
           "anyOf": [
@@ -5098,7 +5210,25 @@
           ]
         },
         "no-restricted-globals": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+                }
+              ],
+              "additionalItems": {
+                "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+              },
+              "minItems": 2
+            }
+          ]
         },
         "no-restricted-imports": {
           "anyOf": [
@@ -5586,7 +5716,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/NoWarningCommentsConfigJson"
+                  "$ref": "#/definitions/NoWarningCommentsConfig"
                 }
               ],
               "maxItems": 2,
@@ -5613,6 +5743,29 @@
                 }
               ],
               "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "node/exports-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/ExportsStyleMode"
+                },
+                {
+                  "$ref": "#/definitions/ExportsStyleOptions"
+                }
+              ],
+              "maxItems": 3,
               "minItems": 2
             }
           ]
@@ -5709,6 +5862,26 @@
             }
           ]
         },
+        "node/no-top-level-await": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoTopLevelAwaitConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "object-shorthand": {
           "anyOf": [
             {
@@ -5728,6 +5901,26 @@
                 }
               ],
               "maxItems": 3,
+              "minItems": 2
+            }
+          ]
+        },
+        "one-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/OneVar"
+                }
+              ],
+              "maxItems": 2,
               "minItems": 2
             }
           ]
@@ -5765,6 +5958,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "oxc/bad-comparison-sequence": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "oxc/bad-match-all-arg": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "oxc/bad-min-max-func": {
@@ -5970,7 +6166,7 @@
                   "$ref": "#/definitions/PreferDestructuringOption"
                 },
                 {
-                  "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+                  "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
                 }
               ],
               "maxItems": 3,
@@ -6488,6 +6684,26 @@
         },
         "react/forward-ref-uses-ref": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/function-component-definition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/FunctionComponentDefinition"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/hook-use-state": {
           "anyOf": [
@@ -9760,6 +9976,9 @@
         "vitest/padding-around-after-all-blocks": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "vitest/padding-around-test-blocks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "vitest/prefer-called-exactly-once-with": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -9840,7 +10059,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "vitest/prefer-lowercase-title": {
-          "$ref": "#/definitions/DummyRule"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferLowercaseTitleConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "vitest/prefer-mock-promise-shorthand": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -10778,6 +11014,51 @@
         }
       ]
     },
+    "ExportsStyle": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/ExportsStyleMode"
+        },
+        {
+          "$ref": "#/definitions/ExportsStyleOptions"
+        }
+      ],
+      "maxItems": 2,
+      "minItems": 2
+    },
+    "ExportsStyleMode": {
+      "oneOf": [
+        {
+          "description": "Requires `module.exports` and disallows `exports`",
+          "type": "string",
+          "enum": [
+            "module.exports"
+          ],
+          "markdownDescription": "Requires `module.exports` and disallows `exports`"
+        },
+        {
+          "description": "Requires `exports` and disallows `module.exports`",
+          "type": "string",
+          "enum": [
+            "exports"
+          ],
+          "markdownDescription": "Requires `exports` and disallows `module.exports`"
+        }
+      ]
+    },
+    "ExportsStyleOptions": {
+      "type": "object",
+      "properties": {
+        "allowBatchAssign": {
+          "description": "If this option is set to `true`, `module.exports = exports = obj` are allowed.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If this option is set to `true`, `module.exports = exports = obj` are allowed."
+        }
+      },
+      "additionalProperties": false
+    },
     "ExtensionRule": {
       "description": "Extension rule configuration; Copy to avoid extra indirection.",
       "type": "string",
@@ -11193,6 +11474,31 @@
       },
       "additionalProperties": false
     },
+    "FunctionComponentDefinition": {
+      "$ref": "#/definitions/FunctionComponentDefinitionConfig"
+    },
+    "FunctionComponentDefinitionConfig": {
+      "type": "object",
+      "properties": {
+        "namedComponents": {
+          "default": "function-declaration",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NamedComponents"
+            }
+          ]
+        },
+        "unnamedComponents": {
+          "default": "function-expression",
+          "allOf": [
+            {
+              "$ref": "#/definitions/UnnamedComponents"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "GetterReturn": {
       "type": "object",
       "properties": {
@@ -11212,6 +11518,24 @@
         "type": "string"
       },
       "markdownDescription": "A set of glob patterns.\nPatterns are matched against paths relative to the configuration file's directory."
+    },
+    "GlobalNameOrObject": {
+      "anyOf": [
+        {
+          "description": "The name of a restricted global.",
+          "type": "string",
+          "markdownDescription": "The name of a restricted global."
+        },
+        {
+          "description": "A restricted global with an optional custom message.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/RestrictedGlobal"
+            }
+          ],
+          "markdownDescription": "A restricted global with an optional custom message."
+        }
+      ]
     },
     "GlobalValue": {
       "type": "string",
@@ -11326,6 +11650,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "IdDenylist": {
+      "type": "array",
+      "additionalItems": {
+        "type": "string"
+      },
+      "uniqueItems": true
     },
     "IdLengthConfig": {
       "type": "object",
@@ -12422,10 +12753,23 @@
       }
     },
     "Location": {
-      "type": "string",
-      "enum": [
-        "start",
-        "anywhere"
+      "oneOf": [
+        {
+          "description": "Terms must appear at the start of the comment, after any decoration.",
+          "type": "string",
+          "enum": [
+            "start"
+          ],
+          "markdownDescription": "Terms must appear at the start of the comment, after any decoration."
+        },
+        {
+          "description": "Terms can appear anywhere in the comment.",
+          "type": "string",
+          "enum": [
+            "anywhere"
+          ],
+          "markdownDescription": "Terms can appear anywhere in the comment."
+        }
       ]
     },
     "LogicalAssignmentOperators": {
@@ -12886,6 +13230,14 @@
             "prefer-inline"
           ],
           "markdownDescription": "Prefer `import { type Foo } from 'foo'` for type imports."
+        },
+        {
+          "description": "Prefer `import type { Foo } from 'foo'` when all named imports are types, but allow\n`import { type Foo, bar } from 'foo'` when value imports are present.",
+          "type": "string",
+          "enum": [
+            "prefer-top-level-if-only-type-imports"
+          ],
+          "markdownDescription": "Prefer `import type { Foo } from 'foo'` when all named imports are types, but allow\n`import { type Foo, bar } from 'foo'` when value imports are present."
         }
       ]
     },
@@ -13016,6 +13368,27 @@
       ],
       "markdownDescription": "Name specifier that can be a single string or array of strings"
     },
+    "NamedComponentStyle": {
+      "type": "string",
+      "enum": [
+        "function-declaration",
+        "arrow-function",
+        "function-expression"
+      ]
+    },
+    "NamedComponents": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NamedComponentStyle"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NamedComponentStyle"
+          }
+        }
+      ]
+    },
     "NamedExports": {
       "type": "string",
       "enum": [
@@ -13035,6 +13408,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "Namespaces": {
+      "oneOf": [
+        {
+          "description": "Allow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "allow"
+          ],
+          "markdownDescription": "Allow declarations directly inside TypeScript namespace or module bodies."
+        },
+        {
+          "description": "Disallow declarations directly inside TypeScript namespace or module bodies.",
+          "type": "string",
+          "enum": [
+            "disallow"
+          ],
+          "markdownDescription": "Disallow declarations directly inside TypeScript namespace or module bodies."
+        }
+      ]
     },
     "NativeAllowList": {
       "anyOf": [
@@ -13393,6 +13786,18 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true` the `int32Hint` option allows the use of bitwise OR in |0\npattern for type casting.\n\nFor example with `{ \"int32Hint\": true }` the following is permitted:\n\n```javascript\nconst b = a|0;\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoBlankBlocks": {
+      "type": "object",
+      "properties": {
+        "enableFixer": {
+          "description": "Whether to automatically remove blank JSDoc blocks.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to automatically remove blank JSDoc blocks."
         }
       },
       "additionalProperties": false
@@ -13812,7 +14217,7 @@
       "properties": {
         "allowIndirect": {
           "description": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain."
         }
@@ -14116,6 +14521,16 @@
             }
           ],
           "markdownDescription": "Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior)."
+        },
+        "namespaces": {
+          "description": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/Namespaces"
+            }
+          ],
+          "markdownDescription": "Controls whether declarations directly inside TypeScript namespace or module bodies are allowed."
         }
       },
       "additionalProperties": false
@@ -14233,7 +14648,7 @@
       "properties": {
         "skipComments": {
           "description": "Whether to skip irregular whitespace in comments.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to skip irregular whitespace in comments."
         },
@@ -14286,7 +14701,7 @@
       "type": "object",
       "properties": {
         "allowedSnapshots": {
-          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions.",
+          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead.",
           "default": {},
           "type": "object",
           "additionalProperties": {
@@ -14295,11 +14710,11 @@
               "type": "string"
             }
           },
-          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions."
+          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead."
         },
         "inlineMaxSize": {
           "description": "Maximum number of lines allowed for inline snapshots.",
-          "default": 50,
+          "default": null,
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0,
@@ -14812,7 +15227,6 @@
       "properties": {
         "allow": {
           "description": "These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.\nA common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,\nso statically importing it would lead to root directory conflicts, especially with `resolveJsonModule` enabled.\nYou can also use it to allow importing any JSON if your environment doesn't support JSON modules, or use it for other cases where `import` statements cannot work.\n\nWith `{ allow: ['/package\\\\.json$'] }`:\n\nExamples of **correct** code for this rule:\n```ts\nconsole.log(require('../package.json').version);\n```",
-          "default": [],
           "type": "array",
           "items": {
             "type": "string"
@@ -14943,6 +15357,58 @@
         }
       },
       "additionalProperties": false
+    },
+    "NoRestrictedGlobalsConfigEnum": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/RestrictedGlobal"
+        },
+        {
+          "$ref": "#/definitions/NoRestrictedGlobalsObjectConfig"
+        }
+      ]
+    },
+    "NoRestrictedGlobalsConfigValue": {
+      "additionalItems": {
+        "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
+      }
+    },
+    "NoRestrictedGlobalsObjectConfig": {
+      "description": "Object form of the configuration, which additionally allows detecting\nrestricted globals accessed via global objects.",
+      "type": "object",
+      "required": [
+        "globals"
+      ],
+      "properties": {
+        "checkGlobalObject": {
+          "description": "Whether to also detect restricted globals accessed via global objects. Default is `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also detect restricted globals accessed via global objects. Default is `false`."
+        },
+        "globalObjects": {
+          "description": "Additional global object names to check when `checkGlobalObject` is enabled.\nBy default, the rule checks these global objects: `globalThis`, `self`, and `window`.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional global object names to check when `checkGlobalObject` is enabled.\nBy default, the rule checks these global objects: `globalThis`, `self`, and `window`."
+        },
+        "globals": {
+          "description": "The restricted globals, as names or `{ \"name\", \"message\" }` objects.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GlobalNameOrObject"
+          },
+          "markdownDescription": "The restricted globals, as names or `{ \"name\", \"message\" }` objects."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Object form of the configuration, which additionally allows detecting\nrestricted globals accessed via global objects."
     },
     "NoRestrictedImportsConfig": {
       "type": "object",
@@ -15230,6 +15696,18 @@
       },
       "additionalProperties": false
     },
+    "NoTopLevelAwaitConfig": {
+      "type": "object",
+      "properties": {
+        "ignoreBin": {
+          "description": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "If `true`, top-level `await` is allowed in files that start with a\nhashbang (`#!`), which marks them as executable scripts rather than\nimportable modules."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoTypeofUndefined": {
       "type": "object",
       "properties": {
@@ -15385,20 +15863,20 @@
       "type": "object",
       "properties": {
         "allowConstantLoopConditions": {
-          "description": "Whether to allow constant loop conditions.\n`true` is treated as `\"always\"`, `false` as `\"never\"`.",
+          "description": "Controls which constant conditions are allowed in `while`, `do...while`, and `for` loops.\n\n- `\"never\"` (or `false`) reports all constant loop conditions.\n- `\"always\"` (or `true`) allows conditions whose type is the literal type `true`, such as\n`while (true)` or `while (variable)` when `variable` has type `true`.\n- `\"only-allowed-literals\"` allows only the literal expressions `true`, `false`, `0`, and\n`1`. Variables whose types are those literal types are still reported.",
           "default": "never",
           "allOf": [
             {
               "$ref": "#/definitions/AllowConstantLoopConditions"
             }
           ],
-          "markdownDescription": "Whether to allow constant loop conditions.\n`true` is treated as `\"always\"`, `false` as `\"never\"`."
+          "markdownDescription": "Controls which constant conditions are allowed in `while`, `do...while`, and `for` loops.\n\n- `\"never\"` (or `false`) reports all constant loop conditions.\n- `\"always\"` (or `true`) allows conditions whose type is the literal type `true`, such as\n`while (true)` or `while (variable)` when `variable` has type `true`.\n- `\"only-allowed-literals\"` allows only the literal expressions `true`, `false`, `0`, and\n`1`. Variables whose types are those literal types are still reported."
         },
         "checkTypePredicates": {
-          "description": "Whether to check type predicate functions.",
+          "description": "Whether to check arguments passed to type predicate and assertion functions.\n\nWhen enabled, the rule reports a call if the argument already satisfies the predicate or\nif an assertion function receives an argument that is always truthy or always falsy.\n\nFor example, `narrow(value)` is unnecessary because `value` already has type `true`:\n\n```ts\ndeclare const narrow: (value: unknown) => value is true;\nconst value = true;\nif (narrow(value)) {\n// ...\n}\n```",
           "default": false,
           "type": "boolean",
-          "markdownDescription": "Whether to check type predicate functions."
+          "markdownDescription": "Whether to check arguments passed to type predicate and assertion functions.\n\nWhen enabled, the rule reports a call if the argument already satisfies the predicate or\nif an assertion function receives an argument that is always truthy or always falsy.\n\nFor example, `narrow(value)` is unnecessary because `value` already has type `true`:\n\n```ts\ndeclare const narrow: (value: unknown) => value is true;\nconst value = true;\nif (narrow(value)) {\n// ...\n}\n```"
         }
       },
       "additionalProperties": false
@@ -15650,13 +16128,13 @@
           "markdownDescription": "Controls how unused arguments are checked."
         },
         "argsIgnorePattern": {
-          "description": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```",
+          "description": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, names starting with `_` are ignored, except for the bare `_`\nparameter. If options are configured with an object, this will default\nto [`None`]. Note that this behavior deviates from both ESLint and\nTypeScript-ESLint, which never provide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```",
           "allOf": [
             {
               "$ref": "#/definitions/IgnorePattern_for_String"
             }
           ],
-          "markdownDescription": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```"
+          "markdownDescription": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, names starting with `_` are ignored, except for the bare `_`\nparameter. If options are configured with an object, this will default\nto [`None`]. Note that this behavior deviates from both ESLint and\nTypeScript-ESLint, which never provide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```"
         },
         "caughtErrors": {
           "description": "Used for `catch` block validation.",
@@ -15903,23 +16381,41 @@
       },
       "additionalProperties": false
     },
-    "NoWarningCommentsConfigJson": {
+    "NoWarningCommentsConfig": {
       "type": "object",
       "properties": {
         "decoration": {
+          "description": "An array of characters to ignore at the start of comments when `location` is `\"start\"`.\n\nUseful for ignoring common comment decorations like `*` in JSDoc-style comments.",
+          "default": [],
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "uniqueItems": true,
+          "markdownDescription": "An array of characters to ignore at the start of comments when `location` is `\"start\"`.\n\nUseful for ignoring common comment decorations like `*` in JSDoc-style comments."
         },
         "location": {
-          "$ref": "#/definitions/Location"
+          "description": "Where to check for the terms.",
+          "default": "start",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Location"
+            }
+          ],
+          "markdownDescription": "Where to check for the terms."
         },
         "terms": {
+          "description": "An array of terms to match. The matching is case-insensitive.",
+          "default": [
+            "todo",
+            "fixme",
+            "xxx"
+          ],
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "An array of terms to match. The matching is case-insensitive."
         }
       },
       "additionalProperties": false
@@ -16175,6 +16671,153 @@
         }
       ]
     },
+    "OneVar": {
+      "description": "Enforces consistent grouping of variable declarations.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OneVarConfig"
+        }
+      ],
+      "markdownDescription": "Enforces consistent grouping of variable declarations."
+    },
+    "OneVarConfig": {
+      "description": "Configuration accepted by the `one-var` rule.",
+      "anyOf": [
+        {
+          "description": "Applies one grouping mode to every declaration kind and initialization state.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Applies one grouping mode to every declaration kind and initialization state."
+        },
+        {
+          "description": "Configures grouping by declaration kind or initialization state.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarOptions"
+            }
+          ],
+          "markdownDescription": "Configures grouping by declaration kind or initialization state."
+        }
+      ],
+      "markdownDescription": "Configuration accepted by the `one-var` rule."
+    },
+    "OneVarMode": {
+      "description": "Controls how variable declarators are grouped into declarations.",
+      "oneOf": [
+        {
+          "description": "Requires one declaration per variable kind in each applicable scope.",
+          "type": "string",
+          "enum": [
+            "always"
+          ],
+          "markdownDescription": "Requires one declaration per variable kind in each applicable scope."
+        },
+        {
+          "description": "Requires each declarator to have its own declaration statement.",
+          "type": "string",
+          "enum": [
+            "never"
+          ],
+          "markdownDescription": "Requires each declarator to have its own declaration statement."
+        },
+        {
+          "description": "Requires adjacent declarations of the same kind to be combined.",
+          "type": "string",
+          "enum": [
+            "consecutive"
+          ],
+          "markdownDescription": "Requires adjacent declarations of the same kind to be combined."
+        }
+      ],
+      "markdownDescription": "Controls how variable declarators are grouped into declarations."
+    },
+    "OneVarOptions": {
+      "description": "Options for configuring declaration grouping by kind or initialization state.\n\n`initialized` and `uninitialized` take precedence over the per-kind option for the\ncorresponding declarators.",
+      "type": "object",
+      "properties": {
+        "awaitUsing": {
+          "description": "Controls grouping for `await using` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `await using` declarations."
+        },
+        "const": {
+          "description": "Controls grouping for `const` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `const` declarations."
+        },
+        "initialized": {
+          "description": "Controls grouping for initialized declarators, overriding per-kind options.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for initialized declarators, overriding per-kind options."
+        },
+        "let": {
+          "description": "Controls grouping for `let` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `let` declarations."
+        },
+        "separateRequires": {
+          "description": "Keeps direct `require(...)` initializers separate from other initialized declarations.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Keeps direct `require(...)` initializers separate from other initialized declarations."
+        },
+        "uninitialized": {
+          "description": "Controls grouping for uninitialized declarators, overriding per-kind options.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for uninitialized declarators, overriding per-kind options."
+        },
+        "using": {
+          "description": "Controls grouping for `using` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `using` declarations."
+        },
+        "var": {
+          "description": "Controls grouping for `var` declarations.",
+          "default": null,
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneVarMode"
+            }
+          ],
+          "markdownDescription": "Controls grouping for `var` declarations."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Options for configuring declaration grouping by kind or initialization state.\n\n`initialized` and `uninitialized` take precedence over the per-kind option for the\ncorresponding declarators."
+    },
     "OnlyExportComponentsConfig": {
       "type": "object",
       "properties": {
@@ -16249,11 +16892,12 @@
       "type": "object",
       "properties": {
         "ignoreProps": {
-          "default": [],
+          "description": "Prop names to ignore, as regular expression patterns.",
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "Prop names to ignore, as regular expression patterns."
         }
       },
       "additionalProperties": false
@@ -16892,11 +17536,25 @@
           "$ref": "#/definitions/PreferDestructuringOption"
         },
         {
-          "$ref": "#/definitions/PreferDestructuringRenamedPropertiesConfig"
+          "$ref": "#/definitions/PreferDestructuringEnforcementConfig"
         }
       ],
       "maxItems": 2,
       "minItems": 2
+    },
+    "PreferDestructuringEnforcementConfig": {
+      "type": "object",
+      "properties": {
+        "enforceForDeclarationWithTypeAnnotation": {
+          "default": false,
+          "type": "boolean"
+        },
+        "enforceForRenamedProperties": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     },
     "PreferDestructuringOption": {
       "anyOf": [
@@ -16907,16 +17565,6 @@
           "$ref": "#/definitions/PreferDestructuringAssignmentConfig"
         }
       ]
-    },
-    "PreferDestructuringRenamedPropertiesConfig": {
-      "type": "object",
-      "properties": {
-        "enforceForRenamedProperties": {
-          "default": false,
-          "type": "boolean"
-        }
-      },
-      "additionalProperties": false
     },
     "PreferDestructuringTargetOption": {
       "type": "object",
@@ -17065,6 +17713,42 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, allows bitwise expressions in enum member initializers.\nThis includes bitwise NOT (`~`), AND (`&`), OR (`|`), XOR (`^`), and shift operators (`<<`, `>>`, `>>>`)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferLowercaseTitleConfig": {
+      "type": "object",
+      "properties": {
+        "allowedPrefixes": {
+          "description": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with. This can be useful when writing tests for API endpoints, where\nyou'd like to prefix with the HTTP method.\nBy default, nothing is allowed (the equivalent of `{ \"allowedPrefixes\": [] }`).\n\nExample of **correct** code for the `{ \"allowedPrefixes\": [\"GET\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"allowedPrefixes\": [\"GET\"] }] */\ndescribe('GET /live');\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option allows specifying prefixes, which contain capitals that titles\ncan start with. This can be useful when writing tests for API endpoints, where\nyou'd like to prefix with the HTTP method.\nBy default, nothing is allowed (the equivalent of `{ \"allowedPrefixes\": [] }`).\n\nExample of **correct** code for the `{ \"allowedPrefixes\": [\"GET\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"allowedPrefixes\": [\"GET\"] }] */\ndescribe('GET /live');\n```"
+        },
+        "ignore": {
+          "description": "This array option controls which Jest or Vitest functions are checked by this rule. There\nare four possible values:\n- `\"describe\"`\n- `\"test\"`\n- `\"it\"`\n- `\"bench\"`\n\nBy default, none of these options are enabled (the equivalent of\n`{ \"ignore\": [] }`).\n\nExample of **correct** code for the `{ \"ignore\": [\"describe\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"describe\"] }] */\ndescribe('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"test\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"test\"] }] */\ntest('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"it\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"it\"] }] */\nit('Uppercase description');\n```",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "This array option controls which Jest or Vitest functions are checked by this rule. There\nare four possible values:\n- `\"describe\"`\n- `\"test\"`\n- `\"it\"`\n- `\"bench\"`\n\nBy default, none of these options are enabled (the equivalent of\n`{ \"ignore\": [] }`).\n\nExample of **correct** code for the `{ \"ignore\": [\"describe\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"describe\"] }] */\ndescribe('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"test\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"test\"] }] */\ntest('Uppercase description');\n```\n\nExample of **correct** code for the `{ \"ignore\": [\"it\"] }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignore\": [\"it\"] }] */\nit('Uppercase description');\n```"
+        },
+        "ignoreTopLevelDescribe": {
+          "description": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.\n\nExample of **correct** code for the `{ \"ignoreTopLevelDescribe\": true }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignoreTopLevelDescribe\": true }] */\ndescribe('MyClass', () => {\ndescribe('#myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to allow only the top-level `describe` blocks to have a\ntitle starting with an upper-case letter.\n\nExample of **correct** code for the `{ \"ignoreTopLevelDescribe\": true }` option:\n```js\n/* jest/prefer-lowercase-title: [\"error\", { \"ignoreTopLevelDescribe\": true }] */\ndescribe('MyClass', () => {\ndescribe('#myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```"
+        },
+        "lowercaseFirstCharacterOnly": {
+          "description": "This option can be set to only validate that the first character of a test name is lowercased.\n\nExample of **correct** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('myClass', () => {\ndescribe('myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```\n\nExample of **incorrect** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('MyClass', () => {\ndescribe('MyMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "This option can be set to only validate that the first character of a test name is lowercased.\n\nExample of **correct** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('myClass', () => {\ndescribe('myMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```\n\nExample of **incorrect** code for the `{ \"lowercaseFirstCharacterOnly\": true }` option:\n```js\n/* vitest/prefer-lowercase-title: [\"error\", { \"lowercaseFirstCharacterOnly\": true }] */\ndescribe('MyClass', () => {\ndescribe('MyMethod', () => {\nit('does things', () => {\n//\n});\n});\n});\n```"
         }
       },
       "additionalProperties": false
@@ -17543,11 +18227,38 @@
     "ReactCompilerConfig": {
       "type": "object",
       "properties": {
+        "environment": {
+          "description": "React Compiler environment options supported by this rule.",
+          "default": {
+            "validateNoCapitalizedCalls": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReactCompilerEnvironmentConfig"
+            }
+          ],
+          "markdownDescription": "React Compiler environment options supported by this rule."
+        },
         "reportAllBailouts": {
           "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReactCompilerEnvironmentConfig": {
+      "type": "object",
+      "properties": {
+        "validateNoCapitalizedCalls": {
+          "description": "Additional capitalized global functions that are known not to be React\ncomponents. These names will not be reported by `CapitalizedCalls`.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional capitalized global functions that are known not to be React\ncomponents. These names will not be reported by `CapitalizedCalls`."
         }
       },
       "additionalProperties": false
@@ -17716,6 +18427,83 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Also require type parameters for `importActual` and `importMock`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "RequireParamConfig": {
+      "type": "object",
+      "properties": {
+        "checkConstructors": {
+          "description": "Whether to check constructor methods.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check constructor methods."
+        },
+        "checkDestructured": {
+          "description": "Whether to check destructured parameters.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters."
+        },
+        "checkDestructuredRoots": {
+          "description": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check destructured parameters when you have code like\n`function doSomething({ a, b }) { ... }`. Because there is no named\nparameter in this example, when this option is `true` you must\nhave a `@param` tag that corresponds to `{a, b}`."
+        },
+        "checkGetters": {
+          "description": "Whether to check getter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check getter methods."
+        },
+        "checkRestProperty": {
+          "description": "Whether to check rest properties.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to check rest properties."
+        },
+        "checkSetters": {
+          "description": "Whether to check setter methods.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to check setter methods."
+        },
+        "checkTypesPattern": {
+          "description": "Regex pattern to match types that exempt parameters from checking.",
+          "default": "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$",
+          "type": "string",
+          "markdownDescription": "Regex pattern to match types that exempt parameters from checking."
+        },
+        "exemptedBy": {
+          "description": "List of JSDoc tags that exempt functions from `@param` checking.",
+          "default": [
+            "inheritdoc"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of JSDoc tags that exempt functions from `@param` checking."
+        },
+        "ignoreWhenAllParamsMissing": {
+          "description": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` to ignore reporting when all params are missing. Defaults to `false`."
+        },
+        "interfaceExemptsParamsCheck": {
+          "description": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set if you wish TypeScript interfaces to exempt checks for the existence of `@param`'s.\nWill check for a type defining the function itself (on a variable declaration) or if there is a single destructured object with a type. Defaults to `false`."
+        },
+        "useDefaultObjectProperties": {
+          "description": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Set to `true` if you wish to expect documentation of properties on objects supplied as default values. Defaults to `false`."
         }
       },
       "additionalProperties": false
@@ -18002,6 +18790,27 @@
         }
       },
       "additionalProperties": false
+    },
+    "RestrictedGlobal": {
+      "description": "A restricted global with an optional custom message.",
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "message": {
+          "description": "A custom message shown when the restricted global is used.",
+          "type": "string",
+          "markdownDescription": "A custom message shown when the restricted global is used."
+        },
+        "name": {
+          "description": "The name of the restricted global.",
+          "type": "string",
+          "markdownDescription": "The name of the restricted global."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "A restricted global with an optional custom message."
     },
     "RestrictedPath": {
       "type": "object",
@@ -18681,6 +19490,26 @@
         }
       },
       "additionalProperties": false
+    },
+    "UnnamedComponentStyle": {
+      "type": "string",
+      "enum": [
+        "arrow-function",
+        "function-expression"
+      ]
+    },
+    "UnnamedComponents": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/UnnamedComponentStyle"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UnnamedComponentStyle"
+          }
+        }
+      ]
     },
     "UseIsnan": {
       "type": "object",

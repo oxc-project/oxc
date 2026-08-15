@@ -37,6 +37,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeParameters(tsgolint),
     typescript,
     suspicious,
+    pending,
     version = "1.49.0",
     short_description = "Disallow type parameters that are declared but not meaningfully used.",
 );

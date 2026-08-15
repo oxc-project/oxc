@@ -19,7 +19,7 @@ use crate::{
     frameworks::FrameworkOptions,
     rule::{Rule, TupleRuleConfig},
     utils::{
-        find_property, for_each_define_props_type_signature,
+        deserialize_regex_vec, find_property, for_each_define_props_type_signature,
         is_vue_component_options_object_excluding_instance, vue_casing,
     },
 };
@@ -46,16 +46,18 @@ impl CaseType {
     }
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 pub struct PropNameCasing(Box<Config>);
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct Options {
-    ignore_props: Vec<String>,
+    /// Prop names to ignore, as regular expression patterns.
+    #[serde(default, deserialize_with = "deserialize_regex_vec")]
+    ignore_props: Vec<Regex>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct Config(CaseType, Options);
 
@@ -233,22 +235,8 @@ fn check_case(s: &str, case_type: CaseType) -> bool {
     }
 }
 
-/// Matches upstream `toRegExpGroupMatcher`: a pattern wrapped in slashes
-/// (`/foo/`) is treated as a regular expression; everything else is a
-/// literal string compare.
-fn is_ignored(name: &str, patterns: &[String]) -> bool {
-    for pattern in patterns {
-        let bytes = pattern.as_bytes();
-        if bytes.len() >= 2 && bytes[0] == b'/' && bytes[bytes.len() - 1] == b'/' {
-            let inner = &pattern[1..pattern.len() - 1];
-            if Regex::new(inner).is_ok_and(|re| re.is_match(name)) {
-                return true;
-            }
-        } else if pattern == name {
-            return true;
-        }
-    }
-    false
+fn is_ignored(name: &str, ignore_props: &[Regex]) -> bool {
+    ignore_props.iter().any(|regex| regex.is_match(name))
 }
 
 #[test]
@@ -662,7 +650,7 @@ fn test() {
                     </script>
                   ",
             Some(
-                serde_json::json!([ "camelCase", { "ignoreProps": ["ignored_prop", "/^ignored-pattern-/"] } ]),
+                serde_json::json!([ "camelCase", { "ignoreProps": ["ignored_prop", "^ignored-pattern-"] } ]),
             ),
             None,
             Some(PathBuf::from("test.vue")),
@@ -930,7 +918,7 @@ fn test() {
                     </script>
                   ",
             Some(
-                serde_json::json!(["camelCase", { "ignoreProps": ["ignored_prop", "/^pattern-/"] }]),
+                serde_json::json!(["camelCase", { "ignoreProps": ["ignored_prop", "^pattern-"] }]),
             ),
             None,
             Some(PathBuf::from("test.vue")),
@@ -944,7 +932,7 @@ fn test() {
                     </script>
                   ",
             Some(
-                serde_json::json!(["camelCase", { "ignoreProps": ["ignored_prop", "/^pattern-/"] }]),
+                serde_json::json!(["camelCase", { "ignoreProps": ["ignored_prop", "^pattern-"] }]),
             ),
             None,
             Some(PathBuf::from("test.vue")),

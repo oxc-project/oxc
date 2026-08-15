@@ -1,7 +1,10 @@
 use oxc_allocator::{ArenaBox, CloneIn, GetAllocator};
-use oxc_ast::ast::{
-    ArrowFunctionExpression, Expression, FormalParameter, Function, Statement, TSType,
-    TSTypeAnnotation, UnaryExpression,
+use oxc_ast::{
+    ast::{
+        ArrowFunctionBody, ArrowFunctionExpression, Expression, FormalParameter, Function, TSType,
+        TSTypeAnnotation, UnaryExpression,
+    },
+    match_expression,
 };
 use oxc_span::SPAN;
 
@@ -116,16 +119,15 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        if function.expression
-            && let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first()
-        {
-            return self
-                .infer_type_from_expression(&stmt.expression)
-                .map(|type_annotation| TSTypeAnnotation::boxed(SPAN, type_annotation, self));
+        match &function.body {
+            ArrowFunctionBody::FunctionBody(function_body) => {
+                FunctionReturnType::infer(self, function_body)
+                    .map(|type_annotation| TSTypeAnnotation::boxed(SPAN, type_annotation, self))
+            }
+            expression @ match_expression!(ArrowFunctionBody) => self
+                .infer_type_from_expression(expression.to_expression())
+                .map(|type_annotation| TSTypeAnnotation::boxed(SPAN, type_annotation, self)),
         }
-
-        FunctionReturnType::infer(self, &function.body)
-            .map(|type_annotation| TSTypeAnnotation::boxed(SPAN, type_annotation, self))
     }
 
     pub(crate) fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {

@@ -409,13 +409,16 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         debug_assert!(size >= requested_layout.size());
         debug_assert!(size > 0);
 
+        // Mark the upcoming allocation as a chunk operation, so the allocation-tracking
+        // task can exclude it from its heap metrics. Must be set immediately before the
+        // `alloc` call, with no allocations in between.
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        crate::tracking::start_chunk_operation();
+
         // Allocate memory for the chunk.
         // SAFETY: `layout` has non-zero size.
         let start_ptr = unsafe { alloc::alloc(layout) };
         let start_ptr = NonNull::new(start_ptr)?;
-
-        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
-        crate::tracking::record_chunk_allocation();
 
         // The `ChunkFooter` is at the end of the chunk.
         // SAFETY: We allocated `new_size_without_footer + CHUNK_FOOTER_SIZE` bytes, starting at `start_ptr`,

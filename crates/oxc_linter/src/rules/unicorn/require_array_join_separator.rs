@@ -75,27 +75,14 @@ impl Rule for RequireArrayJoinSeparator {
                 )),
                 |fixer| {
                     // after end of `join`, find the `(` and insert `","`
-                    let open_bracket = ctx
-                        .source_range(call_expr.span)
-                        .chars()
-                        .skip(member_expr.span().size() as usize)
-                        .position(|c| c == '(');
+                    let callee_end = member_expr.span().end;
+                    let Some(offset) =
+                        ctx.find_next_token_within(callee_end, call_expr.span.end, "(")
+                    else {
+                        return fixer.noop();
+                    };
 
-                    if let Some(open_bracket) = open_bracket {
-                        #[expect(clippy::cast_possible_truncation)]
-                        fixer.insert_text_after_range(
-                            Span::new(
-                                0,
-                                call_expr.span.start
-                                    + member_expr.span().size()
-                                    + open_bracket as u32
-                                    + 1,
-                            ),
-                            r#"",""#,
-                        )
-                    } else {
-                        fixer.noop()
-                    }
+                    fixer.insert_text_after_range(Span::empty(callee_end + offset + 1), r#"",""#)
                 },
             );
         }
@@ -206,6 +193,11 @@ fn test() {
         (r"Array.prototype.join.call(foo)", r#"Array.prototype.join.call(foo, ",")"#),
         (r"Array.prototype.join.call(foo, )", r#"Array.prototype.join.call(foo, ",", )"#),
         (r"foo?.join()", r#"foo?.join(",")"#),
+        // a multi-byte callee must not shift the search for `(`
+        ("аrr.join()", r#"аrr.join(",")"#),
+        ("foo.ä.join()", r#"foo.ä.join(",")"#),
+        // a `(` inside a comment is not the start of the arguments
+        ("foo.join/* ( */()", r#"foo.join/* ( */(",")"#),
     ];
 
     Tester::new(RequireArrayJoinSeparator::NAME, RequireArrayJoinSeparator::PLUGIN, pass, fail)

@@ -1,0 +1,15 @@
+single-paragraph:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+paragraphs:
+  aaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbb
+  ccccccccccccccccccccccccccc ddddddddddddddddddddddddddd
+
+  second paragraph
+? a
+  true
+: null d
+? keep
+
+  paragraph key
+: explicit stays

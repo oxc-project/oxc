@@ -1,6 +1,8 @@
 // 1. Long `&&` chain whose final JSX operand has a `(`-trailing inline `//`
-//    comment. The chain must break because the inline comment forces a newline
-//    that pushes the collapsed line past `printWidth`.
+//    comment. The chain must break because the inline comment forces a newline.
+//    The break is structural, not width-driven: the comment rides a `line_suffix`
+//    and never counts toward `printWidth` (case 3 breaks the same way with a
+//    tiny comment).
 const A = () => (
   <div>
     {someLongConditionA &&

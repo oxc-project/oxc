@@ -51,8 +51,8 @@ fn get_statement_span(stmt: &Statement<'_>) -> u32 {
                 export.span.start
             }
         }
-        Statement::ExportNamedDeclaration(export) => {
-            if let Some(Declaration::ClassDeclaration(class)) = &export.declaration
+        Statement::ExportDeclaration(export) => {
+            if let Declaration::ClassDeclaration(class) = &export.declaration
                 && let Some(decorator) = class.decorators.first()
             {
                 min(decorator.span.start, export.span.start)

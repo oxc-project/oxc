@@ -1,12 +1,16 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::IndentWidth;
-use oxc_span::GetSpan;
+use oxc_formatter_core::{
+    FormatElement, IndentWidth, dispatch_fragment_ir, format_element::TextWidth,
+};
 
 use crate::{
     ast_nodes::AstNode,
-    format_args,
-    formatter::{FormatElement, format_element::TextWidth, prelude::*},
+    embed_context::CssInJsTemplate,
+    formatter::prelude::*,
+    print::template::{
+        FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
+    },
     write,
 };
 
@@ -50,18 +54,7 @@ pub(super) fn format_css_doc<'a>(
             return true;
         }
 
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-            allocator,
-            group_id_builder,
-            "css",
-            &[raw],
-        ) else {
-            return false;
-        };
-        result.remap_tailwind_into(f.context_mut());
-        let Some(ir) = result.docs.into_iter().next() else {
+        let Some(ir) = dispatch_fragment_ir(f, "css", raw, Some(&CssInJsTemplate)) else {
             return false;
         };
 
@@ -87,18 +80,7 @@ pub(super) fn format_css_doc<'a>(
     };
 
     // Phase 2: Format via the dispatcher (IR path)
-    let allocator = f.allocator();
-    let group_id_builder = f.group_id_builder();
-    let Some(Ok(mut result)) = f.context().external_callbacks().dispatch_embedded(
-        allocator,
-        group_id_builder,
-        "css",
-        &[joined],
-    ) else {
-        return false;
-    };
-    result.remap_tailwind_into(f.context_mut());
-    let Some(ir) = result.docs.into_iter().next() else {
+    let Some(ir) = dispatch_fragment_ir(f, "css", joined, Some(&CssInJsTemplate)) else {
         return false;
     };
 
@@ -141,37 +123,12 @@ pub(super) fn format_css_doc<'a>(
                     let Some(&expr) = expressions.get(index as usize) else {
                         continue;
                     };
-                    // Prettier's `printTemplateExpression()` adds indent+softline when:
-                    // - the original source has newlines in the interpolation
-                    // - AND the expression is a comment-bearing node or Identifier/etc
-                    // For CSS embed, the relevant case is comments inside `${...}`.
-                    let has_newline = f.source_text().has_line_terminator_before(expr.span().start)
-                        || f.source_text().has_line_terminator_after(expr.span().end);
-                    let has_comment = has_newline && {
-                        let comments = f.context().comments();
-                        let leading = comments.comments_before(expr.span().start);
-                        let trailing = comments.comments_before_character(expr.span().start, b'}');
-                        !leading.is_empty() || !trailing.is_empty()
-                    };
-
-                    let format_expr = format_with(|f| {
-                        if has_comment {
-                            write!(
-                                f,
-                                [
-                                    indent(&format_args!(
-                                        soft_line_break(),
-                                        expr,
-                                        line_suffix_boundary()
-                                    )),
-                                    soft_line_break()
-                                ]
-                            );
-                        } else {
-                            write!(f, [expr, line_suffix_boundary()]);
-                        }
-                    });
-                    write!(f, [group(&format_args!("${", format_expr, "}"))]);
+                    // Prettier prints embedded `${expr}` with `printEmbeddedTemplateExpressions()`:
+                    // the plain-template expression logic minus source-indentation preservation.
+                    // Default options (zero indention) are exactly that (same as graphql.rs).
+                    let te = TemplateExpression::Expression(expr);
+                    FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default())
+                        .fmt(f);
                 }
                 // A sentinel inside a string / `url()` is always inline `${expr}`.
                 // Same scan as html.rs: `split_on_placeholders` yields alternating

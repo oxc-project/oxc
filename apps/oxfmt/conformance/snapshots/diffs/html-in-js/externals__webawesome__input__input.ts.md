@@ -75,63 +75,11 @@
    /** Enables spell checking on the input. */
    @property({
      type: Boolean,
-@@ -442,10 +462,15 @@
-         <input
-           part="input"
-           id="input"
-           class="control"
--          type=${this.type === "password" && this.passwordVisible ? "text" : this.type}
--          title=${this.title /* An empty title prevents browser validation tooltips from appearing on hover */}
-+          type=${this.type === "password" && this.passwordVisible
-+            ? "text"
-+            : this.type}
-+          title=${
-+            this
-+              .title /* An empty title prevents browser validation tooltips from appearing on hover */
-+          }
-           name=${ifDefined(this.name)}
-           ?disabled=${this.disabled}
-           ?readonly=${this.readonly}
-           ?required=${this.required}
-@@ -469,66 +494,62 @@
-           @input=${this.handleInput}
-           @keydown=${this.handleKeyDown}
-         />
- 
--        ${
--          isClearIconVisible
--            ? html`
--                <button
--                  part="clear-button"
--                  class="clear"
--                  type="button"
--                  aria-label=${this.localize.term("clearEntry")}
--                  @click=${this.handleClearClick}
--                  tabindex="-1"
--                >
--                  <slot name="clear-icon">
--                    <wa-icon
--                      name="circle-xmark"
--                      library="system"
--                      variant="regular"
--                    ></wa-icon>
--                  </slot>
--                </button>
--              `
--            : ""
--        }
--        ${
--          this.passwordToggle && !this.disabled
--            ? html`
--                <button
--                  part="password-toggle-button"
--                  class="password-toggle"
--                  type="button"
--                  aria-label=${this.localize.term(this.passwordVisible ? "hidePassword" : "showPassword")}
--                  @click=${this.handlePasswordToggle}
--                  tabindex="-1"
--                >
--                  ${
+@@ -503,28 +523,28 @@
+                   @click=${this.handlePasswordToggle}
+                   tabindex="-1"
+                 >
+                   ${
 -                  !this.passwordVisible
 -                    ? html`
 -                        <slot name="show-password-icon">
@@ -152,68 +100,30 @@
 -                        </slot>
 -                      `
 -                }
--                </button>
--              `
--            : ""
--        }
-+        ${isClearIconVisible
-+          ? html`
-+              <button
-+                part="clear-button"
-+                class="clear"
-+                type="button"
-+                aria-label=${this.localize.term("clearEntry")}
-+                @click=${this.handleClearClick}
-+                tabindex="-1"
-+              >
-+                <slot name="clear-icon">
-+                  <wa-icon
-+                    name="circle-xmark"
-+                    library="system"
-+                    variant="regular"
-+                  ></wa-icon>
-+                </slot>
-+              </button>
-+            `
-+          : ""}
-+        ${this.passwordToggle && !this.disabled
-+          ? html`
-+              <button
-+                part="password-toggle-button"
-+                class="password-toggle"
-+                type="button"
-+                aria-label=${this.localize.term(
-+                  this.passwordVisible ? "hidePassword" : "showPassword",
-+                )}
-+                @click=${this.handlePasswordToggle}
-+                tabindex="-1"
-+              >
-+                ${!this.passwordVisible
-+                  ? html`
-+                      <slot name="show-password-icon">
-+                        <wa-icon
-+                          name="eye"
-+                          library="system"
-+                          variant="regular"
-+                        ></wa-icon>
-+                      </slot>
-+                    `
-+                  : html`
-+                      <slot name="hide-password-icon">
-+                        <wa-icon
-+                          name="eye-slash"
-+                          library="system"
-+                          variant="regular"
-+                        ></wa-icon>
-+                      </slot>
-+                    `}
-+              </button>
-+            `
-+          : ""}
- 
-         <slot name="end" part="end" class="end"></slot>
-       </div>
- 
++                    !this.passwordVisible
++                      ? html`
++                          <slot name="show-password-icon">
++                            <wa-icon
++                              name="eye"
++                              library="system"
++                              variant="regular"
++                            ></wa-icon>
++                          </slot>
++                        `
++                      : html`
++                          <slot name="hide-password-icon">
++                            <wa-icon
++                              name="eye-slash"
++                              library="system"
++                              variant="regular"
++                            ></wa-icon>
++                          </slot>
++                        `
++                  }
+                 </button>
+               `
+             : ""
+         }
 
 `````
 
@@ -685,13 +595,8 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
           part="input"
           id="input"
           class="control"
-          type=${this.type === "password" && this.passwordVisible
-            ? "text"
-            : this.type}
-          title=${
-            this
-              .title /* An empty title prevents browser validation tooltips from appearing on hover */
-          }
+          type=${this.type === "password" && this.passwordVisible ? "text" : this.type}
+          title=${this.title /* An empty title prevents browser validation tooltips from appearing on hover */}
           name=${ifDefined(this.name)}
           ?disabled=${this.disabled}
           ?readonly=${this.readonly}
@@ -717,60 +622,64 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
           @keydown=${this.handleKeyDown}
         />
 
-        ${isClearIconVisible
-          ? html`
-              <button
-                part="clear-button"
-                class="clear"
-                type="button"
-                aria-label=${this.localize.term("clearEntry")}
-                @click=${this.handleClearClick}
-                tabindex="-1"
-              >
-                <slot name="clear-icon">
-                  <wa-icon
-                    name="circle-xmark"
-                    library="system"
-                    variant="regular"
-                  ></wa-icon>
-                </slot>
-              </button>
-            `
-          : ""}
-        ${this.passwordToggle && !this.disabled
-          ? html`
-              <button
-                part="password-toggle-button"
-                class="password-toggle"
-                type="button"
-                aria-label=${this.localize.term(
-                  this.passwordVisible ? "hidePassword" : "showPassword",
-                )}
-                @click=${this.handlePasswordToggle}
-                tabindex="-1"
-              >
-                ${!this.passwordVisible
-                  ? html`
-                      <slot name="show-password-icon">
-                        <wa-icon
-                          name="eye"
-                          library="system"
-                          variant="regular"
-                        ></wa-icon>
-                      </slot>
-                    `
-                  : html`
-                      <slot name="hide-password-icon">
-                        <wa-icon
-                          name="eye-slash"
-                          library="system"
-                          variant="regular"
-                        ></wa-icon>
-                      </slot>
-                    `}
-              </button>
-            `
-          : ""}
+        ${
+          isClearIconVisible
+            ? html`
+                <button
+                  part="clear-button"
+                  class="clear"
+                  type="button"
+                  aria-label=${this.localize.term("clearEntry")}
+                  @click=${this.handleClearClick}
+                  tabindex="-1"
+                >
+                  <slot name="clear-icon">
+                    <wa-icon
+                      name="circle-xmark"
+                      library="system"
+                      variant="regular"
+                    ></wa-icon>
+                  </slot>
+                </button>
+              `
+            : ""
+        }
+        ${
+          this.passwordToggle && !this.disabled
+            ? html`
+                <button
+                  part="password-toggle-button"
+                  class="password-toggle"
+                  type="button"
+                  aria-label=${this.localize.term(this.passwordVisible ? "hidePassword" : "showPassword")}
+                  @click=${this.handlePasswordToggle}
+                  tabindex="-1"
+                >
+                  ${
+                    !this.passwordVisible
+                      ? html`
+                          <slot name="show-password-icon">
+                            <wa-icon
+                              name="eye"
+                              library="system"
+                              variant="regular"
+                            ></wa-icon>
+                          </slot>
+                        `
+                      : html`
+                          <slot name="hide-password-icon">
+                            <wa-icon
+                              name="eye-slash"
+                              library="system"
+                              variant="regular"
+                            ></wa-icon>
+                          </slot>
+                        `
+                  }
+                </button>
+              `
+            : ""
+        }
 
         <slot name="end" part="end" class="end"></slot>
       </div>
@@ -1398,55 +1307,11 @@ declare global {
    /**
     * Only required for SSR. Set to `true` if you're slotting in a `label` element so the server-rendered markup
     * includes the label before the component hydrates on the client.
-@@ -410,9 +417,12 @@
-           part="input"
-           id="input"
-           class="control"
-           type=${this.type === "password" && this.passwordVisible ? "text" : this.type}
--          title=${this.title /* An empty title prevents browser validation tooltips from appearing on hover */}
-+          title=${
-+            this
-+              .title /* An empty title prevents browser validation tooltips from appearing on hover */
-+          }
-           name=${ifDefined(this.name)}
-           ?disabled=${this.disabled}
-           ?readonly=${this.readonly}
-           ?required=${this.required}
-@@ -436,54 +446,50 @@
-           @input=${this.handleInput}
-           @keydown=${this.handleKeyDown}
-         />
- 
--        ${
--          isClearIconVisible
--            ? html`
--                <button
--                  part="clear-button"
--                  class="clear"
--                  type="button"
--                  aria-label=${this.localize.term("clearEntry")}
--                  @click=${this.handleClearClick}
--                  tabindex="-1"
--                >
--                  <slot name="clear-icon">
--                    <wa-icon name="circle-xmark" library="system" variant="regular"></wa-icon>
--                  </slot>
--                </button>
--              `
--            : ""
--        }
--        ${
--          this.passwordToggle && !this.disabled
--            ? html`
--                <button
--                  part="password-toggle-button"
--                  class="password-toggle"
--                  type="button"
--                  aria-label=${this.localize.term(this.passwordVisible ? "hidePassword" : "showPassword")}
--                  @click=${this.handlePasswordToggle}
--                  tabindex="-1"
--                >
--                  ${
+@@ -466,20 +473,20 @@
+                   @click=${this.handlePasswordToggle}
+                   tabindex="-1"
+                 >
+                   ${
 -                  !this.passwordVisible
 -                    ? html`
 -                        <slot name="show-password-icon">
@@ -1459,56 +1324,22 @@ declare global {
 -                        </slot>
 -                      `
 -                }
--                </button>
--              `
--            : ""
--        }
-+        ${isClearIconVisible
-+          ? html`
-+              <button
-+                part="clear-button"
-+                class="clear"
-+                type="button"
-+                aria-label=${this.localize.term("clearEntry")}
-+                @click=${this.handleClearClick}
-+                tabindex="-1"
-+              >
-+                <slot name="clear-icon">
-+                  <wa-icon name="circle-xmark" library="system" variant="regular"></wa-icon>
-+                </slot>
-+              </button>
-+            `
-+          : ""}
-+        ${this.passwordToggle && !this.disabled
-+          ? html`
-+              <button
-+                part="password-toggle-button"
-+                class="password-toggle"
-+                type="button"
-+                aria-label=${this.localize.term(
-+                  this.passwordVisible ? "hidePassword" : "showPassword",
-+                )}
-+                @click=${this.handlePasswordToggle}
-+                tabindex="-1"
-+              >
-+                ${!this.passwordVisible
-+                  ? html`
-+                      <slot name="show-password-icon">
-+                        <wa-icon name="eye" library="system" variant="regular"></wa-icon>
-+                      </slot>
-+                    `
-+                  : html`
-+                      <slot name="hide-password-icon">
-+                        <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
-+                      </slot>
-+                    `}
-+              </button>
-+            `
-+          : ""}
- 
-         <slot name="end" part="end" class="end"></slot>
-       </div>
- 
++                    !this.passwordVisible
++                      ? html`
++                          <slot name="show-password-icon">
++                            <wa-icon name="eye" library="system" variant="regular"></wa-icon>
++                          </slot>
++                        `
++                      : html`
++                          <slot name="hide-password-icon">
++                            <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
++                          </slot>
++                        `
++                  }
+                 </button>
+               `
+             : ""
+         }
 
 `````
 
@@ -1935,10 +1766,7 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
           id="input"
           class="control"
           type=${this.type === "password" && this.passwordVisible ? "text" : this.type}
-          title=${
-            this
-              .title /* An empty title prevents browser validation tooltips from appearing on hover */
-          }
+          title=${this.title /* An empty title prevents browser validation tooltips from appearing on hover */}
           name=${ifDefined(this.name)}
           ?disabled=${this.disabled}
           ?readonly=${this.readonly}
@@ -1964,48 +1792,52 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
           @keydown=${this.handleKeyDown}
         />
 
-        ${isClearIconVisible
-          ? html`
-              <button
-                part="clear-button"
-                class="clear"
-                type="button"
-                aria-label=${this.localize.term("clearEntry")}
-                @click=${this.handleClearClick}
-                tabindex="-1"
-              >
-                <slot name="clear-icon">
-                  <wa-icon name="circle-xmark" library="system" variant="regular"></wa-icon>
-                </slot>
-              </button>
-            `
-          : ""}
-        ${this.passwordToggle && !this.disabled
-          ? html`
-              <button
-                part="password-toggle-button"
-                class="password-toggle"
-                type="button"
-                aria-label=${this.localize.term(
-                  this.passwordVisible ? "hidePassword" : "showPassword",
-                )}
-                @click=${this.handlePasswordToggle}
-                tabindex="-1"
-              >
-                ${!this.passwordVisible
-                  ? html`
-                      <slot name="show-password-icon">
-                        <wa-icon name="eye" library="system" variant="regular"></wa-icon>
-                      </slot>
-                    `
-                  : html`
-                      <slot name="hide-password-icon">
-                        <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
-                      </slot>
-                    `}
-              </button>
-            `
-          : ""}
+        ${
+          isClearIconVisible
+            ? html`
+                <button
+                  part="clear-button"
+                  class="clear"
+                  type="button"
+                  aria-label=${this.localize.term("clearEntry")}
+                  @click=${this.handleClearClick}
+                  tabindex="-1"
+                >
+                  <slot name="clear-icon">
+                    <wa-icon name="circle-xmark" library="system" variant="regular"></wa-icon>
+                  </slot>
+                </button>
+              `
+            : ""
+        }
+        ${
+          this.passwordToggle && !this.disabled
+            ? html`
+                <button
+                  part="password-toggle-button"
+                  class="password-toggle"
+                  type="button"
+                  aria-label=${this.localize.term(this.passwordVisible ? "hidePassword" : "showPassword")}
+                  @click=${this.handlePasswordToggle}
+                  tabindex="-1"
+                >
+                  ${
+                    !this.passwordVisible
+                      ? html`
+                          <slot name="show-password-icon">
+                            <wa-icon name="eye" library="system" variant="regular"></wa-icon>
+                          </slot>
+                        `
+                      : html`
+                          <slot name="hide-password-icon">
+                            <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
+                          </slot>
+                        `
+                  }
+                </button>
+              `
+            : ""
+        }
 
         <slot name="end" part="end" class="end"></slot>
       </div>

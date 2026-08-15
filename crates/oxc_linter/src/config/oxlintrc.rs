@@ -282,9 +282,23 @@ pub struct Oxlintrc {
     /// are rejected as a configuration error.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
-    /// Paths of configuration files that this configuration file extends (inherits from). The files
-    /// are resolved relative to the location of the configuration file that contains the `extends`
-    /// property. The configuration files are merged from the first to the last, with the last file
+    /// Configurations that this configuration file extends (inherits from).
+    ///
+    /// In `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration
+    /// file, resolved relative to the location of the configuration file that contains the
+    /// `extends` property.
+    ///
+    /// In `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and
+    /// pass the configuration object directly:
+    ///
+    /// ```ts
+    /// import { defineConfig } from "oxlint";
+    /// import baseConfig from "./base-config.ts";
+    ///
+    /// export default defineConfig({ extends: [baseConfig] });
+    /// ```
+    ///
+    /// Configurations are merged from the first to the last, with the last configuration
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,

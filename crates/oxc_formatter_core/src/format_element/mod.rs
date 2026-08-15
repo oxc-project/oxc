@@ -1,5 +1,7 @@
 pub mod debug;
 pub mod document;
+pub(crate) mod formatted;
+pub(crate) mod group_id;
 pub mod tag;
 
 // #[cfg(target_pointer_width = "64")]
@@ -16,26 +18,10 @@ use crate::IndentWidth;
 
 use self::tag::{LabelId, Tag, TagKind};
 
-#[cfg(debug_assertions)]
-const _: () = {
-    if cfg!(target_pointer_width = "64") {
-        assert!(
-            size_of::<FormatElement>() == 40,
-            "`FormatElement` size exceeds 40 bytes, expected 40 bytes in 64-bit platforms"
-        );
-    } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
-        // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
-        //
-        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
-        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
-        assert!(
-            size_of::<FormatElement>() == 24,
-            "`FormatElement` size exceeds 24 bytes, expected 24 bytes in 32-bit platforms"
-        );
-    }
-};
-
-#[cfg(not(debug_assertions))]
+// `FormatElement` must have the same layout in debug and release builds.
+//
+// So that memory measurements taken with `debug-assertions` enabled (`cargo allocs` runs with the `coverage` profile) reflect release layouts.
+// That is why `GroupId` and `LabelId` keep their debug names in side tables instead of inline fields.
 const _: () = {
     if cfg!(target_pointer_width = "64") {
         assert!(
@@ -45,8 +31,8 @@ const _: () = {
     } else if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
         // Some 32-bit platforms have 8-byte alignment for `u64` and `f64`, while others have 4-byte alignment.
         //
-        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment, because
-        // some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
+        // Skip these assertions on 32-bit platforms where `u64` / `f64` have 4-byte alignment,
+        // because some layout calculations may be incorrect. https://github.com/oxc-project/oxc/pull/13716
         assert!(
             size_of::<FormatElement>() == 16,
             "`FormatElement` size exceeds 16 bytes, expected 16 bytes in 32-bit platforms"
@@ -132,19 +118,40 @@ pub enum LineMode {
     Soft,
     /// See [crate::builders::hard_line_break] for documentation.
     Hard,
+    /// See [crate::builders::Line::without_expand_parent] for documentation.
+    HardWithoutExpand,
     /// See [crate::builders::empty_line] for documentation.
     Empty,
+    /// See [crate::builders::exact_line_breaks] for documentation.
+    ExactLineBreaks(std::num::NonZeroU32),
     /// See [crate::builders::literal_line_break] for documentation.
     Literal,
 }
 
 impl LineMode {
+    /// Exactly [Self::Hard], excludes [Self::HardWithoutExpand];
+    /// ask [Self::will_break] for "does this always print a newline".
     pub const fn is_hard(self) -> bool {
         matches!(self, LineMode::Hard)
     }
 
+    /// The line always prints as a line break, regardless of print mode.
     pub const fn will_break(self) -> bool {
-        matches!(self, LineMode::Hard | LineMode::Empty | LineMode::Literal)
+        matches!(
+            self,
+            LineMode::Hard
+                | LineMode::HardWithoutExpand
+                | LineMode::Empty
+                | LineMode::ExactLineBreaks(_)
+                | LineMode::Literal
+        )
+    }
+
+    /// The line forces enclosing groups to expand at build time.
+    /// See `Document::propagate_expand`:
+    /// every always-breaking mode except [Self::HardWithoutExpand].
+    pub const fn propagates_expand(self) -> bool {
+        self.will_break() && !matches!(self, LineMode::HardWithoutExpand)
     }
 }
 
@@ -159,10 +166,6 @@ pub enum PrintMode {
 impl PrintMode {
     pub const fn is_flat(self) -> bool {
         matches!(self, PrintMode::Flat)
-    }
-
-    pub const fn is_expanded(self) -> bool {
-        matches!(self, PrintMode::Expanded)
     }
 }
 
@@ -238,19 +241,6 @@ pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) ->
 }
 
 impl FormatElement<'_> {
-    /// Returns `true` if self is a [FormatElement::Tag]
-    pub const fn is_tag(&self) -> bool {
-        matches!(self, FormatElement::Tag(_))
-    }
-
-    /// Returns `true` if self is a [FormatElement::Tag] and [Tag::is_start] is `true`.
-    pub const fn is_start_tag(&self) -> bool {
-        match self {
-            FormatElement::Tag(tag) => tag.is_start(),
-            _ => false,
-        }
-    }
-
     /// Returns `true` if self is a [FormatElement::Tag] and [Tag::is_end] is `true`.
     pub const fn is_end_tag(&self) -> bool {
         match self {
@@ -266,10 +256,6 @@ impl FormatElement<'_> {
     pub const fn is_space(&self) -> bool {
         matches!(self, FormatElement::Space)
     }
-
-    pub const fn is_line(&self) -> bool {
-        matches!(self, FormatElement::Line(_))
-    }
 }
 
 impl FormatElements for FormatElement<'_> {
@@ -278,6 +264,9 @@ impl FormatElements for FormatElement<'_> {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => line_mode.will_break(),
+            // NOTE: intentionally `propagates_expand`, not a will-break analogue:
+            // a `without_expand_parent` text's embedded newlines don't count as breaking here,
+            // while a `HardWithoutExpand` LINE does (the line above)
             FormatElement::Text { text: _, width } => width.propagates_expand(),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even

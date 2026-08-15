@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-unclosed-eslint-sup
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Suppression: React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled", labels: One([LabeledSpan { label: Some("Found React rule suppression"), span: SourceSpan { offset: SourceOffset(91), length: 47 }, primary: false }]), help: Some("React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression `eslint-disable react-hooks/rules-of-hooks`"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Suppression: React Compiler has skipped optimizing this component because one or more React ESLint rules were disabled", labels: [LabeledSpan { label: Some("Found React rule suppression"), span: Span { start: 91, end: 138 }, primary: false }], help: Some("React Compiler only works when your components follow all the rules of React, disabling them may result in unexpected or incorrect behavior. Found suppression `eslint-disable react-hooks/rules-of-hooks`"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

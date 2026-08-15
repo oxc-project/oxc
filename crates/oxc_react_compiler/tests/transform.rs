@@ -1,5 +1,6 @@
 //! End-to-end integration tests: oxc parse + semantic -> compile -> codegen.
 
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{ModuleExportName, Program, Statement};
 use oxc_codegen::Codegen;
@@ -8,7 +9,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{PluginOptions, compile};
+use oxc_react_compiler::{CompileResult, PanicThreshold, PluginOptions, compile};
 
 fn options() -> PluginOptions {
     PluginOptions::default()
@@ -17,6 +18,7 @@ fn options() -> PluginOptions {
 struct TransformResult {
     changed: bool,
     diagnostics: Diagnostics,
+    fatal: bool,
 }
 
 /// Parse `source_text` then run the compiler in place, returning the
@@ -28,15 +30,23 @@ fn transform_source<'a>(
     options: PluginOptions,
 ) -> (Program<'a>, TransformResult) {
     let mut program = Parser::new(allocator, source_text, source_type).parse().program;
-    let (output, diagnostics) = {
+    let result = {
         let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
         compile(&program, &semantic, allocator, options)
     };
-    let changed = output.is_some();
-    if let Some(output) = output {
-        output.transform(&mut program);
-    }
-    (program, TransformResult { changed, diagnostics })
+    let result = match result {
+        CompileResult::Success { output, diagnostics } => {
+            let changed = output.is_some();
+            if let Some(output) = output {
+                output.transform(&mut program);
+            }
+            TransformResult { changed, diagnostics, fatal: false }
+        }
+        CompileResult::Fatal { diagnostics } => {
+            TransformResult { changed: false, diagnostics, fatal: true }
+        }
+    };
+    (program, result)
 }
 
 #[test]
@@ -61,11 +71,218 @@ fn memoizes_a_component_end_to_end() {
 }
 
 #[test]
+fn allows_ref_access_in_a_returned_event_handler() {
+    let source = "\
+function Component({ onChange, onInput }) {\n\
+  const lastValue = useRef(\"\");\n\
+  const wrappedEvent = (callback) => (event) => {\n\
+    const text = event.currentTarget.textContent || \"\";\n\
+    if (text !== lastValue.current) {\n\
+      lastValue.current = text;\n\
+      onChange?.(text);\n\
+    }\n\
+    callback?.(event);\n\
+  };\n\
+  return <div onInput={wrappedEvent(onInput)} />;\n\
+}\n";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "component should compile; diagnostics: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("react/compiler-runtime"), "component should memoize:\n{output}");
+}
+
+#[test]
+fn preserves_manual_memoization_guarantees() {
+    let source = "\
+import { useCallback, useMemo } from 'react';
+export function Component({ value }) {
+  const callback = useCallback(() => value, [value]);
+  const memo = useMemo(() => ({ callback }), [callback]);
+  return <button onClick={callback}>{memo.callback()}</button>;
+}
+";
+
+    let allocator = Allocator::default();
+    let (program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(!result.diagnostics.has_errors(), "unexpected errors: {:?}", result.diagnostics);
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("if ($[0] !== value)"),
+        "useCallback must retain its source dependency:\n{output}"
+    );
+    assert!(
+        output.contains("if ($[2] !== callback)"),
+        "useMemo must retain its source dependency:\n{output}"
+    );
+    assert!(
+        !output.contains("useCallback(()") && !output.contains("useMemo(()"),
+        "manual memo calls should be lowered into compiler caches:\n{output}"
+    );
+    assert!(
+        output.contains("import { useCallback, useMemo } from \"react\""),
+        "the compiler must leave surrounding import cleanup to downstream transforms:\n{output}"
+    );
+}
+
+#[test]
 fn skips_non_react_code() {
     let source = "function add(a, b) {\n  return a + b;\n}\n";
     let allocator = Allocator::default();
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
     assert!(!result.changed, "non-React code must not be transformed");
+}
+
+#[test]
+fn default_lint_suppressions_bail_out() {
+    let fixtures = [
+        (
+            "eslint-disable-next-line",
+            include_str!("../fixtures/default-suppression-eslint-next-line.js"),
+        ),
+        (
+            "eslint-disable block range",
+            include_str!("../fixtures/default-suppression-eslint-block-range.js"),
+        ),
+    ];
+
+    for prefix in ["eslint", "oxlint"] {
+        for (kind, source) in fixtures {
+            let source = source.cow_replace("eslint", prefix);
+            let allocator = Allocator::default();
+            let (_program, result) =
+                transform_source(&source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+            assert!(!result.changed, "{prefix} {kind} must prevent compilation");
+            assert!(!result.fatal, "{prefix} {kind} must not produce a fatal result");
+            assert_eq!(result.diagnostics.len(), 1);
+            assert!(result.diagnostics[0].message.contains("Suppression:"));
+        }
+    }
+}
+
+#[test]
+fn flow_suppressions_still_bail_out_by_default() {
+    let source = include_str!("../fixtures/default-suppression-flow.js");
+    let allocator = Allocator::default();
+    let (_program, result) =
+        transform_source(source, SourceType::tsx(), &allocator, PluginOptions::default());
+
+    assert!(!result.changed, "Flow suppression must prevent compilation");
+    assert!(!result.fatal, "Flow suppression must be a nonfatal bail-out by default");
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(result.diagnostics[0].message.contains("Suppression:"));
+}
+
+#[test]
+fn empty_eslint_suppression_rules_disable_bailouts() {
+    let source = include_str!("../fixtures/default-suppression-eslint-next-line.js");
+    let options =
+        PluginOptions { eslint_suppression_rules: Some(Vec::new()), ..PluginOptions::default() };
+    let allocator = Allocator::default();
+    let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+
+    assert!(result.changed, "an empty suppression rule list must allow compilation");
+    assert!(!result.fatal);
+    assert!(!result.diagnostics.has_errors());
+}
+
+#[test]
+fn eslint_suppressions_take_precedence_over_internal_validations() {
+    let cases = [
+        (
+            "memo dependencies",
+            "\
+import { useMemo } from 'react';
+function Component({ value }) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const doubled = useMemo(() => value * 2, []);
+  return <div>{doubled}</div>;
+}
+",
+        ),
+        (
+            "hooks usage",
+            "\
+import { useState } from 'react';
+function Component({ condition }) {
+  if (condition) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useState(0);
+  }
+  return <div />;
+}
+",
+        ),
+    ];
+
+    for (kind, source) in cases {
+        let mut options = PluginOptions::default();
+        options.environment.validate_exhaustive_memoization_dependencies = true;
+        let allocator = Allocator::default();
+        let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+
+        assert!(!result.changed, "{kind} suppression must prevent compilation");
+        assert_eq!(result.diagnostics.len(), 1);
+        assert!(
+            result.diagnostics[0].message.contains("Suppression:"),
+            "expected a suppression diagnostic, got {:?}",
+            result.diagnostics
+        );
+    }
+}
+
+#[test]
+fn custom_eslint_suppressions_bail_out() {
+    let source = "\
+function Component({ value }) {
+  // eslint-disable-next-line custom/react-rule
+  const doubled = value * 2;
+  return <div>{doubled}</div>;
+}
+";
+
+    let allocator = Allocator::default();
+    let options = PluginOptions {
+        eslint_suppression_rules: Some(vec!["custom/react-rule".to_string()]),
+        ..PluginOptions::default()
+    };
+    let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+    assert!(!result.changed, "custom suppression must bail out by default");
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(result.diagnostics[0].message.contains("Suppression:"));
+
+    let allocator = Allocator::default();
+    let mut options = PluginOptions {
+        eslint_suppression_rules: Some(vec!["custom/react-rule".to_string()]),
+        ..PluginOptions::default()
+    };
+    options.environment.validate_exhaustive_memoization_dependencies = true;
+    let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+    assert!(!result.changed, "custom suppression must bail out with both validations enabled");
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(result.diagnostics[0].message.contains("Suppression:"));
+}
+
+#[test]
+fn all_errors_makes_enabled_eslint_suppressions_fatal() {
+    let source = include_str!("../fixtures/default-suppression-eslint-next-line.js");
+    let allocator = Allocator::default();
+    let mut options =
+        PluginOptions { panic_threshold: PanicThreshold::AllErrors, ..PluginOptions::default() };
+    options.environment.validate_exhaustive_memoization_dependencies = true;
+    let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
+
+    assert!(result.fatal, "all_errors must escalate suppression diagnostics");
+    assert!(!result.changed, "a fatal result must not produce a rewrite");
+    assert!(result.diagnostics.has_errors());
 }
 
 /// TypeScript-only constructs (`declare global`, `import =`, `export =`,
@@ -345,7 +562,7 @@ function Component(props) {\n  return <div>{props.text}</div>;\n}\n";
         .body
         .iter()
         .find_map(|stmt| match stmt {
-            Statement::ExportNamedDeclaration(decl) if decl.source.is_none() => Some(decl),
+            Statement::ExportNamedDeclaration(decl) => Some(decl),
             _ => None,
         })
         .expect("a local `export { Foo }` should round-trip");
@@ -407,6 +624,56 @@ fn diagnostics_preserve_compiler_severity() {
         !result.diagnostics.has_errors(),
         "fbt warning must not be reported as an error: {:?}",
         result.diagnostics
+    );
+}
+
+/// A warning-level function bail-out must not be promoted to a fatal error:
+/// sibling functions should still compile and downstream transforms should run.
+#[test]
+fn incompatible_library_bailout_remains_a_warning() {
+    let source = "\
+import { useReactTable } from '@tanstack/react-table';\n\
+function Table() {\n\
+  const table = useReactTable({});\n\
+  return <div>{table}</div>;\n\
+}\n\
+export function Component(props: { text: string }) {\n\
+  return <span>{props.text}</span>;\n\
+}\n";
+
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+
+    assert!(result.changed, "the unaffected component should compile");
+    assert!(
+        result.diagnostics.has_warnings(),
+        "the incompatible library should report a warning: {:?}",
+        result.diagnostics
+    );
+    assert!(
+        !result.diagnostics.has_errors(),
+        "a warning-level function bail-out must not become fatal: {:?}",
+        result.diagnostics
+    );
+    assert_eq!(result.diagnostics.len(), 1);
+    assert!(
+        result.diagnostics[0].message.contains("IncompatibleLibrary:"),
+        "expected the original compiler diagnostic: {:?}",
+        result.diagnostics
+    );
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .all(|diagnostic| !diagnostic.message.contains("Unexpected error")),
+        "the bail-out must not create a synthetic error: {:?}",
+        result.diagnostics
+    );
+
+    let output = Codegen::new().build(&program).code;
+    assert!(
+        output.contains("react/compiler-runtime"),
+        "expected the unaffected component to be transformed:\n{output}"
     );
 }
 

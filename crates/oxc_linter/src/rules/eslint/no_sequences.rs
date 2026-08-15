@@ -163,14 +163,11 @@ impl NoSequences {
         }
 
         // Check for ArrowFunctionExpression body
-        // In oxc's AST: SequenceExpr -> ParenthesizedExpr -> ExpressionStatement -> FunctionBody -> ArrowFunctionExpr
+        // In oxc's AST: SequenceExpr -> ParenthesizedExpr -> ArrowFunctionExpr
         // Arrow body needs double parentheses because the first layer is syntactically required
         // (otherwise `() => a, b` would be parsed as `(() => a), b`)
-        let is_arrow_body = matches!(cur.kind(), AstKind::ExpressionStatement(_))
-            && matches!(
-                nodes.parent_node(nodes.parent_node(cur.id()).id()).kind(),
-                AstKind::ArrowFunctionExpression(arrow) if arrow.expression
-            );
+        let is_arrow_body =
+            matches!(cur.kind(), AstKind::ArrowFunctionExpression(arrow) if arrow.is_expression());
 
         if is_arrow_body {
             // Arrow body needs at least 2 levels of parentheses

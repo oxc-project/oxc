@@ -32,7 +32,7 @@ use std::{iter, mem};
 use serde::Deserialize;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, GetAllocator, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{BoundNames, ToJsString, WithoutGlobalReferenceInformation};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
@@ -43,6 +43,7 @@ use crate::{
     common::helper_loader::{Helper, helper_call, helper_call_expr, helper_load},
     context::TraverseCtx,
     state::TransformState,
+    utils::ast_builder::arrow_function_body_as_function_body_mut,
 };
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
@@ -215,7 +216,7 @@ impl<'a> ObjectRestSpread<'a> {
         let mut new_decls = vec![];
 
         if let Some(id) = reference_builder.binding.take() {
-            new_decls.push(VariableDeclarator::new(SPAN, state.kind, id, NONE, None, false, ctx));
+            new_decls.push(VariableDeclarator::new(SPAN, id, None, None, false, ctx));
         }
 
         let data = Self::walk_assignment_target(&mut assign_expr.left, &mut new_decls, state, ctx);
@@ -456,8 +457,7 @@ impl<'a> ObjectRestSpread<'a> {
                 }
                 let bound_identifier = ctx.generate_uid_in_current_hoist_scope("ref");
                 let id = bound_identifier.create_binding_pattern(ctx);
-                let kind = VariableDeclarationKind::Var;
-                decls.push(VariableDeclarator::new(SPAN, kind, id, NONE, None, false, ctx));
+                decls.push(VariableDeclarator::new(SPAN, id, None, None, false, ctx));
                 exprs.push(Expression::new_assignment_expression(
                     SPAN,
                     AssignmentOperator::Assign,
@@ -544,8 +544,7 @@ impl<'a> ObjectRestSpread<'a> {
             let arg = Expression::CallExpression(call_expr);
             let arg = Argument::from(arg);
             if had_props {
-                let empty_object =
-                    Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+                let empty_object = Expression::new_object_expression(SPAN, [], ctx);
                 ArenaVec::from_array_in(
                     [arg, Argument::from(empty_object), Argument::from(obj)],
                     ctx,
@@ -585,28 +584,11 @@ impl<'a> ObjectRestSpread<'a> {
         for param in &mut arrow.params.items {
             if Self::has_nested_object_rest(&param.pattern) {
                 // `({ ...args }) => { args }`
-                if arrow.expression {
-                    arrow.expression = false;
-
-                    debug_assert_eq!(arrow.body.statements.len(), 1);
-
-                    let Statement::ExpressionStatement(stmt) = arrow.body.statements.pop().unwrap()
-                    else {
-                        unreachable!(
-                            "`arrow.expression` is true, which means it has only one ExpressionStatement."
-                        );
-                    };
-                    let return_stmt = Statement::new_return_statement(
-                        stmt.span,
-                        Some(stmt.unbox().expression),
-                        ctx,
-                    );
-                    arrow.body.statements.push(return_stmt);
-                }
+                let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
                 Self::replace_rest_element(
                     VariableDeclarationKind::Var,
                     &mut param.pattern,
-                    &mut arrow.body.statements,
+                    &mut body.statements,
                     scope_id,
                     ctx,
                 );
@@ -653,7 +635,7 @@ impl<'a> ObjectRestSpread<'a> {
                     if decl.kind.is_var() { ctx.current_hoist_scope_id() } else { scope_id };
 
                 Self::replace_rest_element(
-                    declarator.kind,
+                    decl.kind,
                     &mut declarator.id,
                     &mut block.body,
                     old_scope_id,
@@ -691,10 +673,8 @@ impl<'a> ObjectRestSpread<'a> {
         let bound_identifier = ctx.generate_uid("ref", ctx.current_hoist_scope_id(), flags);
         let id = bound_identifier.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Var;
-        let declarations = ArenaVec::from_value_in(
-            VariableDeclarator::new(SPAN, kind, id, NONE, None, false, ctx),
-            ctx,
-        );
+        let declarations =
+            ArenaVec::from_value_in(VariableDeclarator::new(SPAN, id, None, None, false, ctx), ctx);
         let decl = VariableDeclaration::boxed(SPAN, kind, declarations, false, ctx);
         *left = ForStatementLeft::VariableDeclaration(decl);
         Self::try_replace_statement_with_block(body, scope_id, ctx);
@@ -816,7 +796,7 @@ impl<'a> ObjectRestSpread<'a> {
         });
         let init = bound_identifier.create_read_expression(ctx);
         let declarations = ArenaVec::from_value_in(
-            VariableDeclarator::new(SPAN, kind, id, NONE, Some(init), false, ctx),
+            VariableDeclarator::new(SPAN, id, None, Some(init), false, ctx),
             ctx,
         );
         VariableDeclaration::boxed(SPAN, kind, declarations, false, ctx)
@@ -836,7 +816,7 @@ impl<'a> ObjectRestSpread<'a> {
             if variable_declarator.init.is_some()
                 && Self::has_nested_object_rest(&variable_declarator.id)
             {
-                let decls = self.transform_variable_declarator(variable_declarator, ctx);
+                let decls = self.transform_variable_declarator(variable_declarator, decl.kind, ctx);
                 new_decls.push((i, decls));
             }
         }
@@ -853,6 +833,7 @@ impl<'a> ObjectRestSpread<'a> {
     fn transform_variable_declarator(
         &mut self,
         decl: &mut VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, VariableDeclarator<'a>> {
         // It is syntax error or inside for loop if missing initializer in destructuring pattern.
@@ -862,7 +843,7 @@ impl<'a> ObjectRestSpread<'a> {
         // `for (var {...x} = {};;);` and `for (let {...x} = {};;);`
         // TODO: improve this by getting the value only once.
         let mut scope_id = ctx.current_scope_id();
-        let mut symbol_flags = kind_to_symbol_flags(decl.kind);
+        let mut symbol_flags = kind_to_symbol_flags(kind);
         let symbols = ctx.scoping();
         decl.id.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
@@ -870,7 +851,7 @@ impl<'a> ObjectRestSpread<'a> {
             symbol_flags.insert(symbols.symbol_flags(symbol_id));
         });
 
-        let state = State::new(decl.kind, symbol_flags, scope_id);
+        let state = State::new(kind, symbol_flags, scope_id);
         let mut new_decls = vec![];
 
         let mut reference_builder = ReferenceBuilder::new(init, symbol_flags, scope_id, false, ctx);
@@ -880,9 +861,8 @@ impl<'a> ObjectRestSpread<'a> {
         if let Some(id) = reference_builder.binding.take() {
             let decl = VariableDeclarator::new(
                 SPAN,
-                state.kind,
                 id,
-                NONE,
+                None,
                 Some(reference_builder.create_read_expression(ctx)),
                 false,
                 ctx,
@@ -936,15 +916,8 @@ impl<'a> ObjectRestSpread<'a> {
                     ctx,
                 );
                 if let BindingPatternOrAssignmentTarget::BindingPattern(lhs) = lhs {
-                    let decl = VariableDeclarator::new(
-                        lhs.span(),
-                        decl.kind,
-                        lhs,
-                        NONE,
-                        Some(rhs),
-                        false,
-                        ctx,
-                    );
+                    let decl =
+                        VariableDeclarator::new(lhs.span(), lhs, None, Some(rhs), false, ctx);
                     temp_decls.push(decl);
                 }
             }
@@ -958,14 +931,12 @@ impl<'a> ObjectRestSpread<'a> {
 
         // Insert the original declarator by copying its data out.
         if !remove_empty_object_pattern {
-            let mut binding_pattern =
-                BindingPattern::new_object_pattern(decl.span, ArenaVec::new_in(ctx), NONE, ctx);
+            let mut binding_pattern = BindingPattern::new_object_pattern(decl.span, [], None, ctx);
             mem::swap(&mut binding_pattern, &mut decl.id);
             let decl = VariableDeclarator::new(
                 decl.span,
-                decl.kind,
                 binding_pattern,
-                NONE,
+                None,
                 Some(reference_builder.create_read_expression(ctx)),
                 false,
                 ctx,
@@ -1007,10 +978,9 @@ impl<'a> ObjectRestSpread<'a> {
                     let id = mem::replace(pat, bound_identifier.create_binding_pattern(ctx));
 
                     let init = bound_identifier.create_read_expression(ctx);
-                    let mut decl =
-                        VariableDeclarator::new(SPAN, state.kind, id, NONE, Some(init), false, ctx);
+                    let mut decl = VariableDeclarator::new(SPAN, id, None, Some(init), false, ctx);
                     let mut decls = self
-                        .transform_variable_declarator(&mut decl, ctx)
+                        .transform_variable_declarator(&mut decl, state.kind, ctx)
                         .into_iter()
                         .collect::<Vec<_>>();
                     decls.extend(data);
@@ -1046,8 +1016,7 @@ impl<'a> ObjectRestSpread<'a> {
             // `let { [`a`], ... rest }`
             PropertyKey::TemplateLiteral(lit) if lit.is_no_substitution_template() => {
                 let quasis = ArenaVec::from_value_in(lit.quasis[0].clone(), ctx);
-                let expressions = ArenaVec::new_in(ctx);
-                let expr = Expression::new_template_literal(lit.span, quasis, expressions, ctx);
+                let expr = Expression::new_template_literal(lit.span, quasis, [], ctx);
                 Some(ArrayExpressionElement::from(expr))
             }
             PropertyKey::PrivateIdentifier(_) => {
@@ -1077,15 +1046,7 @@ impl<'a> ObjectRestSpread<'a> {
                 let p = bound_identifier.create_binding_pattern(ctx);
                 let mut lhs = bound_identifier.create_read_expression(ctx);
                 mem::swap(&mut lhs, expr);
-                new_decls.push(VariableDeclarator::new(
-                    SPAN,
-                    state.kind,
-                    p,
-                    NONE,
-                    Some(lhs),
-                    false,
-                    ctx,
-                ));
+                new_decls.push(VariableDeclarator::new(SPAN, p, None, Some(lhs), false, ctx));
                 Some(ArrayExpressionElement::from(bound_identifier.create_read_expression(ctx)))
             }
         }
@@ -1159,7 +1120,7 @@ impl<'a> SpreadPair<'a> {
             let arguments = ArenaVec::from_array_in(
                 [
                     // Add `{}`.
-                    Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx),
+                    Argument::new_object_expression(SPAN, [], ctx),
                     Argument::new_sequence_expression(SPAN, sequence, ctx),
                 ],
                 ctx,
@@ -1179,12 +1140,10 @@ impl<'a> SpreadPair<'a> {
                     "excluded",
                     SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
                 );
-                let kind = VariableDeclarationKind::Const;
                 let declarator = VariableDeclarator::new(
                     SPAN,
-                    kind,
                     bound_identifier.create_binding_pattern(ctx),
-                    NONE,
+                    None,
                     Some(key_expression),
                     false,
                     ctx,
@@ -1206,7 +1165,7 @@ impl<'a> SpreadPair<'a> {
                     Argument::from(helper_load(Helper::ToPropertyKey, ctx)),
                     ctx,
                 );
-                Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx)
+                Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx)
             } else {
                 key_expression
             };

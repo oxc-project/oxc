@@ -1,0 +1,24 @@
+//      10        20        30        40        50        60        70        80
+// 45678901234567890123456789012345678901234567890123456789012345678901234567890
+
+// Every signature below is exactly 80 chars including `=>`.
+
+// A conditional body plans the hug layout `=> (cond ? a : b)`,
+// whose literal space is counted when measuring the signature: 81 > 80 breaks the params.
+const MachineConsoleLink = ({ ipAddress }: { ipAddress: string | undefined }) =>
+  ipAddress ? (
+    <a target={"_blank"} rel="noreferrer" href={`http://${ipAddress}`}>
+      {ipAddress}
+    </a>
+  ) : (
+    "--"
+  );
+
+// Non-JSX conditional body: params break, then the body hugs with parens.
+const MachineConsoleLinkAA = ({ hostName }: { hostName: string | undefined }) =>
+  hostName ? hostName : "--";
+
+// Call body: the body starts with a soft line instead of the hug space,
+// so the measurement stops at 80 and the signature is kept.
+const MachineConsoleLinkAB = ({ hostName }: { hostName: string | undefined }) =>
+  foo(hostName);

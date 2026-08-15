@@ -531,7 +531,7 @@ impl IdMatch {
     }
 }
 
-fn is_known_external_global(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+pub fn is_known_external_global(ident: &IdentifierReference, ctx: &LintContext) -> bool {
     ident.is_global_reference(ctx.scoping())
         && ctx
             .get_global_variable_value(ident.name.as_str())
@@ -547,7 +547,7 @@ fn binding_is_import_local<'a>(ident: &BindingIdentifier<'a>, parent: &AstNode<'
     }
 }
 
-fn transparent_reference_parent<'a, 'b>(
+pub fn transparent_reference_parent<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> (&'b AstNode<'a>, Span) {
@@ -672,7 +672,7 @@ fn is_inside_object_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<
     false
 }
 
-fn is_dynamic_import_attribute_object_property<'a>(
+pub fn is_dynamic_import_attribute_object_property<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {

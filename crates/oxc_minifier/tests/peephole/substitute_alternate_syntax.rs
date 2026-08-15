@@ -328,6 +328,9 @@ fn test_string_array_splitting() {
 #[test]
 fn test_template_string_to_string() {
     test("x = `abcde`", "x = 'abcde'");
+    // Lone surrogates are stored escaped in the cooked value; converting to a
+    // string literal would materialize the escape encoding as literal text.
+    test_same("x = `\\ud800y`");
     test("x = `ab cd ef`", "x = 'ab cd ef'");
     test_same("x = `hello ${name}`");
     test_same("tag `hello ${name}`");
@@ -335,6 +338,7 @@ fn test_template_string_to_string() {
     test("x = `hello ${'foo'}`", "x = 'hello foo'");
     test("x = `${2} bananas`", "x = '2 bananas'");
     test("x = `This is ${true}`", "x = 'This is true'");
+    test_same("x = `a${void f()}b`");
 }
 
 #[test]
@@ -540,13 +544,9 @@ fn test_fold_is_object_and_not_null() {
 
 #[test]
 fn test_fold_is_object_and_not_null_minted_then_dropped() {
-    // Exercises the same-pass mint-then-drop flow through `DropDiff`'s
-    // capacity guard: `substitute_is_object_and_not_null` mints fresh
-    // references (indices beyond the pass bitset's capacity) at
-    // `exit_expression`, then the unreachable statement containing them is
-    // dropped at `exit_statements` in the same pass. The guard must treat
-    // the minted refs as live (conservative — callers rebuild scoping), not
-    // panic.
+    // Exercises same-pass mint-then-drop through `DroppedSubtreeCollector`'s capacity guard.
+    // The fresh references carry their semantic scope, so post-flush
+    // reachability observes them without a separate mint log.
     test(
         "function f(a) { return 1; if (typeof a === 'object' && a !== null) b(a); } f();",
         "function f(a) { return 1; }",
@@ -761,6 +761,8 @@ fn test_fold_number_constructor() {
     test("x = Number(true)", "x = 1");
     test("x = Number(false)", "x = 0");
     test("x = Number('foo')", "x = NaN");
+    test_same("x = Number(void f())");
+    test_same("x = Number([f(), 1])");
 }
 
 #[test]
@@ -1021,4 +1023,29 @@ fn test_flatten_array_spread_elements() {
     test("var x=[30,40];var y = [10,...[],20,...x,50];", "var y = [10,20,30,40,50]");
     test_same("var y = [0, ...[1, , , 3]]");
     test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
+}
+
+#[test]
+fn fold_sequence_expression() {
+    test("(a(), b) + c", "a(), b + c");
+    test("(a(), b, c) + d", "a(), b, c + d");
+
+    test("(a(), b) || c", "a(), b || c");
+    test("(a(), b) && c", "a(), b && c");
+    test("(a(), b, c) || d", "a(), b, c || d");
+
+    test("-(a(), b)", "a(), -b");
+    test("~(a(), b)", "a(), ~b");
+    test("-(a(), b, c)", "a(), b, -c");
+
+    test("function* a() { yield (c(1), 2) }", "function* a() { c(1), yield 2 }");
+    test("function* a() { b(yield (c(1), 2)) }", "function* a() { b((c(1), yield 2)) }");
+    test("function* a() { yield (c(1), d(2), 3) }", "function* a() { c(1), d(2), yield 3 }");
+
+    test("async function a() { await (c(1), 2) }", "async function a() { c(1), await 2 }");
+    test("async function a() { b(await (c(1), 2)) }", "async function a() { b((c(1), await 2)) }");
+    test(
+        "async function a() { await (c(1), d(2), 3) }",
+        "async function a() { c(1), d(2), await 3 }",
+    );
 }

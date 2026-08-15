@@ -10,13 +10,14 @@
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::is_set_state_type;
 use crate::react_compiler_hir::{
-    BlockId, HirFunction, Identifier, IdentifierId, InstructionValue, Type,
+    BlockId, FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, Type, TypeId,
 };
 
 pub fn validate_no_set_state_in_render(
@@ -24,7 +25,7 @@ pub fn validate_no_set_state_in_render(
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
     let mut unconditional_set_state_functions: FxHashSet<IdentifierId> = FxHashSet::default();
-    let next_block_id = env.next_block_id().0;
+    let next_block_id = env.next_block_id().index() as u32;
     let diagnostics = validate_impl(
         func,
         &env.identifiers,
@@ -42,19 +43,19 @@ pub fn validate_no_set_state_in_render(
 
 fn is_set_state_id(
     identifier_id: IdentifierId,
-    identifiers: &[Identifier],
-    types: &[Type],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
 ) -> bool {
-    let ident = &identifiers[identifier_id.0 as usize];
-    let ty = &types[ident.type_.0 as usize];
+    let ident = &identifiers[identifier_id];
+    let ty = &types[ident.type_];
     is_set_state_type(ty)
 }
 
 fn validate_impl(
     func: &HirFunction,
-    identifiers: &[Identifier],
-    types: &[Type],
-    functions: &[HirFunction],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     next_block_id_counter: u32,
     enable_use_keyed_state: bool,
     unconditional_set_state_functions: &mut FxHashSet<IdentifierId>,
@@ -66,7 +67,7 @@ fn validate_impl(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::LoadLocal { place, .. } => {
                     if unconditional_set_state_functions.contains(&place.identifier) {
@@ -81,7 +82,7 @@ fn validate_impl(
                 }
                 InstructionValue::ObjectMethod { lowered_func, .. }
                 | InstructionValue::FunctionExpression { lowered_func, .. } => {
-                    let inner_func = &functions[lowered_func.func.0 as usize];
+                    let inner_func = &functions[lowered_func.func];
 
                     // Check if any operand references a setState.
                     // For FunctionExpression/ObjectMethod, operands are the context captures.
@@ -124,47 +125,14 @@ fn validate_impl(
                         || unconditional_set_state_functions.contains(&callee.identifier)) =>
                 {
                     if active_manual_memo_id.is_some() {
-                        errors.push(
-                            ErrorCategory::RenderSetState
-                                .diagnostic(
-                                    "Calling setState from useMemo may trigger an infinite loop",
-                                )
-                                .with_help(
-                                    "Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render. (https://react.dev/reference/react/useState)",
-                                )
-                                .with_labels(
-                                    callee
-                                        .span
-                                        .map(|s| s.label("Found setState() within useMemo()")),
-                                ),
-                        );
+                        errors.push(diagnostics::set_state_in_use_memo(callee.span));
                     } else if unconditional_blocks.contains(&block.id) {
                         if enable_use_keyed_state {
-                            errors.push(
-                                ErrorCategory::RenderSetState
-                                    .diagnostic("Cannot call setState during render")
-                                    .with_help(
-                                        "Calling setState during render may trigger an infinite loop.\n\
-                                        * To reset state when other state/props change, use `const [state, setState] = useKeyedState(initialState, key)` to reset `state` when `key` changes.\n\
-                                        * To derive data from other state/props, compute the derived data during render without using state",
-                                    )
-                                    .with_labels(
-                                        callee.span.map(|s| s.label("Found setState() in render")),
-                                    ),
-                            );
+                            errors.push(diagnostics::set_state_in_render_with_keyed_state(
+                                callee.span,
+                            ));
                         } else {
-                            errors.push(
-                                ErrorCategory::RenderSetState
-                                    .diagnostic("Cannot call setState during render")
-                                    .with_help(
-                                        "Calling setState during render may trigger an infinite loop.\n\
-                                        * To reset state when other state/props change, store the previous value in state and update conditionally: https://react.dev/reference/react/useState#storing-information-from-previous-renders\n\
-                                        * To derive data from other state/props, compute the derived data during render without using state",
-                                    )
-                                    .with_labels(
-                                        callee.span.map(|s| s.label("Found setState() in render")),
-                                    ),
-                            );
+                            errors.push(diagnostics::set_state_in_render(callee.span));
                         }
                     }
                 }

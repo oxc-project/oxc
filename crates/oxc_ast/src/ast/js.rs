@@ -96,74 +96,77 @@ pub enum Expression<'a> {
     /// See [`IdentifierReference`] for AST node details.
     Identifier(Box<'a, IdentifierReference<'a>>) = 7,
 
-    /// See [`MetaProperty`] for AST node details.
-    MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
     /// See [`Super`] for AST node details.
-    Super(Box<'a, Super>) = 9,
+    Super(Box<'a, Super>) = 8,
 
     /// See [`ArrayExpression`] for AST node details.
-    ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+    ArrayExpression(Box<'a, ArrayExpression<'a>>) = 9,
     /// See [`ArrowFunctionExpression`] for AST node details.
-    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+    ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 10,
     /// See [`AssignmentExpression`] for AST node details.
-    AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+    AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 11,
     /// See [`AwaitExpression`] for AST node details.
-    AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+    AwaitExpression(Box<'a, AwaitExpression<'a>>) = 12,
     /// See [`BinaryExpression`] for AST node details.
-    BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+    BinaryExpression(Box<'a, BinaryExpression<'a>>) = 13,
     /// See [`CallExpression`] for AST node details.
-    CallExpression(Box<'a, CallExpression<'a>>) = 15,
+    CallExpression(Box<'a, CallExpression<'a>>) = 14,
     /// See [`ChainExpression`] for AST node details.
-    ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+    ChainExpression(Box<'a, ChainExpression<'a>>) = 15,
     /// See [`Class`] for AST node details.
-    ClassExpression(Box<'a, Class<'a>>) = 17,
+    ClassExpression(Box<'a, Class<'a>>) = 16,
     /// See [`ConditionalExpression`] for AST node details.
-    ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+    ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 17,
     /// See [`Function`] for AST node details.
     #[visit(args(flags = ScopeFlags::Function))]
-    FunctionExpression(Box<'a, Function<'a>>) = 19,
+    FunctionExpression(Box<'a, Function<'a>>) = 18,
     /// See [`ImportExpression`] for AST node details.
-    ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+    ImportExpression(Box<'a, ImportExpression<'a>>) = 19,
     /// See [`LogicalExpression`] for AST node details.
-    LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+    LogicalExpression(Box<'a, LogicalExpression<'a>>) = 20,
     /// See [`NewExpression`] for AST node details.
-    NewExpression(Box<'a, NewExpression<'a>>) = 22,
+    NewExpression(Box<'a, NewExpression<'a>>) = 21,
     /// See [`ObjectExpression`] for AST node details.
-    ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+    ObjectExpression(Box<'a, ObjectExpression<'a>>) = 22,
     /// See [`ParenthesizedExpression`] for AST node details.
-    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 23,
     /// See [`SequenceExpression`] for AST node details.
-    SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+    SequenceExpression(Box<'a, SequenceExpression<'a>>) = 24,
     /// See [`TaggedTemplateExpression`] for AST node details.
-    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+    TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 25,
     /// See [`ThisExpression`] for AST node details.
-    ThisExpression(Box<'a, ThisExpression>) = 27,
+    ThisExpression(Box<'a, ThisExpression>) = 26,
     /// See [`UnaryExpression`] for AST node details.
-    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 27,
     /// See [`UpdateExpression`] for AST node details.
-    UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+    UpdateExpression(Box<'a, UpdateExpression<'a>>) = 28,
     /// See [`YieldExpression`] for AST node details.
-    YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+    YieldExpression(Box<'a, YieldExpression<'a>>) = 29,
     /// See [`PrivateInExpression`] for AST node details.
-    PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
+    PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 30,
+
+    /// See [`ImportMeta`] for AST node details.
+    ImportMeta(Box<'a, ImportMeta>) = 31,
+    /// See [`NewTarget`] for AST node details.
+    NewTarget(Box<'a, NewTarget>) = 32,
 
     /// See [`JSXElement`] for AST node details.
-    JSXElement(Box<'a, JSXElement<'a>>) = 32,
+    JSXElement(Box<'a, JSXElement<'a>>) = 33,
     /// See [`JSXFragment`] for AST node details.
-    JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
+    JSXFragment(Box<'a, JSXFragment<'a>>) = 34,
 
     /// See [`TSAsExpression`] for AST node details.
-    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+    TSAsExpression(Box<'a, TSAsExpression<'a>>) = 35,
     /// See [`TSSatisfiesExpression`] for AST node details.
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 36,
     /// See [`TSTypeAssertion`] for AST node details.
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 37,
     /// See [`TSNonNullExpression`] for AST node details.
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 38,
     /// See [`TSInstantiationExpression`] for AST node details.
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
+    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 39,
     /// See [`V8IntrinsicExpression`] for AST node details.
-    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 39,
+    V8IntrinsicExpression(Box<'a, V8IntrinsicExpression<'a>>) = 40,
 
     // `MemberExpression` variants added here by `#[ast]` macro
     INHERIT(MemberExpression<'a>),
@@ -607,18 +610,44 @@ pub struct NewExpression<'a> {
     pub pure: bool,
 }
 
-/// `import.meta` in `console.log(import.meta);`
-///
-/// Represents a meta property. The following syntaxes are supported. `import.meta`, `new.target`.
+/// `import.meta` in `console.log(import.meta);`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
-pub struct MetaProperty<'a> {
+#[estree(
+    rename = "MetaProperty",
+    ts_alias = "MetaProperty",
+    add_ts_def = "
+        interface MetaProperty extends Span {
+            type: 'MetaProperty';
+            meta: IdentifierName;
+            property: IdentifierName;
+            parent/* IF !LINTER */?/* END IF */: Node;
+        }
+    ",
+    add_fields(meta = ImportMetaMeta, property = ImportMetaProperty),
+    field_order(meta, property, span),
+)]
+pub struct ImportMeta {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub meta: IdentifierName<'a>,
-    pub property: IdentifierName<'a>,
+}
+
+/// `new.target` in `function F() { return new.target; }`.
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "MetaProperty",
+    ts_alias = "MetaProperty",
+    add_fields(meta = NewTargetMeta, property = NewTargetProperty),
+    field_order(meta, property, span),
+)]
+pub struct NewTarget {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
 }
 
 /// `...[1, 2]` in `const arr = [...[1, 2]];`
@@ -1138,9 +1167,10 @@ pub enum Declaration<'a> {
     TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 35,
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
-    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 39,
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+    TSExternalModuleDeclaration(Box<'a, TSExternalModuleDeclaration<'a>>) = 38,
+    TSNamespaceDeclaration(Box<'a, TSNamespaceDeclaration<'a>>) = 39,
+    TSGlobalDeclaration(Box<'a, TSGlobalDeclaration<'a>>) = 40,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 41,
 }
 
 /// `let a;` in `let a; a = 1;`
@@ -1186,8 +1216,6 @@ pub enum VariableDeclarationKind {
 pub struct VariableDeclarator<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(skip)]
-    pub kind: VariableDeclarationKind,
     #[estree(via = VariableDeclaratorId)]
     pub id: BindingPattern<'a>,
     #[ts]
@@ -1841,7 +1869,7 @@ pub enum FunctionType {
         interface FormalParameterRest extends Span {
             type: 'RestElement';
             argument: BindingPattern;
-            decorators?: [],
+            decorators?: Array<Decorator>;
             optional?: boolean;
             typeAnnotation?: TSTypeAnnotation | null;
             value?: null;
@@ -1955,6 +1983,22 @@ pub struct FunctionBody<'a> {
     pub statements: Vec<'a, Statement<'a>>,
 }
 
+/// The body of an [`ArrowFunctionExpression`].
+///
+/// Arrow functions have either a concise expression body (`() => expression`) or a block body
+/// (`() => { statements }`).
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetAddress, GetSpan, GetSpanMut)]
+#[estree(no_ts_def)]
+pub enum ArrowFunctionBody<'a> {
+    FunctionBody(Box<'a, FunctionBody<'a>>) = 64,
+
+    // `Expression` variants added here by `#[ast]` macro
+    INHERIT(Expression<'a>),
+}
+
 /// Arrow Function Definitions
 #[ast(visit)]
 #[scope(
@@ -1964,22 +2008,22 @@ pub struct FunctionBody<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
-#[estree(add_fields(id = Null, generator = False))]
+#[estree(
+    add_fields(expression = ArrowFunctionExpressionExpression, id = Null, generator = False),
+    field_order(expression, r#async, type_parameters, params, return_type, body, id, generator, span),
+)]
 pub struct ArrowFunctionExpression<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    pub expression: bool,
     pub r#async: bool,
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     #[ts]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    /// See `expression` for whether this arrow expression returns an expression.
     // ESTree: https://github.com/estree/estree/blob/master/es2015.md#arrowfunctionexpression
-    #[estree(via = ArrowFunctionExpressionBody)]
-    pub body: Box<'a, FunctionBody<'a>>,
+    #[estree(ts_type = "FunctionBody | Expression")]
+    pub body: ArrowFunctionBody<'a>,
     pub scope_id: Cell<Option<ScopeId>>,
     /// `true` if the function is marked with a `/*#__NO_SIDE_EFFECTS__*/` comment
     #[builder(default)]
@@ -2013,6 +2057,22 @@ pub struct YieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    add_fields(superClass = ClassSuperClass, superTypeArguments = ClassSuperTypeArguments),
+    field_order(
+        r#type,
+        decorators,
+        id,
+        type_parameters,
+        superClass,
+        superTypeArguments,
+        implements,
+        body,
+        r#abstract,
+        declare,
+        span,
+    ),
+)]
 pub struct Class<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2033,23 +2093,15 @@ pub struct Class<'a> {
     #[scope(enter_before)]
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    /// Super class. When present, this will usually be an [`IdentifierReference`].
-    ///
-    /// ## Example
-    /// ```ts
-    /// class Foo extends Bar {}
-    /// //                ^^^
-    /// ```
-    pub super_class: Option<Expression<'a>>,
-    /// Type parameters passed to super class.
+    /// The class heritage.
     ///
     /// ## Example
     /// ```ts
     /// class Foo<T> extends Bar<T> {}
-    /// //                       ^
+    /// //           ^^^^^^^^^^^^^^
     /// ```
-    #[ts]
-    pub super_type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    #[estree(skip)]
+    pub heritage: Option<ClassHeritage<'a>>,
     /// Interface implementation clause for TypeScript classes.
     ///
     /// ## Example
@@ -2081,6 +2133,27 @@ pub struct Class<'a> {
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
     pub scope_id: Cell<Option<ScopeId>>,
+}
+
+/// The expression and optional type arguments in a class heritage clause.
+///
+/// ```ts
+/// class Foo extends Bar<Baz> {}
+/// //                ^^^ ^^^^^
+/// //                |   |
+/// //                |   +-- type_arguments
+/// //                +------ expression
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn, ContentEq, ESTree)]
+#[estree(skip, no_type, no_ts_def)]
+pub struct ClassHeritage<'a> {
+    /// Superclass expression. This will usually be an [`IdentifierReference`].
+    pub expression: Expression<'a>,
+    /// Type arguments passed to the superclass.
+    #[ts]
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 #[ast]
@@ -2356,8 +2429,7 @@ pub struct StaticBlock<'a> {
 /// import bar from 'bar';
 /// import * as baz from 'baz';
 ///
-/// // Not a ModuleDeclaration
-/// export const a = 5;
+/// export const a = 5;       // ExportDeclaration
 ///
 /// const b = 6;
 ///
@@ -2379,14 +2451,17 @@ pub enum ModuleDeclaration<'a> {
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>) = 65,
     /// `export default 5;`
     ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>) = 66,
-    /// `export {five} from './numbers.js';`
+    /// `export const five = 5;`
+    ExportDeclaration(Box<'a, ExportDeclaration<'a>>) = 67,
     /// `export {six, seven};`
-    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 67,
+    ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>) = 68,
+    /// `export {five} from './numbers.js';`
+    ExportFromDeclaration(Box<'a, ExportFromDeclaration<'a>>) = 69,
 
     /// `export = 5;`
-    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 68,
+    TSExportAssignment(Box<'a, TSExportAssignment<'a>>) = 70,
     /// `export as namespace React;`
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 69,
+    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration<'a>>) = 71,
 }
 
 #[ast]
@@ -2624,32 +2699,104 @@ pub enum ImportAttributeKey<'a> {
     StringLiteral(StringLiteral<'a>) = 1,
 }
 
-/// Named Export Declaration
+/// Exported declaration.
+///
+/// ## Example
+///
+/// ```ts
+/// export const foo = 1;
+/// export interface Bar {}
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_ts_def = "
+        interface ExportNamedDeclaration extends Span {
+            type: 'ExportNamedDeclaration';
+            declaration: Declaration | null;
+            specifiers: Array<ExportSpecifier>;
+            source: StringLiteral | null;
+            exportKind?: ImportOrExportKind;
+            attributes: Array<ImportAttribute>;
+            parent/* IF !LINTER */?/* END IF */: Node;
+        }
+    ",
+    add_fields(
+        specifiers = EmptyArray,
+        source = Null,
+        exportKind = ExportDeclarationExportKind,
+        attributes = EmptyArray,
+    ),
+    field_order(declaration, specifiers, source, exportKind, attributes, span),
+)]
+pub struct ExportDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub declaration: Declaration<'a>,
+}
+
+/// Local named export declaration.
 ///
 /// ## Example
 ///
 /// ```ts
 /// //       ________ specifiers
 /// export { Foo, Bar };
-/// export type { Baz } from 'baz';
-/// //     ^^^^              ^^^^^
-/// // export_kind           source
+/// export type { Baz };
+/// //     ^^^^
+/// // export_kind
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_fields(declaration = Null, source = Null, attributes = EmptyArray),
+    field_order(declaration, specifiers, source, export_kind, attributes, span),
+)]
 pub struct ExportNamedDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier<'a>>,
-    pub source: Option<StringLiteral<'a>>,
     /// `export type { foo }`
     #[ts]
     pub export_kind: ImportOrExportKind,
+}
+
+/// Named re-export declaration.
+///
+/// ## Example
+///
+/// ```ts
+/// export { Foo, Bar } from 'module';
+/// export type { Baz } from 'baz';
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
+#[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    rename = "ExportNamedDeclaration",
+    ts_alias = "ExportNamedDeclaration",
+    add_fields(declaration = Null),
+    field_order(declaration, specifiers, source, export_kind, with_clause, span),
+)]
+pub struct ExportFromDeclaration<'a> {
+    pub node_id: Cell<NodeId>,
+    pub span: Span,
+    pub specifiers: Vec<'a, ExportSpecifier<'a>>,
+    pub source: StringLiteral<'a>,
+    /// `export type { foo } from 'module'`
+    #[ts]
+    pub export_kind: ImportOrExportKind,
     /// Some(vec![]) for empty assertion
-    #[estree(rename = "attributes", via = ExportNamedDeclarationWithClause)]
+    #[estree(rename = "attributes", via = ExportFromDeclarationWithClause)]
     pub with_clause: Option<Box<'a, WithClause<'a>>>,
 }
 

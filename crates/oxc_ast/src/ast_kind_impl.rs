@@ -44,7 +44,8 @@ impl<'a> AstKind<'a> {
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
         || matches!(self, Self::Class(class) if class.is_declaration())
-        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_) | Self::TSGlobalDeclaration(_)
+        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSExternalModuleDeclaration(_)
+            | Self::TSNamespaceDeclaration(_) | Self::TSGlobalDeclaration(_)
             | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
             | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_) | Self::PropertyDefinition(_)
         ) || self.is_module_declaration()
@@ -65,7 +66,9 @@ impl<'a> AstKind<'a> {
         match self {
             Self::ImportDeclaration(decl) => Some(ModuleDeclarationKind::Import(decl)),
             Self::ExportAllDeclaration(decl) => Some(ModuleDeclarationKind::ExportAll(decl)),
+            Self::ExportDeclaration(decl) => Some(ModuleDeclarationKind::Export(decl)),
             Self::ExportNamedDeclaration(decl) => Some(ModuleDeclarationKind::ExportNamed(decl)),
+            Self::ExportFromDeclaration(decl) => Some(ModuleDeclarationKind::ExportFrom(decl)),
             Self::ExportDefaultDeclaration(decl) => {
                 Some(ModuleDeclarationKind::ExportDefault(decl))
             }
@@ -261,7 +264,8 @@ impl<'a> AstKind<'a> {
             Expression::StringLiteral(e) => Self::StringLiteral(e),
             Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
             Expression::Identifier(e) => Self::IdentifierReference(e),
-            Expression::MetaProperty(e) => Self::MetaProperty(e),
+            Expression::ImportMeta(e) => Self::ImportMeta(e),
+            Expression::NewTarget(e) => Self::NewTarget(e),
             Expression::Super(e) => Self::Super(e),
             Expression::ArrayExpression(e) => Self::ArrayExpression(e),
             Expression::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
@@ -428,7 +432,8 @@ impl AstKind<'_> {
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
 
-            Self::MetaProperty(_) => "MetaProperty".into(),
+            Self::ImportMeta(_) => "ImportMeta".into(),
+            Self::NewTarget(_) => "NewTarget".into(),
             Self::Super(_) => "Super".into(),
 
             Self::AccessorProperty(_) => "AccessorProperty".into(),
@@ -513,7 +518,9 @@ impl AstKind<'_> {
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ImportAttribute(_) => "ImportAttribute".into(),
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
+            Self::ExportDeclaration(_) => "ExportDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
+            Self::ExportFromDeclaration(_) => "ExportFromDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
             Self::WithClause(_) => "WithClause".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
@@ -583,7 +590,10 @@ impl AstKind<'_> {
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
-            Self::TSModuleDeclaration(m) => format!("TSModuleDeclaration({})", m.id).into(),
+            Self::TSExternalModuleDeclaration(m) => {
+                format!("TSExternalModuleDeclaration({})", m.id).into()
+            }
+            Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
             Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),
@@ -771,8 +781,12 @@ pub enum ModuleDeclarationKind<'a> {
     Import(&'a ImportDeclaration<'a>),
     /// An export all declaration like `export * from 'foo'`
     ExportAll(&'a ExportAllDeclaration<'a>),
+    /// An exported declaration like `export const foo = 1`
+    Export(&'a ExportDeclaration<'a>),
     /// A named export declaration like `export { foo, bar }`
     ExportNamed(&'a ExportNamedDeclaration<'a>),
+    /// A named re-export declaration like `export { foo } from 'bar'`
+    ExportFrom(&'a ExportFromDeclaration<'a>),
     /// A default export declaration like `export default foo`
     ExportDefault(&'a ExportDefaultDeclaration<'a>),
     /// A TypeScript export assignment like `export = foo`
@@ -787,7 +801,9 @@ impl ModuleDeclarationKind<'_> {
         matches!(
             self,
             Self::ExportAll(_)
+                | Self::Export(_)
                 | Self::ExportNamed(_)
+                | Self::ExportFrom(_)
                 | Self::ExportDefault(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExport(_)
@@ -800,7 +816,9 @@ impl GetSpan for ModuleDeclarationKind<'_> {
         match self {
             Self::Import(decl) => decl.span,
             Self::ExportAll(decl) => decl.span,
+            Self::Export(decl) => decl.span,
             Self::ExportNamed(decl) => decl.span,
+            Self::ExportFrom(decl) => decl.span,
             Self::ExportDefault(decl) => decl.span,
             Self::TSExportAssignment(decl) => decl.span,
             Self::TSNamespaceExport(decl) => decl.span,
@@ -814,7 +832,9 @@ impl GetAddress for ModuleDeclarationKind<'_> {
         match *self {
             Self::Import(decl) => decl.unstable_address(),
             Self::ExportAll(decl) => decl.unstable_address(),
+            Self::Export(decl) => decl.unstable_address(),
             Self::ExportNamed(decl) => decl.unstable_address(),
+            Self::ExportFrom(decl) => decl.unstable_address(),
             Self::ExportDefault(decl) => decl.unstable_address(),
             Self::TSExportAssignment(decl) => decl.unstable_address(),
             Self::TSNamespaceExport(decl) => decl.unstable_address(),

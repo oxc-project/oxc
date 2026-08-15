@@ -201,9 +201,8 @@ use indexmap::IndexMap;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use oxc_allocator::IdentBuildHasher;
 use oxc_ast::ast::*;
-use oxc_str::Ident;
+use oxc_str::{Ident, IdentBuildHasher};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 

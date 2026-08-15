@@ -1,0 +1,2 @@
+// A comment between a function argument and its comma stays BEFORE the comma
+$x: foo($a /* c1 */, $b /* c2 */);

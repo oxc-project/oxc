@@ -17,7 +17,7 @@ export function fooGood3({a = x, b: [{c = y}]}: object): void {}
 // Incorrect
 export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
 export function fnDeclBad2<T>(p: T = [], r2: T): void { }
-export function fnDeclBad3<T>(p: T = [], rParam?: T, r2: T): void { }
+export function fnDeclBad3<T>(p: T = [], r2: T, rParam?: T): void { }
 
 export function fooBad([a, b] = [1, 2]): number {
   return 2;

@@ -76,7 +76,7 @@ declare_oxc_lint!(
     NoArraySort,
     unicorn,
     suspicious,
-    fix,
+    suggestion,
     config = NoArraySort,
     version = "1.15.0",
     short_description = "Prefer using `Array#toSorted()` over `Array#sort()`.",
@@ -154,7 +154,14 @@ impl Rule for NoArraySort {
             }
         }
 
-        ctx.diagnostic_with_fix(no_array_sort_diagnostic(span), |fixer| {
+        // The replacement is a suggestion, not an auto-fix, matching upstream
+        // eslint-plugin-unicorn (`hasSuggestions: true`, not `fixable`): the
+        // receiver is not statically known to be an array — the compareFn
+        // heuristic above catches many query-builder receivers, but not
+        // zero-argument ones — and non-array receivers have no `toSorted()`,
+        // so applying the replacement blindly under `--fix` turns working
+        // code into a runtime `TypeError`.
+        ctx.diagnostic_with_suggestion(no_array_sort_diagnostic(span), |fixer| {
             fixer.replace(span, "toSorted")
         });
     }

@@ -228,19 +228,18 @@ impl Rule for PreferEndingWithAnExpect {
 impl PreferEndingWithAnExpect {
     fn is_valid_last_statement<'a>(
         &self,
-        function_body: &'a FunctionBody<'a>,
+        function_body: FunctionArgument<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let Some(statement) = function_body.statements.last() else {
-            return false;
-        };
-
-        let statement_expression = match statement {
-            Statement::ExpressionStatement(expression_statement) => {
+        let statement_expression = match function_body {
+            FunctionArgument::Expression(expression) => expression,
+            FunctionArgument::Body(function_body) => {
+                let Some(Statement::ExpressionStatement(expression_statement)) =
+                    function_body.statements.last()
+                else {
+                    return false;
+                };
                 &expression_statement.expression
-            }
-            _ => {
-                return false;
             }
         };
 
@@ -274,10 +273,21 @@ impl PreferEndingWithAnExpect {
     }
 }
 
-fn function_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a FunctionBody<'a>> {
+#[derive(Clone, Copy)]
+enum FunctionArgument<'a> {
+    Body(&'a FunctionBody<'a>),
+    Expression(&'a Expression<'a>),
+}
+
+fn function_argument<'a>(argument: &'a Argument<'a>) -> Option<FunctionArgument<'a>> {
     match argument {
-        Argument::ArrowFunctionExpression(array_fn) => Some(&array_fn.body),
-        Argument::FunctionExpression(function) => function.body.as_ref().map(AsRef::as_ref),
+        Argument::ArrowFunctionExpression(array_fn) => array_fn
+            .get_expression()
+            .map(FunctionArgument::Expression)
+            .or_else(|| array_fn.get_function_body().map(FunctionArgument::Body)),
+        Argument::FunctionExpression(function) => {
+            function.body.as_deref().map(FunctionArgument::Body)
+        }
         _ => None,
     }
 }

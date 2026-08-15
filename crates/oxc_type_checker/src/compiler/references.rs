@@ -12,7 +12,7 @@
 
 use oxc_ast::ast::{
     CallExpression, Declaration, Expression, ImportExpression, Program as AstProgram, Statement,
-    TSImportType, TSModuleDeclarationBody, TSModuleDeclarationName, TSModuleReference,
+    TSImportType, TSModuleReference,
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::GetSpan;
@@ -178,12 +178,14 @@ impl Collector {
                     self.add_static(decl.source.span.start, &decl.source.value, true);
                 }
             }
-            Statement::ExportNamedDeclaration(decl) => {
-                if in_ambient_module && let Some(source) = &decl.source {
-                    self.add_static(source.span.start, &source.value, true);
+            Statement::ExportFromDeclaration(decl) => {
+                if in_ambient_module {
+                    self.add_static(decl.source.span.start, &decl.source.value, true);
                 }
+            }
+            Statement::ExportDeclaration(decl) => {
                 // `export import A = require("...")` wraps the import-equals declaration.
-                if let Some(Declaration::TSImportEqualsDeclaration(decl)) = &decl.declaration
+                if let Declaration::TSImportEqualsDeclaration(decl) = &decl.declaration
                     && let TSModuleReference::ExternalModuleReference(reference) =
                         &decl.module_reference
                 {
@@ -196,10 +198,8 @@ impl Collector {
                     self.add_static(decl.source.span.start, &decl.source.value, true);
                 }
             }
-            Statement::TSModuleDeclaration(decl) => {
-                // Only string-named ambient modules matter here (`declare global` has no module
-                // name to resolve; tsgo drops it at resolution time).
-                let TSModuleDeclarationName::StringLiteral(name) = &decl.id else { return };
+            Statement::TSExternalModuleDeclaration(decl) => {
+                let name = &decl.id;
                 if !(in_ambient_module || decl.declare || self.is_declaration_file) {
                     return;
                 }
@@ -213,7 +213,7 @@ impl Collector {
                 } else if !in_ambient_module {
                     // A top-level ambient module declaration in a script file *declares* the
                     // module — nothing to resolve, but its body may reference other modules.
-                    if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &decl.body {
+                    if let Some(block) = &decl.body {
                         for statement in &block.body {
                             self.collect_module_references(statement, true);
                         }

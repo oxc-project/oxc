@@ -15,14 +15,15 @@ mod react_compiler_typeinference;
 mod react_compiler_utils;
 mod react_compiler_validation;
 
-use crate::react_compiler::entrypoint::compile_result::CompileResult;
 use crate::react_compiler::entrypoint::imports::{
     get_react_compiler_runtime_module, has_memo_cache_function_import, validate_restricted_imports,
 };
 use crate::react_compiler::entrypoint::program::compile_program;
 
+pub use crate::react_compiler::entrypoint::compile_result::CompileResult;
 pub use crate::react_compiler::entrypoint::program::CompileOutput;
 
+pub use diagnostics::ErrorCategory;
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::options::{
     CompilationMode, CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig,
@@ -46,15 +47,17 @@ use oxc_semantic::Semantic;
 pub struct LintResult {
     /// Errors and warnings produced by the compile.
     pub diagnostics: Diagnostics,
+    /// Whether compilation was aborted according to `panic_threshold`.
+    pub fatal: bool,
 }
 
 /// Run the React Compiler on a pre-parsed program.
 ///
-/// Returns the compiled output — `None` when the compiler has nothing to change
-/// (no React-like functions, a bail-out, nothing to memoize, or a fatal error) —
-/// together with the diagnostics. Errors (e.g. Rules of Hooks violations) are
-/// hard problems in the source; the program is still left valid. Warnings
-/// include bail-outs where the compiler declined to optimize.
+/// Returns [`CompileResult::Success`] when compilation completed, even if one or
+/// more functions bailed out with diagnostics. Returns
+/// [`CompileResult::Fatal`] only when compilation was aborted according to
+/// [`PluginOptions::panic_threshold`]. Diagnostic severity and fatality are
+/// intentionally separate.
 ///
 /// Must run **first**, on the pristine AST, before any other transform. The
 /// borrowed `semantic` must have been built from that same pristine AST with
@@ -62,12 +65,14 @@ pub struct LintResult {
 /// the output with [`CompileOutput::transform`] once `semantic` is dropped:
 ///
 /// ```ignore
-/// let (output, diagnostics) = {
+/// let result = {
 ///     let semantic = SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
 ///     compile(&program, &semantic, &allocator, options)
 /// }; // `semantic`'s borrow of `program` ends here
-/// if let Some(output) = output {
-///     output.transform(&mut program);
+/// match result {
+///     CompileResult::Success { output: Some(output), .. } => output.transform(&mut program),
+///     CompileResult::Success { output: None, .. } => {}
+///     CompileResult::Fatal { diagnostics } => report(diagnostics),
 /// }
 /// ```
 pub fn compile<'a>(
@@ -75,24 +80,26 @@ pub fn compile<'a>(
     semantic: &Semantic<'_>,
     allocator: &'a Allocator,
     options: PluginOptions,
-) -> (Option<CompileOutput<'a>>, Diagnostics) {
+) -> CompileResult<'a> {
     // Check for existing runtime imports (file already compiled).
     if has_memo_cache_function_import(program, &get_react_compiler_runtime_module(&options.target))
     {
-        return (None, Diagnostics::default());
+        return CompileResult::Success { output: None, diagnostics: Diagnostics::default() };
     }
 
-    // Blocklisted imports fail the whole file: report and bail without compiling.
+    // Blocklisted imports bail out the whole file. Whether that aborts the
+    // surrounding transform is controlled by `panic_threshold`.
     if let Some(diagnostics) =
         validate_restricted_imports(program, &options.environment.validate_blocklisted_imports)
     {
-        return (None, diagnostics);
+        return if diagnostics::should_panic(&diagnostics, options.panic_threshold) {
+            CompileResult::Fatal { diagnostics }
+        } else {
+            CompileResult::Success { output: None, diagnostics }
+        };
     }
 
-    match compile_program(allocator, semantic, program, options) {
-        CompileResult::Success { output, diagnostics } => (output, diagnostics),
-        CompileResult::Error { diagnostics } => (None, diagnostics),
-    }
+    compile_program(allocator, semantic, program, options)
 }
 
 /// Lint a pre-parsed program — like [`compile`] but read-only: it collects
@@ -109,6 +116,8 @@ pub fn lint<'a>(
     let mut options = options;
     options.no_emit = true;
 
-    let (_output, diagnostics) = compile(program, semantic, allocator, options);
-    LintResult { diagnostics }
+    match compile(program, semantic, allocator, options) {
+        CompileResult::Success { diagnostics, .. } => LintResult { diagnostics, fatal: false },
+        CompileResult::Fatal { diagnostics } => LintResult { diagnostics, fatal: true },
+    }
 }

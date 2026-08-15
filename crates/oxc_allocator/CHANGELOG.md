@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.144.0] - 2026-08-10
+
+### 🚀 Features
+
+- b3c1b30 allocator: Add `ArenaVec::push_mut` (#25338) (overlookmotel)
+
+### 📚 Documentation
+
+- fe111eb allocator: Improve doc comments for `Arena` methods (#24922) (overlookmotel)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- f0a41c8 allocator: [**BREAKING**] Remove `ArenaBox::dangling` method (#25236) (overlookmotel)
+
+### 🚀 Features
+
+- 3c8312e allocator: Make `Box` `Send` + `Sync` when the type it contains is (#25242) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 🚀 Features
+
+- f08b152 allocator: Implement `FromIn` for array to `Vec` conversion (#24620) (overlookmotel)
+- 2338c13 track-memory-allocations: Track heap deallocs, alloc bytes, and peak growth (#24619) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 40c2f43 allocator: `Vec::from_array_in` do not allocate zero-length array (#24628) (overlookmotel)
+
+### ⚡ Performance
+
+- c35d8ab allocator: Mark `ReplaceWith` panic path cold (#24515) (camc314)
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- 460176a track-memory-allocations: Exclude arena chunks from Sys allocs (#24292) (Dunqing)
+
+### ⚡ Performance
+
+- 3ff0234 allocator: Remove `unwrap` from `ReplaceWith` (#24365) (overlookmotel)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

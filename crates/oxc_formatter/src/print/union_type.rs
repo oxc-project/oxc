@@ -1,3 +1,13 @@
+//! NOTE: This printer deliberately stays on Prettier 3.8-style expansion (one member per line with leading `|`)
+//! and will probably NOT follow Prettier 3.9's fit-to-width rewrite
+//! (prettier#18827: collapse when it fits, changed `=` comment placement, conditional-type `? |` hugging).
+//!
+//! Not final yet, but that is the working assumption:
+//! the per-member layout is the diff-friendly output, and the rewrite is still contested upstream (prettier#19733, open).
+//! Most `typescript/union/**` conformance failures are this one cluster;
+//! once the decision is final, reclassify them as a Known divergence entry instead of catch-up backlog.
+//! Planned: intersection types unify INTO this printer's layout (see the NOTE in `intersection_type.rs`).
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
@@ -297,6 +307,15 @@ fn format_union_types<'a>(
             // ```
             // If there is a leading own line comment between `|` and the next node, we need to put printing comments
             // before `|` instead of after it.
+            //
+            // NOTE: this is the same hoist rule as `format_hoisted_leading_comments`, but it must stay trailing-style:
+            // Prettier preserves a blank line before the comment in union chains (`lines_before`-driven),
+            // while collapsing it in binary-like chains (leading-style).
+            // One shared rendering would diverge on one of the two.
+            //
+            // The asymmetry is an attachment artifact on Prettier's side:
+            // only its trailing-comment printer preserves the empty line (`printTrailingComment`),
+            // and this comment attaches as trailing there, leading in binary-like chains.
             if f.comments().has_leading_own_line_comment(next_node_span.start) {
                 let comments = f.context().comments().comments_before(next_node_span.start);
                 FormatTrailingComments::Comments(comments).fmt(f);

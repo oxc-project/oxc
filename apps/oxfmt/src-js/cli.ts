@@ -1,7 +1,7 @@
 import { runCli } from "./bindings";
 import {
-  initExternalFormatter,
-  disposeExternalFormatter,
+  initExternalServices,
+  disposeExternalServices,
   formatFile,
   formatEmbeddedCode,
   formatEmbeddedDoc,
@@ -41,7 +41,7 @@ void (async () => {
   const [mode, exitCode] = await runCli(
     args,
     process.env.VP_VERSION ? loadVitePlusConfig : loadJsConfig,
-    initExternalFormatter,
+    initExternalServices,
     formatFile,
     formatEmbeddedCode,
     formatEmbeddedDoc,
@@ -65,7 +65,7 @@ void (async () => {
   // Other modes are handled by Rust, just need to set `exitCode`
 
   // Clean up worker pool to not V8 crashes on process exit
-  await disposeExternalFormatter();
+  await disposeExternalServices();
 
   // NOTE: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
   // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

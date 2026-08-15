@@ -172,9 +172,12 @@ impl RequireHookConfig {
                         }
                     }
                     Argument::ArrowFunctionExpression(arrow_func_expr)
-                        if !arrow_func_expr.expression =>
+                        if !arrow_func_expr.is_expression() =>
                     {
-                        self.check_block_body(&arrow_func_expr.body.statements, ctx);
+                        self.check_block_body(
+                            &arrow_func_expr.get_function_body().unwrap().statements,
+                            ctx,
+                        );
                     }
                     _ => (),
                 }

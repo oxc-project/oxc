@@ -213,8 +213,7 @@ impl NoUnsafeOptionalChaining {
                 }
                 AstKind::Class(class)
                     if class
-                        .super_class
-                        .as_ref()
+                        .heritage_expression()
                         .is_some_and(|expr| expr.node_id() == current_id) =>
                 {
                     return Some(ErrorType::Usage);

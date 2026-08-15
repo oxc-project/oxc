@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_parser::{Parser, ParserReturn};
-use oxc_react_compiler::{PluginOptions, compile};
+use oxc_react_compiler::{CompileResult, PluginOptions, compile};
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
 
@@ -30,15 +30,20 @@ fn bench_react_compiler(criterion: &mut Criterion) {
                     Parser::new(&allocator, source_text, source_type).parse();
 
                 runner.run(|| {
-                    let (output, diagnostics) = {
+                    let result = {
                         let semantic =
                             SemanticBuilder::new().with_build_nodes(true).build(&program).semantic;
                         compile(&program, &semantic, &allocator, options.clone())
                     };
-                    if let Some(output) = output {
-                        output.transform(&mut program);
+                    match result {
+                        CompileResult::Success { output, diagnostics } => {
+                            if let Some(output) = output {
+                                output.transform(&mut program);
+                            }
+                            diagnostics
+                        }
+                        CompileResult::Fatal { diagnostics } => diagnostics,
                     }
-                    diagnostics
                 });
             });
         });

@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.139.0",
+  "version": "0.144.0",
   "description": "Oxc Transformer Node API",
   "keywords": [
     "babel",
@@ -44,7 +44,7 @@
     "postbuild": "publint",
     "postbuild-dev": "node scripts/patch.js",
     "build-wasm": "pnpm run build-wasm-dev --release",
-    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads",
+    "build-wasm-dev": "pnpm run build-dev --target wasm32-wasip1-threads --dts transform.wasi.d.cts",
     "test": "vitest run --dir ./test"
   },
   "devDependencies": {

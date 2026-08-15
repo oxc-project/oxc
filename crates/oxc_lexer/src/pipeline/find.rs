@@ -385,8 +385,8 @@ pub(super) unsafe fn scan_block_comment(
         let v = load256(src, i);
         let vn = load256(src, i + 1);
         let term = mm(_mm256_and_si256(veq(v, b'*'), veq(vn, b'/')));
-        let nl = mm(_mm256_or_si256(veq(v, b'\n'), veq(v, b'\r')));
-        let at = mm(veq(v, b'@'));
+        let nl = if saw_nl { 0 } else { mm(_mm256_or_si256(veq(v, b'\n'), veq(v, b'\r'))) };
+        let at = if lic_q < 0 { mm(veq(v, b'@')) } else { 0 };
         if term != 0 {
             let j = term.trailing_zeros() as usize;
             let bodymask: u32 = if j > 0 { (1u32 << j) - 1 } else { 0 };

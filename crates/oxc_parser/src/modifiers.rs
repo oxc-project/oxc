@@ -7,26 +7,29 @@ use std::{
 
 use oxc_ast::ast::TSAccessibility;
 use oxc_data_structures::fieldless_enum;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    ParserConfig as Config, ParserImpl,
+    diagnostics::{self, ParserDiagnostic},
+    lexer::Kind,
+};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Modifier {
-    pub span_start: u32,
+    pub start: u32,
     pub kind: ModifierKind,
 }
 
 impl Modifier {
     #[inline]
-    pub const fn new(span_start: u32, kind: ModifierKind) -> Self {
-        Self { span_start, kind }
+    pub const fn new(start: u32, kind: ModifierKind) -> Self {
+        Self { start, kind }
     }
 
     #[inline]
-    pub const fn span(&self) -> Span {
-        Span::sized(self.span_start, self.kind.len())
+    pub const fn span(self) -> Span {
+        Span::sized(self.start, self.kind.len())
     }
 }
 
@@ -491,10 +494,10 @@ impl<C: Config> ParserImpl<'_, C> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers {
         let mut modifiers = Modifiers::empty();
         while let Some(modifier_kind) = self.get_modifier() {
-            let modifier = Modifier::new(self.start_span(), modifier_kind);
+            let modifier = Modifier::new(self.cur_start(), modifier_kind);
             self.bump_any();
-            self.check_modifier(modifiers.kinds(), &modifier);
-            modifiers.add(modifier.kind, modifier.span_start);
+            self.check_modifier(modifiers.kinds(), modifier);
+            modifiers.add(modifier.kind, modifier.start);
         }
         modifiers
     }
@@ -520,12 +523,12 @@ impl<C: Config> ParserImpl<'_, C> {
         if is_modifier { Some(modifier_kind) } else { None }
     }
 
-    fn modifier(&mut self, kind: Kind, span_start: u32) -> Modifier {
+    fn modifier(&mut self, kind: Kind, start: u32) -> Modifier {
         let modifier_kind = ModifierKind::try_from(kind).unwrap_or_else(|()| {
             self.set_unexpected();
             ModifierKind::Abstract // Dummy value
         });
-        Modifier::new(span_start, modifier_kind)
+        Modifier::new(start, modifier_kind)
     }
 
     pub(crate) fn parse_modifiers(
@@ -540,8 +543,8 @@ impl<C: Config> ParserImpl<'_, C> {
             permit_const_as_modifier,
             stop_on_start_of_class_static_block,
         ) {
-            self.check_modifier(modifiers.kinds(), &modifier);
-            modifiers.add(modifier.kind, modifier.span_start);
+            self.check_modifier(modifiers.kinds(), modifier);
+            modifiers.add(modifier.kind, modifier.start);
         }
 
         modifiers
@@ -553,7 +556,7 @@ impl<C: Config> ParserImpl<'_, C> {
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Option<Modifier> {
-        let span_start = self.start_span();
+        let start = self.cur_start();
         let kind = self.cur_kind();
 
         if kind == Kind::Const {
@@ -587,7 +590,7 @@ impl<C: Config> ParserImpl<'_, C> {
             // next token is not a modifier
             return None;
         }
-        Some(self.modifier(kind, span_start))
+        Some(self.modifier(kind, start))
     }
 
     pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
@@ -717,9 +720,9 @@ const fn get_illegal_preceding_modifiers(kind: ModifierKind) -> ModifierKinds {
     }
 }
 
-impl<C: Config> ParserImpl<'_, C> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline]
-    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn check_modifier(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         // Do a quick check that this modifier is not illegal in this position.
         //
         // This is just 2 instructions:
@@ -739,7 +742,7 @@ impl<C: Config> ParserImpl<'_, C> {
     /// Create an error for an illegal modifier.
     #[cold]
     #[inline(never)]
-    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: &Modifier) {
+    fn illegal_modifier_error(&mut self, existing_kinds: ModifierKinds, modifier: Modifier) {
         const ACCESSIBILITY_KINDS: ModifierKinds = ModifierKinds::new([
             ModifierKind::Public,
             ModifierKind::Private,
@@ -807,7 +810,7 @@ impl<C: Config> ParserImpl<'_, C> {
         strict: bool,
         create_diagnostic: F,
     ) where
-        F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
+        F: Fn(Modifier, Option<ModifierKinds>) -> ParserDiagnostic<'a>,
     {
         if modifiers.kinds().has_any_not_in(allowed) {
             // Invalid modifiers are rare, so handle this case in `#[cold]` function.
@@ -823,27 +826,27 @@ impl<C: Config> ParserImpl<'_, C> {
                     .iter()
                     .filter(|modifier| !allowed.contains(modifier.kind))
                     .collect::<Vec<_>>();
-                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.span_start);
+                disallowed_modifiers.sort_unstable_by_key(|modifier| modifier.start);
                 disallowed_modifiers
             }
 
             #[cold]
             #[inline(never)]
-            fn report<C: Config, F>(
-                parser: &mut ParserImpl<'_, C>,
+            fn report<'a, C: Config, F>(
+                parser: &mut ParserImpl<'a, C>,
                 modifiers: &Modifiers,
                 allowed: ModifierKinds,
                 strict: bool,
                 create_diagnostic: F,
             ) where
-                F: Fn(&Modifier, Option<ModifierKinds>) -> OxcDiagnostic,
+                F: Fn(Modifier, Option<ModifierKinds>) -> ParserDiagnostic<'a>,
             {
                 let disallowed_modifiers = collect_disallowed(modifiers, allowed);
 
                 debug_assert!(!disallowed_modifiers.is_empty());
 
                 for modifier in &disallowed_modifiers {
-                    parser.error(create_diagnostic(modifier, strict.then_some(allowed)));
+                    parser.error(create_diagnostic(*modifier, strict.then_some(allowed)));
                 }
             }
             report(self, modifiers, allowed, strict, create_diagnostic);

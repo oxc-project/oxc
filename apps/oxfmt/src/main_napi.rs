@@ -8,10 +8,10 @@ use serde_json::Value;
 
 use crate::{
     api::{format_api, text_to_doc_api},
-    cli::{MigrateSource, Mode, StdinRunner, WalkRunner, format_command, init_miette, init_rayon},
+    cli::{MigrateSource, Mode, StdinRunner, WalkRunner, format_command, init_rayon},
     core::{
-        ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-        JsInitExternalFormatterCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
+        ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+        JsInitExternalServicesCb, JsLoadJsConfigCb, JsSortTailwindClassesCb,
         create_js_config_loader, utils,
     },
     lsp::run_lsp,
@@ -23,7 +23,7 @@ use crate::{
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
 /// 2. `load_js_config_cb`: Callback to load JS/TS config files
-/// 3. `init_external_formatter_cb`: Callback to initialize external formatter (JS worker pool)
+/// 3. `init_external_services_cb`: Callback to initialize external services (JS worker pool)
 /// 4. `format_file_cb`: Callback to format files
 /// 5. `format_embedded_cb`: Callback to format embedded code in templates
 /// 6. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
@@ -38,16 +38,14 @@ pub async fn run_cli(
     args: Vec<String>,
     #[napi(ts_arg_type = "(path: string) => Promise<any>")] load_js_config_cb: JsLoadJsConfigCb,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<void>")]
-    init_external_formatter_cb: JsInitExternalFormatterCb,
+    init_external_services_cb: JsInitExternalServicesCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>"
     )]
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
@@ -85,40 +83,34 @@ pub async fn run_cli(
 
     // Otherwise, handle modes that require Rust side processing
 
-    let external_formatter = ExternalFormatter::new(
+    let external_services = ExternalServices::new(
         format_file_cb,
         format_embedded_cb,
         format_embedded_doc_cb,
         sort_tailwindcss_classes_cb,
     )
-    .with_init_cb(init_external_formatter_cb);
+    .with_init_cb(init_external_services_cb);
     let js_config_loader = create_js_config_loader(load_js_config_cb);
 
     utils::init_tracing();
     let result = match command.mode {
         Mode::Lsp => {
-            run_lsp(js_config_loader, external_formatter.clone()).await;
+            run_lsp(js_config_loader, external_services.clone()).await;
 
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
-            init_miette();
-
-            let result = StdinRunner::new(
-                command,
-                Arc::clone(&js_config_loader),
-                external_formatter.clone(),
-            )
-            .run();
+            let result =
+                StdinRunner::new(command, Arc::clone(&js_config_loader), external_services.clone())
+                    .run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
         Mode::Cli(_) => {
-            init_miette();
             init_rayon(command.runtime_options.threads);
 
             let result = WalkRunner::new(command)
-                .with_external_formatter(Some(external_formatter.clone()))
+                .with_external_services(Some(external_services.clone()))
                 .with_js_config_loader(Arc::clone(&js_config_loader))
                 .run();
 
@@ -129,7 +121,7 @@ pub async fn run_cli(
 
     // Explicitly drop ThreadsafeFunctions before returning to prevent
     // use-after-free during V8 cleanup (Node.js issue with TSFN cleanup timing)
-    external_formatter.cleanup();
+    external_services.cleanup();
 
     result
 }
@@ -163,9 +155,7 @@ pub async fn format(
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"
@@ -205,9 +195,7 @@ pub async fn js_text_to_doc(
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[] | null>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string | null>")]
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(
         ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[] | null>"

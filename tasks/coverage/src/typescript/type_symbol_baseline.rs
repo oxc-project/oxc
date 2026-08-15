@@ -131,7 +131,7 @@ impl<'a> SymbolWalker<'a> {
         let nodes = self.sema().nodes();
         let span = nodes.kind(nid).span();
         match nodes.parent_kind(nid) {
-            AstKind::ExportNamedDeclaration(export) => export.span().start,
+            AstKind::ExportDeclaration(export) => export.span().start,
             AstKind::ExportDefaultDeclaration(export) => export.span().start,
             _ => span.start,
         }

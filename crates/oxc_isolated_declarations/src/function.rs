@@ -1,5 +1,5 @@
 use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{SPAN, Span};
 
 use crate::{
@@ -33,7 +33,7 @@ impl<'a> IsolatedDeclarations<'a> {
             func.this_param.clone_in(self.allocator()),
             params,
             return_type,
-            NONE,
+            None,
             self,
         )
     }
@@ -92,14 +92,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
                             // union with `undefined`
-                            return TSTypeAnnotation::new(
+                            return TSTypeAnnotation::boxed(
                                 SPAN,
                                 TSType::new_ts_union_type(
                                     SPAN,
-                                    ArenaVec::from_array_in(
-                                        [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
-                                        self,
-                                    ),
+                                    [ts_type, TSType::new_ts_undefined_keyword(SPAN, self)],
                                     self,
                                 ),
                                 self,
@@ -107,19 +104,19 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
 
-                    TSTypeAnnotation::new(SPAN, ts_type, self)
+                    TSTypeAnnotation::boxed(SPAN, ts_type, self)
                 });
 
             let optional =
                 param.optional || (!is_remaining_params_have_required && is_assignment_pattern);
             return Some(FormalParameter::new(
                 param.span,
-                ArenaVec::new_in(self),
+                [],
                 // `pattern` is already an owned, freshly-cloned binding (see above) and is
                 // not used afterwards, so move it in directly instead of cloning again.
                 pattern,
                 type_annotation,
-                NONE,
+                None,
                 optional,
                 None,
                 false,
@@ -130,10 +127,10 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Some(FormalParameter::new(
             param.span,
-            ArenaVec::new_in(self),
+            [],
             pattern,
             param.type_annotation.clone_in(self.allocator()),
-            NONE,
+            None,
             param.optional,
             None,
             false,

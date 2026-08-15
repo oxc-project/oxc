@@ -1,0 +1,120 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# oxfmt-ignore freezes exactly ONE node (never everything after it,
+# prettier#13008); above the first item of a block collection it freezes
+# that item, same as it does for any later item.
+# oxfmt-ignore
+kept:   {  as: is  }
+reformatted:   {  a: 1  }
+
+nested:
+  # oxfmt-ignore
+  first:   frozen
+  second:   formatted
+
+seq:
+  # oxfmt-ignore
+  - keep:   this
+  - fix:   this
+
+value:
+  # oxfmt-ignore
+  [
+      deep, indent,
+    ]
+
+flow: [
+  # oxfmt-ignore
+  {  sss  },
+  {  qqq  },
+]
+---
+# first and last sequence items (prettier#16756's top-comment.yml shape)
+# oxfmt-ignore
+-        abc
+-        def
+# oxfmt-ignore
+-        ghi
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# oxfmt-ignore freezes exactly ONE node (never everything after it,
+# prettier#13008); above the first item of a block collection it freezes
+# that item, same as it does for any later item.
+# oxfmt-ignore
+kept:   {  as: is  }
+reformatted: { a: 1 }
+
+nested:
+  # oxfmt-ignore
+  first:   frozen
+  second: formatted
+
+seq:
+  # oxfmt-ignore
+  - keep:   this
+  - fix: this
+
+value:
+  # oxfmt-ignore
+  [
+      deep, indent,
+    ]
+
+flow: [
+    # oxfmt-ignore
+    {  sss  },
+    { qqq },
+  ]
+---
+# first and last sequence items (prettier#16756's top-comment.yml shape)
+# oxfmt-ignore
+-        abc
+- def
+# oxfmt-ignore
+-        ghi
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# oxfmt-ignore freezes exactly ONE node (never everything after it,
+# prettier#13008); above the first item of a block collection it freezes
+# that item, same as it does for any later item.
+# oxfmt-ignore
+kept:   {  as: is  }
+reformatted: { a: 1 }
+
+nested:
+  # oxfmt-ignore
+  first:   frozen
+  second: formatted
+
+seq:
+  # oxfmt-ignore
+  - keep:   this
+  - fix: this
+
+value:
+  # oxfmt-ignore
+  [
+      deep, indent,
+    ]
+
+flow: [
+    # oxfmt-ignore
+    {  sss  },
+    { qqq },
+  ]
+---
+# first and last sequence items (prettier#16756's top-comment.yml shape)
+# oxfmt-ignore
+-        abc
+- def
+# oxfmt-ignore
+-        ghi
+
+===================== End =====================

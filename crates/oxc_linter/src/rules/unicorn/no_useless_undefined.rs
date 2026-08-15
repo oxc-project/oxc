@@ -152,14 +152,13 @@ fn is_undefined(arg: &Argument) -> bool {
 }
 
 fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-    let parent_node = ctx.nodes().parent_node(node.id());
-    match parent_node.kind() {
+    match node.kind() {
         AstKind::Program(_) => false,
         AstKind::ArrowFunctionExpression(arrow_func_express) => {
             arrow_func_express.return_type.is_some()
         }
         AstKind::Function(func) => func.return_type.is_some(),
-        _ => is_has_function_return_type(parent_node, ctx),
+        _ => is_has_function_return_type(ctx.nodes().parent_node(node.id()), ctx),
     }
 }
 
@@ -210,22 +209,10 @@ impl Rule for NoUselessUndefined {
                         );
                     }
                     // `() => undefined`
-                    AstKind::ExpressionStatement(_) => {
+                    AstKind::ArrowFunctionExpression(arrow) if arrow.is_expression() => {
                         if !self.check_arrow_function_body {
                             return;
                         }
-                        let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
-                        let grand_parent_node_kind = grand_parent_node.kind();
-                        let AstKind::FunctionBody(func_body) = grand_parent_node_kind else {
-                            return;
-                        };
-                        let grand_grand_parent_node =
-                            ctx.nodes().parent_node(grand_parent_node.id());
-                        let grand_grand_parent_node_kind = grand_grand_parent_node.kind();
-                        let AstKind::ArrowFunctionExpression(_) = grand_grand_parent_node_kind
-                        else {
-                            return;
-                        };
 
                         if is_has_function_return_type(parent_node, ctx) {
                             return;
@@ -233,17 +220,18 @@ impl Rule for NoUselessUndefined {
 
                         ctx.diagnostic_with_fix(
                             no_useless_undefined_diagnostic(undefined_literal.span),
-                            |fixer| fixer.replace(func_body.span, "{}"),
+                            |fixer| fixer.replace(arrow.body.span(), "{}"),
                         );
                     }
                     // `let foo = undefined` / `var foo = undefined`
                     AstKind::VariableDeclarator(variable_declarator) => {
                         let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
-                        let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
+                        let AstKind::VariableDeclaration(declaration) = grand_parent_node_kind
+                        else {
                             return;
                         };
-                        if variable_declarator.kind == VariableDeclarationKind::Const {
+                        if declaration.kind == VariableDeclarationKind::Const {
                             return;
                         }
                         if is_has_function_return_type(parent_node, ctx) {
@@ -276,6 +264,25 @@ impl Rule for NoUselessUndefined {
                         if let Some(initializer) = &assign_pattern.initializer
                             && initializer.span() == undefined_literal.span
                         {
+                            let formal_parameters = ctx.nodes().parent_node(parent_node.id());
+                            let AstKind::FormalParameters(formal_parameters) =
+                                formal_parameters.kind()
+                            else {
+                                return;
+                            };
+
+                            // Removing the default initializer makes this parameter required. Do
+                            // not produce a TypeScript-invalid signature by placing it after an
+                            // optional parameter.
+                            let has_preceding_optional_parameter = formal_parameters
+                                .items
+                                .iter()
+                                .take_while(|parameter| parameter.span != assign_pattern.span)
+                                .any(|parameter| parameter.optional);
+                            if has_preceding_optional_parameter {
+                                return;
+                            }
+
                             let left = &assign_pattern
                                 .type_annotation
                                 .as_ref()
@@ -550,6 +557,11 @@ fn test() {
                 public x: number | undefined = undefined
             }
         ",
+            None,
+        ),
+        ("function foo(optional?: string, required: string = undefined) {}", None),
+        (
+            "function getBackLinks(subject: string, limit = 16, cursor?: string, reverse = false, ttl: number | undefined = undefined) {}",
             None,
         ),
     ];

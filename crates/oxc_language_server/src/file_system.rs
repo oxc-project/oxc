@@ -103,6 +103,10 @@ impl LSPFileSystem {
         )
     }
 
+    pub fn is_open(&self, uri: &Uri) -> bool {
+        self.files.pin().contains_key(uri)
+    }
+
     pub fn remove(&self, uri: &Uri) {
         self.files.pin().remove(uri);
     }

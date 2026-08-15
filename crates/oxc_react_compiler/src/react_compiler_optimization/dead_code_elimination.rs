@@ -11,6 +11,8 @@
 //!
 //! Ported from TypeScript `src/Optimization/DeadCodeElimination.ts`.
 
+use oxc_allocator::Vec as ArenaVec;
+use oxc_index::{IndexSlice, IndexVec};
 use oxc_str::IdentHashSet;
 use rustc_hash::FxHashSet;
 
@@ -19,8 +21,9 @@ use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     ArrayPatternElement, BlockId, BlockKind, HirFunction, Identifier, IdentifierId, IdentifierName,
-    InstructionId, InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern,
+    InstructionId, InstructionKind, InstructionValue, ObjectPropertyOrSpread, Pattern, Terminal,
 };
+use crate::react_compiler_optimization::prune_maybe_throws::value_may_throw;
 
 /// Implements dead-code elimination, eliminating instructions whose values are unused.
 ///
@@ -29,11 +32,11 @@ use crate::react_compiler_hir::{
 /// Corresponds to TS `deadCodeElimination(fn: HIRFunction): void`.
 pub fn dead_code_elimination<'a>(func: &mut HirFunction<'a>, env: &Environment<'a>) {
     // Phase 1: Find/mark all referenced identifiers
-    let state = find_referenced_identifiers(func, env);
+    let state = find_referenced_identifiers(func, env, true);
 
     // Phase 2: Prune / sweep unreferenced identifiers and instructions
     // Collect instructions to rewrite (two-phase: collect then apply to avoid borrow conflicts)
-    let mut instructions_to_rewrite: Vec<InstructionId> = Vec::new();
+    let mut instructions_to_rewrite: Vec<(InstructionId, bool)> = Vec::new();
 
     for (_block_id, block) in &mut func.body.blocks {
         // Remove unused phi nodes
@@ -41,7 +44,7 @@ pub fn dead_code_elimination<'a>(func: &mut HirFunction<'a>, env: &Environment<'
 
         // Remove instructions with unused lvalues
         block.instructions.retain(|instr_id| {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier)
         });
 
@@ -50,14 +53,21 @@ pub fn dead_code_elimination<'a>(func: &mut HirFunction<'a>, env: &Environment<'
         for i in 0..retained_count {
             let is_block_value = block.kind != BlockKind::Block && i == retained_count - 1;
             if !is_block_value {
-                instructions_to_rewrite.push(block.instructions[i]);
+                let instr_id = block.instructions[i];
+                let preserve_destructure =
+                    matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. })
+                        && matches!(
+                            func.instructions[instr_id.index()].value,
+                            InstructionValue::Destructure { .. }
+                        );
+                instructions_to_rewrite.push((instr_id, preserve_destructure));
             }
         }
     }
 
     // Apply rewrites
-    for instr_id in instructions_to_rewrite {
-        rewrite_instruction(func, instr_id, &state, env);
+    for (instr_id, preserve_destructure) in instructions_to_rewrite {
+        rewrite_instruction(func, instr_id, preserve_destructure, &state, env);
     }
 
     // Remove unused context variables
@@ -85,11 +95,11 @@ impl State<'_> {
 /// Mark an identifier as being referenced (not dead code).
 fn reference<'a>(
     state: &mut State<'a>,
-    identifiers: &[Identifier<'a>],
+    identifiers: &IndexSlice<IdentifierId, [Identifier<'a>]>,
     identifier_id: IdentifierId,
 ) {
     state.identifiers.insert(identifier_id);
-    let ident = &identifiers[identifier_id.0 as usize];
+    let ident = &identifiers[identifier_id];
     if let Some(IdentifierName::Named(name) | IdentifierName::Promoted(name)) = ident.name {
         state.named.insert(name);
     }
@@ -99,13 +109,13 @@ fn reference<'a>(
 /// Checks both the specific SSA id and (for named identifiers) any usage of that name.
 fn is_id_or_name_used(
     state: &State,
-    identifiers: &[Identifier],
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     identifier_id: IdentifierId,
 ) -> bool {
     if state.identifiers.contains(&identifier_id) {
         return true;
     }
-    let ident = &identifiers[identifier_id.0 as usize];
+    let ident = &identifiers[identifier_id];
     if let Some(ref name) = ident.name { state.named.contains(name.value()) } else { false }
 }
 
@@ -115,7 +125,11 @@ fn is_id_used(state: &State, identifier_id: IdentifierId) -> bool {
 }
 
 /// Phase 1: Find all referenced identifiers via fixed-point iteration.
-fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>) -> State<'a> {
+fn find_referenced_identifiers<'a>(
+    func: &HirFunction<'a>,
+    env: &Environment<'a>,
+    preserve_caught_throws: bool,
+) -> State<'a> {
     let has_loop = has_back_edge(func);
     // Collect block ids in reverse order (postorder - successors before predecessors)
     let reversed_block_ids: Vec<BlockId> = func.body.blocks.keys().rev().copied().collect();
@@ -138,7 +152,7 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
             let instr_count = block.instructions.len();
             for i in (0..instr_count).rev() {
                 let instr_id = block.instructions[i];
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
 
                 let is_block_value = block.kind != BlockKind::Block && i == instr_count - 1;
 
@@ -149,6 +163,14 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
                         reference(&mut state, &env.identifiers, place.identifier);
                     }
                 } else if is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier)
+                    // Throwing is observable inside try/catch even when the produced value is
+                    // unused. Keep the instruction until its MaybeThrow edge is proven dead.
+                    || (preserve_caught_throws
+                        && matches!(
+                            block.terminal,
+                            Terminal::MaybeThrow { handler: Some(_), .. }
+                        )
+                        && value_may_throw(&instr.value))
                     || !pruneable_value(&instr.value, &state, env)
                 {
                     reference(&mut state, &env.identifiers, instr.lvalue.identifier);
@@ -187,17 +209,56 @@ fn find_referenced_identifiers<'a>(func: &HirFunction<'a>, env: &Environment<'a>
     state
 }
 
-/// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).
-fn rewrite_instruction(
-    func: &mut HirFunction,
-    instr_id: InstructionId,
-    state: &State,
+/// Finds caught instructions retained only because their throw is observable.
+///
+/// Re-running the mark phase without catch preservation distinguishes dead operations from
+/// ordinary used values. Dependency inference uses this to add safe root dependencies only for
+/// the former, leaving normal dependencies precise.
+pub(crate) fn find_semantic_only_caught_instructions(
+    func: &HirFunction,
     env: &Environment,
+) -> Option<IndexVec<InstructionId, bool>> {
+    let mut candidates = Vec::new();
+    for block in func.body.blocks.values() {
+        if !matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }) {
+            continue;
+        }
+        for &instr_id in &block.instructions {
+            let instr = &func.instructions[instr_id.index()];
+            if value_may_throw(&instr.value) {
+                candidates.push(instr_id);
+            }
+        }
+    }
+
+    if candidates.is_empty() {
+        return None;
+    }
+
+    let state = find_referenced_identifiers(func, env, false);
+    let mut semantic_only = IndexVec::from_vec(vec![false; func.instructions.len()]);
+    for instr_id in candidates {
+        let instr = &func.instructions[instr_id.index()];
+        if !is_id_or_name_used(&state, &env.identifiers, instr.lvalue.identifier) {
+            semantic_only[instr_id] = true;
+        }
+    }
+
+    Some(semantic_only)
+}
+
+/// Rewrite a retained instruction (destructuring cleanup, StoreLocal -> DeclareLocal).
+fn rewrite_instruction<'a>(
+    func: &mut HirFunction<'a>,
+    instr_id: InstructionId,
+    preserve_destructure: bool,
+    state: &State,
+    env: &Environment<'a>,
 ) {
-    let instr = &mut func.instructions[instr_id.0 as usize];
+    let instr = &mut func.instructions[instr_id.index()];
 
     match &mut instr.value {
-        InstructionValue::Destructure { lvalue, .. } => {
+        InstructionValue::Destructure { lvalue, .. } if !preserve_destructure => {
             match &mut lvalue.pattern {
                 Pattern::Array(arr) => {
                     // For arrays, replace unused items with holes, truncate trailing holes
@@ -231,7 +292,7 @@ fn rewrite_instruction(
                         match prop {
                             ObjectPropertyOrSpread::Property(p) => {
                                 if is_id_or_name_used(state, &env.identifiers, p.place.identifier) {
-                                    next_properties.get_or_insert_with(Vec::new).push(prop.clone());
+                                    next_properties.get_or_insert_with(Vec::new).push(*prop);
                                 }
                             }
                             ObjectPropertyOrSpread::Spread(s) => {
@@ -244,7 +305,7 @@ fn rewrite_instruction(
                         }
                     }
                     if let Some(props) = next_properties {
-                        obj.properties = props;
+                        obj.properties = ArenaVec::from_iter_in(props, &env.allocator);
                     }
                 }
             }
@@ -256,7 +317,7 @@ fn rewrite_instruction(
             // This is a const/let declaration where the variable is accessed later,
             // but where the value is always overwritten before being read.
             // Rewrite to DeclareLocal so the initializer value can be DCE'd.
-            let new_lvalue = lvalue.clone();
+            let new_lvalue = *lvalue;
             let new_span = *span;
             instr.value = InstructionValue::DeclareLocal { lvalue: new_lvalue, span: new_span };
         }
@@ -306,10 +367,13 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             // explicitly retain debugger statements
             false
         }
+        InstructionValue::TSEnumDeclaration { .. } => {
+            // Enum initializers can have arbitrary runtime side effects.
+            false
+        }
         InstructionValue::CallExpression { callee, .. } => {
             if env.output_mode == OutputMode::Ssr {
-                let callee_ty =
-                    &env.types[env.identifiers[callee.identifier.0 as usize].type_.0 as usize];
+                let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {
@@ -320,8 +384,7 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
         }
         InstructionValue::MethodCall { property, .. } => {
             if env.output_mode == OutputMode::Ssr {
-                let callee_ty =
-                    &env.types[env.identifiers[property.identifier.0 as usize].type_.0 as usize];
+                let callee_ty = &env.types[env.identifiers[property.identifier].type_];
                 if let Some(HookKind::UseState | HookKind::UseReducer | HookKind::UseRef) =
                     env.get_hook_kind_for_type(callee_ty).ok().flatten()
                 {

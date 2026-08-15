@@ -22,12 +22,11 @@ use crate::{
     FormatOptions, FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
     VecBuffer,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
-    format::write,
     format_element::{
         LineMode, TextWidth,
         tag::{self, DedentMode, GroupMode, Tag},
     },
-    write as w,
+    write, write as w,
 };
 
 impl<'a> Document<'a> {
@@ -167,8 +166,20 @@ where
                     LineMode::Hard => {
                         w!(f, [token("hard_line_break")]);
                     }
+                    LineMode::HardWithoutExpand => {
+                        w!(f, [token("hard_line_break_without_expand_parent")]);
+                    }
                     LineMode::Empty => {
                         w!(f, [token("empty_line")]);
+                    }
+                    LineMode::ExactLineBreaks(count) => {
+                        w!(
+                            f,
+                            [text(
+                                f.allocator()
+                                    .alloc_str(&std::format!("exact_line_breaks({count})"))
+                            )]
+                        );
                     }
                     LineMode::Literal => {
                         w!(f, [token("literal_line_break")]);

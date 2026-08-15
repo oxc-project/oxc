@@ -1,16 +1,19 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_index::IndexSlice;
+
 use oxc_diagnostics::Diagnostics;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     each_instruction_value_operand_with_functions, each_terminal_operand,
 };
 use crate::react_compiler_hir::{
     FunctionId, HirFunction, IdentifierId, InstructionValue, ParamPattern, Place, PlaceOrSpread,
-    PropertyLiteral, ReturnVariant, Span, Terminal,
+    PropertyLiteral, ReturnVariant, Terminal,
 };
+use oxc_span::Span;
 
 /// Validates useMemo() usage patterns.
 ///
@@ -33,7 +36,7 @@ struct FuncExprInfo {
 
 fn validate_use_memo_impl(
     func: &HirFunction,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     errors: &mut Diagnostics,
     validate_no_void_use_memo: bool,
 ) -> Diagnostics {
@@ -46,7 +49,7 @@ fn validate_use_memo_impl(
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let lvalue = &instr.lvalue;
             let value = &instr.value;
 
@@ -67,12 +70,11 @@ fn validate_use_memo_impl(
                     }
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
-                    if react.contains(&object.identifier) {
-                        if let PropertyLiteral::String(prop_name) = property {
-                            if prop_name == "useMemo" {
-                                use_memos.insert(lvalue.identifier);
-                            }
-                        }
+                    if react.contains(&object.identifier)
+                        && let PropertyLiteral::String(prop_name) = property
+                        && prop_name == "useMemo"
+                    {
+                        use_memos.insert(lvalue.identifier);
                     }
                 }
                 InstructionValue::FunctionExpression { lowered_func, span, .. } => {
@@ -124,14 +126,7 @@ fn validate_use_memo_impl(
     // Report unused useMemo results
     if !unused_use_memos.is_empty() {
         for (span, _) in unused_use_memos.values() {
-            void_memo_errors.push(
-                ErrorCategory::VoidUseMemo
-                    .diagnostic("useMemo() result is unused")
-                    .with_help(
-                        "This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects",
-                    )
-                    .with_label(span.label("useMemo() result is unused")),
-            );
+            void_memo_errors.push(diagnostics::unused_use_memo(*span));
         }
     }
 
@@ -140,7 +135,7 @@ fn validate_use_memo_impl(
 
 #[allow(clippy::too_many_arguments)]
 fn handle_possible_use_memo_call(
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
     errors: &mut Diagnostics,
     void_memo_errors: &mut Diagnostics,
     use_memos: &FxHashSet<IdentifierId>,
@@ -166,7 +161,7 @@ fn handle_possible_use_memo_call(
         None => return,
     };
 
-    let body_func = &functions[body_info.func_id.0 as usize];
+    let body_func = &functions[body_info.func_id];
 
     // Validate no parameters
     if !body_func.params.is_empty() {
@@ -175,52 +170,23 @@ fn handle_possible_use_memo_call(
             ParamPattern::Place(place) => place.span,
             ParamPattern::Spread(spread) => spread.place.span,
         };
-        errors.push(
-            ErrorCategory::UseMemo
-                .diagnostic("useMemo() callbacks may not accept parameters")
-                .with_help(
-                    "useMemo() callbacks are called by React to cache calculations across re-renders. They should not take parameters. Instead, directly reference the props, state, or local variables needed for the computation",
-                )
-                .with_labels(span.map(|s| s.label("Callbacks with parameters are not supported"))),
-        );
+        errors.push(diagnostics::use_memo_callback_parameters(span));
     }
 
     // Validate not async or generator
     if body_func.is_async || body_func.generator {
-        errors.push(
-            ErrorCategory::UseMemo
-                .diagnostic("useMemo() callbacks may not be async or generator functions")
-                .with_help(
-                    "useMemo() callbacks are called once and must synchronously return a value",
-                )
-                .with_labels(
-                    body_info
-                        .span
-                        .map(|s| s.label("Async and generator functions are not supported")),
-                ),
-        );
+        errors.push(diagnostics::async_or_generator_use_memo(body_info.span));
     }
 
     // Validate no context variable assignment
     validate_no_context_variable_assignment(body_func, errors);
 
     if validate_no_void_use_memo && !has_non_void_return(body_func) {
-        void_memo_errors.push(
-            ErrorCategory::VoidUseMemo
-                .diagnostic("useMemo() callbacks must return a value")
-                .with_help(
-                    "This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects",
-                )
-                .with_labels(
-                    body_info.span.map(|s| s.label("useMemo() callbacks must return a value")),
-                ),
-        );
-    } else if validate_no_void_use_memo {
-        if let Some(callee_span) = callee.span {
-            // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
-            // The identifierName in Babel's AST Span is "useMemo".
-            unused_use_memos.insert(lvalue.identifier, (callee_span, Some("useMemo".to_string())));
-        }
+        void_memo_errors.push(diagnostics::use_memo_no_return(body_info.span));
+    } else if validate_no_void_use_memo && let Some(callee_span) = callee.span {
+        // The callee is always useMemo/React.useMemo since we checked is_use_memo above.
+        // The identifierName in Babel's AST Span is "useMemo".
+        unused_use_memos.insert(lvalue.identifier, (callee_span, Some("useMemo".to_string())));
     }
 }
 
@@ -230,22 +196,11 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diag
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
-            if let InstructionValue::StoreContext { lvalue, .. } = &instr.value {
-                if context.contains(&lvalue.place.identifier) {
-                    errors.push(
-                        ErrorCategory::UseMemo
-                            .diagnostic(
-                                "useMemo() callbacks may not reassign variables declared outside of the callback",
-                            )
-                            .with_help(
-                                "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function",
-                            )
-                            .with_labels(
-                                lvalue.place.span.map(|s| s.label("Cannot reassign variable")),
-                            ),
-                    );
-                }
+            let instr = &func.instructions[instr_id.index()];
+            if let InstructionValue::StoreContext { lvalue, .. } = &instr.value
+                && context.contains(&lvalue.place.identifier)
+            {
+                errors.push(diagnostics::use_memo_reassigns_outer_variable(lvalue.place.span));
             }
         }
     }
@@ -253,10 +208,10 @@ fn validate_no_context_variable_assignment(func: &HirFunction, errors: &mut Diag
 
 fn has_non_void_return(func: &HirFunction) -> bool {
     for (_block_id, block) in &func.body.blocks {
-        if let Terminal::Return { return_variant, .. } = &block.terminal {
-            if matches!(return_variant, ReturnVariant::Explicit | ReturnVariant::Implicit) {
-                return true;
-            }
+        if let Terminal::Return { return_variant, .. } = &block.terminal
+            && matches!(return_variant, ReturnVariant::Explicit | ReturnVariant::Implicit)
+        {
+            return true;
         }
     }
     false
@@ -266,7 +221,7 @@ fn has_non_void_return(func: &HirFunction) -> bool {
 /// Thin wrapper around canonical `each_instruction_value_operand_with_functions` that maps to ids.
 fn each_instruction_value_operand_ids(
     value: &InstructionValue,
-    functions: &[HirFunction],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
 ) -> Vec<IdentifierId> {
     each_instruction_value_operand_with_functions(value, functions)
         .into_iter()

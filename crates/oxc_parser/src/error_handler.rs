@@ -1,16 +1,19 @@
 //! Code related to error handling.
 
 use oxc_allocator::{Dummy, GetAllocator};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
+use crate::{
+    ParserConfig as Config, ParserImpl,
+    diagnostics::{self, ParserDiagnostic},
+    lexer::Kind,
+};
 
 /// Fatal parsing error.
 #[derive(Debug, Clone)]
-pub struct FatalError {
+pub struct FatalError<'a> {
     /// The fatal error
-    pub error: OxcDiagnostic,
+    pub error: ParserDiagnostic<'a>,
     /// Length of `errors` at time fatal error is recorded
     pub errors_len: usize,
 }
@@ -53,7 +56,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Push a Syntax Error
     #[cold]
-    pub(crate) fn error(&mut self, error: OxcDiagnostic) {
+    pub(crate) fn error(&mut self, error: ParserDiagnostic<'a>) {
         self.errors.push(error);
     }
 
@@ -63,7 +66,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Errors like "await outside async function" are only valid if the file ends up being
     /// a Script. If ESM syntax is found, the file becomes a Module and these errors are discarded.
     #[cold]
-    pub(crate) fn error_on_script(&mut self, error: OxcDiagnostic) {
+    pub(crate) fn error_on_script(&mut self, error: ParserDiagnostic<'a>) {
         if self.source_type.is_unambiguous() {
             self.deferred_script_errors.push(error);
         } else {
@@ -78,7 +81,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Advance lexer's cursor to end of file.
     #[cold]
-    pub(crate) fn set_fatal_error(&mut self, error: OxcDiagnostic) {
+    pub(crate) fn set_fatal_error(&mut self, error: ParserDiagnostic<'a>) {
         if self.fatal_error.is_none() {
             self.lexer.advance_to_end();
             self.fatal_error = Some(FatalError { error, errors_len: self.errors.len() });
@@ -86,7 +89,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     #[cold]
-    pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: OxcDiagnostic) -> T {
+    pub(crate) fn fatal_error<T: Dummy<'a>>(&mut self, error: ParserDiagnostic<'a>) -> T {
         self.set_fatal_error(error);
         Dummy::dummy(self.allocator())
     }

@@ -41,8 +41,8 @@
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_allocator::TakeIn;
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::Traverse;
@@ -117,9 +117,9 @@ impl ClassStaticBlock {
         ClassElement::new_property_definition(
             block.span,
             PropertyDefinitionType::PropertyDefinition,
-            ArenaVec::new_in(ctx),
+            [],
             key,
-            NONE,
+            None,
             Some(expr),
             false,
             true,

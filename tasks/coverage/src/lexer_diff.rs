@@ -29,22 +29,17 @@ fn lexer_stream(
     options.source_type_module = source_type.is_module();
     options.jsx = source_type.is_jsx();
     options.ts = source_type.is_typescript();
-    // Keep the stream fully contiguous so `starts[i + 1]` is token `i`'s true end.
-    options.emit_whitespace = true;
-    options.emit_comments = true;
 
     let (result, arena) = oxc_lexer::lex_utf8(&buf, n as u32, options);
     let kinds = result.tok_kinds(&arena);
-    let starts = result.tok_starts(&arena);
+    let token_spans = result.tok_spans(&arena);
 
     let mut spans = Vec::with_capacity(kinds.len());
     for (i, &kind) in kinds.iter().enumerate() {
-        if kind == oxc_lexer::token_kind::EOF || oxc_lexer::is_trivia(kind) {
+        if kind == oxc_lexer::TokenKind::Eof || kind.is_trivia() {
             continue;
         }
-        let start = oxc_lexer::token::offset(starts[i]);
-        let end = oxc_lexer::token::offset(starts[i + 1]);
-        spans.push((start, end));
+        spans.push((token_spans[i].start, token_spans[i].end));
     }
     let mut diags = result.diagnostics().to_vec();
     diags.sort_by_key(|d| d.off);

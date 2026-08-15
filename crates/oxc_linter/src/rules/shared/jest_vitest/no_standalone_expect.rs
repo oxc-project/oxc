@@ -127,7 +127,10 @@ fn is_correct_place_to_call_expect<'a>(
         let mut current = ctx.nodes().parent_node(current_node.id());
 
         // loop until find the closest function body
-        while !matches!(current.kind(), AstKind::FunctionBody(_) | AstKind::Program(_)) {
+        while !matches!(
+            current.kind(),
+            AstKind::FunctionBody(_) | AstKind::ArrowFunctionExpression(_) | AstKind::Program(_)
+        ) {
             current = ctx.nodes().parent_node(current.id());
         }
 
@@ -136,7 +139,11 @@ fn is_correct_place_to_call_expect<'a>(
             return None;
         }
 
-        let parent = ctx.nodes().parent_node(current.id());
+        let parent = if matches!(current.kind(), AstKind::ArrowFunctionExpression(_)) {
+            current
+        } else {
+            ctx.nodes().parent_node(current.id())
+        };
 
         match parent.kind() {
             AstKind::Function(function) => {

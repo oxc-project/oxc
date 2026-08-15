@@ -24,6 +24,41 @@ source: crates/oxc_linter/src/tester.rs
   help: Use object destructuring rather than direct member access.
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = object.foo;
+   ·                   ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = object['foo'];
+   ·                   ─────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Array destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = array[0];
+   ·                   ────────
+   ╰────
+  help: Use array destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = object.foo;
+   ·                   ──────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
+   ╭─[prefer_destructuring.tsx:1:19]
+ 1 │ var foo: string = object['foo'];
+   ·                   ─────────────
+   ╰────
+  help: Use object destructuring rather than direct member access.
+
+  ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
  1 │ var foo = (a, b).foo;
    ·           ──────────

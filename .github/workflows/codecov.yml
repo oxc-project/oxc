@@ -29,22 +29,24 @@ jobs:
       - name: Clone submodules
         uses: ./.github/actions/clone-submodules
 
-      - uses: namespacelabs/nscloud-cache-action@58bf6e08898e88803c098e2b522668541cd3b2e3 # v1.6.0
+      - uses: namespacelabs/nscloud-cache-action@c5f8dab7560444c4bf8dbc64f1b203431873c547 # v1.6.1
         with:
           path: /home/runner/.rustup
           cache: rust
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
 
       - run: rustup component add llvm-tools-preview
-      - uses: taiki-e/install-action@16b05812d776ae1dfaabc8277e421fb6d2506419 # v2.82.7
+      - uses: taiki-e/install-action@91ddec75689c4c78665b598d188dc821c5a43e5c # v2.85.9
         with:
           tool: cargo-llvm-cov
 
       - name: Run
         env:
-          # Increase stack size to 10MB, avoid `oxc_formatter` from stack overflowing when printing long assignment expressions.
+          # Increase stack size to 100MiB, avoid `oxc_formatter` from stack overflowing when printing long assignment expressions.
           RUST_MIN_STACK: 104857600
+          # Limit concurrent compiler processes to avoid exhausting the 8GiB runner.
+          CARGO_BUILD_JOBS: 2
         run: cargo codecov --lcov --output-path lcov.info
 
       - name: Upload Artifact

@@ -2,9 +2,11 @@ use rustc_hash::FxHashMap;
 use std::fmt::Display;
 use std::fmt::Formatter;
 
+use oxc_index::IndexSlice;
+
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_lvalue, each_pattern_operand};
 use crate::react_compiler_hir::{
@@ -49,10 +51,10 @@ pub fn validate_context_variable_lvalues(
 /// Like [`validate_context_variable_lvalues`], but writes diagnostics into the
 /// provided `errors` instead of `env.errors`. Useful when the caller wants to
 /// discard the diagnostics (e.g. when lowering is incomplete).
-pub fn validate_context_variable_lvalues_with_errors(
+fn validate_context_variable_lvalues_with_errors(
     func: &HirFunction,
-    functions: &[HirFunction],
-    identifiers: &[Identifier],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     let mut identifier_kinds: IdentifierKinds = FxHashMap::default();
@@ -68,15 +70,15 @@ pub fn validate_context_variable_lvalues_with_errors(
 fn validate_context_variable_lvalues_impl(
     func: &HirFunction,
     identifier_kinds: &mut IdentifierKinds,
-    functions: &[HirFunction],
-    identifiers: &[Identifier],
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     let mut inner_function_ids: Vec<FunctionId> = Vec::new();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             let value = &instr.value;
 
             match value {
@@ -122,11 +124,7 @@ fn validate_context_variable_lvalues_impl(
                 _ => {
                     for _ in each_instruction_value_lvalue(value) {
                         errors.push(
-                            ErrorCategory::Todo
-                                .diagnostic(
-                                    "ValidateContextVariableLValues: unhandled instruction variant",
-                                )
-                                .with_labels(value.span().copied()),
+                            diagnostics::todo_validate_context_variable_lvalues_unhandled_instruction_variant(value.span().copied()),
                         );
                     }
                 }
@@ -136,7 +134,7 @@ fn validate_context_variable_lvalues_impl(
 
     // Process inner functions after the block loop to avoid borrow conflicts
     for func_id in inner_function_ids {
-        let inner_func = &functions[func_id.0 as usize];
+        let inner_func = &functions[func_id];
         validate_context_variable_lvalues_impl(
             inner_func,
             identifier_kinds,
@@ -150,18 +148,18 @@ fn validate_context_variable_lvalues_impl(
 }
 
 /// Format a place like TS `printPlace()`: `<effect> <name>$<id>`
-fn format_place(place: &Place, identifiers: &[Identifier]) -> String {
+fn format_place(place: &Place, identifiers: &IndexSlice<IdentifierId, [Identifier]>) -> String {
     let id = place.identifier;
-    let ident = &identifiers[id.0 as usize];
+    let ident = &identifiers[id];
     let name = ident.name.as_ref().map_or("", |name| name.value());
-    format!("{} {}${}", place.effect, name, id.0)
+    format!("{} {}${}", place.effect, name, id.index())
 }
 
 fn visit(
     identifiers: &mut IdentifierKinds,
     place: &Place,
     kind: VarRefKind,
-    env_identifiers: &[Identifier],
+    env_identifiers: &IndexSlice<IdentifierId, [Identifier]>,
     errors: &mut Diagnostics,
 ) -> Result<(), OxcDiagnostic> {
     if let Some((prev_place, prev_kind)) = identifiers.get(&place.identifier) {
@@ -171,25 +169,15 @@ fn visit(
             if *prev_kind == VarRefKind::Destructure || kind == VarRefKind::Destructure {
                 let span =
                     if kind == VarRefKind::Destructure { place.span } else { prev_place.span };
-                errors.push(
-                    ErrorCategory::Todo
-                        .diagnostic("Support destructuring of context variables")
-                        .with_labels(span),
-                );
+                errors.push(diagnostics::todo_support_destructuring_context_variables(span));
                 return Ok(());
             }
             let place_str = format_place(place, env_identifiers);
-            return Err(ErrorCategory::Invariant
-                .diagnostic(
-                    "Expected all references to a variable to be consistently local or context references",
-                )
-                .with_help(format!(
-                    "Identifier {} is referenced as a {} variable, but was previously referenced as a {} variable",
-                    place_str, kind, prev_kind
-                ))
-                .with_labels(place.span.map(|s| s.label(format!("this is {}", prev_kind)))));
+            return Err(diagnostics::inconsistent_context_variable(
+                &place_str, kind, prev_kind, place.span,
+            ));
         }
     }
-    identifiers.insert(place.identifier, (place.clone(), kind));
+    identifiers.insert(place.identifier, (*place, kind));
     Ok(())
 }

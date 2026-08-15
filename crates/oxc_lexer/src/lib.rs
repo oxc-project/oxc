@@ -18,9 +18,7 @@ pub use error::{Diagnostic, diag_code, diag_severity};
 pub use lanes::Lanes;
 pub use options::{LexOptions, default_options};
 pub use pipeline::Lexer;
-pub use token::{
-    TRIVIA_MAX, TRIVIA_MIN, is_string_kind, is_trivia, token_flags, token_kind, token_kind_name,
-};
+pub use token::{KW_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
 use core::cell::RefCell;
 
@@ -62,11 +60,11 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
     }
     assert!(
         arena.tok_kinds_capacity as usize >= n + PAD
-            && arena.tok_starts_capacity as usize >= n + PAD,
-        "lexer: arena token capacity too small for source len {n} (tok_kinds={}, tok_starts={}); need >= n + {PAD} \
-         — compress writes a full 8-lane group past the last token and the pipeline appends an EOF sentinel",
+            && arena.tok_spans_capacity as usize >= n + PAD,
+        "lexer: arena token capacity too small for source len {n} (tok_kinds={}, tok_spans={}); need >= n + {PAD} \
+         — build_spans writes a full 4-lane group past the last token and the pipeline appends EOF sentinels",
         arena.tok_kinds_capacity,
-        arena.tok_starts_capacity
+        arena.tok_spans_capacity
     );
 
     assert!(
@@ -83,7 +81,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
                 src,
                 n,
                 arena.tok_kinds,
-                arena.tok_starts,
+                arena.tok_spans,
                 options.jsx,
                 options.ts,
                 options.source_type_module,
@@ -92,14 +90,17 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         };
 
         if !lx.lanes.unicode_leads.is_empty() && k > 0 {
-            // SAFETY: `lex_raw` wrote `k` kinds and `k + 1` starts.
-            let (kinds_all, starts_all) = unsafe {
+            // SAFETY: `lex_raw` wrote `k` kinds and `k` spans.
+            let (kind_bytes, spans_all) = unsafe {
                 (
                     core::slice::from_raw_parts(arena.tok_kinds, k),
-                    core::slice::from_raw_parts(arena.tok_starts, k + 1),
+                    core::slice::from_raw_parts(arena.tok_spans, k),
                 )
             };
-            resolve_unicode_leads(&mut lx.lanes, &src[..n], kinds_all, starts_all);
+            token::debug_assert_kind_bytes(kind_bytes);
+            // SAFETY: every kind the pipeline writes is a declared discriminant.
+            let kinds_all = unsafe { token::kinds_from_bytes(kind_bytes) };
+            resolve_unicode_leads(&mut lx.lanes, &src[..n], kinds_all, spans_all);
         }
 
         if !lx.lanes.diag_suppress.is_empty() {
@@ -139,15 +140,23 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
 }
 
 #[expect(clippy::cast_possible_truncation, reason = "char lengths are 1..=4")]
-fn resolve_unicode_leads(lanes: &mut Lanes, src: &[u8], kinds_all: &[u8], starts_all: &[u32]) {
+fn resolve_unicode_leads(
+    lanes: &mut Lanes,
+    src: &[u8],
+    kinds_all: &[TokenKind],
+    spans_all: &[oxc_span::Span],
+) {
     let k = kinds_all.len();
     let mut leads = core::mem::take(&mut lanes.unicode_leads);
     let mut ti = 0usize;
     for &off in &leads {
-        while ti + 1 < k && token::offset(starts_all[ti + 1]) <= off {
+        while ti + 1 < k && spans_all[ti].end <= off {
             ti += 1;
         }
-        if !candidate_is_code_level(kinds_all[ti]) {
+        if off < spans_all[ti].start
+            || off >= spans_all[ti].end
+            || !candidate_is_code_level(kinds_all[ti])
+        {
             continue;
         }
         let Some(ch) = lanes::decode_char_at(src, off as usize) else { continue };
@@ -172,14 +181,13 @@ fn resolve_unicode_leads(lanes: &mut Lanes, src: &[u8], kinds_all: &[u8], starts
 }
 
 /// Literal interiors, trivia, and JSX text may legally contain any char; only candidates landing in code-level tokens are worth checking.
-fn candidate_is_code_level(kind: u8) -> bool {
-    use token::token_kind as T;
-    !(is_trivia(kind)
-        || is_string_kind(kind)
-        || kind == T::REGEXP
-        || (T::TEMPLATE_NO_SUB..=T::TEMPLATE_TAIL).contains(&kind)
-        || (T::TEMPLATE_NO_SUB_COOKED..=T::TEMPLATE_TAIL_COOKED).contains(&kind)
-        || kind == T::JSX_TEXT)
+fn candidate_is_code_level(kind: TokenKind) -> bool {
+    !(kind.is_trivia()
+        || kind.is_string()
+        || kind == TokenKind::RegExp
+        || (TokenKind::TemplateNoSub..=TokenKind::TemplateTail).contains(&kind)
+        || (TokenKind::TemplateNoSubCooked..=TokenKind::TemplateTailCooked).contains(&kind)
+        || kind == TokenKind::JsxText)
 }
 
 fn empty_result(arena: &Arena) -> LexResult {

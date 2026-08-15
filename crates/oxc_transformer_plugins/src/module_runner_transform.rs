@@ -51,7 +51,7 @@ use itoa::Buffer as ItoaBuffer;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
 use oxc_span::SPAN;
@@ -107,7 +107,7 @@ impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::Identifier(_) => self.transform_identifier(expr, ctx),
-            Expression::MetaProperty(_) => Self::transform_meta_property(expr, ctx),
+            Expression::ImportMeta(_) => Self::transform_import_meta(expr, ctx),
             Expression::ImportExpression(_) => self.transform_dynamic_import(expr, ctx),
             _ => {}
         }
@@ -149,9 +149,19 @@ impl<'a> ModuleRunnerTransform<'a> {
                     );
                 }
                 Statement::ExportNamedDeclaration(export) => {
-                    self.transform_export_named_declaration(
-                        &mut new_stmts,
+                    self.transform_export_named_declaration(&mut hoist_exports, export, ctx);
+                }
+                Statement::ExportFromDeclaration(export) => {
+                    self.transform_export_from_declaration(
                         &mut hoist_imports,
+                        &mut hoist_exports,
+                        export,
+                        ctx,
+                    );
+                }
+                Statement::ExportDeclaration(export) => {
+                    Self::transform_export_declaration(
+                        &mut new_stmts,
                         &mut hoist_exports,
                         export,
                         ctx,
@@ -232,8 +242,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Property_accessors#method_binding>
                 let zero =
                     Expression::new_numeric_literal(SPAN, 0f64, None, NumberBase::Decimal, ctx);
-                let expressions = ArenaVec::from_array_in([zero, expr], ctx);
-                Expression::new_sequence_expression(ident.span, expressions, ctx)
+                Expression::new_sequence_expression(ident.span, [zero, expr], ctx)
             } else {
                 expr
             }
@@ -265,19 +274,19 @@ impl<'a> ModuleRunnerTransform<'a> {
             let arguments = options.into_iter().map(Argument::from);
             let arguments =
                 ArenaVec::from_iter_in(iter::once(Argument::from(source)).chain(arguments), ctx);
-            Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+            Expression::new_call_expression(span, callee, None, arguments, false, ctx)
         });
     }
 
     /// Transform `import.meta` to `__vite_ssr_import_meta__`.
     #[inline]
-    fn transform_meta_property(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::MetaProperty(meta) = expr else {
+    fn transform_import_meta(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::ImportMeta(import_meta) = expr else {
             unreachable!();
         };
 
         *expr = ctx.create_unbound_ident_expr(
-            meta.span,
+            import_meta.span,
             static_ident!("__vite_ssr_import_meta__"),
             ReferenceFlags::Read,
         );
@@ -383,97 +392,119 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// // to
     /// Object.defineProperty(__vite_ssr_exports__, 'bar', { enumerable: true, configurable: true, get() { return foo; }});
     /// ```
+    fn transform_export_declaration(
+        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
+        export: ArenaBox<'a, ExportDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let ExportDeclaration { span, declaration, .. } = export.unbox();
+        let export_expression = match &declaration {
+            // `export const [foo, bar] = [1, 2];`
+            Declaration::VariableDeclaration(variable) => {
+                let new_stmts_index = new_stmts.len();
+                variable.bound_names(&mut |ident| {
+                    let binding = BoundIdentifier::from_binding_ident(ident);
+                    let ident = binding.create_read_expression(ctx);
+                    hoist_exports.push(Self::create_export(span, ident, binding.name, ctx));
+                });
+                new_stmts.insert(new_stmts_index, Statement::from(declaration));
+                return;
+            }
+            Declaration::FunctionDeclaration(func) => {
+                let binding = BoundIdentifier::from_binding_ident(func.id.as_ref().unwrap());
+                let ident = binding.create_read_expression(ctx);
+                Self::create_export(span, ident, binding.name, ctx)
+            }
+            Declaration::ClassDeclaration(class) => {
+                let binding = BoundIdentifier::from_binding_ident(class.id.as_ref().unwrap());
+                let ident = binding.create_read_expression(ctx);
+                Self::create_export(span, ident, binding.name, ctx)
+            }
+            _ => unreachable!("Unsupported TypeScript declaration in exported declaration"),
+        };
+        new_stmts.push(Statement::from(declaration));
+        hoist_exports.push(export_expression);
+    }
+
     fn transform_export_named_declaration(
         &mut self,
-        new_stmts: &mut ArenaVec<'a, Statement<'a>>,
-        hoist_imports: &mut Vec<Statement<'a>>,
         hoist_exports: &mut Vec<Statement<'a>>,
         export: ArenaBox<'a, ExportNamedDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ExportNamedDeclaration { span, source, specifiers, declaration, .. } = export.unbox();
+        let ExportNamedDeclaration { specifiers, .. } = export.unbox();
+        let mut no_imports = vec![];
+        self.transform_export_specifiers(None, specifiers, &mut no_imports, hoist_exports, ctx);
+    }
 
-        if let Some(declaration) = declaration {
-            let export_expression = match &declaration {
-                // `export const [foo, bar] = [1, 2];`
-                Declaration::VariableDeclaration(variable) => {
-                    let new_stmts_index = new_stmts.len();
-                    variable.bound_names(&mut |ident| {
-                        let binding = BoundIdentifier::from_binding_ident(ident);
-                        let ident = binding.create_read_expression(ctx);
-                        hoist_exports.push(Self::create_export(span, ident, binding.name, ctx));
-                    });
-                    // Should be inserted before the exports
-                    new_stmts.insert(new_stmts_index, Statement::from(declaration));
-                    return;
-                }
-                // `export function foo() {}`
-                Declaration::FunctionDeclaration(func) => {
-                    let binding = BoundIdentifier::from_binding_ident(func.id.as_ref().unwrap());
-                    let ident = binding.create_read_expression(ctx);
-                    Self::create_export(span, ident, binding.name, ctx)
-                }
-                // `export class Foo {}`
-                Declaration::ClassDeclaration(class) => {
-                    let binding = BoundIdentifier::from_binding_ident(class.id.as_ref().unwrap());
-                    let ident = binding.create_read_expression(ctx);
-                    Self::create_export(span, ident, binding.name, ctx)
-                }
-                _ => {
-                    unreachable!(
-                        "Unsupported for transforming typescript declaration in named export"
-                    );
-                }
-            };
-            new_stmts.push(Statement::from(declaration));
-            hoist_exports.push(export_expression);
-        } else {
-            // If the source is Some, then we need to import the module first and then export them.
-            let import_binding = source.map(|source| {
-                self.deps.insert(source.value.to_string());
-                let binding = self.generate_import_binding(ctx);
-                let pattern = binding.create_binding_pattern(ctx);
-                let imported_names = ArenaVec::from_iter_in(
-                    specifiers.iter().map(|specifier| {
-                        let local_name = specifier.local.name();
-                        let local_name_expr =
-                            Expression::new_string_literal(SPAN, local_name, None, ctx);
-                        ArrayExpressionElement::from(local_name_expr)
-                    }),
-                    ctx,
-                );
-                let arguments = ArenaVec::from_array_in(
-                    [
-                        Argument::StringLiteral(ArenaBox::new_in(source, ctx)),
-                        Self::create_imported_names_object(imported_names, ctx),
-                    ],
-                    ctx,
-                );
-                hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
-                binding
-            });
+    fn transform_export_from_declaration(
+        &mut self,
+        hoist_imports: &mut Vec<Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
+        export: ArenaBox<'a, ExportFromDeclaration<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let ExportFromDeclaration { source, specifiers, .. } = export.unbox();
+        self.transform_export_specifiers(
+            Some(source),
+            specifiers,
+            hoist_imports,
+            hoist_exports,
+            ctx,
+        );
+    }
 
-            hoist_exports.extend(specifiers.into_iter().map(|specifier| {
-                let ExportSpecifier { span, exported, local, .. } = specifier;
-                let expr = if let Some(import_binding) = &import_binding {
-                    let object = import_binding.create_read_expression(ctx);
-                    let property = local.name();
-                    // TODO(improvement): It looks like here could always return a computed member expression,
-                    //                    so that we don't need to check if it's an identifier name.
-                    if is_identifier_name(&property) {
-                        create_property_access(SPAN, object, &property, ctx)
-                    } else {
-                        create_compute_property_access(SPAN, object, &property, ctx)
-                    }
+    fn transform_export_specifiers(
+        &mut self,
+        source: Option<StringLiteral<'a>>,
+        specifiers: ArenaVec<'a, ExportSpecifier<'a>>,
+        hoist_imports: &mut Vec<Statement<'a>>,
+        hoist_exports: &mut Vec<Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let import_binding = source.map(|source| {
+            self.deps.insert(source.value.to_string());
+            let binding = self.generate_import_binding(ctx);
+            let pattern = binding.create_binding_pattern(ctx);
+            let imported_names = ArenaVec::from_iter_in(
+                specifiers.iter().map(|specifier| {
+                    let local_name = specifier.local.name();
+                    let local_name_expr =
+                        Expression::new_string_literal(SPAN, local_name, None, ctx);
+                    ArrayExpressionElement::from(local_name_expr)
+                }),
+                ctx,
+            );
+            let arguments = ArenaVec::from_array_in(
+                [
+                    Argument::StringLiteral(ArenaBox::new_in(source, ctx)),
+                    Self::create_imported_names_object(imported_names, ctx),
+                ],
+                ctx,
+            );
+            hoist_imports.push(Self::create_import(SPAN, pattern, arguments, ctx));
+            binding
+        });
+
+        hoist_exports.extend(specifiers.into_iter().map(|specifier| {
+            let ExportSpecifier { span, exported, local, .. } = specifier;
+            let expr = if let Some(import_binding) = &import_binding {
+                let object = import_binding.create_read_expression(ctx);
+                let property = local.name();
+                // TODO(improvement): It looks like here could always return a computed member expression,
+                //                    so that we don't need to check if it's an identifier name.
+                if is_identifier_name(&property) {
+                    create_property_access(SPAN, object, &property, ctx)
                 } else {
-                    let ModuleExportName::IdentifierReference(ident) = local else {
-                        unreachable!()
-                    };
-                    Expression::Identifier(ArenaBox::new_in(ident, ctx))
-                };
-                Self::create_export(span, expr, exported.name().into(), ctx)
-            }));
-        }
+                    create_compute_property_access(SPAN, object, &property, ctx)
+                }
+            } else {
+                let ModuleExportName::IdentifierReference(ident) = local else { unreachable!() };
+                Expression::Identifier(ArenaBox::new_in(ident, ctx))
+            };
+            Self::create_export(span, expr, exported.name().into(), ctx)
+        }));
     }
 
     /// Transform export all declaration (`export * from 'vue'`).
@@ -521,9 +552,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         } else {
             let callee =
                 Expression::new_identifier(SPAN, static_ident!("__vite_ssr_exportAll__"), ctx);
-            let arguments = ArenaVec::from_value_in(Argument::from(ident), ctx);
+            let ident = Argument::from(ident);
             // `export * from 'vue'` -> `__vite_ssr_exportAll__(__vite_ssr_import_0__);`
-            let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
+            let call = Expression::new_call_expression(SPAN, callee, None, [ident], false, ctx);
             let export = Statement::new_expression_statement(span, call, ctx);
             // names from `export *` cannot be known, so add it right after the import.
             hoist_imports.extend([import, export]);
@@ -674,7 +705,9 @@ impl<'a> ModuleRunnerTransform<'a> {
             statement,
             Statement::ImportDeclaration(_)
                 | Statement::ExportAllDeclaration(_)
+                | Statement::ExportDeclaration(_)
                 | Statement::ExportNamedDeclaration(_)
+                | Statement::ExportFromDeclaration(_)
                 | Statement::ExportDefaultDeclaration(_)
         )
     }
@@ -711,7 +744,7 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             ctx,
         );
-        Argument::new_object_expression(SPAN, ArenaVec::from_value_in(imported_names, ctx), ctx)
+        Argument::new_object_expression(SPAN, [imported_names], ctx)
     }
 
     // `const __vite_ssr_import_0__ = await __vite_ssr_import__('vue', { importedNames: ['foo'] });`
@@ -726,18 +759,13 @@ impl<'a> ModuleRunnerTransform<'a> {
             static_ident!("__vite_ssr_import__"),
             ReferenceFlags::Read,
         );
-        let call = Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx);
+        let call = Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx);
         let init = Expression::new_await_expression(SPAN, call, ctx);
 
         let kind = VariableDeclarationKind::Const;
-        let declarator = VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(init), false, ctx);
-        let declaration = Declaration::new_variable_declaration(
-            span,
-            kind,
-            ArenaVec::from_value_in(declarator, ctx),
-            false,
-            ctx,
-        );
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(init), false, ctx);
+        let declaration =
+            Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
     }
 
@@ -749,7 +777,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let object =
             ctx.create_unbound_ident_expr(SPAN, static_ident!("Object"), ReferenceFlags::Read);
         let member = create_member_callee(object, static_ident!("defineProperty"), ctx);
-        Expression::new_call_expression(SPAN, member, NONE, arguments, false, ctx)
+        Expression::new_call_expression(SPAN, member, None, arguments, false, ctx)
     }
 
     // `key: value` or `key() {}`
@@ -777,14 +805,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let kind = FormalParameterKind::FormalParameter;
-        let params = FormalParameters::new(SPAN, kind, ArenaVec::new_in(ctx), NONE, ctx);
+        let params = FormalParameters::boxed(SPAN, kind, [], None, ctx);
         let statement = Statement::new_return_statement(SPAN, Some(expr), ctx);
-        let body = FunctionBody::new(
-            SPAN,
-            ArenaVec::new_in(ctx),
-            ArenaVec::from_value_in(statement, ctx),
-            ctx,
-        );
+        let body = FunctionBody::boxed(SPAN, [], [statement], ctx);
         let r#type = FunctionType::FunctionExpression;
         let scope_id = ctx.create_child_scope(ctx.scoping().root_scope_id(), ScopeFlags::Function);
         Expression::new_function_expression_with_scope_id_and_pure_and_pife(
@@ -794,10 +817,10 @@ impl<'a> ModuleRunnerTransform<'a> {
             false,
             false,
             false,
-            NONE,
-            NONE,
+            None,
+            None,
             params,
-            NONE,
+            None,
             Some(body),
             scope_id,
             false,
@@ -816,14 +839,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);
         let object = Expression::new_object_expression(
             SPAN,
-            ArenaVec::from_array_in(
-                [
-                    Self::create_object_property("enumerable", None, ctx),
-                    Self::create_object_property("configurable", None, ctx),
-                    Self::create_object_property("get", Some(getter), ctx),
-                ],
-                ctx,
-            ),
+            [
+                Self::create_object_property("enumerable", None, ctx),
+                Self::create_object_property("configurable", None, ctx),
+                Self::create_object_property("get", Some(getter), ctx),
+            ],
             ctx,
         );
 
@@ -868,15 +888,9 @@ impl<'a> ModuleRunnerTransform<'a> {
         );
         let pattern = binding.create_binding_pattern(ctx);
         let kind = VariableDeclarationKind::Const;
-        let declarator =
-            VariableDeclarator::new(SPAN, kind, pattern, NONE, Some(right), false, ctx);
-        let declaration = Declaration::new_variable_declaration(
-            span,
-            kind,
-            ArenaVec::from_value_in(declarator, ctx),
-            false,
-            ctx,
-        );
+        let declarator = VariableDeclarator::new(SPAN, pattern, None, Some(right), false, ctx);
+        let declaration =
+            Declaration::new_variable_declaration(span, kind, [declarator], false, ctx);
         Statement::from(declaration)
     }
 }

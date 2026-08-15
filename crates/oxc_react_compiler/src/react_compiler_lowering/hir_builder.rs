@@ -1,17 +1,20 @@
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::FxIndexMap;
-use crate::react_compiler_utils::FxIndexSet;
 use crate::react_compiler_utils::IdentIndexMap;
+use crate::react_compiler_utils::OrderedMap;
+use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
 use crate::scope::DeclKind;
 use crate::scope::ImportBindingKind;
 use crate::scope::ScopeId;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
+use rustc_hash::FxHashSet;
 
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 use oxc_str::{Ident, format_ident};
@@ -19,7 +22,12 @@ use oxc_str::{Ident, format_ident};
 use crate::react_compiler_lowering::identifier_loc_index::IdentifierLocIndex;
 
 type BuildResult<'a> = Result<
-    (HIR, Vec<Instruction<'a>>, IdentIndexMap<'a, SymbolId>, FxIndexMap<SymbolId, IdentifierId>),
+    (
+        HIR<'a>,
+        Vec<Instruction<'a>>,
+        IdentIndexMap<'a, SymbolId>,
+        FxIndexMap<SymbolId, IdentifierId>,
+    ),
     OxcDiagnostic,
 >;
 
@@ -69,13 +77,6 @@ pub(crate) fn is_always_reserved_word(s: &str) -> bool {
     )
 }
 
-pub(crate) fn reserved_identifier_diagnostic(name: &str) -> OxcDiagnostic {
-    ErrorCategory::Syntax.diagnostic("Expected a non-reserved identifier name").with_help(format!(
-        "`{}` is a reserved word in JavaScript and cannot be used as an identifier name",
-        name
-    ))
-}
-
 // ---------------------------------------------------------------------------
 // Scope types for tracking break/continue targets
 // ---------------------------------------------------------------------------
@@ -123,7 +124,7 @@ fn new_block(id: BlockId, kind: BlockKind) -> WipBlock {
 // ---------------------------------------------------------------------------
 
 pub struct HirBuilder<'a, 'b> {
-    completed: FxIndexMap<BlockId, BasicBlock>,
+    completed: OrderedMap<BlockId, BasicBlock<'a>>,
     current: WipBlock,
     entry: BlockId,
     scopes: Vec<Scope<'a>>,
@@ -184,7 +185,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let entry = env.next_block_id();
         let kind = entry_block_kind.unwrap_or(BlockKind::Block);
         HirBuilder {
-            completed: FxIndexMap::default(),
+            completed: OrderedMap::default(),
             current: new_block(entry, kind),
             entry,
             scopes: Vec::new(),
@@ -229,7 +230,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// so that TypeIds are consistent with identifier type slots.
     pub fn make_type(&mut self) -> Type<'a> {
         let type_id = self.env.make_type();
-        Type::TypeVar { id: type_id }
+        Type::Var { id: type_id }
     }
 
     /// Access the scope resolver.
@@ -312,7 +313,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// then continues in a new block.
     pub fn push(&mut self, instruction: Instruction<'a>) {
         let span = instruction.span;
-        let instr_id = InstructionId(self.instruction_table.len() as u32);
+        let instr_id = InstructionId::from_usize(self.instruction_table.len());
         self.instruction_table.push(instruction);
         self.current.instructions.push(instr_id);
 
@@ -322,7 +323,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 Terminal::MaybeThrow {
                     continuation: continuation.id,
                     handler: Some(handler),
-                    id: EvaluationOrder(0),
+                    id: EvaluationOrder::UNSET,
                     span,
                     effects: None,
                 },
@@ -336,16 +337,17 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Kept non-generic (and out-of-line) so the block-completion machinery compiles
     /// once instead of being duplicated into every generic `try_enter*` instantiation.
     #[inline(never)]
-    fn complete_block(&mut self, wip: WipBlock, terminal: Terminal) {
+    fn complete_block(&mut self, wip: WipBlock, terminal: Terminal<'a>) {
+        let alloc = self.env.allocator;
         self.completed.insert(
             wip.id,
             BasicBlock {
                 kind: wip.kind,
                 id: wip.id,
-                instructions: wip.instructions,
+                instructions: ArenaVec::from_iter_in(wip.instructions, &alloc),
                 terminal,
-                preds: FxIndexSet::default(),
-                phis: Vec::new(),
+                preds: ArenaOrderedSet::new_in(alloc),
+                phis: ArenaVec::new_in(&alloc),
             },
         );
     }
@@ -354,13 +356,17 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     ///
     /// If `next_block_kind` is `Some`, a new current block is created with that kind.
     /// Returns the BlockId of the completed block.
-    pub fn terminate(&mut self, terminal: Terminal, next_block_kind: Option<BlockKind>) -> BlockId {
-        // The placeholder block created here (BlockId(u32::MAX)) is only used when
+    pub fn terminate(
+        &mut self,
+        terminal: Terminal<'a>,
+        next_block_kind: Option<BlockKind>,
+    ) -> BlockId {
+        // The placeholder block created here (`BlockId::PLACEHOLDER`) is only used when
         // next_block_kind is None, meaning this is the final terminate() call.
         // It will never be read or completed because build() consumes self
         // immediately after, and no further operations should occur on the builder.
         let wip =
-            std::mem::replace(&mut self.current, new_block(BlockId(u32::MAX), BlockKind::Block));
+            std::mem::replace(&mut self.current, new_block(BlockId::PLACEHOLDER, BlockKind::Block));
         let block_id = wip.id;
 
         self.complete_block(wip, terminal);
@@ -374,7 +380,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
     /// Terminate the current block with the given terminal, and set
     /// a previously reserved block as the new current block.
-    pub fn terminate_with_continuation(&mut self, terminal: Terminal, continuation: WipBlock) {
+    pub fn terminate_with_continuation(&mut self, terminal: Terminal<'a>, continuation: WipBlock) {
         let wip = std::mem::replace(&mut self.current, continuation);
         self.complete_block(wip, terminal);
     }
@@ -391,7 +397,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn try_enter_reserved(
         &mut self,
         wip: WipBlock,
-        f: impl FnOnce(&mut Self) -> Result<Terminal, OxcDiagnostic>,
+        f: impl FnOnce(&mut Self) -> Result<Terminal<'a>, OxcDiagnostic>,
     ) -> Result<(), OxcDiagnostic> {
         let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self)?;
@@ -404,7 +410,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     pub fn try_enter(
         &mut self,
         kind: BlockKind,
-        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal, OxcDiagnostic>,
+        f: impl FnOnce(&mut Self, BlockId) -> Result<Terminal<'a>, OxcDiagnostic>,
     ) -> Result<BlockId, OxcDiagnostic> {
         let wip = self.reserve(kind);
         let wip_id = wip.id;
@@ -448,8 +454,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 );
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched loop scope: expected Loop, got other"));
+                return Err(diagnostics::invariant_mismatched_loop_scope_expected_loop_got_other());
             }
         }
         Ok(value)
@@ -470,8 +475,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched label scope");
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched label scope: expected Label, got other"));
+                return Err(
+                    diagnostics::invariant_mismatched_label_scope_expected_label_got_other(),
+                );
             }
         }
         Ok(value)
@@ -492,8 +498,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched switch scope");
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched switch scope: expected Switch, got other"));
+                return Err(
+                    diagnostics::invariant_mismatched_switch_scope_expected_switch_got_other(),
+                );
             }
         }
         Ok(value)
@@ -513,8 +520,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 _ => continue,
             }
         }
-        Err(ErrorCategory::Invariant
-            .diagnostic("Expected a loop or switch to be in scope for break"))
+        Err(diagnostics::invariant_expected_loop_or_switch_scope_break())
     }
 
     /// Look up the continue target for the given label (or the innermost
@@ -529,20 +535,19 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 }
                 _ => {
                     if label.is_some() && scope.label() == label {
-                        return Err(ErrorCategory::Invariant
-                            .diagnostic("Continue may only refer to a labeled loop"));
+                        return Err(diagnostics::invariant_continue_may_only_refer_labeled_loop());
                     }
                 }
             }
         }
-        Err(ErrorCategory::Invariant.diagnostic("Expected a loop to be in scope for continue"))
+        Err(diagnostics::invariant_expected_loop_scope_continue())
     }
 
     /// Create a temporary identifier with a fresh id, returning its IdentifierId.
     pub fn make_temporary(&mut self, span: Option<Span>) -> IdentifierId {
         let id = self.env.next_identifier_id();
         // Update the span on the allocated identifier
-        self.env.identifiers[id.0 as usize].span = span;
+        self.env.identifiers[id].span = span;
         id
     }
 
@@ -588,7 +593,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         let mut instructions = std::mem::take(&mut self.instruction_table);
 
-        let rpo_blocks = get_reverse_postordered_blocks(&hir);
+        let rpo_blocks = get_reverse_postordered_blocks(&hir, self.env.allocator);
 
         // Check for unreachable blocks that contain FunctionExpression instructions.
         // These could contain hoisted declarations that we can't safely remove.
@@ -596,7 +601,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             if !rpo_blocks.contains_key(id) {
                 let has_function_expr = block.instructions.iter().any(|&instr_id| {
                     matches!(
-                        instructions[instr_id.0 as usize].value,
+                        instructions[instr_id.index()].value,
                         InstructionValue::FunctionExpression { .. }
                     )
                 });
@@ -604,12 +609,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                     let span = block
                         .instructions
                         .first()
-                        .and_then(|&i| instructions[i.0 as usize].span)
+                        .and_then(|&i| instructions[i.index()].span)
                         .or_else(|| block.terminal.span().copied());
                     self.env.record_error(
-                        ErrorCategory::Todo
-                            .diagnostic("Support functions with unreachable code that may contain hoisted declarations")
-                            .with_labels(span),
+                        diagnostics::todo_support_functions_unreachable_code_that_may_contain_hoisted_declarations(span),
                     )?;
                 }
             }
@@ -662,7 +665,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             let should_record_fbt_error =
                 if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
                     // Already resolved - check if the resolved name is still "fbt"
-                    match &self.env.identifiers[identifier_id.0 as usize].name {
+                    match &self.env.identifiers[identifier_id].name {
                         Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
                         _ => false,
                     }
@@ -672,12 +675,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 };
             if should_record_fbt_error {
                 let error_span = self.declaration_span(symbol_id).or(span);
-                self.env.record_error(
-                    ErrorCategory::Todo
-                        .diagnostic("Support local variables named `fbt`")
-                        .with_help("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported")
-                        .with_labels(error_span),
-                )?;
+                self.env.record_error(diagnostics::local_fbt_variable(error_span))?;
             }
         }
 
@@ -688,7 +686,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         if is_always_reserved_word(name.as_str()) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(reserved_identifier_diagnostic(name.as_str()));
+            return Err(diagnostics::reserved_identifier(name.as_str()));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...
@@ -715,15 +713,15 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // Allocate identifier in the arena
         let id = self.env.next_identifier_id();
         // Update the name and span on the allocated identifier
-        self.env.identifiers[id.0 as usize].name = Some(IdentifierName::Named(candidate));
+        self.env.identifiers[id].name = Some(IdentifierName::Named(candidate));
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).
         let decl_span = self.declaration_span(symbol_id);
         if let Some(ref dl) = decl_span {
-            self.env.identifiers[id.0 as usize].span = Some(*dl);
+            self.env.identifiers[id].span = Some(*dl);
         } else if let Some(ref span) = span {
-            self.env.identifiers[id.0 as usize].span = Some(*span);
+            self.env.identifiers[id].span = Some(*span);
         }
 
         self.used_names.insert(candidate, symbol_id);
@@ -734,7 +732,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// Set the span on an identifier to the declaration-site span.
     /// This overrides any previously-set span (which may have come from a reference site).
     pub fn set_identifier_declaration_span(&mut self, id: IdentifierId, span: Span) {
-        self.env.identifiers[id.0 as usize].span = Some(span);
+        self.env.identifiers[id].span = Some(span);
     }
 
     /// Resolve an identifier reference to a VariableBinding.
@@ -754,11 +752,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name });
         };
-        // Treat type-only declarations as globals so the compiler
-        // doesn't try to create/initialize HIR bindings for them.
-        // TSEnumDeclaration is included because a function with an inline
-        // enum is skipped (`skip_compilation`) and the enum binding is
-        // never initialized in HIR.
+        // Treat type-only declarations as globals so the compiler doesn't try to
+        // create or initialize HIR bindings for them. Inline enums are opaque
+        // pass-through instructions, matching upstream's `UnsupportedNode`, so
+        // their references also remain global from HIR's perspective.
         if matches!(
             self.scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration
@@ -848,7 +845,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         // None = unresolved binding; Some(matches) = resolved, current name comparison
         let resolved_name_matches = |sid: SymbolId| -> Option<bool> {
             let &identifier_id = self.bindings.get(&sid)?;
-            match &self.env.identifiers[identifier_id.0 as usize].name {
+            match &self.env.identifiers[identifier_id].name {
                 Some(IdentifierName::Named(n)) => Some(n == name),
                 _ => Some(false),
             }
@@ -857,12 +854,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         while let Some(id) = current {
             let mut found =
                 self.scope.bindings_in(id).find(|&sid| resolved_name_matches(sid) == Some(true));
-            if found.is_none() {
-                if let Some(sid) = self.scope.get_binding(id, name) {
-                    // Skip bindings that were renamed away from `name`.
-                    if resolved_name_matches(sid) != Some(false) {
-                        found = Some(sid);
-                    }
+            if found.is_none()
+                && let Some(sid) = self.scope.get_binding(id, name)
+            {
+                // Skip bindings that were renamed away from `name`.
+                if resolved_name_matches(sid) != Some(false) {
+                    found = Some(sid);
                 }
             }
             if let Some(sid) = found {
@@ -889,19 +886,22 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 /// Blocks not reachable through successors are removed. Blocks that are
 /// only reachable as fallthroughs (not through real successor edges) are
 /// replaced with empty blocks that have an Unreachable terminal.
-pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlock> {
-    let mut visited: FxIndexSet<BlockId> = FxIndexSet::default();
-    let mut used: FxIndexSet<BlockId> = FxIndexSet::default();
-    let mut used_fallthroughs: FxIndexSet<BlockId> = FxIndexSet::default();
+pub fn get_reverse_postordered_blocks<'a>(
+    hir: &HIR<'a>,
+    alloc: &'a Allocator,
+) -> OrderedMap<BlockId, BasicBlock<'a>> {
+    let mut visited: FxHashSet<BlockId> = FxHashSet::default();
+    let mut used: FxHashSet<BlockId> = FxHashSet::default();
+    let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
     let mut postorder: Vec<BlockId> = Vec::new();
 
     fn visit(
-        hir: &HIR,
+        hir: &HIR<'_>,
         block_id: BlockId,
         is_used: bool,
-        visited: &mut FxIndexSet<BlockId>,
-        used: &mut FxIndexSet<BlockId>,
-        used_fallthroughs: &mut FxIndexSet<BlockId>,
+        visited: &mut FxHashSet<BlockId>,
+        used: &mut FxHashSet<BlockId>,
+        used_fallthroughs: &mut FxHashSet<BlockId>,
         postorder: &mut Vec<BlockId>,
     ) {
         let was_used = used.contains(&block_id);
@@ -945,24 +945,24 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
 
     visit(hir, hir.entry, true, &mut visited, &mut used, &mut used_fallthroughs, &mut postorder);
 
-    let mut blocks = FxIndexMap::default();
+    let mut blocks = OrderedMap::default();
     for block_id in postorder.into_iter().rev() {
         let block = hir.blocks.get(&block_id).unwrap();
         if used.contains(&block_id) {
-            blocks.insert(block_id, block.clone());
+            blocks.insert(block_id, block.clone_in(alloc));
         } else if used_fallthroughs.contains(&block_id) {
             blocks.insert(
                 block_id,
                 BasicBlock {
                     kind: block.kind,
                     id: block_id,
-                    instructions: Vec::new(),
+                    instructions: ArenaVec::new_in(&alloc),
                     terminal: Terminal::Unreachable {
                         id: block.terminal.evaluation_order(),
                         span: block.terminal.span().copied(),
                     },
-                    preds: block.preds.clone(),
-                    phis: Vec::new(),
+                    preds: block.preds.clone_in(alloc),
+                    phis: ArenaVec::new_in(&alloc),
                 },
             );
         }
@@ -975,14 +975,13 @@ pub fn get_reverse_postordered_blocks(hir: &HIR) -> FxIndexMap<BlockId, BasicBlo
 /// For each block with a `For` terminal whose update block is not in the
 /// blocks map, set update to None.
 pub fn remove_unreachable_for_updates(hir: &mut HIR) {
-    let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
+    let block_ids: FxHashSet<BlockId> = hir.blocks.keys().copied().collect();
     for block in hir.blocks.values_mut() {
-        if let Terminal::For { update, .. } = &mut block.terminal {
-            if let Some(update_id) = *update {
-                if !block_ids.contains(&update_id) {
-                    *update = None;
-                }
-            }
+        if let Terminal::For { update, .. } = &mut block.terminal
+            && let Some(update_id) = *update
+            && !block_ids.contains(&update_id)
+        {
+            *update = None;
         }
     }
 }
@@ -990,21 +989,21 @@ pub fn remove_unreachable_for_updates(hir: &mut HIR) {
 /// For each block with a `DoWhile` terminal whose test block is not in
 /// the blocks map, replace the terminal with a Goto to the loop block.
 pub fn remove_dead_do_while_statements(hir: &mut HIR) {
-    let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
+    let block_ids: FxHashSet<BlockId> = hir.blocks.keys().copied().collect();
     for block in hir.blocks.values_mut() {
         let should_replace = if let Terminal::DoWhile { test, .. } = &block.terminal {
             !block_ids.contains(test)
         } else {
             false
         };
-        if should_replace {
-            if let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
+        if should_replace
+            && let Terminal::DoWhile { loop_block, id, span, .. } = std::mem::replace(
                 &mut block.terminal,
-                Terminal::Unreachable { id: EvaluationOrder(0), span: None },
-            ) {
-                block.terminal =
-                    Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
-            }
+                Terminal::Unreachable { id: EvaluationOrder::UNSET, span: None },
+            )
+        {
+            block.terminal =
+                Terminal::Goto { block: loop_block, variant: GotoVariant::Break, id, span };
         }
     }
 }
@@ -1015,7 +1014,7 @@ pub fn remove_dead_do_while_statements(hir: &mut HIR) {
 /// Also cleans up the fallthrough block's predecessors if the handler
 /// was the only path to it.
 pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
-    let block_ids: FxIndexSet<BlockId> = hir.blocks.keys().copied().collect();
+    let block_ids: FxHashSet<BlockId> = hir.blocks.keys().copied().collect();
 
     // Collect the blocks that need replacement and their associated data
     let replacements: Vec<(BlockId, BlockId, BlockId, BlockId, Option<Span>)> = hir
@@ -1024,10 +1023,9 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
         .filter_map(|(&block_id, block)| {
             if let Terminal::Try { block: try_block, handler, fallthrough, span, .. } =
                 &block.terminal
+                && !block_ids.contains(handler)
             {
-                if !block_ids.contains(handler) {
-                    return Some((block_id, *try_block, *handler, *fallthrough, *span));
-                }
+                return Some((block_id, *try_block, *handler, *fallthrough, *span));
             }
             None
         })
@@ -1038,7 +1036,7 @@ pub fn remove_unnecessary_try_catch(hir: &mut HIR) {
         if let Some(block) = hir.blocks.get_mut(&block_id) {
             block.terminal = Terminal::Goto {
                 block: try_block,
-                id: EvaluationOrder(0),
+                id: EvaluationOrder::UNSET,
                 span,
                 variant: GotoVariant::Break,
             };
@@ -1062,10 +1060,10 @@ pub fn mark_instruction_ids(hir: &mut HIR, instructions: &mut [Instruction]) {
     for block in hir.blocks.values_mut() {
         for &instr_id in &block.instructions {
             order += 1;
-            instructions[instr_id.0 as usize].id = EvaluationOrder(order);
+            instructions[instr_id.index()].id = EvaluationOrder::from_usize(order as usize);
         }
         order += 1;
-        block.terminal.set_evaluation_order(EvaluationOrder(order));
+        block.terminal.set_evaluation_order(EvaluationOrder::from_usize(order as usize));
     }
 }
 
@@ -1082,13 +1080,13 @@ pub fn mark_predecessors(hir: &mut HIR) {
         block.preds.clear();
     }
 
-    let mut visited: FxIndexSet<BlockId> = FxIndexSet::default();
+    let mut visited: FxHashSet<BlockId> = FxHashSet::default();
 
     fn visit(
         hir: &mut HIR,
         block_id: BlockId,
         prev_block_id: Option<BlockId>,
-        visited: &mut FxIndexSet<BlockId>,
+        visited: &mut FxHashSet<BlockId>,
     ) {
         // Add predecessor
         if let Some(prev_id) = prev_block_id {
@@ -1127,6 +1125,6 @@ pub fn mark_predecessors(hir: &mut HIR) {
 pub fn create_temporary_place(env: &mut Environment<'_>, span: Option<Span>) -> Place {
     let id = env.next_identifier_id();
     // Update the span on the allocated identifier
-    env.identifiers[id.0 as usize].span = span;
+    env.identifiers[id].span = span;
     Place { identifier: id, reactive: false, effect: Effect::Unknown, span: None }
 }

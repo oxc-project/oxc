@@ -16,7 +16,6 @@ use crate::{
     config::{
         ESLintRule, OxlintOverrides, OxlintRules,
         external_plugins::ExternalPluginEntry,
-        overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
         rules::OverrideRulesError,
     },
@@ -244,6 +243,14 @@ impl ConfigStoreBuilder {
             }
         }
 
+        let mut external_plugins = external_plugins.into_iter().collect_vec();
+        external_plugins.sort_unstable_by(|a, b| {
+            a.specifier
+                .cmp(&b.specifier)
+                .then_with(|| a.name.cmp(&b.name))
+                .then_with(|| a.config_dir.cmp(&b.config_dir))
+        });
+
         // Only attempt to load external JS plugins when external plugins are enabled,
         // i.e., when the external JS linter is available/initialized. If the store is
         // disabled, configs that reference external plugins are accepted but the plugins
@@ -251,7 +258,7 @@ impl ConfigStoreBuilder {
         if !external_plugins.is_empty() && external_plugin_store.is_enabled() {
             let Some(external_linter) = external_linter else {
                 #[expect(clippy::missing_panics_doc, reason = "infallible")]
-                let first_plugin = external_plugins.iter().next().unwrap();
+                let first_plugin = external_plugins.first().unwrap();
                 return Err(ConfigBuilderError::NoExternalLinterConfigured {
                     plugin_specifier: first_plugin.specifier.clone(),
                 });
@@ -262,7 +269,7 @@ impl ConfigStoreBuilder {
                 ..Default::default()
             });
 
-            for entry in &external_plugins {
+            for entry in external_plugins {
                 Self::load_external_plugin(
                     &entry.config_dir,
                     &entry.specifier,
@@ -341,11 +348,6 @@ impl ConfigStoreBuilder {
         self
     }
 
-    pub fn with_categories(mut self, categories: OxlintCategories) -> Self {
-        self.categories = categories;
-        self
-    }
-
     /// Enable or disable a set of plugins, leaving unrelated plugins alone.
     ///
     /// See [`ConfigStoreBuilder::with_builtin_plugins`] for details on how plugin configuration affects your
@@ -389,12 +391,6 @@ impl ConfigStoreBuilder {
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
-        self
-    }
-
-    /// Appends an override to the end of the current list of overrides.
-    pub fn with_overrides<O: IntoIterator<Item = OxlintOverride>>(mut self, overrides: O) -> Self {
-        self.overrides.extend(overrides);
         self
     }
 

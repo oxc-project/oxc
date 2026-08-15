@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind, Statement},
+    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -136,19 +136,12 @@ impl Rule for PreferObjectFromEntries {
             return;
         };
 
-        if !reducer.expression || reducer.r#async {
+        if !reducer.is_expression() || reducer.r#async {
             return;
         }
 
-        let Statement::ExpressionStatement(stmt) = reducer
-            .body
-            .statements
-            .first()
-            .expect("arrow function expressions must have at least one body statement")
-        else {
-            return;
-        };
-        let stmt = stmt.expression.get_inner_expression();
+        let Some(stmt) = reducer.get_expression() else { return };
+        let stmt = stmt.get_inner_expression();
 
         let Some(accumulator_ident) =
             reducer.params.items.first().and_then(|arg| arg.pattern.get_binding_identifier())

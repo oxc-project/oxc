@@ -62,6 +62,17 @@ pub fn normalize_plugin_name(plugin_name: &str) -> Cow<'_, str> {
     Cow::Borrowed(plugin_name)
 }
 
+/// Gets the canonical display name for a plugin from its internal short name.
+#[inline]
+pub fn plugin_display_name(plugin_name: &str) -> &str {
+    match plugin_name {
+        "jsx_a11y" => "jsx-a11y",
+        "react_perf" => "react-perf",
+        "nextjs" => "next",
+        _ => plugin_name,
+    }
+}
+
 /// Checks if the given plugin name is valid.
 ///
 /// Returns `true` if the given plugin name is already in its normalized form.

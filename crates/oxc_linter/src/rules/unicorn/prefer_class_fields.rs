@@ -95,17 +95,17 @@ impl Rule for PreferClassFields {
         };
 
         // Find constructor
-        let constructor = class.body.body.iter().find(|element| {
-            matches!(
-                element,
-                ClassElement::MethodDefinition(method)
-                    if method.kind == MethodDefinitionKind::Constructor
-                        && !method.r#static
-                        && !method.computed
-            )
-        });
-
-        let Some(ClassElement::MethodDefinition(constructor)) = constructor else {
+        let Some(constructor) = class.body.body.iter().find_map(|element| {
+            if let ClassElement::MethodDefinition(method) = element
+                && method.kind == MethodDefinitionKind::Constructor
+                && !method.r#static
+                && !method.computed
+            {
+                Some(method)
+            } else {
+                None
+            }
+        }) else {
             return;
         };
 

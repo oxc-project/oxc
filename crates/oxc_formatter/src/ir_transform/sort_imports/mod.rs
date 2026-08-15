@@ -7,16 +7,14 @@ mod sortable_imports;
 mod source_line;
 
 use oxc_allocator::{Allocator, ArenaVec};
+use oxc_formatter_core::format_element::{
+    FormatElement, LineMode,
+    tag::{LabelId, Tag},
+};
 
 use crate::{
     Buffer, JsLabels, SortImportsOptions,
-    formatter::{
-        JsFormatter,
-        format_element::{
-            FormatElement, LineMode,
-            tag::{LabelId, Tag},
-        },
-    },
+    formatter::JsFormatter,
     ir_transform::sort_imports::{
         group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },
@@ -108,13 +106,15 @@ fn transform<'a>(
     // and any `Line(_)` inside is for output positioning, not a real line boundary.
     // e.g. ```import "a"; <StartLineSuffix> Line(Empty) Text("// trailing") <EndLineSuffix>```
     let mut inside_line_suffix = false;
+    let comment_label = LabelId::of(JsLabels::Comment);
+    let import_label = LabelId::of(JsLabels::ImportDeclaration);
     for (idx, el) in prev_elements.iter().enumerate() {
         if let FormatElement::Tag(tag) = el {
             match tag {
                 Tag::StartLabelled(id) => {
-                    if *id == LabelId::of(JsLabels::Comment) {
+                    if *id == comment_label {
                         inside_comment = true;
-                    } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                    } else if *id == import_label {
                         inside_multiline_import = true;
                     }
                 }

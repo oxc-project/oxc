@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{Expression, IdentifierReference, Statement},
 };
 use oxc_cfg::{
     BlockNodeId, EdgeType, ErrorEdgeKind, EvalConstConditionResult, Instruction, InstructionKind,
@@ -11,8 +11,12 @@ use oxc_cfg::{
     graph::{Direction, visit::EdgeRef},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::{
+    GlobalContext,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects},
+};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
+use oxc_semantic::{IsGlobalReference, NodeId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -281,8 +285,14 @@ fn has_next_iteration_path(
                 }
                 EdgeType::Unreachable
                 | EdgeType::NewFunction
-                | EdgeType::Join
                 | EdgeType::Error(ErrorEdgeKind::Implicit) => {}
+                // Convergence point after a finalizer completes, i.e. the
+                // statement following the `try`. Only reachable through a
+                // `Finalize` edge, which is gated below, so following it here
+                // cannot resurrect an abrupt path.
+                EdgeType::Join => {
+                    stack.push(edge.target());
+                }
                 EdgeType::Finalize => {
                     if finalizer_can_continue_to_loop(
                         edge.target(),
@@ -292,6 +302,24 @@ fn has_next_iteration_path(
                         unreachable,
                     ) {
                         return true;
+                    }
+
+                    // Control runs the finalizer and resumes after the `try`.
+                    // When the block instead exits abruptly the finalizer
+                    // resumes that exit, so the only way it reaches the next
+                    // iteration is the `continue` the check above looks for.
+                    //
+                    // The builder attaches a `Finalize` edge to every block
+                    // under the finalizer, not just the protected region's
+                    // fallthrough exit, so `source` can be an intermediate
+                    // block (an `if` condition, say) whose every branch still
+                    // exits abruptly. That does not leak a next-iteration path:
+                    // when the protected region cannot complete normally the
+                    // builder marks the block after the `try` unreachable and
+                    // emits `Unreachable` in place of `Join`, which this search
+                    // does not follow. See the `try`/`finally` fail cases.
+                    if block_completes_normally(source, ctx) {
+                        stack.push(edge.target());
                     }
                 }
                 EdgeType::Error(ErrorEdgeKind::Explicit) => {
@@ -458,18 +486,82 @@ fn explicit_error_edge_can_throw(block_id: BlockNodeId, ctx: &LintContext<'_>) -
             | InstructionKind::Continue(_)
             | InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
             | InstructionKind::ImplicitReturn
-            | InstructionKind::Unreachable => return false,
+            | InstructionKind::Unreachable => return can_throw,
             InstructionKind::Throw
+            | InstructionKind::Iteration(_)
             | InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
                 return true;
             }
-            InstructionKind::Statement
-            | InstructionKind::Condition
-            | InstructionKind::Iteration(_) => can_throw = true,
+            InstructionKind::Statement | InstructionKind::Condition => {
+                can_throw |= instruction
+                    .node_id
+                    .is_some_and(|node_id| ast_node_can_throw(ctx.nodes().kind(node_id), ctx));
+            }
         }
     }
 
     can_throw
+}
+
+fn ast_node_can_throw<'a>(node: AstKind<'a>, ctx: &LintContext<'a>) -> bool {
+    let ctx = NoUnreachableLoopSideEffectsContext { ctx };
+    match node {
+        AstKind::ExpressionStatement(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::VariableDeclaration(e) => e.may_have_side_effects(&ctx),
+        AstKind::IdentifierReference(e) => e.may_have_side_effects(&ctx),
+        AstKind::TemplateLiteral(e) => e.may_have_side_effects(&ctx),
+        AstKind::TaggedTemplateExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::ComputedMemberExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::StaticMemberExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::ArrayExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::Class(e) => e.may_have_side_effects(&ctx),
+        AstKind::CallExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::NewExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::UnaryExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::BinaryExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::LogicalExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::AssignmentExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::UpdateExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::SequenceExpression(e) => e.may_have_side_effects(&ctx),
+        AstKind::ParenthesizedExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSAsExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSSatisfiesExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSTypeAssertion(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSNonNullExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::TSInstantiationExpression(e) => e.expression.may_have_side_effects(&ctx),
+        AstKind::ForInStatement(_) | AstKind::ForOfStatement(_) | AstKind::AwaitExpression(_) => {
+            true
+        }
+        _ => false,
+    }
+}
+
+struct NoUnreachableLoopSideEffectsContext<'c, 'a> {
+    ctx: &'c LintContext<'a>,
+}
+
+impl<'a> GlobalContext<'a> for NoUnreachableLoopSideEffectsContext<'_, 'a> {
+    fn is_global_reference(&self, reference: &IdentifierReference<'a>) -> bool {
+        reference.is_global_reference(self.ctx.scoping())
+    }
+}
+
+impl<'a> MayHaveSideEffectsContext<'a> for NoUnreachableLoopSideEffectsContext<'_, 'a> {
+    fn annotations(&self) -> bool {
+        false
+    }
+
+    fn manual_pure_functions(&self, _callee: &Expression) -> bool {
+        false
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        PropertyReadSideEffects::All
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        true
+    }
 }
 
 fn is_static_infinite_loop_exit(block_id: BlockNodeId, ctx: &LintContext<'_>) -> bool {
@@ -632,7 +724,12 @@ fn is_synthetic_continuation(
 
         for edge in graph
             .edges_directed(current, Direction::Incoming)
-            .filter(|edge| matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump))
+            // `Join` reaches the empty block the builder emits after a
+            // finalizer. Without it, the block that resumes the loop after a
+            // `try`/`finally` looks like it belongs to nothing.
+            .filter(|edge| {
+                matches!(edge.weight(), EdgeType::Normal | EdgeType::Jump | EdgeType::Join)
+            })
         {
             let source = edge.source();
             if is_unreachable_block(source, ctx, unreachable) {
@@ -653,6 +750,21 @@ fn is_synthetic_continuation(
     }
 
     false
+}
+
+/// `true` when control can fall off the end of `block_id` instead of leaving it
+/// through `break`, `continue`, `return` or `throw`. An implicit throw is an
+/// error edge rather than an instruction, so it does not count as abrupt here.
+fn block_completes_normally(block_id: BlockNodeId, ctx: &LintContext<'_>) -> bool {
+    !ctx.cfg().basic_block(block_id).instructions().iter().any(|instruction| {
+        matches!(
+            instruction.kind,
+            InstructionKind::Break(_)
+                | InstructionKind::Continue(_)
+                | InstructionKind::Return(_)
+                | InstructionKind::Throw
+        )
+    })
 }
 
 fn owns_block(block_id: BlockNodeId, loop_id: NodeId, ctx: &LintContext<'_>) -> bool {
@@ -893,6 +1005,34 @@ fn test() {
         ("while(true); while(true) break;", None).into(),
         ("while (true) {} while (foo) break;", None).into(),
         ("while (a) { try { continue; } finally {} }", None).into(),
+        // A `try` body that completes normally runs the finalizer and then
+        // resumes after the `try`, so every loop below iterates.
+        ("while (a) { try { foo(); } finally { bar(); } }", None).into(),
+        ("while (a) { try { foo(); } finally {} }", None).into(),
+        ("while (a) { try { foo(); } catch (e) { bar(); } finally { baz(); } }", None).into(),
+        ("while (a) { try { foo(); } finally { bar(); } baz(); }", None).into(),
+        ("function f() { while (a) { try { foo(); } catch (e) { return; } finally { bar(); } } }", None)
+            .into(),
+        ("while (a) { try { foo(); } finally { continue; } }", None).into(),
+        ("function f() { while (a) { try { foo(); } finally { if (a) continue; else return; } } }", None)
+            .into(),
+        ("while (a) { try { try { foo(); } finally { bar(); } } finally { baz(); } }", None).into(),
+        // A branch that can fall through keeps the loop alive, even when a
+        // sibling branch exits.
+        ("function f() { while (a) { try { if (b) { return; } } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { if (b) return; foo(); } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { if (b) continue; else return; } finally { bar(); } } }", None)
+            .into(),
+        // Nothing falls out of the `try`, but the `catch` completes normally.
+        ("function f() { while (a) { try { if (b) return; else return; } catch (e) {} finally { bar(); } } }", None)
+            .into(),
+        ("for (const x of xs) { try { foo(x); } finally { bar(x); } }", None).into(),
+        ("for (let i = 0; i < a; i++) { try { foo(); } finally { bar(); } }", None).into(),
+        ("for (const k in a) { try { foo(); } finally { bar(); } }", None).into(),
+        ("do { try { foo(); } finally { bar(); } } while (a);", None).into(),
+        ("outer: while (a) { try { foo(); } finally { continue outer; } }", None).into(),
         ("while (a) { try { break; } finally { continue; } }", None).into(),
         ("while (a) { try { break; } finally { if (foo) continue; } }", None).into(),
         ("while (a) { try { throw err; } finally { continue; } }", None).into(),
@@ -927,6 +1067,17 @@ fn test() {
             Some(serde_json::json!([{ "ignore": ["ForInStatement", "ForOfStatement"] }])),
         )
             .into(),
+        (
+            "function foo() { for (let i = 0; i <= 3; i++) { try { bar(); return; } catch (error) {} } }",
+            None,
+        )
+            .into(),
+        (
+            "function f() { while (a) { try { if (mayThrow()) {} return; } catch { continue; } } }",
+            None,
+        )
+        .into(),
+        ("while (a) { try { for (const x of iterable) {} return; } catch { continue; } }", None).into()
     ]);
 
     let mut fail = Vec::<TestCase>::new();
@@ -938,6 +1089,30 @@ fn test() {
         }
     }
     fail.extend([
+        // The finalizer runs, then resumes the abrupt exit that entered it.
+        // The `if`/`switch`/inner-loop shapes matter because the builder gives
+        // every block under the finalizer a `Finalize` edge, so the search also
+        // sees intermediate blocks that carry no abrupt instruction themselves.
+        ("function f() { while (a) { try { if (b) return; else return; } finally { bar(); } } }", None)
+            .into(),
+        ("while (a) { try { if (b) break; else break; } finally { bar(); } }", None).into(),
+        ("function f() { while (a) { try { if (b) return; else throw err; } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { switch (b) { case 1: return; default: return; } } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { for (;;) { return; } } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { foo(); } finally { return; } } }", None).into(),
+        ("while (a) { try { foo(); } finally { break; } }", None).into(),
+        ("function f() { while (a) { try { return; } finally { bar(); } } }", None).into(),
+        ("while (a) { try { break; } finally { bar(); } }", None).into(),
+        ("while (a) { try { throw err; } finally { bar(); } }", None).into(),
+        ("function f() { while (a) { try { foo(); } finally { bar(); } return; } }", None).into(),
+        ("function f() { while (a) { try { return; } catch (e) { return; } finally { bar(); } } }", None)
+            .into(),
+        ("function f() { while (a) { try { ; return; } catch { continue; } } }", None).into(),
+        ("function f() { while (a) { try { let value = 1; return; } catch { continue; } } }", None)
+            .into(),
         ("while (foo) { for (a of b) { if (baz) { break; } else { throw err; } } }", None)
             .into(),
         (

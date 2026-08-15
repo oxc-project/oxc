@@ -107,9 +107,7 @@ impl Rule for NoNodejsModules {
                 call.common_js_require().map(|s| s.value)
             }
             AstKind::ImportDeclaration(import) => Some(import.source.value),
-            AstKind::ExportNamedDeclaration(export) => {
-                export.source.as_ref().map(|item| item.value)
-            }
+            AstKind::ExportFromDeclaration(export) => Some(export.source.value),
             AstKind::ExportAllDeclaration(export_all) => Some(export_all.source.value),
             _ => return,
         };

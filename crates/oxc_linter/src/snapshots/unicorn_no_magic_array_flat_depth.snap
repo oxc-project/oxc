@@ -29,3 +29,25 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────
    ╰────
   help: Add a comment explaining the depth.
+
+  ⚠ unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
+   ╭─[no_magic_array_flat_depth.tsx:2:12]
+ 1 │ const s = "😀😀😀😀😀😀😀😀😀😀";
+ 2 │ array.flat(2)
+   ·            ─
+   ╰────
+  help: Add a comment explaining the depth.
+
+  ⚠ unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
+   ╭─[no_magic_array_flat_depth.tsx:1:43]
+ 1 │ array[key(/* not an explanation */)].flat(2)
+   ·                                           ─
+   ╰────
+  help: Add a comment explaining the depth.
+
+  ⚠ unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
+   ╭─[no_magic_array_flat_depth.tsx:1:19]
+ 1 │ array.flat/* ( */(2)
+   ·                   ─
+   ╰────
+  help: Add a comment explaining the depth.

@@ -61,10 +61,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
-                Statement::ExportNamedDeclaration(decl)
-                    if let Some(declaration) = &decl.declaration =>
-                {
-                    !declaration.is_typescript_syntax()
+                Statement::ExportDeclaration(decl) => {
+                    !decl.declaration.is_typescript_syntax()
                 }
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
@@ -77,6 +75,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
                         decl.specifiers
                             .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
                         // Keep the export declaration if there are still specifiers after removing type exports
+                        !decl.specifiers.is_empty()
+                    }
+                }
+                Statement::ExportFromDeclaration(decl) => {
+                    if decl.export_kind.is_type() {
+                        false
+                    } else if decl.specifiers.is_empty() {
+                        true
+                    } else {
+                        decl.specifiers
+                            .retain(|specifier| Self::can_retain_export_specifier(specifier, ctx));
                         !decl.specifiers.is_empty()
                     }
                 }
@@ -164,9 +173,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
         if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
-            let export_decl = Statement::ExportNamedDeclaration(
-                ExportNamedDeclaration::boxed_plain(SPAN, ArenaVec::new_in(ctx), None, ctx),
-            );
+            let export_decl = Statement::ExportNamedDeclaration(ExportNamedDeclaration::boxed(
+                SPAN,
+                [],
+                ImportOrExportKind::Value,
+                ctx,
+            ));
             program.body.push(export_decl);
         }
     }
@@ -220,7 +232,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
         // Remove TypeScript annotations from class declarations
         // Note: declare flag is preserved for exit_statements to handle declaration removal
         class.type_parameters = None;
-        class.super_type_arguments = None;
+        if let Some(heritage) = &mut class.heritage {
+            heritage.type_arguments = None;
+        }
         class.implements.clear();
         class.r#abstract = false;
 
@@ -506,10 +520,11 @@ impl<'a> TypeScriptAnnotations<'a> {
     #[inline]
     fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match decl {
-            // Remove type aliases, interfaces, and `declare global {}`
+            // Remove type aliases, interfaces, global declarations, and external modules.
             Declaration::TSTypeAliasDeclaration(_)
             | Declaration::TSInterfaceDeclaration(_)
-            | Declaration::TSGlobalDeclaration(_) => false,
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::TSExternalModuleDeclaration(_) => false,
             // Remove `declare var/let/const`
             Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
             // Remove `declare function` and function overload signatures (no body)
@@ -518,16 +533,15 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
             // Remove `declare class`
             Declaration::ClassDeclaration(class_decl) => !class_decl.declare,
-            // Remove `declare module` or uninstantiated namespace declarations.
+            // Remove declared or uninstantiated namespace declarations.
             // Keep instantiated `module` declarations — they have runtime
             // representation and need to be transformed.
-            Declaration::TSModuleDeclaration(module_decl) => {
-                !module_decl.declare
-                    && !matches!(
-                        &module_decl.id,
-                        TSModuleDeclarationName::Identifier(ident)
-                            if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
-                    )
+            Declaration::TSNamespaceDeclaration(namespace_decl) => {
+                !namespace_decl.declare
+                    && !ctx
+                        .scoping()
+                        .symbol_flags(namespace_decl.id.symbol_id())
+                        .is_namespace_module()
             }
             // Remove `declare enum`
             Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
@@ -591,12 +605,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        Statement::new_block_statement_with_scope_id(
-            span,
-            ArenaVec::from_value_in(stmt, ctx),
-            scope_id,
-            ctx,
-        )
+        Statement::new_block_statement_with_scope_id(span, [stmt], scope_id, ctx)
     }
 
     fn replace_for_statement_body_with_empty_block_if_ts(
@@ -614,12 +623,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            *stmt = Statement::new_block_statement_with_scope_id(
-                stmt.span(),
-                ArenaVec::new_in(ctx),
-                scope_id,
-                ctx,
-            );
+            *stmt = Statement::new_block_statement_with_scope_id(stmt.span(), [], scope_id, ctx);
         }
     }
 

@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
     BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, ModuleExportName,
-    PropertyKind, TSModuleDeclarationName,
+    PropertyKind,
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
 use oxc_span::GetSpan;
@@ -151,12 +151,12 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             // ObjectMethod extent (which starts at the property, not the function).
             if let AstKind::Function(_) = node.kind() {
                 let parent = nodes.parent_node(node.id());
-                if let AstKind::ObjectProperty(prop) = parent.kind() {
-                    if is_object_method_property(prop) {
-                        let prop_start = parent.kind().span().start;
-                        if prop_start != span.start {
-                            resolver.function_scope_ranges.push((prop_start, span.end));
-                        }
+                if let AstKind::ObjectProperty(prop) = parent.kind()
+                    && is_object_method_property(prop)
+                {
+                    let prop_start = parent.kind().span().start;
+                    if prop_start != span.start {
+                        resolver.function_scope_ranges.push((prop_start, span.end));
                     }
                 }
             }
@@ -236,7 +236,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::CatchParameter(_) => return BindingKind::Let,
             AstKind::TSTypeAliasDeclaration(_) => return BindingKind::Local,
             AstKind::TSEnumDeclaration(_) => return BindingKind::Local,
-            AstKind::TSModuleDeclaration(_) => return BindingKind::Local,
+            AstKind::TSNamespaceDeclaration(_) => return BindingKind::Local,
             AstKind::Function(_) => {
                 if flags.contains(SymbolFlags::Function) {
                     return BindingKind::Hoisted;
@@ -317,7 +317,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::CatchClause(_) | AstKind::CatchParameter(_) => DeclKind::CatchClause,
             AstKind::TSTypeAliasDeclaration(_) => DeclKind::TSTypeAliasDeclaration,
             AstKind::TSEnumDeclaration(_) => DeclKind::TSEnumDeclaration,
-            AstKind::TSModuleDeclaration(_) => DeclKind::TSModuleDeclaration,
+            AstKind::TSNamespaceDeclaration(_) => DeclKind::TSModuleDeclaration,
             _ => DeclKind::Unknown,
         }
     }
@@ -497,10 +497,10 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         let node = self.nodes.get_node(node_id);
         if let AstKind::Function(_) = node.kind() {
             let parent = self.nodes.parent_node(node_id);
-            if let AstKind::ObjectProperty(prop) = parent.kind() {
-                if is_object_method_property(prop) {
-                    return parent.id();
-                }
+            if let AstKind::ObjectProperty(prop) = parent.kind()
+                && is_object_method_property(prop)
+            {
+                return parent.id();
             }
         }
         node_id
@@ -555,11 +555,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 if descendants.contains(&raw) {
                     continue;
                 }
-                if let Some(parent) = scoping.scope_parent_id(scope_id) {
-                    if descendants.contains(&(parent.index() as u32)) {
-                        descendants.insert(raw);
-                        changed = true;
-                    }
+                if let Some(parent) = scoping.scope_parent_id(scope_id)
+                    && descendants.contains(&(parent.index() as u32))
+                {
+                    descendants.insert(raw);
+                    changed = true;
                 }
             }
         }
@@ -593,10 +593,9 @@ fn find_binding_identifier<'a>(kind: AstKind<'a>, name: &str) -> Option<&'a Bind
             (decl.id.name.as_str() == name).then_some(&decl.id)
         }
         AstKind::TSEnumDeclaration(decl) => (decl.id.name.as_str() == name).then_some(&decl.id),
-        AstKind::TSModuleDeclaration(decl) => match &decl.id {
-            TSModuleDeclarationName::Identifier(id) => (id.name.as_str() == name).then_some(id),
-            _ => None,
-        },
+        AstKind::TSNamespaceDeclaration(decl) => {
+            (decl.id.name.as_str() == name).then_some(&decl.id)
+        }
         _ => None,
     }
 }

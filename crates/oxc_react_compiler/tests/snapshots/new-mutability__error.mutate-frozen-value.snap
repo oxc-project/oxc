@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/new-mutability/error.mutate-froze
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: One([LabeledSpan { label: Some("value cannot be modified"), span: SourceSpan { offset: SourceOffset(99), length: 1 }, primary: false }]), help: Some("Modifying a value previously passed as an argument to a hook is not allowed. Consider moving the modification before calling the hook"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Immutability: This value cannot be modified", labels: [LabeledSpan { label: Some("value cannot be modified"), span: Span { start: 99, end: 100 }, primary: false }], help: Some("Modifying a value previously passed as an argument to a hook is not allowed. Consider moving the modification before calling the hook"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

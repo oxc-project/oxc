@@ -6,7 +6,7 @@
 //! Based on Babel's [plugin-rewrite-ts-imports](https://github.com/babel/babel/blob/3bcfee232506a4cebe410f02042fb0f0adeeb0b1/packages/babel-preset-typescript/src/plugin-rewrite-ts-imports.ts)
 
 use oxc_ast::ast::{
-    ExportAllDeclaration, ExportNamedDeclaration, Expression, ImportDeclaration, ImportExpression,
+    ExportAllDeclaration, ExportFromDeclaration, Expression, ImportDeclaration, ImportExpression,
     StringLiteral, TemplateLiteral,
 };
 use oxc_str::Str;
@@ -91,17 +91,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptRewriteExtensions {
         self.rewrite_extensions(&mut node.source, ctx);
     }
 
-    fn enter_export_named_declaration(
+    fn enter_export_from_declaration(
         &mut self,
-        node: &mut ExportNamedDeclaration<'a>,
+        node: &mut ExportFromDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if node.export_kind.is_type() {
             return;
         }
-        if let Some(source) = node.source.as_mut() {
-            self.rewrite_extensions(source, ctx);
-        }
+        self.rewrite_extensions(&mut node.source, ctx);
     }
 
     fn enter_export_all_declaration(

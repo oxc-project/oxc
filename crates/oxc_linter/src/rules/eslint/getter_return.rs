@@ -221,7 +221,7 @@ impl GetterReturn {
             // const fn = () => 1;
             // ```
             if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
-                if arrow_expr.expression {
+                if arrow_expr.is_expression() {
                     break 'returns true;
                 }
                 // If the signature of function supports the return of the `undefined` value,

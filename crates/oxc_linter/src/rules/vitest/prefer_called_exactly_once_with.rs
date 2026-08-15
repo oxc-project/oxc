@@ -445,7 +445,7 @@ fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expres
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {
     match callback {
         Expression::FunctionExpression(func) => func.body.as_ref().map(AsRef::as_ref),
-        Expression::ArrowFunctionExpression(func) => Some(&func.body),
+        Expression::ArrowFunctionExpression(func) => func.get_function_body(),
         _ => None,
     }
 }

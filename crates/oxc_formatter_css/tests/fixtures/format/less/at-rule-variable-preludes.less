@@ -1,0 +1,11 @@
+// Less variables in at-rule preludes are kept verbatim as raw preludes.
+@layer @layer-name {
+	.a { color: red; }
+}
+@layer base, @second-layer {
+	.a { color: red; }
+}
+@container @varfoo (min-width: @threshold) {
+	.a { color: red; }
+}
+@namespace @ns "http://lesscss.org";

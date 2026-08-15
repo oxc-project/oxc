@@ -1,3 +1,5 @@
+use crate::options::QuoteStyle;
+
 use super::{line_buffer::LineBuffer, serialize::join_iter};
 
 /// A parsed `@import` tag.
@@ -135,25 +137,27 @@ fn merge_and_sort_imports(imports: Vec<ImportInfo>) -> Vec<ImportInfo> {
 }
 
 /// Format a single merged `@import` tag into output lines.
-fn format_import_lines(import: &ImportInfo, content_lines: &mut LineBuffer) {
+fn format_import_lines(import: &ImportInfo, quote: &str, content_lines: &mut LineBuffer) {
     let module = &import.module_path;
+    let push_from = |s: &mut String, prefix: &str| {
+        s.push_str(prefix);
+        s.push_str(quote);
+        s.push_str(module);
+        s.push_str(quote);
+    };
 
     match (&import.default_import, import.named_imports.len()) {
         (Some(default), 0) => {
             let s = content_lines.begin_line();
             s.push_str("@import ");
             s.push_str(default);
-            s.push_str(" from \"");
-            s.push_str(module);
-            s.push('"');
+            push_from(s, " from ");
         }
         (None, 1) => {
             let s = content_lines.begin_line();
             s.push_str("@import {");
             s.push_str(&import.named_imports[0]);
-            s.push_str("} from \"");
-            s.push_str(module);
-            s.push('"');
+            push_from(s, "} from ");
         }
         (Some(default), 1) => {
             let s = content_lines.begin_line();
@@ -161,9 +165,7 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut LineBuffer) {
             s.push_str(default);
             s.push_str(", {");
             s.push_str(&import.named_imports[0]);
-            s.push_str("} from \"");
-            s.push_str(module);
-            s.push('"');
+            push_from(s, "} from ");
         }
         (None, n) if n >= 2 => {
             content_lines.push("@import {");
@@ -175,10 +177,7 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut LineBuffer) {
                     s.push(',');
                 }
             }
-            let s = content_lines.begin_line();
-            s.push_str("} from \"");
-            s.push_str(module);
-            s.push('"');
+            push_from(content_lines.begin_line(), "} from ");
         }
         (Some(default), n) if n >= 2 => {
             let s = content_lines.begin_line();
@@ -193,10 +192,7 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut LineBuffer) {
                     s.push(',');
                 }
             }
-            let s = content_lines.begin_line();
-            s.push_str("} from \"");
-            s.push_str(module);
-            s.push('"');
+            push_from(content_lines.begin_line(), "} from ");
         }
         _ => {}
     }
@@ -208,6 +204,7 @@ fn format_import_lines(import: &ImportInfo, content_lines: &mut LineBuffer) {
 /// `@import` tags can fall through to `format_generic_tag()`).
 pub(super) fn process_import_tags(
     tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)],
+    quote_style: QuoteStyle,
 ) -> (LineBuffer, smallvec::SmallVec<[usize; 4]>) {
     let mut imports = Vec::new();
     let mut parsed_indices = smallvec::SmallVec::<[usize; 4]>::new();
@@ -226,8 +223,9 @@ pub(super) fn process_import_tags(
     let merged = merge_and_sort_imports(imports);
 
     let mut lines = LineBuffer::new();
+    let quote = quote_style.as_str();
     for import in &merged {
-        format_import_lines(import, &mut lines);
+        format_import_lines(import, quote, &mut lines);
     }
     (lines, parsed_indices)
 }

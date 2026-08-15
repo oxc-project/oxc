@@ -1,12 +1,10 @@
-use std::cell::Cell;
-
 use oxc_formatter_core::{
-    Buffer, SourceText,
+    Buffer, SourceText, SpanCursor,
     builders::{empty_line, expand_parent, hard_line_break, line_suffix, space, text},
     spec::is_suppression_marker,
     write,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::print::{CssFormatter, format_with};
 
@@ -21,97 +19,16 @@ pub struct CssComment {
     pub inline: bool,
 }
 
-/// Cursor over a sorted comment list that hands out unprinted comments in span order.
-///
-/// `cursor` is a [`Cell`] so the API works through `&self`
-/// (mirrors `oxc_formatter_graphql`'s `Comments`).
-pub struct Comments<'a> {
-    inner: &'a [CssComment],
-    cursor: Cell<usize>,
-}
-
-impl<'a> Comments<'a> {
-    pub fn new(comments: &'a [CssComment]) -> Self {
-        Self { inner: comments, cursor: Cell::new(0) }
-    }
-
-    /// Returns the next unprinted comment without consuming it.
-    pub fn peek(&self) -> Option<CssComment> {
-        self.inner.get(self.cursor.get()).copied()
-    }
-
-    /// Returns unprinted comments whose `span.end <= upper_bound`,
-    /// and advances the cursor past them so they won't be returned again.
-    pub fn take_before(&self, upper_bound: u32) -> &'a [CssComment] {
-        let start = self.cursor.get();
-        let mut end = start;
-        while end < self.inner.len() && self.inner[end].span.end <= upper_bound {
-            end += 1;
-        }
-        self.cursor.set(end);
-        &self.inner[start..end]
-    }
-
-    /// Drains all remaining unprinted comments and returns them.
-    pub fn take_remaining(&self) -> &'a [CssComment] {
-        let start = self.cursor.get();
-        self.cursor.set(self.inner.len());
-        &self.inner[start..]
-    }
-
-    /// Iterator over unprinted comments whose `span.end <= upper_bound`.
-    /// Does NOT advance the cursor.
-    pub fn iter_before(&self, upper_bound: u32) -> impl Iterator<Item = CssComment> {
-        let start = self.cursor.get();
-        self.inner[start..].iter().copied().take_while(move |c| c.span.end <= upper_bound)
+impl GetSpan for CssComment {
+    fn span(&self) -> Span {
+        self.span
     }
 }
 
-/// Vertical spacing implied by an inter-token source gap.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Gap {
-    /// Same line (no line terminator).
-    None,
-    /// One or more line breaks, but no blank line.
-    Line,
-    /// At least one blank line.
-    Blank,
-}
+/// Cursor over the sorted comment list.
+pub type Comments<'a> = SpanCursor<'a, CssComment>;
 
-/// Classifies the gap `slice` between two source positions.
-///
-/// A blank line is a line strictly inside the gap consisting solely of whitespace.
-/// Recognizes `\n`, lone `\r`, and `\r\n` line terminators.
-pub fn classify_gap(slice: &[u8]) -> Gap {
-    let mut newline_count = 0;
-    let mut line_has_content = false;
-    let mut blank = false;
-    let mut i = 0;
-    while i < slice.len() {
-        match slice[i] {
-            b'\r' | b'\n' => {
-                if newline_count > 0 && !line_has_content {
-                    blank = true;
-                }
-                newline_count += 1;
-                line_has_content = false;
-                if slice[i] == b'\r' && slice.get(i + 1) == Some(&b'\n') {
-                    i += 1;
-                }
-            }
-            b' ' | b'\t' => {}
-            _ => line_has_content = true,
-        }
-        i += 1;
-    }
-    if blank {
-        Gap::Blank
-    } else if newline_count > 0 {
-        Gap::Line
-    } else {
-        Gap::None
-    }
-}
+pub use oxc_formatter_core::spec::{Gap, classify_gap};
 
 /// Emit a single comment verbatim.
 /// Mirrors Prettier's `css-comment` case: the original text slice,
@@ -168,24 +85,39 @@ pub fn flush_leading_comments(value_start: u32, f: &mut CssFormatter<'_, '_>) {
     write_leading_comments(leading, value_start, f);
 }
 
-/// If the next pending comment sits on the same line as `prev_end`,
-/// drain it and emit it as a trailing comment.
-pub fn write_trailing_same_line_comment(prev_end: u32, upper: u32, f: &mut CssFormatter<'_, '_>) {
-    let Some(comment) = f.context().comments().peek() else { return };
-    if comment.span.end > upper {
-        return;
-    }
+/// Drains and emits the run of pending comments sitting on the same line
+/// as `prev_end` as trailing comments (`red; /* x */ /* y */`); a `//` comment ends the run.
+/// Look-alike of `scss::write_same_line_trailing_comments`, which deliberately differs:
+/// no `expand_parent` there (its map/config bodies already hard-break).
+pub fn write_trailing_same_line_comments(
+    mut prev_end: u32,
+    upper: u32,
+    f: &mut CssFormatter<'_, '_>,
+) {
     let source = f.context().source_text();
-    if classify_gap(source.bytes_range(prev_end, comment.span.start)) != Gap::None {
-        return;
+    while let Some(comment) = f.context().comments().peek() {
+        if comment.span.end > upper
+            || classify_gap(source.bytes_range(prev_end, comment.span.start)) != Gap::None
+        {
+            return;
+        }
+
+        f.context().comments().take_before(comment.span.end);
+        let content = format_with(move |f: &mut CssFormatter<'_, '_>| {
+            write!(f, space());
+            write_single_comment(comment, f);
+        });
+
+        // NOTE: Prettier does not distinguish between `// c` and `/* c */` at EOL only for CSS/SCSS/Less.
+        // All other formatters treat EOL-line comments as line suffixes, so we are consistent with them.
+        if comment.inline {
+            write!(f, [line_suffix(&content), expand_parent()]);
+            return;
+        }
+
+        write!(f, [content]);
+        prev_end = comment.span.end;
     }
-    f.context().comments().take_before(comment.span.end);
-    // Plain content, NOT a line suffix: Prettier prints trailing comments as
-    // regular doc parts, so they count towards the line width during the
-    // preceding value group's fits measurement (`x: min(...); /* long */`
-    // breaks the `min(` group even when the value alone would fit).
-    write!(f, space());
-    write_single_comment(comment, f);
 }
 
 /// Emit comments that sit between the last child of a container and its closing delimiter.
@@ -235,20 +167,4 @@ pub fn is_suppression_comment(source: SourceText<'_>, comment: CssComment) -> bo
 /// the next line instead of following on the same one.
 pub fn last_line_has_inline_comment(raw: &str) -> bool {
     raw.rsplit('\n').next().unwrap_or(raw).contains("//")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Gap, classify_gap};
-
-    #[test]
-    fn classify_gap_counts_line_terminators() {
-        assert_eq!(classify_gap(b" \t "), Gap::None);
-        assert_eq!(classify_gap(b"\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\n  \n"), Gap::Blank);
-        assert_eq!(classify_gap(b"\r\n"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\n\r\n"), Gap::Blank);
-        assert_eq!(classify_gap(b"\r"), Gap::Line);
-        assert_eq!(classify_gap(b"\r\r"), Gap::Blank);
-    }
 }

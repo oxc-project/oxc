@@ -4,6 +4,21 @@ input_file: crates/oxc_react_compiler/fixtures/gating/dynamic-gating-bailout-nop
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] PreserveManualMemo: Existing memoization could not be preserved", labels: One([LabeledSpan { label: Some("Could not preserve existing manual memoization"), span: SourceSpan { offset: SourceOffset(337), length: 21 }, primary: false }]), help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `value`, but the source dependencies were []. Inferred dependency not present in source"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "PreserveManualMemo: Existing memoization could not be preserved", labels: [LabeledSpan { label: Some("Could not preserve existing manual memoization"), span: Span { start: 337, end: 358 }, primary: false }], help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `value`, but the source dependencies were []. Inferred dependency not present in source"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
-No changes.
+// @dynamicGating:{"source":"shared-runtime"} @validatePreserveExistingMemoizationGuarantees @panicThreshold:"none" @loggerTestOnly @validateExhaustiveMemoizationDependencies:false
+import { useMemo } from "react";
+import { identity } from "shared-runtime";
+function Foo({ value }) {
+	"use memo if(getTrue)";
+	const initialValue = useMemo(() => identity(value), []);
+	return <>
+      <div>initial value {initialValue}</div>
+      <div>current value {value}</div>
+    </>;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Foo,
+	params: [{ value: 1 }],
+	sequentialRenders: [{ value: 1 }, { value: 2 }]
+};

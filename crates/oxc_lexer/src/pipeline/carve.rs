@@ -631,7 +631,7 @@ pub(super) unsafe fn carve_jsx(
                         {
                             f.kind = JFrameKind::JsxElem;
                         }
-                        jsx_punct(kind, opch, s, crate::token::token_kind::GT);
+                        jsx_punct(kind, opch, s, crate::token::TokenKind::Gt as u8);
                         mode = JMode::Text;
                         text_start = s + 1;
                         i = s + 1;

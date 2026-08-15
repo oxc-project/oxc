@@ -665,10 +665,10 @@ pub(super) unsafe fn replay_is_keyword(
 #[cfg(test)]
 mod tests {
     use crate::options::default_options;
-    use crate::token::token_kind as k;
+    use crate::token::TokenKind;
     use crate::{Lexer, PAD};
 
-    fn kinds_of(code: &str, module: bool) -> Vec<u8> {
+    fn kinds_of(code: &str, module: bool) -> Vec<TokenKind> {
         let mut buf = code.as_bytes().to_vec();
         let n = buf.len();
         buf.resize(n + PAD, 0);
@@ -676,20 +676,20 @@ mod tests {
         opts.source_type_module = module;
         let mut lx = Lexer::new();
         let count = lx.lex(&buf, n, opts);
-        lx.kinds[..count - 1].iter().copied().filter(|&kk| !crate::is_trivia(kk)).collect()
+        lx.kinds()[..count].iter().copied().filter(|kk| !kk.is_trivia()).collect()
     }
 
     #[track_caller]
     fn regex(code: &str) {
         let ks = kinds_of(code, false);
-        assert!(ks.contains(&k::REGEXP), "expected regex in {code:?}: kinds {ks:?}");
+        assert!(ks.contains(&TokenKind::RegExp), "expected regex in {code:?}: kinds {ks:?}");
     }
 
     #[track_caller]
     fn division(code: &str) {
         let ks = kinds_of(code, false);
-        assert!(!ks.contains(&k::REGEXP), "expected division in {code:?}: kinds {ks:?}");
-        assert!(ks.contains(&k::SLASH), "expected a `/` in {code:?}: kinds {ks:?}");
+        assert!(!ks.contains(&TokenKind::RegExp), "expected division in {code:?}: kinds {ks:?}");
+        assert!(ks.contains(&TokenKind::Slash), "expected a `/` in {code:?}: kinds {ks:?}");
     }
 
     #[test]
@@ -759,9 +759,9 @@ mod tests {
     #[test]
     fn module_gate_skips_replay() {
         let ks = kinds_of("var r = await /re/.test(x);", true);
-        assert!(ks.contains(&k::REGEXP), "module keeps await reserved: {ks:?}");
+        assert!(ks.contains(&TokenKind::RegExp), "module keeps await reserved: {ks:?}");
         let ks = kinds_of("var r = yield /re/;", true);
-        assert!(ks.contains(&k::REGEXP), "module keeps yield reserved: {ks:?}");
+        assert!(ks.contains(&TokenKind::RegExp), "module keeps yield reserved: {ks:?}");
     }
 
     #[test]

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- ddab89a data_structures: Add `likely` and `unlikely` functions (#24368) (overlookmotel)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

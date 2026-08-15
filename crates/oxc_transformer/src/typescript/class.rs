@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::SPAN;
 use oxc_str::Ident;
@@ -225,7 +225,7 @@ impl<'a> TypeScript<'a> {
             );
             let ctor = create_class_constructor(
                 property_assignments,
-                class.super_class.is_some(),
+                class.heritage.is_some(),
                 scope_id,
                 ctx,
             );
@@ -350,9 +350,9 @@ impl<'a> TypeScript<'a> {
         ClassElement::new_property_definition(
             id.span,
             PropertyDefinitionType::PropertyDefinition,
-            ArenaVec::new_in(ctx),
+            [],
             key,
-            NONE,
+            None,
             None,
             false,
             false,

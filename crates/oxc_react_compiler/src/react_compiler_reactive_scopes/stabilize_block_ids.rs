@@ -10,9 +10,8 @@
 //!
 //! Corresponds to `src/ReactiveScopes/StabilizeBlockIds.ts`.
 
-use rustc_hash::FxHashMap;
-
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexVec;
 
 use crate::react_compiler_hir::{
     BlockId, ReactiveFunction, ReactiveScopeBlock, ReactiveTerminal, ReactiveTerminalStatement,
@@ -25,6 +24,30 @@ use crate::react_compiler_reactive_scopes::visitors::{
     visit_reactive_function,
 };
 
+/// Mapping from original block ids to stable sequential ids, indexed densely by
+/// block id. `next` is the next sequential id to assign (i.e. the number of ids
+/// mapped so far).
+struct BlockIdMappings {
+    map: IndexVec<BlockId, Option<BlockId>>,
+    next: u32,
+}
+
+impl BlockIdMappings {
+    fn new(num_block_ids: usize) -> Self {
+        Self { map: IndexVec::from_vec(vec![None; num_block_ids]), next: 0 }
+    }
+
+    fn get_or_insert(&mut self, id: BlockId) -> BlockId {
+        if let Some(mapped) = self.map[id] {
+            return mapped;
+        }
+        let mapped = BlockId::from_usize(self.next as usize);
+        self.next += 1;
+        self.map[id] = Some(mapped);
+        mapped
+    }
+}
+
 /// Rewrites block IDs to sequential values.
 /// TS: `stabilizeBlockIds`
 pub fn stabilize_block_ids<'a>(func: &mut ReactiveFunction<'a>, env: &mut Environment<'a>) {
@@ -34,10 +57,9 @@ pub fn stabilize_block_ids<'a>(func: &mut ReactiveFunction<'a>, env: &mut Enviro
     visit_reactive_function(func, &collector, &mut referenced);
 
     // Build mappings: referenced block IDs -> sequential IDs (insertion-order deterministic)
-    let mut mappings: FxHashMap<BlockId, BlockId> = FxHashMap::default();
+    let mut mappings = BlockIdMappings::new(env.next_block_id_counter as usize);
     for block_id in &referenced {
-        let len = mappings.len() as u32;
-        mappings.entry(*block_id).or_insert(BlockId(len));
+        mappings.get_or_insert(*block_id);
     }
 
     // Pass 2: Rewrite block IDs using ReactiveFunctionTransform
@@ -61,7 +83,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectReferencedLabels<'a, 'e> {
     }
 
     fn visit_scope(&self, scope: &ReactiveScopeBlock<'a>, state: &mut Self::State) {
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope];
         if let Some(ref early_return) = scope_data.early_return_value {
             state.insert(early_return.label);
         }
@@ -69,10 +91,10 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectReferencedLabels<'a, 'e> {
     }
 
     fn visit_terminal(&self, stmt: &ReactiveTerminalStatement<'a>, state: &mut Self::State) {
-        if let Some(ref label) = stmt.label {
-            if !label.implicit {
-                state.insert(label.id);
-            }
+        if let Some(ref label) = stmt.label
+            && !label.implicit
+        {
+            state.insert(label.id);
         }
         self.traverse_terminal(stmt, state);
     }
@@ -82,18 +104,13 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CollectReferencedLabels<'a, 'e> {
 // Pass 2: RewriteBlockIds
 // =============================================================================
 
-fn get_or_insert_mapping(mappings: &mut FxHashMap<BlockId, BlockId>, id: BlockId) -> BlockId {
-    let len = mappings.len() as u32;
-    *mappings.entry(id).or_insert(BlockId(len))
-}
-
 /// TS: `class RewriteBlockIds extends ReactiveFunctionVisitor<Map<BlockId, BlockId>>`
 struct RewriteBlockIds<'a, 'e> {
     env: &'e mut Environment<'a>,
 }
 
 impl<'a, 'e> ReactiveFunctionTransform<'a> for RewriteBlockIds<'a, 'e> {
-    type State = FxHashMap<BlockId, BlockId>;
+    type State = BlockIdMappings;
 
     fn env(&self) -> &Environment<'a> {
         self.env
@@ -104,9 +121,9 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for RewriteBlockIds<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut Self::State,
     ) -> Result<(), OxcDiagnostic> {
-        let scope_data = &mut self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &mut self.env.scopes[scope.scope];
         if let Some(ref mut early_return) = scope_data.early_return_value {
-            early_return.label = get_or_insert_mapping(state, early_return.label);
+            early_return.label = state.get_or_insert(early_return.label);
         }
         self.traverse_scope(scope, state)
     }
@@ -117,12 +134,12 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for RewriteBlockIds<'a, 'e> {
         state: &mut Self::State,
     ) -> Result<(), OxcDiagnostic> {
         if let Some(ref mut label) = stmt.label {
-            label.id = get_or_insert_mapping(state, label.id);
+            label.id = state.get_or_insert(label.id);
         }
 
         match &mut stmt.terminal {
             ReactiveTerminal::Break { target, .. } | ReactiveTerminal::Continue { target, .. } => {
-                *target = get_or_insert_mapping(state, *target);
+                *target = state.get_or_insert(*target);
             }
             _ => {}
         }

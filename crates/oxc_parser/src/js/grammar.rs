@@ -97,10 +97,10 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
     // would otherwise carry this body's large stack frame + callee-saved spills on every call.
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut elements = ArenaVec::new_in(p);
+        let len = expr.elements.len();
+        let mut elements = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
 
-        let len = expr.elements.len();
         for (i, elem) in expr.elements.into_iter().enumerate() {
             match elem {
                 match_expression!(ArrayExpressionElement) => {
@@ -125,8 +125,8 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(AssignmentTargetRest::boxed(span, target, p));
-                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(span));
                         }
                     } else {
                         let error = diagnostics::spread_last_element(elem.span);
@@ -174,10 +174,10 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
     // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut properties = ArenaVec::new_in(p);
+        let len = expr.properties.len();
+        let mut properties = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
 
-        let len = expr.properties.len();
         for (i, elem) in expr.properties.into_iter().enumerate() {
             match elem {
                 ObjectPropertyKind::ObjectProperty(property) => {
@@ -197,8 +197,8 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
                         ) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
-                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(span));
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(AssignmentTargetRest::boxed(span, target, p));

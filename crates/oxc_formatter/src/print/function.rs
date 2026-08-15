@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use oxc_ast::ast::*;
+use oxc_formatter_core::Buffer;
 
 use super::{
     FormatWrite,
@@ -10,10 +11,8 @@ use super::{
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{Buffer, prelude::*, trivia::FormatLeadingComments},
-    print::{
-        arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
-    },
+    formatter::{prelude::*, trivia::FormatLeadingComments},
+    print::semicolon::OptionalSemicolon,
     write,
 };
 
@@ -127,11 +126,7 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                 f,
                 [
                     space(),
-                    FormatMaybeCachedFunctionBody {
-                        body,
-                        mode: self.options.cache_mode,
-                        expression: false
-                    }
+                    FormatContentWithCacheMode::new(body.span, body, self.options.cache_mode)
                 ]
             );
         }

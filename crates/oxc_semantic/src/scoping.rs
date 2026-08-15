@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn};
+use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn, CloneInSemanticIds};
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{ArenaIdentHashMap, Ident};
@@ -31,13 +31,16 @@ impl CloneIn<'_> for Redeclaration {
     type Cloned = Self;
 
     #[inline]
-    fn clone_in(&self, _allocator: &Allocator) -> Self::Cloned {
-        Self { span: self.span, declaration: NodeId::DUMMY, flags: self.flags }
-    }
-
-    #[inline]
-    fn clone_in_with_semantic_ids(&self, _allocator: &Allocator) -> Self::Cloned {
-        self.clone()
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &Allocator,
+    ) -> Self::Cloned {
+        Self {
+            span: self.span,
+            declaration: self.declaration.clone_in_impl(with_semantic_ids, allocator),
+            flags: self.flags,
+        }
     }
 }
 
@@ -368,6 +371,22 @@ impl Scoping {
     pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.symbol_names[symbol_id.index()] = name.clone_in(allocator);
+        });
+    }
+
+    /// Rename multiple symbols to the same name.
+    ///
+    /// The name is allocated once in the semantic arena and shared between all symbols.
+    #[inline]
+    pub fn set_symbol_names(&mut self, symbol_ids: &[SymbolId], name: Ident<'_>) {
+        if symbol_ids.is_empty() {
+            return;
+        }
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = name.clone_in(allocator);
+            for &symbol_id in symbol_ids {
+                cell.symbol_names[symbol_id.index()] = name;
+            }
         });
     }
 

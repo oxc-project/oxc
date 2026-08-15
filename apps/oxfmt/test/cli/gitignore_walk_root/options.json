@@ -1,0 +1,22 @@
+[
+  {
+    "args": ["--check"],
+    "cwd": "sub/generated/pkg",
+    "gitignore": {
+      "sub/.gitignore": "generated\n"
+    }
+  },
+  {
+    "args": ["--check", "index.ts"],
+    "cwd": "sub/generated/pkg",
+    "gitignore": {
+      "sub/.gitignore": "generated\n"
+    }
+  },
+  {
+    "args": ["--check", "sub/generated/pkg"],
+    "gitignore": {
+      "sub/.gitignore": "generated\n"
+    }
+  }
+]

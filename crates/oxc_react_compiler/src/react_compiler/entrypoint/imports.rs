@@ -12,7 +12,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::{ImportDeclarationSpecifier, ModuleExportName, Program, Statement};
 use oxc_str::{Ident, IdentHashSet, format_ident};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
@@ -174,10 +174,10 @@ impl<'a> ProgramContext<'a> {
         name_hint: Option<&str>,
     ) -> NonLocalImportSpecifier<'a> {
         // Check if already imported
-        if let Some(module_imports) = self.imports.get(module) {
-            if let Some(existing) = module_imports.get(specifier) {
-                return *existing;
-            }
+        if let Some(module_imports) = self.imports.get(module)
+            && let Some(existing) = module_imports.get(specifier)
+        {
+            return *existing;
         }
 
         let name = self.new_uid(name_hint.unwrap_or(specifier));
@@ -232,14 +232,10 @@ pub fn validate_restricted_imports(
     let mut diagnostics = Diagnostics::new();
 
     for stmt in &program.body {
-        if let Statement::ImportDeclaration(import) = stmt {
-            if restricted.contains(import.source.value.as_str()) {
-                diagnostics.push(
-                    ErrorCategory::Todo
-                        .diagnostic("Bailing out due to blocklisted import")
-                        .with_help(format!("Import from module {}", import.source.value)),
-                );
-            }
+        if let Statement::ImportDeclaration(import) = stmt
+            && restricted.contains(import.source.value.as_str())
+        {
+            diagnostics.push(diagnostics::blocklisted_import(import.source.value.as_str()));
         }
     }
 

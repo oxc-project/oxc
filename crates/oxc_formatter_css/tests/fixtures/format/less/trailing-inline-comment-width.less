@@ -1,0 +1,5 @@
+// Pins the "trailing `//` comments don't count toward print width" divergence
+// (see AGENTS.md "Known divergences"): Prettier counts the comment and breaks
+// the value (`fade(\n  @white,\n  4%\n); // ...`); ours keeps the value flat.
+@background-color-light: fade(@white, 4%); // background of header and selected item
+@background-color-base: fade(@white, 8%); // short one stays put

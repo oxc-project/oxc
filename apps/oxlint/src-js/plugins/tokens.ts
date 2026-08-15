@@ -237,8 +237,8 @@ class Token {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
-const getTokenLoc = getTokenLocTemp!;
-const resetLoc = resetLocTemp!;
+const getTokenLoc = getTokenLocTemp;
+const resetLoc = resetLocTemp;
 
 // `ESTreeKind` discriminants (set by Rust side)
 const PRIVATE_IDENTIFIER_KIND = 2;
@@ -284,7 +284,7 @@ export const FLAG_DESERIALIZED = 1;
 export function initTokens(): void {
   debugAssert(tokens === null, "Tokens already initialized");
 
-  if (!allTokensDeserialized) deserializeTokens();
+  if (allTokensDeserialized === false) deserializeTokens();
 
   // Create `tokens` array as a slice of `cachedTokens` array.
   //
@@ -308,7 +308,7 @@ export function initTokens(): void {
  * Does NOT build the `tokens` array - use `initTokens` for that.
  */
 export function deserializeTokens(): void {
-  debugAssert(!allTokensDeserialized, "Tokens already deserialized");
+  debugAssert(allTokensDeserialized === false, "Tokens already deserialized");
 
   if (tokensInt32 === null) initTokensBuffer();
 
@@ -386,7 +386,7 @@ export function initTokensBuffer(): void {
  */
 export function getToken(index: number): TokenType {
   // Skip all other checks if all tokens have been deserialized
-  if (!allTokensDeserialized) {
+  if (allTokensDeserialized === false) {
     const token = deserializeTokenIfNeeded(index);
 
     if (token !== null) {
@@ -413,31 +413,35 @@ export function getToken(index: number): TokenType {
  * @returns `Token` object if newly deserialized, or `null` if already deserialized
  */
 function deserializeTokenIfNeeded(index: number): Token | null {
+  debugAssertIsNonNull(tokensUint8, "Token buffers should be initialized");
+  debugAssertIsNonNull(tokensInt32, "Token buffers should be initialized");
+  debugAssertIsNonNull(sourceText, "Source text should be initialized");
+
   const pos = index << TOKEN_SIZE_SHIFT;
 
   // Fast path: If already deserialized, exit
   const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
-  if (tokensUint8![flagPos] !== FLAG_NOT_DESERIALIZED) return null;
+  if (tokensUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
 
   // Mark token as deserialized, so it won't be deserialized again
-  tokensUint8![flagPos] = FLAG_DESERIALIZED;
+  tokensUint8[flagPos] = FLAG_DESERIALIZED;
 
   // Deserialize token into a cached `Token` object
   const token = cachedTokens[index];
 
-  const kind = tokensUint8![pos + KIND_FIELD_OFFSET];
+  const kind = tokensUint8[pos + KIND_FIELD_OFFSET];
 
   const pos32 = pos >> 2,
-    start = tokensInt32![pos32],
-    end = tokensInt32![pos32 + 1];
+    start = tokensInt32[pos32],
+    end = tokensInt32[pos32 + 1];
 
   // Get `value` as slice of source text `start..end`.
   // Slice `start + 1..end` for private identifiers, to strip leading `#`.
-  let value = sourceText!.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
+  let value = sourceText.slice(start + +(kind === PRIVATE_IDENTIFIER_KIND), end);
 
   if (kind <= PRIVATE_IDENTIFIER_KIND) {
     // Unescape if `escaped` flag is set
-    if (tokensUint8![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+    if (tokensUint8[pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
       value = unescapeIdentifier(value);
     }
   } else if (kind === REGEXP_KIND) {
@@ -498,12 +502,14 @@ function unescapeIdentifier(name: string): string {
 }
 
 /**
- * Check tokens buffer has valid ranges and ascending order.
+ * Check all tokens in buffer have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckValidRanges(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
@@ -516,15 +522,21 @@ function debugCheckValidRanges(): void {
     }
     lastEnd = end;
   }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Tokens end beyond source text length: ${lastEnd} > ${sourceText.length}`);
+  }
 }
 
 /**
- * Check all deserialized tokens are in ascending order.
+ * Check all deserialized tokens have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckDeserializedTokens(): void {
   if (!DEBUG) return;
+
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
 
   let lastEnd = 0;
   for (let i = 0; i < tokensLen; i++) {
@@ -541,6 +553,10 @@ function debugCheckDeserializedTokens(): void {
       );
     }
     lastEnd = end;
+  }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Tokens end beyond source text length: ${lastEnd} > ${sourceText.length}`);
   }
 }
 

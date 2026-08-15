@@ -186,10 +186,10 @@ impl Rule for RequireReturns {
             let config = &self.0;
             let settings = &ctx.settings().jsdoc;
             // If JSDoc is found but safely ignored, skip
-            if should_ignore_as_custom_skip(&jsdoc)
-                || should_ignore_as_avoid(&jsdoc, settings, &config.exempted_by)
-                || should_ignore_as_private(&jsdoc, settings)
-                || should_ignore_as_internal(&jsdoc, settings)
+            if should_ignore_as_custom_skip(jsdoc)
+                || should_ignore_as_avoid(jsdoc, settings, &config.exempted_by)
+                || should_ignore_as_private(jsdoc, settings)
+                || should_ignore_as_internal(jsdoc, settings)
             {
                 continue;
             }

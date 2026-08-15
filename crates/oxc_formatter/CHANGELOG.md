@@ -4,6 +4,121 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.63.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- b63eccc formatter: Keep comments after TS this_param (#25459) (leaysgur)
+- ab52a59 formatter: Format xxx-in-js inside JSDoc js fence (#25414) (leaysgur)
+- 1a2c64a formatter,oxfmt: Apply effective print width for JSDoc fence (#25413) (leaysgur)
+- ef1d04b formatter: Break mapped type brackets (#25297) (leaysgur)
+- 4e6f3f1 formatter: Break index signature brackets (#25296) (leaysgur)
+- c29b587 formatter_core: Measure decided-flat fill separator as flat during group re-measure (#25276) (leaysgur)
+
+### 📚 Documentation
+
+- 6eae5c9 formatter,oxfmt: Record embed-layer decisions in place (#25422) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- a0c7788 ast: [**BREAKING**] Change `TSIndexSignatureName::name` to `Ident` (#25150) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 1b57f78 oxfmt: Support tsx-in-vue (#25063) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- a9e76e9 oxfmt: Rework tsx-in-vue support (#25106) (leaysgur)
+- ca1ba71 formatter: Hug arrows with type-reference return annotations (#25044) (Pitiș Radu)
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+
+### ⚡ Performance
+
+- b91d5a8 formatter_css,formatter_graphql,formatter_yaml,formatter_json: Pre alloc IR buffers (#25234) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+- 193e16f formatter/jsdoc: Correct `str_width` attribution (#25142) (leaysgur)
+
+## [0.61.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- e037709 formatter: Stop preserving indent for embedded template exprs (#24972) (leaysgur)
+- 143fd1f formatter: Align quoted `new` signature (#24883) (leaysgur)
+- d076b40 formatter: Check calee chain is_simple (#24871) (leaysgur)
+- 8eb9eca formatter/jsdoc: Respect `singleQuote` option in `@import` (#24787) (leaysgur)
+- 6f05ac4 formatter: Fix template literal formatting (#24786) (leaysgur)
+
+### ⚡ Performance
+
+- bb73b23 formatter_core: Bound the thread-local scratch cache (#24793) (leaysgur)
+- a5f7b15 formatter: Stage assignment-like left hand side on the heap (#24613) (leaysgur)
+- 94de05f formatter: Accumulate JSX child-list builders on the heap (#24585) (leaysgur)
+- c191f51 formatter_core: Stage IR buffers on the heap to reduce arena memory (#24582) (leaysgur)
+
+## [0.60.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 6fe866a oxfmt: Keep tailwind classes glued to template expr with `preserveWhitespace` (#24609) (leaysgur)
+
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- df250df formatter: Support `quoteProps` for TS enum and methods (#24309) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 162bddf formatter: Add required parens for conditional type in type parameter constraint (#24450) (leaysgur)
+- 2d22a91 formatter: Determine type cast target from span instead of lexical scan (#24447) (leaysgur)
+- 25306e9 formatter: Do not add extra parens with type cast comment (#24444) (leaysgur)
+- bd6edfe formatter: Break arrow signature that exactly fills the line when cond body may hug (#24440) (leaysgur)
+- a99ef41 formatter: Keep quotes on method signature named new (#24432) (leaysgur)
+- b7c7e15 formatter: Add parens for import and private field in new callee chain (#24320) (leaysgur)
+- 0c8f6e4 formatter: Update detect_code_removal for #24309 (#24314) (leaysgur)
+- a85aad0 formatter: Fix member-chain and non-null parens (#24312) (leaysgur)
+- 1c29c73 formatter: Preserve `TSNonNullExpression` in chain expression (#24311) (leaysgur)
+- 8933c0e formatter: Keep comment inside of empty `switch` block (#24308) (leaysgur)
+- ec26af2 formatter: Preserve blank lines between JSX attrs (#24290) (leaysgur)
+- 70bd54d formatter: Keep arrow function body comment (#24287) (leaysgur)
+- 42ec8de formatter: Keep comments inside surviving parens and suppressed statement terminators (#24253) (leaysgur)
+- 1343779 formatter: Keep comment inline for empty statements (#24249) (leaysgur)
+- b996579 formatter: Print ; before trailing comments part 2 (#24246) (leaysgur)
+- 4f86e8c formatter: Print `;` before trailing comments (#24244) (leaysgur)
+- 01252e4 formatter: Add or remove parens for `let` declaration (#24215) (leaysgur)
+
+### ⚡ Performance
+
+- a2f255b formatter: Use `SmallVec` for `MemberChain` collections (#23776) (Marius Schulz)
+
+### 📚 Documentation
+
+- b52d0f5 formatter: Add TODO comment about unsound code (#24372) (overlookmotel)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🚀 Features

@@ -8,7 +8,7 @@ use crate::{
     member_expression_kinds::get_member_expression_kinds,
     node_type_set::NodeTypeSet,
     rules::{RuleEntry, find_rule_source_file, get_all_rules},
-    utils::{find_impl_function, find_rule_impl_block},
+    utils::{executable_stmts, find_impl_function, find_rule_impl_block},
 };
 use rustc_hash::FxHashSet;
 use std::{
@@ -128,7 +128,18 @@ pub fn generate_rules_enum_file() -> io::Result<()> {
         .map_err(|e| std::io::Error::other(format!("could not find project root: {e}")))?;
 
     let rules_file_contents = fs::read_to_string(root.join("crates/oxc_linter/src/rules.rs"))?;
-    let rule_entries = get_all_rules(&rules_file_contents);
+    let mut rule_entries = get_all_rules(&rules_file_contents);
+
+    for rule in &mut rule_entries {
+        let Some(path) = find_rule_source_file(&root, rule) else { continue };
+        let Ok(source) = fs::read_to_string(path) else { continue };
+        let Ok(file) = syn::parse_file(&source) else { continue };
+        let Some(rule_impl) = find_rule_impl_block(&file, &rule.rule_struct_name()) else {
+            continue;
+        };
+        rule.has_custom_from_configuration =
+            find_impl_function(rule_impl, "from_configuration").is_some();
+    }
 
     let out = rules_enum::generate_rules_enum(&rule_entries);
     let formatted_out = rust_fmt(&out);
@@ -183,8 +194,9 @@ fn detect_top_level_node_types(
     }
 
     // Detect if entire body is call to `run_on_regex_node` and return those node types
-    if run_func.block.stmts.len() == 1
-        && let syn::Stmt::Expr(syn::Expr::Call(call_expr), _) = &run_func.block.stmts[0]
+    let stmts = executable_stmts(&run_func.block);
+    if stmts.len() == 1
+        && let syn::Stmt::Expr(syn::Expr::Call(call_expr), _) = stmts[0]
         && call_expr.args.len() == 3
         && let syn::Expr::Path(path_expr) = &*call_expr.func
         && path_expr.path.is_ident("run_on_regex_node")

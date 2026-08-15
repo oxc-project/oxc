@@ -1,5 +1,6 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
@@ -61,9 +62,8 @@ impl Rule for NoExAssign {
             return;
         };
 
-        let idents = catch_param.pattern.get_binding_identifiers();
         let symbol_table = ctx.scoping();
-        for ident in idents {
+        catch_param.pattern.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
             // This symbol _should_ always be considered a catch variable (since we got it from a catch param),
             // but we check in debug mode just to be sure.
@@ -75,7 +75,7 @@ impl Rule for NoExAssign {
                     ));
                 }
             }
-        }
+        });
     }
 }
 

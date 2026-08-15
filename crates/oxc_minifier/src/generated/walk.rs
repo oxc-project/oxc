@@ -108,9 +108,6 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         Expression::Identifier(node) => {
             walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
         }
-        Expression::MetaProperty(node) => {
-            walk_meta_property(traverser, (&mut **node) as *mut _, ctx)
-        }
         Expression::Super(node) => walk_super(traverser, (&mut **node) as *mut _, ctx),
         Expression::ArrayExpression(node) => {
             walk_array_expression(traverser, (&mut **node) as *mut _, ctx)
@@ -176,6 +173,8 @@ unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         Expression::PrivateInExpression(node) => {
             walk_private_in_expression(traverser, (&mut **node) as *mut _, ctx)
         }
+        Expression::ImportMeta(node) => walk_import_meta(traverser, (&mut **node) as *mut _, ctx),
+        Expression::NewTarget(node) => walk_new_target(traverser, (&mut **node) as *mut _, ctx),
         Expression::JSXElement(node) => walk_jsx_element(traverser, (&mut **node) as *mut _, ctx),
         Expression::JSXFragment(node) => walk_jsx_fragment(traverser, (&mut **node) as *mut _, ctx),
         Expression::TSAsExpression(node) => {
@@ -289,7 +288,6 @@ unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         | ArrayExpressionElement::StringLiteral(_)
         | ArrayExpressionElement::TemplateLiteral(_)
         | ArrayExpressionElement::Identifier(_)
-        | ArrayExpressionElement::MetaProperty(_)
         | ArrayExpressionElement::Super(_)
         | ArrayExpressionElement::ArrayExpression(_)
         | ArrayExpressionElement::ArrowFunctionExpression(_)
@@ -313,6 +311,8 @@ unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         | ArrayExpressionElement::UpdateExpression(_)
         | ArrayExpressionElement::YieldExpression(_)
         | ArrayExpressionElement::PrivateInExpression(_)
+        | ArrayExpressionElement::ImportMeta(_)
+        | ArrayExpressionElement::NewTarget(_)
         | ArrayExpressionElement::JSXElement(_)
         | ArrayExpressionElement::JSXFragment(_)
         | ArrayExpressionElement::TSAsExpression(_)
@@ -419,7 +419,6 @@ unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         | PropertyKey::StringLiteral(_)
         | PropertyKey::TemplateLiteral(_)
         | PropertyKey::Identifier(_)
-        | PropertyKey::MetaProperty(_)
         | PropertyKey::Super(_)
         | PropertyKey::ArrayExpression(_)
         | PropertyKey::ArrowFunctionExpression(_)
@@ -443,6 +442,8 @@ unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         | PropertyKey::UpdateExpression(_)
         | PropertyKey::YieldExpression(_)
         | PropertyKey::PrivateInExpression(_)
+        | PropertyKey::ImportMeta(_)
+        | PropertyKey::NewTarget(_)
         | PropertyKey::JSXElement(_)
         | PropertyKey::JSXFragment(_)
         | PropertyKey::TSAsExpression(_)
@@ -681,29 +682,22 @@ unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
     traverser.exit_new_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_meta_property<'a, Tr: Traverse<'a>>(
+unsafe fn walk_import_meta<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
-    node: *mut MetaProperty<'a>,
+    node: *mut ImportMeta,
     ctx: &mut TraverseCtx<'a>,
 ) {
-    traverser.enter_meta_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::MetaPropertyMeta(ancestor::MetaPropertyWithoutMeta(
-        node,
-        PhantomData,
-    )));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_META_PROPERTY_META) as *mut IdentifierName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::MetaPropertyProperty);
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_META_PROPERTY_PROPERTY) as *mut IdentifierName,
-        ctx,
-    );
-    ctx.pop_stack(pop_token);
-    traverser.exit_meta_property(&mut *node, ctx);
+    traverser.enter_import_meta(&mut *node, ctx);
+    traverser.exit_import_meta(&mut *node, ctx);
+}
+
+unsafe fn walk_new_target<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut NewTarget,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_new_target(&mut *node, ctx);
+    traverser.exit_new_target(&mut *node, ctx);
 }
 
 unsafe fn walk_spread_element<'a, Tr: Traverse<'a>>(
@@ -742,7 +736,6 @@ unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
         | Argument::StringLiteral(_)
         | Argument::TemplateLiteral(_)
         | Argument::Identifier(_)
-        | Argument::MetaProperty(_)
         | Argument::Super(_)
         | Argument::ArrayExpression(_)
         | Argument::ArrowFunctionExpression(_)
@@ -766,6 +759,8 @@ unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
         | Argument::UpdateExpression(_)
         | Argument::YieldExpression(_)
         | Argument::PrivateInExpression(_)
+        | Argument::ImportMeta(_)
+        | Argument::NewTarget(_)
         | Argument::JSXElement(_)
         | Argument::JSXFragment(_)
         | Argument::TSAsExpression(_)
@@ -1379,7 +1374,8 @@ unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
         | Statement::TSTypeAliasDeclaration(_)
         | Statement::TSInterfaceDeclaration(_)
         | Statement::TSEnumDeclaration(_)
-        | Statement::TSModuleDeclaration(_)
+        | Statement::TSExternalModuleDeclaration(_)
+        | Statement::TSNamespaceDeclaration(_)
         | Statement::TSGlobalDeclaration(_)
         | Statement::TSImportEqualsDeclaration(_) => {
             walk_declaration(traverser, node as *mut _, ctx)
@@ -1387,7 +1383,9 @@ unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
         Statement::ImportDeclaration(_)
         | Statement::ExportAllDeclaration(_)
         | Statement::ExportDefaultDeclaration(_)
+        | Statement::ExportDeclaration(_)
         | Statement::ExportNamedDeclaration(_)
+        | Statement::ExportFromDeclaration(_)
         | Statement::TSExportAssignment(_)
         | Statement::TSNamespaceExportDeclaration(_) => {
             walk_module_declaration(traverser, node as *mut _, ctx)
@@ -1474,8 +1472,11 @@ unsafe fn walk_declaration<'a, Tr: Traverse<'a>>(
         Declaration::TSEnumDeclaration(node) => {
             walk_ts_enum_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        Declaration::TSModuleDeclaration(node) => {
-            walk_ts_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        Declaration::TSExternalModuleDeclaration(node) => {
+            walk_ts_external_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        Declaration::TSNamespaceDeclaration(node) => {
+            walk_ts_namespace_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
         Declaration::TSGlobalDeclaration(node) => {
             walk_ts_global_declaration(traverser, (&mut **node) as *mut _, ctx)
@@ -1702,7 +1703,6 @@ unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         | ForStatementInit::StringLiteral(_)
         | ForStatementInit::TemplateLiteral(_)
         | ForStatementInit::Identifier(_)
-        | ForStatementInit::MetaProperty(_)
         | ForStatementInit::Super(_)
         | ForStatementInit::ArrayExpression(_)
         | ForStatementInit::ArrowFunctionExpression(_)
@@ -1726,6 +1726,8 @@ unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         | ForStatementInit::UpdateExpression(_)
         | ForStatementInit::YieldExpression(_)
         | ForStatementInit::PrivateInExpression(_)
+        | ForStatementInit::ImportMeta(_)
+        | ForStatementInit::NewTarget(_)
         | ForStatementInit::JSXElement(_)
         | ForStatementInit::JSXFragment(_)
         | ForStatementInit::TSAsExpression(_)
@@ -2441,6 +2443,66 @@ unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
     traverser.exit_function_body(&mut *node, ctx);
 }
 
+unsafe fn walk_arrow_function_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ArrowFunctionBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_arrow_function_body(&mut *node, ctx);
+    match &mut *node {
+        ArrowFunctionBody::FunctionBody(node) => {
+            walk_function_body(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ArrowFunctionBody::BooleanLiteral(_)
+        | ArrowFunctionBody::NullLiteral(_)
+        | ArrowFunctionBody::NumericLiteral(_)
+        | ArrowFunctionBody::BigIntLiteral(_)
+        | ArrowFunctionBody::RegExpLiteral(_)
+        | ArrowFunctionBody::StringLiteral(_)
+        | ArrowFunctionBody::TemplateLiteral(_)
+        | ArrowFunctionBody::Identifier(_)
+        | ArrowFunctionBody::Super(_)
+        | ArrowFunctionBody::ArrayExpression(_)
+        | ArrowFunctionBody::ArrowFunctionExpression(_)
+        | ArrowFunctionBody::AssignmentExpression(_)
+        | ArrowFunctionBody::AwaitExpression(_)
+        | ArrowFunctionBody::BinaryExpression(_)
+        | ArrowFunctionBody::CallExpression(_)
+        | ArrowFunctionBody::ChainExpression(_)
+        | ArrowFunctionBody::ClassExpression(_)
+        | ArrowFunctionBody::ConditionalExpression(_)
+        | ArrowFunctionBody::FunctionExpression(_)
+        | ArrowFunctionBody::ImportExpression(_)
+        | ArrowFunctionBody::LogicalExpression(_)
+        | ArrowFunctionBody::NewExpression(_)
+        | ArrowFunctionBody::ObjectExpression(_)
+        | ArrowFunctionBody::ParenthesizedExpression(_)
+        | ArrowFunctionBody::SequenceExpression(_)
+        | ArrowFunctionBody::TaggedTemplateExpression(_)
+        | ArrowFunctionBody::ThisExpression(_)
+        | ArrowFunctionBody::UnaryExpression(_)
+        | ArrowFunctionBody::UpdateExpression(_)
+        | ArrowFunctionBody::YieldExpression(_)
+        | ArrowFunctionBody::PrivateInExpression(_)
+        | ArrowFunctionBody::ImportMeta(_)
+        | ArrowFunctionBody::NewTarget(_)
+        | ArrowFunctionBody::JSXElement(_)
+        | ArrowFunctionBody::JSXFragment(_)
+        | ArrowFunctionBody::TSAsExpression(_)
+        | ArrowFunctionBody::TSSatisfiesExpression(_)
+        | ArrowFunctionBody::TSTypeAssertion(_)
+        | ArrowFunctionBody::TSNonNullExpression(_)
+        | ArrowFunctionBody::TSInstantiationExpression(_)
+        | ArrowFunctionBody::V8IntrinsicExpression(_)
+        | ArrowFunctionBody::ComputedMemberExpression(_)
+        | ArrowFunctionBody::StaticMemberExpression(_)
+        | ArrowFunctionBody::PrivateFieldExpression(_) => {
+            walk_expression(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_arrow_function_body(&mut *node, ctx);
+}
+
 unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ArrowFunctionExpression<'a>,
@@ -2482,10 +2544,10 @@ unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ArrowFunctionExpressionBody);
-    walk_function_body(
+    walk_arrow_function_body(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-            as *mut ArenaBox<FunctionBody>)) as *mut _,
+        (node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+            as *mut ArrowFunctionBody,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -2545,16 +2607,10 @@ unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) =
-        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_CLASS) as *mut Option<Expression>)
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_HERITAGE) as *mut Option<ClassHeritage>)
     {
-        ctx.retag_stack(AncestorType::ClassSuperClass);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_TYPE_ARGUMENTS)
-        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
-    {
-        ctx.retag_stack(AncestorType::ClassSuperTypeArguments);
-        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+        ctx.retag_stack(AncestorType::ClassHeritage);
+        walk_class_heritage(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ClassImplements);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
@@ -2572,6 +2628,31 @@ unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_class(&mut *node, ctx);
+}
+
+unsafe fn walk_class_heritage<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ClassHeritage<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_class_heritage(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ClassHeritageExpression(
+        ancestor::ClassHeritageWithoutExpression(node, PhantomData),
+    ));
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_CLASS_HERITAGE_EXPRESSION) as *mut Expression,
+        ctx,
+    );
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_CLASS_HERITAGE_TYPE_ARGUMENTS)
+        as *mut Option<ArenaBox<TSTypeParameterInstantiation>>)
+    {
+        ctx.retag_stack(AncestorType::ClassHeritageTypeArguments);
+        walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_class_heritage(&mut *node, ctx);
 }
 
 unsafe fn walk_class_body<'a, Tr: Traverse<'a>>(
@@ -2740,8 +2821,14 @@ unsafe fn walk_module_declaration<'a, Tr: Traverse<'a>>(
         ModuleDeclaration::ExportDefaultDeclaration(node) => {
             walk_export_default_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
+        ModuleDeclaration::ExportDeclaration(node) => {
+            walk_export_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
         ModuleDeclaration::ExportNamedDeclaration(node) => {
             walk_export_named_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ModuleDeclaration::ExportFromDeclaration(node) => {
+            walk_export_from_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
         ModuleDeclaration::TSExportAssignment(node) => {
             walk_ts_export_assignment(traverser, (&mut **node) as *mut _, ctx)
@@ -2989,43 +3076,72 @@ unsafe fn walk_import_attribute_key<'a, Tr: Traverse<'a>>(
     traverser.exit_import_attribute_key(&mut *node, ctx);
 }
 
+unsafe fn walk_export_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExportDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_export_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportDeclarationDeclaration(
+        ancestor::ExportDeclarationWithoutDeclaration(node, PhantomData),
+    ));
+    walk_declaration(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_DECLARATION_DECLARATION) as *mut Declaration,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_declaration(&mut *node, ctx);
+}
+
 unsafe fn walk_export_named_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ExportNamedDeclaration<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_named_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportNamedDeclarationDeclaration(
-        ancestor::ExportNamedDeclarationWithoutDeclaration(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::ExportNamedDeclarationSpecifiers(
+        ancestor::ExportNamedDeclarationWithoutSpecifiers(node, PhantomData),
     ));
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION)
-        as *mut Option<Declaration>)
-    {
-        walk_declaration(traverser, field as *mut _, ctx);
-    }
-    ctx.retag_stack(AncestorType::ExportNamedDeclarationSpecifiers);
     for item in &mut *((node as *mut u8).add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_SPECIFIERS)
         as *mut ArenaVec<ExportSpecifier>)
     {
         walk_export_specifier(traverser, item as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_SOURCE)
-        as *mut Option<StringLiteral>)
+    ctx.pop_stack(pop_token);
+    traverser.exit_export_named_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_export_from_declaration<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ExportFromDeclaration<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_export_from_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::ExportFromDeclarationSpecifiers(
+        ancestor::ExportFromDeclarationWithoutSpecifiers(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_EXPORT_FROM_DECLARATION_SPECIFIERS)
+        as *mut ArenaVec<ExportSpecifier>)
     {
-        ctx.retag_stack(AncestorType::ExportNamedDeclarationSource);
-        walk_string_literal(traverser, field as *mut _, ctx);
+        walk_export_specifier(traverser, item as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::ExportFromDeclarationSource);
+    walk_string_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_EXPORT_FROM_DECLARATION_SOURCE)
+            as *mut StringLiteral,
+        ctx,
+    );
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
+        .add(ancestor::OFFSET_EXPORT_FROM_DECLARATION_WITH_CLAUSE)
         as *mut Option<ArenaBox<WithClause>>)
     {
-        ctx.retag_stack(AncestorType::ExportNamedDeclarationWithClause);
+        ctx.retag_stack(AncestorType::ExportFromDeclarationWithClause);
         walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
-    traverser.exit_export_named_declaration(&mut *node, ctx);
+    traverser.exit_export_from_declaration(&mut *node, ctx);
 }
 
 unsafe fn walk_export_default_declaration<'a, Tr: Traverse<'a>>(
@@ -3127,7 +3243,6 @@ unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         | ExportDefaultDeclarationKind::StringLiteral(_)
         | ExportDefaultDeclarationKind::TemplateLiteral(_)
         | ExportDefaultDeclarationKind::Identifier(_)
-        | ExportDefaultDeclarationKind::MetaProperty(_)
         | ExportDefaultDeclarationKind::Super(_)
         | ExportDefaultDeclarationKind::ArrayExpression(_)
         | ExportDefaultDeclarationKind::ArrowFunctionExpression(_)
@@ -3151,6 +3266,8 @@ unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         | ExportDefaultDeclarationKind::UpdateExpression(_)
         | ExportDefaultDeclarationKind::YieldExpression(_)
         | ExportDefaultDeclarationKind::PrivateInExpression(_)
+        | ExportDefaultDeclarationKind::ImportMeta(_)
+        | ExportDefaultDeclarationKind::NewTarget(_)
         | ExportDefaultDeclarationKind::JSXElement(_)
         | ExportDefaultDeclarationKind::JSXFragment(_)
         | ExportDefaultDeclarationKind::TSAsExpression(_)
@@ -3529,7 +3646,6 @@ unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
         | JSXExpression::StringLiteral(_)
         | JSXExpression::TemplateLiteral(_)
         | JSXExpression::Identifier(_)
-        | JSXExpression::MetaProperty(_)
         | JSXExpression::Super(_)
         | JSXExpression::ArrayExpression(_)
         | JSXExpression::ArrowFunctionExpression(_)
@@ -3553,6 +3669,8 @@ unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
         | JSXExpression::UpdateExpression(_)
         | JSXExpression::YieldExpression(_)
         | JSXExpression::PrivateInExpression(_)
+        | JSXExpression::ImportMeta(_)
+        | JSXExpression::NewTarget(_)
         | JSXExpression::JSXElement(_)
         | JSXExpression::JSXFragment(_)
         | JSXExpression::TSAsExpression(_)
@@ -4758,14 +4876,15 @@ unsafe fn walk_ts_index_signature<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_index_signature(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameters(
-        ancestor::TSIndexSignatureWithoutParameters(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameter(
+        ancestor::TSIndexSignatureWithoutParameter(node, PhantomData),
     ));
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
-        as *mut ArenaVec<TSIndexSignatureName>)
-    {
-        walk_ts_index_signature_name(traverser, item as *mut _, ctx);
-    }
+    walk_ts_index_signature_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETER)
+            as *mut TSIndexSignatureName,
+        ctx,
+    );
     ctx.retag_stack(AncestorType::TSIndexSignatureTypeAnnotation);
     walk_ts_type_annotation(
         traverser,
@@ -4944,12 +5063,12 @@ unsafe fn walk_ts_interface_heritage<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_heritage(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageExpression(
-        ancestor::TSInterfaceHeritageWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageTypeName(
+        ancestor::TSInterfaceHeritageWithoutTypeName(node, PhantomData),
     ));
-    walk_expression(
+    walk_ts_type_name(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION) as *mut Expression,
+        (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_TYPE_NAME) as *mut TSTypeName,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
@@ -5006,77 +5125,101 @@ unsafe fn walk_ts_type_predicate_name<'a, Tr: Traverse<'a>>(
     traverser.exit_ts_type_predicate_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
+unsafe fn walk_ts_external_module_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
-    node: *mut TSModuleDeclaration<'a>,
+    node: *mut TSExternalModuleDeclaration<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
-    traverser.enter_ts_module_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSModuleDeclarationId(
-        ancestor::TSModuleDeclarationWithoutId(node, PhantomData),
+    traverser.enter_ts_external_module_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSExternalModuleDeclarationId(
+        ancestor::TSExternalModuleDeclarationWithoutId(node, PhantomData),
     ));
-    walk_ts_module_declaration_name(
+    walk_string_literal(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_ID)
-            as *mut TSModuleDeclarationName,
+        (node as *mut u8).add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_ID)
+            as *mut StringLiteral,
         ctx,
     );
     let previous_scope_id = ctx.current_scope_id();
-    let current_scope_id =
-        (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_SCOPE_ID)
-            as *mut Cell<Option<ScopeId>>))
-            .get()
-            .unwrap();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
     ctx.set_current_scope_id(current_scope_id);
     let previous_hoist_scope_id = ctx.current_hoist_scope_id();
     ctx.set_current_hoist_scope_id(current_scope_id);
     let previous_block_scope_id = ctx.current_block_scope_id();
     ctx.set_current_block_scope_id(current_scope_id);
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_BODY)
-        as *mut Option<TSModuleDeclarationBody>)
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_TS_EXTERNAL_MODULE_DECLARATION_BODY)
+        as *mut Option<ArenaBox<TSModuleBlock>>)
     {
-        ctx.retag_stack(AncestorType::TSModuleDeclarationBody);
-        walk_ts_module_declaration_body(traverser, field as *mut _, ctx);
+        ctx.retag_stack(AncestorType::TSExternalModuleDeclarationBody);
+        walk_ts_module_block(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     ctx.set_current_scope_id(previous_scope_id);
     ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
     ctx.set_current_block_scope_id(previous_block_scope_id);
-    traverser.exit_ts_module_declaration(&mut *node, ctx);
+    traverser.exit_ts_external_module_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration_name<'a, Tr: Traverse<'a>>(
+unsafe fn walk_ts_namespace_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
-    node: *mut TSModuleDeclarationName<'a>,
+    node: *mut TSNamespaceDeclaration<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
-    traverser.enter_ts_module_declaration_name(&mut *node, ctx);
-    match &mut *node {
-        TSModuleDeclarationName::Identifier(node) => {
-            walk_binding_identifier(traverser, node as *mut _, ctx)
-        }
-        TSModuleDeclarationName::StringLiteral(node) => {
-            walk_string_literal(traverser, node as *mut _, ctx)
-        }
-    }
-    traverser.exit_ts_module_declaration_name(&mut *node, ctx);
+    traverser.enter_ts_namespace_declaration(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSNamespaceDeclarationId(
+        ancestor::TSNamespaceDeclarationWithoutId(node, PhantomData),
+    ));
+    walk_binding_identifier(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMESPACE_DECLARATION_ID)
+            as *mut BindingIdentifier,
+        ctx,
+    );
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8)
+        .add(ancestor::OFFSET_TS_NAMESPACE_DECLARATION_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
+    let previous_hoist_scope_id = ctx.current_hoist_scope_id();
+    ctx.set_current_hoist_scope_id(current_scope_id);
+    let previous_block_scope_id = ctx.current_block_scope_id();
+    ctx.set_current_block_scope_id(current_scope_id);
+    ctx.retag_stack(AncestorType::TSNamespaceDeclarationBody);
+    walk_ts_namespace_declaration_body(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMESPACE_DECLARATION_BODY)
+            as *mut TSNamespaceDeclarationBody,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    ctx.set_current_hoist_scope_id(previous_hoist_scope_id);
+    ctx.set_current_block_scope_id(previous_block_scope_id);
+    traverser.exit_ts_namespace_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration_body<'a, Tr: Traverse<'a>>(
+unsafe fn walk_ts_namespace_declaration_body<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
-    node: *mut TSModuleDeclarationBody<'a>,
+    node: *mut TSNamespaceDeclarationBody<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
-    traverser.enter_ts_module_declaration_body(&mut *node, ctx);
+    traverser.enter_ts_namespace_declaration_body(&mut *node, ctx);
     match &mut *node {
-        TSModuleDeclarationBody::TSModuleDeclaration(node) => {
-            walk_ts_module_declaration(traverser, (&mut **node) as *mut _, ctx)
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(node) => {
+            walk_ts_namespace_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSModuleDeclarationBody::TSModuleBlock(node) => {
+        TSNamespaceDeclarationBody::TSModuleBlock(node) => {
             walk_ts_module_block(traverser, (&mut **node) as *mut _, ctx)
         }
     }
-    traverser.exit_ts_module_declaration_body(&mut *node, ctx);
+    traverser.exit_ts_namespace_declaration_body(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_global_declaration<'a, Tr: Traverse<'a>>(

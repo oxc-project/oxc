@@ -13,4 +13,6 @@ pub struct LintOptions {
     pub fix: FixKind,
     pub framework_hints: FrameworkFlags,
     pub report_unused_directive: Option<AllowWarnDeny>,
+    // If true, the linter will create "ignore this section / line" fixes for all diagnostics
+    pub with_ignore_fixes: bool,
 }

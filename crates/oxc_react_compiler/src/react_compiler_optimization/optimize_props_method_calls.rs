@@ -20,15 +20,15 @@ use crate::react_compiler_hir::{HirFunction, InstructionValue, is_props_type};
 
 pub fn optimize_props_method_calls(func: &mut HirFunction, env: &Environment) {
     for (_block_id, block) in &func.body.blocks {
-        let instruction_ids: Vec<_> = block.instructions.clone();
+        let instruction_ids: Vec<_> = block.instructions.iter().copied().collect();
         for instr_id in instruction_ids {
-            let instr = &mut func.instructions[instr_id.0 as usize];
+            let instr = &mut func.instructions[instr_id.index()];
             let should_replace = matches!(
                 &instr.value,
                 InstructionValue::MethodCall { receiver, .. }
                     if {
-                        let identifier = &env.identifiers[receiver.identifier.0 as usize];
-                        let ty = &env.types[identifier.type_.0 as usize];
+                        let identifier = &env.identifiers[receiver.identifier];
+                        let ty = &env.types[identifier.type_];
                         is_props_type(ty)
                     }
             );

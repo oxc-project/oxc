@@ -10,32 +10,42 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_graphql_parser::ast::{
-    Argument, Directive, InputValueDefinition, Name, NamedType, StringValue, Type, Value, Variable,
+    self, Directive, InputValueDefinition, Name, NamedType, StringValue, Type, Variable,
     VariableDefinition,
 };
 
 use crate::comments::{
-    flush_leading_comments, flush_trailing_inside_comments, write_dangling_comments,
+    flush_leading_comments, flush_trailing_comment_before, flush_trailing_comment_before_break,
+    flush_trailing_inside_comments, write_adjacent_trailing_comment, write_dangling_comments,
 };
 
 use super::{
-    GraphqlFormatter, SeparatorKind, format_with,
-    span::{Spanned, find_close_after, to_span},
+    GraphqlFormatter, SeparatorKind, flush_trailing_before_literal, format_with,
+    span::{Spanned, close_delim_start, next_token_start_after, to_span},
     string, value, write_sequence,
 };
 
 pub(super) fn write_name<'a>(name: &Name<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    flush_leading_comments(to_span(name.span).start, f);
     write!(f, text(name.value));
 }
 
 /// Description followed by a hard line break (the default placement).
+/// A comment on the description's own line stays there (`"desc" # c`),
+/// deferred past the break via `line_suffix`.
 pub(super) fn write_description<'a>(
     description: Option<&StringValue<'a>>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
     let Some(sv) = description else { return };
     string::write_string_value(sv, f);
+    write_adjacent_trailing_comment(to_span(sv.span).end, f);
     write!(f, hard_line_break());
+    // Own-line comments between the description and what follows stay in place, at line start.
+    // Without this, a following bare keyword (`type`, ...) offers no claim site
+    // and the comment would cross it forward to the name's flush.
+    let next_token_start = next_token_start_after(&f.context().source_text(), to_span(sv.span).end);
+    flush_leading_comments(next_token_start, f);
 }
 
 /// Mirrors Prettier's `printDescription`.
@@ -43,6 +53,8 @@ pub(super) fn write_description<'a>(
 /// non-block descriptions are followed by a soft line
 /// (they may stay inline in an argument list),
 /// block descriptions by a hard line break.
+/// No bounded flush after the break (unlike [`write_description`]):
+/// the next token is always the name, whose own leading flush claims at the same position.
 fn write_description_input_value<'a>(
     description: Option<&StringValue<'a>>,
     f: &mut GraphqlFormatter<'_, 'a>,
@@ -50,6 +62,7 @@ fn write_description_input_value<'a>(
     let Some(sv) = description else { return };
     let is_block = sv.block;
     string::write_string_value(sv, f);
+    write_adjacent_trailing_comment(to_span(sv.span).end, f);
     if is_block {
         write!(f, hard_line_break());
     } else {
@@ -103,9 +116,12 @@ pub(super) fn write_directives<'a>(
 }
 
 fn write_directive<'a>(directive: &'a Directive<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    // Claim at the construct's span start so a leading comment lands before the `@`,
+    // not between the sigil and the name.
+    flush_leading_comments(to_span(directive.span).start, f);
     write!(f, "@");
     write_name(&directive.name, f);
-    write_arguments(&directive.arguments, f);
+    write_arguments(directive.arguments.as_ref(), f);
 }
 
 /// Close an empty delimited container (`[]`, `{}`, `{ }` selection set): drains any comments
@@ -131,23 +147,28 @@ pub(super) fn write_empty_delimited<'a>(
 
 /// A parenthesized, comma-soft-separated list:
 /// `group(["(", indent([softline, join(...)]), softline, ")"])`.
-/// Emits nothing for an empty list.
-/// Comments pending before `)` are flushed inside the group body;
-/// the `)` position is derived by scanning past trivia
-/// from the last item's end (paren lists have no wrapper node carrying it).
+/// Emits nothing for an empty list (`f()` parses only on the error path).
+/// Comments pending before `)` are flushed inside the group body.
+/// `list_span` covers `(`..`)`.
 pub(super) fn write_paren_list<'a, T, F>(
     f: &mut GraphqlFormatter<'_, 'a>,
     items: &[T],
+    list_span: ast::Span,
     preserve_blank: bool,
     write_item: F,
 ) where
     T: Spanned,
     F: Fn(usize, &mut GraphqlFormatter<'_, 'a>),
 {
-    let Some(last) = items.last() else { return };
-    let r_paren_start = find_close_after(&f.context().source_text(), last.span().end, b')');
+    let Some(first) = items.first() else { return };
+    let first_start = first.span().start;
+    let r_paren_start = close_delim_start(list_span);
 
+    // `name # c (…)`: pin the comment to the name's line, in front of the `(`
+    flush_trailing_comment_before(to_span(list_span).start, f);
     write!(f, "(");
+    // `( # c`: keep the comment on the `(` line; the body's soft indent breaks after it
+    flush_trailing_comment_before_break(first_start, f);
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end =
             write_sequence(f, items, SeparatorKind::CommaSoftline, preserve_blank, &write_item);
@@ -160,10 +181,16 @@ pub(super) fn write_paren_list<'a, T, F>(
 
 /// `(arg: value, ...)` on fields, directives, and fragment spreads.
 /// Blank lines between arguments are preserved (Prettier routes these through `printSequence`).
-pub(super) fn write_arguments<'a>(arguments: &'a [Argument<'a>], f: &mut GraphqlFormatter<'_, 'a>) {
-    write_paren_list(f, arguments, true, |i, f| {
-        let argument = &arguments[i];
+pub(super) fn write_arguments<'a>(
+    arguments: Option<&'a ast::Arguments<'a>>,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    let Some(arguments) = arguments else { return };
+    let items = arguments.items.as_slice();
+    write_paren_list(f, items, arguments.span, true, |i, f| {
+        let argument = &items[i];
         write_name(&argument.name, f);
+        flush_trailing_before_literal(to_span(argument.name.span).end, f);
         write!(f, ": ");
         if let Some(v) = argument.value.as_ref() {
             value::write_value(v, f);
@@ -174,11 +201,13 @@ pub(super) fn write_arguments<'a>(arguments: &'a [Argument<'a>], f: &mut Graphql
 /// `($var: Type = default, ...)` on operations.
 /// No blank-line preservation (Prettier uses a plain `path.map` here).
 pub(super) fn write_variable_definitions<'a>(
-    variable_definitions: &'a [VariableDefinition<'a>],
+    variable_definitions: Option<&'a ast::VariableDefinitions<'a>>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    write_paren_list(f, variable_definitions, false, |i, f| {
-        write_variable_definition(&variable_definitions[i], f);
+    let Some(variable_definitions) = variable_definitions else { return };
+    let items = variable_definitions.items.as_slice();
+    write_paren_list(f, items, variable_definitions.span, false, |i, f| {
+        write_variable_definition(&items[i], f);
     });
 }
 
@@ -188,6 +217,7 @@ fn write_variable_definition<'a>(
 ) {
     write_description(variable_definition.description.as_deref(), f);
     write_variable(&variable_definition.variable, f);
+    flush_trailing_before_literal(to_span(variable_definition.variable.span).end, f);
     write!(f, ": ");
     if let Some(ty) = variable_definition.ty.as_ref() {
         write_type(ty, f);
@@ -197,14 +227,34 @@ fn write_variable_definition<'a>(
 }
 
 pub(super) fn write_variable<'a>(variable: &Variable<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    // Claim at the construct's span start so a leading comment lands before the `$`,
+    // not between the sigil and the name.
+    flush_leading_comments(to_span(variable.span).start, f);
     write!(f, "$");
     write_name(&variable.name, f);
 }
 
-fn write_default_value<'a>(default_value: Option<&'a Value<'a>>, f: &mut GraphqlFormatter<'_, 'a>) {
-    let Some(v) = default_value else { return };
-    write!(f, " = ");
-    value::write_value(v, f);
+fn write_default_value<'a>(
+    default_value: Option<&'a ast::DefaultValue<'a>>,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    let Some(default_value) = default_value else { return };
+    // The node's span starts at the `=`
+    write_spaced_keyword(to_span(default_value.span).start, "= ", f);
+    value::write_value(&default_value.value, f);
+}
+
+/// ` <keyword>` with a trailing-comment claim in front (`name # c` + break + `keyword`):
+/// the space is written first so a claimed comment's boundary break discards it as pending,
+/// then the claim bounded at `anchor` (the keyword's source position), then the keyword.
+pub(super) fn write_spaced_keyword(
+    anchor: u32,
+    keyword: &'static str,
+    f: &mut GraphqlFormatter<'_, '_>,
+) {
+    write!(f, space());
+    flush_trailing_comment_before(anchor, f);
+    write!(f, text(keyword));
 }
 
 pub(super) fn write_type<'a>(ty: &Type<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
@@ -235,6 +285,7 @@ pub(super) fn write_input_value_definition<'a>(
 ) {
     write_description_input_value(input_value.description.as_deref(), f);
     write_name(&input_value.name, f);
+    flush_trailing_before_literal(to_span(input_value.name.span).end, f);
     write!(f, ": ");
     if let Some(ty) = input_value.ty.as_ref() {
         write_type(ty, f);
@@ -249,20 +300,17 @@ pub(super) fn write_input_value_definition<'a>(
 /// The whole list is one group so it breaks together on width overflow.
 /// A leading comment between two names emits a `hard_line_break` which forces the group to expand.
 pub(super) fn write_implements_interfaces<'a>(
-    interfaces: &'a [NamedType<'a>],
+    implements: Option<&'a ast::ImplementsInterfaces<'a>>,
     f: &mut GraphqlFormatter<'_, 'a>,
 ) {
-    if interfaces.is_empty() {
-        return;
-    }
-    write!(f, " implements ");
+    let Some(implements) = implements else { return };
+    let interfaces = implements.interfaces.as_slice();
+    write_spaced_keyword(to_span(implements.span).start, "implements ", f);
     let joined = format_with(move |f: &mut GraphqlFormatter<'_, 'a>| {
         for (i, named) in interfaces.iter().enumerate() {
-            let start = to_span(named.name.span).start;
             if i > 0 {
                 write!(f, [" &", soft_line_break_or_space()]);
             }
-            flush_leading_comments(start, f);
             write_named_type(named, f);
         }
     });

@@ -8,106 +8,106 @@
     clippy::collapsible_match
 )]
 
-use crate::token::token_kind;
+use crate::token::TokenKind;
 
 pub const KW_COUNT_JS: usize = 46;
 pub const KW_COUNT_TS: usize = 81;
-pub const KW_KIND_BASE: u8 = token_kind::KW_BASE;
+pub const KW_KIND_BASE: u8 = crate::token::KW_BASE;
 
 /// Keyword spellings and the token kind each rewrites to (the JS set).
 /// `get`/`set` map to IDENT (contextual, never keywords at lex time) but
 /// stay in the table so the perfect hash keeps its shape.
-pub const KEYWORDS: [(&str, u8); KW_COUNT_JS] = [
-    ("await", token_kind::KW_AWAIT),
-    ("break", token_kind::KW_BREAK),
-    ("case", token_kind::KW_CASE),
-    ("catch", token_kind::KW_CATCH),
-    ("class", token_kind::KW_CLASS),
-    ("const", token_kind::KW_CONST),
-    ("continue", token_kind::KW_CONTINUE),
-    ("debugger", token_kind::KW_DEBUGGER),
-    ("default", token_kind::KW_DEFAULT),
-    ("delete", token_kind::KW_DELETE),
-    ("do", token_kind::KW_DO),
-    ("else", token_kind::KW_ELSE),
-    ("enum", token_kind::KW_ENUM),
-    ("export", token_kind::KW_EXPORT),
-    ("extends", token_kind::KW_EXTENDS),
-    ("finally", token_kind::KW_FINALLY),
-    ("for", token_kind::KW_FOR),
-    ("function", token_kind::KW_FUNCTION),
-    ("if", token_kind::KW_IF),
-    ("import", token_kind::KW_IMPORT),
-    ("in", token_kind::KW_IN),
-    ("instanceof", token_kind::KW_INSTANCEOF),
-    ("new", token_kind::KW_NEW),
-    ("of", token_kind::KW_OF),
-    ("return", token_kind::KW_RETURN),
-    ("super", token_kind::KW_SUPER),
-    ("switch", token_kind::KW_SWITCH),
-    ("this", token_kind::KW_THIS),
-    ("throw", token_kind::KW_THROW),
-    ("try", token_kind::KW_TRY),
-    ("typeof", token_kind::KW_TYPEOF),
-    ("var", token_kind::KW_VAR),
-    ("void", token_kind::KW_VOID),
-    ("while", token_kind::KW_WHILE),
-    ("with", token_kind::KW_WITH),
-    ("yield", token_kind::KW_YIELD),
-    ("let", token_kind::KW_LET),
-    ("static", token_kind::KW_STATIC),
-    ("async", token_kind::KW_ASYNC),
-    ("get", token_kind::IDENT),
-    ("set", token_kind::IDENT),
-    ("as", token_kind::KW_AS),
-    ("from", token_kind::KW_FROM),
-    ("true", token_kind::KW_TRUE),
-    ("false", token_kind::KW_FALSE),
-    ("null", token_kind::KW_NULL),
+pub const KEYWORDS: [(&str, TokenKind); KW_COUNT_JS] = [
+    ("await", TokenKind::KwAwait),
+    ("break", TokenKind::KwBreak),
+    ("case", TokenKind::KwCase),
+    ("catch", TokenKind::KwCatch),
+    ("class", TokenKind::KwClass),
+    ("const", TokenKind::KwConst),
+    ("continue", TokenKind::KwContinue),
+    ("debugger", TokenKind::KwDebugger),
+    ("default", TokenKind::KwDefault),
+    ("delete", TokenKind::KwDelete),
+    ("do", TokenKind::KwDo),
+    ("else", TokenKind::KwElse),
+    ("enum", TokenKind::KwEnum),
+    ("export", TokenKind::KwExport),
+    ("extends", TokenKind::KwExtends),
+    ("finally", TokenKind::KwFinally),
+    ("for", TokenKind::KwFor),
+    ("function", TokenKind::KwFunction),
+    ("if", TokenKind::KwIf),
+    ("import", TokenKind::KwImport),
+    ("in", TokenKind::KwIn),
+    ("instanceof", TokenKind::KwInstanceof),
+    ("new", TokenKind::KwNew),
+    ("of", TokenKind::KwOf),
+    ("return", TokenKind::KwReturn),
+    ("super", TokenKind::KwSuper),
+    ("switch", TokenKind::KwSwitch),
+    ("this", TokenKind::KwThis),
+    ("throw", TokenKind::KwThrow),
+    ("try", TokenKind::KwTry),
+    ("typeof", TokenKind::KwTypeof),
+    ("var", TokenKind::KwVar),
+    ("void", TokenKind::KwVoid),
+    ("while", TokenKind::KwWhile),
+    ("with", TokenKind::KwWith),
+    ("yield", TokenKind::KwYield),
+    ("let", TokenKind::KwLet),
+    ("static", TokenKind::KwStatic),
+    ("async", TokenKind::KwAsync),
+    ("get", TokenKind::Ident),
+    ("set", TokenKind::Ident),
+    ("as", TokenKind::KwAs),
+    ("from", TokenKind::KwFrom),
+    ("true", TokenKind::KwTrue),
+    ("false", TokenKind::KwFalse),
+    ("null", TokenKind::KwNull),
 ];
 
 /// TS-mode additions: TypeScript's contextual keywords plus the strict-mode
 /// reserved words. JS mode lexes every one of these spellings as IDENT.
-pub const KEYWORDS_TS_EXTRA: [(&str, u8); KW_COUNT_TS - KW_COUNT_JS] = [
-    ("abstract", token_kind::KW_ABSTRACT),
-    ("accessor", token_kind::KW_ACCESSOR),
-    ("any", token_kind::KW_ANY),
-    ("asserts", token_kind::KW_ASSERTS),
-    ("bigint", token_kind::KW_BIGINT),
-    ("boolean", token_kind::KW_BOOLEAN),
-    ("declare", token_kind::KW_DECLARE),
-    ("global", token_kind::KW_GLOBAL),
-    ("implements", token_kind::KW_IMPLEMENTS),
-    ("infer", token_kind::KW_INFER),
-    ("interface", token_kind::KW_INTERFACE),
-    ("intrinsic", token_kind::KW_INTRINSIC),
-    ("is", token_kind::KW_IS),
-    ("keyof", token_kind::KW_KEYOF),
-    ("module", token_kind::KW_MODULE),
-    ("namespace", token_kind::KW_NAMESPACE),
-    ("never", token_kind::KW_NEVER),
-    ("number", token_kind::KW_NUMBER),
-    ("object", token_kind::KW_OBJECT),
-    ("out", token_kind::KW_OUT),
-    ("override", token_kind::KW_OVERRIDE),
-    ("package", token_kind::KW_PACKAGE),
-    ("private", token_kind::KW_PRIVATE),
-    ("protected", token_kind::KW_PROTECTED),
-    ("public", token_kind::KW_PUBLIC),
-    ("readonly", token_kind::KW_READONLY),
-    ("require", token_kind::KW_REQUIRE),
-    ("satisfies", token_kind::KW_SATISFIES),
-    ("string", token_kind::KW_STRING),
-    ("symbol", token_kind::KW_SYMBOL),
-    ("type", token_kind::KW_TYPE),
-    ("undefined", token_kind::KW_UNDEFINED),
-    ("unique", token_kind::KW_UNIQUE),
-    ("unknown", token_kind::KW_UNKNOWN),
-    ("using", token_kind::KW_USING),
+pub const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
+    ("abstract", TokenKind::KwAbstract),
+    ("accessor", TokenKind::KwAccessor),
+    ("any", TokenKind::KwAny),
+    ("asserts", TokenKind::KwAsserts),
+    ("bigint", TokenKind::KwBigInt),
+    ("boolean", TokenKind::KwBoolean),
+    ("declare", TokenKind::KwDeclare),
+    ("global", TokenKind::KwGlobal),
+    ("implements", TokenKind::KwImplements),
+    ("infer", TokenKind::KwInfer),
+    ("interface", TokenKind::KwInterface),
+    ("intrinsic", TokenKind::KwIntrinsic),
+    ("is", TokenKind::KwIs),
+    ("keyof", TokenKind::KwKeyof),
+    ("module", TokenKind::KwModule),
+    ("namespace", TokenKind::KwNamespace),
+    ("never", TokenKind::KwNever),
+    ("number", TokenKind::KwNumber),
+    ("object", TokenKind::KwObject),
+    ("out", TokenKind::KwOut),
+    ("override", TokenKind::KwOverride),
+    ("package", TokenKind::KwPackage),
+    ("private", TokenKind::KwPrivate),
+    ("protected", TokenKind::KwProtected),
+    ("public", TokenKind::KwPublic),
+    ("readonly", TokenKind::KwReadonly),
+    ("require", TokenKind::KwRequire),
+    ("satisfies", TokenKind::KwSatisfies),
+    ("string", TokenKind::KwString),
+    ("symbol", TokenKind::KwSymbol),
+    ("type", TokenKind::KwType),
+    ("undefined", TokenKind::KwUndefined),
+    ("unique", TokenKind::KwUnique),
+    ("unknown", TokenKind::KwUnknown),
+    ("using", TokenKind::KwUsing),
 ];
 
-const fn keywords_ts() -> [(&'static str, u8); KW_COUNT_TS] {
-    let mut out = [("", 0u8); KW_COUNT_TS];
+const fn keywords_ts() -> [(&'static str, TokenKind); KW_COUNT_TS] {
+    let mut out = [("", TokenKind::Eof); KW_COUNT_TS];
     let mut i = 0;
     while i < KW_COUNT_JS {
         out[i] = KEYWORDS[i];
@@ -121,16 +121,16 @@ const fn keywords_ts() -> [(&'static str, u8); KW_COUNT_TS] {
 }
 
 /// The TS-mode keyword set: [`KEYWORDS`] followed by [`KEYWORDS_TS_EXTRA`].
-pub static KEYWORDS_TS: [(&str, u8); KW_COUNT_TS] = keywords_ts();
+pub static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] = keywords_ts();
 
 /// First punctuator kind — the token-kind space reserves [32, 128) for them.
-pub const OP_KIND_BASE: u8 = token_kind::LBRACE;
+pub const OP_KIND_BASE: u8 = TokenKind::LBrace as u8;
 pub const OPMAP_NOPS: usize = 33;
 
 pub struct OpDef {
     pub txt: &'static [u8],
     pub len: u8,
-    pub kind: u8,
+    pub kind: TokenKind,
 }
 
 macro_rules! op {
@@ -140,76 +140,76 @@ macro_rules! op {
 }
 
 pub static OPMAP_OPS: [OpDef; OPMAP_NOPS] = [
-    op!(b"<=", token_kind::LE),
-    op!(b">=", token_kind::GE),
-    op!(b"==", token_kind::EQ_EQ),
-    op!(b"!=", token_kind::BANG_EQ),
-    op!(b"===", token_kind::EQ_EQ_EQ),
-    op!(b"!==", token_kind::BANG_EQ_EQ),
-    op!(b"**", token_kind::STAR_STAR),
-    op!(b"++", token_kind::PLUS_PLUS),
-    op!(b"--", token_kind::MINUS_MINUS),
-    op!(b"<<", token_kind::LSHIFT),
-    op!(b">>", token_kind::RSHIFT),
-    op!(b">>>", token_kind::URSHIFT),
-    op!(b"&&", token_kind::AMP_AMP),
-    op!(b"||", token_kind::PIPE_PIPE),
-    op!(b"??", token_kind::NULLISH),
-    op!(b"?.", token_kind::OPTIONAL_CHAIN),
-    op!(b"=>", token_kind::ARROW),
-    op!(b"+=", token_kind::PLUS_EQ),
-    op!(b"-=", token_kind::MINUS_EQ),
-    op!(b"*=", token_kind::STAR_EQ),
-    op!(b"%=", token_kind::PERCENT_EQ),
-    op!(b"<<=", token_kind::LSHIFT_EQ),
-    op!(b">>=", token_kind::RSHIFT_EQ),
-    op!(b">>>=", token_kind::URSHIFT_EQ),
-    op!(b"&=", token_kind::AMP_EQ),
-    op!(b"|=", token_kind::PIPE_EQ),
-    op!(b"^=", token_kind::CARET_EQ),
-    op!(b"&&=", token_kind::AMP_AMP_EQ),
-    op!(b"||=", token_kind::PIPE_PIPE_EQ),
-    op!(b"??=", token_kind::NULLISH_EQ),
-    op!(b"**=", token_kind::STAR_STAR_EQ),
-    op!(b"...", token_kind::ELLIPSIS),
-    op!(b"/=", token_kind::SLASH_EQ),
+    op!(b"<=", TokenKind::Le),
+    op!(b">=", TokenKind::Ge),
+    op!(b"==", TokenKind::EqEq),
+    op!(b"!=", TokenKind::BangEq),
+    op!(b"===", TokenKind::EqEqEq),
+    op!(b"!==", TokenKind::BangEqEq),
+    op!(b"**", TokenKind::StarStar),
+    op!(b"++", TokenKind::PlusPlus),
+    op!(b"--", TokenKind::MinusMinus),
+    op!(b"<<", TokenKind::LShift),
+    op!(b">>", TokenKind::RShift),
+    op!(b">>>", TokenKind::URShift),
+    op!(b"&&", TokenKind::AmpAmp),
+    op!(b"||", TokenKind::PipePipe),
+    op!(b"??", TokenKind::Nullish),
+    op!(b"?.", TokenKind::OptionalChain),
+    op!(b"=>", TokenKind::Arrow),
+    op!(b"+=", TokenKind::PlusEq),
+    op!(b"-=", TokenKind::MinusEq),
+    op!(b"*=", TokenKind::StarEq),
+    op!(b"%=", TokenKind::PercentEq),
+    op!(b"<<=", TokenKind::LShiftEq),
+    op!(b">>=", TokenKind::RShiftEq),
+    op!(b">>>=", TokenKind::URShiftEq),
+    op!(b"&=", TokenKind::AmpEq),
+    op!(b"|=", TokenKind::PipeEq),
+    op!(b"^=", TokenKind::CaretEq),
+    op!(b"&&=", TokenKind::AmpAmpEq),
+    op!(b"||=", TokenKind::PipePipeEq),
+    op!(b"??=", TokenKind::NullishEq),
+    op!(b"**=", TokenKind::StarStarEq),
+    op!(b"...", TokenKind::Ellipsis),
+    op!(b"/=", TokenKind::SlashEq),
 ];
 
-pub const OP_QDOT: u8 = token_kind::OPTIONAL_CHAIN;
-pub const OP_SLASH_EQ: u8 = token_kind::SLASH_EQ;
+pub const OP_QDOT: u8 = TokenKind::OptionalChain as u8;
+pub const OP_SLASH_EQ: u8 = TokenKind::SlashEq as u8;
 
-pub const PUNCT1_KIND_UNKNOWN: u8 = 255;
+pub const PUNCT1_KIND_UNKNOWN: u8 = TokenKind::Invalid as u8;
 pub const PUNCT1_NKNOWN: usize = 26;
 
 /// Single-char punctuators and their kinds. `#` maps to UNKNOWN: a bare `#`
 /// is invalid on its own (private names and hashbangs are resolved earlier).
-pub const PUNCT1: [(u8, u8); PUNCT1_NKNOWN] = [
-    (b'(', token_kind::LPAREN),
-    (b')', token_kind::RPAREN),
-    (b'[', token_kind::LBRACKET),
-    (b']', token_kind::RBRACKET),
-    (b'{', token_kind::LBRACE),
-    (b'}', token_kind::RBRACE),
-    (b';', token_kind::SEMI),
-    (b',', token_kind::COMMA),
-    (b'.', token_kind::DOT),
-    (b'<', token_kind::LT),
-    (b'>', token_kind::GT),
-    (b'+', token_kind::PLUS),
-    (b'-', token_kind::MINUS),
-    (b'*', token_kind::STAR),
-    (b'/', token_kind::SLASH),
-    (b'%', token_kind::PERCENT),
-    (b'&', token_kind::AMP),
-    (b'|', token_kind::PIPE),
-    (b'^', token_kind::CARET),
-    (b'!', token_kind::BANG),
-    (b'~', token_kind::TILDE),
-    (b'?', token_kind::QUESTION),
-    (b':', token_kind::COLON),
-    (b'=', token_kind::EQ),
-    (b'@', token_kind::AT),
-    (b'#', PUNCT1_KIND_UNKNOWN),
+pub const PUNCT1: [(u8, TokenKind); PUNCT1_NKNOWN] = [
+    (b'(', TokenKind::LParen),
+    (b')', TokenKind::RParen),
+    (b'[', TokenKind::LBracket),
+    (b']', TokenKind::RBracket),
+    (b'{', TokenKind::LBrace),
+    (b'}', TokenKind::RBrace),
+    (b';', TokenKind::Semi),
+    (b',', TokenKind::Comma),
+    (b'.', TokenKind::Dot),
+    (b'<', TokenKind::Lt),
+    (b'>', TokenKind::Gt),
+    (b'+', TokenKind::Plus),
+    (b'-', TokenKind::Minus),
+    (b'*', TokenKind::Star),
+    (b'/', TokenKind::Slash),
+    (b'%', TokenKind::Percent),
+    (b'&', TokenKind::Amp),
+    (b'|', TokenKind::Pipe),
+    (b'^', TokenKind::Caret),
+    (b'!', TokenKind::Bang),
+    (b'~', TokenKind::Tilde),
+    (b'?', TokenKind::Question),
+    (b':', TokenKind::Colon),
+    (b'=', TokenKind::Eq),
+    (b'@', TokenKind::At),
+    (b'#', TokenKind::Invalid),
 ];
 
 const fn punct1_list() -> [u8; PUNCT1_NKNOWN] {
@@ -226,7 +226,7 @@ const fn punct1_tok() -> [u8; PUNCT1_NKNOWN] {
     let mut out = [0u8; PUNCT1_NKNOWN];
     let mut i = 0;
     while i < PUNCT1_NKNOWN {
-        out[i] = PUNCT1[i].1;
+        out[i] = PUNCT1[i].1 as u8;
         i += 1;
     }
     out
@@ -293,7 +293,7 @@ pub fn op_key(c0: u8, c1: u8, c2: u8, len: u32) -> u32 {
 
 impl KwSet {
     pub fn build(
-        list: &[(&'static str, u8)],
+        list: &[(&'static str, TokenKind)],
         ts_key: bool,
         shifts: &[u32],
         hint: (u32, u32),
@@ -318,7 +318,7 @@ impl KwSet {
             let len = bytes.len();
             assert!(len >= 2 && len <= 10, "opmap.rs: keyword length out of range");
             s.kw_len[i] = len as u8;
-            s.kw_tok[i] = list[i].1;
+            s.kw_tok[i] = list[i].1 as u8;
             let mut w: u64 = 0;
             let m = if len < 8 { len } else { 8 };
             for k in 0..m {
@@ -422,7 +422,7 @@ impl KwSet {
         self.kw_tok[idx] as u32
     }
 
-    pub fn self_check(&self, list: &[(&'static str, u8)]) {
+    pub fn self_check(&self, list: &[(&'static str, TokenKind)]) {
         for i in 0..list.len() {
             let mut buf = [0u8; 16];
             let bytes = list[i].0.as_bytes();
@@ -485,7 +485,7 @@ impl OpMap {
         for i in 0..OPMAP_NOPS {
             let a = &OPMAP_OPS[i];
             assert!(
-                a.len as usize == a.txt.len() && a.kind >= OP_KIND_BASE && a.kind <= 89,
+                a.len as usize == a.txt.len() && a.kind as u8 >= OP_KIND_BASE && a.kind as u8 <= 89,
                 "opmap.rs: bad OpDef {i}"
             );
             for j in (i + 1)..OPMAP_NOPS {

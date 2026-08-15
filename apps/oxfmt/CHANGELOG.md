@@ -4,6 +4,82 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+- ab12665 formatter_core: Add `hardlineWithoutBreakParent` equivalent IR (#25273) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 95dc917 oxfmt: Drop IR Space at line start for js-in-xxx (#25460) (leaysgur)
+- ab52a59 formatter: Format xxx-in-js inside JSDoc js fence (#25414) (leaysgur)
+- 1a2c64a formatter,oxfmt: Apply effective print width for JSDoc fence (#25413) (leaysgur)
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+
+### ⚡ Performance
+
+- c9d1a5b oxfmt: Spawn tinypool lazily (#25298) (leaysgur)
+
+### 📚 Documentation
+
+- 6eae5c9 formatter,oxfmt: Record embed-layer decisions in place (#25422) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 0c16cb5 oxfmt: [**BREAKING**] Format parser:yaml files by oxc_formatter_yaml (#24890) (leaysgur)
+
+### 🚀 Features
+
+- 1b57f78 oxfmt: Support tsx-in-vue (#25063) (leaysgur)
+- be7f6da oxfmt: Colorize diff file list in check mode (#25061) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 20f68e7 oxlint,oxfmt: Respect `.gitignore` for walk targets and explicit paths (#25133) (leaysgur)
+- a9e76e9 oxfmt: Rework tsx-in-vue support (#25106) (leaysgur)
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+- 22fdda4 oxfmt/conformance: Fix typo (#25053) (leaysgur)
+- e6e584b oxfmt: Type jsdoc. enum options (#25008) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+
+## [0.61.0] - 2026-07-27
+
+### 🚀 Features
+
+- eabfe01 oxfmt/lsp: Support `oxc.fmt.disableNestedConfig` (#24965) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e037709 formatter: Stop preserving indent for embedded template exprs (#24972) (leaysgur)
+- ae1a39b formatter_css: Align wrapped selector-arg indent (#24971) (leaysgur)
+- 9213560 config: Preserve defineConfig field JSDoc (#24326) (周星星同学)
+
+## [0.60.0] - 2026-07-20
+
+### 🐛 Bug Fixes
+
+- 6fe866a oxfmt: Keep tailwind classes glued to template expr with `preserveWhitespace` (#24609) (leaysgur)
+- 33e32d8 formatter_css: Use `line_suffix` for EOL line comment (#24580) (leaysgur)
+
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- 92f154a oxlint,oxfmt: Auto-discover `.mts` config files (#24357) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8337835 linter: Error on `ignorePatterns` that cannot match files aoutside the config directory (#24341) (leaysgur)
+- 415fe1e oxfmt: Error on ignorePatterns that cannot match files outside the config directory (#24286) (leaysgur)
+- eeabc4a formatter_css: Bail on EOF-recovered parse errors (#24282) (leaysgur)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🚀 Features

@@ -1,0 +1,8 @@
+# DIVERGENCE (prettier#19524): props keep their source order, never reordered.
+- !!str &a1 one
+- &a2 !!str two
+- !!int 3
+- &a4 four
+---
+key: !!map &m
+  a: b

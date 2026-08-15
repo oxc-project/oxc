@@ -1,30 +1,16 @@
 //! AST builder.
 //!
-//! This is undergoing change at present.
-//!
-//! Explanation of the motivation for this change here: <https://github.com/oxc-project/oxc/issues/23043>.
-//!
-//! ## Old builder
-//!
-//! [`AstBuilder`] used to be a [`Copy`] type, which had own methods for:
-//!
-//! * Creating AST nodes e.g. `builder.statement_expression(span, expr)`
-//! * Creating primitives e.g. `builder.vec()`, `builder.ident(str)`
-//!
-//! These methods are defined in `../generated/ast_builder.rs` and `methods.rs`.
-//!
-//! ## New builder
-//!
-//! We have now added methods to AST types themselves which perform the same role,
-//! and are passed an `&B where B: GetAstBuilder` or `&A where A: GetAllocator`:
+//! AST nodes are created by builder methods defined on the AST types themselves,
+//! which are passed an `&impl GetAstBuilder` or an `&impl GetAllocator`:
 //!
 //! * `Statement::new_expression_statement(span, expr, &builder)`
 //! * `Vec::new_in(&builder)`, `Ident::from_str_in(str, &builder)`
 //!
-//! `AstBuilder` is no longer `Copy` or `Clone`, and is passed by reference.
-//! Its `allocator` field is no longer public. Use `allocator` method provided by `GetAllocator` trait.
+//! [`AstBuilder`] provides the memory arena and [`NodeId`]s that these methods use.
+//! It is not [`Copy`] or [`Clone`], and is passed by reference.
+//! Its `allocator` field is private - use the `allocator` method provided by the [`GetAllocator`] trait.
 //!
-//! Implementing `GetAstBuilder` on types which hold an `AstBuilder` allows for a shorter syntax:
+//! Implementing [`GetAstBuilder`] on types which hold an [`AstBuilder`] allows for a shorter syntax:
 //!
 //! * Long: `Vec::new_in(&self.ast)`
 //! * Short: `Vec::new_in(self)`
@@ -78,30 +64,21 @@
 //!
 //! These AST type builder methods are defined in `../generated/builder_methods.rs` and `custom.rs`.
 //!
-//! ## Migration
+//! ## Migration from the old builder
 //!
-//! To minimize immediate breaking changes for downstream consumers, and allow them to migrate incrementally,
-//! at present `AstBuilder` still has its own methods, but can also be passed to the AST type builder methods.
+//! [`AstBuilder`] used to be a [`Copy`] type with its own methods for creating AST nodes
+//! (e.g. `builder.statement_expression(span, expr)`) and primitives (e.g. `builder.vec()`,`builder.ident(str)`).
+//! Those methods have now been removed. Use the AST type builder methods described above instead.
 //!
-//! Once a project has migrated, they should enable the `disable_old_builder` Cargo feature,
-//! which will remove the old-style own methods on `AstBuilder`.
+//! [`AstBuilder`] is no longer re-exported from the crate root either -
+//! import it from this module instead.
 //!
-//! After a few weeks, we will remove `AstBuilder`'s own methods entirely.
-//!
-//! ## Oxc
-//!
-//! All Oxc crates have been migrated to the new usage.
-//!
-//! `disable_old_builder` Cargo feature is enabled in all Oxc crates which utilize `AstBuilder`.
-//! Where those crates expose the `AstBuilder` they use to user code, the feature is only enabled in tests.
+//! Explanation of the motivation for this change here: <https://github.com/oxc-project/oxc/issues/23043>.
 
-use oxc_allocator::{Allocator, ArenaBox, FromIn, GetAllocator};
+use oxc_allocator::{Allocator, GetAllocator};
 use oxc_syntax::node::NodeId;
 
 mod custom;
-
-#[cfg(not(feature = "disable_old_builder"))]
-mod methods;
 
 /// Trait for types which can create AST nodes.
 ///
@@ -116,7 +93,16 @@ mod methods;
 ///
 /// * Version for parser which counts AST nodes (to accurately pre-allocate `Vec`s in `SemanticBuilder`).
 /// * Version for transformer/minifier which assigns unique [`NodeId`]s to all AST nodes.
-pub trait AstBuild<'a>: GetAllocator<'a> {
+///
+/// [`AstBuild`] types must also implement:
+///
+/// * [`GetAstBuilder`] - referring to itself
+/// * [`GetAllocator`]
+///
+/// These bounds mean that any type returned by [`GetAstBuilder::builder`] can be passed to
+/// any other method which accepts any `&impl GetAstBuilder<'a>` or `&impl GetAllocator<'a>`
+/// (i.e. other AST builder methods).
+pub trait AstBuild<'a>: GetAstBuilder<'a, Builder = Self> + GetAllocator<'a> {
     /// Get [`NodeId`] to assign to an AST node.
     fn node_id(&self) -> NodeId;
 }
@@ -124,7 +110,7 @@ pub trait AstBuild<'a>: GetAllocator<'a> {
 /// Trait for types which provide access to an [`AstBuild`]er.
 ///
 /// Implemented by the [`AstBuild`]ers themselves (returning `self`), and by types which hold one
-/// (e.g. parser or traverse context). AST node builder methods are generic over `A: GetAstBuilder<'a>`,
+/// (e.g. parser or traverse context). AST node builder methods take any `&impl GetAstBuilder<'a>`,
 /// so they can be called with a builder directly, or with a type which holds one.
 pub trait GetAstBuilder<'a> {
     /// The [`AstBuild`]er type that this provides access to.
@@ -138,15 +124,9 @@ pub trait GetAstBuilder<'a> {
 ///
 /// For use where no `NodeId`s are required on AST nodes as they are built
 /// e.g. parser, because `NodeId`s are assigned later when building `Semantic`.
-#[cfg_attr(not(feature = "disable_old_builder"), derive(Clone, Copy))]
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
-    #[cfg(feature = "disable_old_builder")]
     allocator: &'a Allocator,
-
-    /// The memory allocator used to allocate AST nodes in the arena.
-    #[cfg(not(feature = "disable_old_builder"))]
-    pub allocator: &'a Allocator,
 }
 
 impl<'a> AstBuilder<'a> {
@@ -154,14 +134,6 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn new(allocator: &'a Allocator) -> Self {
         Self { allocator }
-    }
-}
-
-impl<'a> GetAllocator<'a> for AstBuilder<'a> {
-    /// Get the memory [`Allocator`] to allocate AST types in.
-    #[inline]
-    fn allocator(&self) -> &'a Allocator {
-        self.allocator
     }
 }
 
@@ -175,7 +147,6 @@ impl<'a> AstBuild<'a> for AstBuilder<'a> {
     }
 }
 
-/// [`AstBuilder`] implements [`GetAstBuilder`] so it can be passed directly to AST build methods.
 impl<'a> GetAstBuilder<'a> for AstBuilder<'a> {
     type Builder = Self;
 
@@ -185,13 +156,10 @@ impl<'a> GetAstBuilder<'a> for AstBuilder<'a> {
     }
 }
 
-/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Option<Anything<'a>>>`.
-/// Pass `NONE` instead of `None::<Anything<'a>>`.
-#[expect(clippy::upper_case_acronyms)]
-pub struct NONE;
-
-impl<'a, T> FromIn<'a, NONE> for Option<ArenaBox<'a, T>> {
-    fn from_in(_: NONE, _: &'a Allocator) -> Self {
-        None
+impl<'a> GetAllocator<'a> for AstBuilder<'a> {
+    /// Get the memory [`Allocator`] to allocate AST types in.
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.allocator
     }
 }

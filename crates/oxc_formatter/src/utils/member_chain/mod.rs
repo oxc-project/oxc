@@ -8,7 +8,7 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Comments, Format, JsFormatter, prelude::*},
+    formatter::{Comments, JsFormatter, prelude::*},
     parentheses::NeedsParentheses,
     utils::{
         is_long_curried_call,
@@ -21,9 +21,10 @@ use crate::{
     write,
 };
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
-use super::typecast::is_type_cast_node;
+use super::typecast::classify_type_cast;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -93,7 +94,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                     has_computed_property ||
                     is_factory(&identifier.name) ||
                     // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
-                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
+                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(_))
                         && has_short_name(&identifier.name, f.options().indent_width.value()))
                 }
                 Expression::ThisExpression(_) => true,
@@ -435,7 +436,7 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if is_type_cast_node(expression, f).is_some() {
+        if classify_type_cast(expression.span(), f).is_target() {
             return ChainMember::Node(expression).into();
         }
 

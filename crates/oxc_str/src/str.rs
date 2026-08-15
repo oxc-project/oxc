@@ -4,7 +4,9 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, ArenaStringBuilder, CloneIn, Dummy, FromIn, GetAllocator};
+use oxc_allocator::{
+    Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
+};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -38,7 +40,7 @@ impl Str<'static> {
 impl<'a> Str<'a> {
     /// Allocate provided `&str` into arena, and return a [`Str<'a>`].
     #[inline]
-    pub fn from_str_in<A: GetAllocator<'a>>(s: &str, allocator: &A) -> Self {
+    pub fn from_str_in(s: &str, allocator: &impl GetAllocator<'a>) -> Self {
         Self(allocator.allocator().alloc_str(s))
     }
 
@@ -91,9 +93,9 @@ impl<'a> Str<'a> {
     // are statically known. See `Allocator::alloc_concat_strs_array`.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub fn from_strs_array_in<const N: usize, A: GetAllocator<'a>>(
+    pub fn from_strs_array_in<const N: usize>(
         strings: [&str; N],
-        allocator: &A,
+        allocator: &impl GetAllocator<'a>,
     ) -> Str<'a> {
         Self::from(allocator.allocator().alloc_concat_strs_array(strings))
     }
@@ -105,7 +107,7 @@ impl<'a> Str<'a> {
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Str`.
     #[inline]
-    pub fn from_cow_in<A: GetAllocator<'a>>(value: &Cow<'a, str>, allocator: &A) -> Str<'a> {
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &impl GetAllocator<'a>) -> Str<'a> {
         match value {
             Cow::Borrowed(s) => Str::from(*s),
             Cow::Owned(s) => Str::from_str_in(s, allocator),
@@ -117,7 +119,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Str<'_> {
     type Cloned = Str<'new_alloc>;
 
     #[inline]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
         Str::from_in(self.as_str(), allocator)
     }
 }
@@ -300,6 +306,45 @@ impl ESTree for Str<'_> {
     }
 }
 
+/// Create a [`Str<'static>`] for a string literal, evaluated at compile time.
+///
+/// Why this macro? [`Str`] in time will likely evolve to have more features and constraints
+/// than it currently does. e.g. constrain max length to `u32::MAX`, add a flag for "is all ASCII".
+/// [`Str::from`] will likely gain runtime checks, whereas this macro will perform any checks
+/// or calculations at compile time. So using this macro in preference to [`Str::from`]
+/// is future-proof.
+///
+/// ```
+/// use oxc_str::static_str;
+///
+/// let str = static_str!("undefined");
+/// assert_eq!(str.as_str(), "undefined");
+/// ```
+///
+/// Can also be used in const context:
+///
+/// ```
+/// use oxc_str::{Str, static_str};
+///
+/// const UNDEFINED: Str<'static> = static_str!("undefined");
+/// assert_eq!(UNDEFINED.as_str(), "undefined");
+/// ```
+///
+/// Only accepts string literals, not variables:
+///
+/// ```compile_fail
+/// use oxc_str::static_str;
+///
+/// let s = "hello";
+/// let str = static_str!(s);
+/// ```
+#[macro_export]
+macro_rules! static_str {
+    ($s:literal) => {
+        $crate::Str::new_const($s)
+    };
+}
+
 /// Creates a [`Str`] using interpolation of runtime expressions.
 ///
 /// Identical to [`std`'s `format!` macro](std::format), except:
@@ -328,12 +373,9 @@ impl ESTree for Str<'_> {
 #[macro_export]
 macro_rules! format_str {
     ($alloc:expr, $($arg:tt)*) => {{
-        use ::std::{write, fmt::Write};
-        use $crate::{Str, __internal::ArenaStringBuilder};
-
-        let mut s = ArenaStringBuilder::new_in($alloc);
-        write!(s, $($arg)*).unwrap();
-        Str::from(s)
+        let mut s = $crate::__internal::ArenaStringBuilder::new_in($alloc);
+        ::std::fmt::Write::write_fmt(&mut s, ::std::format_args!($($arg)*)).unwrap();
+        $crate::Str::from(s)
     }}
 }
 

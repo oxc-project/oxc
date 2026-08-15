@@ -8,18 +8,19 @@ use crate::react_compiler_hir::ReactFunctionType;
 use super::program::CompileOutput;
 
 /// Main result type returned by the compile function.
-#[allow(clippy::large_enum_variant)] // built once per compile; `ProgramContext` carries the options
+#[must_use]
 pub enum CompileResult<'a> {
     /// Compilation succeeded (or no functions needed compilation).
     /// `output` is None if no changes are to be made to the program — always so
     /// in lint output mode.
     Success {
-        output: Option<CompileOutput<'a>>,
+        output: Option<Box<CompileOutput<'a>>>,
         /// Errors and warnings accumulated during compilation.
         diagnostics: Diagnostics,
     },
-    /// A fatal error occurred and panicThreshold dictates it should throw.
-    Error { diagnostics: Diagnostics },
+    /// Compilation was aborted because `panicThreshold` dictates that the
+    /// diagnostics should be surfaced as a fatal error.
+    Fatal { diagnostics: Diagnostics },
 }
 
 /// Codegen output for a single compiled function.

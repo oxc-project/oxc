@@ -53,7 +53,11 @@ pub fn parse_json<'a>(
     // So the JS lexer rules apply uniformly regardless of `variant`.
     // e.g. line terminators (incl. U+2028 / U+2029), trailing commas, single quotes
     // Downstream newline scans must therefore be LS/PS-aware for all variants, not just JSON5.
-    let options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+    let options = ParseOptions {
+        preserve_parens: false,
+        enable_ident_hashes: false, // the JSON formatter does not use `Ident` hashes
+        ..ParseOptions::default()
+    };
     let ret =
         Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();
 

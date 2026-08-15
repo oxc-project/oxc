@@ -2,7 +2,7 @@ use syn::{Arm, Expr, Pat, Stmt};
 
 use crate::{
     CollectionResult, NodeTypeSet,
-    utils::{astkind_variant_from_path, is_node_kind_call},
+    utils::{astkind_variant_from_path, executable_stmts, is_node_kind_call},
 };
 
 /// Detects various kinds of diverging statements that narrow by more than one AST node type.
@@ -13,13 +13,13 @@ pub struct EarlyDivergeDetector {
 impl EarlyDivergeDetector {
     pub fn from_run_func(run_func: &syn::ImplItemFn) -> Option<NodeTypeSet> {
         // Only look at cases where the body has more than one top-level statement.
-        let block = &run_func.block;
-        if block.stmts.len() <= 1 {
+        let stmts = executable_stmts(&run_func.block);
+        if stmts.len() <= 1 {
             return None;
         }
 
         // Look at the first statement in the function body.
-        let stmt = block.stmts.first()?;
+        let stmt = *stmts.first()?;
 
         // Check if it's `let something = match node.kind() { ... }` that diverges
         if let Stmt::Local(local) = stmt
@@ -64,7 +64,10 @@ impl EarlyDivergeDetector {
     }
 
     fn extract_variants_from_diverging_match_arm(&mut self, arm: &Arm) -> CollectionResult {
-        let pat = &arm.pat;
+        let pat = match &arm.pat {
+            Pat::Guard(guard) => guard.pat.as_ref(),
+            pat => pat,
+        };
         match pat {
             Pat::TupleStruct(ts) => {
                 if let Some(variant) = astkind_variant_from_path(&ts.path) {

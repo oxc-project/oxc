@@ -1,0 +1,13 @@
+# issue #25253: a multi-line plain-scalar key re-folds under proseWrap always/never.
+# With a block-collection value (hardline separator) the key must flip to the
+# explicit form whenever its folded form overflows: a multi-line implicit key
+# does not re-parse. `never` folds it onto one line, so implicit is fine there.
+sensitive:
+  fields:
+    ? AlphaLongTableName, BravoLongTableName, CharlieLongTableName, DeltaLongTableName, EchoName,
+      FoxtrotLongTableName, GolfLongTableName, HotelLongTableName
+    : scrubber: undefinedScrubber
+# The key-line trailing comment rides along into the explicit form
+? WordAlpha, WordBravo, WordCharlie, WordDelta, WordEcho, WordFoxtrot, WordGolf,
+  WordHotel # trailing
+: value

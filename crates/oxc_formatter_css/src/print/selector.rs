@@ -21,7 +21,7 @@ use oxc_formatter_core::{
 use crate::{
     TEMPLATE_PLACEHOLDER_PREFIX, TEMPLATE_PLACEHOLDER_SUFFIX, comments,
     format::to_span,
-    print::{CssFormatter, format_with, normalize_whitespace, value, write_maybe_lowercase},
+    print::{CssFormatter, format_with, less, normalize_whitespace, value, write_maybe_lowercase},
 };
 
 /// Detects an ICSS rule (`:import { ... }` / `:export { ... }`)
@@ -139,12 +139,30 @@ pub(super) fn write_selector_list<'a>(
 }
 
 /// Mirrors Prettier's `selector-selector`.
-/// group, indented when long (more than 2 children).
+///
+/// group, indented when long (more than 2 simple selectors + combinators).
+/// The count is FLAT: each simple selector inside a compound counts on its own (`.x.y:not(...)` = 3),
+/// so a broken pseudo arg lands at +4 and its `)` at +2.
+///
+/// NOTE: That extra indent on combinator-less compounds is arguably a Prettier bug, not a design:
+/// upstream keeps removing it one threshold at a time (prettier/prettier#16572 for a lone pseudo, #17541 for 2 nodes),
+/// and this `> 2` is what remains as of 3.9.6.
+/// The principled condition would be "has a combinator" (indent only wrapped continuation lines),
+/// keeping pseudo args at +2 and `)` at +0.
 pub(super) fn write_complex_selector<'a>(
     complex: &ComplexSelector<'a>,
     f: &mut CssFormatter<'_, 'a>,
 ) {
-    let should_indent = complex.children.len() > 2;
+    let flat_len: usize = complex
+        .children
+        .iter()
+        .map(|child| match child {
+            ComplexSelectorChild::CompoundSelector(compound) => compound.children.len(),
+            ComplexSelectorChild::Combinator(_) => 1,
+        })
+        .sum();
+    let should_indent = flat_len > 2;
+
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
         for (i, child) in complex.children.iter().enumerate() {
             match child {
@@ -407,20 +425,31 @@ fn write_pseudo_class<'a>(pseudo: &PseudoClassSelector<'a>, f: &mut CssFormatter
     let name_span = to_span(pseudo.name.span());
     write_maybe_lowercase(source.text_for(&name_span), f);
     if let Some(arg) = &pseudo.arg {
-        let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-            write!(f, soft_line_break());
-            write_pseudo_class_arg(&arg.kind, f);
-        });
-        write!(
-            f,
-            group(&format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                write!(f, "(");
-                write!(f, indent(&body));
-                write!(f, soft_line_break());
-                write!(f, ")");
-            }))
-        );
+        write_pseudo_args_group(|f| write_pseudo_class_arg(&arg.kind, f), f);
     }
+}
+
+/// The breakable parens around pseudo args:
+/// inline when they fit, own-line parens + indented args on overflow.
+/// Shared with the statement-position `&:extend(...)` (less.rs),
+/// so both `:extend()` positions keep the same layout by construction.
+pub(super) fn write_pseudo_args_group<'a>(
+    args: impl Fn(&mut CssFormatter<'_, 'a>),
+    f: &mut CssFormatter<'_, 'a>,
+) {
+    let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
+        write!(f, soft_line_break());
+        args(f);
+    });
+    write!(
+        f,
+        group(&format_with(move |f: &mut CssFormatter<'_, 'a>| {
+            write!(f, "(");
+            write!(f, indent(&body));
+            write!(f, soft_line_break());
+            write!(f, ")");
+        }))
+    );
 }
 
 fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -442,21 +471,22 @@ fn write_pseudo_class_arg<'a>(kind: &PseudoClassSelectorArgKind<'a>, f: &mut Css
                 write_complex_selector(&selector.complex_selector, f);
             }
         }
-        PseudoClassSelectorArgKind::CompoundSelector(compound) => {
-            write_compound_selector(compound, f);
-        }
         PseudoClassSelectorArgKind::CompoundSelectorList(list) => {
             write_compound_selector_list(list, f);
         }
         PseudoClassSelectorArgKind::Ident(ident) => write_interpolable_ident(ident, f),
         PseudoClassSelectorArgKind::Nth(nth) => write_nth(nth, f),
-        // Number, LanguageRangeList, TokenSeq, LessExtendList:
+        // `:extend(...)`:
+        // structured like any pseudo selector list (spacing normalized), breaking only on overflow.
+        // The enclosing pseudo group owns the parens and the break.
+        // The statement form (`&:extend(...)`, see less.rs) shares this writer.
+        PseudoClassSelectorArgKind::LessExtendList(list) => {
+            less::write_less_extend_list(list, f);
+        }
+        // Number, LanguageRangeList, TokenSeq:
         // print the source verbatim (normalized below where needed).
-        //
-        // NOTE: `oxc-css-parser` provides structured AST for these (notably `LessExtendList`),
-        // so a structured printer would be feasible.
         // They are kept verbatim because `postcss-selector-parser` tokenizes them as opaque strings
-        // and Prettier emits them raw (matching that keeps `:lang(...)`, `:extend(...)` etc.)
+        // and Prettier emits them raw (matching that keeps `:lang(...)` etc.)
         // byte-identical to Prettier output.
         // Real-world usage is rare enough that the consistency cost is negligible.
         _ => {
@@ -501,8 +531,11 @@ fn write_nth<'a>(nth: &Nth<'a>, f: &mut CssFormatter<'_, 'a>) {
 }
 
 /// Normalize an `An+B` expression:
-/// exactly one space around each `+` (none before a leading `+`),
+/// exactly one space around each `+` between terms,
 /// digit-led segments lowercased, all other whitespace kept as-is (a glued `-` stays glued).
+///
+/// NOTE: We keep a leading sign stays glued, since the An+B grammar forbids whitespace after it.
+/// But Prettier formats as `+ 3n`, output is a semantics-breaking artifact.
 fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     let bytes = raw.as_bytes();
     if !bytes.iter().any(|&b| b == b'+' || b.is_ascii_uppercase()) {
@@ -510,6 +543,7 @@ fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
     }
 
     let mut out = String::with_capacity(raw.len() + 4);
+    let mut seen_term = false;
     let mut i = 0;
     while i < bytes.len() {
         let b = bytes[i];
@@ -517,7 +551,7 @@ fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
             while out.ends_with(' ') {
                 out.pop();
             }
-            if !out.is_empty() {
+            if seen_term {
                 out.push(' ');
             }
             out.push('+');
@@ -525,22 +559,21 @@ fn normalize_an_plus_b(raw: &str) -> Cow<'_, str> {
             while i < bytes.len() && bytes[i].is_ascii_whitespace() {
                 i += 1;
             }
-            if i < bytes.len() {
+            if seen_term && i < bytes.len() {
                 out.push(' ');
             }
         } else if b.is_ascii_whitespace() {
             out.push(b as char);
             i += 1;
         } else {
+            seen_term = true;
             let start = i;
             while i < bytes.len() && !bytes[i].is_ascii_whitespace() && bytes[i] != b'+' {
                 i += 1;
             }
             let segment = &raw[start..i];
             if segment.as_bytes()[0].is_ascii_digit() {
-                for c in segment.chars() {
-                    out.push(c.to_ascii_lowercase());
-                }
+                out.push_str(&segment.cow_to_ascii_lowercase());
             } else {
                 out.push_str(segment);
             }
@@ -576,6 +609,15 @@ fn write_pseudo_element<'a>(pseudo: &PseudoElementSelector<'a>, f: &mut CssForma
                 write_compound_selector_list(list, f);
             }
             PseudoElementSelectorArgKind::Ident(ident) => write_interpolable_ident(ident, f),
+            // CSS Shadow Parts allows `::part(tab active)`: idents joined by one space
+            PseudoElementSelectorArgKind::IdentList(list) => {
+                for (i, ident) in list.idents.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, " ");
+                    }
+                    write_interpolable_ident(ident, f);
+                }
+            }
             PseudoElementSelectorArgKind::TokenSeq(seq) => {
                 let span = to_span(seq.span());
                 write!(f, text(source.text_for(&span)));
@@ -616,6 +658,14 @@ pub(super) fn write_keyframe_selector<'a>(
         },
         KeyframeSelector::Percentage(percentage) => {
             value::write_number(&percentage.value, f);
+            write!(f, "%");
+        }
+        // Scroll-driven animations: `entry 0%` etc.
+        // The range name keeps its case: from/to lowercasing applies only to the bare-`Ident` arm above.
+        KeyframeSelector::TimelineRange(range) => {
+            write_interpolable_ident(&range.name, f);
+            write!(f, " ");
+            value::write_number(&range.percentage.value, f);
             write!(f, "%");
         }
     }

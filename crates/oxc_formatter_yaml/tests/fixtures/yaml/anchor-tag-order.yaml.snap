@@ -1,0 +1,39 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE (prettier#19524): props keep their source order, never reordered.
+- !!str &a1 one
+- &a2 !!str two
+- !!int 3
+- &a4 four
+---
+key: !!map &m
+  a: b
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE (prettier#19524): props keep their source order, never reordered.
+- !!str &a1 one
+- &a2 !!str two
+- !!int 3
+- &a4 four
+---
+key: !!map &m
+  a: b
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE (prettier#19524): props keep their source order, never reordered.
+- !!str &a1 one
+- &a2 !!str two
+- !!int 3
+- &a4 four
+---
+key: !!map &m
+  a: b
+
+===================== End =====================

@@ -20,7 +20,7 @@ doctest = false
 #
 # `features = ["serialize"]` on `oxc_span` and `oxc_syntax` is needed to work around a bug in `oxc_index`.
 oxc_allocator = { workspace = true, optional = true }
-oxc_ast = { workspace = true, optional = true, features = ["disable_old_builder"] }
+oxc_ast = { workspace = true, optional = true }
 oxc_ast_visit = { workspace = true, optional = true }
 oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_minifier = { workspace = true, optional = true }

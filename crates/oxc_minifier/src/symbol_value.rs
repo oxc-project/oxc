@@ -1,6 +1,5 @@
 use oxc_ecmascript::constant_evaluation::ConstantValue;
-use oxc_index::IndexVec;
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::reference::ReferenceFlags;
 
 /// The kind of fresh value a binding was initialized with, or `None` when the
 /// value may alias another binding (or is untracked).
@@ -27,22 +26,75 @@ pub enum FreshValueKind {
     Array,
 }
 
+/// Cached counts for the resolved references to a symbol.
+///
+/// Keep queries here so consumers do not have to coordinate related counters
+/// or repeat the invariant that member-write target reads are a subset of all
+/// reads.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ReferenceCounts {
+    reads: u32,
+    writes: u32,
+    member_write_target_reads: u32,
+}
+
+impl ReferenceCounts {
+    #[inline]
+    pub fn record(&mut self, flags: ReferenceFlags) {
+        debug_assert!(!flags.is_member_write_target() || flags.is_read());
+        if flags.is_read() {
+            self.reads += 1;
+        }
+        if flags.is_write() {
+            self.writes += 1;
+        }
+        if flags.is_member_write_target() {
+            self.member_write_target_reads += 1;
+        }
+    }
+
+    #[inline]
+    pub fn has_reads(self) -> bool {
+        self.reads > 0
+    }
+
+    #[inline]
+    pub fn has_writes(self) -> bool {
+        self.writes > 0
+    }
+
+    #[inline]
+    pub fn has_single_read(self) -> bool {
+        self.reads == 1
+    }
+
+    #[inline]
+    pub fn has_multiple_reads(self) -> bool {
+        self.reads > 1
+    }
+
+    #[inline]
+    pub fn has_only_member_write_target_reads(self) -> bool {
+        self.writes == 0 && self.reads == self.member_write_target_reads
+    }
+}
+
 #[derive(Debug)]
 pub struct SymbolValue<'a> {
     /// Initialized constant value evaluated from expressions.
     /// `None` when the value is not a constant evaluated value.
     pub initialized_constant: Option<ConstantValue<'a>>,
 
-    /// Symbol is exported.
-    pub exported: bool,
+    /// The `initialized_constant` is the implicit `undefined` of a declaration
+    /// with no initializer (`let x;`), not an evaluated initializer. Textually
+    /// inlining such a read prints `void 0` — longer than a mangled identifier
+    /// read — and there is no initializer whose elimination pays for it, so
+    /// `inline_identifier_reference` skips it (rolldown#10174). Constant-driven
+    /// folds (`if (x)`, `x === void 0`, `return x`) are unaffected: they
+    /// resolve the value through `initialized_constant`.
+    pub implicit_undefined: bool,
 
-    pub read_references_count: u32,
-    pub write_references_count: u32,
-
-    /// Number of read references that are member write targets (e.g. `a` in `a.foo = 1`).
-    /// These reads exist only to access the object for a property write, not to use the value.
-    /// Always <= `read_references_count`.
-    pub member_write_target_read_count: u32,
+    pub references: ReferenceCounts,
 
     /// The kind of fresh value the symbol holds (cannot alias another binding),
     /// or `FreshValueKind::None` when the value may alias. Set for function/class
@@ -60,41 +112,29 @@ pub struct SymbolValue<'a> {
     pub boolean_falsy: bool,
 }
 
-/// Per-symbol scratch store indexed by `SymbolId`.
-///
-/// Symbol IDs are dense `u32`s, so an indexed `IndexVec` lookup beats a
-/// `FxHashMap` (hash + probe) on every hot path in the peephole pass.
-///
-/// Sized once from `Scoping::symbols_len()`; no minifier pass mints new
-/// symbols, so `init_value` panics on out-of-range — that's the signal to
-/// add a grow path.
-#[derive(Debug)]
-pub struct SymbolValues<'a> {
-    values: IndexVec<SymbolId, Option<SymbolValue<'a>>>,
-}
-
-impl<'a> SymbolValues<'a> {
-    pub(crate) fn new(len: usize) -> Self {
-        let mut values = IndexVec::with_capacity(len);
-        values.resize_with(len, || None);
-        Self { values }
-    }
-
-    /// Reset slots to `None` without releasing the buffer, so the next peephole
-    /// iteration's `init_value` stays on the indexed-write fast path.
-    pub fn reset(&mut self) {
-        for slot in &mut self.values {
-            *slot = None;
+impl SymbolValue<'_> {
+    /// Constants with one read can always be inlined without duplication:
+    /// `const value = "a long string"; use(value)` -> `use("a long string")`.
+    ///
+    /// With multiple reads, only integers in `-99..=999`, strings with `len() <= 3`,
+    /// booleans, `null`, and `undefined` can be inlined. Bindings with writes or an
+    /// implicit `undefined` cannot be inlined.
+    ///
+    /// Inspired by [esbuild's constant inliner][esbuild] and [SWC's variable inliner][swc].
+    ///
+    /// [esbuild]: https://github.com/evanw/esbuild/blob/f6058f8364fe7ab91ca57a83e02577ed74c9cae4/internal/js_ast/js_ast.go#L1650-L1685
+    /// [swc]: https://github.com/swc-project/swc/blob/6c778430811853d4feee2ab3af1473669deb7b2a/crates/swc_ecma_minifier/src/compress/optimize/inline.rs#L277-L295
+    pub fn can_inline_initialized_constant(&self) -> bool {
+        if self.references.has_writes() || self.implicit_undefined {
+            return false;
         }
-    }
-
-    #[inline]
-    pub fn init_value(&mut self, symbol_id: SymbolId, symbol_value: SymbolValue<'a>) {
-        self.values[symbol_id] = Some(symbol_value);
-    }
-
-    #[inline]
-    pub fn get_symbol_value(&self, symbol_id: SymbolId) -> Option<&SymbolValue<'a>> {
-        self.values.get(symbol_id)?.as_ref()
+        let Some(constant) = &self.initialized_constant else { return false };
+        self.references.has_single_read()
+            || match constant {
+                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
+                ConstantValue::BigInt(_) => false,
+                ConstantValue::String(s) => s.len() <= 3,
+                ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
+            }
     }
 }

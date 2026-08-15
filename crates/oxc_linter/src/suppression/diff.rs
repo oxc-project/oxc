@@ -4,7 +4,7 @@ use oxc_diagnostics::Severity;
 use rustc_hash::FxHashMap;
 
 use crate::{
-    Message,
+    Message, oxc_code_short_canonical_name,
     suppression::{
         DiagnosticCounts, Filename, RuntimeSuppressionMap, StaticSuppressionMap, SuppressionFile,
         SuppressionFileState,
@@ -103,11 +103,7 @@ impl DiffManager {
                     continue;
                 }
 
-                let Some(key) = message
-                    .rule
-                    .as_ref()
-                    .map(super::super::fixer::MessageRule::short_canonical_name)
-                else {
+                let Some(key) = oxc_code_short_canonical_name(&message.error.code) else {
                     continue;
                 };
 
@@ -146,11 +142,7 @@ impl DiffManager {
                             return true;
                         }
 
-                        let Some(key) = message
-                            .rule
-                            .as_ref()
-                            .map(super::super::fixer::MessageRule::short_canonical_name)
-                        else {
+                        let Some(key) = oxc_code_short_canonical_name(&message.error.code) else {
                             return true;
                         };
 

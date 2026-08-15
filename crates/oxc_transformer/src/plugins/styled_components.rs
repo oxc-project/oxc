@@ -64,10 +64,7 @@ use rustc_hash::FxHasher;
 use serde::Deserialize;
 
 use oxc_allocator::{ArenaVec, ReplaceWith, TakeIn};
-use oxc_ast::{
-    ast::*,
-    builder::{AstBuilder, NONE},
-};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_data_structures::{inline_string::InlineString, slice_iter::SliceIter};
 use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
@@ -459,12 +456,12 @@ impl<'a> StyledComponents<'a> {
             );
             self.add_properties(&mut properties, ctx);
             let object = ObjectExpression::boxed(SPAN, properties, ctx);
-            let arguments = ArenaVec::from_value_in(Argument::ObjectExpression(object), ctx);
+            let arguments = [Argument::ObjectExpression(object)];
             expr.replace_with(|object| {
                 let property = IdentifierName::new(SPAN, "withConfig", ctx);
                 let callee =
                     Expression::new_static_member_expression(SPAN, object, property, false, ctx);
-                Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx)
+                Expression::new_call_expression(SPAN, callee, None, arguments, false, ctx)
             });
         } else {
             return false;
@@ -1160,19 +1157,16 @@ mod tests {
 
         let mut lit = TemplateLiteral::new(
             SPAN,
-            ArenaVec::from_value_in(
-                TemplateElement::new(
-                    SPAN,
-                    TemplateElementValue {
-                        raw: Str::from_str_in(input, &ast),
-                        cooked: Some(Str::from_str_in(input, &ast)),
-                    },
-                    true,
-                    &ast,
-                ),
+            [TemplateElement::new(
+                SPAN,
+                TemplateElementValue {
+                    raw: Str::from_str_in(input, &ast),
+                    cooked: Some(Str::from_str_in(input, &ast)),
+                },
+                true,
                 &ast,
-            ),
-            ArenaVec::new_in(&ast),
+            )],
+            [],
             &ast,
         );
 

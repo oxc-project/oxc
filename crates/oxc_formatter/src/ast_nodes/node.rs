@@ -139,17 +139,17 @@ impl<T: GetSpan> AstNode<'_, T> {
     }
 }
 
-impl<'a> AstNode<'a, ExpressionStatement<'a>> {
-    /// Check if this ExpressionStatement is the body of an arrow function expression
-    ///
-    /// Example:
-    /// `() => expression;`
-    ///        ^^^^^^^^^^ This ExpressionStatement is the body of an arrow function
-    ///
-    /// `() => { return expression; }`
-    ///         ^^^^^^^^^^^^^^^^^^^^ This ExpressionStatement is NOT the body of an arrow function
-    pub fn is_arrow_function_body(&self) -> bool {
-        matches!(self.parent().parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
+impl<'a> AstNode<'a, ArrowFunctionBody<'a>> {
+    /// Returns the concise expression body as an [`AstNode`].
+    pub fn as_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        self.allocator
+            .alloc(self.inner.as_expression().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_span_start: self.following_span_start,
+            }))
+            .as_ref()
     }
 }
 
@@ -167,8 +167,13 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         // so Expression and Argument have identical memory layout for shared variants.
         // Both are discriminated unions where each Expression variant (e.g., Expression::Identifier)
         // has a corresponding Argument variant (e.g., Argument::Identifier) with the same discriminant
-        // and the same inner type (ArenaBox<'a, T>). Transmuting Expression to Argument via transmute_copy
+        // and the same inner type (ArenaBox<'a, T>). Transmuting Expression to Argument via `transmute_copy`
         // is safe because we're just copying the bits (discriminant + pointer).
+        //
+        // TODO(unsound): The logic in comment above is flawed - this is unsound.
+        // `Expression` and `Argument`'s variants both contain `Box`es, which own the node the `Box`es contain.
+        // `transmute_copy` here duplicates the `Box`, which means you have 2 `Box`es owning the same node.
+        // This can lead to a violation of Rust's aliasing rules. Fix this.
         unsafe {
             arguments.push(transmute_copy(&self.inner.source));
             if let Some(ref options) = self.inner.options {

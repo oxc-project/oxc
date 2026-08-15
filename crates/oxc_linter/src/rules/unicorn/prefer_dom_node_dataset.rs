@@ -1,8 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, CallExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::Argument};
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,6 +11,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
+    utils::call_uses_optional_chain,
 };
 
 fn set(span: Span) -> OxcDiagnostic {
@@ -239,28 +237,6 @@ fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
     if matches!(parent_kind, AstKind::ChainExpression(_)) {
         let grandparent = ctx.nodes().parent_node(parent_node.id());
         return matches!(grandparent.kind(), AstKind::ExpressionStatement(_));
-    }
-
-    false
-}
-
-fn call_uses_optional_chain(call_expr: &CallExpression) -> bool {
-    call_expr.optional || expression_uses_optional_chain(&call_expr.callee)
-}
-
-fn expression_uses_optional_chain(expr: &Expression) -> bool {
-    let expr = expr.get_inner_expression();
-
-    if matches!(expr, Expression::ChainExpression(_)) {
-        return true;
-    }
-
-    if let Some(member_expr) = expr.as_member_expression() {
-        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
-    }
-
-    if let Expression::CallExpression(call_expr) = expr {
-        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
     }
 
     false

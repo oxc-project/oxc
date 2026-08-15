@@ -482,6 +482,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
    ╭─[prefer_expect_assertions.tsx:1:1]
+ 1 │ test("x", () => promise.then(() => expect(x).toBe(y)))
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Add `expect.hasAssertions()` or `expect.assertions(<number>)` as the first statement in the test.
+
+  ⚠ jest(prefer-expect-assertions): Every test should have either `expect.assertions(<number of assertions>)` or `expect.hasAssertions()` as its first expression.
+   ╭─[prefer_expect_assertions.tsx:1:1]
  1 │ ╭─▶ it('responds ok', function () {
  2 │ │                 client.get('/user', response => {
  3 │ │                   expect(response.status).toBe(200);

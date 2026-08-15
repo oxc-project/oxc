@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -75,12 +72,14 @@ impl Rule for NoMagicArrayFlatDepth {
             return;
         }
 
-        let Some(arguments_span) = get_call_expression_parentheses_pos(call_expression, ctx) else {
+        // the arguments start at the `(` following the callee
+        let callee_end = call_expression.callee.span().end;
+        let call_end = call_expression.span.end;
+        let Some(offset) = ctx.find_next_token_within(callee_end, call_end, "(") else {
             return;
         };
 
-        let has_explaining_comment =
-            ctx.comments_range(arguments_span.start..arguments_span.end).count() != 0;
+        let has_explaining_comment = ctx.comments_range(callee_end + offset..call_end).count() != 0;
 
         if has_explaining_comment {
             return;
@@ -88,30 +87,6 @@ impl Rule for NoMagicArrayFlatDepth {
 
         ctx.diagnostic(no_magic_array_flat_map_diagnostic(arg.span));
     }
-}
-
-// gets the opening `(` and closing `)` of the argument
-#[expect(clippy::cast_possible_truncation)]
-fn get_call_expression_parentheses_pos<'a>(
-    call_expr: &CallExpression<'a>,
-    ctx: &LintContext<'a>,
-) -> Option<Span> {
-    call_expr.callee.get_member_expr().map(|member_expr| {
-        let callee_span = member_expr.object().span();
-
-        // walk forward from the end of callee_span to find the opening `(` of the argument
-        let source = ctx.source_text().char_indices();
-
-        let start = source
-            .skip(callee_span.end as usize)
-            .find(|(_, c)| c == &'(')
-            .map(|(i, _)| i as u32)
-            .expect("missing opening `(` for call expression argument");
-
-        let end = call_expr.span.end;
-
-        Span::new(start, end)
-    })
 }
 
 #[test]
@@ -133,9 +108,22 @@ fn test() {
         "array.flat?.(2)",
         "array.notFlat(2)",
         "flat(2)",
+        // multi-byte characters before the call must not shift the argument span
+        "const s = \"😀😀\";\narray.flat(2 /* explanation */)",
+        "array[key].flat(2 /* explanation */)",
     ];
 
-    let fail = vec!["array.flat(2)", "array?.flat(2)", "array.flat(99,)", "array.flat(0b10,)"];
+    let fail = vec![
+        "array.flat(2)",
+        "array?.flat(2)",
+        "array.flat(99,)",
+        "array.flat(0b10,)",
+        "const s = \"😀😀😀😀😀😀😀😀😀😀\";\narray.flat(2)",
+        // a comment in the computed key is not an explanation of the depth
+        "array[key(/* not an explanation */)].flat(2)",
+        // a `(` inside a comment is not the start of the arguments
+        "array.flat/* ( */(2)",
+    ];
 
     Tester::new(NoMagicArrayFlatDepth::NAME, NoMagicArrayFlatDepth::PLUGIN, pass, fail)
         .test_and_snapshot();

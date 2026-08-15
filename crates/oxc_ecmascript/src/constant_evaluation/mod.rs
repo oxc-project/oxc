@@ -3,13 +3,10 @@ mod equality_comparison;
 mod is_int32_or_uint32;
 mod is_literal_value;
 mod url_encoding;
-mod value;
-mod value_type;
 
+pub use crate::{ConstantValue, DetermineValueType, ValueType};
 pub use is_int32_or_uint32::IsInt32OrUint32;
 pub use is_literal_value::IsLiteralValue;
-pub use value::ConstantValue;
-pub use value_type::{DetermineValueType, ValueType};
 
 use std::borrow::Cow;
 
@@ -165,6 +162,13 @@ impl<'a> ConstantEvaluation<'a> for Expression<'a> {
             Expression::BooleanLiteral(lit) => Some(ConstantValue::Boolean(lit.value)),
             Expression::BigIntLiteral(lit) => lit.to_big_int(ctx).map(ConstantValue::BigInt),
             Expression::StringLiteral(lit) => {
+                // The value of a string with lone surrogates encodes them with
+                // `\u{FFFD}` escapes. Consumers materialize the returned value
+                // into new string literals without the `lone_surrogates` flag,
+                // which would print the escape encoding as literal text.
+                if lit.lone_surrogates {
+                    return None;
+                }
                 Some(ConstantValue::String(Cow::Borrowed(lit.value.as_str())))
             }
             Expression::StaticMemberExpression(e) => e.evaluate_value_to(ctx, target_ty),

@@ -1,8 +1,9 @@
 use oxc_ast::ast::{Comment, Expression};
+use oxc_formatter_core::{Buffer, Format};
 
 use crate::{
     ast_nodes::AstNodes,
-    formatter::{Buffer, Format, JsFormatContext, JsFormatter, trivia::FormatTrailingComments},
+    formatter::{JsFormatContext, JsFormatter, trivia::FormatTrailingComments},
     options::Semicolons,
     utils::format_node_without_trailing_comments::format_content_without_comments_after,
     write,
@@ -71,7 +72,7 @@ pub fn keeps_trailing_comment_inside_parens(expr: &Expression<'_>, gated: bool) 
                     right => keeps_trailing_comment_inside_parens(right, false),
                 }
         }
-        Expression::ArrowFunctionExpression(arrow) if arrow.expression => arrow
+        Expression::ArrowFunctionExpression(arrow) => arrow
             .get_expression()
             .is_some_and(|body| keeps_trailing_comment_inside_parens(body, true)),
         _ => false,
@@ -91,9 +92,10 @@ pub fn write_trailing_comments_inside_parens<'a>(
     is_sequence: bool,
 ) {
     let parens_survive = match parent {
-        AstNodes::VariableDeclarator(_) | AstNodes::ReturnStatement(_) => true,
+        AstNodes::ArrowFunctionExpression(_)
+        | AstNodes::VariableDeclarator(_)
+        | AstNodes::ReturnStatement(_) => true,
         AstNodes::AssignmentExpression(_) => is_sequence,
-        AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
         _ => false,
     };
     if parens_survive

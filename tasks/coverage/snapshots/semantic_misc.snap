@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 71/71 (100.00%)
-Positive Passed: 66/71 (92.96%)
+AST Parsed     : 79/79 (100.00%)
+Positive Passed: 75/79 (94.94%)
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]
@@ -84,11 +84,6 @@ rebuilt        : [ReferenceId(187), ReferenceId(193), ReferenceId(300), Referenc
 Unresolved reference IDs mismatch for "Object":
 after transform: [ReferenceId(166), ReferenceId(170), ReferenceId(174), ReferenceId(185), ReferenceId(226), ReferenceId(228), ReferenceId(265), ReferenceId(267), ReferenceId(304), ReferenceId(306), ReferenceId(343), ReferenceId(345), ReferenceId(382), ReferenceId(386), ReferenceId(425), ReferenceId(427), ReferenceId(464), ReferenceId(468), ReferenceId(507), ReferenceId(509), ReferenceId(546), ReferenceId(550), ReferenceId(589), ReferenceId(591), ReferenceId(628), ReferenceId(632), ReferenceId(671), ReferenceId(673), ReferenceId(839), ReferenceId(843), ReferenceId(876), ReferenceId(880), ReferenceId(891), ReferenceId(895)]
 rebuilt        : [ReferenceId(169), ReferenceId(173), ReferenceId(177), ReferenceId(182), ReferenceId(291), ReferenceId(295), ReferenceId(364), ReferenceId(368), ReferenceId(437), ReferenceId(441), ReferenceId(625), ReferenceId(632), ReferenceId(777), ReferenceId(781), ReferenceId(810), ReferenceId(814), ReferenceId(819), ReferenceId(823)]
-
-semantic Error: tasks/coverage/misc/pass/oxc-13284.ts
-Symbol reference IDs mismatch for "_super":
-after transform: SymbolId(18): [ReferenceId(14)]
-rebuilt        : SymbolId(9): []
 
 semantic Error: tasks/coverage/misc/pass/reserved-kw-ambient-context.ts
 Bindings mismatch:

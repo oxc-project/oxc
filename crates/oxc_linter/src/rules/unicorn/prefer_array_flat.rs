@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression,
-        IdentifierReference, MemberExpression, Statement,
+        IdentifierReference, MemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -11,6 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     ast_util::{get_symbol_id_of_variable, is_method_call},
     context::LintContext,
     rule::Rule,
@@ -99,7 +100,13 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
         return;
     };
 
-    let Some(return_param_name) = get_return_identifier_name(&first_argument.body) else {
+    let return_param_name = first_argument
+        .get_expression()
+        .and_then(|expression| {
+            expression.get_identifier_reference().map(|ident| ident.name.as_str())
+        })
+        .or_else(|| first_argument.get_function_body().and_then(get_return_identifier_name));
+    let Some(return_param_name) = return_param_name else {
         return;
     };
 
@@ -154,7 +161,7 @@ fn const_variable_initializer_kind(
     let AstKind::VariableDeclarator(declarator) = node.kind() else {
         return None;
     };
-    if !declarator.kind.is_const() {
+    if !variable_declaration_kind(declarator, ctx).is_const() {
         return None;
     }
     let init = declarator.init.as_ref()?.get_inner_expression();
@@ -230,13 +237,10 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
         return;
     };
 
-    let Some(Statement::ExpressionStatement(expr_stmt)) = first_argument.body.statements.first()
-    else {
-        return;
-    };
+    let Some(expression) = first_argument.get_expression() else { return };
 
     // `array.reduce((a, b) => a.concat(b), [])`
-    if let Expression::CallExpression(concat_call_expr) = &expr_stmt.expression
+    if let Expression::CallExpression(concat_call_expr) = expression
         && is_method_call(concat_call_expr, None, Some(&["concat"]), Some(1), Some(1))
         && let Argument::Identifier(first_argument_ident) = &concat_call_expr.arguments[0]
     {
@@ -272,7 +276,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
     }
 
     // `array.reduce((a, b) => [...a, ...b], [])`
-    if let Expression::ArrayExpression(array_expr) = &expr_stmt.expression {
+    if let Expression::ArrayExpression(array_expr) = expression {
         if array_expr.elements.len() != 2 {
             return;
         }
@@ -355,22 +359,34 @@ fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &L
 
     if let Some(member_expr_obj) = member_expr.object().as_member_expression() {
         let is_call_call = is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2));
+        let is_apply_call = is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2));
 
-        if (is_call_call || is_method_call(call_expr, None, Some(&["apply"]), Some(2), Some(2)))
+        if (is_call_call || is_apply_call)
             && is_prototype_property(member_expr_obj, "concat", Some("Array"))
             && let Some(first_argument) = call_expr.arguments[0].as_expression()
             && is_empty_array_expression(first_argument)
             && (is_call_call
                 || !matches!(call_expr.arguments.get(1), Some(Argument::SpreadElement(_))))
         {
-            ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
+            if is_apply_call
+                && let Some(Argument::Identifier(array)) = call_expr.arguments.get(1)
+                && array.name != "arguments"
+            {
+                let replacement = format!("{}.flat()", ctx.source_range(array.span));
+                ctx.diagnostic_with_dangerous_fix(
+                    prefer_array_flat_diagnostic(call_expr.span),
+                    |fixer| fixer.replace(call_expr.span, replacement),
+                );
+            } else {
+                ctx.diagnostic(prefer_array_flat_diagnostic(call_expr.span));
+            }
         }
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "array.flatMap",
@@ -553,6 +569,7 @@ fn test() {
         "[].concat.apply([], ((array)))",
         "[].concat.apply([], [foo])",
         "[].concat.apply([], [[foo]])",
+        "function flatten() { return [].concat.apply([], arguments); }",
         "[].concat.call([], maybeArray)",
         "[].concat.call([], ((0, maybeArray)))",
         "[].concat.call([], ((maybeArray)))",
@@ -569,6 +586,7 @@ fn test() {
         "Array.prototype.concat.apply([], ((array)))",
         "Array.prototype.concat.apply([], [foo])",
         "Array.prototype.concat.apply([], [[foo]])",
+        "function flatten() { return Array.prototype.concat.apply([], arguments); }",
         "Array.prototype.concat.call([], maybeArray)",
         "Array.prototype.concat.call([], ((0, maybeArray)))",
         "Array.prototype.concat.call([], ((maybeArray)))",
@@ -619,16 +637,28 @@ fn test() {
     ];
 
     let fix = vec![
-        ("array.flatMap(x => x)", "array.flat()"),
-        ("array.reduce((a, b) => a.concat(b), [])", "array.flat()"),
-        ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()"),
-        ("Foo.bar.flatMap(x => x)", "Foo.bar.flat()"),
+        ("array.flatMap(x => x)", "array.flat()", None, FixKind::SafeFix),
+        ("array.reduce((a, b) => a.concat(b), [])", "array.flat()", None, FixKind::SafeFix),
+        ("array.reduce((a, b) => [...a, ...b], [])", "array.flat()", None, FixKind::SafeFix),
+        ("Foo.bar.flatMap(x => x)", "Foo.bar.flat()", None, FixKind::SafeFix),
         (
             "const values = getValues(); values.flatMap(x => x);",
             "const values = getValues(); values.flat();",
+            None,
+            FixKind::SafeFix,
         ),
-        ("const values = []; values.flatMap(x => x);", "const values = []; values.flat();"),
-        ("const Items = []; Items.flatMap(x => x);", "const Items = []; Items.flat();"),
+        (
+            "const values = []; values.flatMap(x => x);",
+            "const values = []; values.flat();",
+            None,
+            FixKind::SafeFix,
+        ),
+        (
+            "const Items = []; Items.flatMap(x => x);",
+            "const Items = []; Items.flat();",
+            None,
+            FixKind::SafeFix,
+        ),
         (
             "for (const value of values) {
                 value.flatMap(x => x);
@@ -636,14 +666,17 @@ fn test() {
             "for (const value of values) {
                 value.flat();
             }",
+            None,
+            FixKind::SafeFix,
         ),
         (
             "const Items = [] as unknown[]; Items.flatMap(x => x);",
             "const Items = [] as unknown[]; Items.flat();",
+            None,
+            FixKind::SafeFix,
         ),
-        // TODO: Get these passing.
-        // ("/**/[].concat.apply([], array)", "/**/array.flat()"),
-        // ("Array.prototype.concat.apply([], array)", "array.flat()"),
+        ("/**/[].concat.apply([], array)", "/**/array.flat()", None, FixKind::DangerousFix),
+        ("Array.prototype.concat.apply([], array)", "array.flat()", None, FixKind::DangerousFix),
     ];
 
     Tester::new(PreferArrayFlat::NAME, PreferArrayFlat::PLUGIN, pass, fail)

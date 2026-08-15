@@ -1,0 +1,99 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* tailwind theme paths: a source-glued `[...]` is part of ONE postcss word */
+a {
+  font-size: theme(fontSize.af-md[0]);
+  line-height: theme(fontSize.sm[1].lineHeight);
+}
+/* a source gap keeps two words */
+b {
+  font-size: theme(fontSize.af-md [0]);
+}
+/* not theme()-specific: any source-glued `[...]` in value position is one word */
+c {
+  width: foo[0];
+  height: foo[0]bar;
+  margin: foo [0] bar;
+}
+/* the word prints raw: no number normalization inside */
+d {
+  font-size: theme(fontSize.af-md[0.50]);
+  width: 10px[0];
+}
+/* the glue is kept for ANY typed left neighbor; `var(--x)[0]` DIVERGES from
+   Prettier (`var(--x) [0]`, a word-lexing artifact of `[` not extending a word
+   across `)`) — see "Known divergences". `2*[0]` is token-soup math (raw
+   tokens, not a typed bracket) and its spacing matches Prettier */
+e {
+  width: var(--x)[0];
+  height: 2*[0];
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* tailwind theme paths: a source-glued `[...]` is part of ONE postcss word */
+a {
+  font-size: theme(fontSize.af-md[0]);
+  line-height: theme(fontSize.sm[1].lineHeight);
+}
+/* a source gap keeps two words */
+b {
+  font-size: theme(fontSize.af-md [0]);
+}
+/* not theme()-specific: any source-glued `[...]` in value position is one word */
+c {
+  width: foo[0];
+  height: foo[0]bar;
+  margin: foo [0] bar;
+}
+/* the word prints raw: no number normalization inside */
+d {
+  font-size: theme(fontSize.af-md[0.50]);
+  width: 10px[0];
+}
+/* the glue is kept for ANY typed left neighbor; `var(--x)[0]` DIVERGES from
+   Prettier (`var(--x) [0]`, a word-lexing artifact of `[` not extending a word
+   across `)`) — see "Known divergences". `2*[0]` is token-soup math (raw
+   tokens, not a typed bracket) and its spacing matches Prettier */
+e {
+  width: var(--x)[0];
+  height: 2 * [0];
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* tailwind theme paths: a source-glued `[...]` is part of ONE postcss word */
+a {
+  font-size: theme(fontSize.af-md[0]);
+  line-height: theme(fontSize.sm[1].lineHeight);
+}
+/* a source gap keeps two words */
+b {
+  font-size: theme(fontSize.af-md [0]);
+}
+/* not theme()-specific: any source-glued `[...]` in value position is one word */
+c {
+  width: foo[0];
+  height: foo[0]bar;
+  margin: foo [0] bar;
+}
+/* the word prints raw: no number normalization inside */
+d {
+  font-size: theme(fontSize.af-md[0.50]);
+  width: 10px[0];
+}
+/* the glue is kept for ANY typed left neighbor; `var(--x)[0]` DIVERGES from
+   Prettier (`var(--x) [0]`, a word-lexing artifact of `[` not extending a word
+   across `)`) — see "Known divergences". `2*[0]` is token-soup math (raw
+   tokens, not a typed bracket) and its spacing matches Prettier */
+e {
+  width: var(--x)[0];
+  height: 2 * [0];
+}
+
+===================== End =====================

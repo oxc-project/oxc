@@ -13,7 +13,9 @@
 
 use std::cmp::Ordering;
 
-use crate::react_compiler_utils::FxIndexSet;
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+
+use crate::react_compiler_utils::ordered_map::ArenaOrderedSet;
 use rustc_hash::FxHashMap;
 use rustc_hash::FxHashSet;
 
@@ -33,7 +35,7 @@ use crate::react_compiler_hir::visitors::each_terminal_operand_ids;
 use crate::react_compiler_lowering::get_reverse_postordered_blocks;
 use crate::react_compiler_lowering::mark_instruction_ids;
 use crate::react_compiler_lowering::mark_predecessors;
-use crate::react_compiler_utils::FxIndexMap;
+use crate::react_compiler_utils::OrderedMap;
 
 // =============================================================================
 // getScopes
@@ -45,8 +47,8 @@ fn get_scopes(func: &HirFunction, env: &Environment) -> Vec<ScopeId> {
     let mut scope_ids: FxHashSet<ScopeId> = FxHashSet::default();
 
     let mut visit_place = |identifier_id: IdentifierId| {
-        if let Some(scope_id) = env.identifiers[identifier_id.0 as usize].scope {
-            let range = &env.scopes[scope_id.0 as usize].range;
+        if let Some(scope_id) = env.identifiers[identifier_id].scope {
+            let range = &env.scopes[scope_id].range;
             if range.start != range.end {
                 scope_ids.insert(scope_id);
             }
@@ -55,7 +57,7 @@ fn get_scopes(func: &HirFunction, env: &Environment) -> Vec<ScopeId> {
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             // lvalues
             for id in each_instruction_lvalue_ids(instr) {
                 visit_place(id);
@@ -110,14 +112,14 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
 
     // Sort: ascending by start, descending by end for ties
     let mut items: Vec<ScopeId> = scope_ids;
-    items.sort_by(|a, b| {
-        let a_range = &env.scopes[a.0 as usize].range;
-        let b_range = &env.scopes[b.0 as usize].range;
-        let start_diff = a_range.start.0.cmp(&b_range.start.0);
+    items.sort_unstable_by(|a, b| {
+        let a_range = &env.scopes[*a].range;
+        let b_range = &env.scopes[*b].range;
+        let start_diff = a_range.start.cmp(&b_range.start);
         if start_diff != Ordering::Equal {
             return start_diff;
         }
-        b_range.end.0.cmp(&a_range.end.0)
+        b_range.end.cmp(&a_range.end)
     });
 
     let mut rewrites: Vec<TerminalRewriteInfo> = Vec::new();
@@ -125,15 +127,15 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     let mut active_items: Vec<ScopeId> = Vec::new();
 
     for &curr in &items {
-        let curr_start = env.scopes[curr.0 as usize].range.start;
-        let curr_end = env.scopes[curr.0 as usize].range.end;
+        let curr_start = env.scopes[curr].range.start;
+        let curr_end = env.scopes[curr].range.end;
 
         // Pop active items that are disjoint with current
         let mut j = active_items.len();
         while j > 0 {
             j -= 1;
             let maybe_parent = active_items[j];
-            let parent_end = env.scopes[maybe_parent.0 as usize].range.end;
+            let parent_end = env.scopes[maybe_parent].range.end;
             let disjoint = curr_start >= parent_end;
             let nested = curr_end <= parent_end;
             assert!(disjoint || nested, "Invalid nesting in program blocks or scopes");
@@ -141,7 +143,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
                 // Exit this scope
                 let fallthrough_id =
                     *fallthroughs.get(&maybe_parent).expect("Expected scope to exist");
-                let end_instr_id = env.scopes[maybe_parent.0 as usize].range.end;
+                let end_instr_id = env.scopes[maybe_parent].range.end;
                 rewrites
                     .push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
                 active_items.truncate(j);
@@ -153,7 +155,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
         // Enter scope
         let block_id = env.next_block_id();
         let fallthrough_id = env.next_block_id();
-        let start_instr_id = env.scopes[curr.0 as usize].range.start;
+        let start_instr_id = env.scopes[curr].range.start;
         rewrites.push(TerminalRewriteInfo::StartScope {
             block_id,
             fallthrough_id,
@@ -167,7 +169,7 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
     // Exit remaining active items
     while let Some(curr) = active_items.pop() {
         let fallthrough_id = *fallthroughs.get(&curr).expect("Expected scope to exist");
-        let end_instr_id = env.scopes[curr.0 as usize].range.end;
+        let end_instr_id = env.scopes[curr].range.end;
         rewrites.push(TerminalRewriteInfo::EndScope { instr_id: end_instr_id, fallthrough_id });
     }
 
@@ -178,18 +180,19 @@ fn collect_scope_rewrites(func: &HirFunction, env: &mut Environment) -> Vec<Term
 // handleRewrite
 // =============================================================================
 
-struct RewriteContext {
+struct RewriteContext<'a> {
     next_block_id: BlockId,
     next_preds: Vec<BlockId>,
     instr_slice_idx: usize,
-    rewrites: Vec<BasicBlock>,
+    rewrites: Vec<BasicBlock<'a>>,
+    alloc: &'a Allocator,
 }
 
-fn handle_rewrite(
+fn handle_rewrite<'a>(
     terminal_info: &TerminalRewriteInfo,
     idx: usize,
-    source_block: &BasicBlock,
-    context: &mut RewriteContext,
+    source_block: &BasicBlock<'a>,
+    context: &mut RewriteContext<'a>,
 ) {
     let terminal: Terminal = match terminal_info {
         TerminalRewriteInfo::StartScope { block_id, fallthrough_id, instr_id, scope_id } => {
@@ -210,18 +213,28 @@ fn handle_rewrite(
     };
 
     let curr_block_id = context.next_block_id;
-    let mut preds = FxIndexSet::default();
+    let mut preds = ArenaOrderedSet::new_in(context.alloc);
     for &p in &context.next_preds {
         preds.insert(p);
     }
 
+    // Only the first rewrite should reuse source block phis
+    let phis = if context.rewrites.is_empty() {
+        source_block.phis.clone_in(context.alloc)
+    } else {
+        ArenaVec::new_in(&context.alloc)
+    };
+    let instructions = ArenaVec::from_iter_in(
+        source_block.instructions[context.instr_slice_idx..idx].iter().copied(),
+        &context.alloc,
+    );
+
     context.rewrites.push(BasicBlock {
         kind: source_block.kind,
         id: curr_block_id,
-        instructions: source_block.instructions[context.instr_slice_idx..idx].to_vec(),
+        instructions,
         preds,
-        // Only the first rewrite should reuse source block phis
-        phis: if context.rewrites.is_empty() { source_block.phis.clone() } else { Vec::new() },
+        phis,
         terminal,
     });
 
@@ -243,13 +256,16 @@ fn handle_rewrite(
 /// to fallthroughs. Given a function whose reactive scope ranges have been
 /// correctly aligned and merged, this pass rewrites blocks to introduce
 /// ReactiveScopeTerminals and their fallthrough blocks.
-pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Environment) {
+pub fn build_reactive_scope_terminals_hir<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+) {
     // Step 1: Collect rewrites
     let mut queued_rewrites = collect_scope_rewrites(func, env);
 
     // Step 2: Apply rewrites by splitting blocks
     let mut rewritten_final_blocks: FxHashMap<BlockId, BlockId> = FxHashMap::default();
-    let mut next_blocks: FxIndexMap<BlockId, BasicBlock> = FxIndexMap::default();
+    let mut next_blocks: OrderedMap<BlockId, BasicBlock<'a>> = OrderedMap::default();
 
     // Reverse so we can pop from the end while traversing in ascending order
     queued_rewrites.reverse();
@@ -261,13 +277,14 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
             rewrites: Vec::new(),
             next_preds: preds_vec,
             instr_slice_idx: 0,
+            alloc: env.allocator,
         };
 
         // Handle queued terminal rewrites at their nearest instruction ID
         for i in 0..block.instructions.len() + 1 {
             let instr_id = if i < block.instructions.len() {
                 let instr_idx = block.instructions[i];
-                func.instructions[instr_idx.0 as usize].id
+                func.instructions[instr_idx.index()].id
             } else {
                 block.terminal.evaluation_order()
             };
@@ -284,7 +301,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
         }
 
         if !context.rewrites.is_empty() {
-            let mut final_preds = FxIndexSet::default();
+            let mut final_preds = ArenaOrderedSet::new_in(env.allocator);
             for &p in &context.next_preds {
                 final_preds.insert(p);
             }
@@ -292,9 +309,12 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
                 id: context.next_block_id,
                 kind: block.kind,
                 preds: final_preds,
-                terminal: block.terminal.clone(),
-                instructions: block.instructions[context.instr_slice_idx..].to_vec(),
-                phis: Vec::new(),
+                terminal: block.terminal.clone_in(env.allocator),
+                instructions: ArenaVec::from_iter_in(
+                    block.instructions[context.instr_slice_idx..].iter().copied(),
+                    &env.allocator,
+                ),
+                phis: ArenaVec::new_in(&env.allocator),
             };
             let final_block_id = final_block.id;
             context.rewrites.push(final_block);
@@ -303,7 +323,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
             }
             rewritten_final_blocks.insert(block.id, final_block_id);
         } else {
-            next_blocks.insert(block.id, block.clone());
+            next_blocks.insert(block.id, block.clone_in(env.allocator));
         }
     }
 
@@ -328,7 +348,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HirFunction, env: &mut Envi
     }
 
     // Step 4: Fixup HIR to restore RPO, correct predecessors, renumber instructions
-    func.body.blocks = get_reverse_postordered_blocks(&func.body);
+    func.body.blocks = get_reverse_postordered_blocks(&func.body, env.allocator);
     mark_predecessors(&mut func.body);
     mark_instruction_ids(&mut func.body, &mut func.instructions);
 
@@ -356,8 +376,7 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
     // reference as scope.range see the update automatically. We simulate
     // this by only syncing identifiers whose mutableRange matches the
     // scope's pre-update range.
-    let original_scope_ranges: Vec<MutableRange> =
-        env.scopes.iter().map(|s| s.range.clone()).collect();
+    let original_scope_ranges: Vec<MutableRange> = env.scopes.iter().map(|s| s.range).collect();
 
     for (_block_id, block) in &func.body.blocks {
         match &block.terminal {
@@ -365,12 +384,12 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
             | Terminal::PrunedScope { fallthrough, scope, id, .. } => {
                 let fallthrough_block = func.body.blocks.get(fallthrough).unwrap();
                 let first_id = if !fallthrough_block.instructions.is_empty() {
-                    func.instructions[fallthrough_block.instructions[0].0 as usize].id
+                    func.instructions[fallthrough_block.instructions[0].index()].id
                 } else {
                     fallthrough_block.terminal.evaluation_order()
                 };
-                env.scopes[scope.0 as usize].range.start = *id;
-                env.scopes[scope.0 as usize].range.end = first_id;
+                env.scopes[*scope].range.start = *id;
+                env.scopes[*scope].range.end = first_id;
             }
             _ => {}
         }
@@ -386,9 +405,9 @@ fn fix_scope_and_identifier_ranges(func: &HirFunction, env: &mut Environment) {
     // not the root scope's range — so they should NOT be synced here.
     for ident in &mut env.identifiers {
         if let Some(scope_id) = ident.scope {
-            let original = &original_scope_ranges[scope_id.0 as usize];
+            let original = &original_scope_ranges[scope_id.index()];
             if ident.mutable_range.same_range(original) {
-                let scope_range = &env.scopes[scope_id.0 as usize].range;
+                let scope_range = &env.scopes[scope_id].range;
                 ident.mutable_range.start = scope_range.start;
                 ident.mutable_range.end = scope_range.end;
             }

@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": ["src/**/*.{js,ts"],
+      "options": {
+        "semi": false
+      }
+    }
+  ]
+}

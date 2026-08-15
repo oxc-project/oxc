@@ -846,4 +846,17 @@ mod tests {
 
         assert_eq!(drops(), &[10, 20, 31, 40, 50]);
     }
+
+    /// `Stack<T>` is `Send` / `Sync` only if `T` is.
+    #[test]
+    fn send_sync() {
+        use std::rc::Rc;
+
+        use crate::types::implements;
+
+        assert!(implements!(Stack<u32>: Send));
+        assert!(implements!(Stack<u32>: Sync));
+        assert!(implements!(Stack<Rc<u32>>: !Send));
+        assert!(implements!(Stack<Rc<u32>>: !Sync));
+    }
 }

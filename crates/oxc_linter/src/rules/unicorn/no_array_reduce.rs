@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoArrayReduce,
     unicorn,
     restriction,
+    pending,
     config = NoArrayReduce,
     version = "0.0.19",
     short_description = "Disallow `Array#reduce()` and `Array#reduceRight()`.",
@@ -110,14 +111,19 @@ fn is_simple_operation(node: &CallExpression) -> bool {
     let Some(callback_arg) = node.arguments.first() else {
         return false;
     };
+    if let Argument::ArrowFunctionExpression(callback) = callback_arg
+        && let Some(expression) = callback.get_expression()
+    {
+        return matches!(expression, Expression::BinaryExpression(_));
+    }
     let function_body = match callback_arg {
         // `array.reduce((accumulator, element) => accumulator + element)`
-        Argument::ArrowFunctionExpression(callback) => &callback.body,
+        Argument::ArrowFunctionExpression(callback) => callback.get_function_body().unwrap(),
         Argument::FunctionExpression(callback) => {
             let Some(body) = &callback.body else {
                 return false;
             };
-            body
+            body.as_ref()
         }
         _ => return false,
     };

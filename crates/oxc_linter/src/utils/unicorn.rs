@@ -1,3 +1,5 @@
+use smallvec::SmallVec;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -18,9 +20,12 @@ use crate::LintContext;
 mod boolean;
 pub use boolean::*;
 
+mod optional_chain;
+pub use optional_chain::*;
+
 // Built-in Error constructors
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
-pub const BUILT_IN_ERRORS: [&str; 9] = [
+pub const BUILT_IN_ERRORS: [&str; 10] = [
     "Error",
     "EvalError",
     "RangeError",
@@ -30,6 +35,7 @@ pub const BUILT_IN_ERRORS: [&str; 9] = [
     "URIError",
     "InternalError",
     "AggregateError",
+    "SuppressedError",
 ];
 
 /// Returns `true` when `ident` resolves to any import binding from `module_name`.
@@ -439,7 +445,8 @@ where
     P: IntoIterator<Item = S>,
     S: AsRef<[&'a str]>,
 {
-    let mut path = Vec::new();
+    // Member chains are short in practice; keep the segments on the stack.
+    let mut path: SmallVec<[&str; 4]> = SmallVec::new();
 
     while let Some(member_expr) = expr.as_member_expression() {
         let MemberExpression::StaticMemberExpression(static_mem_expr) = member_expr else {

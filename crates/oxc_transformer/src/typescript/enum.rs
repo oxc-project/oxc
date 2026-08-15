@@ -1,8 +1,8 @@
 use std::cell::Cell;
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitJsMut, walk_js_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_semantic::{ScopeFlags, ScopeId};
 use oxc_span::{SPAN, Span};
@@ -42,9 +42,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum {
                     *stmt = new_stmt;
                 }
             }
-            Statement::ExportNamedDeclaration(export_decl) => {
+            Statement::ExportDeclaration(export_decl) => {
                 let span = export_decl.span;
-                if let Some(Declaration::TSEnumDeclaration(decl)) = &mut export_decl.declaration
+                if let Declaration::TSEnumDeclaration(decl) = &mut export_decl.declaration
                     && let Some(new_stmt) = Self::transform_ts_enum(decl, Some(span), ctx)
                 {
                     *stmt = new_stmt;
@@ -187,24 +187,12 @@ impl<'a> TypeScriptEnum {
         let id = param_binding.create_binding_pattern(ctx);
 
         // ((Foo) => {
-        let params = FormalParameter::new(
-            SPAN,
-            ArenaVec::new_in(ctx),
-            id,
-            NONE,
-            NONE,
-            false,
-            None,
-            false,
-            false,
-            ctx,
-        );
-        let params = ArenaVec::from_value_in(params, ctx);
+        let param = FormalParameter::new(SPAN, [], id, None, None, false, None, false, false, ctx);
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
-            params,
-            NONE,
+            [param],
+            None,
             ctx,
         );
 
@@ -222,7 +210,7 @@ impl<'a> TypeScriptEnum {
             ctx,
         );
         let span = decl.span;
-        let body = FunctionBody::boxed(span, ArenaVec::new_in(ctx), statements, ctx);
+        let body = FunctionBody::boxed(span, [], statements, ctx);
         let callee = Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             span,
             FunctionType::FunctionExpression,
@@ -230,10 +218,10 @@ impl<'a> TypeScriptEnum {
             false,
             false,
             false,
-            NONE,
-            NONE,
+            None,
+            None,
             params,
-            NONE,
+            None,
             Some(body),
             func_scope_id,
             false,
@@ -250,8 +238,8 @@ impl<'a> TypeScriptEnum {
 
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
-            let object_arg = Argument::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
-            ArenaVec::from_value_in(object_arg, ctx)
+            let object_arg = Argument::new_object_expression(SPAN, [], ctx);
+            [object_arg]
         } else {
             // }(Foo || {});
             let op = LogicalOperator::Or;
@@ -261,15 +249,15 @@ impl<'a> TypeScriptEnum {
                 enum_symbol_id,
                 ReferenceFlags::Read,
             );
-            let right = Expression::new_object_expression(SPAN, ArenaVec::new_in(ctx), ctx);
+            let right = Expression::new_object_expression(SPAN, [], ctx);
             let argument = Argument::new_logical_expression(span, left, op, right, ctx);
-            ArenaVec::from_value_in(argument, ctx)
+            [argument]
         };
 
         let call_expression = Expression::new_call_expression_with_pure(
             span,
             callee,
-            NONE,
+            None,
             arguments,
             false,
             !has_potential_side_effect,
@@ -307,27 +295,16 @@ impl<'a> TypeScriptEnum {
                 enum_symbol_id,
                 ctx,
             );
-            let decl = VariableDeclarator::new(
-                span,
-                kind,
-                binding,
-                NONE,
-                Some(call_expression),
-                false,
-                ctx,
-            );
-            ArenaVec::from_value_in(decl, ctx)
+            let decl =
+                VariableDeclarator::new(span, binding, None, Some(call_expression), false, ctx);
+            [decl]
         };
         let variable_declaration =
             Declaration::new_variable_declaration(span, kind, decls, false, ctx);
 
         let stmt = if let Some(export_span) = export_span {
-            let declaration = ExportNamedDeclaration::boxed_plain_declaration(
-                export_span,
-                variable_declaration,
-                ctx,
-            );
-            Statement::ExportNamedDeclaration(declaration)
+            let declaration = ExportDeclaration::boxed(export_span, variable_declaration, ctx);
+            Statement::ExportDeclaration(declaration)
         } else {
             Statement::from(variable_declaration)
         };
@@ -710,7 +687,7 @@ impl IdentifierReferenceRename<'_, '_> {
     }
 }
 
-impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
+impl<'a> VisitJsMut<'a> for IdentifierReferenceRename<'a, '_> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         self.scope_stack.push(scope_id.get().unwrap());
     }
@@ -730,7 +707,7 @@ impl<'a> VisitMut<'a> for IdentifierReferenceRename<'a, '_> {
                 .into();
             }
             _ => {
-                walk_mut::walk_expression(self, expr);
+                walk_js_mut::walk_expression(self, expr);
             }
         }
     }

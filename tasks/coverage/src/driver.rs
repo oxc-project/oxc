@@ -9,7 +9,7 @@ use oxc::{
         Comment,
         ast::{Program, RegExpLiteral},
     },
-    ast_visit::{Visit, walk},
+    ast_visit::{VisitJs, walk_js},
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::{Diagnostics, OxcDiagnostic},
     minifier::CompressOptions,
@@ -185,7 +185,7 @@ impl<'a> CheckASTNodes<'a> {
     }
 }
 
-impl<'a> Visit<'a> for CheckASTNodes<'a> {
+impl<'a> VisitJs<'a> for CheckASTNodes<'a> {
     // TODO: This is too slow
     // fn visit_span(&mut self, span: &Span) {
     // let Span { start, end, .. } = span;
@@ -198,7 +198,7 @@ impl<'a> Visit<'a> for CheckASTNodes<'a> {
 
     /// Idempotency test for printing regular expressions.
     fn visit_reg_exp_literal(&mut self, literal: &RegExpLiteral<'a>) {
-        walk::walk_reg_exp_literal(self, literal);
+        walk_js::walk_reg_exp_literal(self, literal);
 
         let Some(pattern) = &literal.regex.pattern.pattern else {
             return;

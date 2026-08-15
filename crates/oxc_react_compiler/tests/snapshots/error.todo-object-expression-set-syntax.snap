@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-object-expression-set-
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Handle set functions in ObjectExpression", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(64), length: 37 }, primary: false }]), help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Todo: (BuildHIR::lowerExpression) Handle set functions in ObjectExpression", labels: [LabeledSpan { label: None, span: Span { start: 64, end: 101 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

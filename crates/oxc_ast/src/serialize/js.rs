@@ -1,13 +1,199 @@
+use std::cell::Cell;
+
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     Concat2, ConcatElement, ESTree, JsonSafeString, SequenceSerializer, Serializer,
     StructSerializer,
 };
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
+use oxc_str::{Ident, static_ident};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
 use super::{EmptyArray, Null};
+
+/// Preserve ESTree's nullable `superClass` field while the Rust AST groups class heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "Expression | null",
+    raw_deser = "DESER[Option<Expression>](POS_OFFSET.heritage)"
+)]
+pub struct ClassSuperClass<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperClass<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_expression().serialize(serializer);
+    }
+}
+
+/// Preserve TS-ESTree's nullable `superTypeArguments` field while the Rust AST groups class
+/// heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeParameterInstantiation | null",
+    raw_deser = "THIS.superClass === null ? null : DESER[Option<Box<TSTypeParameterInstantiation>>](POS_OFFSET.heritage + (POS_OFFSET<ClassHeritage>.type_arguments - pos))"
+)]
+#[ts]
+pub struct ClassSuperTypeArguments<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperTypeArguments<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_type_arguments().serialize(serializer);
+    }
+}
+
+// ----------------------------------------
+// Meta properties
+// ----------------------------------------
+
+/// Serializer for `meta` field of [`ImportMeta`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `import` identifier with span covering first 6 bytes of the [`ImportMeta`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const importStart = DESER[i32](POS_OFFSET.span.start);
+        const importEnd = DESER[i32](POS_OFFSET.span.end) === 0 ? 0 : importStart + 6;
+        const importIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'import',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: importStart,
+            end: importEnd,
+            ...(RANGE && { range: [importStart, importEnd] }),
+            ...(PARENT && { parent }),
+        };
+        importIdent
+    "
+)]
+pub struct ImportMetaMeta<'b>(pub &'b ImportMeta);
+
+impl ESTree for ImportMetaMeta<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.end = span.start + 6;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("import"));
+    }
+}
+
+/// Serializer for `property` field of [`ImportMeta`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `meta` identifier with span covering last 4 bytes of the [`ImportMeta`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const metaEnd = DESER[i32](POS_OFFSET.span.end);
+        const metaStart = metaEnd === 0 ? 0 : metaEnd - 4;
+        const metaIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'meta',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: metaStart,
+            end: metaEnd,
+            ...(RANGE && { range: [metaStart, metaEnd] }),
+            ...(PARENT && { parent }),
+        };
+        metaIdent
+    "
+)]
+pub struct ImportMetaProperty<'b>(pub &'b ImportMeta);
+
+impl ESTree for ImportMetaProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.start = span.end - 4;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("meta"));
+    }
+}
+
+/// Serializer for `meta` field of [`NewTarget`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `new` identifier with span covering first 3 bytes of the [`NewTarget`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const newStart = DESER[i32](POS_OFFSET.span.start);
+        const newEnd = DESER[i32](POS_OFFSET.span.end) === 0 ? 0 : newStart + 3;
+        const newIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'new',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: newStart,
+            end: newEnd,
+            ...(RANGE && { range: [newStart, newEnd] }),
+            ...(PARENT && { parent }),
+        };
+        newIdent
+    "
+)]
+pub struct NewTargetMeta<'b>(pub &'b NewTarget);
+
+impl ESTree for NewTargetMeta<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.end = span.start + 3;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("new"));
+    }
+}
+
+/// Serializer for `property` field of [`NewTarget`].
+///
+/// Field does not exist in Oxc AST.
+/// In ESTree, is `target` identifier with span covering last 6 bytes of the [`NewTarget`].
+#[ast_meta]
+#[estree(
+    ts_type = "IdentifierName",
+    raw_deser = "
+        const targetEnd = DESER[i32](POS_OFFSET.span.end);
+        const targetStart = targetEnd === 0 ? 0 : targetEnd - 6;
+        const targetIdent = {
+            type: 'Identifier',
+            ...(IS_TS && { decorators: [] }),
+            name: 'target',
+            ...(IS_TS && { optional: false, typeAnnotation: null }),
+            start: targetStart,
+            end: targetEnd,
+            ...(RANGE && { range: [targetStart, targetEnd] }),
+            ...(PARENT && { parent }),
+        };
+        targetIdent
+    "
+)]
+pub struct NewTargetProperty<'b>(pub &'b NewTarget);
+
+impl ESTree for NewTargetProperty<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut span = self.0.span;
+        if span != SPAN {
+            span.start = span.end - 6;
+        }
+
+        serialize_meta_property_identifier(serializer, span, static_ident!("target"));
+    }
+}
+
+fn serialize_meta_property_identifier<S: Serializer>(serializer: S, span: Span, name: Ident<'_>) {
+    IdentifierName { node_id: Cell::new(NodeId::DUMMY), span, name }.serialize(serializer);
+}
 
 // ----------------------------------------
 // Binding patterns and function params
@@ -193,6 +379,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             };
             rest.argument = DESER[BindingPattern]( POS_OFFSET<FormalParameterRest>.rest.argument );
             if (IS_TS) {
+                rest.decorators = DESER[Vec<Decorator>](POS_OFFSET<FormalParameterRest>.decorators);
                 rest.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<FormalParameterRest>.type_annotation
                 );
@@ -232,7 +419,7 @@ impl ESTree for FormalParameterRest<'_> {
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("decorators", &rest.decorators);
         state.serialize_field("argument", &rest.rest.argument);
         state.serialize_ts_field("optional", &false);
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);
@@ -583,7 +770,7 @@ impl ESTree for ImportDeclarationSpecifiers<'_, '_> {
     }
 }
 
-// Serializers for `with_clause` field of `ImportDeclaration`, `ExportNamedDeclaration`,
+// Serializers for `with_clause` field of `ImportDeclaration`, `ExportFromDeclaration`,
 // and `ExportAllDeclaration` (which are renamed to `attributes` in ESTree AST).
 //
 // Serialize only the `with_entries` field of `WithClause`, and serialize `None` as empty array (`[]`).
@@ -619,15 +806,30 @@ impl ESTree for ImportDeclarationWithClause<'_, '_> {
         withClause === null ? [] : withClause.attributes
     "
 )]
-pub struct ExportNamedDeclarationWithClause<'a, 'b>(pub &'b ExportNamedDeclaration<'a>);
+pub struct ExportFromDeclarationWithClause<'a, 'b>(pub &'b ExportFromDeclaration<'a>);
 
-impl ESTree for ExportNamedDeclarationWithClause<'_, '_> {
+impl ESTree for ExportFromDeclarationWithClause<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         if let Some(with_clause) = &self.0.with_clause {
             with_clause.with_entries.serialize(serializer);
         } else {
             EmptyArray(()).serialize(serializer);
         }
+    }
+}
+
+/// Serializer for the derived `exportKind` field of [`ExportDeclaration`].
+#[ast_meta]
+#[estree(
+    ts_type = "ImportOrExportKind",
+    raw_deser = "(THIS.declaration.declare === true || THIS.declaration.type === 'TSTypeAliasDeclaration' || THIS.declaration.type === 'TSInterfaceDeclaration') ? 'type' : 'value'"
+)]
+#[ts]
+pub struct ExportDeclarationExportKind<'a, 'b>(pub &'b ExportDeclaration<'a>);
+
+impl ESTree for ExportDeclarationExportKind<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.export_kind().serialize(serializer);
     }
 }
 
@@ -655,31 +857,14 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // Misc
 // ----------------------------------------
 
-/// Serializer for `body` field of `ArrowFunctionExpression`.
-///
-/// Serialize as either an expression (if `expression` property is set),
-/// or a `BlockStatement` (if it's not).
+/// Serializer for the derived `expression` field of [`ArrowFunctionExpression`].
 #[ast_meta]
-#[estree(
-    ts_type = "FunctionBody | Expression",
-    raw_deser = "
-        let body = DESER[Box<FunctionBody>](POS_OFFSET.body);
-        if (THIS.expression === true) {
-            body = body.body[0].expression;
-            if (PARENT) body.parent = parent;
-        }
-        body
-    "
-)]
-pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
+#[estree(ts_type = "boolean", raw_deser = "uint8[POS_OFFSET.body] !== 64", raw_deser_inline)]
+pub struct ArrowFunctionExpressionExpression<'a>(pub &'a ArrowFunctionExpression<'a>);
 
-impl ESTree for ArrowFunctionExpressionBody<'_> {
+impl ESTree for ArrowFunctionExpressionExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(expression) = self.0.get_expression() {
-            expression.serialize(serializer);
-        } else {
-            self.0.body.serialize(serializer);
-        }
+        self.0.is_expression().serialize(serializer);
     }
 }
 

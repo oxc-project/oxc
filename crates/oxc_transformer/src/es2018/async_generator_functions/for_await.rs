@@ -1,7 +1,7 @@
 //! This module is responsible for transforming `for await` to `for` statement
 
 use oxc_allocator::{ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
@@ -89,7 +89,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         if !allow_multiple_statements {
             new_stmt = Statement::new_block_statement_with_scope_id(
                 SPAN,
-                ArenaVec::from_value_in(new_stmt, ctx),
+                [new_stmt],
                 parent_scope_id,
                 ctx,
             );
@@ -122,15 +122,10 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         let assignment_statement = match &mut stmt.left {
             ForStatementLeft::VariableDeclaration(variable) => {
                 // for await (let i of test)
+                let kind = variable.kind;
                 let mut declarator = variable.declarations.pop().unwrap();
                 declarator.init = Some(step_value);
-                Statement::new_variable_declaration(
-                    SPAN,
-                    declarator.kind,
-                    ArenaVec::from_value_in(declarator, ctx),
-                    false,
-                    ctx,
-                )
+                Statement::new_variable_declaration(SPAN, kind, [declarator], false, ctx)
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
@@ -232,54 +227,42 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         items.push(Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    iterator_abrupt_completion.create_binding_pattern(ctx),
-                    NONE,
-                    Some(Expression::new_boolean_literal(SPAN, false, ctx)),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                iterator_abrupt_completion.create_binding_pattern(ctx),
+                None,
+                Some(Expression::new_boolean_literal(SPAN, false, ctx)),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         ));
         items.push(Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    iterator_had_error_key.create_binding_pattern(ctx),
-                    NONE,
-                    Some(Expression::new_boolean_literal(SPAN, false, ctx)),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                iterator_had_error_key.create_binding_pattern(ctx),
+                None,
+                Some(Expression::new_boolean_literal(SPAN, false, ctx)),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         ));
         items.push(Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    iterator_error_key.create_binding_pattern(ctx),
-                    NONE,
-                    None,
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                iterator_error_key.create_binding_pattern(ctx),
+                None,
+                None,
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         ));
@@ -296,29 +279,24 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 Some(ForStatementInit::new_variable_declaration(
                     SPAN,
                     VariableDeclarationKind::Var,
-                    ArenaVec::from_array_in(
-                        [
-                            VariableDeclarator::new(
-                                SPAN,
-                                VariableDeclarationKind::Var,
-                                iterator_key.create_binding_pattern(ctx),
-                                NONE,
-                                Some(iterator),
-                                false,
-                                ctx,
-                            ),
-                            VariableDeclarator::new(
-                                SPAN,
-                                VariableDeclarationKind::Var,
-                                step_key.create_binding_pattern(ctx),
-                                NONE,
-                                None,
-                                false,
-                                ctx,
-                            ),
-                        ],
-                        ctx,
-                    ),
+                    [
+                        VariableDeclarator::new(
+                            SPAN,
+                            iterator_key.create_binding_pattern(ctx),
+                            None,
+                            Some(iterator),
+                            false,
+                            ctx,
+                        ),
+                        VariableDeclarator::new(
+                            SPAN,
+                            step_key.create_binding_pattern(ctx),
+                            None,
+                            None,
+                            false,
+                            ctx,
+                        ),
+                    ],
                     false,
                     ctx,
                 )),
@@ -348,8 +326,8 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                                                 false,
                                                 ctx,
                                             ),
-                                            NONE,
-                                            ArenaVec::new_in(ctx),
+                                            None,
+                                            [],
                                             false,
                                             ctx,
                                         ),
@@ -390,12 +368,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 ctx,
             );
 
-            BlockStatement::new_with_scope_id(
-                SPAN,
-                ArenaVec::from_value_in(for_statement, ctx),
-                block_scope_id,
-                ctx,
-            )
+            BlockStatement::boxed_with_scope_id(SPAN, [for_statement], block_scope_id, ctx)
         };
 
         let catch_clause = {
@@ -406,39 +379,36 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );
-            Some(CatchClause::new_with_scope_id(
+            Some(CatchClause::boxed_with_scope_id(
                 SPAN,
-                Some(CatchParameter::new(SPAN, err_ident.create_binding_pattern(ctx), NONE, ctx)),
+                Some(CatchParameter::new(SPAN, err_ident.create_binding_pattern(ctx), None, ctx)),
                 {
-                    BlockStatement::new_with_scope_id(
+                    BlockStatement::boxed_with_scope_id(
                         SPAN,
-                        ArenaVec::from_array_in(
-                            [
-                                Statement::new_expression_statement(
+                        [
+                            Statement::new_expression_statement(
+                                SPAN,
+                                Expression::new_assignment_expression(
                                     SPAN,
-                                    Expression::new_assignment_expression(
-                                        SPAN,
-                                        AssignmentOperator::Assign,
-                                        iterator_had_error_key.create_write_target(ctx),
-                                        Expression::new_boolean_literal(SPAN, true, ctx),
-                                        ctx,
-                                    ),
+                                    AssignmentOperator::Assign,
+                                    iterator_had_error_key.create_write_target(ctx),
+                                    Expression::new_boolean_literal(SPAN, true, ctx),
                                     ctx,
                                 ),
-                                Statement::new_expression_statement(
+                                ctx,
+                            ),
+                            Statement::new_expression_statement(
+                                SPAN,
+                                Expression::new_assignment_expression(
                                     SPAN,
-                                    Expression::new_assignment_expression(
-                                        SPAN,
-                                        AssignmentOperator::Assign,
-                                        iterator_error_key.create_write_target(ctx),
-                                        err_ident.create_read_expression(ctx),
-                                        ctx,
-                                    ),
+                                    AssignmentOperator::Assign,
+                                    iterator_error_key.create_write_target(ctx),
+                                    err_ident.create_read_expression(ctx),
                                     ctx,
                                 ),
-                            ],
-                            ctx,
-                        ),
+                                ctx,
+                            ),
+                        ],
                         block_scope_id,
                         ctx,
                     )
@@ -479,31 +449,28 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                         ),
                         Statement::new_block_statement_with_scope_id(
                             SPAN,
-                            ArenaVec::from_value_in(
-                                Statement::new_expression_statement(
+                            [Statement::new_expression_statement(
+                                SPAN,
+                                Expression::new_await_expression(
                                     SPAN,
-                                    Expression::new_await_expression(
+                                    Expression::new_call_expression(
                                         SPAN,
-                                        Expression::new_call_expression(
+                                        Expression::new_static_member_expression(
                                             SPAN,
-                                            Expression::new_static_member_expression(
-                                                SPAN,
-                                                iterator_key.create_read_expression(ctx),
-                                                IdentifierName::new(SPAN, "return", ctx),
-                                                false,
-                                                ctx,
-                                            ),
-                                            NONE,
-                                            ArenaVec::new_in(ctx),
+                                            iterator_key.create_read_expression(ctx),
+                                            IdentifierName::new(SPAN, "return", ctx),
                                             false,
                                             ctx,
                                         ),
+                                        None,
+                                        [],
+                                        false,
                                         ctx,
                                     ),
                                     ctx,
                                 ),
                                 ctx,
-                            ),
+                            )],
                             if_block_scope_id,
                             ctx,
                         ),
@@ -511,9 +478,9 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                         ctx,
                     )
                 };
-                let block = BlockStatement::new_with_scope_id(
+                let block = BlockStatement::boxed_with_scope_id(
                     SPAN,
-                    ArenaVec::from_value_in(if_statement, ctx),
+                    [if_statement],
                     try_block_scope_id,
                     ctx,
                 );
@@ -528,14 +495,11 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                             iterator_had_error_key.create_read_expression(ctx),
                             Statement::new_block_statement_with_scope_id(
                                 SPAN,
-                                ArenaVec::from_value_in(
-                                    Statement::new_throw_statement(
-                                        SPAN,
-                                        iterator_error_key.create_read_expression(ctx),
-                                        ctx,
-                                    ),
+                                [Statement::new_throw_statement(
+                                    SPAN,
+                                    iterator_error_key.create_read_expression(ctx),
                                     ctx,
-                                ),
+                                )],
                                 if_block_scope_id,
                                 ctx,
                             ),
@@ -543,22 +507,13 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                             ctx,
                         )
                     };
-                    BlockStatement::new_with_scope_id(
-                        SPAN,
-                        ArenaVec::from_value_in(if_statement, ctx),
-                        finally_scope_id,
-                        ctx,
-                    )
+                    BlockStatement::boxed_with_scope_id(SPAN, [if_statement], finally_scope_id, ctx)
                 };
-                Statement::new_try_statement(SPAN, block, NONE, Some(finally), ctx)
+                Statement::new_try_statement(SPAN, block, None, Some(finally), ctx)
             };
 
-            let block_statement = BlockStatement::new_with_scope_id(
-                SPAN,
-                ArenaVec::from_value_in(try_statement, ctx),
-                finally_scope_id,
-                ctx,
-            );
+            let block_statement =
+                BlockStatement::boxed_with_scope_id(SPAN, [try_statement], finally_scope_id, ctx);
             Some(block_statement)
         };
 

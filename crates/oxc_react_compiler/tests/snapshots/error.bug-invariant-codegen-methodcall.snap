@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.bug-invariant-codegen-metho
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: [Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression", labels: One([LabeledSpan { label: Some("Got: 'Identifier'"), span: SourceSpan { offset: SourceOffset(75), length: 10 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Invariant: [Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression", labels: [LabeledSpan { label: Some("Got: 'Identifier'"), span: Span { start: 75, end: 85 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

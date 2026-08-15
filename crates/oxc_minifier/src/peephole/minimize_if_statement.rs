@@ -1,4 +1,4 @@
-use oxc_allocator::{ArenaVec, TakeIn};
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
 use oxc_semantic::ScopeFlags;
@@ -127,14 +127,13 @@ impl<'a> PeepholeOptimizations {
     /// Wrap to avoid ambiguous else.
     /// `if (foo) if (bar) baz else quaz` ->  `if (foo) { if (bar) baz else quaz }`
     fn wrap_to_avoid_ambiguous_else(if_stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Statement::IfStatement(if2) = &mut if_stmt.consequent
-            && if2.consequent.is_jump_statement()
+        if let Statement::IfStatement(if2) = &if_stmt.consequent
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
             let new_consequent = Statement::new_block_statement_with_scope_id(
                 if_stmt.consequent.span(),
-                ArenaVec::from_value_in(if_stmt.consequent.take_in(ctx), ctx),
+                [if_stmt.consequent.take_in(ctx)],
                 scope_id,
                 ctx,
             );

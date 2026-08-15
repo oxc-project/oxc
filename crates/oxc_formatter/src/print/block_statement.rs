@@ -1,11 +1,12 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Buffer;
 
 use super::FormatWrite;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Buffer, prelude::*},
+    formatter::prelude::*,
     write,
 };
 
@@ -79,7 +80,8 @@ fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
         | AstNodes::ForStatement(_)
         | AstNodes::WhileStatement(_)
         | AstNodes::DoWhileStatement(_)
-        | AstNodes::TSModuleDeclaration(_)
+        | AstNodes::TSExternalModuleDeclaration(_)
+        | AstNodes::TSNamespaceDeclaration(_)
         | AstNodes::TSGlobalDeclaration(_) => false,
         AstNodes::CatchClause(catch) => {
             // prettier collapse the catch block when it don't have `finalizer`, insert a new line when it has `finalizer`

@@ -2,7 +2,7 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, IsInt32OrUint32},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ReferenceFlags;
@@ -65,11 +65,27 @@ impl<'a> PeepholeOptimizations {
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
     //  ^^^^^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_boolean()` is `true`.
-    // `x >> +y !== 0` -> `x >> +y`
-    //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
+    // `x >> +y !== 0` -> `!!(x >> +y)`
+    //  ^^^^^^^ `e.left.is_int32_or_uint32(ctx)` is `true`.
     pub fn minimize_binary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
         if !e.operator.is_equality() {
+            return;
+        }
+        // `NaN == 0` and `!NaN` differ, so require proof that the left side is a non-NaN Number.
+        if e.right.is_number_0() && e.left.is_int32_or_uint32(ctx) {
+            let argument = e.left.take_in(ctx);
+            let mut new_expr =
+                Expression::new_unary_expression(e.span, UnaryOperator::LogicalNot, argument, ctx);
+            if matches!(e.operator, BinaryOperator::Inequality | BinaryOperator::StrictInequality) {
+                new_expr = Expression::new_unary_expression(
+                    e.span,
+                    UnaryOperator::LogicalNot,
+                    new_expr,
+                    ctx,
+                );
+            }
+            ctx.replace_expression(expr, new_expr);
             return;
         }
         let left = e.left.value_type(ctx);
@@ -129,7 +145,9 @@ impl<'a> PeepholeOptimizations {
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return;
         }
-        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
+        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx)
+            && !e.left.may_have_side_effects(ctx)
+        {
             let new_left = Expression::new_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
@@ -140,7 +158,9 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_expression(&mut e.left, new_left);
             return;
         }
-        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
+        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx)
+            && !e.right.may_have_side_effects(ctx)
+        {
             let new_right = Expression::new_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },

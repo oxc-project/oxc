@@ -11,6 +11,10 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Ancestor::VariableDeclarationDeclarations(declaration) = ctx.parent() else {
+            unreachable!();
+        };
+        let declaration_kind = *declaration.kind();
         let BindingPattern::BindingIdentifier(ident) = &decl.id else { return };
         let Some(symbol_id) = ident.symbol_id.get() else { return };
         // Evaluate the initializer's constant once; reuse it for the value-context
@@ -22,10 +26,19 @@ impl<'a> PeepholeOptimizations {
         // `init_value`, which turns it into the `boolean_falsy` fact (see
         // `SymbolValue::boolean_falsy`).
         let falsy_init = init_constant.as_ref().is_some_and(Self::is_falsy_constant);
+        let declaration_in_body_statement_list =
+            !declaration_kind.is_var() || Self::is_declaration_in_body_statement_list(ctx);
         let value = if Self::is_for_statement_init(ctx) {
             // for-statement initializers have their value set by the for statement itself.
             None
-        } else if decl.kind.is_var() && !Self::is_hoisted_var_inlineable(decl, symbol_id, ctx) {
+        } else if declaration_kind.is_var()
+            && !Self::is_hoisted_var_inlineable(
+                decl,
+                symbol_id,
+                declaration_in_body_statement_list,
+                ctx,
+            )
+        {
             // `var` is hoisted: reads before the initializer line see `undefined`.
             // Skip unless the safety predicate proves no such read exists.
             None
@@ -33,8 +46,14 @@ impl<'a> PeepholeOptimizations {
             // No initializer hoists to `undefined`; otherwise reuse the constant.
             decl.init.as_ref().map_or(Some(ConstantValue::Undefined), |_| init_constant)
         };
-        let kind = decl.init.as_ref().map_or(FreshValueKind::None, Self::fresh_value_kind);
-        ctx.init_value(symbol_id, value, kind, falsy_init);
+        // A conditional `var` may still hold its previous value or hoisted
+        // `undefined`, so its initializer alone cannot prove the binding fresh.
+        let kind = if declaration_in_body_statement_list {
+            decl.init.as_ref().map_or(FreshValueKind::None, Self::fresh_value_kind)
+        } else {
+            FreshValueKind::None
+        };
+        ctx.init_value(symbol_id, value, kind, falsy_init, decl.init.is_none());
     }
 
     /// A `ConstantValue` that coerces to `false` (`false`, `0`/`-0`/`NaN`, `""`,
@@ -49,10 +68,28 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether a declaration is a direct item in the current body rather than
+    /// nested in another statement position. Other positions are rejected
+    /// conservatively: in particular, brace-less conditional bodies carry no
+    /// scope that could reveal that the initializer is optional (#24531).
+    fn is_declaration_in_body_statement_list(ctx: &TraverseCtx<'a>) -> bool {
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                Ancestor::VariableDeclarationDeclarations(_)
+                | Ancestor::ExportDeclarationDeclaration(_) => {}
+                Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_) => return true,
+                _ => return false,
+            }
+        }
+        false
+    }
+
     /// Predicate for inlining a hoisted `var x = <literal>;`. True when no read
     /// can observe `x` as its hoisted `undefined`:
     /// - the declarator sits at the current body's top scope and that body is
     ///   still in its declarative prelude;
+    /// - the declaration is a direct body statement-list item rather than a
+    ///   conditional, loop, or other nested statement position;
     /// - it has an initializer (uninitialized `var foo;` would inline to
     ///   `undefined`, which churns existing tests for marginal benefit);
     /// - script-mode top-level vars are excluded (they alias the global object);
@@ -75,25 +112,29 @@ impl<'a> PeepholeOptimizations {
     fn is_hoisted_var_inlineable(
         decl: &VariableDeclarator<'a>,
         symbol_id: SymbolId,
+        declaration_in_body_statement_list: bool,
         ctx: &TraverseCtx<'a>,
     ) -> bool {
-        if decl.init.is_none() || Self::keep_top_level_var_in_script_mode(ctx) {
+        if decl.init.is_none()
+            || !declaration_in_body_statement_list
+            || Self::is_script_root_scope(ctx)
+        {
             return false;
         }
-        // `body_unsafe` is set by a preceding non-declarative statement, and the
-        // program root additionally starts unsafe when the module has loaders
-        // (see `enter_program`) — so this one check covers the cyclic-import gate.
-        let &(body_scope, body_unsafe) = ctx.state.body_unsafe_stack.last();
-        if body_unsafe || ctx.current_scope_id() != body_scope {
+        // `hoisted_var_inlining_unsafe` is set by a preceding non-declarative
+        // statement. The program root additionally starts unsafe when the module
+        // has loaders (see `enter_program`), covering the cyclic-import gate.
+        let frame = ctx.state.body_frames.last();
+        if frame.hoisted_var_inlining_unsafe || ctx.current_scope_id() != frame.scope_id {
             return false;
         }
         // At least one read, and every read crosses a function boundary.
         let mut reads = ctx.scoping().get_resolved_references(symbol_id).filter(|r| r.is_read());
         let Some(first) = reads.next() else { return false };
-        if !Self::read_crosses_function_boundary(first.scope_id(), body_scope, ctx) {
+        if !Self::read_crosses_function_boundary(first.scope_id(), frame.scope_id, ctx) {
             return false;
         }
-        reads.all(|read| Self::read_crosses_function_boundary(read.scope_id(), body_scope, ctx))
+        reads.all(|read| Self::read_crosses_function_boundary(read.scope_id(), frame.scope_id, ctx))
     }
 
     /// Classify the fresh value an expression creates (a value that cannot alias
@@ -146,7 +187,7 @@ impl<'a> PeepholeOptimizations {
         // Classes with `extends` may inherit static setters from the parent.
         // We can't statically determine the parent's static setters,
         // so conservatively mark as non-fresh.
-        if class.super_class.is_some() {
+        if class.heritage.is_some() {
             return true;
         }
         // Class-level decorators run arbitrary code during class creation and can
@@ -206,7 +247,7 @@ impl<'a> PeepholeOptimizations {
     ) {
         let Some(id) = id else { return };
         let Some(symbol_id) = id.symbol_id.get() else { return };
-        ctx.init_value(symbol_id, None, FreshValueKind::Function, false);
+        ctx.init_value(symbol_id, None, FreshValueKind::Function, false, false);
     }
 
     /// Initialize symbol value for class declarations.
@@ -220,7 +261,7 @@ impl<'a> PeepholeOptimizations {
         } else {
             FreshValueKind::Class
         };
-        ctx.init_value(symbol_id, None, kind, false);
+        ctx.init_value(symbol_id, None, kind, false, false);
     }
 
     fn is_for_statement_init(ctx: &TraverseCtx<'a>) -> bool {
@@ -231,24 +272,14 @@ impl<'a> PeepholeOptimizations {
         let Expression::Identifier(ident) = expr else { return };
         let reference_id = ident.reference_id();
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
-        let Some(symbol_value) = ctx.state.symbol_values.get_symbol_value(symbol_id) else {
+        let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
             return;
         };
-        // Skip if there are write references.
-        if symbol_value.write_references_count > 0 {
+        if !symbol_value.can_inline_initialized_constant() {
             return;
         }
-        let Some(cv) = &symbol_value.initialized_constant else { return };
-        if symbol_value.read_references_count == 1
-            || match cv {
-                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
-                ConstantValue::BigInt(_) => false,
-                ConstantValue::String(s) => s.len() <= 3,
-                ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
-            }
-        {
-            let new_expr = ctx.value_to_expr(expr.span(), cv.clone());
-            ctx.replace_expression(expr, new_expr);
-        }
+        let constant = symbol_value.initialized_constant.as_ref().unwrap();
+        let new_expr = ctx.value_to_expr(expr.span(), constant.clone());
+        ctx.replace_expression(expr, new_expr);
     }
 }
