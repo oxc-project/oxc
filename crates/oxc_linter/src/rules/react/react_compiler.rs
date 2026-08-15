@@ -362,10 +362,9 @@ function Component(props) {
             }",
             None,
         ),
-        // Capitalized built-in globals are not components.
+        // Typed capitalized built-in globals are not components.
         (
             "function Component(value) {
-                const bigInt = BigInt(value);
                 const boolean = Boolean(value);
                 const number = Number(value);
                 const string = String(value);
@@ -374,7 +373,6 @@ function Component(props) {
                 const object = Object(value);
                 const date = Date();
                 return <div>{String([
-                    bigInt,
                     boolean,
                     number,
                     string,
