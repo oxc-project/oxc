@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-eval-unsupported.js
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] UnsupportedSyntax: The 'eval' function is not supported", labels: [LabeledSpan { label: None, span: Span { start: 30, end: 34 }, primary: false }], help: Some("Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "UnsupportedSyntax: The 'eval' function is not supported", labels: [LabeledSpan { label: None, span: Span { start: 30, end: 34 }, primary: false }], help: Some("Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

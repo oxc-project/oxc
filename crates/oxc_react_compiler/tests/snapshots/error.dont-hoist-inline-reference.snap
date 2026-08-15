@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.dont-hoist-inline-reference
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: [hoisting] EnterSSA: Expected identifier to be defined before being used", labels: [LabeledSpan { label: None, span: Span { start: 67, end: 89 }, primary: false }], help: Some("Identifier x$1 is undefined"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Todo: [hoisting] EnterSSA: Expected identifier to be defined before being used", labels: [LabeledSpan { label: None, span: Span { start: 67, end: 89 }, primary: false }], help: Some("Identifier x$1 is undefined"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

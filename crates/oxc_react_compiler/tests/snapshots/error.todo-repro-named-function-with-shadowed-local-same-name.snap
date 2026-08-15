@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-repro-named-function-w
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: [InferMutationAliasingEffects] Expected value kind to be initialized", labels: [LabeledSpan { label: Some("this is uninitialized"), span: Span { start: 176, end: 185 }, primary: false }], help: Some("<unknown> hasErrors_0$15:TFunction"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Invariant: [InferMutationAliasingEffects] Expected value kind to be initialized", labels: [LabeledSpan { label: Some("this is uninitialized"), span: Span { start: 176, end: 185 }, primary: false }], help: Some("<unknown> hasErrors_0$15:TFunction"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

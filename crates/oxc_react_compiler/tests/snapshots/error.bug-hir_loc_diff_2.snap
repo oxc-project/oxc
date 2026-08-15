@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.bug-hir_loc_diff_2.js
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: [InferMutationAliasingEffects] Expected value kind to be initialized", labels: [LabeledSpan { label: Some("this is uninitialized"), span: Span { start: 1358, end: 1368 }, primary: false }], help: Some("<unknown> AdHocStore$15:TFunction"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Invariant: [InferMutationAliasingEffects] Expected value kind to be initialized", labels: [LabeledSpan { label: Some("this is uninitialized"), span: Span { start: 1358, end: 1368 }, primary: false }], help: Some("<unknown> AdHocStore$15:TFunction"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

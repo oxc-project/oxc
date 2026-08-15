@@ -4,7 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/gating/dynamic-gating-invalid-mul
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Gating: Multiple dynamic gating directives found", labels: [LabeledSpan { label: None, span: Span { start: 86, end: 190 }, primary: false }], help: Some("Expected a single directive but found [use memo if(getTrue), use memo if(getFalse)]"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Gating: Multiple dynamic gating directives found", labels: [LabeledSpan { label: None, span: Span { start: 86, end: 190 }, primary: false }], help: Some("Expected a single directive but found [use memo if(getTrue), use memo if(getFalse)]"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 // @dynamicGating:{"source":"shared-runtime"} @panicThreshold:"none" @loggerTestOnly
 function Foo() {

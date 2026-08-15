@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-reassign-local-vari
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot reassign variable in async function", labels: [LabeledSpan { label: Some("Cannot reassign `value`"), span: Span { start: 86, end: 91 }, primary: false }], help: Some("Reassigning a variable in an async function can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Immutability: Cannot reassign variable in async function", labels: [LabeledSpan { label: Some("Cannot reassign `value`"), span: Span { start: 86, end: 91 }, primary: false }], help: Some("Reassigning a variable in an async function can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

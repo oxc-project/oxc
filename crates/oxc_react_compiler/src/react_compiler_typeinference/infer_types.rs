@@ -17,7 +17,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::{IndexSlice, IndexVec};
 use oxc_str::{Ident, format_ident};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::{
     BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_MIXED_READONLY_ID,
@@ -1280,9 +1280,7 @@ impl<'a> Unifier<'a> {
 
         if let Type::Phi { ref operands } = ty {
             if operands.is_empty() {
-                return Err(
-                    ErrorCategory::Invariant.diagnostic("there should be at least one operand")
-                );
+                return Err(diagnostics::invariant_there_should_at_least_one_operand());
             }
 
             let mut candidate_type: Option<Type> = None;
@@ -1319,7 +1317,7 @@ impl<'a> Unifier<'a> {
                 self.substitutions.insert(v_id, resolved);
                 return Ok(());
             }
-            return Err(ErrorCategory::Invariant.diagnostic("cycle detected"));
+            return Err(diagnostics::invariant_cycle_detected());
         }
 
         self.substitutions.insert(v_id, ty);

@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.invalid-mis
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] MemoDependencies: Found missing memoization dependencies", labels: [LabeledSpan { label: Some("Missing dependency `object`"), span: Span { start: 227, end: 233 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "MemoDependencies: Found missing memoization dependencies", labels: [LabeledSpan { label: Some("Missing dependency `object`"), span: Span { start: 227, end: 233 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

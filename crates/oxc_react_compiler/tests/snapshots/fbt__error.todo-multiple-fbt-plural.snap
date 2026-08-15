@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/fbt/error.todo-multiple-fbt-plura
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support duplicate fbt tags", labels: [LabeledSpan { label: Some("Multiple `<fbt:plural>` tags found"), span: Span { start: 1311, end: 1321 }, primary: false }, LabeledSpan { label: Some("Multiple `<fbt:plural>` tags found"), span: Span { start: 1442, end: 1452 }, primary: false }], help: Some("Support `<fbt>` tags with multiple `<fbt:plural>` values"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Todo: Support duplicate fbt tags", labels: [LabeledSpan { label: Some("Multiple `<fbt:plural>` tags found"), span: Span { start: 1311, end: 1321 }, primary: false }, LabeledSpan { label: Some("Multiple `<fbt:plural>` tags found"), span: Span { start: 1442, end: 1452 }, primary: false }], help: Some("Support `<fbt>` tags with multiple `<fbt:plural>` values"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

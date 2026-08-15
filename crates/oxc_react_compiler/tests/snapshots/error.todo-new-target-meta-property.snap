@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-new-target-meta-proper
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: (BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta", labels: [LabeledSpan { label: None, span: Span { start: 73, end: 83 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Todo: (BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta", labels: [LabeledSpan { label: None, span: Span { start: 73, end: 83 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

@@ -16,11 +16,11 @@ use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_ast::ast::*;
 use oxc_ast::builder::AstBuilder;
-use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_diagnostics::Diagnostics;
 use oxc_span::{GetSpan, SPAN, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::{ErrorCategory, should_panic, with_fallback_label};
+use crate::diagnostics::{self, should_panic, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
@@ -148,11 +148,7 @@ fn find_directives_dynamic_gating<'a>(
             if is_valid_identifier(ident) {
                 matches.push((directive.as_str(), ident.to_string()));
             } else {
-                errors.push(
-                    ErrorCategory::Gating
-                        .diagnostic("Dynamic gating directive is not a valid JavaScript identifier")
-                        .with_help(format!("Found '{directive}'")),
-                );
+                errors.push(diagnostics::invalid_gating_directive(directive));
             }
         }
     }
@@ -163,11 +159,7 @@ fn find_directives_dynamic_gating<'a>(
 
     if matches.len() > 1 {
         let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
-        return Err(Diagnostics::from(
-            ErrorCategory::Gating
-                .diagnostic("Multiple dynamic gating directives found")
-                .with_help(format!("Expected a single directive but found [{}]", names.join(", "))),
-        ));
+        return Err(Diagnostics::from(diagnostics::multiple_gating_directives(&names)));
     }
 
     if matches.len() == 1 {
@@ -996,15 +988,9 @@ fn log_error(err: &Diagnostics, fn_span: Option<Span>, diagnostics: &mut Diagnos
     // Detect simulated unknown exception (throwUnknownException__testonly). In TS,
     // exceptions that are not compiler errors surface as a pipeline error carrying
     // the error message rather than a per-detail compiler error.
-    let is_simulated_unknown = err.len() == 1
-        && err.iter().all(|d| d.message == "[ReactCompiler] Invariant: unexpected error");
+    let is_simulated_unknown = err.len() == 1 && err.iter().all(diagnostics::is_unexpected_error);
     if is_simulated_unknown {
-        let mut diagnostic =
-            OxcDiagnostic::error("[ReactCompiler] Pipeline error: Error: unexpected error");
-        if let Some(span) = fn_span {
-            diagnostic = diagnostic.with_label(span);
-        }
-        diagnostics.push(diagnostic);
+        diagnostics.push(diagnostics::pipeline_error(fn_span));
         return;
     }
 
@@ -3083,9 +3069,7 @@ pub fn compile_program<'a>(
     if has_module_scope_opt_out {
         if !compiled_fns.is_empty() {
             let err =
-                Diagnostics::from(ErrorCategory::Invariant.diagnostic(
-                    "Unexpected compiled functions when module scope opt-out is present",
-                ));
+                Diagnostics::from(diagnostics::invariant_unexpected_compiled_functions_when_module_scope_opt_out_present());
             if let Some(result) =
                 handle_error(&err, None, context.opts.panic_threshold, &mut context.diagnostics)
             {

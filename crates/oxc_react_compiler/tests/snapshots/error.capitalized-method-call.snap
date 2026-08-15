@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.capitalized-method-call.js
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config", labels: [LabeledSpan { label: None, span: Span { start: 66, end: 87 }, primary: false }], help: Some("SomeFunc may be a component"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "CapitalizedCalls: Capitalized functions are reserved for components, which must be invoked with JSX. If this is a component, render it with JSX. Otherwise, ensure that it has no hook calls and rename it to begin with a lowercase letter. Alternatively, if you know for a fact that this function is not a component, you can allowlist it via the compiler config", labels: [LabeledSpan { label: None, span: Span { start: 66, end: 87 }, primary: false }], help: Some("SomeFunc may be a component"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

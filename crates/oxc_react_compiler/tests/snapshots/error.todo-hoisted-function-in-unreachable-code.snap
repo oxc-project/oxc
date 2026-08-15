@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-hoisted-function-in-un
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: [InferMutationAliasingEffects] Expected value kind to be initialized", labels: [LabeledSpan { label: Some("this is uninitialized"), span: Span { start: 61, end: 64 }, primary: false }], help: Some("<unknown> Foo$0"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Invariant: [InferMutationAliasingEffects] Expected value kind to be initialized", labels: [LabeledSpan { label: Some("this is uninitialized"), span: Span { start: 61, end: 64 }, primary: false }], help: Some("<unknown> Foo$0"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

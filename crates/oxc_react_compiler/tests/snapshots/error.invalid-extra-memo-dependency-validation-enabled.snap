@@ -4,7 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-extra-memo-dependen
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] MemoDependencies: Found extra memoization dependencies", labels: [LabeledSpan { label: Some("Unnecessary dependency `tick`"), span: Span { start: 252, end: 256 }, primary: false }], help: Some("Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "MemoDependencies: Found extra memoization dependencies", labels: [LabeledSpan { label: Some("Unnecessary dependency `tick`"), span: Span { start: 252, end: 256 }, primary: false }], help: Some("Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 // @compilationMode:"infer" @panicThreshold:"none" @validateExhaustiveMemoizationDependencies
 import { useMemo } from "react";

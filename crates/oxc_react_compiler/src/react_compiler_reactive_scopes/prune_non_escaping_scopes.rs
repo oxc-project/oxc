@@ -13,7 +13,7 @@ use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::DeclarationId;
 use crate::react_compiler_hir::Effect;
@@ -1051,7 +1051,7 @@ fn compute_memoized_identifiers(
         // ternary `test` inside `try`/`catch`); it must bail out the function,
         // not abort the process.
         let Some(&(_, seen)) = scope_nodes.get(&id) else {
-            return Err(ErrorCategory::Invariant.diagnostic("Expected a node for all scopes"));
+            return Err(diagnostics::invariant_expected_node_all_scopes());
         };
         if seen {
             return Ok(());

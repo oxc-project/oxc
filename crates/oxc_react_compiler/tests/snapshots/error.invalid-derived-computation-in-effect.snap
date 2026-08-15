@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-derived-computation
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectDerivationsOfState: Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)", labels: [LabeledSpan { label: None, span: Span { start: 349, end: 360 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "EffectDerivationsOfState: Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)", labels: [LabeledSpan { label: None, span: Span { start: 349, end: 360 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

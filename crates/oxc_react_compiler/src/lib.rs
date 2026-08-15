@@ -23,7 +23,7 @@ use crate::react_compiler::entrypoint::program::compile_program;
 pub use crate::react_compiler::entrypoint::compile_result::CompileResult;
 pub use crate::react_compiler::entrypoint::program::CompileOutput;
 
-pub use crate::diagnostics::ErrorCategory;
+pub use diagnostics::ErrorCategory;
 // Re-exported so integrations needn't depend on the upstream `react_compiler` crates.
 pub use crate::options::{
     CompilationMode, CompilerOutputMode, CompilerTarget, DynamicGatingConfig, GatingConfig,

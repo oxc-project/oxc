@@ -163,7 +163,7 @@ fn default_lint_suppressions_bail_out() {
             assert!(!result.changed, "{prefix} {kind} must prevent compilation");
             assert!(!result.fatal, "{prefix} {kind} must not produce a fatal result");
             assert_eq!(result.diagnostics.len(), 1);
-            assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+            assert!(result.diagnostics[0].message.contains("Suppression:"));
         }
     }
 }
@@ -178,7 +178,7 @@ fn flow_suppressions_still_bail_out_by_default() {
     assert!(!result.changed, "Flow suppression must prevent compilation");
     assert!(!result.fatal, "Flow suppression must be a nonfatal bail-out by default");
     assert_eq!(result.diagnostics.len(), 1);
-    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    assert!(result.diagnostics[0].message.contains("Suppression:"));
 }
 
 #[test]
@@ -232,7 +232,7 @@ function Component({ condition }) {
         assert!(!result.changed, "{kind} suppression must prevent compilation");
         assert_eq!(result.diagnostics.len(), 1);
         assert!(
-            result.diagnostics[0].message.contains("[ReactCompiler] Suppression"),
+            result.diagnostics[0].message.contains("Suppression:"),
             "expected a suppression diagnostic, got {:?}",
             result.diagnostics
         );
@@ -257,7 +257,7 @@ function Component({ value }) {
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
     assert!(!result.changed, "custom suppression must bail out by default");
     assert_eq!(result.diagnostics.len(), 1);
-    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    assert!(result.diagnostics[0].message.contains("Suppression:"));
 
     let allocator = Allocator::default();
     let mut options = PluginOptions {
@@ -268,7 +268,7 @@ function Component({ value }) {
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options);
     assert!(!result.changed, "custom suppression must bail out with both validations enabled");
     assert_eq!(result.diagnostics.len(), 1);
-    assert!(result.diagnostics[0].message.contains("[ReactCompiler] Suppression"));
+    assert!(result.diagnostics[0].message.contains("Suppression:"));
 }
 
 #[test]
@@ -657,7 +657,7 @@ export function Component(props: { text: string }) {\n\
     );
     assert_eq!(result.diagnostics.len(), 1);
     assert!(
-        result.diagnostics[0].message.contains("[ReactCompiler] IncompatibleLibrary"),
+        result.diagnostics[0].message.contains("IncompatibleLibrary:"),
         "expected the original compiler diagnostic: {:?}",
         result.diagnostics
     );

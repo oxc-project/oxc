@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.context-variable-only-chain
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: Cannot reassign variable after render completes", labels: [LabeledSpan { label: Some("Cannot reassign `x` after render completes"), span: Span { start: 203, end: 204 }, primary: false }], help: Some("Reassigning `x` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Immutability: Cannot reassign variable after render completes", labels: [LabeledSpan { label: Some("Cannot reassign `x` after render completes"), span: Span { start: 203, end: 204 }, primary: false }], help: Some("Reassigning `x` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

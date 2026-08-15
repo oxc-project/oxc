@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_str::Ident;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
 
@@ -49,12 +49,11 @@ pub fn validate_no_capitalized_calls(
                 InstructionValue::CallExpression { callee, span, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
-                        env.record_error(
-                            ErrorCategory::CapitalizedCalls
-                                .diagnostic(reason)
-                                .with_help(format!("{callee_name} may be a component"))
-                                .with_labels(*span),
-                        )?;
+                        env.record_error(diagnostics::capitalized_call(
+                            reason,
+                            callee_name,
+                            *span,
+                        ))?;
                         continue;
                     }
                 }
@@ -69,12 +68,7 @@ pub fn validate_no_capitalized_calls(
                 InstructionValue::MethodCall { property, span, .. } => {
                     let property_id = property.identifier;
                     if let Some(prop_name) = capitalized_properties.get(&property_id) {
-                        env.record_error(
-                            ErrorCategory::CapitalizedCalls
-                                .diagnostic(reason)
-                                .with_help(format!("{prop_name} may be a component"))
-                                .with_labels(*span),
-                        )?;
+                        env.record_error(diagnostics::capitalized_call(reason, prop_name, *span))?;
                     }
                 }
                 _ => {}

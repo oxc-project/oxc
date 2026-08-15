@@ -15,7 +15,7 @@ use oxc_index::{IndexSlice, IndexVec};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::{
     ArrayElement, BlockId, FunctionId, HirFunction, InstructionValue, ObjectPropertyKey,
     ObjectPropertyOrSpread, Terminal,
@@ -54,14 +54,14 @@ pub fn prune_maybe_throws<'a>(
                 for (predecessor, _) in &phi.operands {
                     if !preds.contains(predecessor) {
                         let mapped_terminal =
-                            terminal_mapping.get(*predecessor).copied().flatten().ok_or_else(|| {
-                                ErrorCategory::Invariant
-                                    .diagnostic("Expected non-existing phi operand's predecessor to have been mapped to a new terminal")
-                                    .with_help(format!(
-                                        "Could not find mapping for predecessor bb{} in block bb{}",
-                                        predecessor.index(), block.id.index(),
-                                    ))
-                            })?;
+                            terminal_mapping.get(*predecessor).copied().flatten().ok_or_else(
+                                || {
+                                    diagnostics::missing_phi_predecessor_mapping(
+                                        predecessor.index(),
+                                        block.id.index(),
+                                    )
+                                },
+                            )?;
                         updates.push((*predecessor, mapped_terminal));
                     }
                 }

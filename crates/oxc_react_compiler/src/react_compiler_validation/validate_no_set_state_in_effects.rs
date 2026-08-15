@@ -17,7 +17,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_index::IndexSlice;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::ArrayPatternElement;
 use crate::react_compiler_hir::ObjectPropertyOrSpread;
 use crate::react_compiler_hir::Pattern;
@@ -150,50 +150,9 @@ fn is_set_state_type_by_id(
 
 fn push_error(errors: &mut Diagnostics, info: &SetStateInfo, enable_verbose: bool) {
     if enable_verbose {
-        errors.push(
-            ErrorCategory::EffectSetState
-                .diagnostic(
-                    "Calling setState synchronously within an effect can trigger cascading renders",
-                )
-                .with_help(
-                    "Effects are intended to synchronize state between React and external systems. \
-                     Calling setState synchronously causes cascading renders that hurt performance.\n\n\
-                     This pattern may indicate one of several issues:\n\n\
-                     **1. Non-local derived data**: If the value being set could be computed from props/state \
-                     but requires data from a parent component, consider restructuring state ownership so the \
-                     derivation can happen during render in the component that owns the relevant state.\n\n\
-                     **2. Derived event pattern**: If you're detecting when a prop changes (e.g., `isPlaying` \
-                     transitioning from false to true), this often indicates the parent should provide an event \
-                     callback (like `onPlay`) instead of just the current state. Request access to the original event.\n\n\
-                     **3. Force update / external sync**: If you're forcing a re-render to sync with an external \
-                     data source (mutable values outside React), use `useSyncExternalStore` to properly subscribe \
-                     to external state changes.\n\n\
-                     See: https://react.dev/learn/you-might-not-need-an-effect",
-                )
-                .with_labels(
-                    info.span
-                        .map(|s| s.label("Avoid calling setState() directly within an effect")),
-                ),
-        );
+        errors.push(diagnostics::set_state_in_effect(info.span, true));
     } else {
-        errors.push(
-            ErrorCategory::EffectSetState
-                .diagnostic(
-                    "Calling setState synchronously within an effect can trigger cascading renders",
-                )
-                .with_help(
-                    "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. \
-                     In general, the body of an effect should do one or both of the following:\n\
-                     * Update external systems with the latest state from React.\n\
-                     * Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\n\
-                     Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. \
-                     (https://react.dev/learn/you-might-not-need-an-effect)",
-                )
-                .with_labels(
-                    info.span
-                        .map(|s| s.label("Avoid calling setState() directly within an effect")),
-                ),
-        );
+        errors.push(diagnostics::set_state_in_effect(info.span, false));
     }
 }
 

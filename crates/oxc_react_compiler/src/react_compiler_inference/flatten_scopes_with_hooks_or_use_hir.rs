@@ -34,7 +34,7 @@
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockId, HirFunction, InstructionValue, Terminal, Type, is_use_operator_type,
@@ -108,10 +108,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
                 (*block, *fallthrough, *id, *span, *scope)
             }
             _ => {
-                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                    "Expected block bb{} to end in a scope terminal",
-                    id.index()
-                )));
+                return Err(diagnostics::expected_scope_terminal(id.index()));
             }
         };
 

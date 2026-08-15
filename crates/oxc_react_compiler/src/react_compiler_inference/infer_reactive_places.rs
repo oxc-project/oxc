@@ -18,7 +18,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -200,10 +200,7 @@ pub fn infer_reactive_places(
                                 // no-op
                             }
                             Effect::Unknown => {
-                                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                                    "Unexpected unknown effect at {:?}",
-                                    op_place.span
-                                )));
+                                return Err(diagnostics::unexpected_unknown_effect(op_place.span));
                             }
                         }
                     }

@@ -18,7 +18,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashMap;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
@@ -116,13 +116,12 @@ pub fn infer_reactive_scope_variables(
             || max_instruction == EvaluationOrder::UNSET
             || scope.range.end > max_instruction + 1
         {
-            return Err(ErrorCategory::Invariant.diagnostic(format!(
-                "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
+            return Err(diagnostics::invalid_mutable_range(
                 scope.id.index(),
                 scope.range.start.index(),
                 scope.range.end.index(),
                 max_instruction.index() + 1,
-            )));
+            ));
         }
     }
 

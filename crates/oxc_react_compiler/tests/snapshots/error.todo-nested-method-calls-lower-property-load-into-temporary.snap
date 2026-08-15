@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-nested-method-calls-lo
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Invariant: [Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression", labels: [LabeledSpan { label: Some("Got: 'Identifier'"), span: Span { start: 159, end: 167 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Invariant: [Codegen] Internal error: MethodCall::property must be an unpromoted + unmemoized MemberExpression", labels: [LabeledSpan { label: Some("Got: 'Identifier'"), span: Span { start: 159, end: 167 }, primary: false }], help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

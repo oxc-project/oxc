@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-for-of-loop-with-conte
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support non-trivial for..of inits", labels: [LabeledSpan { label: None, span: Span { start: 259, end: 471 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Todo: Support non-trivial for..of inits", labels: [LabeledSpan { label: None, span: Span { start: 259, end: 471 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

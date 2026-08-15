@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/error.invalid.inva
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Hooks: Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)", labels: [LabeledSpan { label: None, span: Span { start: 197, end: 205 }, primary: false }], help: Some("Cannot call useState within a function expression"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Hooks: Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)", labels: [LabeledSpan { label: None, span: Span { start: 197, end: 205 }, primary: false }], help: Some("Cannot call useState within a function expression"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.
