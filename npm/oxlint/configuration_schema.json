@@ -6562,6 +6562,9 @@
             }
           ]
         },
+        "react/capitalized-calls": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/checked-requires-onchange-or-readonly": {
           "anyOf": [
             {
@@ -6581,6 +6584,9 @@
               "minItems": 2
             }
           ]
+        },
+        "react/config": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/display-name": {
           "anyOf": [
@@ -6602,6 +6608,9 @@
             }
           ]
         },
+        "react/error-boundaries": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/exhaustive-deps": {
           "anyOf": [
             {
@@ -6621,6 +6630,9 @@
               "minItems": 2
             }
           ]
+        },
+        "react/exhaustive-effect-dependencies": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/forbid-component-props": {
           "anyOf": [
@@ -6705,6 +6717,12 @@
             }
           ]
         },
+        "react/gating": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/globals": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/hook-use-state": {
           "anyOf": [
             {
@@ -6725,7 +6743,19 @@
             }
           ]
         },
+        "react/hooks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/iframe-missing-sandbox": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/immutability": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/incompatible-library": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/invariant": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/jsx-boolean-value": {
@@ -7029,6 +7059,9 @@
             }
           ]
         },
+        "react/memo-dependencies": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/no-array-index-key": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -7042,6 +7075,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-danger-with-children": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/no-deriving-state-in-effects": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-did-mount-set-state": {
@@ -7297,30 +7333,22 @@
             }
           ]
         },
-        "react/react-compiler": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/RuleNoConfig"
-            },
-            {
-              "type": "array",
-              "items": [
-                {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/ReactCompilerConfig"
-                }
-              ],
-              "maxItems": 2,
-              "minItems": 2
-            }
-          ]
+        "react/preserve-manual-memoization": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/purity": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/react-in-jsx-scope": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/refs": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/require-render-return": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/rule-suppression": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/rules-of-hooks": {
@@ -7346,6 +7374,12 @@
             }
           ]
         },
+        "react/set-state-in-effect": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/set-state-in-render": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/state-in-constructor": {
           "anyOf": [
             {
@@ -7365,6 +7399,9 @@
               "minItems": 2
             }
           ]
+        },
+        "react/static-components": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/style-prop-object": {
           "anyOf": [
@@ -7386,7 +7423,22 @@
             }
           ]
         },
+        "react/syntax": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/todo": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/unsupported-syntax": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/use-memo": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/void-dom-elements-no-children": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/void-use-memo": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "require-await": {
@@ -18223,45 +18275,6 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
-    },
-    "ReactCompilerConfig": {
-      "type": "object",
-      "properties": {
-        "environment": {
-          "description": "React Compiler environment options supported by this rule.",
-          "default": {
-            "validateNoCapitalizedCalls": []
-          },
-          "allOf": [
-            {
-              "$ref": "#/definitions/ReactCompilerEnvironmentConfig"
-            }
-          ],
-          "markdownDescription": "React Compiler environment options supported by this rule."
-        },
-        "reportAllBailouts": {
-          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
-          "default": false,
-          "type": "boolean",
-          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
-        }
-      },
-      "additionalProperties": false
-    },
-    "ReactCompilerEnvironmentConfig": {
-      "type": "object",
-      "properties": {
-        "validateNoCapitalizedCalls": {
-          "description": "Additional capitalized global functions that are known not to be React\ncomponents. These names will not be reported by `CapitalizedCalls`.",
-          "default": [],
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "Additional capitalized global functions that are known not to be React\ncomponents. These names will not be reported by `CapitalizedCalls`."
-        }
-      },
-      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",

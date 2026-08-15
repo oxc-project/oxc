@@ -6,9 +6,9 @@
 //! Compiler diagnostics, built directly on [`oxc_diagnostics`].
 //!
 //! Passes construct [`OxcDiagnostic`]s eagerly via cold functions in this module.
-//! Their deterministic `<Category>: ` message prefix lets
-//! consumers recover the category for control flow (Invariant/Config checks,
-//! panic-threshold severity) without a parallel data model.
+//! Their structured error codes let consumers recover the category for control
+//! flow (Invariant/Config checks, panic-threshold severity) without a parallel
+//! data model.
 //!
 //! Errors "thrown" by a pass (TS: exceptions escaping a pass) propagate as a
 //! single `Err(OxcDiagnostic)`; errors accumulated on the Environment and
@@ -21,6 +21,12 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic, Severity};
 use oxc_span::Span;
 
 use crate::options::PanicThreshold;
+
+macro_rules! react_lint_url {
+    ($rule:literal) => {
+        concat!("https://react.dev/reference/eslint-plugin-react-hooks/lints/", $rule)
+    };
+}
 
 /// Error categories matching the TS `ErrorCategory` enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -97,64 +103,30 @@ impl ErrorCategory {
     const fn documentation_url(self) -> &'static str {
         const REACT_LINTS: &str = "https://react.dev/reference/eslint-plugin-react-hooks";
         match self {
-            Self::Hooks => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "rules-of-hooks"
-            ),
-            Self::CapitalizedCalls | Self::StaticComponents => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "static-components"
-            ),
-            Self::UseMemo | Self::VoidUseMemo => {
-                concat!("https://react.dev/reference/eslint-plugin-react-hooks/lints/", "use-memo")
+            Self::Hooks => react_lint_url!("rules-of-hooks"),
+            Self::CapitalizedCalls | Self::StaticComponents => {
+                react_lint_url!("static-components")
             }
-            Self::PreserveManualMemo => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "preserve-manual-memoization"
-            ),
-            Self::MemoDependencies | Self::EffectExhaustiveDependencies => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "exhaustive-deps"
-            ),
-            Self::IncompatibleLibrary => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "incompatible-library"
-            ),
-            Self::Immutability => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "immutability"
-            ),
-            Self::Globals => {
-                concat!("https://react.dev/reference/eslint-plugin-react-hooks/lints/", "globals")
+            Self::UseMemo | Self::VoidUseMemo => react_lint_url!("use-memo"),
+            Self::PreserveManualMemo => react_lint_url!("preserve-manual-memoization"),
+            Self::MemoDependencies | Self::EffectExhaustiveDependencies => {
+                react_lint_url!("exhaustive-deps")
             }
-            Self::Refs => {
-                concat!("https://react.dev/reference/eslint-plugin-react-hooks/lints/", "refs")
+            Self::IncompatibleLibrary => react_lint_url!("incompatible-library"),
+            Self::Immutability => react_lint_url!("immutability"),
+            Self::Globals => react_lint_url!("globals"),
+            Self::Refs => react_lint_url!("refs"),
+            Self::EffectSetState | Self::EffectDerivationsOfState => {
+                react_lint_url!("set-state-in-effect")
             }
-            Self::EffectSetState | Self::EffectDerivationsOfState => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "set-state-in-effect"
-            ),
-            Self::ErrorBoundaries => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "error-boundaries"
-            ),
-            Self::Purity => {
-                concat!("https://react.dev/reference/eslint-plugin-react-hooks/lints/", "purity")
+            Self::ErrorBoundaries => react_lint_url!("error-boundaries"),
+            Self::Purity => react_lint_url!("purity"),
+            Self::RenderSetState => react_lint_url!("set-state-in-render"),
+            Self::Config => react_lint_url!("config"),
+            Self::Gating => react_lint_url!("gating"),
+            Self::Syntax | Self::UnsupportedSyntax | Self::Todo => {
+                react_lint_url!("unsupported-syntax")
             }
-            Self::RenderSetState => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "set-state-in-render"
-            ),
-            Self::Config => {
-                concat!("https://react.dev/reference/eslint-plugin-react-hooks/lints/", "config")
-            }
-            Self::Gating => {
-                concat!("https://react.dev/reference/eslint-plugin-react-hooks/lints/", "gating")
-            }
-            Self::Syntax | Self::UnsupportedSyntax | Self::Todo => concat!(
-                "https://react.dev/reference/eslint-plugin-react-hooks/lints/",
-                "unsupported-syntax"
-            ),
             Self::Invariant => "https://github.com/oxc-project/oxc/issues/new/choose",
             Self::Suppression => REACT_LINTS,
         }
@@ -186,6 +158,37 @@ impl ErrorCategory {
             }
             _ => "React Compiler skipped optimizing this component or hook",
         }
+    }
+
+    /// The category whose [`Self::as_str`] is `name`.
+    fn from_name(name: &str) -> Option<Self> {
+        Some(match name {
+            "Hooks" => Self::Hooks,
+            "CapitalizedCalls" => Self::CapitalizedCalls,
+            "StaticComponents" => Self::StaticComponents,
+            "UseMemo" => Self::UseMemo,
+            "VoidUseMemo" => Self::VoidUseMemo,
+            "PreserveManualMemo" => Self::PreserveManualMemo,
+            "MemoDependencies" => Self::MemoDependencies,
+            "IncompatibleLibrary" => Self::IncompatibleLibrary,
+            "Immutability" => Self::Immutability,
+            "Globals" => Self::Globals,
+            "Refs" => Self::Refs,
+            "EffectExhaustiveDependencies" => Self::EffectExhaustiveDependencies,
+            "EffectSetState" => Self::EffectSetState,
+            "EffectDerivationsOfState" => Self::EffectDerivationsOfState,
+            "ErrorBoundaries" => Self::ErrorBoundaries,
+            "Purity" => Self::Purity,
+            "RenderSetState" => Self::RenderSetState,
+            "Invariant" => Self::Invariant,
+            "Todo" => Self::Todo,
+            "Syntax" => Self::Syntax,
+            "UnsupportedSyntax" => Self::UnsupportedSyntax,
+            "Config" => Self::Config,
+            "Gating" => Self::Gating,
+            "Suppression" => Self::Suppression,
+            _ => return None,
+        })
     }
 
     /// Whether a diagnostic was built for this category.
@@ -2408,6 +2411,29 @@ pub fn pipeline_error(span: Option<Span>) -> OxcDiagnostic {
         )
         .with_note("The compiler pipeline stopped before this component or hook could be optimized")
         .with_labels(span.map(|span| span.primary_label("The compiler pipeline failed here")))
+}
+
+/// A lint finding paired with its [`ErrorCategory`].
+///
+/// The diagnostic's message contains only the user-facing reason; its category
+/// is carried separately in the structured diagnostic code.
+#[derive(Debug, Clone)]
+pub struct LintDiagnostic {
+    pub category: ErrorCategory,
+    pub diagnostic: OxcDiagnostic,
+}
+
+/// Pair a compiler diagnostic with the category in its structured error code.
+pub(crate) fn categorize(diagnostic: OxcDiagnostic) -> LintDiagnostic {
+    let category = diagnostic
+        .code
+        .scope
+        .as_deref()
+        .filter(|scope| *scope == ErrorCategory::CODE_SCOPE)
+        .and_then(|_| diagnostic.code.number.as_deref())
+        .and_then(ErrorCategory::from_name);
+    debug_assert!(category.is_some(), "missing React Compiler diagnostic category");
+    LintDiagnostic { category: category.unwrap_or(ErrorCategory::Invariant), diagnostic }
 }
 
 /// Whether any diagnostic is an error at the TS compiler's *internal*

@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(syntax): Cannot reassign a `const` variable
+   ╭─[syntax.tsx:4:3]
+ 3 │   const x = 0;
+ 4 │   x = 1;
+   ·   ┬
+   ·   ╰── Cannot reassign `x`
+ 5 │   return <div>{x}</div>;
+   ╰────
+  help: `x` is declared as const
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax
