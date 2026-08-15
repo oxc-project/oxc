@@ -230,27 +230,6 @@ export function write(state: State, code: string, last: Category): void {
 }
 
 /**
- * Append `code` to the output, leaving `state.last` describing whatever came before it.
- *
- * Only sound where the value of `last` is provably dead - another `write` must follow before anything reads it.
- * The readers are `printSpaceBeforeIdentifier` and the `CAT_LT`, `CAT_REGEX_SLASH` and `CAT_QUESTION`
- * adjacency checks, all of which run at the start of printing a construct.
- *
- * In practice that means using it for all but the final fragment when one token is written in pieces.
- * Debug builds track the rule and throw if a reader sees a stale `last`.
- *
- * @param code - Text to append, which unlike `write` may be empty
- */
-export function writeNoLast(state: State, code: string): void {
-  state.output += code;
-
-  if (DEBUG) {
-    state.lastIsStale = true;
-    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
-  }
-}
-
-/**
  * Append `code` to the output, record what it ends with, and record a source mapping for `node`.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries a `loc` -
@@ -285,6 +264,27 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
   if (DEBUG) {
     state.lastIsStale = false;
     state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append `code` to the output, leaving `state.last` describing whatever came before it.
+ *
+ * Only sound where the value of `last` is provably dead - another `write` must follow before anything reads it.
+ * The readers are `printSpaceBeforeIdentifier` and the `CAT_LT`, `CAT_REGEX_SLASH` and `CAT_QUESTION`
+ * adjacency checks, all of which run at the start of printing a construct.
+ *
+ * In practice that means using it for all but the final fragment when one token is written in pieces.
+ * Debug builds track the rule and throw if a reader sees a stale `last`.
+ *
+ * @param code - Text to append, which unlike `write` may be empty
+ */
+export function writeNoLast(state: State, code: string): void {
+  state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = true;
+    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
   }
 }
 

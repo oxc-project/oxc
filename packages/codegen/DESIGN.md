@@ -261,8 +261,8 @@ only the last piece's category can possibly be read. Hence four write primitives
 | Function             | Updates `last` | Records a source mapping |
 | :------------------- | :------------- | :----------------------- |
 | `write`              | Yes            | No                       |
-| `writeNoLast`        | No             | No                       |
 | `writeWithMap`       | Yes            | Yes                      |
+| `writeNoLast`        | No             | No                       |
 | `writeWithMapNoLast` | No             | Yes                      |
 
 - The `*NoLast` pair is used at 89 sites, against 596 for the other two.
