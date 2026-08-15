@@ -95,6 +95,18 @@ impl CliRunner {
             ..
         } = self.options;
 
+        let requested_js_plugin_threads = misc_options.js_plugin_threads.unwrap_or(1);
+        let rust_thread_count = rayon::current_num_threads();
+        if requested_js_plugin_threads > rust_thread_count {
+            print_and_flush_stdout(
+                stdout,
+                &format!(
+                    "`--js-plugin-threads` ({requested_js_plugin_threads}) cannot exceed the effective `--threads` count ({rust_thread_count}).\n"
+                ),
+            );
+            return CliRunResult::InvalidOptionJsPluginThreads;
+        }
+
         if basic_options.init {
             return crate::mode::run_init(&self.cwd, stdout);
         }
@@ -376,6 +388,7 @@ impl CliRunner {
             .into_iter()
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
+        let number_of_files = files_to_lint.len();
 
         if debug_files {
             return crate::mode::run_debug_files(
@@ -474,13 +487,23 @@ impl CliRunner {
                 );
                 return CliRunResult::InvalidOptionConfig;
             }
+
+            if number_of_files > 0 {
+                let js_plugin_host_count = requested_js_plugin_threads.min(number_of_files);
+                if let Err(err) = external_linter.initialize_workers(js_plugin_host_count) {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!("Failed to initialize JS plugin workers:\n{err}\n"),
+                    );
+                    return CliRunResult::InvalidOptionJsPluginThreads;
+                }
+            }
         }
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
 
-        let number_of_files = files_to_lint.len();
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
             if path.is_file() {
