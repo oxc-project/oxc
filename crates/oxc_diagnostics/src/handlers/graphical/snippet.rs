@@ -149,8 +149,13 @@ impl GraphicalReportHandler {
 
         match source_name {
             Some(source_name) => {
-                let source_name = source_name.style(self.theme.styles.link);
-                writeln!(f, "[{}:{}:{}]", source_name, primary_line + 1, primary_column + 1)?;
+                let style = self.theme.styles.link;
+                if style.is_plain() {
+                    writeln!(f, "[{source_name}:{}:{}]", primary_line + 1, primary_column + 1)?;
+                } else {
+                    let source_name = source_name.style(style);
+                    writeln!(f, "[{}:{}:{}]", source_name, primary_line + 1, primary_column + 1)?;
+                }
             }
             _ => {
                 if lines.len() <= 1 {
