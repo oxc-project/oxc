@@ -2081,10 +2081,10 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::Capture { from: *await_value, into: *lvalue });
         }
         InstructionValue::TaggedTemplateExpression { tag, subexprs, span, .. } => {
-            // A tagged template is a function call whose first argument is the
-            // call-site's frozen template object, followed by the interpolated
-            // expressions. There is no HIR place for the implicit template object,
-            // so preserve its parameter position with a hole.
+            // A primitive return type does not imply that invoking the tag is pure. Always retain
+            // call/aliasing effects so mutations of captured values remain in the same scope. A
+            // later pass flattens the containing scope unless the configured function signature
+            // independently proves the call safe to memoize.
             let mut args = ArenaVec::new_in(&alloc);
             args.push(PlaceOrSpreadOrHole::Hole);
             args.extend(subexprs.iter().copied().map(PlaceOrSpreadOrHole::Place));

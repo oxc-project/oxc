@@ -416,6 +416,27 @@ fn test_module_type_provider() -> FxIndexMap<String, TypeConfig> {
                 ("notAhookTypedAsHook", hook(type_ref(), None, None)),
             ]),
         ),
+        (
+            "ReactCompilerPureTagTest".to_string(),
+            object([(
+                "tag",
+                TypeConfig::Function(FunctionTypeConfig {
+                    positional_params: Vec::new(),
+                    rest_param: Some(Effect::Read),
+                    callee_effect: Effect::Read,
+                    return_type: Box::new(TypeConfig::TypeReference(TypeReferenceConfig {
+                        name: BuiltInTypeRef::Any,
+                    })),
+                    return_value_kind: ValueKind::Mutable,
+                    no_alias: None,
+                    mutable_only_if_operands_are_mutable: None,
+                    impure: Some(false),
+                    canonical_name: None,
+                    aliasing: None,
+                    known_incompatible: None,
+                }),
+            )]),
+        ),
         ("useDefaultExportNotTypedAsHook".to_string(), object([("default", type_ref())])),
     ])
 }
