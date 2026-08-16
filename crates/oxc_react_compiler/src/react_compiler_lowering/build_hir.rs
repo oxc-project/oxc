@@ -661,6 +661,7 @@ fn lower_inner<'a>(
     let self_binding = if let Some(name) = id
         && let Some(symbol_id) = scope.get_binding(function_scope, name.as_str())
         && scope.decl_kind(symbol_id) == DeclKind::FunctionExpression
+        && !scope.reference_ids(symbol_id).is_empty()
     {
         let identifier = builder.resolve_binding_with_span(name, symbol_id, id_span)?;
         Some(Place { identifier, effect: Effect::Unknown, reactive: false, span: id_span })
