@@ -52,6 +52,7 @@ mod keep_var;
 mod minifier_traverse;
 mod options;
 mod peephole;
+mod spread_cleanup;
 mod state;
 mod symbol_liveness;
 mod symbol_metadata;

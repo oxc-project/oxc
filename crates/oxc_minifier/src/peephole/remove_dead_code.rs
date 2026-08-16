@@ -547,6 +547,9 @@ impl<'a> PeepholeOptimizations {
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
                 && ctx.state.symbols.function_summary(symbol_id).returns_undefined()
+                // Same binding-vs-value asymmetry as the other consumer; see
+                // `PeepholeOptimizations::summary_order_proven`.
+                && Self::summary_order_proven(symbol_id, ctx)
             {
                 let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
                 if exprs.is_empty() {

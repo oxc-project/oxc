@@ -313,6 +313,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         kind: FreshValueKind,
         falsy_init: bool,
         init_absent: bool,
+        declarator_in_body_statement_list: bool,
     ) {
         let mut references = ReferenceCounts::default();
         for reference in self.scoping().get_resolved_references(symbol_id) {
@@ -367,6 +368,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
             implicit_undefined,
             references,
             kind: if has_multiple_value_declarations { FreshValueKind::None } else { kind },
+            declarator_in_body_statement_list,
             boolean_falsy,
         };
         self.state.symbols.init_value(symbol_id, symbol_value);

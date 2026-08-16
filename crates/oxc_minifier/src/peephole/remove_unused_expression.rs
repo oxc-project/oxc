@@ -11,7 +11,10 @@ use oxc_ecmascript::{
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
 use oxc_span::GetSpan;
-use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::{
+    scope::ScopeId,
+    symbol::{SymbolFlags, SymbolId},
+};
 
 use super::PeepholeOptimizations;
 use super::fold_constants::is_cjs_module_exports_hint;
@@ -664,6 +667,79 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// Whether a function summary may be consumed at the call site currently
+    /// being visited.
+    ///
+    /// A summary is a property of the function VALUE, but both consumers key it
+    /// by the BINDING. For a hoisted `function f() {}` those coincide: the
+    /// binding holds that function for the whole scope, so a side-effect-free
+    /// body licenses erasing any call. For `var f = <fn>` they do not — the
+    /// binding holds `undefined` until the assignment runs, and a call reached
+    /// first throws `TypeError`, which erasing the call would silently drop.
+    ///
+    /// `let` / `const` need no proof: a call before their declarator is a TDZ
+    /// `ReferenceError`, inside the minifier's documented `No TDZ Violation`
+    /// assumption. A `var` binding needs all three of the following, because
+    /// each closes a different way the assignment can fail to have run.
+    ///
+    /// 1. A value entry exists. `SymbolState::values` is per-pass scratch
+    ///    written by `exit_variable_declarator`, so an entry proves the
+    ///    declarator precedes this call in the pass's traversal. The
+    ///    `reprocessing_statements` carve-out applies: re-processing a
+    ///    statement list also surfaces entries for declarators positioned
+    ///    later.
+    /// 2. The entry classifies the binding `FreshValueKind::Function`, i.e. the
+    ///    declarator visited THIS pass initializes it with a function literal.
+    ///    A summary is persistent state about a value; without this, one
+    ///    recorded before the declarator was folded away is still consumed
+    ///    against whatever `var f;` the hoist left behind
+    ///    (`while (0) { var f = () => {}; break; } x = f();`).
+    /// 3. The declarator is a direct body statement-list item
+    ///    (`SymbolValue::declarator_in_body_statement_list`). Traversal order
+    ///    is not execution order: `if (flag) var f = () => {}` is visited every
+    ///    pass and assigns on none, so an entry alone says nothing about
+    ///    whether the binding holds the function.
+    /// 4. The call is in the same function as the declarator. Traversal reaches
+    ///    a declarator before a later function body, but that body can run
+    ///    first — `g(); var f = () => {}; function g() { f(); }` calls `f`
+    ///    while it is still `undefined`.
+    ///
+    /// Conservative cases: a call in a nested function loses the optimization
+    /// even when it only runs later, and a conditionally-initialized `var`
+    /// loses it outright. Proving either needs reachability, not traversal
+    /// order.
+    pub(super) fn summary_order_proven(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
+        if !ctx.scoping().symbol_flags(symbol_id).contains(SymbolFlags::FunctionScopedVariable) {
+            return true;
+        }
+        if ctx.state.reprocessing_statements {
+            return false;
+        }
+        let Some(value) = ctx.state.symbols.value(symbol_id) else { return false };
+        if value.kind != FreshValueKind::Function || !value.declarator_in_body_statement_list {
+            return false;
+        }
+        // A `var`'s declaring scope IS its enclosing function body or the
+        // Program, so comparing against the call site's own nearest such scope
+        // answers "same function".
+        let scoping = ctx.scoping();
+        Self::nearest_function_or_program_scope(ctx.current_scope_id(), ctx)
+            == scoping.symbol_scope_id(symbol_id)
+    }
+
+    /// The nearest enclosing function body or Program scope, starting from
+    /// `scope_id` itself. Class static blocks and other non-function var scopes
+    /// are deliberately walked past: the comparison then fails and the caller
+    /// bails, which is the conservative direction.
+    fn nearest_function_or_program_scope(scope_id: ScopeId, ctx: &TraverseCtx<'a>) -> ScopeId {
+        let scoping = ctx.scoping();
+        let root_scope_id = scoping.root_scope_id();
+        scoping
+            .scope_ancestors(scope_id)
+            .find(|&id| id == root_scope_id || scoping.scope_flags(id).is_function())
+            .unwrap_or(root_scope_id)
+    }
+
     fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
@@ -675,6 +751,7 @@ impl<'a> PeepholeOptimizations {
                         ctx.scoping().get_reference(id.reference_id()).symbol_id()
                 {
                     ctx.state.symbols.function_summary(symbol_id).is_side_effect_free()
+                        && Self::summary_order_proven(symbol_id, ctx)
                 } else {
                     false
                 })

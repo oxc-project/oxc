@@ -452,6 +452,12 @@ fn test_fold_call_expression() {
     test("false || /* @__PURE__ */ noEffect()", "");
 
     test("var foo = () => 1; foo(), foo()", "var foo = () => 1");
+
+    // A call reached while the hoisted `var` still holds `undefined` throws, so
+    // the summary of the value assigned later must not erase it. The trailing
+    // `var unused = 1` supplies the extra pass that publishes the summary;
+    // without it the call site is visited before one exists.
+    test("foo(); var foo = () => 1; var unused = 1;", "foo(); var foo = () => 1, unused = 1;");
     test_same("var foo = () => { bar() }; foo(), foo()");
     test_same("const a = (x) => x, b = () => a(1);");
 }
@@ -1175,4 +1181,55 @@ fn test_update_expression_respects_property_read_side_effects() {
         "import { counter } from './c'; counter.another++, console.log(counter);",
         &options,
     );
+}
+
+// Full-minify flavor of the quiet-pass object-spread cleanup (see
+// `crate::spread_cleanup`). `unused: Keep` retains the declarations, so these
+// pin the spread removal itself rather than the cascade behind it.
+// https://github.com/oxc-project/oxc/issues/20661
+// https://github.com/rolldown/rolldown/issues/8582
+#[test]
+fn test_remove_dead_object_spread_of_local_literal() {
+    test(
+        "const Proto = { [TypeId]: TypeId, m() {} }; ({ ...Proto }); ({ ...Proto });",
+        "const Proto = { [TypeId]: TypeId, m() {} };",
+    );
+    // `P1` is single-use once the copies go, so it inlines and folds into `P2`.
+    test(
+        "const P1 = { a: 1 }; const P2 = { ...P1, b: 2 }; ({ ...P2 }); ({ ...P2 });",
+        "const P2 = { a: 1, b: 2 };",
+    );
+    // Mixed properties: the copy is dropped from the group, the data keys are
+    // dropped by the ordinary unused-property path.
+    test("const P = { a: 1 }; ({ ...P, t: 1 }); ({ ...P, u: 2 });", "const P = { a: 1 };");
+}
+
+/// See `remove_layered_object_spread_chain` in the dce suite. `unused: Keep`
+/// retains the declarations, so this pins the copy removal alone.
+#[test]
+fn test_remove_layered_object_spread_chain() {
+    test(
+        "const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; ({ ...P3 }); ({ ...P3 });",
+        "const P0 = {}, P1 = { ...P0, ...P0 }, P2 = { ...P1, ...P1 }, P3 = { ...P2, ...P2 };",
+    );
+}
+
+/// See `keep_object_spread_in_used_initializer` in the dce suite.
+#[test]
+fn test_keep_object_spread_in_used_initializer() {
+    test(
+        "const P = { a: 1 }; const Q = { ...P }; console.log(Q, Q);",
+        "const Q = { a: 1 }; console.log(Q, Q);",
+    );
+}
+
+#[test]
+fn test_keep_object_spread_disqualified_by_census() {
+    test_same("const P = { get a() { return 1 } }; ({ ...P }), { ...P };");
+    test_same("const P = { a: 1 }; foo(P), { ...P };");
+    test_same("const P = { a: 1 }; console.log(P), { ...P };");
+    test_same("const P = { a: 1 }; P.b = 2, { ...P }, { ...P };");
+    test_same("let P = { a: 1 }; P = unknownGlobal, { ...P }, { ...P };");
+    test_same("({ ...P }); const P = { a: 1 };");
+    test_same("const P = { a: 1 }; ({ ...P }); export { P };");
 }

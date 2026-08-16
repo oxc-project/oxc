@@ -18,7 +18,8 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
     ReusableTraverseCtx, TraverseCtx, minifier_traverse::traverse_mut_with_ctx,
-    peephole::PeepholeOptimizations, symbol_liveness, traverse_context::as_direct_eval_call,
+    peephole::PeepholeOptimizations, spread_cleanup, symbol_liveness,
+    traverse_context::as_direct_eval_call,
 };
 
 /// The fixed-point decision produced by one completed peephole pass.
@@ -290,18 +291,82 @@ pub fn run_peephole_pass<'a>(
 ) -> PassOutcome {
     debug_assert_pass_changes_clean(ctx.get_mut());
     ctx.state_mut().symbols.reset_values();
+    ctx.state_mut().spread_cleanup.begin_pass();
     traverse_mut_with_ctx(&mut PeepholeOptimizations, program, ctx);
 
-    let ctx = ctx.get_mut();
-    let revisit_requested = ctx.state.take_revisit_requested();
-    let newly_dead = finish_pass(program, ctx, /* force_liveness_analysis */ false);
-    debug_assert!(
-        !newly_dead || revisit_requested,
-        "ordinary liveness progress must follow a recorded pass change"
-    );
-    debug_assert_pass_changes_clean(ctx);
+    let mut needs_another_pass = {
+        let ctx = ctx.get_mut();
+        let revisit_requested = ctx.state.take_revisit_requested();
+        let newly_dead = finish_pass(program, ctx, /* force_liveness_analysis */ false);
+        debug_assert!(
+            !newly_dead || revisit_requested,
+            "ordinary liveness progress must follow a recorded pass change"
+        );
+        debug_assert_pass_changes_clean(ctx);
+        revisit_requested || newly_dead
+    };
 
-    PassOutcome { needs_another_pass: revisit_requested || newly_dead }
+    // The quiet-pass boundary of [`crate::spread_cleanup`], reached only when
+    // the traversal changed nothing — which is exactly what makes this pass's
+    // spread marks, its symbol values, its liveness data and the just-flushed
+    // `Scoping` describe one and the same program.
+    //
+    // The census's removals happen here and now, in a scope-aware cleanup
+    // traversal, rather than by handing candidates to another peephole pass.
+    // Consuming them a pass at a time cost a global iteration per layer of
+    // spread dependency, because each layer's copies only reach discarded
+    // position once the layer above is gone — a four-layer chain exhausted the
+    // iteration budget. Batched locally, a chain of any depth costs one extra
+    // ordinary pass.
+    let has_candidates =
+        !needs_another_pass && spread_cleanup::settle_candidates(program, ctx.get_mut());
+    if has_candidates {
+        let mut removed_any = false;
+        while spread_cleanup::remove_dead_copies(program, ctx) {
+            removed_any = true;
+            let pass_ctx = ctx.get_mut();
+            let revisit_requested = pass_ctx.state.take_revisit_requested();
+            debug_assert!(
+                revisit_requested,
+                "a successful spread cleanup round must record its AST changes"
+            );
+            // Give the next round current reference counts: its declarator
+            // removals test bindings this round just orphaned.
+            prune_removed_references(program, pass_ctx);
+        }
+        if removed_any {
+            needs_another_pass = true;
+            let pass_ctx = ctx.get_mut();
+            // The batch can orphan an entire recursive function component or
+            // drop a direct eval inside a dead method. Finish it through the
+            // normal semantic boundary instead of leaving cleanup-specific
+            // bookkeeping for the next compressor invocation.
+            needs_another_pass |=
+                finish_pass(program, pass_ctx, /* force_liveness_analysis */ true);
+            debug_assert_pass_changes_clean(pass_ctx);
+        }
+    }
+
+    PassOutcome { needs_another_pass }
+}
+
+/// Prune the references a removal-batch round marked, so the next round sees
+/// current counts. This is only an intermediate batch boundary: direct-eval
+/// refresh and forced liveness analysis run through [`finish_pass`] after the
+/// batch reaches its local fixed point.
+fn prune_removed_references(
+    #[cfg_attr(not(debug_assertions), expect(unused_variables))] program: &Program<'_>,
+    ctx: &mut TraverseCtx<'_>,
+) {
+    if ctx.state.pass_changes.removed_references.is_empty() {
+        return;
+    }
+    #[cfg(debug_assertions)]
+    debug_assert_no_over_prune(program, &ctx.state.pass_changes.removed_references);
+    ctx.scoping
+        .scoping_mut()
+        .retain_resolved_references_excluding(&ctx.state.pass_changes.removed_references);
+    ctx.state.pass_changes.removed_references.clear();
 }
 
 #[inline]

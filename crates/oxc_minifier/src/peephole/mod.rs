@@ -23,7 +23,9 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::IsLiteralValue;
 
-use crate::{Traverse, TraverseCtx, generated::ancestor::Ancestor, state::BodyFrame};
+use crate::{
+    Traverse, TraverseCtx, generated::ancestor::Ancestor, spread_cleanup, state::BodyFrame,
+};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -396,7 +398,22 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        // See `MinifierState::reprocessing_statements`: entries recorded for
+        // declarators later in this list break the traversal-order proof while
+        // the list is re-processed.
+        ctx.state.reprocessing_statements = true;
         Self::minimize_statements(stmts, ctx);
+        ctx.state.reprocessing_statements = false;
+    }
+
+    fn exit_spread_element(&mut self, spread: &mut SpreadElement<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Record a direct `...Identifier` object copy for the census a
+        // quiet-pass boundary may run (see `crate::spread_cleanup`). Runs
+        // before the `exit_expression` transforms that may rewrite the
+        // enclosing literal, so a mark can name a reference that is then
+        // removed — harmless, since the census only ever consults marks of a
+        // pass that changed nothing.
+        spread_cleanup::mark_object_copy_spread(spread, ctx);
     }
 
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {

@@ -737,6 +737,56 @@ fn remove_pure_function_calls() {
 }
 
 #[test]
+fn keep_calls_before_var_function_assignment() {
+    // A `var` binding holds `undefined` until its assignment runs, so a call
+    // reached first throws `TypeError`. The function summary describes the
+    // VALUE; consuming it at a call site keyed only by the BINDING erases that
+    // throw. The trailing `var unused = 1` only supplies the extra pass that
+    // makes the summary available.
+    test("f(); var f = () => {}; var unused = 1;", "f(); var f = () => {};");
+
+    // Reached through a body that ordinary DCE empties. The trailing `f()` IS
+    // order-proven and still goes, so the fixed point keeps only the
+    // conditional call and the emptied declarator.
+    test(
+        "if (unknownGlobal) { f(); } var f = () => { var a = [1]; [...a]; }; f(); var unused = 1;",
+        "if (unknownGlobal) f(); var f = () => {};",
+    );
+
+    // A spread of an object literal is pure on its own, so the body empties.
+    test("f(); var f = () => { ({ ...{ a: 1 } }); }; var unused = 1;", "f(); var f = () => {};");
+
+    // The route the object-spread cleanup opens: its copies are removable, the
+    // body empties, and the summary reaches this same consumer.
+    test(
+        "f(); var f = () => { const P = { a: 1 }; ({ ...P }); ({ ...P }); }; var unused = 1;",
+        "f(); var f = () => {};",
+    );
+
+    // A conditionally-initialized `var` is VISITED on every traversal and
+    // assigns on none, so a value entry proves nothing about the binding. Here
+    // `test(unknownGlobal)` with a falsy argument calls `f` while it is still
+    // `undefined`.
+    test(
+        "function test(flag) { if (flag) var f = () => { const P = {}; ({ ...P }); ({ ...P }); }; f(); } test(unknownGlobal);",
+        "function test(flag) { if (flag) var f = () => {}; f(); } test(unknownGlobal);",
+    );
+
+    // Traversal reaches the declarator before `g`'s body, but `g` runs first.
+    // The call must be in the same function as the declarator.
+    test(
+        "g(); var f = () => {}; function g() { f(); } var unused = 1;",
+        "g(); var f = () => {}; function g() { f(); }",
+    );
+
+    // Order-proven calls keep optimizing: the declarator precedes them, in the
+    // same function, unconditionally.
+    test("var f = () => {}; f(); f();", "");
+    test("const g = () => {}; g();", "");
+    test("function h() { var f = () => {}; f(); } h();", "");
+}
+
+#[test]
 fn preserve_iife_in_dce_mode() {
     // https://github.com/oxc-project/oxc/issues/17480
     // https://github.com/rolldown/rolldown/issues/9437
@@ -1126,4 +1176,138 @@ fn dce_inline_template_literal_does_not_create_octal_escape() {
 
     // Expressions with side effects must still remain interpolation expressions.
     test_same(r"export function makeKey(messageId) { return `${messageId}\0${sideEffect()}`; }");
+}
+
+// A dead object-copy spread of a binding that provably still holds a
+// getter-free object literal runs no user code, so it is removable. Proven at a
+// quiet-pass boundary by a census over the symbol's live references — see
+// `crate::spread_cleanup`.
+// https://github.com/oxc-project/oxc/issues/20661
+// https://github.com/rolldown/rolldown/issues/8582
+#[test]
+fn remove_dead_object_spread_of_local_literal() {
+    // The effect / rolldown#8582 shape: computed keys and methods install no
+    // accessors, so both copies are dead. The computed key's own reads stay.
+    test(
+        "const Proto = { [TypeId]: TypeId, m() {} }; ({ ...Proto }); ({ ...Proto });",
+        "TypeId, TypeId;",
+    );
+    // Transitive: removing `P2`'s copies kills its declarator, which makes
+    // `P1`'s copy inside it dead in the next local cleanup round.
+    test("const P1 = { a: 1 }; const P2 = { ...P1, b: 2 }; ({ ...P2 }); ({ ...P2 });", "");
+    // The copies sit in dead declarator initializers, mixed with data keys.
+    test("const P = { a: 1 }; const X = { ...P, t: 1 }; const Y = { ...P, u: 2 };", "");
+    // A computed `["__proto__"]` key creates an own data property rather than
+    // setting the prototype, so the literal is still classified and the copies
+    // still go. The `base` read is an ordinary global read and stays.
+    test("const P = { [\"__proto__\"]: base, a: 1 }; ({ ...P }); ({ ...P });", "base;");
+}
+
+// Each layer of a spread chain only reaches discarded position once the layer
+// above it is gone, so consuming candidates a pass at a time cost a global
+// iteration per layer and a four-layer chain exhausted the iteration budget.
+// The boundary batches its removals instead, and doubling each layer's copies
+// keeps single-use inlining from dissolving the chain first.
+#[test]
+fn remove_layered_object_spread_chain() {
+    test(
+        "const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; ({ ...P3 }); ({ ...P3 });",
+        "",
+    );
+    // Depth five, same shape.
+    test(
+        "const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; const P4 = { ...P3, ...P3 }; ({ ...P4 }); ({ ...P4 });",
+        "",
+    );
+}
+
+#[test]
+fn object_spread_cleanup_discards_stale_candidates() {
+    // Candidates describe one quiet-pass boundary. `P` qualifies before `A`
+    // is removed, but its copies only become discarded after ordinary DCE
+    // removes `f` and `Q`; the following boundary must re-census `P`.
+    test_source_type(
+        "const P = { a: 1 }; const Q = { ...P, ...P }; const f = () => console.log(Q); const A = { m() { f(); } }; ({ ...A }); ({ ...A });",
+        "",
+        SourceType::mjs(),
+    );
+}
+
+#[test]
+fn object_spread_cleanup_refreshes_liveness() {
+    // Removing `P` also removes the only external edge into this recursive
+    // function component. The cleanup boundary must refresh liveness so both
+    // functions disappear in the same compressor run.
+    test_source_type(
+        "function a() { b(); } function b() { a(); } const P = { m() { a(); } }; ({ ...P }); ({ ...P });",
+        "",
+        SourceType::mjs(),
+    );
+}
+
+#[test]
+fn object_spread_cleanup_tracks_nested_scope() {
+    // The cleanup walk must carry the function scope instead of consulting the
+    // Program scope while removing nested declarations in script mode.
+    test_source_type(
+        "function run() { const P0 = {}; const P1 = { ...P0, ...P0 }; const P2 = { ...P1, ...P1 }; const P3 = { ...P2, ...P2 }; const P4 = { ...P3, ...P3 }; const P5 = { ...P4, ...P4 }; const P6 = { ...P5, ...P5 }; const P7 = { ...P6, ...P6 }; ({ ...P7 }); ({ ...P7 }); } run();",
+        "function run() {} run();",
+        SourceType::script(),
+    );
+}
+
+#[test]
+fn object_spread_cleanup_drops_declarator_references() {
+    // Dropping the whole declarator must also prune references in its TypeScript
+    // annotation, not only references in its initializer.
+    test_source_type(
+        "export function run() { const X = Symbol('x'); const P: { [X]: number } = { [X]: 1 }; ({ ...P }); ({ ...P }); }",
+        "export function run() {}",
+        SourceType::ts(),
+    );
+}
+
+// A symbol whose every copy sits in a USED initializer passes the census, but
+// the cleanup traversal has nothing removable. A no-change round is terminal,
+// so publishing this harmless candidate cannot retry until the iteration
+// guard. `Q` is read twice so single-use inlining does not dissolve the shape
+// first.
+#[test]
+fn keep_object_spread_in_used_initializer() {
+    test(
+        "const P = { a: 1 }; const Q = { ...P }; console.log(Q, Q);",
+        "const Q = { a: 1 }; console.log(Q, Q);",
+    );
+}
+
+// Every keep below is the classifier or the census failing. This cleanup has no
+// sanctioned read positions: any live use that is not an object-copy spread
+// disqualifies the symbol, so the hazards do not need enumerating.
+#[test]
+fn keep_object_spread_disqualified_by_census() {
+    // A getter runs on copy, so the literal is never classified `Object`.
+    test_same("const P = { get a() { return 1 } }; ({ ...P }); ({ ...P });");
+    // An ordinary call argument: `foo` can install a getter.
+    test_same("const P = { a: 1 }; foo(P); ({ ...P });");
+    // `console.log` is no exception — Node invokes a `util.inspect.custom`
+    // method on the argument with the argument as the receiver.
+    test_same("const P = { a: 1 }; console.log(P); ({ ...P });");
+    // An array spread runs the value's own `@@iterator`. Deliberately out of
+    // scope for this object-only cleanup; the census keeps it sound anyway.
+    test_same(
+        "const P = { a: 1, [Symbol.iterator]() { return [][Symbol.iterator]() } }; [...P]; ({ ...P });",
+    );
+    // A member write is not a copy. Allowing static ones would be sound but is
+    // deliberately outside this scope.
+    test_same("const P = { a: 1 }; P.b = 2; ({ ...P }); ({ ...P });");
+    // Reassigned: the copied value is not the classified one.
+    test_same("let P = { a: 1 }; P = unknownGlobal; ({ ...P }); ({ ...P });");
+    // The copy precedes the declarator, so the mark-time order proof fails.
+    test_same("({ ...P }); const P = { a: 1 };");
+    // An exported binding fails twice over: `is_implicitly_observable` marks it,
+    // and the `export { P }` specifier is itself a live unmarked reference.
+    test_same("const P = { a: 1 }; ({ ...P }); export { P };");
+    // `f` runs while the hoisted `var` still holds `undefined`, so the copy
+    // inside it fails the mark-time same-function proof and goes unmarked.
+    test_same("function f() { ({ ...P }); } f(); var P = { a: 1 }; ({ ...P });");
 }
