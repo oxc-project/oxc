@@ -35,8 +35,9 @@ pub use crate::react_compiler_hir::environment_config::{
     InstrumentationConfig,
 };
 pub use crate::react_compiler_hir::type_config::{
-    BuiltInTypeRef, FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig,
-    TypeReferenceConfig, ValueKind,
+    AliasingEffectConfig, AliasingSignatureConfig, ApplyArgConfig, BuiltInTypeRef,
+    FunctionTypeConfig, HookTypeConfig, ObjectTypeConfig, TypeConfig, TypeReferenceConfig,
+    ValueKind, ValueReason,
 };
 pub use crate::react_compiler_utils::FxIndexMap;
 
