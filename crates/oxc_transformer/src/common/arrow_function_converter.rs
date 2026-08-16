@@ -635,7 +635,7 @@ impl<'a> ArrowFunctionConverter<'a> {
                 }
                 // Function body (includes class method or object method)
                 Ancestor::FunctionBody(func) => {
-                    // If we're inside a class async method or an object async method, and `is_async_only` is true,
+                    // If we're inside a class async method or an object async method, and `async_transform_enabled` is true,
                     // the `AsyncToGenerator` or `AsyncGeneratorFunctions` plugin will move the body
                     // of the method into a new generator function. This transformation can cause `this`
                     // to point to the wrong context.
