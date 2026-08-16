@@ -1336,7 +1336,6 @@ export interface DummyRuleMap {
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
   "react/capitalized-calls"?: RuleNoConfig;
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
-  "react/config"?: RuleNoConfig;
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
   "react/error-boundaries"?: RuleNoConfig;
   "react/exhaustive-deps"?: RuleNoConfig | [AllowWarnDeny, ExhaustiveDepsConfig];
