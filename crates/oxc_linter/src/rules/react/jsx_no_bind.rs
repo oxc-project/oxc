@@ -38,7 +38,7 @@ fn func_diagnostic(span: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
-struct ConfigElement0 {
+struct JsxNoBindConfig {
     #[serde(rename = "ignoreDOMComponents")]
     ignore_dom_components: bool,
     allow_bind: bool,
@@ -48,7 +48,7 @@ struct ConfigElement0 {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct JsxNoBind(ConfigElement0);
+pub struct JsxNoBind(JsxNoBindConfig);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -93,7 +93,7 @@ enum ViolationType {
     Func,
 }
 
-impl ConfigElement0 {
+impl JsxNoBindConfig {
     fn get_violation_type(&self, expr: &Expression) -> Option<ViolationType> {
         match expr.get_inner_expression() {
             Expression::CallExpression(call) if !self.allow_bind => {

@@ -1363,6 +1363,7 @@ export interface DummyRuleMap {
   "react/jsx-handler-names"?: RuleNoConfig | [AllowWarnDeny, JsxHandlerNamesConfig];
   "react/jsx-key"?: RuleNoConfig | [AllowWarnDeny, JsxKeyConfig];
   "react/jsx-max-depth"?: RuleNoConfig | [AllowWarnDeny, JsxMaxDepthConfig];
+  "react/jsx-no-bind"?: RuleNoConfig | [AllowWarnDeny, JsxNoBindConfig];
   "react/jsx-no-comment-textnodes"?: RuleNoConfig;
   "react/jsx-no-constructed-context-values"?: RuleNoConfig;
   "react/jsx-no-duplicate-props"?: RuleNoConfig;
@@ -4891,6 +4892,13 @@ export interface JsxMaxDepthConfig {
    * The maximum allowed depth of nested JSX elements and fragments.
    */
   max?: number;
+}
+export interface JsxNoBindConfig {
+  allowArrowFunctions?: boolean;
+  allowBind?: boolean;
+  allowFunctions?: boolean;
+  ignoreDOMComponents?: boolean;
+  ignoreRefs?: boolean;
 }
 /**
  * The options shared between the top-level config and each `elementOverrides` entry.
