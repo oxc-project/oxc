@@ -17,7 +17,7 @@ use oxc_ast::AstKind;
 use oxc_ast::ast::*;
 use oxc_ast::builder::AstBuilder;
 use oxc_diagnostics::Diagnostics;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, SPAN, SourceType, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics::{self, should_panic, with_fallback_label};
@@ -26,14 +26,13 @@ use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
 use crate::scope::ScopeResolver;
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn, GetAddress, GetAllocator};
-use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
+use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic, SemanticBuilder};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::keyword::is_reserved_keyword;
 use oxc_syntax::scope::ScopeId;
 use oxc_syntax::symbol::SymbolId;
 
-use super::compile_result::CodegenFunction;
-use super::compile_result::CompileResult;
+use super::compile_result::{CodegenFunction, CompileResult, OutlinedFunction};
 use super::imports::ProgramContext;
 use super::pipeline;
 use super::suppression::filter_suppressions_that_affect_function;
@@ -86,6 +85,7 @@ struct BodyDirective<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CompileSourceKind {
     Original,
+    Outlined,
 }
 
 // -----------------------------------------------------------------------
@@ -1062,6 +1062,159 @@ fn try_compile_function<'a>(
         env_config,
         context,
     )
+}
+
+/// Build the function declaration used to analyse an outlined component. Outlined functions are
+/// emitted as declarations regardless of the kind of the original function, matching Babel's
+/// `insertNewOutlinedFunctionNode`.
+fn outlined_function_declaration<'a>(
+    ast: &AstBuilder<'a>,
+    codegen_fn: &CodegenFunction<'a>,
+) -> Statement<'a> {
+    let allocator = ast.allocator();
+    let function = Function::boxed(
+        codegen_fn.span.unwrap_or_default(),
+        FunctionType::FunctionDeclaration,
+        codegen_fn.id.clone_in(allocator),
+        codegen_fn.generator,
+        codegen_fn.is_async,
+        false,
+        None,
+        None,
+        codegen_fn.params.clone_in(allocator),
+        None,
+        Some(codegen_fn.body.clone_in(allocator)),
+        ast,
+    );
+    Statement::FunctionDeclaration(function)
+}
+
+struct OutlinedNode<'a> {
+    outlined: Option<OutlinedFunction<'a>>,
+    children: Vec<usize>,
+}
+
+fn outlined_compile_source<'b, 'a>(
+    function: &'b Function<'a>,
+    fn_type: ReactFunctionType,
+) -> CompileSource<'b, 'a> {
+    let span = function.span;
+    CompileSource {
+        kind: CompileSourceKind::Outlined,
+        original_kind: OriginalFnKind::FunctionDeclaration,
+        fn_start: Some(span.start),
+        fn_end: Some(span.end),
+        fn_scope_id: function.scope_id.get().expect("outlined function should have a scope"),
+        fn_type,
+        fn_node: FunctionNode::Function(function),
+        body_directives: function.body.as_deref().map(body_directive_values).unwrap_or_default(),
+    }
+}
+
+/// Queue outlined functions back through [`process_fn`], as in `Program.ts`.
+///
+/// Babel updates scopes as it inserts a `NodePath`. Oxc semantics are immutable, so each FIFO
+/// generation is represented by one temporary program and one shared semantic build. The small
+/// node forest records where newly outlined functions were inserted so it can be flattened back
+/// into the codegen results after the queue is empty.
+#[allow(clippy::result_large_err)]
+fn compile_outlined_functions<'a, 'b, 'p, 's>(
+    ast: &AstBuilder<'a>,
+    compiled_fns: &mut [CompiledFunction<'a, 'b, 'p, 's>],
+    source_type: SourceType,
+    output_mode: CompilerOutputMode,
+    env_config: &EnvironmentConfig,
+    context: &mut ProgramContext<'a>,
+) -> Result<(), CompileResult<'a>> {
+    let mut nodes = Vec::new();
+    let mut roots = vec![Vec::new(); compiled_fns.len()];
+    let mut queue = Vec::new();
+    for (compiled, roots) in compiled_fns.iter_mut().zip(&mut roots) {
+        for outlined in std::mem::take(&mut compiled.codegen_fn.outlined) {
+            let should_compile = outlined.fn_type.is_some();
+            let index = nodes.len();
+            nodes.push(OutlinedNode { outlined: Some(outlined), children: Vec::new() });
+            roots.push(index);
+            if should_compile {
+                queue.push(index);
+            }
+        }
+    }
+
+    'queue: while !queue.is_empty() {
+        let mut body = ArenaVec::with_capacity_in(queue.len(), ast);
+        for &index in &queue {
+            let outlined = nodes[index].outlined.as_ref().unwrap();
+            body.push(outlined_function_declaration(ast, &outlined.func));
+        }
+        let program = Program::new(SPAN, source_type, context.source_text, [], None, [], body, ast);
+        let semantic_ret = SemanticBuilder::new().with_build_nodes(true).build(&program);
+        if !semantic_ret.diagnostics.is_empty() {
+            if let Some(result) = handle_error(
+                &semantic_ret.diagnostics,
+                None,
+                context.opts.panic_threshold,
+                &mut context.diagnostics,
+            ) {
+                return Err(result);
+            }
+            break 'queue;
+        }
+        let semantic = semantic_ret.semantic;
+        let scope = ScopeResolver::new(&semantic, ast.allocator());
+        let sources = program
+            .body
+            .iter()
+            .zip(&queue)
+            .map(|(statement, &index)| {
+                let Statement::FunctionDeclaration(function) = statement else { unreachable!() };
+                let fn_type = nodes[index].outlined.as_ref().unwrap().fn_type.unwrap();
+                outlined_compile_source(function, fn_type)
+            })
+            .collect::<Vec<_>>();
+        let mut results = Vec::with_capacity(sources.len());
+        for source in &sources {
+            results.push(process_fn(ast, source, &scope, output_mode, env_config, context));
+        }
+
+        let mut next_queue = Vec::new();
+        for (index, result) in queue.into_iter().zip(results) {
+            let nested = match result {
+                Ok(Some(mut compiled)) => {
+                    let nested = std::mem::take(&mut compiled.outlined);
+                    let outlined = nodes[index].outlined.as_mut().unwrap();
+                    outlined.fn_type = None;
+                    outlined.func = compiled;
+                    nested
+                }
+                Ok(None) => {
+                    nodes[index].outlined.as_mut().unwrap().fn_type = None;
+                    Vec::new()
+                }
+                Err(result) => return Err(result),
+            };
+            for outlined in nested {
+                let should_compile = outlined.fn_type.is_some();
+                let child = nodes.len();
+                nodes.push(OutlinedNode { outlined: Some(outlined), children: Vec::new() });
+                nodes[index].children.push(child);
+                if should_compile {
+                    next_queue.push(child);
+                }
+            }
+        }
+        queue = next_queue;
+    }
+
+    for (compiled, roots) in compiled_fns.iter_mut().zip(roots) {
+        let mut stack = roots.into_iter().rev().collect::<Vec<_>>();
+        while let Some(index) = stack.pop() {
+            let node = &mut nodes[index];
+            stack.extend(std::mem::take(&mut node.children).into_iter().rev());
+            compiled.codegen_fn.outlined.push(node.outlined.take().unwrap());
+        }
+    }
+    Ok(())
 }
 
 /// Process a single function: check directives, attempt compilation, handle results.
@@ -2751,11 +2904,16 @@ fn ox_transform_program<'a>(
     program.body.extend(appended_outlined_decls);
 
     // Register the memo cache import; codegen emitted its pre-reserved local name.
-    if replacements.iter().any(|r| r.codegen_fn.memo_slots_used > 0) {
+    if replacements.iter().any(|r| codegen_uses_memo_cache(&r.codegen_fn)) {
         context.add_memo_cache_import();
     }
 
     ox_add_imports_to_program(ast, program, context, import_span);
+}
+
+fn codegen_uses_memo_cache(codegen_fn: &CodegenFunction<'_>) -> bool {
+    codegen_fn.memo_slots_used > 0
+        || codegen_fn.outlined.iter().any(|outlined| codegen_uses_memo_cache(&outlined.func))
 }
 
 /// Insert outlined function declarations immediately after the statement that
@@ -3073,6 +3231,17 @@ pub fn compile_program<'a>(
                 return fatal_result;
             }
         }
+    }
+
+    if let Err(fatal_result) = compile_outlined_functions(
+        &ast,
+        &mut compiled_fns,
+        program.source_type,
+        output_mode,
+        &options.environment,
+        &mut context,
+    ) {
+        return fatal_result;
     }
 
     // TS invariant: if there's a module scope opt-out, no functions should have been compiled
