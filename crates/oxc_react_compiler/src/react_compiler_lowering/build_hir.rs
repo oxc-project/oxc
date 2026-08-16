@@ -740,7 +740,7 @@ fn lower_inner<'a>(
             InstructionKind::Let,
             &param.pattern,
             value,
-            AssignmentStyle::Assignment,
+            AssignmentStyle::for_binding_pattern(&param.pattern),
         )?;
     }
 
@@ -757,7 +757,7 @@ fn lower_inner<'a>(
             InstructionKind::Let,
             &rest.rest.argument,
             place,
-            AssignmentStyle::Assignment,
+            AssignmentStyle::for_binding_pattern(&rest.rest.argument),
         )?;
     }
 
@@ -1280,6 +1280,17 @@ enum AssignmentStyle {
     Assignment,
     /// Destructuring assignment
     Destructure,
+}
+
+impl AssignmentStyle {
+    fn for_binding_pattern(pattern: &oxc::BindingPattern<'_>) -> Self {
+        match pattern {
+            oxc::BindingPattern::ObjectPattern(_) | oxc::BindingPattern::ArrayPattern(_) => {
+                Self::Destructure
+            }
+            _ => Self::Assignment,
+        }
+    }
 }
 
 /// Assign `value` to a binding pattern (variable declaration / destructuring param).
@@ -6536,19 +6547,13 @@ fn lower_variable_declaration<'a>(
     for declarator in &var_decl.declarations {
         if let Some(init) = &declarator.init {
             let value = lower_expression_to_temporary(builder, init)?;
-            let assign_style = match &declarator.id {
-                oxc::BindingPattern::ObjectPattern(_) | oxc::BindingPattern::ArrayPattern(_) => {
-                    AssignmentStyle::Destructure
-                }
-                _ => AssignmentStyle::Assignment,
-            };
             lower_binding_assignment(
                 builder,
                 var_decl.span,
                 kind,
                 &declarator.id,
                 value,
-                assign_style,
+                AssignmentStyle::for_binding_pattern(&declarator.id),
             )?;
         } else if let oxc::BindingPattern::BindingIdentifier(id) = &declarator.id {
             // No init: emit DeclareLocal or DeclareContext
