@@ -218,11 +218,8 @@ fn js_parser_test() {
     );
     test("while (x) { if (y) continue; z(); }", "for (; x; ) y || z();");
     test("while (x) { if (y) continue; else z(); w(); }", "for (; x; ) y || (z(), w());");
-    test("while (x) { t(); if (y) continue; z(); }", "for (; x; ) t(), !y && z();");
-    test(
-        "while (x) { t(); if (y) continue; else z(); w(); }",
-        "for (; x; ) t(), !y && (z(), w());",
-    );
+    test("while (x) { t(); if (y) continue; z(); }", "for (; x; ) t(), y || z();");
+    test("while (x) { t(); if (y) continue; else z(); w(); }", "for (; x; ) t(), y || (z(), w());");
     test("while (x) { debugger; if (y) continue; z(); }", "for (; x; ) { debugger; y || z(); }");
     test(
         "while (x) { debugger; if (y) continue; else z(); w(); }",
@@ -1147,10 +1144,10 @@ fn test_minimize_exit_statements() {
     test("if (a) return b; else return c; return d;", "return a ? b : c;");
     test("function x() { if (y) return; z(); }", "function x() { y || z();}");
     test("function x() { if (y) return; else z(); w(); }", "function x() { y || (z(), w());}");
-    test("function x() { t(); if (y) return; z(); }", "function x() { t(), !y && z();}");
+    test("function x() { t(); if (y) return; z(); }", "function x() { t(), y || z(); }");
     test(
         "function x() { t(); if (y) return; else z(); w(); }",
-        "function x() { t(), !y && (z(), w());}",
+        "function x() { t(), y || (z(), w());}",
     );
     test("function x() { debugger; if (y) return; z(); }", "function x() { debugger; y || z();}");
     test(

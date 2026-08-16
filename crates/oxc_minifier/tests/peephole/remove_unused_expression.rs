@@ -322,6 +322,16 @@ fn test_logical_expression() {
     test("typeof x == 'undefined' || x", "");
     test("typeof x < 'u' && x", "");
     test("typeof x > 'u' || x", "");
+
+    // De Morgan unwrapping for unused expressions
+    test("!x && y()", "x || y()");
+    test("!x && y", "x || y");
+    test("!a.b && c()", "a.b || c()");
+    test("!x.y.z && foo()", "x.y.z || foo()");
+    test("!x || y()", "x && y()");
+    test("!x || y", "x && y");
+    test("!a.b || c()", "a.b && c()");
+    test("!x.y.z || foo()", "x.y.z && foo()");
 }
 
 // Regression tests for https://github.com/oxc-project/oxc/issues/21457.

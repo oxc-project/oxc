@@ -150,6 +150,21 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
 
+        if (logical_expr.operator.is_and() || logical_expr.operator.is_or())
+            && let Expression::UnaryExpression(un_expr) = &mut logical_expr.left
+            && un_expr.operator.is_not()
+        {
+            let new_expr = un_expr.argument.take_in(ctx);
+            ctx.replace_expression(&mut logical_expr.left, new_expr);
+
+            logical_expr.operator = if logical_expr.operator == LogicalOperator::And {
+                LogicalOperator::Or
+            } else {
+                LogicalOperator::And
+            };
+            return false;
+        }
+
         // try optional chaining and nullish coalescing
         if ctx.supports_feature(ESFeature::ES2020OptionalChaining)
             || ctx.supports_feature(ESFeature::ES2020NullishCoalescingOperator)

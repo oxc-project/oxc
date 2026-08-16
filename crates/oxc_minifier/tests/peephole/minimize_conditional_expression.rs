@@ -3,7 +3,7 @@ use crate::{test, test_same, test_target};
 #[test]
 fn test_minimize_expr_condition() {
     test("(x ? true : false) && y()", "x && y()");
-    test("(x ? false : true) && y()", "!x && y()");
+    test("(x ? false : true) && y()", "x || y()");
     test("(x ? true : y) && y()", "(x || y) && y();");
     test("(x ? y : false) && y()", "(x && y) && y()");
     test("var x; (x && true) && y()", "var x; x && y()");
