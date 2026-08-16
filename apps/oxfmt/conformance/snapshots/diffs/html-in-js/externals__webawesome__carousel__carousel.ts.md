@@ -1,5 +1,7 @@
 # externals/webawesome/carousel/carousel.ts
 
+> We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently
+
 ## Option 1
 
 `````json
