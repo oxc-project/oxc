@@ -161,6 +161,17 @@ The entries documented so far are not yet an exhaustive audit against the confor
   - Artifact of its comment-extraction doc surgery: an unconditional separator space that its end-of-line trimming can only remove when no line-suffix comment flushes behind it
 - `experimentalOperatorPosition: "start"`, intersection types: a leading own-line comment stays own-line, above the leading `&`; Prettier prints it behind `& `, losing its own-line-ness and idempotency (the second pass inlines the type with the comment behind `;`)
   - Binary-like chains hoist the comment in both formatters; one uniform rule (and the own-line invariant) over Prettier's internal inconsistency
+- Inline comments around a union's formatter-added `(` keep their source side (`keyof /* c */ (A | B)` stays as-is)
+  - Prettier moves the comment inside for `keyof`/type-operator operands while keeping it outside in array/indexed-access positions
+- An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break)
+  - Prettier treats the same shape three ways:
+    - JS keeps it only when the right-hand side breaks and flushes it past a fitting one (prettier#14617-family attachment artifact)
+    - TS type aliases and union-valued property signatures get it own-lined (the 3.9 union rewrite)
+    - simple-typed property signatures get it flushed past the member and its `;` separator
+  - Not yet covered: default parameters, destructuring defaults, enum members (different formatting paths still flush, Prettier-compatible)
+- A union's leading comments normalize to behind the leading `|` (`| /* c */ A`) whenever no comment ends its source line, regardless of the source shape
+  - Prettier does the same except for nested single-member paren sources (`| (/* c */ | A ...`) and multiline block comments starting their line, where it keeps `/* c */ | A`
+    - An output it then reformats into `| /* c */ A` itself for the first shape, not idempotent
 
 ## Verification
 

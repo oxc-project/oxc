@@ -1,0 +1,90 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// An end-of-line line comment right after `=`/`:` keeps its position
+// (`= // c` + mandatory break). Prettier flushes it past a FITTING right-hand
+// side (`const v1 = 1; // c`, crossing the value) while keeping the order when
+// the right-hand side breaks — one rule for both shapes
+// (Known divergence, see AGENTS.md).
+
+const v1 = // c
+  1;
+
+v2 = // c
+  1;
+
+const o = {
+  p: // c
+    1,
+};
+
+class C {
+  f = // c
+    1;
+}
+
+// Breaking right-hand side: Prettier keeps the order here too (no divergence)
+const v3 = // c
+  someLongFunctionCall(argumentOne, argumentTwo, argumentThree, argumentFours);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// An end-of-line line comment right after `=`/`:` keeps its position
+// (`= // c` + mandatory break). Prettier flushes it past a FITTING right-hand
+// side (`const v1 = 1; // c`, crossing the value) while keeping the order when
+// the right-hand side breaks — one rule for both shapes
+// (Known divergence, see AGENTS.md).
+
+const v1 = // c
+  1;
+
+v2 = // c
+  1;
+
+const o = {
+  p: // c
+    1,
+};
+
+class C {
+  f = // c
+    1;
+}
+
+// Breaking right-hand side: Prettier keeps the order here too (no divergence)
+const v3 = // c
+  someLongFunctionCall(argumentOne, argumentTwo, argumentThree, argumentFours);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// An end-of-line line comment right after `=`/`:` keeps its position
+// (`= // c` + mandatory break). Prettier flushes it past a FITTING right-hand
+// side (`const v1 = 1; // c`, crossing the value) while keeping the order when
+// the right-hand side breaks — one rule for both shapes
+// (Known divergence, see AGENTS.md).
+
+const v1 = // c
+  1;
+
+v2 = // c
+  1;
+
+const o = {
+  p: // c
+    1,
+};
+
+class C {
+  f = // c
+    1;
+}
+
+// Breaking right-hand side: Prettier keeps the order here too (no divergence)
+const v3 = // c
+  someLongFunctionCall(argumentOne, argumentTwo, argumentThree, argumentFours);
+
+===================== End =====================
