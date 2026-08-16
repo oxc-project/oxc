@@ -1,3 +1,4 @@
+mod assert_consistent_identifiers;
 mod assert_terminal_blocks_exist;
 pub mod default_module_type_provider;
 pub mod dominator;
@@ -12,6 +13,7 @@ pub mod visitors;
 
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
+pub use assert_consistent_identifiers::assert_consistent_identifiers;
 pub use assert_terminal_blocks_exist::{
     assert_terminal_preds_exist, assert_terminal_successors_exist,
 };

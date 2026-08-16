@@ -309,6 +309,25 @@ pub fn terminal_successor_does_not_reference_correct_predecessor(
 }
 
 #[cold]
+pub fn expected_all_lvalues_to_be_temporaries(name: &str, span: Option<Span>) -> OxcDiagnostic {
+    const REASON: &str = "Expected all lvalues to be temporaries";
+    diagnostic(ErrorCategory::Invariant, REASON)
+        .with_help(format!("Found named lvalue `{name}`"))
+        .with_labels(span.map(|span| span.primary_label(REASON)))
+}
+
+#[cold]
+pub fn expected_lvalues_to_be_assigned_exactly_once(
+    place: impl Display,
+    span: Option<Span>,
+) -> OxcDiagnostic {
+    const REASON: &str = "Expected lvalues to be assigned exactly once";
+    diagnostic(ErrorCategory::Invariant, REASON)
+        .with_help(format!("Found duplicate assignment of '{place}'"))
+        .with_labels(span.map(|span| span.primary_label(REASON)))
+}
+
+#[cold]
 pub fn invariant_analyze_functions_expected_apply_effects_replaced_more_precise_effects()
 -> OxcDiagnostic {
     diagnostic(

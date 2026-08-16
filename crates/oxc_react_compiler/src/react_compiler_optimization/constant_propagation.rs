@@ -40,7 +40,8 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId, InstructionId,
     InstructionValue, ManualMemoDependencyRoot, NonLocalBinding, Phi, Place, PrimitiveValue,
-    PropertyLiteral, Terminal, UnaryOperator, assert_terminal_successors_exist,
+    PropertyLiteral, Terminal, UnaryOperator, assert_consistent_identifiers,
+    assert_terminal_successors_exist,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
@@ -132,7 +133,7 @@ fn constant_propagation_impl<'a>(
          */
         merge_consecutive_blocks(func, &mut env.functions, env.allocator);
 
-        // TODO: port assertConsistentIdentifiers(fn)
+        assert_consistent_identifiers(func, &env.identifiers)?;
         assert_terminal_successors_exist(func)?;
     }
     Ok(())

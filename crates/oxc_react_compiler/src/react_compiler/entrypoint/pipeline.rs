@@ -16,7 +16,8 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_hir::{
-    ReactFunctionType, assert_terminal_preds_exist, assert_terminal_successors_exist,
+    ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
+    assert_terminal_successors_exist,
 };
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
@@ -154,7 +155,7 @@ fn run_pipeline<'a>(
         return Ok(Ok(None));
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -167,14 +168,14 @@ fn run_pipeline<'a>(
 
     merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator);
 
-    // TODO: port assertConsistentIdentifiers
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
     assert_terminal_successors_exist(&hir)?;
 
     enter_ssa(&mut hir, &mut env)?;
 
     eliminate_redundant_phi(&mut hir, &mut env);
 
-    // TODO: port assertConsistentIdentifiers
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
 
     constant_propagation(&mut hir, &mut env)?;
 
@@ -206,7 +207,7 @@ fn run_pipeline<'a>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 
