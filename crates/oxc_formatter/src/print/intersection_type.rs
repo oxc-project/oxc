@@ -3,8 +3,8 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::AstNode, format_args, formatter::prelude::*, parentheses::NeedsParentheses,
-    print::FormatWrite, utils::typescript::is_object_like_type, write,
+    ast_nodes::AstNode, format_args, formatter::prelude::*, print::FormatWrite,
+    utils::typescript::is_object_like_type, write,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
@@ -44,12 +44,6 @@ fn format_intersection_types<'a>(
             if !(is_prev_object_like || is_object_like)
                 || f.comments().has_leading_own_line_comment(item.span().start)
             {
-                let content = format_with(|f| {
-                    if item.needs_parentheses(f) {
-                        write!(f, format_leading_comments(item.span()));
-                    }
-                    write!(f, item);
-                });
                 if operator_leads_break {
                     // The hoist keeps own-line comments own-line, like binary-like chains.
                     // NOTE: Prettier prints them behind `& `, losing that (and idempotency).
@@ -59,11 +53,11 @@ fn format_intersection_types<'a>(
                             format_hoisted_leading_comments(item.span()),
                             "&",
                             space(),
-                            content
+                            item
                         ))
                     );
                 } else {
-                    write!(f, [space(), "&", soft_line_indent_or_space(&content)]);
+                    write!(f, [space(), "&", soft_line_indent_or_space(&item)]);
                 }
             } else {
                 write!(f, [space(), "&", space()]);
