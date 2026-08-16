@@ -416,40 +416,46 @@ impl<'a> PeepholeOptimizations {
         // Higher scores = process first.
         {
             let scoping = ctx.scoping();
-            let priorities: Vec<(SymbolId, usize, usize, usize)> =
-                ctx.state.pass_changes.dirty_symbols
-                    .iter()
-                    .map(|&symbol_id| {
-                        let ref_count = scoping.get_resolved_reference_ids(symbol_id).len();
+            let priorities: Vec<(SymbolId, usize, usize, usize)> = ctx
+                .state
+                .pass_changes
+                .dirty_symbols
+                .iter()
+                .map(|&symbol_id| {
+                    let ref_count = scoping.get_resolved_reference_ids(symbol_id).len();
 
-                        // Find first declaration's initializer
-                        let (init_complexity, ref_symbols) = declarations_by_symbol
-                            .binary_search_by_key(&symbol_id.index(), |(sid, _)| sid.index())
-                            .ok()
-                            .and_then(|idx| {
-                                let stmt_idx = declarations_by_symbol[idx].1;
-                                if let Statement::VariableDeclaration(var_decl) = &stmts[stmt_idx] {
-                                    var_decl.declarations.first().and_then(|decl| {
-                                        decl.init.as_ref().map(|init| {
-                                            let complexity = count_init_complexity(init);
-                                            let refs = count_referenced_symbols(init, scoping);
-                                            (complexity, refs)
-                                        })
+                    // Find first declaration's initializer
+                    let (init_complexity, ref_symbols) = declarations_by_symbol
+                        .binary_search_by_key(&symbol_id.index(), |(sid, _)| sid.index())
+                        .ok()
+                        .and_then(|idx| {
+                            let stmt_idx = declarations_by_symbol[idx].1;
+                            if let Statement::VariableDeclaration(var_decl) = &stmts[stmt_idx] {
+                                var_decl.declarations.first().and_then(|decl| {
+                                    decl.init.as_ref().map(|init| {
+                                        let complexity = count_init_complexity(init);
+                                        let refs = count_referenced_symbols(init, scoping);
+                                        (complexity, refs)
                                     })
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap_or((0, 0));
+                                })
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or((0, 0));
 
-                        (symbol_id, ref_count, init_complexity, ref_symbols)
-                    })
-                    .collect();
+                    (symbol_id, ref_count, init_complexity, ref_symbols)
+                })
+                .collect();
 
             // Sort by reference count, then complexity, then symbol refs (all descending)
             let mut sorted = priorities;
             sorted.sort_unstable_by_key(|(_sym, ref_count, complexity, refs)| {
-                (std::cmp::Reverse(*ref_count), std::cmp::Reverse(*complexity), std::cmp::Reverse(*refs))
+                (
+                    std::cmp::Reverse(*ref_count),
+                    std::cmp::Reverse(*complexity),
+                    std::cmp::Reverse(*refs),
+                )
             });
             ctx.state.pass_changes.dirty_symbols.clear();
             for (symbol_id, _, _, _) in sorted {
