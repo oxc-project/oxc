@@ -15,7 +15,10 @@ static NEXT_BUFFER_ID: AtomicU32 = AtomicU32::new(0);
 fn next_buffer_id() -> u32 {
     loop {
         let id = NEXT_BUFFER_ID.load(Ordering::Relaxed);
-        assert!(id != u32::MAX, "fixed-size allocator buffer_id overflow");
+        #[expect(clippy::manual_assert)]
+        if id == u32::MAX {
+            panic!("fixed-size allocator buffer_id overflow");
+        }
         if NEXT_BUFFER_ID
             .compare_exchange_weak(id, id + 1, Ordering::Relaxed, Ordering::Relaxed)
             .is_ok()
