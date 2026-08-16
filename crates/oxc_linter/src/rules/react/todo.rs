@@ -59,6 +59,19 @@ function Component(props) {
                 const fbt = 'span';
                 return <fbt desc='label'>Hello</fbt>;
             }",
+        // User-facing unsupported-syntax diagnostics should not expose
+        // internal compiler implementation names.
+        "import { useEffect } from 'react';
+            function Component() {
+                useEffect(() => {
+                    try {
+                        doSomething();
+                    } finally {
+                        cleanup();
+                    }
+                }, []);
+                return <div />;
+            }",
     ];
 
     Tester::new(Todo::NAME, Todo::PLUGIN, pass, fail).test_and_snapshot();

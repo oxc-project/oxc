@@ -840,6 +840,7 @@ pub enum InstructionValue<'a> {
         deps: Option<ArenaVec<'a, ManualMemoDependency<'a>>>,
         deps_span: Option<Option<Span>>,
         has_invalid_deps: bool,
+        callee_span: Option<Span>,
         span: Option<Span>,
     },
     FinishMemoize {
@@ -2056,12 +2057,14 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
                 deps,
                 deps_span,
                 has_invalid_deps,
+                callee_span,
                 span,
             } => InstructionValue::StartMemoize {
                 manual_memo_id: *manual_memo_id,
                 deps: deps.as_ref().map(|v| v.clone_in_impl(sem, alloc)),
                 deps_span: *deps_span,
                 has_invalid_deps: *has_invalid_deps,
+                callee_span: *callee_span,
                 span: *span,
             },
         }

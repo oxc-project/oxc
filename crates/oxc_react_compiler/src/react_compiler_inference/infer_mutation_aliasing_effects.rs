@@ -1939,7 +1939,7 @@ fn apply_effect<'a>(
                     let diagnostic = diagnostics::variable_accessed_before_declaration(
                         variable.as_deref(),
                         access_span,
-                        value.span,
+                        None,
                     );
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     apply_effect(
@@ -3119,7 +3119,7 @@ fn get_write_error_reason(abstract_value: &AbstractValue) -> String {
         "Modifying a value returned from a function whose return value should not be mutated"
             .to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReactiveFunctionArgument) {
-        "Modifying component props or hook arguments is not allowed. Consider using a local variable instead".to_string()
+        "Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state".to_string()
     } else if abstract_value.reason.contains(&ValueReason::State) {
         "Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead".to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReducerState) {
