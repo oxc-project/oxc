@@ -6,8 +6,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[void_use_memo.tsx:4:25]
  3 │ function Component() {
  4 │   const value = useMemo(() => {}, []);
-   ·                         ────┬───
-   ·                             ╰── useMemo() callbacks must return a value
+   ·                         ───┬───
+   ·                            ╰── useMemo() callbacks must return a value
  5 │   return <div>{value}</div>;
    ╰────
   help: This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects

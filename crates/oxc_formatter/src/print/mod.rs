@@ -2174,5 +2174,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNonNullableType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSDocUnknownType> {
-    fn write(&self, _f: &mut JsFormatter<'_, 'a>) {}
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, "?");
+    }
 }

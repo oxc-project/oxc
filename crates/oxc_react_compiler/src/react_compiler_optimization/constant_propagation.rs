@@ -29,6 +29,7 @@ use std::mem::replace;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{StringToNumber, ToInt32, ToUint32};
 use oxc_str::{Ident, Str};
 use oxc_syntax::identifier::is_identifier_name;
@@ -39,7 +40,8 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockKind, FloatValue, FunctionId, GotoVariant, HirFunction, IdentifierId, InstructionId,
     InstructionValue, ManualMemoDependencyRoot, NonLocalBinding, Phi, Place, PrimitiveValue,
-    PropertyLiteral, Terminal, UnaryOperator,
+    PropertyLiteral, Terminal, UnaryOperator, assert_consistent_identifiers,
+    assert_terminal_successors_exist,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
@@ -83,18 +85,21 @@ type Constants<'a> = FxHashMap<IdentifierId, Constant<'a>>;
 // Public entry point
 // =============================================================================
 
-pub fn constant_propagation<'a>(func: &mut HirFunction<'a>, env: &mut Environment<'a>) {
+pub fn constant_propagation<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+) -> Result<(), OxcDiagnostic> {
     let mut constants: Constants<'a> = FxHashMap::default();
-    constant_propagation_impl(func, env, &mut constants);
+    constant_propagation_impl(func, env, &mut constants)
 }
 
 fn constant_propagation_impl<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
     constants: &mut Constants<'a>,
-) {
+) -> Result<(), OxcDiagnostic> {
     loop {
-        let have_terminals_changed = apply_constant_propagation(func, env, constants);
+        let have_terminals_changed = apply_constant_propagation(func, env, constants)?;
         if !have_terminals_changed {
             break;
         }
@@ -128,17 +133,17 @@ fn constant_propagation_impl<'a>(
          */
         merge_consecutive_blocks(func, &mut env.functions, env.allocator);
 
-        // TODO: port assertConsistentIdentifiers(fn) and assertTerminalSuccessorsExist(fn)
-        // from TS HIR validation. These are debug assertions that verify structural
-        // invariants after the CFG cleanup helpers run.
+        assert_consistent_identifiers(func, &env.identifiers)?;
+        assert_terminal_successors_exist(func)?;
     }
+    Ok(())
 }
 
 fn apply_constant_propagation<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
     constants: &mut Constants<'a>,
-) -> bool {
+) -> Result<bool, OxcDiagnostic> {
     let mut has_changes = false;
 
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
@@ -171,6 +176,15 @@ fn apply_constant_propagation<'a>(
                  */
                 continue;
             }
+            let inner_func = match &func.instructions[instr_id.index()].value {
+                InstructionValue::FunctionExpression { lowered_func, .. }
+                | InstructionValue::ObjectMethod { lowered_func, .. } => Some(lowered_func.func),
+                _ => None,
+            };
+            if let Some(inner_func) = inner_func {
+                process_inner_function(inner_func, env, constants)?;
+            }
+
             let result = evaluate_instruction(constants, func, env, *instr_id);
             if let Some(value) = result {
                 let lvalue_id = func.instructions[instr_id.index()].lvalue.identifier;
@@ -219,7 +233,7 @@ fn apply_constant_propagation<'a>(
         }
     }
 
-    has_changes
+    Ok(has_changes)
 }
 
 // =============================================================================
@@ -562,16 +576,6 @@ fn evaluate_instruction<'a>(
             }
             place_value
         }
-        InstructionValue::FunctionExpression { lowered_func, .. } => {
-            let func_id = lowered_func.func;
-            process_inner_function(func_id, env, constants);
-            None
-        }
-        InstructionValue::ObjectMethod { lowered_func, .. } => {
-            let func_id = lowered_func.func;
-            process_inner_function(func_id, env, constants);
-            None
-        }
         InstructionValue::StartMemoize { deps, .. } => {
             if let Some(deps) = deps {
                 // Two-phase: collect which deps are constant, then mutate
@@ -621,6 +625,8 @@ fn evaluate_instruction<'a>(
         | InstructionValue::PropertyDelete { .. }
         | InstructionValue::ComputedDelete { .. }
         | InstructionValue::StoreGlobal { .. }
+        | InstructionValue::FunctionExpression { .. }
+        | InstructionValue::ObjectMethod { .. }
         | InstructionValue::TaggedTemplateExpression { .. }
         | InstructionValue::Await { .. }
         | InstructionValue::GetIterator { .. }
@@ -640,10 +646,11 @@ fn process_inner_function<'a>(
     func_id: FunctionId,
     env: &mut Environment<'a>,
     constants: &mut Constants<'a>,
-) {
+) -> Result<(), OxcDiagnostic> {
     let mut inner = replace(&mut env.functions[func_id], placeholder_function(env.allocator));
-    constant_propagation_impl(&mut inner, env, constants);
+    let result = constant_propagation_impl(&mut inner, env, constants);
     env.functions[func_id] = inner;
+    result
 }
 
 // =============================================================================

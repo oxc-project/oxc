@@ -7,6 +7,7 @@ use oxc_str::Ident;
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, PropertyLiteral};
+use oxc_span::Span;
 
 /// Validates that capitalized functions are not called directly (they should be rendered as JSX).
 ///
@@ -24,7 +25,8 @@ pub fn validate_no_capitalized_calls(
     }
 
     let mut capital_load_globals: FxHashMap<IdentifierId, Ident> = FxHashMap::default();
-    let mut capitalized_properties: FxHashMap<IdentifierId, Ident> = FxHashMap::default();
+    let mut capitalized_properties: FxHashMap<IdentifierId, (Ident, Option<Span>)> =
+        FxHashMap::default();
 
     for (_block_id, block) in &func.body.blocks {
         for &instr_id in &block.instructions {
@@ -44,25 +46,31 @@ pub fn validate_no_capitalized_calls(
                         capital_load_globals.insert(lvalue_id, name);
                     }
                 }
-                InstructionValue::CallExpression { callee, span, .. } => {
+                InstructionValue::CallExpression { callee, .. } => {
                     let callee_id = callee.identifier;
                     if let Some(callee_name) = capital_load_globals.get(&callee_id) {
-                        env.record_error(diagnostics::capitalized_call(callee_name, *span))?;
+                        env.record_error(diagnostics::capitalized_call(callee_name, callee.span))?;
                         continue;
                     }
                 }
                 InstructionValue::PropertyLoad {
                     property: PropertyLiteral::String(prop_name),
+                    property_span,
                     ..
                 } => {
                     if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
-                        capitalized_properties.insert(lvalue_id, *prop_name);
+                        capitalized_properties.insert(lvalue_id, (*prop_name, *property_span));
                     }
                 }
-                InstructionValue::MethodCall { property, span, .. } => {
+                InstructionValue::MethodCall { property, .. } => {
                     let property_id = property.identifier;
-                    if let Some(prop_name) = capitalized_properties.get(&property_id) {
-                        env.record_error(diagnostics::capitalized_call(prop_name, *span))?;
+                    if let Some((prop_name, property_span)) =
+                        capitalized_properties.get(&property_id)
+                    {
+                        env.record_error(diagnostics::capitalized_call(
+                            prop_name,
+                            property_span.or(property.span),
+                        ))?;
                     }
                 }
                 _ => {}

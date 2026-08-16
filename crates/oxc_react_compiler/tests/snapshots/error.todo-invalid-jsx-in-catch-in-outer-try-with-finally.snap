@@ -4,7 +4,7 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-invalid-jsx-in-catch-i
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause", labels: [LabeledSpan { label: None, span: Span { start: 134, end: 292 }, primary: false }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause", labels: [LabeledSpan { label: None, span: Span { start: 134, end: 137 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
 
 // @validateNoJSXInTryStatements @outputMode:"lint"
 import { identity } from "shared-runtime";

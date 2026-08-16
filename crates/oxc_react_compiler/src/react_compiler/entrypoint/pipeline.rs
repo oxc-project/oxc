@@ -12,10 +12,13 @@ use oxc_allocator::GetAllocator;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
 use crate::diagnostics;
-use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
+use crate::react_compiler_hir::{
+    ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
+    assert_terminal_successors_exist,
+};
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
 use crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir;
@@ -152,7 +155,7 @@ fn run_pipeline<'a>(
         return Ok(Ok(None));
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -165,16 +168,16 @@ fn run_pipeline<'a>(
 
     merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator);
 
-    // TODO: port assertConsistentIdentifiers
-    // TODO: port assertTerminalSuccessorsExist
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
+    assert_terminal_successors_exist(&hir)?;
 
     enter_ssa(&mut hir, &mut env)?;
 
     eliminate_redundant_phi(&mut hir, &mut env);
 
-    // TODO: port assertConsistentIdentifiers
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
 
-    constant_propagation(&mut hir, &mut env);
+    constant_propagation(&mut hir, &mut env)?;
 
     infer_types(&mut hir, &mut env)?;
 
@@ -204,7 +207,7 @@ fn run_pipeline<'a>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 
@@ -256,7 +259,7 @@ fn run_pipeline<'a>(
         && env.config.validate_static_components
         && env.output_mode == OutputMode::Lint
     {
-        let errors = validate_static_components(&hir);
+        let errors = validate_static_components(&hir, &env.functions);
         log_errors_as_events(&errors, context);
     }
 
@@ -298,8 +301,8 @@ fn run_pipeline<'a>(
 
     flatten_scopes_with_hooks_or_use_hir(&mut hir, &env)?;
 
-    // TODO: port assertTerminalSuccessorsExist
-    // TODO: port assertTerminalPredsExist
+    assert_terminal_successors_exist(&hir)?;
+    assert_terminal_preds_exist(&hir)?;
 
     propagate_scope_dependencies_hir(&mut hir, &mut env);
 

@@ -1,3 +1,5 @@
+mod assert_consistent_identifiers;
+mod assert_terminal_blocks_exist;
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
@@ -11,6 +13,10 @@ pub mod visitors;
 
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
+pub use assert_consistent_identifiers::assert_consistent_identifiers;
+pub use assert_terminal_blocks_exist::{
+    assert_terminal_preds_exist, assert_terminal_successors_exist,
+};
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
@@ -191,6 +197,36 @@ pub struct HirFunction<'a> {
     pub is_async: bool,
     pub directives: ArenaVec<'a, FunctionDirective<'a>>,
     pub aliasing_effects: Option<ArenaVec<'a, AliasingEffect<'a>>>,
+}
+
+impl HirFunction<'_> {
+    /// A compact source location for diagnostics about the function itself.
+    /// Block-bodied functions stop at the opening brace; expression arrows use
+    /// their async prefix, parameter list, or first token.
+    pub fn diagnostic_span(&self) -> Option<Span> {
+        let function_span = self.span?;
+        if let Some(body_span) = self.body_span {
+            return Some(Span::new(
+                function_span.start,
+                body_span.start.saturating_add(1).min(function_span.end),
+            ));
+        }
+        if let Some(id_span) = self.id_span {
+            return Some(id_span);
+        }
+        if self.is_async {
+            return Some(Span::new(
+                function_span.start,
+                function_span.start.saturating_add(5).min(function_span.end),
+            ));
+        }
+        let fallback_end = function_span.start.saturating_add(2);
+        let end = self.params.first().map_or(fallback_end, |param| match param {
+            ParamPattern::Place(place) => place.span.map_or(fallback_end, |span| span.end),
+            ParamPattern::Spread(spread) => spread.place.span.map_or(fallback_end, |span| span.end),
+        });
+        Some(Span::new(function_span.start, end.min(function_span.end)))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

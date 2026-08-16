@@ -21,6 +21,8 @@ target/
 /napi/*/npm-dir
 /napi/parser/tsconfig.browser.tsbuildinfo
 
+.pnpm-store
+
 # Cloned conformance repos
 tasks/coverage/babel/
 tasks/coverage/test262/

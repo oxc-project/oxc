@@ -99,6 +99,7 @@ impl PartialEq for RefAccessRefType {
 #[derive(Debug, Clone, PartialEq)]
 struct RefFnType {
     read_ref_effect: bool,
+    ref_access_span: Option<Span>,
     return_type: Box<RefAccessType>,
 }
 
@@ -165,6 +166,7 @@ fn join_ref_access_ref_types(a: &RefAccessRefType, b: &RefAccessRefType) -> RefA
                 (None, other) | (other, None) => other.clone(),
                 (Some(a_fn), Some(b_fn)) => Some(RefFnType {
                     read_ref_effect: a_fn.read_ref_effect || b_fn.read_ref_effect,
+                    ref_access_span: a_fn.ref_access_span.or(b_fn.ref_access_span),
                     return_type: Box::new(join_ref_access_types(
                         &a_fn.return_type,
                         &b_fn.return_type,
@@ -623,17 +625,30 @@ fn validate_no_ref_access_in_render_impl(
                             ref_env,
                             &mut inner_errors,
                         );
-                        let (return_type, read_ref_effect) = if inner_errors.is_empty() {
-                            (result, false)
-                        } else {
-                            (RefAccessType::None, true)
-                        };
+                        let (return_type, read_ref_effect, ref_access_span) =
+                            if inner_errors.is_empty() {
+                                (result, false, None)
+                            } else {
+                                let ref_access_span = inner_errors
+                                    .iter()
+                                    .flat_map(|diagnostic| &diagnostic.labels)
+                                    .find(|label| label.primary())
+                                    .or_else(|| {
+                                        inner_errors
+                                            .iter()
+                                            .flat_map(|diagnostic| &diagnostic.labels)
+                                            .next()
+                                    })
+                                    .map(oxc_diagnostics::LabeledSpan::span);
+                                (RefAccessType::None, true, ref_access_span)
+                            };
                         ref_env.set(
                             instr.lvalue.identifier,
                             RefAccessType::Structure {
                                 value: None,
                                 fn_type: Some(RefFnType {
                                     read_ref_effect,
+                                    ref_access_span,
                                     return_type: Box::new(return_type),
                                 }),
                             },
@@ -652,7 +667,10 @@ fn validate_no_ref_access_in_render_impl(
                             return_type = *fn_ty.return_type.clone();
                             if fn_ty.read_ref_effect {
                                 did_error = true;
-                                errors.push(diagnostics::function_accesses_ref(callee.span));
+                                errors.push(diagnostics::function_accesses_ref(
+                                    callee.span,
+                                    fn_ty.ref_access_span,
+                                ));
                             }
                         }
 

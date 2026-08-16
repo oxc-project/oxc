@@ -12,16 +12,20 @@
 use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::Diagnostics;
+use oxc_index::IndexSlice;
 
 use crate::diagnostics;
-use crate::react_compiler_hir::{HirFunction, IdentifierId, InstructionValue, JsxTag};
+use crate::react_compiler_hir::{FunctionId, HirFunction, IdentifierId, InstructionValue, JsxTag};
 use oxc_span::Span;
 
 /// Validates that components used in JSX are not dynamically created during render.
 ///
 /// Returns the diagnostics found (may be empty).
 /// Called via `env.logErrors()` pattern in Pipeline.ts.
-pub fn validate_static_components(func: &HirFunction) -> Diagnostics {
+pub fn validate_static_components(
+    func: &HirFunction,
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+) -> Diagnostics {
     let mut error = Diagnostics::new();
     let mut known_dynamic_components: FxHashMap<IdentifierId, Option<Span>> = FxHashMap::default();
 
@@ -43,11 +47,16 @@ pub fn validate_static_components(func: &HirFunction) -> Diagnostics {
             let value = &instr.value;
 
             match value {
-                InstructionValue::FunctionExpression { span, .. }
-                | InstructionValue::NewExpression { span, .. }
-                | InstructionValue::MethodCall { span, .. }
-                | InstructionValue::CallExpression { span, .. } => {
-                    known_dynamic_components.insert(lvalue_id, *span);
+                InstructionValue::FunctionExpression { lowered_func, span, .. } => {
+                    let location = functions[lowered_func.func].diagnostic_span().or(*span);
+                    known_dynamic_components.insert(lvalue_id, location);
+                }
+                InstructionValue::NewExpression { callee, span, .. }
+                | InstructionValue::CallExpression { callee, span, .. } => {
+                    known_dynamic_components.insert(lvalue_id, callee.span.or(*span));
+                }
+                InstructionValue::MethodCall { property, span, .. } => {
+                    known_dynamic_components.insert(lvalue_id, property.span.or(*span));
                 }
                 InstructionValue::LoadLocal { place, .. } => {
                     if let Some(span) = known_dynamic_components.get(&place.identifier) {

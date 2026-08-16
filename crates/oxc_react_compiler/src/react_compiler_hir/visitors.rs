@@ -24,6 +24,9 @@ use crate::react_compiler_hir::{
 /// of heap-allocating a `Vec` for every instruction visited.
 pub type PlaceList = SmallVec<[Place; 4]>;
 
+/// Non-switch terminals reference at most five blocks; keep those block IDs inline.
+pub type TerminalBlockList = SmallVec<[BlockId; 5]>;
+
 /// Yields `instr.lvalue` plus the value's lvalues.
 /// Equivalent to TS `eachInstructionLValue`.
 pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
@@ -362,8 +365,8 @@ pub fn does_pattern_contain_spread_element(pattern: &Pattern) -> bool {
 
 /// Yields successor block IDs (NOT fallthroughs, this is intentional).
 /// Equivalent to TS `eachTerminalSuccessor`.
-pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
-    let mut result = Vec::new();
+pub fn each_terminal_successor(terminal: &Terminal) -> TerminalBlockList {
+    let mut result = TerminalBlockList::new();
     match terminal {
         Terminal::Goto { block, .. } => {
             result.push(*block);
@@ -606,8 +609,8 @@ pub fn map_terminal_successors(terminal: &mut Terminal, f: &mut impl FnMut(Block
 /// Yields ALL block IDs referenced by a terminal (successors + fallthroughs + internal blocks).
 /// Unlike `each_terminal_successor` which yields only standard control flow successors,
 /// this function yields every block ID that `map_terminal_successors` would visit.
-pub fn each_terminal_all_successors(terminal: &Terminal) -> Vec<BlockId> {
-    let mut result = Vec::new();
+pub fn each_terminal_all_successors(terminal: &Terminal) -> TerminalBlockList {
+    let mut result = TerminalBlockList::new();
     match terminal {
         Terminal::Goto { block, .. } => {
             result.push(*block);

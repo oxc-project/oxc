@@ -21,6 +21,7 @@ oxc_span = { workspace = true }
 
 bytecount = { workspace = true }
 cow-utils = { workspace = true }
+itoa = { workspace = true }
 memchr = { workspace = true }
 owo-colors = { workspace = true }
 percent-encoding = { workspace = true }
