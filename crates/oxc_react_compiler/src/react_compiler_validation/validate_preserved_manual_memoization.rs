@@ -16,7 +16,7 @@ use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     ArrayPatternElement, Effect, ObjectPropertyOrSpread, Pattern, PropertyLiteral,
-    PrunedReactiveScopeBlock, ReactiveTerminalStatement,
+    PrunedReactiveScopeBlock, ReactiveScopeDependency, ReactiveTerminalStatement,
 };
 use crate::react_compiler_hir::{
     DeclarationId, DependencyPathEntry, Identifier, IdentifierId, IdentifierName, InstructionKind,
@@ -33,6 +33,8 @@ struct ManualMemoBlockState<'h> {
     reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
     /// Source location of the StartMemoize instruction.
     span: Option<Span>,
+    /// Source location of the manual dependency array, when one was provided.
+    deps_span: Option<Span>,
     /// Declarations produced within this manual memo block.
     decls: FxHashSet<DeclarationId>,
     /// Normalized deps from source (useMemo/useCallback dep array).
@@ -146,19 +148,20 @@ fn visit_scope<'h>(scope_block: &ReactiveScopeBlock<'h>, state: &mut VisitorStat
         let scope = &state.env.scopes[scope_block.scope];
         let deps = scope.dependencies.clone_in(alloc);
         let memo_span = memo_state.span;
+        let deps_span = memo_state.deps_span;
         let decls = memo_state.decls.clone();
         let deps_from_source = deps_from_source.clone_in(alloc);
         let temporaries: FxHashMap<IdentifierId, ManualMemoDependency> =
             state.temporaries.iter().map(|(k, v)| (*k, v.clone_in(alloc))).collect();
         for dep in &deps {
             validate_inferred_dep(
-                dep.identifier,
-                &dep.path,
+                dep,
                 &temporaries,
                 &decls,
                 &deps_from_source,
                 state.env,
                 memo_span,
+                deps_span,
             );
         }
     }
@@ -185,6 +188,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
         ReactiveValue::Instruction(InstructionValue::StartMemoize {
             manual_memo_id,
             deps,
+            deps_span,
             has_invalid_deps,
             ..
         }) => {
@@ -202,6 +206,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
 
             state.manual_memo_state = Some(ManualMemoBlockState {
                 span: instr.span,
+                deps_span: deps_span.flatten(),
                 decls: FxHashSet::default(),
                 deps_from_source,
                 manual_memo_id: *manual_memo_id,
@@ -256,13 +261,19 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
 
                     for id in decls_to_check {
                         if is_unmemoized(id, &state.scopes, &state.env.identifiers) {
-                            record_unmemoized_error(decl.span, state.env);
+                            record_unmemoized_error(
+                                memo_state.deps_span.or(memo_state.span).or(decl.span),
+                                state.env,
+                            );
                         }
                     }
                 } else {
                     // Single identifier with scope
                     if is_unmemoized(decl.identifier, &state.scopes, &state.env.identifiers) {
-                        record_unmemoized_error(decl.span, state.env);
+                        record_unmemoized_error(
+                            memo_state.deps_span.or(memo_state.span).or(decl.span),
+                            state.env,
+                        );
                     }
                 }
             }
@@ -604,14 +615,16 @@ fn get_compare_dependency_result_description(result: CompareDependencyResult) ->
 /// Validate that an inferred dependency matches a source dependency or was produced
 /// within the manual memo block.
 fn validate_inferred_dep<'h>(
-    dep_id: IdentifierId,
-    dep_path: &[DependencyPathEntry<'h>],
+    dep: &ReactiveScopeDependency<'h>,
     temporaries: &FxHashMap<IdentifierId, ManualMemoDependency<'h>>,
     decls_within_memo_block: &FxHashSet<DeclarationId>,
     valid_deps_in_memo_block: &[ManualMemoDependency<'h>],
     env: &mut Environment<'h>,
     memo_location: Option<Span>,
+    deps_location: Option<Span>,
 ) {
+    let dep_id = dep.identifier;
+    let dep_path = &dep.path;
     let alloc = env.allocator;
     // Normalize the dependency through temporaries
     let normalized_dep = if let Some(temp) = temporaries.get(&dep_id) {
@@ -689,6 +702,8 @@ fn validate_inferred_dep<'h>(
 
     let diag = diagnostics::preserve_memo_inferred_dependencies(
         description.trim().to_string(),
+        deps_location,
+        dep.span.or(normalized_dep.span),
         memo_location,
     );
     env.record_diagnostic(diag);

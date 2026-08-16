@@ -1293,6 +1293,12 @@ fn validate_dependencies(
 
     let mut diagnostic = create_diagnostic(category, &filtered_missing, &filtered_extra)?;
 
+    if !filtered_missing.is_empty() && filtered_extra.is_empty() {
+        diagnostic.labels.extend(manual_memo_span.map(|span| {
+            span.primary_label("This dependency list is missing values used by the callback")
+        }));
+    }
+
     // Add detail items for missing deps
     for dep in &filtered_missing {
         if let InferredDependency::Local { identifier, path: _, span, .. } = dep {

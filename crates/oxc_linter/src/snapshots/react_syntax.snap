@@ -4,7 +4,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ react(syntax): Cannot reassign a `const` variable
    ╭─[syntax.tsx:4:3]
+ 2 │ function Component() {
  3 │   const x = 0;
+   ·         ┬
+   ·         ╰── `x` is declared here
  4 │   x = 1;
    ·   ┬
    ·   ╰── Cannot reassign `x`

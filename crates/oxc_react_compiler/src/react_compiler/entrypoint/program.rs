@@ -67,9 +67,6 @@ const OPT_OUT_DIRECTIVES: &[&str] = &["use no forget", "use no memo"];
 struct CompileSource<'b, 'a> {
     kind: CompileSourceKind,
     original_kind: OriginalFnKind,
-    /// Byte span of the discovered function, used as the fallback labeled span in
-    /// compile-error diagnostics.
-    fn_ast_span: Option<Span>,
     fn_start: Option<u32>,
     fn_end: Option<u32>,
     fn_scope_id: ScopeId,
@@ -77,7 +74,13 @@ struct CompileSource<'b, 'a> {
     /// The discovered oxc function node, handed straight to lowering.
     fn_node: FunctionNode<'b, 'a>,
     /// Directive values from the function body (for opt-in/opt-out checks)
-    body_directives: Vec<Str<'a>>,
+    body_directives: Vec<BodyDirective<'a>>,
+}
+
+#[derive(Clone, Copy)]
+struct BodyDirective<'a> {
+    value: Str<'a>,
+    span: Span,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -94,13 +97,13 @@ enum CompileSourceKind {
 ///
 /// Also checks for dynamic gating directives (`use memo if(...)`)
 fn try_find_directive_enabling_memoization<'a>(
-    directives: &[Str<'a>],
+    directives: &[BodyDirective<'a>],
     opts: &PluginOptions,
 ) -> Result<Option<&'a str>, Diagnostics> {
     // Check standard opt-in directives
-    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
+    let opt_in = directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.value.as_str()));
     if let Some(directive) = opt_in {
-        return Ok(Some(directive.as_str()));
+        return Ok(Some(directive.value.as_str()));
     }
 
     // Check dynamic gating directives
@@ -132,7 +135,7 @@ struct DynamicGatingResult<'a> {
 /// Check for dynamic gating directives like `use memo if(identifier)`.
 /// Returns the directive and gating config if found, or an error if malformed.
 fn find_directives_dynamic_gating<'a>(
-    directives: &[Str<'a>],
+    directives: &[BodyDirective<'a>],
     opts: &PluginOptions,
 ) -> Result<Option<DynamicGatingResult<'a>>, Diagnostics> {
     let dynamic_gating = match &opts.dynamic_gating {
@@ -141,14 +144,17 @@ fn find_directives_dynamic_gating<'a>(
     };
 
     let mut errors = Diagnostics::new();
-    let mut matches: Vec<(&'a str, String)> = Vec::new();
+    let mut matches: Vec<(&'a str, String, Span)> = Vec::new();
 
     for directive in directives {
-        if let Some(ident) = parse_dynamic_gating_directive(directive) {
+        if let Some(ident) = parse_dynamic_gating_directive(directive.value.as_str()) {
             if is_valid_identifier(ident) {
-                matches.push((directive.as_str(), ident.to_string()));
+                matches.push((directive.value.as_str(), ident.to_string(), directive.span));
             } else {
-                errors.push(diagnostics::invalid_gating_directive(directive));
+                errors.push(diagnostics::invalid_gating_directive(
+                    directive.value.as_str(),
+                    directive.span,
+                ));
             }
         }
     }
@@ -158,8 +164,9 @@ fn find_directives_dynamic_gating<'a>(
     }
 
     if matches.len() > 1 {
-        let names: Vec<&str> = matches.iter().map(|(d, _)| *d).collect();
-        return Err(Diagnostics::from(diagnostics::multiple_gating_directives(&names)));
+        let names: Vec<&str> = matches.iter().map(|(directive, _, _)| *directive).collect();
+        let spans = matches.iter().map(|(_, _, span)| *span);
+        return Err(Diagnostics::from(diagnostics::multiple_gating_directives(&names, spans)));
     }
 
     if matches.len() == 1 {
@@ -858,7 +865,7 @@ fn get_react_function_type(
     name: Option<&str>,
     params: &FormalParameters,
     body: &FnBody,
-    body_directives: &[Str<'_>],
+    body_directives: &[BodyDirective<'_>],
     is_declaration: bool,
     parent_callee_name: Option<&str>,
     opts: &PluginOptions,
@@ -1071,11 +1078,12 @@ fn process_fn<'a>(
     env_config: &EnvironmentConfig,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, CompileResult<'a>> {
+    let diagnostic_span = Some(source.fn_node.diagnostic_span());
     // Parse directives from the function body
     let opt_in_result =
         try_find_directive_enabling_memoization(&source.body_directives, &context.opts);
     let opt_out = find_directive_disabling_memoization(
-        source.body_directives.iter().map(Str::as_str),
+        source.body_directives.iter().map(|directive| directive.value.as_str()),
         context.opts.custom_opt_out_directives.as_deref(),
     );
 
@@ -1086,7 +1094,7 @@ fn process_fn<'a>(
             // Apply panic threshold logic (same as compilation errors)
             if let Some(result) = handle_error(
                 &err,
-                source.fn_ast_span,
+                diagnostic_span,
                 context.opts.panic_threshold,
                 &mut context.diagnostics,
             ) {
@@ -1103,12 +1111,12 @@ fn process_fn<'a>(
         Err(err) => {
             if opt_out.is_some() {
                 // If there's an opt-out, just log the error (don't escalate)
-                log_error(&err, source.fn_ast_span, &mut context.diagnostics);
+                log_error(&err, diagnostic_span, &mut context.diagnostics);
             } else {
                 // Apply panic threshold logic
                 if let Some(result) = handle_error(
                     &err,
-                    source.fn_ast_span,
+                    diagnostic_span,
                     context.opts.panic_threshold,
                     &mut context.diagnostics,
                 ) {
@@ -1154,8 +1162,14 @@ fn process_fn<'a>(
 
 /// Collect the directive value strings of a function body (for opt-in/opt-out
 /// checks). Matches the Babel-bridge directive values (`d.expression.value`).
-fn body_directive_values<'a>(body: &FunctionBody<'a>) -> Vec<Str<'a>> {
-    body.directives.iter().map(|d| d.expression.value).collect()
+fn body_directive_values<'a>(body: &FunctionBody<'a>) -> Vec<BodyDirective<'a>> {
+    body.directives
+        .iter()
+        .map(|directive| BodyDirective {
+            value: directive.expression.value,
+            span: directive.expression.span,
+        })
+        .collect()
 }
 
 /// Try to create a `CompileSource` from a discovered oxc function node.
@@ -1216,10 +1230,6 @@ fn try_make_compile_source<'b, 'a>(
     Some(CompileSource {
         kind: CompileSourceKind::Original,
         original_kind,
-        // The function source location flows into compile-error diagnostics as the
-        // fallback labeled span (offset/length). Only the byte `index` is
-        // load-bearing; line/column/filename never reach the example's output.
-        fn_ast_span: Some(span),
         fn_start: Some(span.start),
         fn_end: Some(span.end),
         fn_scope_id,

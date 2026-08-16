@@ -4,7 +4,10 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders
    ╭─[set_state_in_effect.tsx:6:5]
+ 4 │   const [state, setState] = useState(0);
  5 │   useEffect(() => {
+   ·   ────┬────
+   ·       ╰── This is the containing effect
  6 │     setState(s => s + 1);
    ·     ────┬───
    ·         ╰── Avoid calling setState() directly within an effect

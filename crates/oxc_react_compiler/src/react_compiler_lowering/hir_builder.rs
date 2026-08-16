@@ -608,8 +608,23 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 if has_function_expr {
                     let span = block
                         .instructions
-                        .first()
-                        .and_then(|&i| instructions[i.index()].span)
+                        .iter()
+                        .find_map(|&instruction_id| {
+                            let instruction = &instructions[instruction_id.index()];
+                            if let InstructionValue::FunctionExpression {
+                                name_span,
+                                lowered_func,
+                                span,
+                                ..
+                            } = &instruction.value
+                            {
+                                name_span
+                                    .or(self.env.functions[lowered_func.func].diagnostic_span())
+                                    .or(*span)
+                            } else {
+                                None
+                            }
+                        })
                         .or_else(|| block.terminal.span().copied());
                     self.env.record_error(
                         diagnostics::todo_support_functions_unreachable_code_that_may_contain_hoisted_declarations(span),

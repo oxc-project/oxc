@@ -100,6 +100,7 @@ pub fn validate_no_set_state_in_effects(
                         push_error(
                             &mut errors,
                             info,
+                            property.span,
                             env.config.enable_verbose_no_set_state_in_effect,
                         );
                     }
@@ -121,6 +122,7 @@ pub fn validate_no_set_state_in_effects(
                         push_error(
                             &mut errors,
                             info,
+                            callee.span,
                             env.config.enable_verbose_no_set_state_in_effect,
                         );
                     }
@@ -148,11 +150,16 @@ fn is_set_state_type_by_id(
     is_set_state_type(ty)
 }
 
-fn push_error(errors: &mut Diagnostics, info: &SetStateInfo, enable_verbose: bool) {
+fn push_error(
+    errors: &mut Diagnostics,
+    info: &SetStateInfo,
+    effect_span: Option<Span>,
+    enable_verbose: bool,
+) {
     if enable_verbose {
-        errors.push(diagnostics::set_state_in_effect(info.span, true));
+        errors.push(diagnostics::set_state_in_effect(info.span, effect_span, true));
     } else {
-        errors.push(diagnostics::set_state_in_effect(info.span, false));
+        errors.push(diagnostics::set_state_in_effect(info.span, effect_span, false));
     }
 }
 

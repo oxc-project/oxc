@@ -1329,8 +1329,12 @@ fn apply_signature<'a>(
                             }
                             _ => "value".to_string(),
                         };
-                        let diagnostic =
-                            diagnostics::immutable_value(reason_str, &variable, mutate_value.span);
+                        let diagnostic = diagnostics::immutable_value(
+                            reason_str,
+                            &variable,
+                            mutate_value.span,
+                            ident.span,
+                        );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
                         effects.push(AliasingEffect::MutateFrozen { place: *mutate_value, error });
@@ -1955,7 +1959,7 @@ fn apply_effect<'a>(
                         _ => "value".to_string(),
                     };
                     let diagnostic =
-                        diagnostics::immutable_value(reason_str, &variable, value.span);
+                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {

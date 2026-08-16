@@ -1239,7 +1239,13 @@ fn lower_identifier_for_assignment<'a>(
                 builder.set_identifier_declaration_span(identifier, ident_span);
             }
             if binding_kind == BindingKind::Const && kind == InstructionKind::Reassign {
-                builder.record_error(diagnostics::const_reassignment(name.as_str(), span))?;
+                let declaration_span =
+                    symbol.and_then(|symbol_id| builder.declaration_span(symbol_id));
+                builder.record_error(diagnostics::const_reassignment(
+                    name.as_str(),
+                    span,
+                    declaration_span,
+                ))?;
                 return Ok(None);
             }
             Ok(Some(IdentifierForAssignment::Place(Place {
@@ -3862,9 +3868,13 @@ fn lower_expression<'a>(
         }
         oxc::Expression::ClassExpression(cls) => {
             let span = Some(cls.span);
+            let diagnostic_span = Some(cls.id.as_ref().map_or_else(
+                || Span::new(cls.span.start, cls.span.start.saturating_add(5).min(cls.span.end)),
+                |id| Span::new(cls.span.start, id.span.end),
+            ));
             builder.record_error(
                 diagnostics::todo_build_hir_lower_expression_handle_class_expression_expressions(
-                    span,
+                    diagnostic_span,
                 ),
             )?;
             Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
@@ -4218,6 +4228,7 @@ fn lower_assignment_expression<'a>(
                             builder.record_error(diagnostics::const_reassignment(
                                 ident.name.as_str(),
                                 ident_span,
+                                symbol.and_then(|symbol_id| builder.declaration_span(symbol_id)),
                             ))?;
                             return Ok(InstructionValue::Primitive {
                                 value: PrimitiveValue::Undefined,
@@ -5440,7 +5451,11 @@ fn lower_object_method<'a>(
             oxc::PropertyKind::Set => "set",
             oxc::PropertyKind::Init => "method",
         };
-        builder.record_error(diagnostics::unsupported_object_method(kind_str, method.span))?;
+        let kind_span = Span::new(
+            method.span.start,
+            method.span.start.saturating_add(kind_str.len() as u32).min(method.span.end),
+        );
+        builder.record_error(diagnostics::unsupported_object_method(kind_str, kind_span))?;
         return Ok(None);
     }
 
@@ -5521,9 +5536,18 @@ fn lower_reorderable_expression<'a>(
     expr: &oxc::Expression<'a>,
 ) -> Result<Place, OxcDiagnostic> {
     if !is_reorderable_expression(builder, expr, true) {
+        let diagnostic_span = match expr {
+            oxc::Expression::FunctionExpression(function) => {
+                FunctionNode::Function(function).diagnostic_span()
+            }
+            oxc::Expression::ArrowFunctionExpression(arrow) => {
+                FunctionNode::Arrow(arrow).diagnostic_span()
+            }
+            _ => expr.span(),
+        };
         builder.record_error(diagnostics::unsafe_reorderable_expression(
             expression_type_name(expr),
-            expr.span(),
+            diagnostic_span,
         ))?;
     }
     lower_expression_to_temporary(builder, expr)
@@ -6094,8 +6118,9 @@ fn lower_statement<'a>(
             let test_block_id = test_block.id;
 
             if for_of.r#await {
+                let for_await_span = Some(Span::new(for_of.span.start, left_span.start));
                 builder.record_error(
-                    diagnostics::todo_build_hir_lower_statement_handle_await_loops(span),
+                    diagnostics::todo_build_hir_lower_statement_handle_await_loops(for_await_span),
                 )?;
                 return Ok(());
             }
@@ -6246,6 +6271,10 @@ fn lower_statement<'a>(
         }
         oxc::Statement::TryStatement(try_stmt) => {
             let span = Some(try_stmt.span);
+            let try_keyword_span = Some(Span::new(
+                try_stmt.span.start,
+                try_stmt.span.start.saturating_add(3).min(try_stmt.span.end),
+            ));
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
 
@@ -6253,15 +6282,17 @@ fn lower_statement<'a>(
                 Some(h) => h,
                 None => {
                     builder.record_error(
-                        diagnostics::todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(span),
+                        diagnostics::todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(try_keyword_span),
                     )?;
                     return Ok(());
                 }
             };
 
-            if try_stmt.finalizer.is_some() {
+            if let Some(finalizer) = &try_stmt.finalizer {
+                let finalizer_clause_span =
+                    Some(Span::new(handler_clause.span.end, finalizer.span.start));
                 builder.record_error(
-                    diagnostics::todo_build_hir_lower_statement_handle_try_statement_finalizer_finally_clause(span),
+                    diagnostics::todo_build_hir_lower_statement_handle_try_statement_finalizer_finally_clause(finalizer_clause_span),
                 )?;
             }
 

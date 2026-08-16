@@ -256,7 +256,7 @@ fn run_pipeline<'a>(
         && env.config.validate_static_components
         && env.output_mode == OutputMode::Lint
     {
-        let errors = validate_static_components(&hir);
+        let errors = validate_static_components(&hir, &env.functions);
         log_errors_as_events(&errors, context);
     }
 
