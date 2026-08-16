@@ -1,5 +1,6 @@
 mod assert_consistent_identifiers;
 mod assert_terminal_blocks_exist;
+mod assert_valid_block_nesting;
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
@@ -17,6 +18,8 @@ pub use assert_consistent_identifiers::assert_consistent_identifiers;
 pub use assert_terminal_blocks_exist::{
     assert_terminal_preds_exist, assert_terminal_successors_exist,
 };
+pub use assert_valid_block_nesting::assert_valid_block_nesting;
+pub(crate) use assert_valid_block_nesting::{get_scopes, recursively_traverse_items};
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
