@@ -11,7 +11,10 @@ use oxc_diagnostics::OxcDiagnostic;
 
 use crate::diagnostics;
 
-use super::{HIR, HirFunction, visitors::each_terminal_all_successors};
+use super::{
+    HIR, HirFunction,
+    visitors::{each_terminal_all_successors, each_terminal_successor},
+};
 
 pub fn assert_terminal_successors_exist(func: &HirFunction<'_>) -> Result<(), OxcDiagnostic> {
     assert_terminal_successors_exist_in_body(&func.body)
@@ -26,6 +29,28 @@ fn assert_terminal_successors_exist_in_body(body: &HIR<'_>) -> Result<(), OxcDia
                     &block.terminal,
                     block.terminal.span().copied(),
                 ));
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn assert_terminal_preds_exist(func: &HirFunction<'_>) -> Result<(), OxcDiagnostic> {
+    for block in func.body.blocks.values() {
+        for predecessor in block.preds.iter().copied() {
+            let Some(predecessor_block) = func.body.blocks.get(&predecessor) else {
+                return Err(diagnostics::expected_predecessor_block_to_exist(
+                    block.id.index(),
+                    predecessor.index(),
+                ));
+            };
+            if !each_terminal_successor(&predecessor_block.terminal).contains(&block.id) {
+                return Err(
+                    diagnostics::terminal_successor_does_not_reference_correct_predecessor(
+                        block.id.index(),
+                        predecessor_block.id.index(),
+                    ),
+                );
             }
         }
     }

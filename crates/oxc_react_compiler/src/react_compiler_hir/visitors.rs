@@ -365,8 +365,8 @@ pub fn does_pattern_contain_spread_element(pattern: &Pattern) -> bool {
 
 /// Yields successor block IDs (NOT fallthroughs, this is intentional).
 /// Equivalent to TS `eachTerminalSuccessor`.
-pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
-    let mut result = Vec::new();
+pub fn each_terminal_successor(terminal: &Terminal) -> TerminalBlockList {
+    let mut result = TerminalBlockList::new();
     match terminal {
         Terminal::Goto { block, .. } => {
             result.push(*block);

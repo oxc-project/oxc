@@ -15,7 +15,9 @@ use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
-use crate::react_compiler_hir::{ReactFunctionType, assert_terminal_successors_exist};
+use crate::react_compiler_hir::{
+    ReactFunctionType, assert_terminal_preds_exist, assert_terminal_successors_exist,
+};
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
 use crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir;
@@ -299,7 +301,7 @@ fn run_pipeline<'a>(
     flatten_scopes_with_hooks_or_use_hir(&mut hir, &env)?;
 
     assert_terminal_successors_exist(&hir)?;
-    // TODO: port assertTerminalPredsExist
+    assert_terminal_preds_exist(&hir)?;
 
     propagate_scope_dependencies_hir(&mut hir, &mut env);
 

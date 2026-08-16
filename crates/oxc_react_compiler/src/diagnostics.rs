@@ -286,6 +286,29 @@ pub fn terminal_successor_references_unknown_block(
 }
 
 #[cold]
+pub fn expected_predecessor_block_to_exist(
+    block: impl Display,
+    predecessor: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::Invariant, "Expected predecessor block to exist")
+        .with_help(format!("Block {block} references non-existent {predecessor}"))
+}
+
+#[cold]
+pub fn terminal_successor_does_not_reference_correct_predecessor(
+    block: impl Display,
+    predecessor: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Invariant,
+        "Terminal successor does not reference correct predecessor",
+    )
+    .with_help(format!(
+        "Block bb{block} has bb{predecessor} as a predecessor, but bb{predecessor}'s successors do not include bb{block}"
+    ))
+}
+
+#[cold]
 pub fn invariant_analyze_functions_expected_apply_effects_replaced_more_precise_effects()
 -> OxcDiagnostic {
     diagnostic(
