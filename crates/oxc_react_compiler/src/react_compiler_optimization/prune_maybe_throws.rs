@@ -18,7 +18,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use crate::diagnostics;
 use crate::react_compiler_hir::{
     ArrayElement, BlockId, FunctionId, HirFunction, InstructionValue, ObjectPropertyKey,
-    ObjectPropertyOrSpread, Terminal,
+    ObjectPropertyOrSpread, Terminal, assert_terminal_successors_exist,
 };
 use crate::react_compiler_lowering::{
     get_reverse_postordered_blocks, mark_instruction_ids, remove_dead_do_while_statements,
@@ -77,6 +77,8 @@ pub fn prune_maybe_throws<'a>(
                 }
             }
         }
+
+        assert_terminal_successors_exist(func)?;
     }
     Ok(())
 }

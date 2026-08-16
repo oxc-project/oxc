@@ -1,3 +1,4 @@
+mod assert_terminal_blocks_exist;
 pub mod default_module_type_provider;
 pub mod dominator;
 pub mod environment;
@@ -11,6 +12,7 @@ pub mod visitors;
 
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
+pub use assert_terminal_blocks_exist::assert_terminal_successors_exist;
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
