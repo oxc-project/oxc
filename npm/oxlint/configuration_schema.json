@@ -1528,6 +1528,32 @@
       "maxItems": 2,
       "minItems": 2
     },
+    "ConfigElement0": {
+      "type": "object",
+      "properties": {
+        "allowArrowFunctions": {
+          "default": false,
+          "type": "boolean"
+        },
+        "allowBind": {
+          "default": false,
+          "type": "boolean"
+        },
+        "allowFunctions": {
+          "default": false,
+          "type": "boolean"
+        },
+        "ignoreDOMComponents": {
+          "default": false,
+          "type": "boolean"
+        },
+        "ignoreRefs": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "ConsistentEachForJson": {
       "type": "object",
       "properties": {
@@ -6891,6 +6917,26 @@
                 },
                 {
                   "$ref": "#/definitions/JsxMaxDepthConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "react/jsx-no-bind": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoBind"
                 }
               ],
               "maxItems": 2,
@@ -12460,6 +12506,9 @@
         }
       },
       "additionalProperties": false
+    },
+    "JsxNoBind": {
+      "$ref": "#/definitions/ConfigElement0"
     },
     "JsxNoLiteralsConfig": {
       "description": "The options shared between the top-level config and each `elementOverrides` entry.",

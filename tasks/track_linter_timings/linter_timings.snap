@@ -434,6 +434,7 @@ react/jsx-fragments                                        |    459
 react/jsx-handler-names                                    |    804
 react/jsx-key                                              |   1088
 react/jsx-max-depth                                        |    459
+react/jsx-no-bind                                          |    804
 react/jsx-no-comment-textnodes                             |    672
 react/jsx-no-constructed-context-values                    |    452
 react/jsx-no-duplicate-props                               |    452

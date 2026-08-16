@@ -468,6 +468,7 @@ pub(crate) mod react {
     pub mod jsx_handler_names;
     pub mod jsx_key;
     pub mod jsx_max_depth;
+    pub mod jsx_no_bind;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_constructed_context_values;
     pub mod jsx_no_duplicate_props;

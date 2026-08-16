@@ -451,6 +451,7 @@ pub use crate::rules::react::jsx_fragments::JsxFragments as ReactJsxFragments;
 pub use crate::rules::react::jsx_handler_names::JsxHandlerNames as ReactJsxHandlerNames;
 pub use crate::rules::react::jsx_key::JsxKey as ReactJsxKey;
 pub use crate::rules::react::jsx_max_depth::JsxMaxDepth as ReactJsxMaxDepth;
+pub use crate::rules::react::jsx_no_bind::JsxNoBind as ReactJsxNoBind;
 pub use crate::rules::react::jsx_no_comment_textnodes::JsxNoCommentTextnodes as ReactJsxNoCommentTextnodes;
 pub use crate::rules::react::jsx_no_constructed_context_values::JsxNoConstructedContextValues as ReactJsxNoConstructedContextValues;
 pub use crate::rules::react::jsx_no_duplicate_props::JsxNoDuplicateProps as ReactJsxNoDuplicateProps;
@@ -1310,6 +1311,7 @@ pub enum RuleEnum {
     ReactJsxHandlerNames(ReactJsxHandlerNames),
     ReactJsxKey(ReactJsxKey),
     ReactJsxMaxDepth(ReactJsxMaxDepth),
+    ReactJsxNoBind(ReactJsxNoBind),
     ReactJsxNoCommentTextnodes(ReactJsxNoCommentTextnodes),
     ReactJsxNoConstructedContextValues(ReactJsxNoConstructedContextValues),
     ReactJsxNoDuplicateProps(ReactJsxNoDuplicateProps),
@@ -2236,7 +2238,8 @@ const REACT_JSX_FRAGMENTS_ID: usize = REACT_JSX_FILENAME_EXTENSION_ID + 1usize;
 const REACT_JSX_HANDLER_NAMES_ID: usize = REACT_JSX_FRAGMENTS_ID + 1usize;
 const REACT_JSX_KEY_ID: usize = REACT_JSX_HANDLER_NAMES_ID + 1usize;
 const REACT_JSX_MAX_DEPTH_ID: usize = REACT_JSX_KEY_ID + 1usize;
-const REACT_JSX_NO_COMMENT_TEXTNODES_ID: usize = REACT_JSX_MAX_DEPTH_ID + 1usize;
+const REACT_JSX_NO_BIND_ID: usize = REACT_JSX_MAX_DEPTH_ID + 1usize;
+const REACT_JSX_NO_COMMENT_TEXTNODES_ID: usize = REACT_JSX_NO_BIND_ID + 1usize;
 const REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID: usize =
     REACT_JSX_NO_COMMENT_TEXTNODES_ID + 1usize;
 const REACT_JSX_NO_DUPLICATE_PROPS_ID: usize = REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID + 1usize;
@@ -2751,7 +2754,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 871usize] = [
+static RULE_NAMES: [&str; 872usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3169,6 +3172,7 @@ static RULE_NAMES: [&str; 871usize] = [
     ReactJsxHandlerNames::NAME,
     ReactJsxKey::NAME,
     ReactJsxMaxDepth::NAME,
+    ReactJsxNoBind::NAME,
     ReactJsxNoCommentTextnodes::NAME,
     ReactJsxNoConstructedContextValues::NAME,
     ReactJsxNoDuplicateProps::NAME,
@@ -4116,6 +4120,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => REACT_JSX_HANDLER_NAMES_ID,
             Self::ReactJsxKey(_) => REACT_JSX_KEY_ID,
             Self::ReactJsxMaxDepth(_) => REACT_JSX_MAX_DEPTH_ID,
+            Self::ReactJsxNoBind(_) => REACT_JSX_NO_BIND_ID,
             Self::ReactJsxNoCommentTextnodes(_) => REACT_JSX_NO_COMMENT_TEXTNODES_ID,
             Self::ReactJsxNoConstructedContextValues(_) => {
                 REACT_JSX_NO_CONSTRUCTED_CONTEXT_VALUES_ID
@@ -5146,6 +5151,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::CATEGORY,
             Self::ReactJsxKey(_) => ReactJsxKey::CATEGORY,
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::CATEGORY,
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::CATEGORY,
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::CATEGORY,
             Self::ReactJsxNoConstructedContextValues(_) => {
                 ReactJsxNoConstructedContextValues::CATEGORY
@@ -6170,6 +6176,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::FIX,
             Self::ReactJsxKey(_) => ReactJsxKey::FIX,
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::FIX,
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::FIX,
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::FIX,
             Self::ReactJsxNoConstructedContextValues(_) => ReactJsxNoConstructedContextValues::FIX,
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::FIX,
@@ -7270,6 +7277,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::documentation(),
             Self::ReactJsxKey(_) => ReactJsxKey::documentation(),
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::documentation(),
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::documentation(),
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::documentation(),
             Self::ReactJsxNoConstructedContextValues(_) => {
                 ReactJsxNoConstructedContextValues::documentation()
@@ -9124,6 +9132,8 @@ impl RuleEnum {
             }
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::config_schema(generator)
                 .or_else(|| ReactJsxMaxDepth::schema(generator)),
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::config_schema(generator)
+                .or_else(|| ReactJsxNoBind::schema(generator)),
             Self::ReactJsxNoCommentTextnodes(_) => {
                 ReactJsxNoCommentTextnodes::config_schema(generator)
                     .or_else(|| ReactJsxNoCommentTextnodes::schema(generator))
@@ -10857,6 +10867,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => "react",
             Self::ReactJsxKey(_) => "react",
             Self::ReactJsxMaxDepth(_) => "react",
+            Self::ReactJsxNoBind(_) => "react",
             Self::ReactJsxNoCommentTextnodes(_) => "react",
             Self::ReactJsxNoConstructedContextValues(_) => "react",
             Self::ReactJsxNoDuplicateProps(_) => "react",
@@ -11978,6 +11989,9 @@ impl RuleEnum {
             Self::ReactJsxMaxDepth(_) => {
                 Ok(Self::ReactJsxMaxDepth(ReactJsxMaxDepth::from_configuration(value)?))
             }
+            Self::ReactJsxNoBind(_) => {
+                Ok(Self::ReactJsxNoBind(ReactJsxNoBind::from_configuration(value)?))
+            }
             Self::ReactJsxNoLiterals(_) => {
                 Ok(Self::ReactJsxNoLiterals(ReactJsxNoLiterals::from_configuration(value)?))
             }
@@ -12826,6 +12840,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(rule) => rule.to_configuration(),
             Self::ReactJsxKey(rule) => rule.to_configuration(),
             Self::ReactJsxMaxDepth(rule) => rule.to_configuration(),
+            Self::ReactJsxNoBind(rule) => rule.to_configuration(),
             Self::ReactJsxNoCommentTextnodes(rule) => rule.to_configuration(),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.to_configuration(),
             Self::ReactJsxNoDuplicateProps(rule) => rule.to_configuration(),
@@ -13704,6 +13719,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(rule) => rule.run(node, ctx),
             Self::ReactJsxKey(rule) => rule.run(node, ctx),
             Self::ReactJsxMaxDepth(rule) => rule.run(node, ctx),
+            Self::ReactJsxNoBind(rule) => rule.run(node, ctx),
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run(node, ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run(node, ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run(node, ctx),
@@ -14592,6 +14608,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(rule) => rule.run_once(ctx),
             Self::ReactJsxKey(rule) => rule.run_once(ctx),
             Self::ReactJsxMaxDepth(rule) => rule.run_once(ctx),
+            Self::ReactJsxNoBind(rule) => rule.run_once(ctx),
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run_once(ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run_once(ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run_once(ctx),
@@ -15551,6 +15568,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxMaxDepth(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactJsxNoBind(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16486,6 +16504,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(rule) => rule.should_run(ctx),
             Self::ReactJsxKey(rule) => rule.should_run(ctx),
             Self::ReactJsxMaxDepth(rule) => rule.should_run(ctx),
+            Self::ReactJsxNoBind(rule) => rule.should_run(ctx),
             Self::ReactJsxNoCommentTextnodes(rule) => rule.should_run(ctx),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.should_run(ctx),
             Self::ReactJsxNoDuplicateProps(rule) => rule.should_run(ctx),
@@ -17539,6 +17558,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::IS_TSGOLINT_RULE,
             Self::ReactJsxKey(_) => ReactJsxKey::IS_TSGOLINT_RULE,
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::IS_TSGOLINT_RULE,
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::IS_TSGOLINT_RULE,
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::IS_TSGOLINT_RULE,
             Self::ReactJsxNoConstructedContextValues(_) => {
                 ReactJsxNoConstructedContextValues::IS_TSGOLINT_RULE
@@ -18720,6 +18740,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::VERSION,
             Self::ReactJsxKey(_) => ReactJsxKey::VERSION,
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::VERSION,
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::VERSION,
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::VERSION,
             Self::ReactJsxNoConstructedContextValues(_) => {
                 ReactJsxNoConstructedContextValues::VERSION
@@ -19788,6 +19809,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::HAS_CONFIG,
             Self::ReactJsxKey(_) => ReactJsxKey::HAS_CONFIG,
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::HAS_CONFIG,
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::HAS_CONFIG,
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::HAS_CONFIG,
             Self::ReactJsxNoConstructedContextValues(_) => {
                 ReactJsxNoConstructedContextValues::HAS_CONFIG
@@ -20835,6 +20857,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::INFO,
             Self::ReactJsxKey(_) => ReactJsxKey::INFO,
             Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::INFO,
+            Self::ReactJsxNoBind(_) => ReactJsxNoBind::INFO,
             Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::INFO,
             Self::ReactJsxNoConstructedContextValues(_) => ReactJsxNoConstructedContextValues::INFO,
             Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::INFO,
@@ -21761,6 +21784,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(rule) => rule.types_info(),
             Self::ReactJsxKey(rule) => rule.types_info(),
             Self::ReactJsxMaxDepth(rule) => rule.types_info(),
+            Self::ReactJsxNoBind(rule) => rule.types_info(),
             Self::ReactJsxNoCommentTextnodes(rule) => rule.types_info(),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.types_info(),
             Self::ReactJsxNoDuplicateProps(rule) => rule.types_info(),
@@ -22636,6 +22660,7 @@ impl RuleEnum {
             Self::ReactJsxHandlerNames(rule) => rule.run_info(),
             Self::ReactJsxKey(rule) => rule.run_info(),
             Self::ReactJsxMaxDepth(rule) => rule.run_info(),
+            Self::ReactJsxNoBind(rule) => rule.run_info(),
             Self::ReactJsxNoCommentTextnodes(rule) => rule.run_info(),
             Self::ReactJsxNoConstructedContextValues(rule) => rule.run_info(),
             Self::ReactJsxNoDuplicateProps(rule) => rule.run_info(),
@@ -23601,6 +23626,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactJsxHandlerNames(ReactJsxHandlerNames::default()),
         RuleEnum::ReactJsxKey(ReactJsxKey::default()),
         RuleEnum::ReactJsxMaxDepth(ReactJsxMaxDepth::default()),
+        RuleEnum::ReactJsxNoBind(ReactJsxNoBind::default()),
         RuleEnum::ReactJsxNoCommentTextnodes(ReactJsxNoCommentTextnodes::default()),
         RuleEnum::ReactJsxNoConstructedContextValues(ReactJsxNoConstructedContextValues::default()),
         RuleEnum::ReactJsxNoDuplicateProps(ReactJsxNoDuplicateProps::default()),
