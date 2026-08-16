@@ -82,6 +82,40 @@ impl AllocatorPool {
         AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
     }
 
+    /// Number of allocators this pool was constructed with.
+    ///
+    /// For a fixed-size pool this is the number of arenas that were actually created
+    /// (on Windows this can be less than the requested `thread_count`).
+    pub fn len(&self) -> usize {
+        match &self.0 {
+            AllocatorPoolInner::Standard(pool) => pool.len(),
+            #[cfg(all(
+                feature = "fixed_size",
+                target_pointer_width = "64",
+                target_endian = "little"
+            ))]
+            AllocatorPoolInner::FixedSize(pool) => pool.len(),
+        }
+    }
+
+    /// `true` if this pool was constructed with no allocators.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// `true` if this pool uses fixed-size raw-transfer allocators.
+    pub fn is_fixed_size(&self) -> bool {
+        match &self.0 {
+            AllocatorPoolInner::Standard(_) => false,
+            #[cfg(all(
+                feature = "fixed_size",
+                target_pointer_width = "64",
+                target_endian = "little"
+            ))]
+            AllocatorPoolInner::FixedSize(_) => true,
+        }
+    }
+
     /// Add an [`Allocator`] to the pool.
     ///
     /// The `Allocator` is reset by this method, so it's ready to be re-used.
@@ -129,5 +163,59 @@ impl Drop for AllocatorGuard<'_> {
         // SAFETY: After taking ownership of the `Allocator`, we do not touch the `ManuallyDrop` again
         let allocator = unsafe { ManuallyDrop::take(&mut self.allocator) };
         self.pool.add(allocator);
+    }
+}
+
+#[cfg(all(test, feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+mod buffer_id_tests {
+    use std::mem::size_of;
+
+    use rustc_hash::FxHashSet;
+
+    use super::*;
+
+    #[test]
+    fn buffer_id_two_pools_are_distinct() {
+        let pool_a = AllocatorPool::new_fixed_size(2);
+        let pool_b = AllocatorPool::new_fixed_size(2);
+        assert_eq!(pool_a.len(), 2);
+        assert_eq!(pool_b.len(), 2);
+        assert!(pool_a.is_fixed_size());
+        assert!(pool_b.is_fixed_size());
+
+        let a0 = pool_a.get();
+        let a1 = pool_a.get();
+        let b0 = pool_b.get();
+        let b1 = pool_b.get();
+
+        assert!(a0.is_fixed_size());
+        assert!(a1.is_fixed_size());
+        assert!(b0.is_fixed_size());
+        assert!(b1.is_fixed_size());
+
+        // SAFETY: these allocators came from `new_fixed_size` pools.
+        let ids = unsafe {
+            [
+                a0.fixed_size_buffer_id(),
+                a1.fixed_size_buffer_id(),
+                b0.fixed_size_buffer_id(),
+                b1.fixed_size_buffer_id(),
+            ]
+        };
+        assert_eq!(FxHashSet::from_iter(ids).len(), 4);
+        assert_eq!(size_of::<FixedSizeAllocatorMetadata>(), 8);
+    }
+
+    #[test]
+    fn buffer_id_new_fixed_size_len() {
+        assert_eq!(AllocatorPool::new_fixed_size(2).len(), 2);
+    }
+
+    #[test]
+    fn buffer_id_standard_pool_is_not_fixed_size() {
+        let pool = AllocatorPool::new(2);
+        assert_eq!(pool.len(), 2);
+        assert!(!pool.is_fixed_size());
+        assert!(!pool.get().is_fixed_size());
     }
 }
