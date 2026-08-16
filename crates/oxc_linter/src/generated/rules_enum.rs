@@ -889,7 +889,8 @@ use crate::{
     utils::PossibleJestNode,
 };
 use oxc_semantic::AstTypesBitset;
-#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ruledocs", derive(Debug))]
+#[derive(Clone)]
 pub enum RuleEnum {
     ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle),
     ImportDefault(ImportDefault),
@@ -23091,6 +23092,14 @@ impl RuleEnum {
             Self::VueValidDefineProps(rule) => rule.run_info(),
             Self::VueValidNextTick(rule) => rule.run_info(),
         }
+    }
+}
+#[cfg(not(feature = "ruledocs"))]
+impl std::fmt::Debug for RuleEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.plugin_name())?;
+        f.write_str("/")?;
+        f.write_str(self.name())
     }
 }
 impl std::hash::Hash for RuleEnum {

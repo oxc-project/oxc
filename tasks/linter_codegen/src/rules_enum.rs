@@ -132,7 +132,8 @@ fn generate_rule_enum(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         .collect();
 
     quote! {
-        #[derive(Debug, Clone)]
+        #[cfg_attr(feature = "ruledocs", derive(Debug))]
+        #[derive(Clone)]
         pub enum RuleEnum {
             #(#variants),*
         }
@@ -486,6 +487,15 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
 fn generate_trait_impls() -> TokenStream {
     quote! {
+        #[cfg(not(feature = "ruledocs"))]
+        impl std::fmt::Debug for RuleEnum {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str(self.plugin_name())?;
+                f.write_str("/")?;
+                f.write_str(self.name())
+            }
+        }
+
         impl std::hash::Hash for RuleEnum {
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
                 self.id().hash(state);

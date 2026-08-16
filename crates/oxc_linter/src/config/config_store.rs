@@ -472,6 +472,20 @@ mod test {
         (RuleEnum::TypescriptNoExplicitAny(Default::default()), AllowWarnDeny::Warn)
     }
 
+    fn no_unused_vars_is_local(rule: &RuleEnum) -> bool {
+        let RuleEnum::EslintNoUnusedVars(rule) = rule else {
+            panic!("expected eslint/no-unused-vars")
+        };
+        rule.vars.is_local()
+    }
+
+    #[cfg(not(feature = "ruledocs"))]
+    #[test]
+    fn rule_enum_debug_uses_qualified_name() {
+        let rule = RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default());
+        assert_eq!(format!("{rule:?}"), "eslint/no-unused-vars");
+    }
+
     /// an empty ruleset is a no-op
     #[test]
     fn test_no_rules() {
@@ -1156,31 +1170,25 @@ mod test {
             ExternalPluginStore::default(),
         );
 
-        assert_eq!(
-            format!("{:?}", base_rules[0].0),
-            format!(
-                "{:?}",
-                store
-                    .resolve("app.ts".as_ref())
-                    .rules
-                    .iter()
-                    .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
-                    .unwrap()
-                    .0
-            )
-        );
+        let app_rules = store.resolve("app.ts".as_ref());
+        let app_rule = &app_rules
+            .rules
+            .iter()
+            .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+            .unwrap()
+            .0;
+        assert_eq!(no_unused_vars_is_local(&base_rules[0].0), no_unused_vars_is_local(app_rule));
+
+        let app_tsx_rules = store.resolve("app.tsx".as_ref());
+        let app_tsx_rule = &app_tsx_rules
+            .rules
+            .iter()
+            .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+            .unwrap()
+            .0;
         assert_ne!(
-            format!("{:?}", base_rules[0].0),
-            format!(
-                "{:?}",
-                store
-                    .resolve("app.tsx".as_ref())
-                    .rules
-                    .iter()
-                    .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
-                    .unwrap()
-                    .0
-            )
+            no_unused_vars_is_local(&base_rules[0].0),
+            no_unused_vars_is_local(app_tsx_rule)
         );
     }
 
