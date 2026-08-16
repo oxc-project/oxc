@@ -1,14 +1,16 @@
 use std::{
     io::BufWriter,
     process::{ExitCode, Termination},
+    sync::{LazyLock, Mutex},
 };
 
 use napi::{
     Status,
-    bindgen_prelude::{FnArgs, Promise, Uint8Array},
+    bindgen_prelude::{FnArgs, FromNapiValue, Object, Promise, Uint8Array},
     threadsafe_function::ThreadsafeFunction,
 };
 use napi_derive::napi;
+use rustc_hash::FxHashMap;
 
 use crate::{init::init_tracing, lint::CliRunner, result::CliRunResult};
 
@@ -121,6 +123,80 @@ pub type JsLoadJsConfigsCb = ThreadsafeFunction<
     // CalleeHandled
     false,
 >;
+
+/// JS callback to drop a cached raw-transfer buffer.
+#[napi]
+pub type JsForgetBufferCb = ThreadsafeFunction<
+    // Arguments
+    u32, // Buffer ID
+    // Return value
+    (),
+    // Arguments (repeated)
+    u32,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// Callbacks registered by a JS plugin worker isolate.
+///
+/// Populated by [`register_worker`]. Later used to route `ExternalLinter` through workers.
+pub struct RegisteredWorker {
+    pub load_plugin: JsLoadPluginCb,
+    pub lint_file: JsLintFileCb,
+    pub forget_buffer: JsForgetBufferCb,
+    pub setup_rule_configs: JsSetupRuleConfigsCb,
+    pub create_workspace: JsCreateWorkspaceCb,
+    pub destroy_workspace: JsDestroyWorkspaceCb,
+}
+
+/// Process-wide JS worker callbacks, keyed by worker `id`.
+pub static REGISTERED_WORKERS: LazyLock<Mutex<FxHashMap<u32, RegisteredWorker>>> =
+    LazyLock::new(|| Mutex::new(FxHashMap::default()));
+
+/// Register JS plugin callbacks for a worker isolate.
+///
+/// Called from `worker.ts` after the worker starts. Callbacks are stored
+/// process-wide, keyed by `id`.
+///
+/// # Errors
+///
+/// Returns an error if any required field is missing from `options`.
+#[napi]
+pub fn register_worker(
+    #[napi(
+        ts_arg_type = "{ id: number, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, setupRuleConfigs: JsSetupRuleConfigsCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb }"
+    )]
+    options: Object,
+) -> napi::Result<()> {
+    let id = require_field::<u32>(&options, "id")?;
+    let load_plugin = require_field::<JsLoadPluginCb>(&options, "loadPlugin")?;
+    let lint_file = require_field::<JsLintFileCb>(&options, "lintFile")?;
+    let forget_buffer = require_field::<JsForgetBufferCb>(&options, "forgetBuffer")?;
+    let setup_rule_configs = require_field::<JsSetupRuleConfigsCb>(&options, "setupRuleConfigs")?;
+    let create_workspace = require_field::<JsCreateWorkspaceCb>(&options, "createWorkspace")?;
+    let destroy_workspace = require_field::<JsDestroyWorkspaceCb>(&options, "destroyWorkspace")?;
+
+    REGISTERED_WORKERS.lock().unwrap_or_else(std::sync::PoisonError::into_inner).insert(
+        id,
+        RegisteredWorker {
+            load_plugin,
+            lint_file,
+            forget_buffer,
+            setup_rule_configs,
+            create_workspace,
+            destroy_workspace,
+        },
+    );
+    Ok(())
+}
+
+fn require_field<T: FromNapiValue>(options: &Object, field: &'static str) -> napi::Result<T> {
+    options
+        .get(field)?
+        .ok_or_else(|| napi::Error::from_reason(format!("registerWorker: missing `{field}`")))
+}
 
 /// NAPI entry point.
 ///

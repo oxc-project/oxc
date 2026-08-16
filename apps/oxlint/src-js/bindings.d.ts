@@ -59,6 +59,10 @@ export type JsCreateWorkspaceCb =
 export type JsDestroyWorkspaceCb =
   ((arg: string) => void)
 
+/** JS callback to drop a cached raw-transfer buffer. */
+export type JsForgetBufferCb =
+  ((arg: number) => void)
+
 /** JS callback to lint a file. */
 export type JsLintFileCb =
   ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7?: string | undefined | null) => string | null)
@@ -132,3 +136,15 @@ export interface ParserOptions {
 
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
+
+/**
+ * Register JS plugin callbacks for a worker isolate.
+ *
+ * Called from `worker.ts` after the worker starts. Callbacks are stored
+ * process-wide, keyed by `id`.
+ *
+ * # Errors
+ *
+ * Returns an error if any required field is missing from `options`.
+ */
+export declare function registerWorker(options: { id: number, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, setupRuleConfigs: JsSetupRuleConfigsCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb }): void
