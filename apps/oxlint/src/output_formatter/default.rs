@@ -126,13 +126,14 @@ impl DiagnosticReporter for GraphicalReporter {
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        let mut output = String::new();
+        let mut output = String::with_capacity(384);
         self.handler.render_report(&mut output, error.as_ref()).unwrap();
         Some(output)
     }
 
     fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
-        let mut output = String::new();
+        let capacity = errors.len().checked_mul(384).unwrap_or(0);
+        let mut output = String::with_capacity(capacity);
         self.handler
             .render_reports(
                 &mut output,
