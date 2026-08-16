@@ -13,6 +13,7 @@ use std::{
 };
 
 use owo_colors::{OwoColorize, Style};
+use smallvec::SmallVec;
 
 use super::{
     handler::GraphicalReportHandler,
@@ -133,7 +134,7 @@ impl GraphicalReportHandler {
         let mut highest = 0;
 
         let chars = &self.theme.characters;
-        let mut vbar_offsets = Vec::with_capacity(single_liners.len());
+        let mut vbar_offsets = SmallVec::<[_; 2]>::with_capacity(single_liners.len());
         for &hl in single_liners {
             let byte_start = hl.offset();
             let byte_end = hl.offset() + hl.len();

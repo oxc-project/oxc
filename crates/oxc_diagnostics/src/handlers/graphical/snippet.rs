@@ -11,6 +11,7 @@
 use std::{borrow::Cow, cmp::max, fmt};
 
 use owo_colors::OwoColorize;
+use smallvec::SmallVec;
 
 use super::{
     handler::GraphicalReportHandler,
@@ -112,7 +113,7 @@ impl GraphicalReportHandler {
             .copied()
             .zip(self.theme.styles.highlights.iter().copied().cycle())
             .map(|(label, style)| FancySpan::new(label.label(), label.span(), style))
-            .collect::<Vec<_>>();
+            .collect::<SmallVec<[_; 2]>>();
 
         // Find the maximum number of active gutter lines to determine indentation.
         let mut max_gutter = 0usize;
@@ -166,7 +167,7 @@ impl GraphicalReportHandler {
             self.render_line_gutter(f, max_gutter, line, &labels)?;
             Self::render_line_text(f, line.text)?;
 
-            let (single_line, multi_line): (Vec<_>, Vec<_>) = labels
+            let (single_line, multi_line): (SmallVec<[_; 2]>, SmallVec<[_; 2]>) = labels
                 .iter()
                 .filter(|hl| line.span_applies(hl))
                 .partition(|hl| line.span_line_only(hl));
