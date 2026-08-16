@@ -265,7 +265,7 @@ simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 valid
 similar = "3.1.1" # Text diffing
 similar-asserts = "2.0.0" # Test diff assertions
 smallvec = { version = "1.15.2", features = ["union", "serde"] } # Stack-allocated vectors
-sort-package-json = "0.0.15" # package.json key sorting
+sort-package-json = "1.0.0" # package.json key sorting
 tempfile = "3.27.0" # Temporary files
 textwrap = "0.16.2" # Text wrapping
 tokio = { version = "1.52.3", default-features = false } # Async runtime
