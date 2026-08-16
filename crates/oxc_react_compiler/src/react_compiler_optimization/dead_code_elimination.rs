@@ -367,6 +367,10 @@ fn pruneable_value(value: &InstructionValue, state: &State, env: &Environment) -
             // explicitly retain debugger statements
             false
         }
+        InstructionValue::TSEnumDeclaration { .. } => {
+            // Enum initializers can have arbitrary runtime side effects.
+            false
+        }
         InstructionValue::CallExpression { callee, .. } => {
             if env.output_mode == OutputMode::Ssr {
                 let callee_ty = &env.types[env.identifiers[callee.identifier].type_];

@@ -3,8 +3,9 @@ use itertools::Itertools as _;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Path, Result, Token,
-    parse::{Parse, ParseStream},
+    Attribute, Error, Expr, Ident, LitStr, Meta, Path, Result, Token,
+    parse::{Parse, ParseStream, Parser},
+    punctuated::Punctuated,
 };
 
 /// Documentation source for a lint rule
@@ -48,11 +49,10 @@ impl Parse for LintRuleMeta {
         let mut backtick_fences_count: usize = 0;
 
         for attr in input.call(Attribute::parse_outer)? {
-            match parse_attr(["doc"], &attr) {
-                Some(lit) => {
+            match parse_doc_attr(&attr)? {
+                Some(value) => {
                     #[cfg(feature = "ruledocs")]
                     {
-                        let value = lit.value();
                         let line = value.strip_prefix(' ').unwrap_or(&value);
                         doc_comments.push_str(line);
                         doc_comments.push('\n');
@@ -62,7 +62,7 @@ impl Parse for LintRuleMeta {
                     }
                     #[cfg(not(feature = "ruledocs"))]
                     {
-                        let _ = lit;
+                        let _ = value;
                     }
                 }
                 _ => {
@@ -350,20 +350,28 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     TokenStream::from(output)
 }
 
-fn parse_attr<'a, const LEN: usize>(
-    path: [&'static str; LEN],
-    attr: &'a Attribute,
-) -> Option<&'a LitStr> {
+fn parse_doc_attr(attr: &Attribute) -> Result<Option<String>> {
     if let Meta::NameValue(name_value) = &attr.meta {
         let path_idents = name_value.path.segments.iter().map(|segment| &segment.ident);
-        if itertools::equal(path_idents, path)
-            && let Expr::Lit(expr_lit) = &name_value.value
-            && let Lit::Str(s) = &expr_lit.lit
-        {
-            return Some(s);
+        if !itertools::equal(path_idents, ["doc"]) {
+            return Ok(None);
+        }
+
+        match &name_value.value {
+            Expr::Lit(expr_lit) => {
+                if let syn::Lit::Str(lit) = &expr_lit.lit {
+                    return Ok(Some(lit.value()));
+                }
+            }
+            Expr::Macro(expr_macro) if expr_macro.mac.path.is_ident("concat") => {
+                let literals = Punctuated::<LitStr, Token![,]>::parse_terminated
+                    .parse2(expr_macro.mac.tokens.clone())?;
+                return Ok(Some(literals.iter().map(LitStr::value).collect()));
+            }
+            _ => {}
         }
     }
-    None
+    Ok(None)
 }
 
 fn parse_fix(s: &str) -> proc_macro2::TokenStream {

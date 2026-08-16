@@ -5,7 +5,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{
@@ -17,11 +17,6 @@ use crate::react_compiler_hir::{
     ParamPattern, Place, PrimitiveValue, Terminal, Type, TypeId, UnaryOperator, is_use_ref_type,
 };
 use oxc_span::Span;
-
-const ERROR_DESCRIPTION: &str = "React refs are values that are not needed for rendering. \
-    Refs should only be accessed outside of render, such as in event handlers or effects. \
-    Accessing a ref value (the `current` property) during render can cause your component \
-    not to update as expected (https://react.dev/reference/react/useRef)";
 
 // --- RefId ---
 
@@ -314,15 +309,7 @@ fn validate_no_direct_ref_value_access(
     if let Some(ty) = env.get(operand.identifier) {
         let ty = destructure(ty);
         if let RefAccessType::RefValue { span, .. } = &ty {
-            errors.push(
-                ErrorCategory::Refs
-                    .diagnostic("Cannot access refs during render")
-                    .with_help(ERROR_DESCRIPTION)
-                    .with_labels(
-                        span.or(operand.span)
-                            .map(|s| s.label("Cannot access ref value during render")),
-                    ),
-            );
+            errors.push(diagnostics::ref_value_access(span.or(operand.span)));
         }
     }
 }
@@ -332,25 +319,10 @@ fn validate_no_ref_value_access(errors: &mut Vec<OxcDiagnostic>, env: &Env, oper
         let ty = destructure(ty);
         match &ty {
             RefAccessType::RefValue { span, .. } => {
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(
-                            span.or(operand.span)
-                                .map(|s| s.label("Cannot access ref value during render")),
-                        ),
-                );
+                errors.push(diagnostics::ref_value_access(span.or(operand.span)));
             }
             RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(
-                            operand.span.map(|s| s.label("Cannot access ref value during render")),
-                        ),
-                );
+                errors.push(diagnostics::ref_value_access(operand.span));
             }
             _ => {}
         }
@@ -372,24 +344,10 @@ fn validate_no_ref_passed_to_function(
                 } else {
                     span
                 };
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(error_span.map(|s| {
-                            s.label("Passing a ref to a function may read its value during render")
-                        })),
-                );
+                errors.push(diagnostics::ref_passed_to_function(error_span));
             }
             RefAccessType::Structure { fn_type: Some(fn_type), .. } if fn_type.read_ref_effect => {
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(span.map(|s| {
-                            s.label("Passing a ref to a function may read its value during render")
-                        })),
-                );
+                errors.push(diagnostics::ref_passed_to_function(span));
             }
             _ => {}
         }
@@ -411,14 +369,7 @@ fn validate_no_ref_update(
                 } else {
                     span
                 };
-                errors.push(
-                    ErrorCategory::Refs
-                        .diagnostic("Cannot access refs during render")
-                        .with_help(ERROR_DESCRIPTION)
-                        .with_labels(
-                            error_span.map(|s| s.label("Cannot update ref during render")),
-                        ),
-                );
+                errors.push(diagnostics::ref_update(error_span));
             }
             _ => {}
         }
@@ -427,14 +378,7 @@ fn validate_no_ref_update(
 
 fn guard_check(errors: &mut Vec<OxcDiagnostic>, operand: &Place, env: &Env) {
     if matches!(env.get(operand.identifier), Some(RefAccessType::Guard { .. })) {
-        errors.push(
-            ErrorCategory::Refs
-                .diagnostic("Cannot access refs during render")
-                .with_help(ERROR_DESCRIPTION)
-                .with_labels(
-                    operand.span.map(|s| s.label("Cannot access ref value during render")),
-                ),
-        );
+        errors.push(diagnostics::ref_value_access(operand.span));
     }
 }
 
@@ -708,14 +652,7 @@ fn validate_no_ref_access_in_render_impl(
                             return_type = *fn_ty.return_type.clone();
                             if fn_ty.read_ref_effect {
                                 did_error = true;
-                                errors.push(
-                                    ErrorCategory::Refs
-                                        .diagnostic("Cannot access refs during render")
-                                        .with_help(ERROR_DESCRIPTION)
-                                        .with_labels(callee.span.map(|s| {
-                                            s.label("This function accesses a ref value")
-                                        })),
-                                );
+                                errors.push(diagnostics::function_accesses_ref(callee.span));
                             }
                         }
 
@@ -967,14 +904,7 @@ fn validate_no_ref_access_in_render_impl(
                                     instr.lvalue.identifier,
                                     RefAccessType::Guard { ref_id: *ref_id },
                                 );
-                                errors.push(
-                                    ErrorCategory::Refs
-                                        .diagnostic("Cannot access refs during render")
-                                        .with_help(ERROR_DESCRIPTION)
-                                        .with_labels(value.span.map(|s| {
-                                            s.label("Cannot access ref value during render")
-                                        })),
-                                );
+                                errors.push(diagnostics::ref_value_access(value.span));
                             } else {
                                 validate_no_ref_value_access(errors, ref_env, value);
                             }
@@ -1099,7 +1029,7 @@ fn validate_no_ref_access_in_render_impl(
     }
 
     if ref_env.has_changed() {
-        errors.push(ErrorCategory::Invariant.diagnostic("Ref type environment did not converge"));
+        errors.push(diagnostics::invariant_ref_type_environment_did_not_converge());
         return RefAccessType::None;
     }
 

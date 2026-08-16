@@ -12,7 +12,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionKind, InstructionValue, Place, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -112,9 +112,11 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
             state.uninitialized.get(&place.identifier)
             && *definition != Some(place.identifier)
         {
-            return Err(ErrorCategory::Todo
-                .diagnostic("[PruneHoistedContexts] Rewrite hoisted function references")
-                .with_labels(place.span));
+            return Err(
+                diagnostics::todo_prune_hoisted_contexts_rewrite_hoisted_function_references(
+                    place.span,
+                ),
+            );
         }
         Ok(())
     }
@@ -154,18 +156,16 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
                 } else if lvalue.kind == InstructionKind::Function {
                     if let Some(kind) = state.uninitialized.get(&lvalue_id) {
                         if !matches!(kind, UninitializedKind::Func { .. }) {
-                            return Err(ErrorCategory::Invariant
-                                .diagnostic("[PruneHoistedContexts] Unexpected hoisted function")
-                                .with_labels(instruction.span));
+                            return Err(diagnostics::invariant_prune_hoisted_contexts_unexpected_hoisted_function(instruction.span));
                         }
                         // References to hoisted functions are now "safe" as
                         // variable assignments have finished.
                         state.uninitialized.remove(&lvalue_id);
                     }
                 } else {
-                    return Err(ErrorCategory::Todo
-                        .diagnostic("[PruneHoistedContexts] Unexpected kind")
-                        .with_labels(instruction.span));
+                    return Err(diagnostics::todo_prune_hoisted_contexts_unexpected_kind(
+                        instruction.span,
+                    ));
                 }
             }
         }

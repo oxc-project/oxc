@@ -10,7 +10,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{each_instruction_value_operand, each_terminal_operand};
 use crate::react_compiler_hir::{
@@ -182,27 +182,11 @@ fn check_operand_for_freeze_violation(
             _ => "a local variable".to_string(),
         };
 
-        diagnostics.push(
-            ErrorCategory::Immutability
-                .diagnostic("Cannot modify local variables after render completes")
-                .with_help(format!(
-                    "This argument is a function which may reassign or mutate {} after render, \
-                         which can cause inconsistent behavior on subsequent renders. \
-                         Consider using state instead",
-                    variable_name
-                ))
-                .with_labels(operand.span.map(|s| {
-                    s.label(format!(
-                        "This function may (indirectly) reassign or modify {} after render",
-                        variable_name
-                    ))
-                }))
-                .and_labels(
-                    mutation_info
-                        .value_span
-                        .map(|s| s.label(format!("This modifies {}", variable_name))),
-                ),
-        );
+        diagnostics.push(diagnostics::known_mutable_function(
+            &variable_name,
+            operand.span,
+            mutation_info.value_span,
+        ));
     }
 }
 

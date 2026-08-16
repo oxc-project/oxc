@@ -12,7 +12,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::{ImportDeclarationSpecifier, ModuleExportName, Program, Statement};
 use oxc_str::{Ident, IdentHashSet, format_ident};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::scope::ScopeResolver;
 
 use oxc_diagnostics::Diagnostics;
@@ -235,11 +235,10 @@ pub fn validate_restricted_imports(
         if let Statement::ImportDeclaration(import) = stmt
             && restricted.contains(import.source.value.as_str())
         {
-            diagnostics.push(
-                ErrorCategory::Todo
-                    .diagnostic("Bailing out due to blocklisted import")
-                    .with_help(format!("Import from module {}", import.source.value)),
-            );
+            diagnostics.push(diagnostics::blocklisted_import(
+                import.source.value.as_str(),
+                import.source.span,
+            ));
         }
     }
 

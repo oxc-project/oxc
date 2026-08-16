@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(immutability): This value cannot be modified
+   ╭─[immutability.tsx:7:11]
+ 6 │           const [state, setState] = useState({a: 0});
+ 7 │           state.a = 1;
+   ·           ──┬──
+   ·             ╰── value cannot be modified
+ 8 │           return <div>{props.foo}</div>;
+   ╰────
+  help: Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability

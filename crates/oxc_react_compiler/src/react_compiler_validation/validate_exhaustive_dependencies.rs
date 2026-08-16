@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use oxc_str::Ident;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics::{self, ErrorCategory};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment_config::ExhaustiveEffectDepsMode;
 use crate::react_compiler_hir::visitors::{
@@ -1529,12 +1529,11 @@ fn create_diagnostic(
             (reason, description)
         }
         _ => {
-            return Err(ErrorCategory::Invariant
-                .diagnostic(format!("Unexpected error category: {:?}", category)));
+            return Err(diagnostics::unexpected_error_category(category));
         }
     };
 
-    Ok(category.diagnostic(reason).with_help(description))
+    Ok(diagnostics::exhaustive_dependencies(category, &reason, description))
 }
 
 /// Collect lvalue identifier ids from instruction value (for the default branch).

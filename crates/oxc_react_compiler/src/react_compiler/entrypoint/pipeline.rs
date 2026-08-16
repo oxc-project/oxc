@@ -11,7 +11,7 @@
 use oxc_allocator::GetAllocator;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::ReactFunctionType;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
@@ -362,7 +362,7 @@ fn run_pipeline<'a>(
 
     // Simulate unexpected exception for testing (matches TS Pipeline.ts)
     if env.config.throw_unknown_exception_testonly {
-        return Err(ErrorCategory::Invariant.diagnostic("unexpected error"));
+        return Err(diagnostics::invariant_unexpected_error());
     }
 
     // Check for accumulated errors at the end of the pipeline

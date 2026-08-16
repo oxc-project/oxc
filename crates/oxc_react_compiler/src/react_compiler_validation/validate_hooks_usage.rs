@@ -14,7 +14,7 @@ use std::iter::once;
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
 use crate::react_compiler_hir::environment::{Environment, is_hook_name};
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -108,15 +108,14 @@ fn record_conditional_hook_error(
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
     value_kinds[place.identifier] = Some(Kind::Error);
-    let reason = "Hooks must always be called in a consistent order, and may not be called conditionally. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)";
     if let Some(span) = place.span {
-        let diagnostic = ErrorCategory::Hooks.diagnostic(reason).with_label(span);
+        let diagnostic = diagnostics::conditional_hook(Some(span));
         let previous = errors_by_span.get(&span);
         if previous.is_none() || previous.unwrap().message != diagnostic.message {
             errors_by_span.insert(span, diagnostic);
         }
     } else {
-        env.record_error(ErrorCategory::Hooks.diagnostic(reason))?;
+        env.record_error(diagnostics::conditional_hook(None))?;
     }
     Ok(())
 }
@@ -126,13 +125,12 @@ fn record_invalid_hook_usage_error(
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
-    let reason = "Hooks may not be referenced as normal values, they must be called. See https://react.dev/reference/rules/react-calls-components-and-hooks#never-pass-around-hooks-as-regular-values";
     if let Some(span) = place.span {
         if !errors_by_span.contains_key(&span) {
-            errors_by_span.insert(span, ErrorCategory::Hooks.diagnostic(reason).with_label(span));
+            errors_by_span.insert(span, diagnostics::hook_used_as_value(Some(span)));
         }
     } else {
-        env.record_error(ErrorCategory::Hooks.diagnostic(reason))?;
+        env.record_error(diagnostics::hook_used_as_value(None))?;
     }
     Ok(())
 }
@@ -142,13 +140,12 @@ fn record_dynamic_hook_usage_error(
     errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
     env: &mut Environment,
 ) -> Result<(), OxcDiagnostic> {
-    let reason = "Hooks must be the same function on every render, but this value may change over time to a different function. See https://react.dev/reference/rules/react-calls-components-and-hooks#dont-dynamically-use-hooks";
     if let Some(span) = place.span {
         if !errors_by_span.contains_key(&span) {
-            errors_by_span.insert(span, ErrorCategory::Hooks.diagnostic(reason).with_label(span));
+            errors_by_span.insert(span, diagnostics::dynamic_hook(Some(span)));
         }
     } else {
-        env.record_error(ErrorCategory::Hooks.diagnostic(reason))?;
+        env.record_error(diagnostics::dynamic_hook(None))?;
     }
     Ok(())
 }
@@ -446,14 +443,7 @@ fn visit_function_expression(
                             hook_kind_display(&hook_kind)
                         }
                     );
-                    env.record_error(
-                        ErrorCategory::Hooks
-                            .diagnostic(
-                                "Hooks must be called at the top level in the body of a function component or custom hook, and may not be called within function expressions. See the Rules of Hooks (https://react.dev/warnings/invalid-hook-call-warning)",
-                            )
-                            .with_help(description)
-                            .with_labels(span),
-                    )?;
+                    env.record_error(diagnostics::hook_in_function_expression(description, span))?;
                 }
             }
             Item::NestedFunc(nested_func_id) => {

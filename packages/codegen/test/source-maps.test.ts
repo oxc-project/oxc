@@ -235,8 +235,8 @@ for (const fixture of FIXTURES) {
 
       // Both builds through the public API - `printSync` picks the maps build when given a
       // `sourceMap`, and the no-maps build when not
-      const withMaps = printSync(program, { jsx, ts, sourceMap: collector });
-      const withoutMaps = printSync(program, { jsx, ts });
+      const withMaps = printSync(program, { jsx, ts, sourceMap: collector }).code;
+      const withoutMaps = printSync(program, { jsx, ts }).code;
 
       printed = {
         withMaps,
@@ -364,7 +364,7 @@ describe("indent option", () => {
     const out = printSync(program, {
       indent: indent as string | undefined,
       sourceMap: collector,
-    });
+    }).code;
 
     const expectedIndent = typeof indent === "string" && /^[ \t]+$/.test(indent) ? indent : "\t";
     const lines = out.split("\n");

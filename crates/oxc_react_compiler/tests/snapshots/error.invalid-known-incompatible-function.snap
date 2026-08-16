@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-known-incompatible-
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library", labels: [LabeledSpan { label: Some("useKnownIncompatible is known to be incompatible"), span: Span { start: 109, end: 126 }, primary: false }], help: Some("This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized"), note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Use of incompatible library", labels: [LabeledSpan { label: Some("useKnownIncompatible is known to be incompatible"), span: Span { start: 109, end: 126 }, primary: true }], help: Some("This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("IncompatibleLibrary") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/incompatible-library") } }
 
 No changes.

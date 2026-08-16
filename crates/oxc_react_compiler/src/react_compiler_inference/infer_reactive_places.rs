@@ -11,13 +11,14 @@
 //! 1. Props (component parameters may change between renders)
 //! 2. Hooks (can access state or context)
 //! 3. `use` operator (can access context)
-//! 4. Mutation with reactive operands
-//! 5. Conditional assignment based on reactive control flow
+//! 4. Tagged templates (calls may produce a new result with stable operands)
+//! 5. Mutation with reactive operands
+//! 6. Conditional assignment based on reactive control flow
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::dominator::{compute_post_dominator_tree, post_dominator_frontier};
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -141,14 +142,19 @@ pub fn infer_reactive_places(
 
                 // Hooks and `use` operator are sources of reactivity
                 match value {
-                    InstructionValue::CallExpression { callee, .. }
-                    | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
+                    InstructionValue::CallExpression { callee, .. } => {
                         let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                         if get_hook_kind_for_type(env, callee_ty)?.is_some()
                             || is_use_operator_type(callee_ty)
                         {
                             has_reactive_input = true;
                         }
+                    }
+                    InstructionValue::TaggedTemplateExpression { .. } => {
+                        // A tag may produce a new result even when its explicit operands are
+                        // stable. Proven-pure tags retain the resulting scope; other tags have it
+                        // flattened later so the call remains unconditional.
+                        has_reactive_input = true;
                     }
                     InstructionValue::MethodCall { property, .. } => {
                         let property_ty = &env.types[env.identifiers[property.identifier].type_];
@@ -194,10 +200,7 @@ pub fn infer_reactive_places(
                                 // no-op
                             }
                             Effect::Unknown => {
-                                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                                    "Unexpected unknown effect at {:?}",
-                                    op_place.span
-                                )));
+                                return Err(diagnostics::unexpected_unknown_effect(op_place.span));
                             }
                         }
                     }
@@ -585,14 +588,17 @@ fn apply_reactive_flags_replay(
 
             // Check hooks/use
             match &instr.value {
-                InstructionValue::CallExpression { callee, .. }
-                | InstructionValue::TaggedTemplateExpression { tag: callee, .. } => {
+                InstructionValue::CallExpression { callee, .. } => {
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if get_hook_kind_for_type(env, callee_ty).ok().flatten().is_some()
                         || is_use_operator_type(callee_ty)
                     {
                         has_reactive_input = true;
                     }
+                }
+                InstructionValue::TaggedTemplateExpression { .. } => {
+                    // Mirror the fixpoint rule above when writing the final reactive flags.
+                    has_reactive_input = true;
                 }
                 InstructionValue::MethodCall { property, .. } => {
                     let property_ty = &env.types[env.identifiers[property.identifier].type_];

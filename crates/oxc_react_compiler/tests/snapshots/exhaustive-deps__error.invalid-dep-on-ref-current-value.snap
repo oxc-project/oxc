@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.invalid-dep
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] MemoDependencies: Found extra memoization dependencies", labels: [LabeledSpan { label: Some("Unnecessary dependency `ref.current.value`"), span: Span { start: 173, end: 190 }, primary: false }], help: Some("Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found extra memoization dependencies", labels: [LabeledSpan { label: Some("Unnecessary dependency `ref.current.value`"), span: Span { start: 173, end: 190 }, primary: false }], help: Some("Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
 
 No changes.

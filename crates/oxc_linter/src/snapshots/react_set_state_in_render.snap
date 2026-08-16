@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(set-state-in-render): Cannot call setState during render
+   ╭─[set_state_in_render.tsx:5:3]
+ 4 │   const [state, setState] = useState(0);
+ 5 │   setState(1);
+   ·   ────┬───
+   ·       ╰── Found setState() in render
+ 6 │   return state;
+   ╰────
+  help: Calling setState during render may trigger an infinite loop.
+        * To reset state when other state/props change, store the previous value in state and update conditionally.
+        * To derive data from other state/props, compute the derived data during render without using state
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-render

@@ -1,4 +1,4 @@
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::each_terminal_successor;
 use crate::react_compiler_hir::visitors::terminal_fallthrough;
@@ -75,13 +75,6 @@ pub(crate) fn is_always_reserved_word(s: &str) -> bool {
             | "false"
             | "delete"
     )
-}
-
-pub(crate) fn reserved_identifier_diagnostic(name: &str) -> OxcDiagnostic {
-    ErrorCategory::Syntax.diagnostic("Expected a non-reserved identifier name").with_help(format!(
-        "`{}` is a reserved word in JavaScript and cannot be used as an identifier name",
-        name
-    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -461,8 +454,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 );
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched loop scope: expected Loop, got other"));
+                return Err(diagnostics::invariant_mismatched_loop_scope_expected_loop_got_other());
             }
         }
         Ok(value)
@@ -483,8 +475,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched label scope");
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched label scope: expected Label, got other"));
+                return Err(
+                    diagnostics::invariant_mismatched_label_scope_expected_label_got_other(),
+                );
             }
         }
         Ok(value)
@@ -505,8 +498,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 assert!(*l == label && *b == break_block, "Mismatched switch scope");
             }
             _ => {
-                return Err(ErrorCategory::Invariant
-                    .diagnostic("Mismatched switch scope: expected Switch, got other"));
+                return Err(
+                    diagnostics::invariant_mismatched_switch_scope_expected_switch_got_other(),
+                );
             }
         }
         Ok(value)
@@ -526,8 +520,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 _ => continue,
             }
         }
-        Err(ErrorCategory::Invariant
-            .diagnostic("Expected a loop or switch to be in scope for break"))
+        Err(diagnostics::invariant_expected_loop_or_switch_scope_break())
     }
 
     /// Look up the continue target for the given label (or the innermost
@@ -542,13 +535,12 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 }
                 _ => {
                     if label.is_some() && scope.label() == label {
-                        return Err(ErrorCategory::Invariant
-                            .diagnostic("Continue may only refer to a labeled loop"));
+                        return Err(diagnostics::invariant_continue_may_only_refer_labeled_loop());
                     }
                 }
             }
         }
-        Err(ErrorCategory::Invariant.diagnostic("Expected a loop to be in scope for continue"))
+        Err(diagnostics::invariant_expected_loop_scope_continue())
     }
 
     /// Create a temporary identifier with a fresh id, returning its IdentifierId.
@@ -620,9 +612,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                         .and_then(|&i| instructions[i.index()].span)
                         .or_else(|| block.terminal.span().copied());
                     self.env.record_error(
-                        ErrorCategory::Todo
-                            .diagnostic("Support functions with unreachable code that may contain hoisted declarations")
-                            .with_labels(span),
+                        diagnostics::todo_support_functions_unreachable_code_that_may_contain_hoisted_declarations(span),
                     )?;
                 }
             }
@@ -685,12 +675,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
                 };
             if should_record_fbt_error {
                 let error_span = self.declaration_span(symbol_id).or(span);
-                self.env.record_error(
-                    ErrorCategory::Todo
-                        .diagnostic("Support local variables named `fbt`")
-                        .with_help("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported")
-                        .with_labels(error_span),
-                )?;
+                self.env.record_error(diagnostics::local_fbt_variable(error_span))?;
             }
         }
 
@@ -701,7 +686,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         if is_always_reserved_word(name.as_str()) {
             // Match TS behavior: makeIdentifierName throws for reserved words.
-            return Err(reserved_identifier_diagnostic(name.as_str()));
+            return Err(diagnostics::reserved_identifier(name.as_str(), span));
         }
 
         // Find a unique name: start with the original name, then try name_0, name_1, ...
@@ -767,11 +752,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name });
         };
-        // Treat type-only declarations as globals so the compiler
-        // doesn't try to create/initialize HIR bindings for them.
-        // TSEnumDeclaration is included because a function with an inline
-        // enum is skipped (`skip_compilation`) and the enum binding is
-        // never initialized in HIR.
+        // Treat type-only declarations as globals so the compiler doesn't try to
+        // create or initialize HIR bindings for them. Inline enums are opaque
+        // pass-through instructions, matching upstream's `UnsupportedNode`, so
+        // their references also remain global from HIR's perspective.
         if matches!(
             self.scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration
