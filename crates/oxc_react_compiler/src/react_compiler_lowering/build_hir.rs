@@ -3806,18 +3806,6 @@ fn lower_expression<'a>(
             // instead lowers the tag plus every quasi and every `${...}`
             // subexpression (mirroring `TemplateLiteral`). This is a deliberate
             // divergence from the TS reference.
-            //
-            // We still bail when any quasi's cooked value differs from its raw value
-            // (e.g. escape sequences or graphql templates), matching upstream's
-            // single-quasi behavior — the HIR only round-trips raw==cooked quasis.
-            if tagged.quasi.quasis.iter().any(|q| {
-                q.value.raw.as_str() != q.value.cooked.map(|c| c.to_string()).unwrap_or_default()
-            }) {
-                builder.record_error(
-                    diagnostics::todo_build_hir_lower_expression_handle_tagged_template_where_cooked_value_different_from_raw_value(span),
-                )?;
-                return Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span });
-            }
             // Evaluation order: the tag is evaluated first, then each interpolated
             // subexpression left-to-right.
             let tag = lower_expression_to_temporary(builder, &tagged.tag)?;
