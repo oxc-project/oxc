@@ -249,6 +249,9 @@ impl CliRunner {
             !misc_options.print_config &&
             !self.options.list_rules;
 
+        // Spike timers (js plugin workers): plugin_load_ms covers config + JS plugin import.
+        let plugin_load_start = Instant::now();
+
         let config_result = {
             let mut config_loader =
                 ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
@@ -475,6 +478,8 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         }
+        let plugin_load_ms = plugin_load_start.elapsed();
+        eprintln!("worker_boot_ms=0 plugin_load_ms={}", plugin_load_ms.as_millis());
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
@@ -536,6 +541,7 @@ impl CliRunner {
         let diff_manager = suppression_manager.build_diff();
 
         let rule_timing_store = debug_timings.then(RuleTimingStore::new);
+        let lint_start = Instant::now();
         let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
             lint_runner.lint_files::<true>(
                 &files_to_lint,
@@ -546,6 +552,8 @@ impl CliRunner {
         } else {
             lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
         };
+        let lint_ms = lint_start.elapsed();
+        eprintln!("lint_ms={}", lint_ms.as_millis());
 
         match lint_result {
             Ok(lint_runner) => {
