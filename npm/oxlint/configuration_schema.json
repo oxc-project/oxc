@@ -6585,9 +6585,6 @@
             }
           ]
         },
-        "react/config": {
-          "$ref": "#/definitions/RuleNoConfig"
-        },
         "react/display-name": {
           "anyOf": [
             {

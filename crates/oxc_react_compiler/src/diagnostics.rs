@@ -1102,18 +1102,24 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_statement_handle_try_statement_without_catch_clause<L, T>(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(
+pub fn todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(
+    try_span: Option<Span>,
+    finally_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic = diagnostic(
         ErrorCategory::Todo,
-        "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause",
+        "`try`/`finally` without `catch` is not supported by React Compiler",
     )
-    .with_labels(labels)
+    .with_help(
+        "React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled",
+    )
+    .with_labels(try_span.map(|span| span.primary_label("Unsupported `try` starts here")));
+    diagnostic.labels.extend(
+        finally_span
+            .filter(|finally_span| Some(*finally_span) != try_span)
+            .map(|span| span.label("This `finally` clause requires unsupported control flow")),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2301,8 +2307,24 @@ pub fn ref_passed_to_function(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn ref_update(span: Option<Span>) -> OxcDiagnostic {
-    ref_access(span, "Cannot update ref during render")
+pub fn ref_update(span: Option<Span>, ref_span: Option<Span>) -> OxcDiagnostic {
+    let ref_value_span = match (span, ref_span) {
+        (Some(span), Some(ref_span)) if span.start == ref_span.start && ref_span.end < span.end => {
+            Some(Span::new(ref_span.end, span.end))
+        }
+        _ => span,
+    };
+    let mut diagnostic = ref_access(ref_value_span, "Cannot update ref value during render");
+    diagnostic.labels.extend(
+        ref_span
+            .filter(|ref_span| {
+                ref_value_span.is_none_or(|value_span| {
+                    ref_span.end <= value_span.start || ref_span.start >= value_span.end
+                })
+            })
+            .map(|span| span.label("This value is a ref")),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2336,11 +2358,8 @@ pub fn set_state_in_effect(
          data source (mutable values outside React), use `useSyncExternalStore` to properly subscribe \
          to external state changes."
     } else {
-        "Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. \
-         In general, the body of an effect should do one or both of the following:\n\
-         * Update external systems with the latest state from React.\n\
-         * Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\n\
-         Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended."
+        "Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. \
+         Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system."
     };
     let mut diagnostic = diagnostic_with_help_and_label(
         ErrorCategory::EffectSetState,
@@ -2368,12 +2387,27 @@ pub fn preserve_memo_mutated_dependency(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn preserve_memo_unmemoized(span: Option<Span>) -> OxcDiagnostic {
-    diagnostic(ErrorCategory::PreserveManualMemo, "Existing memoization could not be preserved")
+pub fn preserve_memo_unmemoized(
+    span: Option<Span>,
+    callback_start_span: Option<Span>,
+) -> OxcDiagnostic {
+    let mut diagnostic =
+        diagnostic(ErrorCategory::PreserveManualMemo, "Existing memoization could not be preserved")
         .with_help(
-            "React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output",
+            "React Compiler could not prove that this useMemo/useCallback remains memoized. Fix related React Compiler errors inside the callback first. If manual memoization is not required for semantics, remove it; otherwise restructure the callback to avoid values that invalidate memoization",
         )
-        .with_labels(span.map(|span| span.primary_label("Could not preserve existing memoization")))
+        .with_labels(span.map(|span| span.primary_label("Manual memoization is not preserved here")));
+    diagnostic.labels.extend(
+        callback_start_span
+            .filter(|callback_start_span| {
+                span.is_none_or(|primary_span| {
+                    callback_start_span.end <= primary_span.start
+                        || callback_start_span.start >= primary_span.end
+                })
+            })
+            .map(|span| span.label("Manual memoization callback starts here")),
+    );
+    diagnostic
 }
 
 #[cold]
@@ -2544,19 +2578,17 @@ pub fn variable_accessed_before_declaration(
     let label_name = variable.unwrap_or("variable");
     let mut diagnostic = diagnostic(
         ErrorCategory::Immutability,
-        "Cannot access variable before it is declared",
+        "Cannot access variable while it is being initialized",
     )
     .with_help(format!(
-        "{help_name} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time"
+        "{help_name} is read while its declaration is still being initialized. Move the access after initialization. For a recursive callback, use a named function expression or restructure the callback so it does not capture itself during initialization"
     ));
-    diagnostic
-        .labels
-        .extend(access_span.map(|span| {
-            span.primary_label(format!("{label_name} accessed before it is declared"))
-        }));
-    diagnostic
-        .labels
-        .extend(declaration_span.map(|span| span.label(format!("{label_name} is declared here"))));
+    diagnostic.labels.extend(access_span.map(|span| {
+        span.primary_label(format!("{label_name} is read during its own initialization"))
+    }));
+    diagnostic.labels.extend(
+        declaration_span.map(|span| span.label(format!("{label_name} is initialized here"))),
+    );
     diagnostic
 }
 
@@ -2735,7 +2767,7 @@ mod tests {
 
         assert!(diagnostic.labels[0].primary());
         assert!(!diagnostic.labels[1].primary());
-        assert_eq!(diagnostic.labels[1].label(), Some("value is declared here"));
+        assert_eq!(diagnostic.labels[1].label(), Some("value is initialized here"));
     }
 
     #[test]

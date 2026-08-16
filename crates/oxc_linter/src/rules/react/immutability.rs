@@ -86,6 +86,27 @@ function Component(props) {
           return <div>{props.foo}</div>;
         }
       ",
+        // A recursive callback should point at the access, not the entire
+        // callback initializer.
+        "
+        import { useCallback } from 'react';
+        function Component() {
+          const applyFilter = useCallback(() => {
+            setTimeout(() => {
+              applyFilter();
+            });
+          }, []);
+          return null;
+        }
+      ",
+        // Mutating an argument should recommend updating its owner rather than
+        // suggesting a local copy that would not update the UI.
+        "
+        function Component({model}) {
+          model.value = 'next';
+          return <div>{model.value}</div>;
+        }
+      ",
     ];
 
     Tester::new(Immutability::NAME, Immutability::PLUGIN, pass, fail).test_and_snapshot();

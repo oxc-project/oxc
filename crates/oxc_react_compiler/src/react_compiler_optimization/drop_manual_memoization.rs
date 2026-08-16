@@ -222,6 +222,7 @@ fn process_manual_memo_call<'a>(
     let ExtractedMemoArgs { fn_place, deps_list, deps_span } = memo_details;
 
     let span = func.instructions[instr_id.index()].value.span().cloned();
+    let callee_span = func.instructions[manual_memo.load_instr_id.index()].value.span().copied();
 
     // Replace the instruction value with the memoization replacement
     let replacement =
@@ -255,6 +256,7 @@ fn process_manual_memo_call<'a>(
             env,
             deps_list,
             deps_span,
+            callee_span,
             &memo_decl,
             manual_memo_id,
         );
@@ -457,6 +459,7 @@ fn make_manual_memoization_markers<'a>(
     env: &mut Environment<'a>,
     deps_list: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Span>,
+    callee_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
 ) -> (Instruction<'a>, Instruction<'a>) {
@@ -468,6 +471,7 @@ fn make_manual_memoization_markers<'a>(
             deps: deps_list.map(|v| ArenaVec::from_iter_in(v, &env.allocator)),
             deps_span: Some(deps_span),
             has_invalid_deps: false,
+            callee_span,
             span: fn_expr.span,
         },
         span: fn_expr.span,

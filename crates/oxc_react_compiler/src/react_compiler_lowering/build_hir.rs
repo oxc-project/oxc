@@ -6276,6 +6276,10 @@ fn lower_statement<'a>(
                 try_stmt.span.start,
                 try_stmt.span.start.saturating_add(3).min(try_stmt.span.end),
             ));
+            let finally_keyword_span = try_stmt
+                .finalizer
+                .as_ref()
+                .map(|finalizer| Span::new(try_stmt.block.span.end, finalizer.span.start));
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
 
@@ -6283,7 +6287,10 @@ fn lower_statement<'a>(
                 Some(h) => h,
                 None => {
                     builder.record_error(
-                        diagnostics::todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(try_keyword_span),
+                        diagnostics::todo_build_hir_lower_statement_handle_try_statement_without_catch_clause(
+                            try_keyword_span,
+                            finally_keyword_span,
+                        ),
                     )?;
                     return Ok(());
                 }

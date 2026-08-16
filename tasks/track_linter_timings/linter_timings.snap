@@ -412,7 +412,6 @@ promise/valid-params                                       |  62606
 react/button-has-type                                      |   7019
 react/capitalized-calls                                    |      7
 react/checked-requires-onchange-or-readonly                |  63058
-react/config                                               |      7
 react/display-name                                         |      7
 react/error-boundaries                                     |      7
 react/exhaustive-deps                                      |  62606

@@ -33,6 +33,8 @@ struct ManualMemoBlockState<'h> {
     reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
     /// Source location of the StartMemoize instruction.
     span: Option<Span>,
+    /// Source location of the useMemo/useCallback callee.
+    callee_span: Option<Span>,
     /// Source location of the manual dependency array, when one was provided.
     deps_span: Option<Span>,
     /// Declarations produced within this manual memo block.
@@ -189,6 +191,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
             manual_memo_id,
             deps,
             deps_span,
+            callee_span,
             has_invalid_deps,
             ..
         }) => {
@@ -206,6 +209,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
 
             state.manual_memo_state = Some(ManualMemoBlockState {
                 span: instr.span,
+                callee_span: *callee_span,
                 deps_span: deps_span.flatten(),
                 decls: FxHashSet::default(),
                 deps_from_source,
@@ -246,6 +250,13 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
             }
 
             let memo_state = state.manual_memo_state.take().unwrap();
+            let unmemoized_span =
+                memo_state.callee_span.or(memo_state.deps_span).or(memo_state.span).or(decl.span);
+            // A full callback span can cover dozens of lines. The first source token is enough to
+            // connect the hook callee to its callback without expanding the diagnostic codeframe.
+            let callback_start_span = memo_state.span.and_then(|span| {
+                (span.start < span.end).then(|| Span::new(span.start, span.start + 1))
+            });
 
             if !pruned {
                 // Check if the declared value is unmemoized
@@ -262,7 +273,8 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
                     for id in decls_to_check {
                         if is_unmemoized(id, &state.scopes, &state.env.identifiers) {
                             record_unmemoized_error(
-                                memo_state.deps_span.or(memo_state.span).or(decl.span),
+                                unmemoized_span,
+                                callback_start_span,
                                 state.env,
                             );
                         }
@@ -270,10 +282,7 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
                 } else {
                     // Single identifier with scope
                     if is_unmemoized(decl.identifier, &state.scopes, &state.env.identifiers) {
-                        record_unmemoized_error(
-                            memo_state.deps_span.or(memo_state.span).or(decl.span),
-                            state.env,
-                        );
+                        record_unmemoized_error(unmemoized_span, callback_start_span, state.env);
                     }
                 }
             }
@@ -306,8 +315,12 @@ fn visit_instruction<'h>(instr: &ReactiveInstruction<'h>, state: &mut VisitorSta
     }
 }
 
-fn record_unmemoized_error(span: Option<Span>, env: &mut Environment) {
-    let diag = diagnostics::preserve_memo_unmemoized(span);
+fn record_unmemoized_error(
+    span: Option<Span>,
+    callback_start_span: Option<Span>,
+    env: &mut Environment,
+) {
+    let diag = diagnostics::preserve_memo_unmemoized(span, callback_start_span);
     env.record_diagnostic(diag);
 }
 

@@ -88,6 +88,22 @@ function Component(props) {
   return value;
 }
 ",
+        // Updating a ref should distinguish the ref object from its current value.
+        "
+function Component() {
+  const ref = useRef(null);
+  ref.current = 1;
+  return null;
+}
+",
+        // Nested writes should retain the base ref location through ref.current.
+        "
+function Component() {
+  const ref = useRef({inner: null});
+  ref.current.inner = 1;
+  return null;
+}
+",
     ];
 
     Tester::new(Refs::NAME, Refs::PLUGIN, pass, fail).test_and_snapshot();

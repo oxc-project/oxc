@@ -35,7 +35,7 @@ fn next_ref_id() -> RefId {
 /// Corresponds to TS `RefAccessType`.
 ///
 /// PartialEq matches the TS `tyEqual` semantics: Ref ignores ref_id,
-/// RefValue compares span but ignores ref_id. This is critical for fixpoint
+/// RefValue compares its access span but ignores ref origin and ref_id. This is critical for fixpoint
 /// convergence — join creates fresh ref_ids, and comparing them would
 /// prevent the environment from stabilizing.
 #[derive(Debug, Clone)]
@@ -44,7 +44,7 @@ enum RefAccessType {
     Nullable,
     Guard { ref_id: RefId },
     Ref { ref_id: RefId },
-    RefValue { span: Option<Span>, ref_id: Option<RefId> },
+    RefValue { span: Option<Span>, ref_span: Option<Span>, ref_id: Option<RefId> },
     Structure { value: Option<Box<RefAccessRefType>>, fn_type: Option<RefFnType> },
 }
 
@@ -70,12 +70,12 @@ impl PartialEq for RefAccessType {
 /// Corresponds to TS `RefAccessRefType` — the subset of `RefAccessType` that can appear
 /// inside `Structure.value` and be joined via `join_ref_access_ref_types`.
 ///
-/// PartialEq mirrors RefAccessType: Ref ignores ref_id, RefValue compares
-/// span only.
+/// PartialEq mirrors RefAccessType: Ref ignores ref_id, while RefValue compares
+/// its access span but ignores ref origin and ref_id.
 #[derive(Debug, Clone)]
 enum RefAccessRefType {
     Ref { ref_id: RefId },
-    RefValue { span: Option<Span>, ref_id: Option<RefId> },
+    RefValue { span: Option<Span>, ref_span: Option<Span>, ref_id: Option<RefId> },
     Structure { value: Option<Box<RefAccessRefType>>, fn_type: Option<RefFnType> },
 }
 
@@ -108,8 +108,12 @@ impl RefAccessType {
     fn to_ref_type(&self) -> Option<RefAccessRefType> {
         match self {
             RefAccessType::Ref { ref_id } => Some(RefAccessRefType::Ref { ref_id: *ref_id }),
-            RefAccessType::RefValue { span, ref_id } => {
-                Some(RefAccessRefType::RefValue { span: *span, ref_id: *ref_id })
+            RefAccessType::RefValue { span, ref_span, ref_id } => {
+                Some(RefAccessRefType::RefValue {
+                    span: *span,
+                    ref_span: *ref_span,
+                    ref_id: *ref_id,
+                })
             }
             RefAccessType::Structure { value, fn_type } => {
                 Some(RefAccessRefType::Structure { value: value.clone(), fn_type: fn_type.clone() })
@@ -122,8 +126,8 @@ impl RefAccessType {
     fn from_ref_type(ref_type: &RefAccessRefType) -> Self {
         match ref_type {
             RefAccessRefType::Ref { ref_id } => RefAccessType::Ref { ref_id: *ref_id },
-            RefAccessRefType::RefValue { span, ref_id } => {
-                RefAccessType::RefValue { span: *span, ref_id: *ref_id }
+            RefAccessRefType::RefValue { span, ref_span, ref_id } => {
+                RefAccessType::RefValue { span: *span, ref_span: *ref_span, ref_id: *ref_id }
             }
             RefAccessRefType::Structure { value, fn_type } => {
                 RefAccessType::Structure { value: value.clone(), fn_type: fn_type.clone() }
@@ -143,14 +147,14 @@ fn join_ref_access_ref_types(a: &RefAccessRefType, b: &RefAccessRefType) -> RefA
             if a_id == b_id {
                 a.clone()
             } else {
-                RefAccessRefType::RefValue { span: None, ref_id: None }
+                RefAccessRefType::RefValue { span: None, ref_span: None, ref_id: None }
             }
         }
         (RefAccessRefType::RefValue { .. }, _) => {
-            RefAccessRefType::RefValue { span: None, ref_id: None }
+            RefAccessRefType::RefValue { span: None, ref_span: None, ref_id: None }
         }
         (_, RefAccessRefType::RefValue { .. }) => {
-            RefAccessRefType::RefValue { span: None, ref_id: None }
+            RefAccessRefType::RefValue { span: None, ref_span: None, ref_id: None }
         }
         (RefAccessRefType::Ref { ref_id: a_id }, RefAccessRefType::Ref { ref_id: b_id }) => {
             if a_id == b_id { a.clone() } else { RefAccessRefType::Ref { ref_id: next_ref_id() } }
@@ -266,7 +270,7 @@ fn ref_type_of_type(
     let identifier = &identifiers[id];
     let ty = &types[identifier.type_];
     if crate::react_compiler_hir::is_ref_value_type(ty) {
-        RefAccessType::RefValue { span: None, ref_id: None }
+        RefAccessType::RefValue { span: None, ref_span: None, ref_id: None }
     } else if is_use_ref_type(ty) {
         RefAccessType::Ref { ref_id: next_ref_id() }
     } else {
@@ -365,13 +369,12 @@ fn validate_no_ref_update(
     if let Some(ty) = env.get(operand.identifier) {
         let ty = destructure(ty);
         match &ty {
-            RefAccessType::Ref { .. } | RefAccessType::RefValue { .. } => {
-                let error_span = if let RefAccessType::RefValue { span: ref_span, .. } = &ty {
-                    ref_span.or(span)
-                } else {
-                    span
-                };
-                errors.push(diagnostics::ref_update(error_span));
+            RefAccessType::Ref { .. } => {
+                errors.push(diagnostics::ref_update(span, operand.span));
+            }
+            RefAccessType::RefValue { span: value_span, ref_span, .. } => {
+                errors
+                    .push(diagnostics::ref_update(value_span.or(span), ref_span.or(operand.span)));
             }
             _ => {}
         }
@@ -424,12 +427,8 @@ fn collect_temporaries_sidemap(
                     env.define(lvalue.place.identifier, temp);
                 }
                 InstructionValue::PropertyLoad { object, property, .. } => {
-                    // JSX ref attributes infer their values as ref-like, including callback
-                    // member expressions. Keep such a property result separate from its receiver
-                    // so `refs.setReference` does not make sibling properties look like ref values.
-                    if is_ref_type(instr.lvalue.identifier, identifiers, types)
-                        || (is_ref_type(object.identifier, identifiers, types)
-                            && property.is_string("current"))
+                    if is_ref_type(object.identifier, identifiers, types)
+                        && property.is_string("current")
                     {
                         continue;
                     }
@@ -527,6 +526,7 @@ fn validate_no_ref_access_in_render_impl(
                             }
                             Some(RefAccessType::Ref { ref_id }) => Some(RefAccessType::RefValue {
                                 span: instr.span,
+                                ref_span: object.span,
                                 ref_id: Some(*ref_id),
                             }),
                             _ => None,
@@ -546,6 +546,7 @@ fn validate_no_ref_access_in_render_impl(
                             }
                             Some(RefAccessType::Ref { ref_id }) => Some(RefAccessType::RefValue {
                                 span: instr.span,
+                                ref_span: object.span,
                                 ref_id: Some(*ref_id),
                             }),
                             _ => None,
@@ -1009,7 +1010,11 @@ fn validate_no_ref_access_in_render_impl(
                         instr.lvalue.identifier,
                         join_ref_access_types(
                             &existing,
-                            &RefAccessType::RefValue { span: instr.span, ref_id: None },
+                            &RefAccessType::RefValue {
+                                span: instr.span,
+                                ref_span: None,
+                                ref_id: None,
+                            },
                         ),
                     );
                 }

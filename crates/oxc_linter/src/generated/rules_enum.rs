@@ -427,7 +427,6 @@ pub use crate::rules::promise::valid_params::ValidParams as PromiseValidParams;
 pub use crate::rules::react::button_has_type::ButtonHasType as ReactButtonHasType;
 pub use crate::rules::react::capitalized_calls::CapitalizedCalls as ReactCapitalizedCalls;
 pub use crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly as ReactCheckedRequiresOnchangeOrReadonly;
-pub use crate::rules::react::config::Config as ReactConfig;
 pub use crate::rules::react::display_name::DisplayName as ReactDisplayName;
 pub use crate::rules::react::error_boundaries::ErrorBoundaries as ReactErrorBoundaries;
 pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveDeps;
@@ -1287,7 +1286,6 @@ pub enum RuleEnum {
     ReactButtonHasType(ReactButtonHasType),
     ReactCapitalizedCalls(ReactCapitalizedCalls),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
-    ReactConfig(ReactConfig),
     ReactDisplayName(ReactDisplayName),
     ReactErrorBoundaries(ReactErrorBoundaries),
     ReactExhaustiveDeps(ReactExhaustiveDeps),
@@ -2214,8 +2212,7 @@ const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
 const REACT_CAPITALIZED_CALLS_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_CAPITALIZED_CALLS_ID + 1usize;
-const REACT_CONFIG_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
-const REACT_DISPLAY_NAME_ID: usize = REACT_CONFIG_ID + 1usize;
+const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
 const REACT_ERROR_BOUNDARIES_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
 const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_ERROR_BOUNDARIES_ID + 1usize;
 const REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
@@ -2754,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 872usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3148,7 +3145,6 @@ static RULE_NAMES: [&str; 872usize] = [
     ReactButtonHasType::NAME,
     ReactCapitalizedCalls::NAME,
     ReactCheckedRequiresOnchangeOrReadonly::NAME,
-    ReactConfig::NAME,
     ReactDisplayName::NAME,
     ReactErrorBoundaries::NAME,
     ReactExhaustiveDeps::NAME,
@@ -4096,7 +4092,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID
             }
-            Self::ReactConfig(_) => REACT_CONFIG_ID,
             Self::ReactDisplayName(_) => REACT_DISPLAY_NAME_ID,
             Self::ReactErrorBoundaries(_) => REACT_ERROR_BOUNDARIES_ID,
             Self::ReactExhaustiveDeps(_) => REACT_EXHAUSTIVE_DEPS_ID,
@@ -5125,7 +5120,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::CATEGORY
             }
-            Self::ReactConfig(_) => ReactConfig::CATEGORY,
             Self::ReactDisplayName(_) => ReactDisplayName::CATEGORY,
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::CATEGORY,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::CATEGORY,
@@ -6152,7 +6146,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::FIX
             }
-            Self::ReactConfig(_) => ReactConfig::FIX,
             Self::ReactDisplayName(_) => ReactDisplayName::FIX,
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::FIX,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FIX,
@@ -7249,7 +7242,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::documentation()
             }
-            Self::ReactConfig(_) => ReactConfig::documentation(),
             Self::ReactDisplayName(_) => ReactDisplayName::documentation(),
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::documentation(),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::documentation(),
@@ -9068,9 +9060,6 @@ impl RuleEnum {
                 ReactCheckedRequiresOnchangeOrReadonly::config_schema(generator)
                     .or_else(|| ReactCheckedRequiresOnchangeOrReadonly::schema(generator))
             }
-            Self::ReactConfig(_) => {
-                ReactConfig::config_schema(generator).or_else(|| ReactConfig::schema(generator))
-            }
             Self::ReactDisplayName(_) => ReactDisplayName::config_schema(generator)
                 .or_else(|| ReactDisplayName::schema(generator)),
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::config_schema(generator)
@@ -10844,7 +10833,6 @@ impl RuleEnum {
             Self::ReactButtonHasType(_) => "react",
             Self::ReactCapitalizedCalls(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
-            Self::ReactConfig(_) => "react",
             Self::ReactDisplayName(_) => "react",
             Self::ReactErrorBoundaries(_) => "react",
             Self::ReactExhaustiveDeps(_) => "react",
@@ -12814,7 +12802,6 @@ impl RuleEnum {
             Self::ReactButtonHasType(rule) => rule.to_configuration(),
             Self::ReactCapitalizedCalls(rule) => rule.to_configuration(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
-            Self::ReactConfig(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
             Self::ReactErrorBoundaries(rule) => rule.to_configuration(),
             Self::ReactExhaustiveDeps(rule) => rule.to_configuration(),
@@ -13693,7 +13680,6 @@ impl RuleEnum {
             Self::ReactButtonHasType(rule) => rule.run(node, ctx),
             Self::ReactCapitalizedCalls(rule) => rule.run(node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
-            Self::ReactConfig(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
             Self::ReactErrorBoundaries(rule) => rule.run(node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
@@ -14582,7 +14568,6 @@ impl RuleEnum {
             Self::ReactButtonHasType(rule) => rule.run_once(ctx),
             Self::ReactCapitalizedCalls(rule) => rule.run_once(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
-            Self::ReactConfig(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
             Self::ReactErrorBoundaries(rule) => rule.run_once(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
@@ -15542,7 +15527,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
-            Self::ReactConfig(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactErrorBoundaries(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16478,7 +16462,6 @@ impl RuleEnum {
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
             Self::ReactCapitalizedCalls(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
-            Self::ReactConfig(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
             Self::ReactErrorBoundaries(rule) => rule.should_run(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.should_run(ctx),
@@ -17528,7 +17511,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::IS_TSGOLINT_RULE
             }
-            Self::ReactConfig(_) => ReactConfig::IS_TSGOLINT_RULE,
             Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::IS_TSGOLINT_RULE,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
@@ -18712,7 +18694,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::VERSION
             }
-            Self::ReactConfig(_) => ReactConfig::VERSION,
             Self::ReactDisplayName(_) => ReactDisplayName::VERSION,
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::VERSION,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::VERSION,
@@ -19779,7 +19760,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::HAS_CONFIG
             }
-            Self::ReactConfig(_) => ReactConfig::HAS_CONFIG,
             Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::HAS_CONFIG,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
@@ -20831,7 +20811,6 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::INFO
             }
-            Self::ReactConfig(_) => ReactConfig::INFO,
             Self::ReactDisplayName(_) => ReactDisplayName::INFO,
             Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::INFO,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::INFO,
@@ -21758,7 +21737,6 @@ impl RuleEnum {
             Self::ReactButtonHasType(rule) => rule.types_info(),
             Self::ReactCapitalizedCalls(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
-            Self::ReactConfig(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
             Self::ReactErrorBoundaries(rule) => rule.types_info(),
             Self::ReactExhaustiveDeps(rule) => rule.types_info(),
@@ -22634,7 +22612,6 @@ impl RuleEnum {
             Self::ReactButtonHasType(rule) => rule.run_info(),
             Self::ReactCapitalizedCalls(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
-            Self::ReactConfig(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
             Self::ReactErrorBoundaries(rule) => rule.run_info(),
             Self::ReactExhaustiveDeps(rule) => rule.run_info(),
@@ -23600,7 +23577,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
             ReactCheckedRequiresOnchangeOrReadonly::default(),
         ),
-        RuleEnum::ReactConfig(ReactConfig::default()),
         RuleEnum::ReactDisplayName(ReactDisplayName::default()),
         RuleEnum::ReactErrorBoundaries(ReactErrorBoundaries::default()),
         RuleEnum::ReactExhaustiveDeps(ReactExhaustiveDeps::default()),

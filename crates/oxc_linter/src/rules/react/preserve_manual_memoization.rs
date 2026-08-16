@@ -86,6 +86,20 @@ function Component({propA}) {
   }, [propA.x]);
 }
 ",
+        // Identify the manual memoization without highlighting the callback body.
+        "
+import {useCallback} from 'react';
+function useFoo(props) {
+  const x = [];
+  useHook();
+  x.push(props);
+  return useCallback(() => {
+    doSomething();
+    doSomethingElse();
+    return [x];
+  }, [x]);
+}
+",
     ];
 
     Tester::new(PreserveManualMemoization::NAME, PreserveManualMemoization::PLUGIN, pass, fail)

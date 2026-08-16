@@ -444,7 +444,6 @@ pub(crate) mod react {
     pub mod button_has_type;
     pub mod capitalized_calls;
     pub mod checked_requires_onchange_or_readonly;
-    pub mod config;
     pub mod display_name;
     pub mod error_boundaries;
     pub mod exhaustive_deps;

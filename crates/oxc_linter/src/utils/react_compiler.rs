@@ -69,9 +69,9 @@ impl ReactCompilerResults {
     }
 }
 
-/// `LintResult::fatal` is deliberately ignored: with the default
-/// `panic_threshold: None` it is only reachable through `Config` diagnostics,
-/// which still flow to the `react/config` rule like any other category.
+/// `LintResult::fatal` is deliberately ignored: Oxlint uses fixed compiler
+/// options, and category routing reports diagnostics independently of transform
+/// fatality.
 pub fn build_react_compiler_results(host: &ContextHost) -> ReactCompilerResults {
     let semantic = host.semantic();
     let program = semantic.nodes().program();

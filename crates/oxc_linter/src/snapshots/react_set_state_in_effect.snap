@@ -13,9 +13,5 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── Avoid calling setState() directly within an effect
  7 │   });
    ╰────
-  help: Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-        * Update external systems with the latest state from React.
-        * Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-        
-        Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended.
+  help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
   note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect
