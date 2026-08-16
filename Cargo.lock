@@ -2002,6 +2002,7 @@ version = "0.144.0"
 dependencies = [
  "bytecount",
  "cow-utils",
+ "itoa",
  "memchr",
  "owo-colors",
  "oxc_span",

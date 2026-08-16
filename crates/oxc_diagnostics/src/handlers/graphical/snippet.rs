@@ -151,7 +151,12 @@ impl GraphicalReportHandler {
             Some(source_name) => {
                 let style = self.theme.styles.link;
                 if style.is_plain() {
-                    writeln!(f, "[{source_name}:{}:{}]", primary_line + 1, primary_column + 1)?;
+                    Self::write_location(
+                        f,
+                        Some(source_name),
+                        primary_line + 1,
+                        primary_column + 1,
+                    )?;
                 } else {
                     let source_name = source_name.style(style);
                     writeln!(f, "[{}:{}:{}]", source_name, primary_line + 1, primary_column + 1)?;
@@ -162,7 +167,7 @@ impl GraphicalReportHandler {
                     write_repeated_char(f, self.theme.characters.hbar, 3)?;
                     f.write_char('\n')?;
                 } else {
-                    writeln!(f, "[{}:{}]", primary_line + 1, primary_column + 1)?;
+                    Self::write_location(f, None, primary_line + 1, primary_column + 1)?;
                 }
             }
         }
@@ -207,6 +212,28 @@ impl GraphicalReportHandler {
         Ok(())
     }
 
+    fn write_location(
+        f: &mut impl fmt::Write,
+        source_name: Option<&str>,
+        line: usize,
+        column: usize,
+    ) -> fmt::Result {
+        let mut line_buffer = itoa::Buffer::new();
+        let mut column_buffer = itoa::Buffer::new();
+        let line = line_buffer.format(line);
+        let column = column_buffer.format(column);
+
+        f.write_char('[')?;
+        if let Some(source_name) = source_name {
+            f.write_str(source_name)?;
+            f.write_char(':')?;
+        }
+        f.write_str(line)?;
+        f.write_char(':')?;
+        f.write_str(column)?;
+        f.write_str("]\n")
+    }
+
     /// Renders a line to the output formatter, replacing tabs with spaces.
     pub(super) fn render_line_text(f: &mut impl fmt::Write, text: &str) -> fmt::Result {
         if !text.contains('\t') {
@@ -225,5 +252,25 @@ impl GraphicalReportHandler {
         }
         f.write_char('\n')?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GraphicalReportHandler;
+
+    #[test]
+    fn direct_locations_match_standard_formatting() {
+        for (source_name, line, column) in
+            [(None, 1, 1), (Some("src/火.ts"), usize::MAX, usize::MAX)]
+        {
+            let expected = source_name.map_or_else(
+                || format!("[{line}:{column}]\n"),
+                |source_name| format!("[{source_name}:{line}:{column}]\n"),
+            );
+            let mut actual = String::new();
+            GraphicalReportHandler::write_location(&mut actual, source_name, line, column).unwrap();
+            assert_eq!(actual, expected);
+        }
     }
 }
