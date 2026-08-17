@@ -1660,7 +1660,26 @@ mod bigint {
         fold_same("({ ...{ m() { return super.x; } } })");
         fold_same("({ __proto__: p2, ...{ __proto__: p1, m() { return super.x; } } })");
 
-        // nested classes/objects with super should still be folded because super is bound to the nested scope
+        // super in nested expressions is still bound to the method being moved
+        fold_same("({ __proto__: p2, ...{ __proto__: p1, m() { return ({ x: super.x }); } } })");
+        fold_same("({ __proto__: p2, ...{ __proto__: p1, m() { return ({ [super.x]: 1 }); } } })");
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return ({ x: () => super.x }); } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return class extends super.x {}; } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return class { [super.x]() {} }; } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return class { [super.x] = 1; }; } } })",
+        );
+        fold_same(
+            "({ __proto__: p2, ...{ __proto__: p1, m() { return ({ [super.x]() { return 1; } }); } } })",
+        );
+
+        // nested classes/objects with their own home object should still be folded
         fold(
             "({ ...{ m() { return class A extends B { constructor() { super(); } }; } } })",
             "({ m() { return class extends B { constructor() { super(); } }; } })",
@@ -1668,6 +1687,18 @@ mod bigint {
         fold(
             "({ ...{ m() { return ({ m() { return super.x; } }); } } })",
             "({ m() { return ({ m() { return super.x; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ get x() { return super.y; } }); } } })",
+            "({ m() { return ({ get x() { return super.y; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { x = super.y; }; } } })",
+            "({ m() { return class extends B { x = super.y; }; } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { static { super.x; } }; } } })",
+            "({ m() { return class extends B { static { super.x; } }; } })",
         );
     }
 }
