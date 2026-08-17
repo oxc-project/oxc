@@ -1700,6 +1700,34 @@ mod bigint {
             "({ ...{ m() { return class extends B { static { super.x; } }; } } })",
             "({ m() { return class extends B { static { super.x; } }; } })",
         );
+        fold(
+            "({ ...{ m() { return ({ set x(v) { super.y = v; } }); } } })",
+            "({ m() { return ({ set x(v) { super.y = v; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ async n() { return super.x; } }); } } })",
+            "({ m() { return ({ async n() { return super.x; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ *n() { return super.x; } }); } } })",
+            "({ m() { return ({ *n() { return super.x; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return ({ n(a = super.x) { return a; } }); } } })",
+            "({ m() { return ({ n(a = super.x) { return a; } }); } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { foo() { return super.x; } }; } } })",
+            "({ m() { return class extends B { foo() { return super.x; } }; } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { static foo() { return super.x; } }; } } })",
+            "({ m() { return class extends B { static foo() { return super.x; } }; } })",
+        );
+        fold(
+            "({ ...{ m() { return class extends B { constructor() { super(); } foo() { return super.x; } }; } } })",
+            "({ m() { return class extends B { constructor() { super(); } foo() { return super.x; } }; } })",
+        );
     }
 }
 
