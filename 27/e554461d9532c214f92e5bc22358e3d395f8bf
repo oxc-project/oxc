@@ -1,0 +1,19 @@
+apps/oxlint/test/fixtures/js_config_config_options_spread_valid/oxlint.config.mts
+  s_d6724e296b1326::t_49e6fb7f74a5fa 1,5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "27e554461d9532c214f92e5bc22358e3d395f8bf",
+  "prompts": {},
+  "sessions": {
+    "s_d6724e296b1326": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-73c2-7e92-94da-e14269edd6e0",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
