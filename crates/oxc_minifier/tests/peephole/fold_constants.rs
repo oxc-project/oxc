@@ -1139,6 +1139,28 @@ fn test_fold_exponential() {
     fold("x = null ** 0", "x = 1");
 }
 
+/// `Number::exponentiate` is not IEEE 754 `pow`. It returns `NaN` whenever the
+/// exponent is `NaN`, and whenever the base has magnitude `1` and the exponent
+/// is infinite — both cases where `pow` is specified to return `1`.
+///
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
+#[test]
+fn test_fold_exponential_disagrees_with_ieee_pow() {
+    fold("x = 1 ** Infinity", "x = NaN");
+    fold("x = 1 ** -Infinity", "x = NaN");
+    fold("x = (-1) ** Infinity", "x = NaN");
+    fold("x = (-1) ** -Infinity", "x = NaN");
+    fold("x = true ** Infinity", "x = NaN");
+    fold("x = 1 ** NaN", "x = NaN");
+    fold("x = (-1) ** NaN", "x = NaN");
+
+    // The cases `pow` and `Number::exponentiate` agree on.
+    fold("x = 2 ** Infinity", "x = Infinity");
+    fold("x = 2 ** NaN", "x = NaN");
+    fold("x = NaN ** 0", "x = 1");
+    fold("x = Infinity ** 0", "x = 1");
+}
+
 #[test]
 fn test_fold_arithmetic_undefined_null_operands() {
     // `undefined` has no literal form (it prints as `void 0`), so it never
