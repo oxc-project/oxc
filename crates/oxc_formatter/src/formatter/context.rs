@@ -5,7 +5,7 @@ use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{external_formatter::ExternalCallbacks, options::JsFormatOptions};
+use crate::options::JsFormatOptions;
 
 use super::Comments;
 
@@ -104,8 +104,6 @@ pub struct JsFormatContext<'ast> {
     /// Stack tracking whether we're inside a Tailwind class context.
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
-
-    external_callbacks: ExternalCallbacks,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -123,7 +121,7 @@ impl std::fmt::Debug for JsFormatContext<'_> {
 }
 
 /// Lets embedded children's classes merge into this context's index space
-/// (`DispatchResult::remap_tailwind_into` at each embed site).
+/// (`DispatchPayload::into_doc` at each embed site).
 impl oxc_formatter_core::TailwindCollector for JsFormatContext<'_> {
     fn add_class(&mut self, class: String) -> usize {
         self.add_tailwind_class(class)
@@ -152,7 +150,6 @@ impl<'ast> JsFormatContext<'ast> {
         source_type: SourceType,
         comments: &'ast [Comment],
         options: JsFormatOptions,
-        external_callbacks: Option<ExternalCallbacks>,
     ) -> Self {
         let source_text = SourceText::new(source_text);
         Self {
@@ -164,7 +161,6 @@ impl<'ast> JsFormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
-            external_callbacks: external_callbacks.unwrap_or_default(),
         }
     }
 
@@ -259,10 +255,5 @@ impl<'ast> JsFormatContext<'ast> {
     /// Get a mutable reference to the current Tailwind context, if any.
     pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
         self.tailwind_context_stack.last_mut()
-    }
-
-    /// Get the external callbacks if set
-    pub fn external_callbacks(&self) -> &ExternalCallbacks {
-        &self.external_callbacks
     }
 }

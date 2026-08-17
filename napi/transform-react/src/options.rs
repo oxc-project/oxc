@@ -84,8 +84,9 @@ pub struct ReactCompilerOptions {
     #[napi(ts_type = "'client' | 'ssr' | 'lint'")]
     pub output_mode: Option<String>,
 
-    /// ESLint rule names whose suppressions opt a function out of compilation when
-    /// hooks usage or exhaustive memoization dependency validation is disabled.
+    /// ESLint rule names whose suppressions opt a function out of compilation.
+    /// Defaults to `react-hooks/exhaustive-deps` and `react-hooks/rules-of-hooks`;
+    /// pass an empty array to disable this behavior.
     pub eslint_suppression_rules: Option<Vec<String>>,
 
     /// Treat Flow suppression comments as opt-outs.
@@ -258,6 +259,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_custom_type_definition_for_reanimated: Option<bool>,
     pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
     pub enable_treat_set_identifiers_as_state_setters: Option<bool>,
+    /// Validate that `useMemo` callbacks return a value.
+    ///
+    /// @default false
     pub validate_no_void_use_memo: Option<bool>,
     pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
     pub enable_verbose_no_set_state_in_effect: Option<bool>,

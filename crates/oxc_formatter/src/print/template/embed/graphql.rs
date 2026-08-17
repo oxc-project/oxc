@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    FormatElement, IndentWidth,
+    FormatElement, IndentWidth, dispatch_fragment_ir,
     format_element::{LineMode, TextWidth},
 };
 
@@ -70,60 +70,27 @@ pub(super) fn format_graphql_doc<'a>(
         infos.push(QuasiInfo { text, comments_only, starts_with_blank_line, ends_with_blank_line });
     }
 
-    // Phase 2: Collect non-skip texts for batch formatting.
-    // Only send texts that actually need formatting to JS.
-    let mut texts_to_format: Vec<&str> = Vec::new();
-    let mut format_index_map: Vec<Option<usize>> = Vec::with_capacity(num_quasis);
-    for info in &infos {
-        if info.comments_only {
-            format_index_map.push(None);
-        } else {
-            format_index_map.push(Some(texts_to_format.len()));
-            texts_to_format.push(info.text);
-        }
-    }
-
-    // PERF: Batch send only non-skip texts, get IRs back.
-    let all_irs = if texts_to_format.is_empty() {
-        vec![]
-    } else {
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Some(Ok(result)) = f.context().external_callbacks().dispatch_embedded(
-            allocator,
-            group_id_builder,
-            "graphql",
-            &texts_to_format,
-        ) else {
-            return false;
-        };
-        // One IR per sent text is the dispatcher contract for GraphQL.
-        if result.docs.len() != texts_to_format.len() {
-            return false;
-        }
-        result.docs
-    };
-
-    // Phase 3: Build `ir_parts` by mapping formatted results back to original indices.
-    // Use `into_iter` to take ownership and avoid cloning.
+    // Phase 2+3: Build `ir_parts`, one dispatch per non-comment quas.
+    // (any failure keeps the whole template verbatim:
+    // the quasis are one interleaved template, so degradation is all-or-nothing.
+    // Discarding docs already consumed via `into_doc` is safe, see its rustdoc)
+    // Comment-only quasis are synthesized locally.
     // The IR is re-inserted into a JS template literal built from `.cooked` values,
     // so template-literal characters (`` ` ``, `${`, `\`) are re-escaped here
     // for both dispatcher returned IRs and manually built comment-only IRs.
     let allocator = f.allocator();
     let indent_width = f.options().indent_width;
-    let mut irs_iter = all_irs.into_iter();
     let mut ir_parts: Vec<Option<ArenaVec<'a, FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
-    for (idx, info) in infos.iter().enumerate() {
-        let mut ir = if format_index_map[idx].is_some() {
-            irs_iter.next()
-        } else if info.comments_only {
+    for info in &infos {
+        let ir = if info.comments_only {
             build_graphql_comment_ir(info.text, allocator, indent_width)
         } else {
-            None
+            let Some(ir) = dispatch_fragment_ir(f, "graphql", info.text, None) else {
+                return false;
+            };
+            Some(ir)
         };
-        if let Some(ir) = ir.as_mut() {
-            super::escape_template_chars_in_ir(ir, allocator, indent_width);
-        }
+        let ir = ir.map(|ir| super::escape_template_chars_in_ir(&ir, f));
         ir_parts.push(ir);
     }
 

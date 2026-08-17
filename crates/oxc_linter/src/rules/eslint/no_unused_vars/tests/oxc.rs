@@ -1089,6 +1089,7 @@ fn test_arguments() {
     let pass = vec![
         ("function foo(a) { return a } foo()", None),
         ("function foo(a, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("function foo(_) {} foo()", Some(json!([{ "argsIgnorePattern": "^_" }]))),
         ("let a; a = function(a = a) {}; a();", None),
         ("let ids = arr.map(el => el.id); f(ids)", None),
         (
@@ -1152,6 +1153,7 @@ fn test_arguments() {
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
+        ("window.addEventListener('logModel', function (_) { doSomething() })", None),
         ("function foo(a: number) {} foo()", None),
         ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
         ("function foo(...args: typeof args) {} foo()", None),

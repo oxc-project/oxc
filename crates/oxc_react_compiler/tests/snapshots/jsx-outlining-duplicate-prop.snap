@@ -39,8 +39,35 @@ function Component(t0) {
 	return t2;
 }
 function _temp(t0) {
-	let { "i": i, "i1": i1, "x": x } = t0;
-	return <Bar x={x}><Baz i={i} /><Foo i={i1} /></Bar>;
+	const $ = _c(8);
+	const { "i": i, "i1": i1, "x": x } = t0;
+	let t1;
+	if ($[0] !== i) {
+		t1 = <Baz i={i} />;
+		$[0] = i;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	let t2;
+	if ($[2] !== i1) {
+		t2 = <Foo i={i1} />;
+		$[2] = i1;
+		$[3] = t2;
+	} else {
+		t2 = $[3];
+	}
+	let t3;
+	if ($[4] !== t1 || $[5] !== t2 || $[6] !== x) {
+		t3 = <Bar x={x}>{t1}{t2}</Bar>;
+		$[4] = t1;
+		$[5] = t2;
+		$[6] = x;
+		$[7] = t3;
+	} else {
+		t3 = $[7];
+	}
+	return t3;
 }
 function Bar(t0) {
 	const $ = _c(3);

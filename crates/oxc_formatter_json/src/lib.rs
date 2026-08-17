@@ -20,7 +20,7 @@ mod separated;
 
 pub use crate::{
     context::JsonFormatContext,
-    format::format,
+    format::{format, format_to_ir},
     options::{
         BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, SingleQuote,
         TrailingCommas,

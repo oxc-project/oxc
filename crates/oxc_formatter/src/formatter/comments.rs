@@ -374,6 +374,15 @@ impl<'a> Comments<'a> {
             .any(|comment| comment.followed_by_newline())
     }
 
+    /// Position-based variant of [`Self::has_comment_in_range`],
+    /// considering ALL comments, including already-printed ones:
+    /// whether the first comment at or after `start` ends within `end`.
+    /// Same discipline as [`Self::has_own_line_comment_in_range`].
+    pub fn has_any_comment_in_range(&self, start: u32, end: u32) -> bool {
+        let first = self.inner.partition_point(|comment| comment.span.start < start);
+        self.inner.get(first).is_some_and(|comment| comment.span.end <= end)
+    }
+
     pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {
         !self.end_of_line_comments_after(pos).is_empty()
     }

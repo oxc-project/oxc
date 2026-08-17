@@ -11,7 +11,7 @@ use oxc_ast::{
         ObjectPropertyKind, ReturnStatement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
@@ -325,7 +325,7 @@ const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
 
 impl Rule for NoMapSpread {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -632,7 +632,7 @@ where
     }
 }
 
-impl<'a, F> Visit<'a> for SpreadInReturnVisitor<'a, '_, F>
+impl<'a, F> VisitJs<'a> for SpreadInReturnVisitor<'a, '_, F>
 where
     F: FnMut(Spread<'a, '_>),
 {
@@ -640,7 +640,7 @@ where
         self.is_in_return = true;
         self.return_span = stmt.argument.as_ref().map(GetSpan::span);
 
-        walk::walk_return_statement(self, stmt);
+        walk_js::walk_return_statement(self, stmt);
 
         self.is_in_return = false;
         // NOTE: do not clear `return_span` here. We want to keep the last

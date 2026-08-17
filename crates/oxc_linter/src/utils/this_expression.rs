@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPattern, Expression, Function, IdentifierReference, PropertyDefinition, StaticBlock,
-        ThisExpression, VariableDeclarationKind,
+        BindingPattern, Expression, Function, FunctionBody, IdentifierReference,
+        PropertyDefinition, StaticBlock, ThisExpression, VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -13,6 +13,14 @@ use crate::{
     ast_util::get_declaration_from_reference_id, ast_util::variable_declaration_kind,
     context::LintContext,
 };
+
+/// Checks whether a function body contains a `this` expression without traversing into nested
+/// functions.
+pub fn function_body_contains_this(body: &FunctionBody) -> bool {
+    let mut finder = ThisExpressionFinder::new();
+    finder.visit_function_body(body);
+    !finder.spans.is_empty()
+}
 
 /// Finds `this` expressions without traversing into nested functions.
 pub struct ThisExpressionFinder {

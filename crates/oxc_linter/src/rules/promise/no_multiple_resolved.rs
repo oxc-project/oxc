@@ -732,7 +732,9 @@ impl<'a> VisitJs<'a> for ResolveFinder<'a> {
         match &call_expr.callee {
             Expression::Identifier(ident) => {
                 let symbol_id = self.scoping.get_reference(ident.reference_id()).symbol_id();
-                if symbol_id == self.resolve_symbol_id || symbol_id == self.reject_symbol_id {
+                if symbol_id.is_some_and(|id| {
+                    Some(id) == self.resolve_symbol_id || Some(id) == self.reject_symbol_id
+                }) {
                     self.resolved.push(self.alloc(call_expr));
                 } else {
                     self.record_throwable_expr_span(call_expr.span);
@@ -914,6 +916,45 @@ fn test() {
     } catch (error) {
         reject(error);
     }
+})",
+        "new Promise(resolve => {
+    let timer;
+    const finish = () => {
+        clearTimeout(timer);
+        resolve();
+    };
+    timer = setTimeout(finish, ms);
+})",
+        "const abortableDelay = (ms, signal) =>
+    new Promise(resolve => {
+        let timer;
+        const finish = () => {
+            clearTimeout(timer);
+            signal?.removeEventListener('abort', finish);
+            resolve();
+        };
+        timer = setTimeout(finish, ms);
+        if (signal?.aborted) {
+            finish();
+            return;
+        }
+        signal?.addEventListener('abort', finish);
+    })",
+        "new Promise(resolve => {
+    let timer;
+    const finish = () => {
+        clearInterval(timer);
+        resolve();
+    };
+    timer = setInterval(finish, ms);
+})",
+        "new Promise(resolve => {
+    let frame;
+    const finish = () => {
+        cancelAnimationFrame(frame);
+        resolve();
+    };
+    frame = requestAnimationFrame(finish);
 })",
     ];
 

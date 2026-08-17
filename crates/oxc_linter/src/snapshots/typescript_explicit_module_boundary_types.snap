@@ -24,9 +24,18 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:1:12]
+   ╭─[explicit_module_boundary_types.tsx:1:25]
  1 │ export var arrowFn = () => 'test';
-   ·            ───────
+   ·                         ──
+   ╰────
+  help: Define an explicit return type for the function.
+
+  ⚠ typescript(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:5:15]
+ 4 │               organization: { id: string }
+ 5 │             ) => {
+   ·               ──
+ 6 │               return { users, organization };
    ╰────
   help: Define an explicit return type for the function.
 
@@ -148,16 +157,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:1:16]
+   ╭─[explicit_module_boundary_types.tsx:1:19]
  1 │ export default () => (true ? () => {} : (): void => {});
-   ·                ──
+   ·                   ──
    ╰────
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:1:12]
+   ╭─[explicit_module_boundary_types.tsx:1:25]
  1 │ export var arrowFn = () => 'test';
-   ·            ───────
+   ·                         ──
    ╰────
   help: Define an explicit return type for the function.
 
@@ -240,37 +249,37 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:26]
+   ╭─[explicit_module_boundary_types.tsx:2:50]
  1 │ 
  2 │             export const func1 = (value: number) => ({ type: 'X', value }) as any;
-   ·                          ─────
+   ·                                                  ──
  3 │             export const func2 = (value: number) => ({ type: 'X', value }) as Action;
    ╰────
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:3:26]
+   ╭─[explicit_module_boundary_types.tsx:3:50]
  2 │             export const func1 = (value: number) => ({ type: 'X', value }) as any;
  3 │             export const func2 = (value: number) => ({ type: 'X', value }) as Action;
-   ·                          ─────
+   ·                                                  ──
  4 │             
    ╰────
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:26]
+   ╭─[explicit_module_boundary_types.tsx:2:49]
  1 │ 
  2 │             export const func = (value: number) => ({ type: 'X', value }) as const;
-   ·                          ────
+   ·                                                 ──
  3 │             
    ╰────
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:7:26]
+   ╭─[explicit_module_boundary_types.tsx:7:49]
  6 │ 
  7 │             export const func = (value: number) =>
-   ·                          ────
+   ·                                                 ──
  8 │               ({ type: 'X', value }) as const satisfies R;
    ╰────
   help: Define an explicit return type for the function.
@@ -302,10 +311,10 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:26]
+   ╭─[explicit_module_boundary_types.tsx:2:50]
  1 │ 
  2 │             export const func1 = (value: number) => value;
-   ·                          ─────
+   ·                                                  ──
  3 │             export const func2 = (value: number) => value;
    ╰────
   help: Define an explicit return type for the function.
@@ -370,10 +379,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit argument type for each argument.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:19]
+   ╭─[explicit_module_boundary_types.tsx:2:29]
  1 │ 
  2 │             const foo = arg => arg;
-   ·                   ───
+   ·                             ──
  3 │             export default foo;
    ╰────
   help: Define an explicit return type for the function.
@@ -388,10 +397,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit argument type for each argument.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:19]
+   ╭─[explicit_module_boundary_types.tsx:2:29]
  1 │ 
  2 │             const foo = arg => arg;
-   ·                   ───
+   ·                             ──
  3 │             export = foo;
    ╰────
   help: Define an explicit return type for the function.
@@ -406,10 +415,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit argument type for each argument.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:19]
+   ╭─[explicit_module_boundary_types.tsx:2:29]
  1 │ 
  2 │             const foo = arg => arg;
-   ·                   ───
+   ·                             ──
  3 │             export default [foo];
    ╰────
   help: Define an explicit return type for the function.
@@ -424,10 +433,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit argument type for each argument.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:19]
+   ╭─[explicit_module_boundary_types.tsx:2:29]
  1 │ 
  2 │             const foo = arg => arg;
-   ·                   ───
+   ·                             ──
  3 │             export default { foo };
    ╰────
   help: Define an explicit return type for the function.
@@ -622,10 +631,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit argument type for each argument.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:17]
+   ╭─[explicit_module_boundary_types.tsx:2:28]
  1 │ 
  2 │             let test = arg => argl;
-   ·                 ────
+   ·                            ──
  3 │             test = (): void => {
    ╰────
   help: Define an explicit return type for the function.
@@ -640,20 +649,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit argument type for each argument.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:17]
+   ╭─[explicit_module_boundary_types.tsx:2:28]
  1 │ 
  2 │             let test = arg => argl;
-   ·                 ────
+   ·                            ──
  3 │             test = (): void => {
    ╰────
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:2:26]
- 1 │ 
+   ╭─[explicit_module_boundary_types.tsx:3:18]
  2 │             export const foo =
-   ·                          ───
  3 │               () =>
+   ·                  ──
+ 4 │               (a: string): ((n: number) => string) => {
    ╰────
   help: Define an explicit return type for the function.
 
@@ -841,18 +850,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Define an explicit return type for the function.
 
   ⚠ typescript(explicit-module-boundary-types): Missing return type on function
-    ╭─[explicit_module_boundary_types.tsx:2:28]
-  1 │     
-  2 │ ╭─▶             export default ({
-  3 │ │                   a,
-  4 │ │                   b,
-  5 │ │                   c,
-  6 │ │               }: {
-  7 │ │                   a: string;
-  8 │ │                   b: string;
-  9 │ │                   c: string;
- 10 │ ╰─▶             }) => {
- 11 │                     return `${a} ${b} ${c}`;
+    ╭─[explicit_module_boundary_types.tsx:10:16]
+  9 │                 c: string;
+ 10 │             }) => {
+    ·                ──
+ 11 │                 return `${a} ${b} ${c}`;
     ╰────
   help: Define an explicit return type for the function.
 

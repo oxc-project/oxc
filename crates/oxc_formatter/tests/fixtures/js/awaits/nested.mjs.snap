@@ -7,6 +7,11 @@ vite = await (
 ).createServer({
   appType
 })
+
+const x = (
+  await mapLimit((await cache.getAllAccounts()).accounts, 10, async (account) => account)
+).flat()
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -17,6 +22,14 @@ vite = await (
   appType,
 });
 
+const x = (
+  await mapLimit(
+    (await cache.getAllAccounts()).accounts,
+    10,
+    async (account) => account,
+  )
+).flat();
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -25,5 +38,9 @@ vite = await (
 ).createServer({
   appType,
 });
+
+const x = (
+  await mapLimit((await cache.getAllAccounts()).accounts, 10, async (account) => account)
+).flat();
 
 ===================== End =====================

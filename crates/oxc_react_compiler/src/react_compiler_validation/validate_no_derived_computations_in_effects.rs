@@ -10,6 +10,7 @@
 //!
 //! Port of ValidateNoDerivedComputationsInEffects_exp.ts.
 
+use crate::diagnostics;
 use crate::react_compiler_utils::{FxIndexSet, IdentIndexMap};
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -17,7 +18,6 @@ use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_index::IndexSlice;
 use oxc_str::{Ident, IdentBuildHasher, IdentHashSet};
 
-use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::BasicBlock;
 use crate::react_compiler_hir::Instruction;
 use crate::react_compiler_hir::Terminal;
@@ -560,7 +560,7 @@ fn record_instruction_derivations<'a>(
                 }
             }
         } else if matches!(operand.effect, Effect::Unknown) {
-            return Err(ErrorCategory::Invariant.diagnostic("Unexpected unknown effect"));
+            return Err(diagnostics::invariant_unexpected_unknown_effect());
         }
         // Freeze | Read => no-op
     }
@@ -951,16 +951,7 @@ fn validate_effect<'a>(
                     trees.join("\n"),
                 );
 
-                errors.push(
-                    ErrorCategory::EffectDerivationsOfState
-                        .diagnostic(
-                            "You might not need an effect. Derive values in render, not effects.",
-                        )
-                        .with_help(description)
-                        .with_labels(derived.callee_span.map(|s| {
-                            s.label("This should be computed during render, not in an effect")
-                        })),
-                );
+                errors.push(diagnostics::derived_state_in_effect(description, derived.callee_span));
             }
         }
     }
@@ -1201,11 +1192,7 @@ fn validate_effect_non_exp(
     set_state_spans
         .into_iter()
         .map(|span| {
-            ErrorCategory::EffectDerivationsOfState
-                .diagnostic(
-                    "Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)",
-                )
-                .with_label(span)
+            diagnostics::effect_derivations_of_state_values_derived_from_props_and_state_should_calculated_during_render_not(span)
         })
         .collect()
 }
