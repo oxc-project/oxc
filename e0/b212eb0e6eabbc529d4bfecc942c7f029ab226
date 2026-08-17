@@ -1,0 +1,31 @@
+packages/codegen/src-js/print/source_map.ts
+  s_6a85dfe90dd69f::t_96444cd601a323 14-15,18-19,22,25,38-40,50-58,65-66,69,76,79-88,96-103,106-122,179-181,190-191,264-273,284-285,298-308,315
+packages/codegen/src-js/print/write.ts
+  s_6a85dfe90dd69f::t_2f8df7d7e87cd7 375-376,379-380,382,408-409,420,424,454-458
+packages/codegen/src-js/state.ts
+  s_6a85dfe90dd69f::t_92fb592836c663 86-89,145,148-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e0b212eb0e6eabbc529d4bfecc942c7f029ab226",
+  "prompts": {},
+  "sessions": {
+    "s_31d85f49abbbeb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-518f-76e0-b05f-d7c0d5ef8546",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
