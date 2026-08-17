@@ -295,6 +295,7 @@ ignored = [
 # Force the registry request to resolve to the workspace copy so there's a single instance.
 [patch.crates-io]
 oxc_allocator = { path = "crates/oxc_allocator" }
+tower-lsp-server = { git = "https://github.com/Boshen/tower-lsp-server.git", rev = "faf808f141d562d9dda7308b9da9c553c95427b3" }
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

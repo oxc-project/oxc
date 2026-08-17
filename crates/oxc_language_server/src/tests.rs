@@ -6,7 +6,7 @@ use std::{
 use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tower_lsp_server::{
-    Client, LspService, Server,
+    Client, Server,
     jsonrpc::{ErrorCode, Id, Request, Response},
     ls_types::*,
 };
@@ -15,6 +15,7 @@ use crate::{
     DiagnosticMode, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
     WorkerManager,
     backend::Backend,
+    build_lsp_service,
     tool::{ClientMessage, DiagnosticResult},
 };
 
@@ -253,7 +254,7 @@ impl TestServer {
         let (req_client, req_server) = tokio::io::duplex(1024);
         let (res_server, res_client) = tokio::io::duplex(1024);
 
-        let (service, socket) = LspService::build(init)
+        let (service, socket) = build_lsp_service(init)
             .custom_method("test/configuration", test_configuration_handler)
             .finish();
 
