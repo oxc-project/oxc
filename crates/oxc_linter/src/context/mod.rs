@@ -8,7 +8,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
-use oxc_semantic::Semantic;
+use oxc_semantic::{IsGlobalReference, Semantic};
 use oxc_span::Span;
 
 #[cfg(debug_assertions)]
@@ -19,6 +19,7 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
+    utils::{ReactCompilerResults, build_react_compiler_results},
 };
 
 mod host;
@@ -86,6 +87,15 @@ impl<'a> LintContext<'a> {
         self.parent.allocator()
     }
 
+    /// Shared per-file result of the React Compiler lint run, for the React
+    /// Compiler family of rules. The compiler runs at most once per file, on
+    /// first access; it never runs when no rule in the family is enabled.
+    pub fn react_compiler_results(&self) -> &ReactCompilerResults {
+        self.parent
+            .react_compiler_results
+            .get_or_init(|| build_react_compiler_results(&self.parent))
+    }
+
     #[inline]
     pub fn module_record(&self) -> &ModuleRecord {
         self.parent.module_record()
@@ -109,31 +119,6 @@ impl<'a> LintContext<'a> {
     /// see [`Span::source_text`].
     pub fn source_range(&self, span: Span) -> &'a str {
         span.source_text(self.parent.semantic().source_text())
-    }
-
-    /// Finds the next occurrence of the given token in the source code,
-    /// starting from the specified position, skipping over comments.
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
-        let source =
-            self.source_range(Span::new(start, self.parent.semantic().source_text().len() as u32));
-
-        source
-            .match_indices(token)
-            .find(|(a, _)| !self.is_inside_comment(start + *a as u32))
-            .map(|(a, _)| a as u32)
-    }
-
-    /// Finds the previous occurrence of the given token in the source code,
-    /// starting from the specified position, skipping over comments.
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn find_prev_token_from(&self, start: u32, token: &str) -> Option<u32> {
-        let source = self.source_range(Span::from(0..start));
-
-        source
-            .rmatch_indices(token)
-            .find(|(a, _)| !self.is_inside_comment(*a as u32))
-            .map(|(a, _)| a as u32)
     }
 
     /// Finds the next occurrence of the given token within a bounded span,
@@ -193,7 +178,7 @@ impl<'a> LintContext<'a> {
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         let name = ident.name.as_str();
-        self.scoping().root_unresolved_references().contains_key(name)
+        ident.is_global_reference(self.scoping())
             && !self.globals().get(name).is_some_and(|value| *value == GlobalValue::Off)
     }
 
@@ -299,7 +284,8 @@ impl<'a> LintContext<'a> {
     /// Report a lint rule violation.
     ///
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
-    #[inline]
+    #[cold]
+    #[inline(never)]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
     }
@@ -565,29 +551,5 @@ impl<'a> LintContext<'a> {
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
-    }
-}
-
-/// Gets the canonical display name for a plugin, given its internal short plugin name.
-///
-/// This is what is shown to users in diagnostic output (e.g. `unicorn(prefer-date-now)`).
-/// Most plugin names are returned unchanged; the exceptions are plugins whose internal
-/// name differs from the canonical name (`jsx_a11y` → `jsx-a11y`, `react_perf` →
-/// `react-perf`, `nextjs` → `next`).
-///
-/// Example:
-///
-/// ```ignore
-/// assert_eq!(plugin_display_name("react"), "react");
-/// assert_eq!(plugin_display_name("jsx_a11y"), "jsx-a11y");
-/// assert_eq!(plugin_display_name("nextjs"), "next");
-/// ```
-#[inline]
-fn plugin_display_name(plugin_name: &'static str) -> &'static str {
-    match plugin_name {
-        "jsx_a11y" => "jsx-a11y",
-        "react_perf" => "react-perf",
-        "nextjs" => "next",
-        _ => plugin_name,
     }
 }

@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
-/// the statement is termitated by return statement in all/some/nome of
+/// the statement is terminated by return statement in all/some/nome of
 /// its exit blocks.
 ///
 /// For example, an "if" statement is terminated by explicit return if and only if either:

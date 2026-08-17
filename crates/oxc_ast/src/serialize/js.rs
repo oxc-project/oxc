@@ -13,6 +13,36 @@ use crate::ast::*;
 
 use super::{EmptyArray, Null};
 
+/// Preserve ESTree's nullable `superClass` field while the Rust AST groups class heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "Expression | null",
+    raw_deser = "DESER[Option<Expression>](POS_OFFSET.heritage)"
+)]
+pub struct ClassSuperClass<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperClass<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_expression().serialize(serializer);
+    }
+}
+
+/// Preserve TS-ESTree's nullable `superTypeArguments` field while the Rust AST groups class
+/// heritage.
+#[ast_meta]
+#[estree(
+    ts_type = "TSTypeParameterInstantiation | null",
+    raw_deser = "THIS.superClass === null ? null : DESER[Option<Box<TSTypeParameterInstantiation>>](POS_OFFSET.heritage + (POS_OFFSET<ClassHeritage>.type_arguments - pos))"
+)]
+#[ts]
+pub struct ClassSuperTypeArguments<'a, 'b>(pub &'b Class<'a>);
+
+impl ESTree for ClassSuperTypeArguments<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        self.0.heritage_type_arguments().serialize(serializer);
+    }
+}
+
 // ----------------------------------------
 // Meta properties
 // ----------------------------------------
@@ -349,6 +379,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             };
             rest.argument = DESER[BindingPattern]( POS_OFFSET<FormalParameterRest>.rest.argument );
             if (IS_TS) {
+                rest.decorators = DESER[Vec<Decorator>](POS_OFFSET<FormalParameterRest>.decorators);
                 rest.typeAnnotation = DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<FormalParameterRest>.type_annotation
                 );
@@ -388,7 +419,7 @@ impl ESTree for FormalParameterRest<'_> {
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("decorators", &rest.decorators);
         state.serialize_field("argument", &rest.rest.argument);
         state.serialize_ts_field("optional", &false);
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);

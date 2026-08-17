@@ -1570,7 +1570,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for VariableDeclarator<'_> {
         VariableDeclarator {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
             id: CloneIn::clone_in_impl(&self.id, with_semantic_ids, allocator),
             type_annotation: CloneIn::clone_in_impl(
                 &self.type_annotation,
@@ -2439,12 +2438,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
                 with_semantic_ids,
                 allocator,
             ),
-            super_class: CloneIn::clone_in_impl(&self.super_class, with_semantic_ids, allocator),
-            super_type_arguments: CloneIn::clone_in_impl(
-                &self.super_type_arguments,
-                with_semantic_ids,
-                allocator,
-            ),
+            heritage: CloneIn::clone_in_impl(&self.heritage, with_semantic_ids, allocator),
             implements: CloneIn::clone_in_impl(&self.implements, with_semantic_ids, allocator),
             body: CloneIn::clone_in_impl(&self.body, with_semantic_ids, allocator),
             r#abstract: CloneIn::clone_in_impl(&self.r#abstract, with_semantic_ids, allocator),
@@ -2452,6 +2446,25 @@ impl<'new_alloc> CloneIn<'new_alloc> for Class<'_> {
             scope_id: oxc_syntax::semantic_id::SemanticId::clone_cell_option_id(
                 &self.scope_id,
                 with_semantic_ids,
+            ),
+        }
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for ClassHeritage<'_> {
+    type Cloned = ClassHeritage<'new_alloc>;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        ClassHeritage {
+            expression: CloneIn::clone_in_impl(&self.expression, with_semantic_ids, allocator),
+            type_arguments: CloneIn::clone_in_impl(
+                &self.type_arguments,
+                with_semantic_ids,
+                allocator,
             ),
         }
     }
@@ -5023,7 +5036,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSInterfaceHeritage<'_> {
         TSInterfaceHeritage {
             node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
-            expression: CloneIn::clone_in_impl(&self.expression, with_semantic_ids, allocator),
+            type_name: CloneIn::clone_in_impl(&self.type_name, with_semantic_ids, allocator),
             type_arguments: CloneIn::clone_in_impl(
                 &self.type_arguments,
                 with_semantic_ids,

@@ -1,12 +1,11 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::test_support::{
-    FixtureFormatter, OptionSet, apply_core_options, build_fixture_snapshot,
-};
-use oxc_formatter_json::{
-    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas, format,
-};
+use oxc_formatter_json::{JsonFormatOptions, format};
+use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+
+mod options;
+use options::apply_json_options;
 
 struct JsonHarness;
 
@@ -15,64 +14,7 @@ impl FixtureFormatter for JsonHarness {
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = JsonFormatOptions::default();
-        apply_core_options(&mut options, json);
-
-        for (key, value) in json {
-            match key.as_str() {
-                "variant" => {
-                    if let Some(s) = value.as_str() {
-                        options.variant = match s {
-                            "json" => JsonVariant::Json,
-                            "jsonc" => JsonVariant::Jsonc,
-                            "json5" => JsonVariant::Json5,
-                            "json-stringify" => JsonVariant::JsonStringify,
-                            _ => options.variant,
-                        };
-                    }
-                }
-                "trailingComma" => {
-                    if let Some(s) = value.as_str() {
-                        // Translate Prettier's vocabulary into JSON's neutral two states here,
-                        // in the harness — the JSON type itself knows no "es5".
-                        options.trailing_commas = match s {
-                            "all" | "es5" => TrailingCommas::Always,
-                            "none" => TrailingCommas::Never,
-                            _ => options.trailing_commas,
-                        };
-                    }
-                }
-                "bracketSpacing" => {
-                    if let Some(b) = value.as_bool() {
-                        options.bracket_spacing = BracketSpacing::from(b);
-                    }
-                }
-                "singleQuote" => {
-                    if let Some(b) = value.as_bool() {
-                        options.single_quote = b.into();
-                    }
-                }
-                "quoteProps" => {
-                    if let Some(s) = value.as_str() {
-                        options.quote_props = match s {
-                            "preserve" => QuoteProps::Preserve,
-                            "consistent" => QuoteProps::Consistent,
-                            _ => QuoteProps::AsNeeded,
-                        };
-                    }
-                }
-                "objectWrap" => {
-                    if let Some(s) = value.as_str() {
-                        options.expand = match s {
-                            "preserve" => Expand::Auto,
-                            "collapse" => Expand::Never,
-                            _ => options.expand,
-                        };
-                    }
-                }
-                _ => {}
-            }
-        }
-
+        apply_json_options(&mut options, json);
         options
     }
 

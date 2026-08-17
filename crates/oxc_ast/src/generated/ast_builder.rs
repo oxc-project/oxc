@@ -538,8 +538,7 @@ impl<'a> Expression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -551,8 +550,7 @@ impl<'a> Expression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -565,8 +563,7 @@ impl<'a> Expression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -585,8 +582,7 @@ impl<'a> Expression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -599,8 +595,7 @@ impl<'a> Expression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -614,8 +609,7 @@ impl<'a> Expression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -2072,8 +2066,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -2085,8 +2078,7 @@ impl<'a> ArrayExpressionElement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -2099,8 +2091,7 @@ impl<'a> ArrayExpressionElement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -2119,8 +2110,7 @@ impl<'a> ArrayExpressionElement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -2133,8 +2123,7 @@ impl<'a> ArrayExpressionElement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -2148,8 +2137,7 @@ impl<'a> ArrayExpressionElement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -3513,8 +3501,7 @@ impl<'a> PropertyKey<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -3526,8 +3513,7 @@ impl<'a> PropertyKey<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -3540,8 +3526,7 @@ impl<'a> PropertyKey<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -3560,8 +3545,7 @@ impl<'a> PropertyKey<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -3574,8 +3558,7 @@ impl<'a> PropertyKey<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -3589,8 +3572,7 @@ impl<'a> PropertyKey<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -5461,8 +5443,7 @@ impl<'a> Argument<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5474,8 +5455,7 @@ impl<'a> Argument<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -5488,8 +5468,7 @@ impl<'a> Argument<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -5508,8 +5487,7 @@ impl<'a> Argument<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -5522,8 +5500,7 @@ impl<'a> Argument<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -5537,8 +5514,7 @@ impl<'a> Argument<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -8611,8 +8587,7 @@ impl<'a> Statement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -8624,8 +8599,7 @@ impl<'a> Statement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -8638,8 +8612,7 @@ impl<'a> Statement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -8658,8 +8631,7 @@ impl<'a> Statement<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -8672,8 +8644,7 @@ impl<'a> Statement<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -8687,8 +8658,7 @@ impl<'a> Statement<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -9506,8 +9476,7 @@ impl<'a> Declaration<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -9519,8 +9488,7 @@ impl<'a> Declaration<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -9533,8 +9501,7 @@ impl<'a> Declaration<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -9553,8 +9520,7 @@ impl<'a> Declaration<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -9567,8 +9533,7 @@ impl<'a> Declaration<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -9582,8 +9547,7 @@ impl<'a> Declaration<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -10008,7 +9972,6 @@ impl<'a> VariableDeclarator<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `kind`
     /// * `id`
     /// * `type_annotation`
     /// * `init`
@@ -10016,7 +9979,6 @@ impl<'a> VariableDeclarator<'a> {
     #[inline]
     pub fn new(
         span: Span,
-        kind: VariableDeclarationKind,
         id: BindingPattern<'a>,
         type_annotation: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
         init: Option<Expression<'a>>,
@@ -10027,7 +9989,6 @@ impl<'a> VariableDeclarator<'a> {
         VariableDeclarator {
             node_id: Cell::new(builder.node_id()),
             span,
-            kind,
             id,
             type_annotation,
             init,
@@ -10818,8 +10779,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -10831,8 +10791,7 @@ impl<'a> ForStatementInit<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -10845,8 +10804,7 @@ impl<'a> ForStatementInit<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -10865,8 +10823,7 @@ impl<'a> ForStatementInit<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -10879,8 +10836,7 @@ impl<'a> ForStatementInit<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -10894,8 +10850,7 @@ impl<'a> ForStatementInit<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -13886,8 +13841,7 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -13899,8 +13853,7 @@ impl<'a> ArrowFunctionBody<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -13913,8 +13866,7 @@ impl<'a> ArrowFunctionBody<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -13933,8 +13885,7 @@ impl<'a> ArrowFunctionBody<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -13947,8 +13898,7 @@ impl<'a> ArrowFunctionBody<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -13962,8 +13912,7 @@ impl<'a> ArrowFunctionBody<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -14873,8 +14822,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -14886,8 +14834,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -14902,8 +14849,7 @@ impl<'a> Class<'a> {
             decorators: decorators.into_in(builder.allocator()),
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements: implements.into_in(builder.allocator()),
             body,
             r#abstract,
@@ -14923,8 +14869,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -14936,8 +14881,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -14952,8 +14896,7 @@ impl<'a> Class<'a> {
                 decorators,
                 id,
                 type_parameters,
-                super_class,
-                super_type_arguments,
+                heritage,
                 implements,
                 body,
                 r#abstract,
@@ -14975,8 +14918,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -14989,8 +14931,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -15006,8 +14947,7 @@ impl<'a> Class<'a> {
             decorators: decorators.into_in(builder.allocator()),
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements: implements.into_in(builder.allocator()),
             body,
             r#abstract,
@@ -15027,8 +14967,7 @@ impl<'a> Class<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -15041,8 +14980,7 @@ impl<'a> Class<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -15058,8 +14996,7 @@ impl<'a> Class<'a> {
                 decorators,
                 id,
                 type_parameters,
-                super_class,
-                super_type_arguments,
+                heritage,
                 implements,
                 body,
                 r#abstract,
@@ -15069,6 +15006,24 @@ impl<'a> Class<'a> {
             ),
             &builder.allocator(),
         )
+    }
+}
+
+impl<'a> ClassHeritage<'a> {
+    /// Build a [`ClassHeritage`].
+    ///
+    /// ## Parameters
+    /// * `expression`: Superclass expression. This will usually be an [`IdentifierReference`].
+    /// * `type_arguments`: Type arguments passed to the superclass.
+    #[expect(unused_variables)]
+    #[inline]
+    pub fn new(
+        expression: Expression<'a>,
+        type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        builder: &impl GetAstBuilder<'a>,
+    ) -> Self {
+        let builder = builder.builder();
+        ClassHeritage { expression, type_arguments }
     }
 }
 
@@ -16768,8 +16723,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -16781,8 +16735,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -16795,8 +16748,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -16815,8 +16767,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -16829,8 +16780,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -16844,8 +16794,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -17361,8 +17310,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -17374,8 +17322,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -17388,8 +17335,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -17408,8 +17354,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -17422,8 +17367,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -17437,8 +17381,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -19558,8 +19501,7 @@ impl<'a> JSXExpression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -19571,8 +19513,7 @@ impl<'a> JSXExpression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -19585,8 +19526,7 @@ impl<'a> JSXExpression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -19605,8 +19545,7 @@ impl<'a> JSXExpression<'a> {
     /// * `decorators`: Decorators applied to the class.
     /// * `id`: Class identifier, AKA the name
     /// * `type_parameters`
-    /// * `super_class`: Super class. When present, this will usually be an [`IdentifierReference`].
-    /// * `super_type_arguments`: Type parameters passed to super class.
+    /// * `heritage`: The class heritage.
     /// * `implements`: Interface implementation clause for TypeScript classes.
     /// * `body`
     /// * `abstract`: Whether the class is abstract
@@ -19619,8 +19558,7 @@ impl<'a> JSXExpression<'a> {
         decorators: impl IntoIn<'a, ArenaVec<'a, Decorator<'a>>>,
         id: Option<BindingIdentifier<'a>>,
         type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
-        super_class: Option<Expression<'a>>,
-        super_type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
+        heritage: Option<ClassHeritage<'a>>,
         implements: impl IntoIn<'a, ArenaVec<'a, TSClassImplements<'a>>>,
         body: ArenaBox<'a, ClassBody<'a>>,
         r#abstract: bool,
@@ -19634,8 +19572,7 @@ impl<'a> JSXExpression<'a> {
             decorators,
             id,
             type_parameters,
-            super_class,
-            super_type_arguments,
+            heritage,
             implements,
             body,
             r#abstract,
@@ -25380,12 +25317,12 @@ impl<'a> TSInterfaceHeritage<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `expression`
+    /// * `type_name`
     /// * `type_arguments`
     #[inline]
     pub fn new(
         span: Span,
-        expression: Expression<'a>,
+        type_name: TSTypeName<'a>,
         type_arguments: Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>>,
         builder: &impl GetAstBuilder<'a>,
     ) -> Self {
@@ -25393,7 +25330,7 @@ impl<'a> TSInterfaceHeritage<'a> {
         TSInterfaceHeritage {
             node_id: Cell::new(builder.node_id()),
             span,
-            expression,
+            type_name,
             type_arguments,
         }
     }

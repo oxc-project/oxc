@@ -122,9 +122,10 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         let assignment_statement = match &mut stmt.left {
             ForStatementLeft::VariableDeclaration(variable) => {
                 // for await (let i of test)
+                let kind = variable.kind;
                 let mut declarator = variable.declarations.pop().unwrap();
                 declarator.init = Some(step_value);
-                Statement::new_variable_declaration(SPAN, declarator.kind, [declarator], false, ctx)
+                Statement::new_variable_declaration(SPAN, kind, [declarator], false, ctx)
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
@@ -228,7 +229,6 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             VariableDeclarationKind::Var,
             [VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 iterator_abrupt_completion.create_binding_pattern(ctx),
                 None,
                 Some(Expression::new_boolean_literal(SPAN, false, ctx)),
@@ -243,7 +243,6 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             VariableDeclarationKind::Var,
             [VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 iterator_had_error_key.create_binding_pattern(ctx),
                 None,
                 Some(Expression::new_boolean_literal(SPAN, false, ctx)),
@@ -258,7 +257,6 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             VariableDeclarationKind::Var,
             [VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 iterator_error_key.create_binding_pattern(ctx),
                 None,
                 None,
@@ -284,7 +282,6 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                     [
                         VariableDeclarator::new(
                             SPAN,
-                            VariableDeclarationKind::Var,
                             iterator_key.create_binding_pattern(ctx),
                             None,
                             Some(iterator),
@@ -293,7 +290,6 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                         ),
                         VariableDeclarator::new(
                             SPAN,
-                            VariableDeclarationKind::Var,
                             step_key.create_binding_pattern(ctx),
                             None,
                             None,

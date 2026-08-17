@@ -69,7 +69,7 @@ pub fn run_on_jest_node<'a, 'c>(
         return;
     };
 
-    let has_not = jest_fn_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+    let has_not = jest_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
 
     if jest_fn_call.args.is_empty()
         && (matcher_name == "toThrow" || matcher_name == "toThrowError")

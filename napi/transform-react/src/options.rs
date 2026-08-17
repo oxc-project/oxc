@@ -11,9 +11,9 @@ use oxc_react_compiler::{
 
 /// Options for compiling a JavaScript or TypeScript React module.
 ///
-/// React Compiler fields mirror `babel-plugin-react-compiler` and
-/// `react-compiler-napi`. `lang`, `sourceType`, and `sourcemap` configure the
-/// surrounding Oxc parse/codegen pipeline.
+/// `lang`, `sourceType`, and `sourcemap` configure the surrounding Oxc
+/// parse/codegen pipeline. React Compiler and JSX transforms are configured
+/// independently.
 #[napi(object)]
 #[derive(Default, Debug)]
 pub struct TransformOptions {
@@ -30,6 +30,25 @@ pub struct TransformOptions {
     /// @default false
     pub sourcemap: Option<bool>,
 
+    /// Configure how TSX and JSX are transformed, or preserve JSX syntax.
+    ///
+    /// @see <https://oxc.rs/docs/guide/usage/transformer/jsx>
+    #[napi(ts_type = "'preserve' | JsxOptions")]
+    pub jsx: Option<Either<String, JsxOptions>>,
+
+    /// Configure React Compiler, or disable it with `false`.
+    ///
+    /// @default true
+    #[napi(ts_type = "boolean | ReactCompilerOptions")]
+    pub react_compiler: Option<Either<bool, ReactCompilerOptions>>,
+}
+
+/// React Compiler options.
+///
+/// Fields mirror `babel-plugin-react-compiler` and `react-compiler-napi`.
+#[napi(object)]
+#[derive(Default, Debug)]
+pub struct ReactCompilerOptions {
     /// Which functions the compiler attempts to compile.
     ///
     /// @default 'infer'
@@ -65,8 +84,9 @@ pub struct TransformOptions {
     #[napi(ts_type = "'client' | 'ssr' | 'lint'")]
     pub output_mode: Option<String>,
 
-    /// ESLint rule names whose suppressions opt a function out of compilation when
-    /// hooks usage or exhaustive memoization dependency validation is disabled.
+    /// ESLint rule names whose suppressions opt a function out of compilation.
+    /// Defaults to `react-hooks/exhaustive-deps` and `react-hooks/rules-of-hooks`;
+    /// pass an empty array to disable this behavior.
     pub eslint_suppression_rules: Option<Vec<String>>,
 
     /// Treat Flow suppression comments as opt-outs.
@@ -90,6 +110,88 @@ pub struct TransformOptions {
 
     /// Feature flags and validation settings for compiler passes.
     pub environment: Option<ReactCompilerEnvironmentOptions>,
+}
+
+/// Configure how TSX and JSX are transformed.
+///
+/// @see <https://oxc.rs/docs/guide/usage/transformer/jsx>
+#[napi(object)]
+#[derive(Debug)]
+pub struct JsxOptions {
+    /// Decides which runtime to use.
+    ///
+    /// - 'automatic' - auto-import the correct JSX factories
+    /// - 'classic' - no auto-import
+    ///
+    /// @default 'automatic'
+    #[napi(ts_type = "'classic' | 'automatic'")]
+    pub runtime: Option<String>,
+
+    /// Emit development-specific information, such as `__source` and `__self`.
+    ///
+    /// @default false
+    pub development: Option<bool>,
+
+    /// Toggles whether or not to throw an error if an XML namespaced tag name
+    /// is used.
+    ///
+    /// Though the JSX spec allows this, it is disabled by default since React's
+    /// JSX does not currently have support for it.
+    ///
+    /// @default true
+    pub throw_if_namespace: Option<bool>,
+
+    /// Mark JSX elements and top-level React method calls as pure for tree shaking.
+    ///
+    /// @default true
+    pub pure: Option<bool>,
+
+    /// Replaces the import source when importing functions.
+    ///
+    /// @default 'react'
+    pub import_source: Option<String>,
+
+    /// Replace the function used when compiling JSX expressions. It should be a
+    /// qualified name (e.g. `React.createElement`) or an identifier (e.g.
+    /// `createElement`).
+    ///
+    /// Only used for `classic` {@link runtime}.
+    ///
+    /// @default 'React.createElement'
+    pub pragma: Option<String>,
+
+    /// Replace the component used when compiling JSX fragments. It should be a
+    /// valid JSX tag name.
+    ///
+    /// Only used for `classic` {@link runtime}.
+    ///
+    /// @default 'React.Fragment'
+    pub pragma_frag: Option<String>,
+
+    /// Enable React Fast Refresh.
+    ///
+    /// @default false
+    pub refresh: Option<Either<bool, ReactRefreshOptions>>,
+}
+
+/// React Fast Refresh options.
+#[napi(object)]
+#[derive(Debug)]
+pub struct ReactRefreshOptions {
+    /// Specify the identifier of the refresh registration variable.
+    ///
+    /// @default `$RefreshReg$`
+    pub refresh_reg: Option<String>,
+
+    /// Specify the identifier of the refresh signature variable.
+    ///
+    /// @default `$RefreshSig$`
+    pub refresh_sig: Option<String>,
+
+    /// Emit full hook signatures instead of compact hashes.
+    ///
+    /// @default false
+    pub emit_full_signatures: Option<bool>,
 }
 
 /// Meta-internal React runtime target.
@@ -127,6 +229,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_reset_cache_on_source_file_changes: Option<bool>,
     pub enable_preserve_existing_memoization_guarantees: Option<bool>,
     pub validate_preserve_existing_memoization_guarantees: Option<bool>,
+    /// Enable exhaustive manual memo dependency validation.
+    ///
+    /// @default false
     pub validate_exhaustive_memoization_dependencies: Option<bool>,
     #[napi(ts_type = "'off' | 'all' | 'missing-only' | 'extra-only'")]
     pub validate_exhaustive_effect_dependencies: Option<String>,
@@ -154,6 +259,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_custom_type_definition_for_reanimated: Option<bool>,
     pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
     pub enable_treat_set_identifiers_as_state_setters: Option<bool>,
+    /// Validate that `useMemo` callbacks return a value.
+    ///
+    /// @default false
     pub validate_no_void_use_memo: Option<bool>,
     pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
     pub enable_verbose_no_set_state_in_effect: Option<bool>,
@@ -165,19 +273,38 @@ impl TransformOptions {
         self,
         filename: &str,
     ) -> Result<(Option<PluginOptions>, oxc::transformer::TransformOptions), OxcDiagnostic> {
-        let enabled = self
-            .sources
-            .as_ref()
-            .is_none_or(|sources| sources.iter().any(|source| filename.contains(source.as_str())));
-        let react_compiler = enabled.then(|| self.into_plugin_options()).transpose()?;
+        let react_compiler = match self.react_compiler {
+            None | Some(Either::A(true)) => Some(PluginOptions::default()),
+            Some(Either::A(false)) => None,
+            Some(Either::B(options)) => options.resolve(filename)?,
+        };
+
+        let jsx = match self.jsx {
+            None => oxc::transformer::JsxOptions::enable(),
+            Some(Either::A(value)) if value == "preserve" => {
+                oxc::transformer::JsxOptions::disable()
+            }
+            Some(Either::A(value)) => return Err(invalid_jsx_option(&value)),
+            Some(Either::B(options)) => oxc::transformer::JsxOptions::from(options),
+        };
 
         Ok((
             react_compiler,
             oxc::transformer::TransformOptions {
-                jsx: oxc::transformer::JsxOptions::enable(),
+                jsx,
                 ..oxc::transformer::TransformOptions::default()
             },
         ))
+    }
+}
+
+impl ReactCompilerOptions {
+    fn resolve(self, filename: &str) -> Result<Option<PluginOptions>, OxcDiagnostic> {
+        let enabled = self
+            .sources
+            .as_ref()
+            .is_none_or(|sources| sources.iter().any(|source| filename.contains(source.as_str())));
+        enabled.then(|| self.into_plugin_options()).transpose()
     }
 
     fn into_plugin_options(self) -> Result<PluginOptions, OxcDiagnostic> {
@@ -242,6 +369,44 @@ impl TransformOptions {
         }
 
         Ok(options)
+    }
+}
+
+impl From<JsxOptions> for oxc::transformer::JsxOptions {
+    fn from(options: JsxOptions) -> Self {
+        let defaults = Self::default();
+        Self {
+            runtime: match options.runtime.as_deref() {
+                Some("classic") => oxc::transformer::JsxRuntime::Classic,
+                /* "automatic" */ _ => oxc::transformer::JsxRuntime::Automatic,
+            },
+            development: options.development.unwrap_or(defaults.development),
+            throw_if_namespace: options.throw_if_namespace.unwrap_or(defaults.throw_if_namespace),
+            pure: options.pure.unwrap_or(defaults.pure),
+            import_source: options.import_source,
+            pragma: options.pragma,
+            pragma_frag: options.pragma_frag,
+            use_built_ins: None,
+            use_spread: None,
+            refresh: options.refresh.and_then(|value| match value {
+                Either::A(enabled) => enabled.then(oxc::transformer::ReactRefreshOptions::default),
+                Either::B(options) => Some(oxc::transformer::ReactRefreshOptions::from(options)),
+            }),
+            ..Self::default()
+        }
+    }
+}
+
+impl From<ReactRefreshOptions> for oxc::transformer::ReactRefreshOptions {
+    fn from(options: ReactRefreshOptions) -> Self {
+        let defaults = Self::default();
+        Self {
+            refresh_reg: options.refresh_reg.unwrap_or(defaults.refresh_reg),
+            refresh_sig: options.refresh_sig.unwrap_or(defaults.refresh_sig),
+            emit_full_signatures: options
+                .emit_full_signatures
+                .unwrap_or(defaults.emit_full_signatures),
+        }
     }
 }
 
@@ -327,4 +492,8 @@ fn parse<T: FromStr>(value: &str, option: &str) -> Result<T, OxcDiagnostic> {
 
 fn invalid_option(option: &str, value: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Invalid React Compiler `{option}` option: `{value}`."))
+}
+
+fn invalid_jsx_option(value: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Invalid `jsx` option: `{value}`."))
 }

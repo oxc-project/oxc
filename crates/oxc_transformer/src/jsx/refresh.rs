@@ -177,7 +177,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
         let calls = self.registrations.iter().map(|(binding, persistent_id)| {
             variable_declarator_items.push(VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 binding.create_binding_pattern(ctx),
                 None,
                 None,

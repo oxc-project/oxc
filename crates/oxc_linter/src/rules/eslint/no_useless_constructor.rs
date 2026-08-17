@@ -128,7 +128,7 @@ impl Rule for NoUselessConstructor {
             Some(TSAccessibility::Private | TSAccessibility::Protected) => {
                 return;
             }
-            Some(TSAccessibility::Public) if class.super_class.is_some() => {
+            Some(TSAccessibility::Public) if class.heritage.is_some() => {
                 return;
             }
             _ => {}
@@ -138,7 +138,7 @@ impl Rule for NoUselessConstructor {
             return;
         }
 
-        if class.super_class.is_none() {
+        if class.heritage.is_none() {
             lint_empty_constructor(ctx, constructor, body);
         } else {
             lint_redundant_super_call(ctx, constructor, body);

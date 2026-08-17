@@ -953,6 +953,25 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Split variable declarations
 
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:23]
+ 1 │ const foo = 1; export const bar = 2;
+   ·                       ──────────────
+   ╰────
+
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:53]
+ 1 │ function foo() { const a = () => { return false; }; const b = 1; }
+   ·                                                     ────────────
+   ╰────
+  help: Combine variable declarations
+
+  ⚠ eslint(one-var): Combine this with the previous 'const' statement.
+   ╭─[one_var.tsx:1:28]
+ 1 │ declare const foo: number; const bar = 2;
+   ·                            ──────────────
+   ╰────
+
   ⚠ eslint(one-var): Split 'var' declarations into multiple statements.
    ╭─[one_var.tsx:1:10]
  1 │ if (foo) var x, y;

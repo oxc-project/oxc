@@ -2049,6 +2049,15 @@
       },
       "additionalProperties": false
     },
+    "DescriptionFormatConfig": {
+      "type": "object",
+      "properties": {
+        "descriptionFormat": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
     "Destructure": {
       "oneOf": [
         {
@@ -2106,13 +2115,7 @@
           "$ref": "#/definitions/RequireDescription"
         },
         {
-          "type": "object",
-          "properties": {
-            "descriptionFormat": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
+          "$ref": "#/definitions/DescriptionFormatConfig"
         }
       ]
     },
@@ -2560,15 +2563,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "type": "string"
                 }
               ],
               "additionalItems": {
                 "type": "string"
               },
-              "minItems": 2,
+              "minItems": 1,
               "uniqueItems": true
             }
           ]
@@ -3577,6 +3577,26 @@
         },
         "jsdoc/implements-on-classes": {
           "$ref": "#/definitions/RuleNoConfig"
+        },
+        "jsdoc/no-blank-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoBlankBlocks"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "jsdoc/no-defaults": {
           "anyOf": [
@@ -5195,15 +5215,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/NoRestrictedGlobalsConfigEnum"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -5216,15 +5233,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/NoRestrictedImportsConfigEnum"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -5237,15 +5251,12 @@
               "items": [
                 {
                   "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/PropertyDetails"
                 }
               ],
               "additionalItems": {
                 "$ref": "#/definitions/PropertyDetails"
               },
-              "minItems": 2
+              "minItems": 1
             }
           ]
         },
@@ -6539,6 +6550,9 @@
             }
           ]
         },
+        "react/capitalized-calls": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/checked-requires-onchange-or-readonly": {
           "anyOf": [
             {
@@ -6579,6 +6593,9 @@
             }
           ]
         },
+        "react/error-boundaries": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/exhaustive-deps": {
           "anyOf": [
             {
@@ -6598,6 +6615,9 @@
               "minItems": 2
             }
           ]
+        },
+        "react/exhaustive-effect-dependencies": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/forbid-component-props": {
           "anyOf": [
@@ -6682,6 +6702,12 @@
             }
           ]
         },
+        "react/gating": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/globals": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/hook-use-state": {
           "anyOf": [
             {
@@ -6702,7 +6728,19 @@
             }
           ]
         },
+        "react/hooks": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/iframe-missing-sandbox": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/immutability": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/incompatible-library": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/invariant": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/jsx-boolean-value": {
@@ -7006,6 +7044,9 @@
             }
           ]
         },
+        "react/memo-dependencies": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/no-array-index-key": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -7019,6 +7060,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-danger-with-children": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/no-deriving-state-in-effects": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/no-did-mount-set-state": {
@@ -7274,30 +7318,22 @@
             }
           ]
         },
-        "react/react-compiler": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/RuleNoConfig"
-            },
-            {
-              "type": "array",
-              "items": [
-                {
-                  "$ref": "#/definitions/AllowWarnDeny"
-                },
-                {
-                  "$ref": "#/definitions/ReactCompilerConfig"
-                }
-              ],
-              "maxItems": 2,
-              "minItems": 2
-            }
-          ]
+        "react/preserve-manual-memoization": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/purity": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/react-in-jsx-scope": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "react/refs": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/require-render-return": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/rule-suppression": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "react/rules-of-hooks": {
@@ -7323,6 +7359,12 @@
             }
           ]
         },
+        "react/set-state-in-effect": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/set-state-in-render": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/state-in-constructor": {
           "anyOf": [
             {
@@ -7342,6 +7384,9 @@
               "minItems": 2
             }
           ]
+        },
+        "react/static-components": {
+          "$ref": "#/definitions/RuleNoConfig"
         },
         "react/style-prop-object": {
           "anyOf": [
@@ -7363,7 +7408,22 @@
             }
           ]
         },
+        "react/syntax": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/todo": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/unsupported-syntax": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/use-memo": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "react/void-dom-elements-no-children": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "react/void-use-memo": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "require-await": {
@@ -13767,6 +13827,18 @@
       },
       "additionalProperties": false
     },
+    "NoBlankBlocks": {
+      "type": "object",
+      "properties": {
+        "enableFixer": {
+          "description": "Whether to automatically remove blank JSDoc blocks.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to automatically remove blank JSDoc blocks."
+        }
+      },
+      "additionalProperties": false
+    },
     "NoCallbackInPromiseConfig": {
       "type": "object",
       "properties": {
@@ -14182,7 +14254,7 @@
       "properties": {
         "allowIndirect": {
           "description": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "This `allowIndirect` option allows indirect `eval()` calls.\n\nIndirect calls to `eval`(e.g., `window['eval']`) are less dangerous\nthan direct calls because they cannot dynamically change the scope.\nIndirect `eval()` calls also typically have less impact on performance\ncompared to direct calls, as they do not invoke JavaScript's scope chain."
         }
@@ -14613,7 +14685,7 @@
       "properties": {
         "skipComments": {
           "description": "Whether to skip irregular whitespace in comments.",
-          "default": true,
+          "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to skip irregular whitespace in comments."
         },
@@ -14666,7 +14738,7 @@
       "type": "object",
       "properties": {
         "allowedSnapshots": {
-          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions.",
+          "description": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead.",
           "default": {},
           "type": "object",
           "additionalProperties": {
@@ -14675,11 +14747,11 @@
               "type": "string"
             }
           },
-          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nSnapshot names can be specified as regular expressions."
+          "markdownDescription": "A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.\nEach snapshot name is interpreted as a Rust regular expression. If it is not a valid regular\nexpression, it is matched as an exact literal string instead."
         },
         "inlineMaxSize": {
           "description": "Maximum number of lines allowed for inline snapshots.",
-          "default": 50,
+          "default": null,
           "type": "integer",
           "format": "uint32",
           "minimum": 0.0,
@@ -16093,13 +16165,13 @@
           "markdownDescription": "Controls how unused arguments are checked."
         },
         "argsIgnorePattern": {
-          "description": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```",
+          "description": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, names starting with `_` are ignored, except for the bare `_`\nparameter. If options are configured with an object, this will default\nto [`None`]. Note that this behavior deviates from both ESLint and\nTypeScript-ESLint, which never provide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```",
           "allOf": [
             {
               "$ref": "#/definitions/IgnorePattern_for_String"
             }
           ],
-          "markdownDescription": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, this pattern is `^_` unless options are configured with an\nobject. In this case it will default to [`None`]. Note that this\nbehavior deviates from both ESLint and TypeScript-ESLint, which never\nprovide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```"
+          "markdownDescription": "Specifies exceptions to this rule for unused arguments. Arguments whose\nnames match this pattern will be ignored.\n\nBy default, names starting with `_` are ignored, except for the bare `_`\nparameter. If options are configured with an object, this will default\nto [`None`]. Note that this behavior deviates from both ESLint and\nTypeScript-ESLint, which never provide a default pattern.\n\n#### Example\n\nExamples of **correct** code for this option when the pattern is `^_`:\n\n```javascript\nfunction foo(_a, b) {\nconsole.log(b);\n}\nfoo(1, 2);\n```"
         },
         "caughtErrors": {
           "description": "Used for `catch` block validation.",
@@ -18188,18 +18260,6 @@
           "markdownDescription": "Only require the radix parameter when necessary."
         }
       ]
-    },
-    "ReactCompilerConfig": {
-      "type": "object",
-      "properties": {
-        "reportAllBailouts": {
-          "description": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize.",
-          "default": false,
-          "type": "boolean",
-          "markdownDescription": "Also report compiler bail-outs — places where React Compiler skipped a\ncomponent or hook (for example because of unsupported syntax) without\nfinding a rule violation. These do not indicate incorrect code, only\ncode that the compiler declined to optimize."
-        }
-      },
-      "additionalProperties": false
     },
     "ReactPerfConfig": {
       "type": "object",

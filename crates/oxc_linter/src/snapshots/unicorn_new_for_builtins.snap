@@ -186,6 +186,12 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────
    ╰────
 
+  ⚠ unicorn(new-for-builtins): Use `new Float16Array()` instead of `Float16Array()`
+   ╭─[new_for_builtins.tsx:1:13]
+ 1 │ const foo = Float16Array()
+   ·             ──────────────
+   ╰────
+
   ⚠ unicorn(new-for-builtins): Use `new Float32Array()` instead of `Float32Array()`
    ╭─[new_for_builtins.tsx:1:13]
  1 │ const foo = Float32Array()

@@ -74,8 +74,7 @@ fn main() -> std::io::Result<()> {
 /// Print diagnostic errors with source context
 fn print_errors(source_text: &str, errors: Vec<OxcDiagnostic>) {
     for error in errors {
-        let error = error.with_source_code(source_text.to_string());
-        println!("{error:?}");
+        println!("{}", error.render_with_source_code(source_text.to_string()));
     }
 }
 

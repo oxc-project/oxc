@@ -36,6 +36,76 @@ export interface SourceMap {
   version: number
   x_google_ignoreList?: Array<number>
 }
+/**
+ * Configure how TSX and JSX are transformed.
+ *
+ * @see <https://oxc.rs/docs/guide/usage/transformer/jsx>
+ */
+export interface JsxOptions {
+  /**
+   * Decides which runtime to use.
+   *
+   * - 'automatic' - auto-import the correct JSX factories
+   * - 'classic' - no auto-import
+   *
+   * @default 'automatic'
+   */
+  runtime?: 'classic' | 'automatic'
+  /**
+   * Emit development-specific information, such as `__source` and `__self`.
+   *
+   * @default false
+   */
+  development?: boolean
+  /**
+   * Toggles whether or not to throw an error if an XML namespaced tag name
+   * is used.
+   *
+   * Though the JSX spec allows this, it is disabled by default since React's
+   * JSX does not currently have support for it.
+   *
+   * @default true
+   */
+  throwIfNamespace?: boolean
+  /**
+   * Mark JSX elements and top-level React method calls as pure for tree shaking.
+   *
+   * @default true
+   */
+  pure?: boolean
+  /**
+   * Replaces the import source when importing functions.
+   *
+   * @default 'react'
+   */
+  importSource?: string
+  /**
+   * Replace the function used when compiling JSX expressions. It should be a
+   * qualified name (e.g. `React.createElement`) or an identifier (e.g.
+   * `createElement`).
+   *
+   * Only used for `classic` {@link runtime}.
+   *
+   * @default 'React.createElement'
+   */
+  pragma?: string
+  /**
+   * Replace the component used when compiling JSX fragments. It should be a
+   * valid JSX tag name.
+   *
+   * Only used for `classic` {@link runtime}.
+   *
+   * @default 'React.Fragment'
+   */
+  pragmaFrag?: string
+  /**
+   * Enable React Fast Refresh.
+   *
+   * @default false
+   */
+  refresh?: boolean | ReactRefreshOptions
+}
+
 /** Dynamic feature-gating import. */
 export interface ReactCompilerDynamicGating {
   source: string
@@ -52,6 +122,11 @@ export interface ReactCompilerEnvironmentOptions {
   enableResetCacheOnSourceFileChanges?: boolean
   enablePreserveExistingMemoizationGuarantees?: boolean
   validatePreserveExistingMemoizationGuarantees?: boolean
+  /**
+   * Enable exhaustive manual memo dependency validation.
+   *
+   * @default false
+   */
   validateExhaustiveMemoizationDependencies?: boolean
   validateExhaustiveEffectDependencies?: 'off' | 'all' | 'missing-only' | 'extra-only'
   enableOptionalDependencies?: boolean
@@ -78,6 +153,11 @@ export interface ReactCompilerEnvironmentOptions {
   enableCustomTypeDefinitionForReanimated?: boolean
   enableTreatRefLikeIdentifiersAsRefs?: boolean
   enableTreatSetIdentifiersAsStateSetters?: boolean
+  /**
+   * Validate that `useMemo` callbacks return a value.
+   *
+   * @default false
+   */
   validateNoVoidUseMemo?: boolean
   enableAllowSetStateFromRefsInEffects?: boolean
   enableVerboseNoSetStateInEffect?: boolean
@@ -97,31 +177,11 @@ export interface ReactCompilerMetaTarget {
 }
 
 /**
- * Compile a JavaScript or TypeScript React module asynchronously.
+ * React Compiler options.
  *
- * This uses a worker-pool thread and can be slower than `transformSync` for a
- * single small module.
+ * Fields mirror `babel-plugin-react-compiler` and `react-compiler-napi`.
  */
-export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResult>
-
-/**
- * Options for compiling a JavaScript or TypeScript React module.
- *
- * React Compiler fields mirror `babel-plugin-react-compiler` and
- * `react-compiler-napi`. `lang`, `sourceType`, and `sourcemap` configure the
- * surrounding Oxc parse/codegen pipeline.
- */
-export interface TransformOptions {
-  /** Treat the source as `js`, `jsx`, `ts`, `tsx`, or `dts`. */
-  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
-  /** Treat the source as script, module, CommonJS, or infer it from syntax. */
-  sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous'
-  /**
-   * Generate a source map.
-   *
-   * @default false
-   */
-  sourcemap?: boolean
+export interface ReactCompilerOptions {
   /**
    * Which functions the compiler attempts to compile.
    *
@@ -155,8 +215,9 @@ export interface TransformOptions {
   /** Select client, SSR, or lint output. */
   outputMode?: 'client' | 'ssr' | 'lint'
   /**
-   * ESLint rule names whose suppressions opt a function out of compilation when
-   * hooks usage or exhaustive memoization dependency validation is disabled.
+   * ESLint rule names whose suppressions opt a function out of compilation.
+   * Defaults to `react-hooks/exhaustive-deps` and `react-hooks/rules-of-hooks`;
+   * pass an empty array to disable this behavior.
    */
   eslintSuppressionRules?: Array<string>
   /**
@@ -184,6 +245,68 @@ export interface TransformOptions {
   environment?: ReactCompilerEnvironmentOptions
 }
 
+/** React Fast Refresh options. */
+export interface ReactRefreshOptions {
+  /**
+   * Specify the identifier of the refresh registration variable.
+   *
+   * @default `$RefreshReg$`
+   */
+  refreshReg?: string
+  /**
+   * Specify the identifier of the refresh signature variable.
+   *
+   * @default `$RefreshSig$`
+   */
+  refreshSig?: string
+  /**
+   * Emit full hook signatures instead of compact hashes.
+   *
+   * @default false
+   */
+  emitFullSignatures?: boolean
+}
+
+/**
+ * Compile a JavaScript or TypeScript React module asynchronously.
+ *
+ * This uses a worker-pool thread and can be slower than `transformSync` for a
+ * single small module.
+ */
+export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResult>
+
+/**
+ * Options for compiling a JavaScript or TypeScript React module.
+ *
+ * `lang`, `sourceType`, and `sourcemap` configure the surrounding Oxc
+ * parse/codegen pipeline. React Compiler and JSX transforms are configured
+ * independently.
+ */
+export interface TransformOptions {
+  /** Treat the source as `js`, `jsx`, `ts`, `tsx`, or `dts`. */
+  lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
+  /** Treat the source as script, module, CommonJS, or infer it from syntax. */
+  sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous'
+  /**
+   * Generate a source map.
+   *
+   * @default false
+   */
+  sourcemap?: boolean
+  /**
+   * Configure how TSX and JSX are transformed, or preserve JSX syntax.
+   *
+   * @see <https://oxc.rs/docs/guide/usage/transformer/jsx>
+   */
+  jsx?: 'preserve' | JsxOptions
+  /**
+   * Configure React Compiler, or disable it with `false`.
+   *
+   * @default true
+   */
+  reactCompiler?: boolean | ReactCompilerOptions
+}
+
 /** Result returned by the React Compiler transform. */
 export interface TransformResult {
   /** Whether the transform was aborted without emitting code. */
@@ -204,7 +327,7 @@ export interface TransformResult {
 /**
  * Compile a JavaScript or TypeScript React module synchronously.
  *
- * The React Compiler runs first on the pristine AST. TypeScript and JSX are
- * lowered afterwards, matching the transform pipeline used by `oxc-transform`.
+ * The React Compiler runs first on the pristine AST. TypeScript syntax is
+ * removed and configured JSX transforms run afterwards.
  */
 export declare function transformSync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult

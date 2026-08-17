@@ -116,16 +116,14 @@ fn only_constructor_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic 
 
 impl Rule for NoExtraneousClass {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::Class(class) = node.kind() else {
             return;
         };
-        if class.super_class.is_some()
-            || (self.allow_with_decorator && !class.decorators.is_empty())
-        {
+        if class.heritage.is_some() || (self.allow_with_decorator && !class.decorators.is_empty()) {
             return;
         }
         let span = class.id.as_ref().map_or(class.span, |id| id.span);

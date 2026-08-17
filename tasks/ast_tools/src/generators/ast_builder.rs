@@ -253,11 +253,14 @@ fn generate_builder_methods_for_struct_impl(
     }
 
     let params_docs = generate_doc_comment_for_params(params);
+    let unused_builder_attr =
+        (!fields.to_string().contains("builder")).then(|| quote!(#[expect(unused_variables)]));
 
     let new_method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
+        #unused_builder_attr
         #[inline]
         pub fn #new_fn_name #lifetime_param (#fn_params, builder: &impl GetAstBuilder<'a>) -> Self {
             let builder = builder.builder();

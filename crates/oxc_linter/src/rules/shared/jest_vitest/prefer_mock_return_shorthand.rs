@@ -5,7 +5,7 @@ use oxc_ast::{
         Statement, TaggedTemplateExpression, VariableDeclarationKind,
     },
 };
-use oxc_ast_visit::{Visit, VisitJs};
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -257,7 +257,7 @@ impl IdentifierCollectorVisitor {
     }
 }
 
-impl<'a> Visit<'a> for IdentifierCollectorVisitor {
+impl<'a> VisitJs<'a> for IdentifierCollectorVisitor {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         self.references.insert(ident.reference_id());
     }

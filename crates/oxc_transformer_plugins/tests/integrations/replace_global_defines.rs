@@ -200,6 +200,13 @@ fn invalid_typeof_define_key() {
 }
 
 #[test]
+fn invalid_define_value() {
+    for value in ["console.log foo", "1 2", "foo;"] {
+        assert!(ReplaceGlobalDefinesConfig::new(&[("foo", value)]).is_err(), "{value}");
+    }
+}
+
+#[test]
 fn dot() {
     let config = config(&[("process.env.NODE_ENV", "production")]);
     test("foo(process.env.NODE_ENV)", "foo(production)", &config);

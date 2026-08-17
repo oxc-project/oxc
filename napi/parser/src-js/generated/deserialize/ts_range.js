@@ -1493,7 +1493,7 @@ function deserializeVariableDeclarator(pos) {
       type: "VariableDeclarator",
       id: null,
       init: null,
-      definite: deserializeBool(pos + 13),
+      definite: deserializeBool(pos + 12),
       start: (start = deserializeI32(pos)),
       end: (end = deserializeI32(pos + 4)),
       range: [start, end],
@@ -2124,6 +2124,7 @@ function deserializeFormalParameters(pos) {
         range: [start, end],
       };
     rest.argument = deserializeBindingPattern(pos + 56);
+    rest.decorators = deserializeVecDecorator(pos + 16);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
     if (rest.typeAnnotation !== null) {
       end = rest.typeAnnotation.end;
@@ -2415,12 +2416,16 @@ function deserializeClass(pos) {
       start: (start = deserializeI32(pos)),
       end: (end = deserializeI32(pos + 4)),
       range: [start, end],
-    };
+    },
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 72);
-  node.superClass = deserializeOptionExpression(pos + 80);
-  node.superTypeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 96);
+  node.superClass = superClass;
+  node.superTypeArguments =
+    superClass === null
+      ? null
+      : deserializeOptionBoxTSTypeParameterInstantiation(pos + 80 + (pos + 16 - pos));
   node.implements = deserializeVecTSClassImplements(pos + 104);
   node.body = deserializeBoxClassBody(pos + 128);
   return node;
@@ -4554,8 +4559,39 @@ function deserializeTSInterfaceHeritage(pos) {
       start: (start = deserializeI32(pos)),
       end: (end = deserializeI32(pos + 4)),
       range: [start, end],
-    };
-  node.expression = deserializeExpression(pos + 16);
+    },
+    expression = deserializeTSTypeName(pos + 16);
+  if (expression.type === "TSQualifiedName") {
+    let object = expression.left,
+      { right } = expression,
+      start,
+      end,
+      previous = (expression = {
+        type: "MemberExpression",
+        object,
+        property: right,
+        optional: false,
+        computed: false,
+        start: (start = expression.start),
+        end: (end = expression.end),
+        range: [start, end],
+      });
+    for (; object.type === "TSQualifiedName";) {
+      let { left, right } = object;
+      previous = previous.object = {
+        type: "MemberExpression",
+        object: left,
+        property: right,
+        optional: false,
+        computed: false,
+        start: (start = object.start),
+        end: (end = object.end),
+        range: [start, end],
+      };
+      object = left;
+    }
+  }
+  node.expression = expression;
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   return node;
 }

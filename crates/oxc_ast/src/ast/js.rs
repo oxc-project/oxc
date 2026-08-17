@@ -1216,8 +1216,6 @@ pub enum VariableDeclarationKind {
 pub struct VariableDeclarator<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
-    #[estree(skip)]
-    pub kind: VariableDeclarationKind,
     #[estree(via = VariableDeclaratorId)]
     pub id: BindingPattern<'a>,
     #[ts]
@@ -1871,7 +1869,7 @@ pub enum FunctionType {
         interface FormalParameterRest extends Span {
             type: 'RestElement';
             argument: BindingPattern;
-            decorators?: [],
+            decorators?: Array<Decorator>;
             optional?: boolean;
             typeAnnotation?: TSTypeAnnotation | null;
             value?: null;
@@ -2059,6 +2057,22 @@ pub struct YieldExpression<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn)]
 #[generate_derive(ContentEq, ESTree, GetSpan, GetSpanMut, UnstableAddress)]
+#[estree(
+    add_fields(superClass = ClassSuperClass, superTypeArguments = ClassSuperTypeArguments),
+    field_order(
+        r#type,
+        decorators,
+        id,
+        type_parameters,
+        superClass,
+        superTypeArguments,
+        implements,
+        body,
+        r#abstract,
+        declare,
+        span,
+    ),
+)]
 pub struct Class<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
@@ -2079,23 +2093,15 @@ pub struct Class<'a> {
     #[scope(enter_before)]
     #[ts]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    /// Super class. When present, this will usually be an [`IdentifierReference`].
-    ///
-    /// ## Example
-    /// ```ts
-    /// class Foo extends Bar {}
-    /// //                ^^^
-    /// ```
-    pub super_class: Option<Expression<'a>>,
-    /// Type parameters passed to super class.
+    /// The class heritage.
     ///
     /// ## Example
     /// ```ts
     /// class Foo<T> extends Bar<T> {}
-    /// //                       ^
+    /// //           ^^^^^^^^^^^^^^
     /// ```
-    #[ts]
-    pub super_type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    #[estree(skip)]
+    pub heritage: Option<ClassHeritage<'a>>,
     /// Interface implementation clause for TypeScript classes.
     ///
     /// ## Example
@@ -2127,6 +2133,27 @@ pub struct Class<'a> {
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
     pub scope_id: Cell<Option<ScopeId>>,
+}
+
+/// The expression and optional type arguments in a class heritage clause.
+///
+/// ```ts
+/// class Foo extends Bar<Baz> {}
+/// //                ^^^ ^^^^^
+/// //                |   |
+/// //                |   +-- type_arguments
+/// //                +------ expression
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, ReplaceWith, TakeIn, ContentEq, ESTree)]
+#[estree(skip, no_type, no_ts_def)]
+pub struct ClassHeritage<'a> {
+    /// Superclass expression. This will usually be an [`IdentifierReference`].
+    pub expression: Expression<'a>,
+    /// Type arguments passed to the superclass.
+    #[ts]
+    pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 #[ast]

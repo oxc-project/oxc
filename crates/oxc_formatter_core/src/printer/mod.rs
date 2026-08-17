@@ -1,13 +1,14 @@
 mod call_stack;
+pub mod error;
 mod line_suffixes;
-mod printer_options;
+mod options;
 mod queue;
 mod stack;
 
 use std::num::NonZeroU8;
 
+pub use options::*;
 use oxc_data_structures::code_buffer::{self, CodeBuffer};
-pub use printer_options::*;
 use unicode_width::UnicodeWidthChar;
 
 use crate::{
@@ -34,11 +35,6 @@ pub struct Printed {
 impl Printed {
     pub fn new(code: String) -> Self {
         Self { code }
-    }
-
-    /// Construct an empty formatter result
-    pub fn new_empty() -> Self {
-        Self { code: String::new() }
     }
 
     /// Access the resulting code, borrowing the result
@@ -366,13 +362,12 @@ impl<'a> Printer<'a> {
             }
             FormatElement::TailwindClass(index) => {
                 let text = self.state.sorted_tailwind_classes.get(*index);
-                // A dangling index silently DELETES the class list from the
-                // output, so fail loudly in debug builds instead.
+                // A dangling index silently DELETES the class list from the output,
+                // so fail loudly in debug builds instead.
                 debug_assert!(
                     text.is_some(),
-                    "TailwindClass index {index} out of bounds ({} classes) — \
-                     was the embedded IR remapped into the parent's class space \
-                     (`DispatchResult::remap_tailwind_into`)?",
+                    "TailwindClass index {index} out of bounds ({} classes): \
+                     Was the embedded IR remapped into the parent's class space (`DispatchPayload::into_doc`)?",
                     self.state.sorted_tailwind_classes.len(),
                 );
                 if let Some(text) = text {
@@ -693,7 +688,7 @@ impl<'a> Printer<'a> {
 
     /// Fully print an element (print the element itself and all its descendants)
     ///
-    /// Unlike [print_element], this function ensures the entire element has
+    /// Unlike [`Self::print_element`], this function ensures the entire element has
     /// been printed when it returns and the queue is back to its original state
     fn print_entry(
         &mut self,
@@ -961,11 +956,9 @@ impl Indention {
 
     /// Increments the level by one.
     ///
-    /// The behaviour depends on the [`indent_style`][IndentStyle] if this is an [Indent::Align]:
+    /// The behaviour depends on the [`indent_style`][IndentStyle] if this is an [`Indention::Align`]:
     /// * **Tabs**: `align` is converted into an indent. This results in `level` increasing by two: once for the align, once for the level increment
     /// * **Spaces**: Increments the `level` by one and keeps the `align` unchanged.
-    ///
-    /// Keeps any  the current value is [Indent::Align] and increments the level by one.
     fn increment_level(self, indent_style: IndentStyle) -> Self {
         match self {
             Indention::Level(count) => Indention::Level(count + 1),
@@ -981,7 +974,7 @@ impl Indention {
 
     /// Adds an `align` of `count` spaces to the current indention.
     ///
-    /// It increments the `level` value if the current value is [Indent::IndentAlign].
+    /// It increments the `level` value if the current value is [`Indention::Align`].
     fn set_align(self, count: NonZeroU8) -> Self {
         match self {
             Indention::Level(indent_count) => {
@@ -1609,12 +1602,10 @@ mod tests {
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, allocator);
         let mut buffer = VecBuffer::new(&mut state);
-        crate::format::write(&mut buffer, Arguments::new(&[Argument::new(root)]));
+        write(&mut buffer, Arguments::new(&[Argument::new(root)]));
 
         let elements = buffer.into_vec();
-        let document = Document::new(elements, Vec::default());
-        document.propagate_expand();
-        Printer::new(options, &[]).print(document.elements()).expect("Document to be valid")
+        Document::new(elements, Vec::default()).print(0, options).expect("Document to be valid")
     }
 
     #[test]

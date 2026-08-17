@@ -346,9 +346,11 @@ unsafe fn operand_position_at(
             return true;
         }
         if k == IDENT && !prop_name(src, p) {
+            if ident_is(src, p, b"void") {
+                return !(ts && void_is_type_position(t, src, st, kind, n, p, depth));
+            }
             if ident_is(src, p, b"new")
                 || ident_is(src, p, b"typeof")
-                || ident_is(src, p, b"void")
                 || ident_is(src, p, b"delete")
                 || ident_is(src, p, b"in")
                 || ident_is(src, p, b"instanceof")
@@ -1095,6 +1097,417 @@ unsafe fn brace_close_is_regex(
         None => true, // unbalanced / cap => fallback regex
     }
 }
+const ASI_WALK_CAP: u32 = 256;
+
+#[inline]
+unsafe fn is_binder_keyword(src: *const u8, kind: *const u8, w: usize) -> bool {
+    *kind.add(w) == IDENT
+        && !prop_name(src, w)
+        && (ident_is(src, w, b"let") || ident_is(src, w, b"const") || ident_is(src, w, b"var"))
+}
+#[inline]
+unsafe fn binder_outside_paren_head(
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    binder: usize,
+) -> bool {
+    let q = bm_prev_sig(st, kind, binder);
+    q < 0 || !(*kind.add(q as usize) >= OP_KIND_BASE && *src.add(q as usize) == b'(')
+}
+unsafe fn declarator_without_init(
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    id: usize,
+) -> bool {
+    let q = bm_prev_sig(st, kind, id);
+    if q < 0 {
+        return false;
+    }
+    let mut w = q as usize;
+    if is_binder_keyword(src, kind, w) {
+        return binder_outside_paren_head(src, st, kind, w);
+    }
+    if !(*kind.add(w) >= OP_KIND_BASE && *src.add(w) == b',') {
+        return false;
+    }
+    let mut steps: u32 = 0;
+    loop {
+        steps += 1;
+        if steps > ASI_WALK_CAP {
+            return false;
+        }
+        if *kind.add(w) >= OP_KIND_BASE {
+            let c = *src.add(w);
+            match c {
+                b')' | b']' | b'}' => {
+                    let open = match c {
+                        b')' => b'(',
+                        b']' => b'[',
+                        _ => b'{',
+                    };
+                    match match_delim_back(src, st, kind, w, open, c) {
+                        Some(op) => {
+                            let q2 = bm_prev_sig(st, kind, op);
+                            if q2 < 0 {
+                                return false;
+                            }
+                            w = q2 as usize;
+                            continue;
+                        }
+                        None => return false,
+                    }
+                }
+                b'(' | b'[' | b'{' | b';' => return false,
+                _ => {}
+            }
+        } else if is_binder_keyword(src, kind, w) {
+            return binder_outside_paren_head(src, st, kind, w);
+        }
+        let q2 = bm_prev_sig(st, kind, w);
+        if q2 < 0 {
+            return false;
+        }
+        w = q2 as usize;
+    }
+}
+unsafe fn type_alias_head(src: *const u8, st: *const u64, kind: *const u8, eq: usize) -> bool {
+    let q = bm_prev_sig(st, kind, eq);
+    if q < 0 {
+        return false;
+    }
+    let mut w = q as usize;
+    if *kind.add(w) >= OP_KIND_BASE && *src.add(w) == b'>' {
+        match angle_match_back(src, st, kind, w) {
+            AngleMatch::Found(lt) => {
+                let p = bm_prev_sig(st, kind, lt);
+                if p < 0 {
+                    return false;
+                }
+                w = p as usize;
+            }
+            _ => return false,
+        }
+    }
+    if *kind.add(w) != IDENT || prop_name(src, w) {
+        return false;
+    }
+    let p = bm_prev_sig(st, kind, w);
+    p >= 0
+        && *kind.add(p as usize) == IDENT
+        && !prop_name(src, p as usize)
+        && ident_is(src, p as usize, b"type")
+}
+unsafe fn signature_return_type(
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    rparen: usize,
+) -> bool {
+    let Some(lp) = match_delim_back(src, st, kind, rparen, b'(', b')') else {
+        return false;
+    };
+    let q = bm_prev_sig(st, kind, lp);
+    if q < 0 {
+        return false;
+    }
+    let mut w = q as usize;
+    if *kind.add(w) == IDENT && !prop_name(src, w) && !ident_is(src, w, b"function") {
+        let p = bm_prev_sig(st, kind, w);
+        if p < 0 {
+            return false;
+        }
+        w = p as usize;
+    }
+    *kind.add(w) == IDENT && !prop_name(src, w) && ident_is(src, w, b"function")
+}
+unsafe fn annotation_colon_is_declaration(
+    t: &Tables,
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    n: usize,
+    colon: usize,
+    depth: u32,
+) -> bool {
+    if colon_marks_value(t, src, st, kind, n, colon, true, depth) {
+        return false;
+    }
+    let q = bm_prev_sig(st, kind, colon);
+    if q < 0 {
+        return false;
+    }
+    let w = q as usize;
+    let kk = *kind.add(w);
+    if kk == IDENT {
+        return declarator_without_init(src, st, kind, w);
+    }
+    if kk >= OP_KIND_BASE {
+        let c = *src.add(w);
+        if c == b')' {
+            return signature_return_type(src, st, kind, w);
+        }
+        if c == b'!' && *src.add(w + 1) != b'=' {
+            let q2 = bm_prev_sig(st, kind, w);
+            return q2 >= 0
+                && *kind.add(q2 as usize) == IDENT
+                && declarator_without_init(src, st, kind, q2 as usize);
+        }
+        if c == b']' || c == b'}' {
+            let open = if c == b']' { b'[' } else { b'{' };
+            if let Some(op) = match_delim_back(src, st, kind, w, open, c) {
+                let p = bm_prev_sig(st, kind, op);
+                if p >= 0 && is_binder_keyword(src, kind, p as usize) {
+                    return binder_outside_paren_head(src, st, kind, p as usize);
+                }
+            }
+        }
+    }
+    false
+}
+unsafe fn extends_precedes_question(
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    question: usize,
+) -> bool {
+    let mut steps: u32 = 0;
+    let mut q = bm_prev_sig(st, kind, question);
+    while q >= 0 {
+        steps += 1;
+        if steps > 64 {
+            return false;
+        }
+        let w = q as usize;
+        if *kind.add(w) >= OP_KIND_BASE {
+            let c = *src.add(w);
+            match c {
+                b')' | b']' | b'}' => {
+                    let open = match c {
+                        b')' => b'(',
+                        b']' => b'[',
+                        _ => b'{',
+                    };
+                    match match_delim_back(src, st, kind, w, open, c) {
+                        Some(op) => {
+                            q = bm_prev_sig(st, kind, op);
+                            continue;
+                        }
+                        None => return false,
+                    }
+                }
+                b'(' | b'[' | b'{' | b';' | b':' | b'?' => return false,
+                _ => {}
+            }
+        } else if *kind.add(w) == IDENT && !prop_name(src, w) && ident_is(src, w, b"extends") {
+            return true;
+        }
+        q = bm_prev_sig(st, kind, w);
+    }
+    false
+}
+unsafe fn conditional_type_question(
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    colon: usize,
+) -> Option<usize> {
+    let mut debt: u32 = 0;
+    let mut steps: u32 = 0;
+    let mut q = bm_prev_sig(st, kind, colon);
+    while q >= 0 {
+        steps += 1;
+        if steps > ASI_WALK_CAP {
+            return None;
+        }
+        let w = q as usize;
+        if *kind.add(w) >= OP_KIND_BASE {
+            let c = *src.add(w);
+            match c {
+                b')' | b']' | b'}' => {
+                    let open = match c {
+                        b')' => b'(',
+                        b']' => b'[',
+                        _ => b'{',
+                    };
+                    match match_delim_back(src, st, kind, w, open, c) {
+                        Some(op) => {
+                            q = bm_prev_sig(st, kind, op);
+                            continue;
+                        }
+                        None => return None,
+                    }
+                }
+                b'(' | b'[' | b'{' | b';' => return None,
+                b':' => debt += 1,
+                b'?' => {
+                    if *src.add(w + 1) != b'?'
+                        && *src.add(w + 1) != b'.'
+                        && (w == 0 || *src.add(w - 1) != b'?')
+                    {
+                        if debt == 0 {
+                            return if extends_precedes_question(src, st, kind, w) {
+                                Some(w)
+                            } else {
+                                None
+                            };
+                        }
+                        debt -= 1;
+                    }
+                }
+                _ => {}
+            }
+        }
+        q = bm_prev_sig(st, kind, w);
+    }
+    None
+}
+unsafe fn type_annotation_asi(
+    t: &Tables,
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    n: usize,
+    from: usize,
+    depth: u32,
+) -> bool {
+    let mut q = from as i64;
+    let mut steps: u32 = 0;
+    while q >= 0 {
+        steps += 1;
+        if steps > ASI_WALK_CAP {
+            return false;
+        }
+        let w = q as usize;
+        let kk = *kind.add(w);
+        if kk >= OP_KIND_BASE {
+            let c = *src.add(w);
+            match c {
+                b')' | b']' | b'}' => {
+                    let open = match c {
+                        b')' => b'(',
+                        b']' => b'[',
+                        _ => b'{',
+                    };
+                    match match_delim_back(src, st, kind, w, open, c) {
+                        Some(op) => {
+                            q = bm_prev_sig(st, kind, op);
+                            continue;
+                        }
+                        None => return false,
+                    }
+                }
+                b'(' | b'[' | b'{' | b';' => return false,
+                b':' => {
+                    if annotation_colon_is_declaration(t, src, st, kind, n, w, depth) {
+                        return true;
+                    }
+                    match conditional_type_question(src, st, kind, w) {
+                        Some(qm) => {
+                            q = bm_prev_sig(st, kind, qm);
+                            continue;
+                        }
+                        None => return false,
+                    }
+                }
+                b'=' => {
+                    if *src.add(w + 1) != b'>' {
+                        if *src.add(w + 1) == b'=' {
+                            return false;
+                        }
+                        if w > 0
+                            && matches!(*src.add(w - 1), b'=' | b'!' | b'<' | b'>' | b'+' | b'-')
+                        {
+                            return false;
+                        }
+                        return type_alias_head(src, st, kind, w);
+                    }
+                }
+                b'>' => {
+                    if !(w > 0 && *src.add(w - 1) == b'=') {
+                        match angle_match_back(src, st, kind, w) {
+                            AngleMatch::Found(lt) => {
+                                q = bm_prev_sig(st, kind, lt);
+                                continue;
+                            }
+                            _ => return false,
+                        }
+                    }
+                }
+                b'.' | b'|' | b'&' | b'?' | b'-' => {}
+                _ => return false,
+            }
+        } else if !matches!(
+            kk,
+            IDENT
+                | IDENT_ESC
+                | NUM
+                | BIGINT
+                | STR
+                | TMPL_NOSUB
+                | TMPL_HEAD
+                | TMPL_MIDDLE
+                | TMPL_TAIL
+        ) {
+            return false;
+        }
+        q = bm_prev_sig(st, kind, w);
+    }
+    false
+}
+#[inline]
+unsafe fn label_after_restricted(
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    n: usize,
+    label: usize,
+) -> bool {
+    let q = bm_prev_sig(st, kind, label);
+    if q < 0 {
+        return false;
+    }
+    let w = q as usize;
+    *kind.add(w) == IDENT
+        && !prop_name(src, w)
+        && (ident_is(src, w, b"break") || ident_is(src, w, b"continue"))
+        && !lt_in_range(src, bm_next1(st, w + 1, n), label)
+}
+#[inline]
+unsafe fn module_specifier_asi(
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    spec: usize,
+) -> bool {
+    let q = bm_prev_sig(st, kind, spec);
+    if q < 0 {
+        return false;
+    }
+    let w = q as usize;
+    *kind.add(w) == IDENT
+        && !prop_name(src, w)
+        && (ident_is(src, w, b"from") || ident_is(src, w, b"import"))
+}
+unsafe fn void_is_type_position(
+    t: &Tables,
+    src: *const u8,
+    st: *const u64,
+    kind: *const u8,
+    n: usize,
+    p: usize,
+    depth: u32,
+) -> bool {
+    let q = bm_prev_sig(st, kind, p);
+    if q < 0 {
+        return false;
+    }
+    let w = q as usize;
+    *kind.add(w) >= OP_KIND_BASE
+        && *src.add(w) == b':'
+        && !colon_marks_value(t, src, st, kind, n, w, true, depth + 1)
+}
 
 pub(super) unsafe fn prev_is_regex(
     t: &Tables,
@@ -1116,10 +1529,20 @@ pub(super) unsafe fn prev_is_regex(
             q = bm_prev1(st, qi);
             continue;
         }
-        if k == STR
-            || k == REGEX
-            || k == TMPL_NOSUB
-            || k == TMPL_TAIL
+        if k == STR {
+            let e = bm_next1(st, qi + 1, n);
+            if !lt_in_range(src, e, p) {
+                return false;
+            }
+            return module_specifier_asi(src, st, kind, qi)
+                || (ts && type_annotation_asi(t, src, st, kind, n, qi, 0));
+        }
+        if k == TMPL_NOSUB || k == TMPL_TAIL {
+            return ts
+                && lt_in_range(src, bm_next1(st, qi + 1, n), p)
+                && type_annotation_asi(t, src, st, kind, n, qi, 0);
+        }
+        if k == REGEX
             || k == PRIV_IDENT
             || k == IDENT_ESC
             || k == PRIV_IDENT_ESC
@@ -1135,16 +1558,25 @@ pub(super) unsafe fn prev_is_regex(
             let we = bm_next0(word, qi, n);
             let de = bm_next0(digit, qi, n);
             if de >= we {
-                return false;
+                return ts
+                    && lt_in_range(src, we, p)
+                    && type_annotation_asi(t, src, st, kind, n, qi, 0);
             }
             let a = glue_anchor(src, st, qi);
-            return prev_regex_sim(t, src, n, a, p, anchor_seed_tail(t, src, st, kind, n, a));
+            if prev_regex_sim(t, src, n, a, p, anchor_seed_tail(t, src, st, kind, n, a)) {
+                return true;
+            }
+            return ts
+                && lt_in_range(src, we, p)
+                && type_annotation_asi(t, src, st, kind, n, qi, 0);
         }
         if k == IDENT {
-            if prop_name(src, qi) {
-                return false;
-            }
             let e = bm_next1(st, qi + 1, n);
+            if prop_name(src, qi) {
+                return ts
+                    && lt_in_range(src, e, p)
+                    && type_annotation_asi(t, src, st, kind, n, qi, 0);
+            }
             let (ws, we) = match word_run_end(src, qi, e) {
                 RunEnd::Seg(ss, se, _) => (ss, se),
                 RunEnd::Blank(_) => {
@@ -1167,6 +1599,17 @@ pub(super) unsafe fn prev_is_regex(
             }
             if we - ws == 2 && *src.add(ws) == b'o' && *src.add(ws + 1) == b'f' {
                 return of_is_forof_keyword(t, src, st, kind, n, qi);
+            }
+            if lt_in_range(src, e, p) {
+                if label_after_restricted(src, st, kind, n, qi) {
+                    return true;
+                }
+                if declarator_without_init(src, st, kind, qi) {
+                    return true;
+                }
+                if ts && type_annotation_asi(t, src, st, kind, n, qi, 0) {
+                    return true;
+                }
             }
             return false;
         }
@@ -1199,7 +1642,12 @@ pub(super) unsafe fn prev_is_regex(
                 return brace_close_is_regex(t, src, st, kind, n, qi, ts);
             }
             if ch == b')' {
-                return paren_close_is_regex(src, st, kind, qi);
+                if paren_close_is_regex(src, st, kind, qi) {
+                    return true;
+                }
+                return ts
+                    && lt_in_range(src, qi + 1, p)
+                    && type_annotation_asi(t, src, st, kind, n, qi, 0);
             }
             if ts && ch == b'>' && !(qi > 0 && *src.add(qi - 1) == b'=') {
                 if let AngleMatch::Found(lt) = angle_match_back(src, st, kind, qi) {
@@ -1209,7 +1657,12 @@ pub(super) unsafe fn prev_is_regex(
                 }
                 return true;
             }
-            return ch != b']';
+            if ch == b']' {
+                return ts
+                    && lt_in_range(src, qi + 1, p)
+                    && type_annotation_asi(t, src, st, kind, n, qi, 0);
+            }
+            return true;
         }
         return true;
     }
@@ -1637,5 +2090,200 @@ mod tests {
         let ks =
             jsx("var await = 1, g = 2;\nvar el = <a b={async () => await 1} c={await /2/g}/>;");
         assert!(!ks.contains(&TokenKind::RegExp), "container leak, expected division: {ks:?}");
+    }
+
+    #[test]
+    fn ts_declarator_type_annotation_forces_asi() {
+        regex("let x: T\n/re/g.exec(s);", true);
+        regex("let x: string\n/re/.exec(s);", true);
+        regex("let x: number\n/re/.exec(s);", true);
+        regex("let x: A | B\n/re/.exec(s);", true);
+        regex("let x: T[]\n/re/.exec(s);", true);
+        regex("let x: (T)\n/re/.exec(s);", true);
+        regex("let x: typeof y\n/re/.exec(s);", true);
+        regex("let x: a.b.C\n/re/.exec(s);", true);
+        regex("var x: T\n/re/.exec(s);", true);
+        regex("let x: T\n/re/gimsuy.exec(s);", true);
+        regex("let a = 1, b: T\n/re/.exec(s);", true);
+    }
+
+    #[test]
+    fn ts_declarator_type_annotation_already_resolved() {
+        regex("let x: Array<T>\n/re/.exec(s);", true);
+        regex("let x: {a: T}\n/re/.exec(s);", true);
+        regex("interface I { a: T }\n/re/.exec(s);", true);
+    }
+
+    #[test]
+    fn ts_initialised_declarator_stays_division() {
+        division("let x= T\n/re/g.exec(s);", true);
+        division("let x: number = 1\n/re/g.exec(s);", true);
+        division("let x: T = y\n/re/g.exec(s);", true);
+        division("let a = b\n/hi/g.exec(c);", false);
+        division("let a = b, c = d\n/hi/g.exec(e);", false);
+    }
+
+    #[test]
+    fn ts_type_alias_forces_asi() {
+        regex("type A = T\n/re/.exec(s);", true);
+        regex("type A = B | C\n/re/.exec(s);", true);
+        regex("declare function f(): T\n/re/.exec(s);", true);
+    }
+
+    #[test]
+    fn declarator_without_initializer_forces_asi() {
+        regex("let x\n/re/.exec(s);", false);
+        regex("var a\n/re/.test(b);", false);
+        regex("let x\n/re/.exec(s);", true);
+        regex("let a, b\n/re/.test(c);", false);
+        regex("let a = 1, b\n/re/.test(c);", false);
+    }
+
+    #[test]
+    fn module_specifier_forces_asi() {
+        regex("import y from 'y'\n/re/.exec(s);", false);
+        regex("import 'y'\n/re/.exec(s);", false);
+        regex("export * from 'y'\n/re/.exec(s);", false);
+        regex("export {a} from 'y'\n/re/.exec(s);", false);
+        division("x = 'y' / 2;", false);
+        division("x = f('y') / 2;", false);
+    }
+
+    #[test]
+    fn restricted_production_keywords_precede_regex() {
+        regex("for(;;){ break\n/re/.test(b); }", false);
+        regex("for(;;){ continue\n/re/.test(b); }", false);
+        division("x.break / 2;", false);
+        division("x.continue / 2;", false);
+    }
+
+    #[test]
+    fn ts_return_type_keyword_name_is_not_operand() {
+        regex("function f(): void {}\n/re/.test(x);", true);
+        regex("function f(): void {} /re/.test(x);", true);
+        division("x = function(): void {} / 2;", true);
+        division("x = void {} / 2;", false);
+        division("x = typeof {} / 2;", false);
+    }
+
+    #[test]
+    fn ts_composite_type_forms_force_asi() {
+        regex("let x: A extends B ? C : D\n/re/.exec(s);", true);
+        regex("let x: (a: T) => U\n/re/.exec(s);", true);
+        regex("let x: 'lit'\n/re/.exec(s);", true);
+        regex("let x: [A, B]\n/re/.exec(s);", true);
+        regex("let x: readonly A[]\n/re/.exec(s);", true);
+        regex("let x: keyof T\n/re/.exec(s);", true);
+        regex("let x: Map<A, B<C>>\n/re/.exec(s);", true);
+        regex("let x: T | null\n/re/.exec(s);", true);
+        regex("declare const x: T\n/re/.exec(s);", true);
+        regex("export const x: T\n/re/.exec(s);", true);
+    }
+
+    #[test]
+    fn value_ternary_and_arrow_stay_division() {
+        division("let x = c ? a : b\n/re/.exec(s);", true);
+        division("let x = c ? a : b\n/re/.exec(s);", false);
+        division("let f = (a) => b\n/re/.exec(s);", false);
+        division("let x: T = c ? a : b\n/re/.exec(s);", true);
+        division("export const x: T = 1\n/re/g.exec(s);", true);
+    }
+
+    #[test]
+    fn tsx_asi_then_jsx_element() {
+        let tsx = |code: &str| kinds_of(code, true, true);
+        let ks = tsx("let v: T\n<div />;");
+        assert!(ks.contains(&TokenKind::JsxLt), "type-annotation ASI must open JSX: {ks:?}");
+        let ks = tsx("let v\n<div />;");
+        assert!(
+            ks.contains(&TokenKind::JsxLt),
+            "uninitialised declarator ASI must open JSX: {ks:?}"
+        );
+        let ks = tsx("import R from 'r'\n<div />;");
+        assert!(ks.contains(&TokenKind::JsxLt), "module-specifier ASI must open JSX: {ks:?}");
+        let ks = tsx("const a = 1, div = 2;\nexport const r = a < div;");
+        assert!(!ks.contains(&TokenKind::JsxLt), "a < div stays a comparison: {ks:?}");
+    }
+
+    #[test]
+    fn ts_numeric_literal_type_forces_asi() {
+        regex("let x: 1\n/re/.exec(s);", true);
+        regex("let x: -1\n/re/.exec(s);", true);
+        regex("let x: 1n\n/re/.exec(s);", true);
+        regex("let x: -1n\n/re/.exec(s);", true);
+        regex("let x: 0x1f\n/re/.exec(s);", true);
+        regex("let x: 1e3\n/re/.exec(s);", true);
+        regex("let a = 1, b: 2\n/re/.exec(s);", true);
+        regex("type A = 1\n/re/.exec(s);", true);
+        regex("declare function f(): 1\n/re/.exec(s);", true);
+    }
+
+    #[test]
+    fn numeric_value_stays_division() {
+        division("let x = 1\n/re/g.exec(s);", true);
+        division("let x: number = 1\n/re/g.exec(s);", true);
+        division("x = a - 1\n/re/g.exec(s);", true);
+        division("let x: T = a - 1\n/re/g.exec(s);", true);
+        division("x = 1\n/re/g.exec(s);", false);
+        division("x = 1n\n/re/g.exec(s);", false);
+        division("x = 0x1f\n/re/g.exec(s);", false);
+    }
+
+    #[test]
+    fn ts_template_literal_type_forces_asi() {
+        regex("let x: `lit`\n/re/.exec(s);", true);
+        regex("let x: `p${string}s`\n/re/.exec(s);", true);
+        regex("let x: `${number}`\n/re/.exec(s);", true);
+        regex("let x: `a${'b'}c${number}d`\n/re/.exec(s);", true);
+        regex("type A = `lit`\n/re/.exec(s);", true);
+    }
+
+    #[test]
+    fn template_value_stays_division() {
+        division("let x = `lit`\n/re/g.exec(s);", true);
+        division("let x = `p${y}s`\n/re/g.exec(s);", true);
+        division("let x: T = `lit`\n/re/g.exec(s);", true);
+        division("x = `lit`\n/re/g.exec(s);", false);
+        division("x = `p${y}s`\n/re/g.exec(s);", false);
+    }
+
+    #[test]
+    fn ts_definite_assignment_forces_asi() {
+        regex("let x!: T\n/re/.exec(s);", true);
+        regex("let x!: T[]\n/re/.exec(s);", true);
+        regex("let x!: 1\n/re/.exec(s);", true);
+        regex("let a = 1, b!: T\n/re/.exec(s);", true);
+        division("x! / 2;", true);
+        division("x!\n/re/g.exec(s);", true);
+    }
+
+    #[test]
+    fn restricted_production_label_precedes_regex() {
+        regex("outer: for(;;){ break outer\n/re/.test(b); }", false);
+        regex("outer: for(;;){ continue outer\n/re/.test(b); }", false);
+        regex("outer: for(;;){ break outer\n/re/.test(b); }", true);
+        division("outer: for(;;){ break\nouter\n/re/g.test(b); }", false);
+        division("x.break / 2;", false);
+        division("x.continue / 2;", false);
+    }
+
+    #[test]
+    fn tsx_literal_type_asi_then_jsx_element() {
+        let tsx = |code: &str| kinds_of(code, true, true);
+        for code in [
+            "let v: 1\n<div />;",
+            "let v: -1\n<div />;",
+            "let v: 1n\n<div />;",
+            "let v: `lit`\n<div />;",
+            "let v: `p${string}s`\n<div />;",
+            "let v!: T\n<div />;",
+        ] {
+            let ks = tsx(code);
+            assert!(ks.contains(&TokenKind::JsxLt), "{code:?} must open JSX: {ks:?}");
+        }
+        let ks = kinds_of("outer: for(;;){ break outer\n<div />; }", false, true);
+        assert!(ks.contains(&TokenKind::JsxLt), "labelled break ASI must open JSX: {ks:?}");
+        let ks = tsx("const a = 1, div = 2;\nconst r = a - 1 < div;");
+        assert!(!ks.contains(&TokenKind::JsxLt), "a - 1 < div stays a comparison: {ks:?}");
     }
 }

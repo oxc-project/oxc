@@ -96,7 +96,7 @@ struct DetectedComponent {
 
 impl Rule for NoMultiComp {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -408,7 +408,7 @@ fn is_function_returning_null(expr: &Expression) -> bool {
 
 /// Check if a class is an ES6 React component (extends React.Component or React.PureComponent)
 fn is_es6_component_class(class: &Class) -> bool {
-    class.super_class.as_ref().is_some_and(|super_class| {
+    class.heritage_expression().is_some_and(|super_class| {
         if let Some(member_expr) = super_class.as_member_expression()
             && let Expression::Identifier(ident) = member_expr.object()
             && ident.name == "React"

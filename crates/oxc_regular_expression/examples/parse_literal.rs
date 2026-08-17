@@ -70,8 +70,7 @@ fn main() {
                 println!("✨ {pattern:#?}");
             }
             Err(error) => {
-                let error = error.with_source_code(literal);
-                println!("💥 {error:?}");
+                println!("💥 {}", error.render_with_source_code(literal));
             }
         }
         println!();

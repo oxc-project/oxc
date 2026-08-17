@@ -72,7 +72,7 @@ impl<'a> ClassProperties<'a> {
         let is_declaration = *class.r#type() == ClassType::ClassDeclaration;
         let mut class_name_binding = class.id().as_ref().map(BoundIdentifier::from_binding_ident);
         let class_scope_id = class.scope_id().get().unwrap();
-        let has_super_class = class.super_class().is_some();
+        let has_super_class = class.heritage().is_some();
 
         // Check if class has any properties, private methods, or static blocks
         let mut instance_prop_count = 0;

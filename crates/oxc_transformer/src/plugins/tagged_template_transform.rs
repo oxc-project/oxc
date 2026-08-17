@@ -231,7 +231,6 @@ impl<'a> TaggedTemplateTransform {
 
         let variable = VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
             None,
             None,

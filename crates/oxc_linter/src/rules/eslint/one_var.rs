@@ -107,13 +107,13 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = OneVar,
-    version = "next",
+    version = "1.78.0",
     short_description = "Enforce variables to be declared either together or separately in functions.",
 );
 
 impl Rule for OneVar {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -157,6 +157,7 @@ impl Rule for OneVar {
                     {
                         report_join(
                             ctx,
+                            node,
                             declaration,
                             previous,
                             format!(
@@ -171,6 +172,7 @@ impl Rule for OneVar {
                         {
                             report_join(
                                 ctx,
+                                node,
                                 declaration,
                                 previous,
                                 format!(
@@ -185,6 +187,7 @@ impl Rule for OneVar {
                         {
                             report_join(
                                 ctx,
+                                node,
                                 declaration,
                                 previous,
                                 format!(
@@ -469,7 +472,7 @@ fn report_join_with_optional_previous<'a>(
     if let Some(previous) =
         previous_declaration(node, ctx).filter(|previous| previous.kind == declaration.kind)
     {
-        report_join(ctx, declaration, previous, message);
+        report_join(ctx, node, declaration, previous, message);
     } else {
         ctx.diagnostic(one_var_diagnostic(declaration.span, message));
     }
@@ -478,17 +481,23 @@ fn report_join_with_optional_previous<'a>(
 #[expect(clippy::cast_possible_truncation)]
 fn report_join(
     ctx: &LintContext<'_>,
+    node: &AstNode<'_>,
     declaration: &VariableDeclaration<'_>,
     previous: &VariableDeclaration<'_>,
     message: String,
 ) {
-    ctx.diagnostic_with_fix(one_var_diagnostic(declaration.span, message), |fixer| {
+    let diagnostic = one_var_diagnostic(declaration.span, message);
+    if declaration.declare
+        || previous.declare
+        || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ExportDeclaration(_))
+    {
+        ctx.diagnostic(diagnostic);
+        return;
+    }
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let mut fixes = fixer.new_fix_with_capacity(3);
-        if let Some(offset) =
-            ctx.find_next_token_within(previous.span.start, previous.span.end, ";")
-        {
-            let start = previous.span.start + offset;
-            fixes.push(Fix::new(",", Span::sized(start, 1)));
+        if ctx.source_text().as_bytes().get(previous.span.end as usize - 1) == Some(&b';') {
+            fixes.push(Fix::new(",", Span::sized(previous.span.end - 1, 1)));
         } else {
             fixes.push(Fix::new(",", Span::empty(previous.span.end)));
         }
@@ -1316,6 +1325,12 @@ fn test() {
         ("export const foo=() => a, bar=2;", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2021, "sourceType": "module" },
         ("export const foo= a, bar=2, bar2=2;", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2021, "sourceType": "module" },
         ("export const foo = 1,bar = 2;", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2021, "sourceType": "module" },
+        ("const foo = 1; export const bar = 2;", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2021, "sourceType": "module" },
+        (
+            "function foo() { const a = () => { return false; }; const b = 1; }",
+            Some(serde_json::json!(["always"])),
+        ),
+        ("declare const foo: number; const bar = 2;", Some(serde_json::json!(["always"]))),
         ("if (foo) var x, y;", Some(serde_json::json!(["never"]))),
         ("if (foo) var x, y;", Some(serde_json::json!([{ "var": "never" }]))),
         ("if (foo) var x, y;", Some(serde_json::json!([{ "uninitialized": "never" }]))),
@@ -1868,6 +1883,21 @@ fn test() {
             "export const foo = 1,bar = 2;",
             "export const foo = 1; export const bar = 2;",
             Some(serde_json::json!(["never"])),
+        ),
+        (
+            "const foo = 1; export const bar = 2;",
+            "const foo = 1; export const bar = 2;",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "function foo() { const a = () => { return false; }; const b = 1; }",
+            "function foo() { const a = () => { return false; },  b = 1; }",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "declare const foo: number; const bar = 2;",
+            "declare const foo: number; const bar = 2;",
+            Some(serde_json::json!(["always"])),
         ),
         (
             "class C { static { let x, y; } }",

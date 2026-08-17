@@ -10,11 +10,7 @@ use napi::{
 };
 use napi_derive::napi;
 
-use crate::{
-    init::{init_miette, init_tracing},
-    lint::CliRunner,
-    result::CliRunResult,
-};
+use crate::{init::init_tracing, lint::CliRunner, result::CliRunResult};
 
 /// JS callback to load a JS plugin.
 #[napi]
@@ -226,8 +222,6 @@ async fn lint_impl(
         crate::lsp::run_lsp(external_linter, js_config_loader).await;
         return CliRunResult::LintSucceeded;
     }
-
-    init_miette();
 
     command.handle_threads();
 

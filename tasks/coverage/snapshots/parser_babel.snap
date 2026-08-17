@@ -1,9 +1,9 @@
-commit: 06b6eae3
+commit: 1eac4481
 
 parser_babel Summary:
 AST Parsed     : 2234/2234 (100.00%)
 Positive Passed: 2218/2234 (99.28%)
-Negative Passed: 1727/1742 (99.14%)
+Negative Passed: 1728/1742 (99.20%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -31,8 +31,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable-in-module/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
@@ -1384,7 +1382,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ [
    ╰────
 
-  × Unexpected token
+  × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/376/input.js:1:3]
  1 │ [,
    ╰────
@@ -1399,7 +1397,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 1 + { t:t
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/379/input.js:1:11]
  1 │ 1 + { t:t,
    ╰────
@@ -10863,7 +10861,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ [
    ╰────
 
-  × Unexpected token
+  × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0058/input.js:2:1]
  1 │ [,
    ╰────
@@ -10878,7 +10876,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 1 + { t:t
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0061/input.js:2:1]
  1 │ 1 + { t:t,
    ╰────
@@ -12970,8 +12968,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ──
    ╰────
 
-  × Expected `{` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-empty/input.ts:3:1]
+  × TS(1097): 'extends' list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-empty/input.ts:1:15]
+ 1 │ interface foo extends {
+   ·               ───────
  2 │ }
    ╰────
 
@@ -14262,6 +14262,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:38]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                      ─────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:49]
  1 │ // Every extend element here is invalid
  2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
@@ -14701,6 +14708,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts:3:21]
+ 2 │ // but they are always type-checking errors.
+ 3 │ interface A extends this.B {}
+   ·                     ──────
+ 4 │ type T = typeof var.bar;
+   ╰────
 
   × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts:2:12]

@@ -798,7 +798,6 @@ impl<'a> AsyncGeneratorExecutor<'a> {
         let declarations = ArenaVec::from_value_in(
             VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 bound_ident.create_binding_pattern(ctx),
                 None,
                 Some(init),

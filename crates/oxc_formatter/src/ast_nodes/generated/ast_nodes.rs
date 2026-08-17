@@ -3327,11 +3327,6 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     }
 
     #[inline]
-    pub fn kind(&self) -> VariableDeclarationKind {
-        self.inner.kind
-    }
-
-    #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingPattern<'a>> {
         let following_span_start = self
             .inner
@@ -5034,8 +5029,7 @@ impl<'a> AstNode<'a, Class<'a>> {
             .as_ref()
             .map(|n| n.span().start)
             .or_else(|| self.inner.type_parameters.as_deref().map(|n| n.span().start))
-            .or_else(|| self.inner.super_class.as_ref().map(|n| n.span().start))
-            .or_else(|| self.inner.super_type_arguments.as_deref().map(|n| n.span().start))
+            .or_else(|| self.inner.heritage.as_ref().map(|n| n.span().start))
             .or_else(|| self.inner.implements.first().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
@@ -5054,8 +5048,7 @@ impl<'a> AstNode<'a, Class<'a>> {
             .type_parameters
             .as_deref()
             .map(|n| n.span().start)
-            .or_else(|| self.inner.super_class.as_ref().map(|n| n.span().start))
-            .or_else(|| self.inner.super_type_arguments.as_deref().map(|n| n.span().start))
+            .or_else(|| self.inner.heritage.as_ref().map(|n| n.span().start))
             .or_else(|| self.inner.implements.first().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
@@ -5073,10 +5066,9 @@ impl<'a> AstNode<'a, Class<'a>> {
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
-            .super_class
+            .heritage
             .as_ref()
             .map(|n| n.span().start)
-            .or_else(|| self.inner.super_type_arguments.as_deref().map(|n| n.span().start))
             .or_else(|| self.inner.implements.first().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
@@ -5091,27 +5083,7 @@ impl<'a> AstNode<'a, Class<'a>> {
     }
 
     #[inline]
-    pub fn super_class(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        let following_span_start = self
-            .inner
-            .super_type_arguments
-            .as_deref()
-            .map(|n| n.span().start)
-            .or_else(|| self.inner.implements.first().map(|n| n.span().start))
-            .or_else(|| Some(self.inner.body.span().start))
-            .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.super_class.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::Class(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    #[inline]
-    pub fn super_type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn heritage(&self) -> Option<&AstNode<'a, ClassHeritage<'a>>> {
         let following_span_start = self
             .inner
             .implements
@@ -5120,8 +5092,8 @@ impl<'a> AstNode<'a, Class<'a>> {
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
         self.allocator
-            .alloc(self.inner.super_type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
+            .alloc(self.inner.heritage.as_ref().map(|inner| AstNode {
+                inner,
                 allocator: self.allocator,
                 parent: AstNodes::Class(transmute_self(self)),
                 following_span_start,
@@ -5159,6 +5131,47 @@ impl<'a> AstNode<'a, Class<'a>> {
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'a, ClassHeritage<'a>> {
+    #[inline]
+    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_span_start = self
+            .inner
+            .type_arguments
+            .as_deref()
+            .map(|n| n.span().start)
+            .or(Some(self.following_span_start))
+            .unwrap_or(0);
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.expression,
+            allocator: self.allocator,
+            parent: self.parent,
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_span_start = self.following_span_start;
+        self.allocator
+            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: self.parent,
+                following_span_start,
+            }))
+            .as_ref()
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9413,7 +9426,7 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn type_name(&self) -> &AstNode<'a, TSTypeName<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -9422,7 +9435,7 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
             .or(Some(self.following_span_start))
             .unwrap_or(0);
         self.allocator.alloc(AstNode {
-            inner: &self.inner.expression,
+            inner: &self.inner.type_name,
             allocator: self.allocator,
             parent: AstNodes::TSInterfaceHeritage(transmute_self(self)),
             following_span_start,

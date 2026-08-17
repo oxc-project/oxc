@@ -33,14 +33,16 @@ pub use self::{
     context::{JsFormatContext, TailwindContextEntry},
     formatter_js::{JsFormatter, JsFormatterExt},
 };
-use oxc_formatter_core::{Arguments, Buffer as _, Document, FormatState, Formatted, VecBuffer};
+use oxc_formatter_core::{
+    Arguments, Buffer as _, Document, FormatSession, FormatState, Formatted, VecBuffer,
+};
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
 ///
 /// The [`Arguments`] instance can be created with the [`format_args!`].
 pub fn format<'ast>(
     context: JsFormatContext<'ast>,
-    allocator: &'ast oxc_allocator::Allocator,
+    session: &FormatSession<'ast>,
     arguments: Arguments<'_, 'ast, JsFormatContext<'ast>>,
 ) -> Formatted<'ast, JsFormatContext<'ast>> {
     // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
@@ -48,7 +50,7 @@ pub fn format<'ast>(
     // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids reallocation for 95%+ of files.
     let capacity = (context.source_text().len() * 2) / 5;
 
-    let mut state = FormatState::new(context, allocator);
+    let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);
@@ -57,12 +59,9 @@ pub fn format<'ast>(
     let mut context = state.into_context();
 
     let tailwind_classes = context.take_tailwind_classes();
-    let sorted_tailwind_classes =
-        context.external_callbacks().sort_tailwind_classes(tailwind_classes);
+    let sorted_tailwind_classes = session.sort_tailwind_classes(tailwind_classes);
 
-    let document = Document::new(elements, sorted_tailwind_classes);
+    let ir = Document::new(elements, sorted_tailwind_classes);
 
-    document.propagate_expand();
-
-    Formatted::new(document, context)
+    Formatted::new(ir, context)
 }

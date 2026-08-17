@@ -36,8 +36,7 @@ fn main() -> std::io::Result<()> {
 
     if !ret.diagnostics.is_empty() {
         for error in ret.diagnostics {
-            let error = error.with_source_code(source_text.clone());
-            println!("{error:?}");
+            println!("{}", error.render_with_source_code(source_text.clone()));
         }
         return Ok(());
     }
@@ -62,8 +61,7 @@ fn main() -> std::io::Result<()> {
     if !id_ret.diagnostics.is_empty() {
         println!("Transformed dts failed:\n");
         for error in id_ret.diagnostics {
-            let error = error.with_source_code(source_text.clone());
-            println!("{error:?}");
+            println!("{}", error.render_with_source_code(source_text.clone()));
         }
     }
 

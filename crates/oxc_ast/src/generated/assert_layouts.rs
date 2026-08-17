@@ -412,13 +412,12 @@ const _: () = {
     assert!(size_of::<VariableDeclarationKind>() == 1);
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<VariableDeclarator>() == 56);
     assert!(align_of::<VariableDeclarator>() == 8);
     assert!(offset_of!(VariableDeclarator, span) == 0);
     assert!(offset_of!(VariableDeclarator, node_id) == 8);
-    assert!(offset_of!(VariableDeclarator, kind) == 12);
-    assert!(offset_of!(VariableDeclarator, definite) == 13);
+    assert!(offset_of!(VariableDeclarator, definite) == 12);
     assert!(offset_of!(VariableDeclarator, id) == 16);
     assert!(offset_of!(VariableDeclarator, type_annotation) == 32);
     assert!(offset_of!(VariableDeclarator, init) == 40);
@@ -736,13 +735,18 @@ const _: () = {
     assert!(offset_of!(Class, decorators) == 16);
     assert!(offset_of!(Class, id) == 40);
     assert!(offset_of!(Class, type_parameters) == 72);
-    assert!(offset_of!(Class, super_class) == 80);
-    assert!(offset_of!(Class, super_type_arguments) == 96);
+    assert!(offset_of!(Class, heritage) == 80);
     assert!(offset_of!(Class, implements) == 104);
     assert!(offset_of!(Class, body) == 128);
     assert!(offset_of!(Class, r#type) == 136);
     assert!(offset_of!(Class, r#abstract) == 137);
     assert!(offset_of!(Class, declare) == 138);
+
+    // Padding: 0 bytes
+    assert!(size_of::<ClassHeritage>() == 24);
+    assert!(align_of::<ClassHeritage>() == 8);
+    assert!(offset_of!(ClassHeritage, expression) == 0);
+    assert!(offset_of!(ClassHeritage, type_arguments) == 16);
 
     assert!(size_of::<ClassType>() == 1);
     assert!(align_of::<ClassType>() == 1);
@@ -1565,7 +1569,7 @@ const _: () = {
     assert!(align_of::<TSInterfaceHeritage>() == 8);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, node_id) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, expression) == 16);
+    assert!(offset_of!(TSInterfaceHeritage, type_name) == 16);
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 32);
 
     // Padding: 3 bytes
@@ -2250,13 +2254,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(size_of::<VariableDeclarationKind>() == 1);
     assert!(align_of::<VariableDeclarationKind>() == 1);
 
-    // Padding: 2 bytes
+    // Padding: 3 bytes
     assert!(size_of::<VariableDeclarator>() == 36);
     assert!(align_of::<VariableDeclarator>() == 4);
     assert!(offset_of!(VariableDeclarator, span) == 0);
     assert!(offset_of!(VariableDeclarator, node_id) == 8);
-    assert!(offset_of!(VariableDeclarator, kind) == 12);
-    assert!(offset_of!(VariableDeclarator, definite) == 13);
+    assert!(offset_of!(VariableDeclarator, definite) == 12);
     assert!(offset_of!(VariableDeclarator, id) == 16);
     assert!(offset_of!(VariableDeclarator, type_annotation) == 24);
     assert!(offset_of!(VariableDeclarator, init) == 28);
@@ -2574,13 +2577,18 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(Class, decorators) == 16);
     assert!(offset_of!(Class, id) == 32);
     assert!(offset_of!(Class, type_parameters) == 60);
-    assert!(offset_of!(Class, super_class) == 64);
-    assert!(offset_of!(Class, super_type_arguments) == 72);
+    assert!(offset_of!(Class, heritage) == 64);
     assert!(offset_of!(Class, implements) == 76);
     assert!(offset_of!(Class, body) == 92);
     assert!(offset_of!(Class, r#type) == 96);
     assert!(offset_of!(Class, r#abstract) == 97);
     assert!(offset_of!(Class, declare) == 98);
+
+    // Padding: 0 bytes
+    assert!(size_of::<ClassHeritage>() == 12);
+    assert!(align_of::<ClassHeritage>() == 4);
+    assert!(offset_of!(ClassHeritage, expression) == 0);
+    assert!(offset_of!(ClassHeritage, type_arguments) == 8);
 
     assert!(size_of::<ClassType>() == 1);
     assert!(align_of::<ClassType>() == 1);
@@ -3403,7 +3411,7 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<TSInterfaceHeritage>() == 4);
     assert!(offset_of!(TSInterfaceHeritage, span) == 0);
     assert!(offset_of!(TSInterfaceHeritage, node_id) == 8);
-    assert!(offset_of!(TSInterfaceHeritage, expression) == 12);
+    assert!(offset_of!(TSInterfaceHeritage, type_name) == 12);
     assert!(offset_of!(TSInterfaceHeritage, type_arguments) == 20);
 
     // Padding: 3 bytes

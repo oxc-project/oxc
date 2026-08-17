@@ -27,7 +27,7 @@ impl<'a> IsolatedDeclarations<'a> {
         } else {
             let declarations = ArenaVec::from_iter_in(
                 decl.declarations.iter().filter_map(|declarator| {
-                    self.transform_variable_declarator(declarator, check_binding)
+                    self.transform_variable_declarator(declarator, decl.kind, check_binding)
                 }),
                 self,
             );
@@ -46,6 +46,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn transform_variable_declarator(
         &self,
         decl: &VariableDeclarator<'a>,
+        kind: VariableDeclarationKind,
         check_binding: bool,
     ) -> Option<VariableDeclarator<'a>> {
         if decl.id.is_destructuring_pattern() {
@@ -69,16 +70,14 @@ impl<'a> IsolatedDeclarations<'a> {
         if decl.type_annotation.is_none() {
             if let Some(init_expr) = &decl.init {
                 // if kind is const and it doesn't need to infer type from expression
-                if decl.kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
+                if kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
                     if let Expression::TemplateLiteral(lit) = init_expr {
                         init =
                             self.transform_template_to_string(lit).map(Expression::StringLiteral);
                     } else {
                         init = Some(init_expr.clone_in(self.allocator()));
                     }
-                } else if !decl.kind.is_const()
-                    || !matches!(init_expr, Expression::TemplateLiteral(_))
-                {
+                } else if !kind.is_const() || !matches!(init_expr, Expression::TemplateLiteral(_)) {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);
                 }
@@ -101,15 +100,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let type_annotation =
             binding_type.map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
 
-        Some(VariableDeclarator::new(
-            decl.span,
-            decl.kind,
-            id,
-            type_annotation,
-            init,
-            decl.definite,
-            self,
-        ))
+        Some(VariableDeclarator::new(decl.span, id, type_annotation, init, decl.definite, self))
     }
 
     fn transform_ts_module_block(

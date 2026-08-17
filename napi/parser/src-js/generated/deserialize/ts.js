@@ -1365,7 +1365,7 @@ function deserializeVariableDeclarator(pos) {
       type: "VariableDeclarator",
       id: null,
       init: null,
-      definite: deserializeBool(pos + 13),
+      definite: deserializeBool(pos + 12),
       start: deserializeI32(pos),
       end: deserializeI32(pos + 4),
     },
@@ -1917,6 +1917,7 @@ function deserializeFormalParameters(pos) {
         end: (end = deserializeI32(pos + 44)),
       };
     rest.argument = deserializeBindingPattern(pos + 56);
+    rest.decorators = deserializeVecDecorator(pos + 16);
     rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 72);
     if (rest.typeAnnotation !== null) {
       end = rest.typeAnnotation.end;
@@ -2163,24 +2164,28 @@ function deserializeYieldExpression(pos) {
 
 function deserializeClass(pos) {
   let node = {
-    type: deserializeClassType(pos + 136),
-    decorators: null,
-    id: null,
-    typeParameters: null,
-    superClass: null,
-    superTypeArguments: null,
-    implements: null,
-    body: null,
-    abstract: deserializeBool(pos + 137),
-    declare: deserializeBool(pos + 138),
-    start: deserializeI32(pos),
-    end: deserializeI32(pos + 4),
-  };
+      type: deserializeClassType(pos + 136),
+      decorators: null,
+      id: null,
+      typeParameters: null,
+      superClass: null,
+      superTypeArguments: null,
+      implements: null,
+      body: null,
+      abstract: deserializeBool(pos + 137),
+      declare: deserializeBool(pos + 138),
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    superClass = deserializeOptionExpression(pos + 80);
   node.decorators = deserializeVecDecorator(pos + 16);
   node.id = deserializeOptionBindingIdentifier(pos + 40);
   node.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(pos + 72);
-  node.superClass = deserializeOptionExpression(pos + 80);
-  node.superTypeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 96);
+  node.superClass = superClass;
+  node.superTypeArguments =
+    superClass === null
+      ? null
+      : deserializeOptionBoxTSTypeParameterInstantiation(pos + 80 + (pos + 16 - pos));
   node.implements = deserializeVecTSClassImplements(pos + 104);
   node.body = deserializeBoxClassBody(pos + 128);
   return node;
@@ -4072,13 +4077,40 @@ function deserializeTSIndexSignatureName(pos) {
 
 function deserializeTSInterfaceHeritage(pos) {
   let node = {
-    type: "TSInterfaceHeritage",
-    expression: null,
-    typeArguments: null,
-    start: deserializeI32(pos),
-    end: deserializeI32(pos + 4),
-  };
-  node.expression = deserializeExpression(pos + 16);
+      type: "TSInterfaceHeritage",
+      expression: null,
+      typeArguments: null,
+      start: deserializeI32(pos),
+      end: deserializeI32(pos + 4),
+    },
+    expression = deserializeTSTypeName(pos + 16);
+  if (expression.type === "TSQualifiedName") {
+    let object = expression.left,
+      { right } = expression,
+      previous = (expression = {
+        type: "MemberExpression",
+        object,
+        property: right,
+        optional: false,
+        computed: false,
+        start: expression.start,
+        end: expression.end,
+      });
+    for (; object.type === "TSQualifiedName";) {
+      let { left, right } = object;
+      previous = previous.object = {
+        type: "MemberExpression",
+        object: left,
+        property: right,
+        optional: false,
+        computed: false,
+        start: object.start,
+        end: object.end,
+      };
+      object = left;
+    }
+  }
+  node.expression = expression;
   node.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(pos + 32);
   return node;
 }

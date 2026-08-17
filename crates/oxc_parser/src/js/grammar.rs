@@ -125,8 +125,8 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(AssignmentTargetRest::boxed(span, target, p));
-                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(span));
                         }
                     } else {
                         let error = diagnostics::spread_last_element(elem.span);
@@ -197,8 +197,8 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
                         ) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
-                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(span));
                         }
                         let target = AssignmentTarget::cover(argument, p);
                         rest = Some(AssignmentTargetRest::boxed(span, target, p));

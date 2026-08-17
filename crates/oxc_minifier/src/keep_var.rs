@@ -80,7 +80,7 @@ impl<'a> KeepVar<'a> {
                         )
                     },
                 );
-                VariableDeclarator::new(span, kind, id, None, None, false, builder)
+                VariableDeclarator::new(span, id, None, None, false, builder)
             }),
             builder,
         );

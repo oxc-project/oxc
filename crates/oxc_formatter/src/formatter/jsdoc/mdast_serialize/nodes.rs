@@ -749,9 +749,8 @@ fn serialize_code(
 /// - JS/TS code (fenced with a JS/TS lang tag, fenced with no lang tag, or indented blocks):
 ///   formatted in-process via [`format_jsdoc_js_snippet`] (`oxc_formatter`'s own parser/formatter).
 /// - Non-JS/TS fenced code (css, html, graphql, etc.):
-///   when external callbacks are wired,
-///   routed through `ExternalCallbacks::format_embedded` (the string channel).
-///   When callbacks are absent (Rust-only conformance / pure CLI build), preserved verbatim.
+///   when the session carries a string embedder, routed through it (the string channel);
+///   absent one (Rust-only conformance, or the language has no native branch), preserved verbatim.
 ///
 /// NOTE: `@example` fences diverge here, see `tag_formatters::format_example_fenced_block`.
 fn format_code_value<'a>(
@@ -760,27 +759,22 @@ fn format_code_value<'a>(
     width: usize,
     opts: &SerializeOptions<'_>,
 ) -> Cow<'a, str> {
-    if let (Some(format_options), Some(allocator)) = (opts.format_options, opts.allocator) {
-        // For fenced code with an explicit non-JS/TS lang, try external formatter (CSS, HTML, etc.)
-        if let Some(l) = lang
-            && !is_js_ts_lang(l)
+    // Fenced code with an explicit non-JS/TS lang: route through the session's string embedder
+    // (the host decides who serves the language); verbatim when absent or it fails.
+    if let Some(l) = lang
+        && !is_js_ts_lang(l)
+    {
+        if let Some(embed) = opts.session.string_embedder()
+            && let Ok(formatted) = embed(l, code, width)
         {
-            if let Some(external) = opts.external_callbacks
-                && let Some(Ok(formatted)) = external.format_embedded(l, code)
-            {
-                let mut result = formatted;
-                // Trim trailing newline that Prettier adds
-                if result.ends_with('\n') {
-                    result.pop();
-                }
-                return Cow::Owned(result);
-            }
-            return Cow::Borrowed(code);
-        }
-        // Fenced JS/TS, fenced with no lang, or indented code: try formatting
-        if let Some(formatted) = format_jsdoc_js_snippet(code, width, format_options, allocator) {
             return Cow::Owned(formatted);
         }
+        return Cow::Borrowed(code);
+    }
+    // Fenced JS/TS, fenced with no lang, or indented code: try formatting
+    if let Some(formatted) = format_jsdoc_js_snippet(code, width, opts.format_options, opts.session)
+    {
+        return Cow::Owned(formatted);
     }
     Cow::Borrowed(code)
 }

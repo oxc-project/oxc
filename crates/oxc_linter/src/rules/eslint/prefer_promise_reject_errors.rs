@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
-    ast_util::{could_be_error, is_method_call},
+    ast_util::{could_be_error, is_method_call, outermost_paren_parent},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -92,7 +92,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferPromiseRejectErrors {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -140,8 +140,9 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
     }
 
     if call_expr.arguments.is_empty()
-        || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(ctx, e))
-        || is_undefined(&call_expr.arguments[0])
+        || matches!(&call_expr.arguments[0], Argument::SpreadElement(_))
+        || call_expr.arguments[0].as_expression().is_some_and(|e| !could_be_error(e))
+        || is_undefined(&call_expr.arguments[0], ctx)
     {
         ctx.diagnostic(prefer_promise_reject_errors_diagnostic(call_expr.span));
     }
@@ -194,15 +195,21 @@ fn check_reject_in_function(
             continue;
         }
 
-        if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(parent.id()) {
+        let Some(parent) = outermost_paren_parent(parent, ctx) else { continue };
+
+        if let AstKind::CallExpression(call_expr) = parent.kind()
+            && call_expr.callee.span().contains_inclusive(member_expr.span)
+        {
             check_reject_call(call_expr, ctx, allow_empty_reject);
         }
     }
 }
 
-fn is_undefined(arg: &Argument) -> bool {
+fn is_undefined(arg: &Argument, ctx: &LintContext) -> bool {
     match arg.as_expression().map(Expression::get_inner_expression) {
-        Some(Expression::Identifier(ident)) => ident.name == "undefined",
+        Some(Expression::Identifier(ident)) => {
+            ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
+        }
         _ => false,
     }
 }
@@ -220,6 +227,7 @@ fn test() {
         ("Promise.reject(new Error())", None),
         ("Promise.reject(new TypeError)", None),
         ("Promise.reject(new Error('foo'))", None),
+        ("function foo(undefined) { Promise.reject(undefined); }", None),
         (
             "declare const error: Error | undefined; new Promise((_, reject) => { if (error) reject(error); });",
             None,
@@ -251,10 +259,9 @@ fn test() {
         ("new Promise(function (resolve, ...rest) { rest[0](new Error('')); });", None),
         ("new Promise(function (...rest) { rest[0](new Error('')); });", None),
         ("new Promise(function (...rest) { rest[1](new Error('')); });", None),
+        ("new Promise(function (...rest) { foo(5, (rest[1])); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
-        // TODO: This currently passes, as we only look at the immediate parent of the member expression
-        ("new Promise(function (...rest) { (rest[1])(5); });", None),
     ];
 
     let fail = vec![
@@ -313,8 +320,18 @@ fn test() {
         // evaluates either to a falsy value of `foo` (which, then, cannot be an Error object), or to `5`
         ("Promise.reject(foo && 5)", None),
         ("Promise.reject(foo &&= 5)", None),
+        // Spread arguments
+        ("Promise.reject(...args)", None),
+        (
+            "new Promise((resolve, reject) => {
+                somePromise.catch((...args) => reject(...args));
+            })",
+            None,
+        ),
         ("new Promise(function (resolve, ...rest) { rest[0](5); });", None),
         ("new Promise(function (...rest) { rest[1](5); });", None),
+        ("new Promise(function (...rest) { (rest[1])(5); });", None),
+        ("new Promise(function (...rest) { ((rest[1]))(5); });", None),
     ];
 
     Tester::new(PreferPromiseRejectErrors::NAME, PreferPromiseRejectErrors::PLUGIN, pass, fail)

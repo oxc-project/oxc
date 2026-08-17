@@ -137,7 +137,7 @@ impl Tables {
         // `of` is deliberately absent: it precedes a regex only in a for-of
         // head (never written — a RegExp isn't iterable), while `instance/of/g`
         // style division is real code. Matches es-module-lexer/SWC/RESS.
-        const RX: [&str; 16] = [
+        const RX: [&str; 18] = [
             "in",
             "do",
             "new",
@@ -147,11 +147,13 @@ impl Tables {
             "yield",
             "await",
             "throw",
+            "break",
             "return",
             "typeof",
             "delete",
             "default",
             "extends",
+            "continue",
             "debugger",
             "instanceof",
         ];

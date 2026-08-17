@@ -244,6 +244,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSClassImplements<'a>> {
     }
 }
 
+impl<'a> FormatWrite<'a> for AstNode<'a, ClassHeritage<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write!(f, [self.expression(), self.type_arguments()]);
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.r#type == ClassType::ClassExpression
@@ -270,7 +276,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let decorators = self.decorators();
         let type_parameters = self.type_parameters();
-        let super_class = self.super_class();
+        let heritage = self.heritage();
+        let super_class = heritage.map(AstNode::<ClassHeritage<'a>>::expression);
+        let super_type_arguments = heritage.and_then(AstNode::<ClassHeritage<'a>>::type_arguments);
         let implements = self.implements();
         let body = self.body();
 
@@ -339,7 +347,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
             if let Some(extends) = super_class {
                 // Format the extends clause with its expression and optional type arguments
                 let format_super = format_with(|f| {
-                    let type_arguments = self.super_type_arguments();
+                    let type_arguments = super_type_arguments;
 
                     // Collect comments after the extends expression (and type arguments if present)
                     // These comments need careful handling to preserve their association
@@ -481,14 +489,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
 /// 3. Implements is a qualified name and has no type arguments
 /// 4. There are comments in the heritage clause area
 /// 5. There are trailing line comments after type parameters
-fn should_group<'a>(class: &AstNode<Class<'a>>, f: &JsFormatter<'_, 'a>) -> bool {
-    if usize::from(class.super_class.is_some()) + class.implements.len() > 1 {
+fn should_group<'a>(class: &AstNode<'a, Class<'a>>, f: &JsFormatter<'_, 'a>) -> bool {
+    let heritage = class.heritage.as_ref();
+
+    if usize::from(heritage.is_some()) + class.implements.len() > 1 {
         return true;
     }
 
     if (!class.is_expression() || !matches!(class.parent(), AstNodes::AssignmentExpression(_)))
-        && class.super_class.as_ref().is_some_and(is_member_expression_without_chain_wrappers)
-        && class.super_type_arguments.is_none()
+        && heritage.is_some_and(|heritage| {
+            is_member_expression_without_chain_wrappers(&heritage.expression)
+        })
+        && heritage.is_none_or(|heritage| heritage.type_arguments.is_none())
         || class.implements.first().is_some_and(|implements| {
             implements.type_arguments.is_none() && implements.expression.is_qualified_name()
         })
@@ -500,8 +512,9 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &JsFormatter<'_, 'a>) -> bool
 
     let id_span = class.id.as_ref().map(GetSpan::span);
     let type_parameters_span = class.type_parameters.as_ref().map(|t| t.span);
-    let super_class_span = class.super_class.as_ref().map(GetSpan::span);
-    let super_type_arguments_span = class.super_type_arguments.as_ref().map(|t| t.span);
+    let super_class_span = heritage.map(|heritage| heritage.expression.span());
+    let super_type_arguments_span =
+        heritage.and_then(|heritage| heritage.type_arguments.as_deref()).map(GetSpan::span);
     let implements_span = class.implements.first().map(GetSpan::span);
 
     let spans = [

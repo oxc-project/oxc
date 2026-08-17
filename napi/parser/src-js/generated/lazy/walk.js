@@ -2465,8 +2465,6 @@ function walkClass(pos, ast, visitors) {
   walkVecDecorator(pos + 16, ast, visitors);
   walkOptionBindingIdentifier(pos + 40, ast, visitors);
   walkOptionBoxTSTypeParameterDeclaration(pos + 72, ast, visitors);
-  walkOptionExpression(pos + 80, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 96, ast, visitors);
   walkVecTSClassImplements(pos + 104, ast, visitors);
   walkBoxClassBody(pos + 128, ast, visitors);
 
@@ -4404,7 +4402,7 @@ function walkTSInterfaceHeritage(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkExpression(pos + 16, ast, visitors);
+  walkTSTypeName(pos + 16, ast, visitors);
   walkOptionBoxTSTypeParameterInstantiation(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);

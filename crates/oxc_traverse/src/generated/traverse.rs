@@ -1267,6 +1267,21 @@ pub trait Traverse<'a, State> {
     fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a, State>) {}
 
     #[inline]
+    fn enter_class_heritage(
+        &mut self,
+        node: &mut ClassHeritage<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_class_heritage(
+        &mut self,
+        node: &mut ClassHeritage<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a, State>) {}
     #[inline]
     fn exit_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a, State>) {}

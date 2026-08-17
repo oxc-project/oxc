@@ -120,7 +120,7 @@ declare_oxc_lint!(
 
 impl Rule for NoNamespace {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -142,7 +142,8 @@ impl Rule for NoNamespace {
 
         let keyword = declaration.kind.as_str();
         let mut span_start = declaration.span.start;
-        span_start += ctx.find_next_token_from(span_start, keyword).unwrap();
+        span_start +=
+            ctx.find_next_token_within(span_start, declaration.span.end, keyword).unwrap();
         #[expect(clippy::cast_possible_truncation)]
         let span = Span::sized(span_start, keyword.len() as u32);
         ctx.diagnostic(no_namespace_diagnostic(span));

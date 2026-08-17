@@ -18,8 +18,8 @@ impl GroupEntry {
     /// - Valid predefined name: `GroupEntry::Predefined(..)`
     /// - Anything else: `GroupEntry::Custom(..)`
     ///
-    /// NOTE: This does NOT validate whether custom group names are actually defined.
-    /// That validation should be done at the config layer.
+    /// NOTE: This does NOT validate whether custom group names are actually defined;
+    /// `SortImportsOptions::validate` checks the built option set for dangling names.
     pub fn parse(name: &str) -> Self {
         if name == "unknown" {
             return Self::Unknown;

@@ -164,7 +164,7 @@ fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
 
 impl Rule for NoUselessUndefined {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,10 +227,11 @@ impl Rule for NoUselessUndefined {
                     AstKind::VariableDeclarator(variable_declarator) => {
                         let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
-                        let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
+                        let AstKind::VariableDeclaration(declaration) = grand_parent_node_kind
+                        else {
                             return;
                         };
-                        if variable_declarator.kind == VariableDeclarationKind::Const {
+                        if declaration.kind == VariableDeclarationKind::Const {
                             return;
                         }
                         if is_has_function_return_type(parent_node, ctx) {
