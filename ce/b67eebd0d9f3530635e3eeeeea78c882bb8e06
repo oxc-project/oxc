@@ -1,0 +1,21 @@
+packages/codegen/sourcemap-baseline.json
+  s_6a85dfe90dd69f::t_6fa1fc4f7176ff 13,15-24,26-32,38,40-49,51-57,68,70-79,81-87,93,95-104,106-112,123,125-134,136-142,148,150-159,161-167,178,180-189,191-197,203,205-214,216-222,233,235-244,246-252,258,260-269,271-277,288,290-299,301-307,313,315-324,326-332,343,345-354,356-362,368,370-379,381-387,398,400-408,411-415,417,423,425-433,436-440,442
+packages/codegen/src-js/print/source_map.ts
+  s_6a85dfe90dd69f::t_3456368ceed51b 64-66,108-110,113,162-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ceb67eebd0d9f3530635e3eeeeea78c882bb8e06",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
