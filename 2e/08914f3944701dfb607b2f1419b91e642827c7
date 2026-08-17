@@ -1,0 +1,141 @@
+packages/codegen/test/utils/common.ts
+  s_6b5aa3ca33a1b5::t_6e8b1bc9ffb31e 9
+  s_6b5aa3ca33a1b5::t_475b81e1258c71 48-72
+  s_6b5aa3ca33a1b5::t_512c8c4a8d3056 132,135-136,142
+  s_6b5aa3ca33a1b5::t_fc0673ff41ae46 130-131
+packages/codegen/src-js/print/write.ts
+  s_6b5aa3ca33a1b5::t_5363962bb889ef 311,364,370-372,458
+  s_6b5aa3ca33a1b5::t_8098ac721aa6ab 472-475,479,482,486-487,494,498,521-528,568-569
+  s_6b5aa3ca33a1b5::t_c36bf94c5b4b41 354,357,364,370-372,387,390,397,403-405
+  s_6b5aa3ca33a1b5::t_e6797c4cc6e14c 459-460
+  s_292828c19fc15b::t_90466a523aaacc 355-372,378,388-405,414,416,418,429-440,462-468,534-545
+  s_6a85dfe90dd69f::t_2f8df7d7e87cd7 375-376,379-380,382,408-409,420,424,454-458
+packages/codegen/test/source-maps.test.ts
+  s_6b5aa3ca33a1b5::t_351f81db0b6af5 93
+  s_6b5aa3ca33a1b5::t_538c005bf2d75b 459
+  s_6b5aa3ca33a1b5::t_37aa5f76d05a39 77-78,85,239,405-406,507
+  s_6b5aa3ca33a1b5::t_f81ca1dbca9cad 131-133,135-143,214
+  s_6b5aa3ca33a1b5::t_d20d8672c70826 183,188,214,338-350,357,359-364
+  s_6b5aa3ca33a1b5::t_691a33d32e3269 3,19,124-129,144-151,164,180,197-200,202-213,253,263-295,297-298,300-315,317-318,321-322,390-392,395-396,404,499,501-502,504
+  s_6b5aa3ca33a1b5::t_6248522cd0d34e 171-172,174-183,336-357,359-364
+  s_0415f6eb50ea9e::t_80b1659a888e28 330,333-335,387
+  s_6b5aa3ca33a1b5::t_518c226a79508b 188-190,192-193,197-198
+  s_6b5aa3ca33a1b5::t_f5772ee86427d9 503,519-520,522
+  s_292828c19fc15b::t_42b880bfc1234b 154-170,184-198
+  s_6a85dfe90dd69f::t_7b70da198d20bf 94-98
+packages/codegen/README.md
+  s_6b5aa3ca33a1b5::t_774a10751d1963 82,85-88,94-99,113-114
+  s_6b5aa3ca33a1b5::t_f6d0486f5fab1c 89-93,101-104
+tasks/codegen_conformance/index.d.ts
+  s_6b5aa3ca33a1b5::t_6925ac241adfbc 23-24,70-79
+Cargo.lock
+  s_6b5aa3ca33a1b5::t_e570c7da252899 1923
+packages/codegen/DESIGN.md
+  s_6b5aa3ca33a1b5::t_5e0de2cfccfe26 302,511
+  s_0415f6eb50ea9e::t_204ec40dc05b25 507,512-514
+packages/codegen/bench.bench.ts
+  s_6b5aa3ca33a1b5::t_18499eeafe8173 3
+packages/codegen/src-js/index.ts
+  s_6b5aa3ca33a1b5::t_5397a1cd45857f 17,25,43,64,73
+  s_6b5aa3ca33a1b5::t_1993b8cf8be347 28
+packages/codegen/src-js/print/index.ts
+  s_6b5aa3ca33a1b5::t_edf351abcea10a 13,16,32,42-43
+  s_6b5aa3ca33a1b5::t_c599896cc24826 49
+packages/codegen/src-js/print/options.ts
+  s_6b5aa3ca33a1b5::t_ef492f76221389 1,3-9,12-15,50,52-55
+  s_6b5aa3ca33a1b5::t_4a76b4aad5b66e 46
+packages/codegen/src-js/print/source_map.ts
+  s_6b5aa3ca33a1b5::t_1a285a28068cb2 3-4,8,10,13-14,42,72-75,82,90,193,207,211,215-220,222,225,228-229,232-234,236-238,240-242,285,296-299,301,352,364
+  s_0415f6eb50ea9e::t_d1c1fc1e024f56 22,239,243-254,271-273,275,279,281-282
+  s_6b5aa3ca33a1b5::t_1883823a2c0d0d 23,25-26,243-254,271-273,275,279,281-282
+  s_6a85dfe90dd69f::t_6ace99be3dfa42 28-37,47-51,53-54,71,83,92-93,104-110,119,138-169,177-192,227,230,255-270,274,276-278,280,317-320,354-358
+  s_6a85dfe90dd69f::t_96444cd601a323 16-17,20-21,24,27,43-45,55-58,62-63,67,77-78,81,91,94-103,120,122-137,212-214,223-224,286-290,292,294-295,315-316,329-339,359
+  s_6a85dfe90dd69f::t_a904054763a890 6-7,38-41,84-87,194-206,208-210,221,235,283-284,291,293,300,302-311,353,360,363
+  s_6a85dfe90dd69f::t_9863852a4222b5 361-362
+packages/codegen/src-js/state.ts
+  s_6b5aa3ca33a1b5::t_d8c37dc13655db 145-146
+  s_6b5aa3ca33a1b5::t_849e2f53ff9fdd 14
+  s_6a85dfe90dd69f::t_92fb592836c663 83-86,147,150-151
+tasks/codegen_conformance/Cargo.toml
+  s_6b5aa3ca33a1b5::t_df7498d32333b1 29
+tasks/codegen_conformance/src/lib.rs
+  s_6b5aa3ca33a1b5::t_05023b583ded87 29,52-53,129,131
+packages/codegen/src-js/print/types.ts
+  s_6b5aa3ca33a1b5::t_8c301a0da689e9 120
+  s_6b5aa3ca33a1b5::t_1a62410d5c738b 113
+packages/codegen/sourcemap-baseline.json
+  s_292828c19fc15b::t_1030e4c3ed01eb 1-12,14,25,33-37,39,50,58-67,69,80,88-92,94,105,113-121,124,135,143-146,149,160,168-176,179,190,198-201,204,215,223-231,234,245,253-256,259,270,278-287,289,300,308-312,314,325,333-341,344,363-366,369,388-396,399,409-410,416,418-421,424,434-435,441,443-449
+  s_6a85dfe90dd69f::t_67018d16fac098 13,15-24,26-32,38,40-49,51-57,68,70-79,81-87,93,95-104,106-112,122-123,125-134,136-142,147-148,150-159,161-167,177-178,180-189,191-197,202-203,205-214,216-222,232-233,235-244,246-252,257-258,260-269,271-277,288,290-299,301-307,313,315-324,326-332,342-343,345-362,367-368,370-387,397-398,400-408,411-415,417,422-423,425-433,436-440,442
+pnpm-lock.yaml
+  s_6a85dfe90dd69f::t_c30a27f86afd1c 449-451
+packages/codegen/sourcemap.bench.ts
+  s_bb7b93f87b9e81::t_336341486f5bec 1-4,7-31,33-39,41-69,71-83,85-90,92-98,101-107,110-114
+  s_6a85dfe90dd69f::t_25716bac6866bb 40,70,91,99-100,108-109
+  s_31d85f49abbbeb::t_882f3527d65356 5-6,32,84
+packages/codegen/package.json
+  s_bb7b93f87b9e81::t_451178499084cb 39-40,53-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2e08914f3944701dfb607b2f1419b91e642827c7",
+  "prompts": {},
+  "sessions": {
+    "s_0415f6eb50ea9e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a006b7-f43a-7b41-be52-8324edc0f468",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_292828c19fc15b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ed2-3a98-7500-bb28-b6e2db64d5b1",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_31d85f49abbbeb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-518f-76e0-b05f-d7c0d5ef8546",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_bb7b93f87b9e81": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ed2-c84f-73a0-bdfa-54573d5eb75f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_e1c6fb4f73c11b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f51-6a3c-7ac3-aa0f-7208f196bf60",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

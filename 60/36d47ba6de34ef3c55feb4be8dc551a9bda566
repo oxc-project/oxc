@@ -1,0 +1,49 @@
+packages/codegen/src-js/print/assignment_target.ts
+  s_6a85dfe90dd69f::t_19b397e10fa571 5,100,162
+packages/codegen/src-js/print/binary.ts
+  s_6a85dfe90dd69f::t_f6bfd6666f42b5 4,184
+packages/codegen/src-js/print/binding_pattern.ts
+  s_6a85dfe90dd69f::t_3d7dd8ed4c26ca 9,124,197
+packages/codegen/src-js/print/class.ts
+  s_6a85dfe90dd69f::t_4338b1fef9140d 14,111,128,268,332,416
+packages/codegen/src-js/print/expression.ts
+  s_6a85dfe90dd69f::t_c088691de3783a 58,62,200,274,280,341,357,375,399,442,480,543,598,630,663,704,706,750,775,821,840,904,929,961,963,984
+packages/codegen/src-js/print/function.ts
+  s_6a85dfe90dd69f::t_5dc821b61d8ca6 12,74,83,89
+packages/codegen/src-js/print/literal.ts
+  s_6a85dfe90dd69f::t_9a8f78b7f03bfc 11,130,138,197
+packages/codegen/src-js/print/statement.ts
+  s_6a85dfe90dd69f::t_e415ddda41ac7e 13,256,437,525,615,687,689,714,748,753
+packages/codegen/src-js/print/typescript.ts
+  s_6a85dfe90dd69f::t_627af2f3e93026 12,69,160-161,185,199,202,240,362,402,478,499,695,728,736,823,888,941,1083,1190,1220
+packages/codegen/src-js/print/write.ts
+  s_9153bd2eba8a25::t_2d30b260c4c3bd 224-243,272,343-363
+packages/codegen/sourcemap-baseline.json
+  s_6a85dfe90dd69f::t_40fde572f7c1d8 13,15-24,26-32,38,40-49,51-57,68,70-79,81-87,93,95-104,106-112,123,125-134,136-142,148,150-159,161-167,178,180-189,191-197,203,205-214,216-222,233,235-244,246-252,258,260-269,271-277,288,290-299,301-307,313,315-324,326-332,343,345-354,356-362,368,370-387,398,400-417,423,425-433,436-440,442
+packages/codegen/tsdown_plugins/unmap_writes.ts
+  s_6a85dfe90dd69f::t_7d48250773ebac 21-22,35,163-169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6036d47ba6de34ef3c55feb4be8dc551a9bda566",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_9153bd2eba8a25": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f76-5d15-7632-80d7-d4f8c422bf86",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
