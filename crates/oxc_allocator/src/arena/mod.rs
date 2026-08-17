@@ -251,6 +251,17 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     pub const fn min_align(&self) -> usize {
         Self::MIN_ALIGN
     }
+
+    /// `true` if the current chunk was created as a fixed-size raw-transfer arena.
+    ///
+    /// Empty arenas (no chunks) are not fixed-size.
+    pub fn is_fixed_size(&self) -> bool {
+        match self.current_chunk_footer_ptr.get() {
+            // SAFETY: `current_chunk_footer_ptr` always points to a valid `ChunkFooter` when `Some`.
+            Some(footer_ptr) => unsafe { footer_ptr.as_ref().is_fixed_size },
+            None => false,
+        }
+    }
 }
 
 // SAFETY:
