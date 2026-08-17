@@ -40,13 +40,7 @@ impl<'a> PeepholeOptimizations {
 
             // `if (!a) {} else x;` => `if (a) x;`
             // `if (a)  {} else x;` => `if (!a) x;`
-            let new_test = match &mut if_stmt.test {
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                    unary_expr.argument.take_in(ctx)
-                }
-                _ => Self::minimize_not(if_stmt.test.span(), if_stmt.test.take_in(ctx), ctx),
-            };
-            ctx.replace_expression(&mut if_stmt.test, new_test);
+            Self::negate_expression_in_boolean_context(&mut if_stmt.test, ctx);
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
 

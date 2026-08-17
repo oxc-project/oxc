@@ -85,7 +85,7 @@ impl<'a> PeepholeOptimizations {
     /// Character delta from parentheses added or removed by De Morgan's law
     /// (flipping `&&` <-> `||` changes which nested operands need parens), or
     /// `None` if some operand cannot invert its operator in place.
-    fn de_morgan_paren_delta(e: &LogicalExpression<'a>) -> Option<i32> {
+    pub fn de_morgan_paren_delta(e: &LogicalExpression<'a>) -> Option<i32> {
         if !matches!(e.operator, LogicalOperator::And | LogicalOperator::Or) {
             return None;
         }
@@ -111,7 +111,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Apply De Morgan's law in place. Only called on chains approved by
     /// [`Self::de_morgan_paren_delta`].
-    fn de_morgan_invert_logical(e: &mut LogicalExpression<'a>) {
+    pub fn de_morgan_invert_logical(e: &mut LogicalExpression<'a>) {
         e.operator = if e.operator == LogicalOperator::And {
             LogicalOperator::Or
         } else {

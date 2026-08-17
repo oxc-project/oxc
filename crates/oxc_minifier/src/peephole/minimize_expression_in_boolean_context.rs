@@ -8,6 +8,64 @@ use crate::TraverseCtx;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    /// Negate and simplify expression when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
+    pub fn negate_expression_in_boolean_context(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !Self::try_negate_expression_in_boolean_context(expr, ctx) {
+            let new_expr = Expression::new_unary_expression(
+                expr.span(),
+                UnaryOperator::LogicalNot,
+                expr.take_in(ctx),
+                ctx,
+            );
+            ctx.replace_expression(expr, new_expr);
+        }
+    }
+
+    fn try_negate_expression_in_boolean_context(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        match expr {
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                let mut e = unary_expr.argument.take_in(ctx);
+                Self::minimize_expression_in_boolean_context(&mut e, ctx);
+                ctx.replace_expression(expr, e);
+                true
+            }
+            // `!(a == b)` => `a != b`
+            // `!(a != b)` => `a == b`
+            // `!(a === b)` => `a !== b`
+            // `!(a !== b)` => `a === b`
+            Expression::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
+                binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
+                Self::minimize_expression_in_boolean_context(expr, ctx);
+                true
+            }
+            // De Morgan's law for logical expressions
+            // `!(a == b || c == d)` => `a != b && c != d`
+            // `!(a == b && c == d)` => `a != b || c != d`
+            Expression::LogicalExpression(logical_expr)
+                if Self::de_morgan_paren_delta(logical_expr).is_some_and(|delta| delta <= 0) =>
+            {
+                Self::de_morgan_invert_logical(logical_expr);
+                Self::minimize_expression_in_boolean_context(expr, ctx);
+                true
+            }
+            // "!(a, b)" => "a, !b"
+            Expression::SequenceExpression(sequence_expr) => {
+                if let Some(last_expr) = sequence_expr.expressions.last_mut() {
+                    Self::negate_expression_in_boolean_context(last_expr, ctx);
+                    return true;
+                }
+                false
+            }
+            _ => false,
+        }
+    }
+
     /// Simplify syntax when we know it's used inside a boolean context, e.g. `if (boolean_context) {}`.
     ///
     /// `SimplifyBooleanExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2059>
@@ -16,14 +74,21 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         match expr {
-            // "!!a" => "a"
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
+                // "!!a" => "a"
                 if let Expression::UnaryExpression(u2) = &mut u1.argument
                     && u2.operator.is_not()
                 {
                     let mut e = u2.argument.take_in(ctx);
                     Self::minimize_expression_in_boolean_context(&mut e, ctx);
                     ctx.replace_expression(expr, e);
+                } else {
+                    if Self::try_negate_expression_in_boolean_context(&mut u1.argument, ctx) {
+                        let e = u1.argument.take_in(ctx);
+                        ctx.replace_expression(expr, e);
+                    } else {
+                        Self::minimize_expression_in_boolean_context(&mut u1.argument, ctx);
+                    }
                 }
             }
             Expression::BinaryExpression(e)
@@ -60,7 +125,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             // "if (!!a ||!!b)" => "if (a || b)"
-            Expression::LogicalExpression(e) if e.operator == LogicalOperator::Or => {
+            Expression::LogicalExpression(e) if e.operator.is_or() => {
                 Self::minimize_expression_in_boolean_context(&mut e.left, ctx);
                 Self::minimize_expression_in_boolean_context(&mut e.right, ctx);
                 // "if (anything || falsyNoSideEffects)" => "if (anything)"
@@ -75,30 +140,32 @@ impl<'a> PeepholeOptimizations {
                 Self::minimize_expression_in_boolean_context(&mut e.alternate, ctx);
                 if let Some(boolean) = e.consequent.get_side_free_boolean_value(ctx) {
                     let right = e.alternate.take_in(ctx);
-                    let left = e.test.take_in(ctx);
                     let span = e.span;
-                    let (op, left) = if boolean {
+                    let op = if boolean {
                         // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
-                        (LogicalOperator::Or, left)
+                        LogicalOperator::Or
                     } else {
                         // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
-                        (LogicalOperator::And, Self::minimize_not(left.span(), left, ctx))
+                        Self::negate_expression_in_boolean_context(&mut e.test, ctx);
+                        LogicalOperator::And
                     };
+                    let left = e.test.take_in(ctx);
                     let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
                     ctx.replace_expression(expr, new_expr);
                     return;
                 }
                 if let Some(boolean) = e.alternate.get_side_free_boolean_value(ctx) {
-                    let left = e.test.take_in(ctx);
                     let right = e.consequent.take_in(ctx);
                     let span = e.span;
-                    let (op, left) = if boolean {
+                    let op = if boolean {
                         // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
-                        (LogicalOperator::Or, Self::minimize_not(left.span(), left, ctx))
+                        Self::negate_expression_in_boolean_context(&mut e.test, ctx);
+                        LogicalOperator::Or
                     } else {
                         // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
-                        (LogicalOperator::And, left)
+                        LogicalOperator::And
                     };
+                    let left = e.test.take_in(ctx);
                     let new_expr = Self::join_with_left_associative_op(span, op, left, right, ctx);
                     ctx.replace_expression(expr, new_expr);
                 }

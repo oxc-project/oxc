@@ -859,9 +859,8 @@ impl<'a> PeepholeOptimizations {
                         } else {
                             body[0].span()
                         };
-                        let test = if_stmt.unbox().test;
-                        let mut test = Self::minimize_not(test.span(), test, ctx);
-                        Self::minimize_expression_in_boolean_context(&mut test, ctx);
+                        let mut test = if_stmt.unbox().test;
+                        Self::negate_expression_in_boolean_context(&mut test, ctx);
                         let consequent = if body.len() == 1 {
                             body.remove(0)
                         } else {
