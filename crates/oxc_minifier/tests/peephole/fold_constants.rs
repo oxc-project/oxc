@@ -671,7 +671,7 @@ fn test_fold_nullish_coalesce() {
     fold("a() ?? (1 ?? b())", "a() ?? 1");
     fold("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
 
-    test_same("var y; x = (y ?? 1)()"); // can compress to "var y; x = y()" if y is not null or undefined
+    test_same("v = function(y) { x = (y ?? 1)() }");
     test_same("var y; x = (y.z ?? 1)()"); // "var y; x = (0, y.z)()" if y is not null or undefined
     test("var y; x = (null ?? y)()", "var y; x = y()");
     test("var y; x = (null ?? y.z)()", "var y; x = (0, y.z)()");
@@ -1279,7 +1279,7 @@ fn test_fold_instance_of() {
 
     // An unknown value should never be folded.
     fold_same("x instanceof Foo");
-    test_same("var x; foo(x instanceof Object)");
+    test_same("v = function(x) { foo(x instanceof Object) }");
     fold_same("x instanceof Object");
     fold_same("0 instanceof Foo");
 }
