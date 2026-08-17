@@ -882,20 +882,6 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_expression_handle_tagged_template_where_cooked_value_different_from_raw_value<
-    L,
-    T,
->(
-    labels: T,
-) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(ErrorCategory::Todo, "(BuildHIR::lowerExpression) Handle tagged template where cooked value is different from raw value").with_labels(labels)
-}
-
-#[cold]
 pub fn todo_build_hir_lower_expression_handle_yield_expression_expressions<L, T>(
     labels: T,
 ) -> OxcDiagnostic
