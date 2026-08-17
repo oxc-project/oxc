@@ -1,15 +1,17 @@
 use std::{iter, ops::ControlFlow};
 
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
+use oxc_allocator::{ArenaBox, ArenaHashMap, ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitJs, walk_js};
+use oxc_compat::ESFeature;
 use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
@@ -334,6 +336,245 @@ impl<'a> PeepholeOptimizations {
             current = &c.alternate;
         }
         false
+    }
+
+    /// Check whether an import can be merged with a local named export.
+    fn can_merge_import_export(
+        import_decl: &ImportDeclaration<'a>,
+        export_decl: &ExportNamedDeclaration<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let Some(import_specifiers) = import_decl.specifiers.as_ref() else { return false };
+        let is_namespace_import = matches!(
+            import_specifiers.as_slice(),
+            [ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)]
+        );
+
+        if import_decl.phase.is_some()
+            || import_decl.import_kind.is_type()
+            || export_decl.export_kind.is_type()
+            || import_specifiers.is_empty()
+            || import_specifiers.len() > export_decl.specifiers.len()
+            || (is_namespace_import && !ctx.supports_feature(ESFeature::ES2020ExportNamespaceFrom))
+            || (is_namespace_import && export_decl.specifiers.len() != 1)
+            || ctx.scoping().root_scope_flags().contains_direct_eval()
+            || (!is_namespace_import
+                && !import_specifiers.iter().all(|specifier| match specifier {
+                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                        !specifier.import_kind.is_type()
+                    }
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(_) => true,
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => false,
+                }))
+        {
+            return false;
+        }
+
+        // Every local export must refer to one of the imported bindings, and
+        // every imported binding must be used exactly by this export.
+        for import_specifier in import_specifiers {
+            let symbol_id = import_specifier.symbol_id();
+            let export_count = export_decl
+                .specifiers
+                .iter()
+                .filter(|export_specifier| {
+                    let ModuleExportName::IdentifierReference(id) = &export_specifier.local else {
+                        return false;
+                    };
+                    ctx.scoping().get_reference(id.reference_id()).symbol_id() == Some(symbol_id)
+                })
+                .count();
+            if export_count == 0
+                || ctx.scoping().get_resolved_reference_ids(symbol_id).len() != export_count
+            {
+                return false;
+            }
+        }
+
+        export_decl.specifiers.iter().all(|export_specifier| {
+            if export_specifier.export_kind.is_type() {
+                return false;
+            }
+            let ModuleExportName::IdentifierReference(id) = &export_specifier.local else {
+                return false;
+            };
+            let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id() else {
+                return false;
+            };
+            import_specifiers
+                .iter()
+                .any(|import_specifier| import_specifier.symbol_id() == symbol_id)
+        })
+    }
+
+    /// Merge an import and a local named export into a direct
+    /// re-export.
+    ///
+    /// ```js
+    /// import { foo as bar } from "module";
+    /// export { bar as baz };
+    /// // becomes
+    /// export { foo as baz } from "module";
+    ///
+    /// import * as namespace from "module";
+    /// export { namespace };
+    /// // becomes
+    /// export * as namespace from "module";
+    ///
+    /// import defaultExport from "module";
+    /// export { defaultExport };
+    /// // becomes
+    /// export { default as defaultExport } from "module";
+    /// ```
+    ///
+    /// The import declaration can only be removed when all of its bindings are
+    /// represented by the export and have no other references. This also keeps
+    /// direct `eval` from observing a binding that is removed here.
+    pub fn merge_import_export(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        let mut import_export_cache: ArenaHashMap<'a, SymbolId, usize> =
+            ArenaHashMap::new_in(ctx.allocator());
+        let mut merges = ArenaVec::new_in(ctx);
+
+        // Collect the candidates
+        for (statement_index, stmt) in stmts.iter().enumerate() {
+            match stmt {
+                Statement::ImportDeclaration(import_decl) => {
+                    if let Some(specifiers) = import_decl.specifiers.as_ref() {
+                        import_export_cache.extend(
+                            specifiers
+                                .iter()
+                                .map(|specifier| (specifier.symbol_id(), statement_index)),
+                        );
+                    }
+                }
+                Statement::ExportNamedDeclaration(export_decl) => {
+                    let Some(import_index) = export_decl.specifiers.iter().find_map(|spec| {
+                        let ModuleExportName::IdentifierReference(id) = &spec.local else {
+                            return None;
+                        };
+                        let Some(symbol_id) =
+                            ctx.scoping().get_reference(id.reference_id()).symbol_id()
+                        else {
+                            return None;
+                        };
+                        import_export_cache.get(&symbol_id).copied()
+                    }) else {
+                        continue;
+                    };
+                    let Some(Statement::ImportDeclaration(import_decl)) = stmts.get(import_index)
+                    else {
+                        continue;
+                    };
+                    if !Self::can_merge_import_export(import_decl, export_decl, ctx) {
+                        continue;
+                    }
+
+                    merges.push((import_index, statement_index));
+                    if let Some(specifiers) = import_decl.specifiers.as_ref() {
+                        for specifier in specifiers {
+                            let symbol_id = specifier.symbol_id();
+                            if import_export_cache.get(&symbol_id) == Some(&import_index) {
+                                import_export_cache.remove(&symbol_id);
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        // Apply in reverse order so removing an export does not shift the
+        // indices of any merge that is still waiting to be applied.
+        for &(import_index, export_index) in merges.iter().rev() {
+            // The old export contains references to the local import binding.
+            // Mark those references before replacing them with the imported
+            // module name.
+            let old_export = std::mem::replace(
+                stmts.get_mut(export_index).unwrap(),
+                Statement::new_empty_statement(SPAN, ctx),
+            );
+            ctx.drop_statement(&old_export);
+            let Statement::ExportNamedDeclaration(mut export_decl) = old_export else {
+                unreachable!();
+            };
+
+            let old_import = std::mem::replace(
+                stmts.get_mut(import_index).unwrap(),
+                Statement::new_empty_statement(SPAN, ctx),
+            );
+            ctx.drop_statement(&old_import);
+            let Statement::ImportDeclaration(import_decl) = old_import else {
+                unreachable!();
+            };
+            let ImportDeclaration {
+                specifiers: Some(mut import_specifiers),
+                source,
+                with_clause,
+                ..
+            } = import_decl.unbox()
+            else {
+                unreachable!();
+            };
+
+            let is_namespace_import = matches!(
+                import_specifiers.as_slice(),
+                [ImportDeclarationSpecifier::ImportNamespaceSpecifier(_)]
+            );
+            if is_namespace_import {
+                let exported =
+                    export_decl.specifiers.first().unwrap().exported.clone_in(ctx.allocator());
+                ctx.replace_statement(
+                    stmts.get_mut(import_index).unwrap(),
+                    Statement::new_export_all_declaration(
+                        export_decl.span,
+                        Some(exported),
+                        source,
+                        with_clause,
+                        export_decl.export_kind,
+                        ctx,
+                    ),
+                );
+                stmts.remove(export_index);
+                continue;
+            }
+
+            for export_specifier in &mut export_decl.specifiers {
+                let ModuleExportName::IdentifierReference(id) = &export_specifier.local else {
+                    unreachable!();
+                };
+                let symbol_id = ctx.scoping().get_reference(id.reference_id()).symbol_id().unwrap();
+                let import_specifier = import_specifiers
+                    .iter_mut()
+                    .find(|import_specifier| import_specifier.symbol_id() == symbol_id)
+                    .unwrap();
+                export_specifier.local = match import_specifier {
+                    ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+                        import_specifier.imported.clone_in(ctx.allocator())
+                    }
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(import_default) => {
+                        ModuleExportName::IdentifierName(IdentifierName::new(
+                            import_default.span,
+                            "default",
+                            ctx,
+                        ))
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => unreachable!(),
+                };
+            }
+
+            ctx.replace_statement(
+                stmts.get_mut(import_index).unwrap(),
+                Statement::new_export_from_declaration(
+                    export_decl.span,
+                    export_decl.specifiers.take_in(ctx),
+                    source,
+                    export_decl.export_kind,
+                    with_clause,
+                    ctx,
+                ),
+            );
+            stmts.remove(export_index);
+        }
     }
 
     fn minimize_statement(

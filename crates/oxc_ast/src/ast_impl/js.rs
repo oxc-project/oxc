@@ -2024,6 +2024,11 @@ impl<'a> ImportDeclarationSpecifier<'a> {
         }
     }
 
+    /// Returns the symbol ID of the bound local identifier.
+    pub fn symbol_id(&self) -> SymbolId {
+        self.local().symbol_id()
+    }
+
     /// Returns the name of the bound local identifier for this import declaration specifier.
     ///
     /// ## Example

@@ -8,6 +8,7 @@ mod inline;
 mod inline_single_use_variable;
 mod manual_pure_functions;
 mod merge_assignments_to_declarations;
+mod merge_import_export;
 mod minimize_conditional_expression;
 mod minimize_conditions;
 mod minimize_exit_points;
