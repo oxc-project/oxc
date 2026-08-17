@@ -24,6 +24,10 @@ A-editor:
       - any-glob-to-any-file:
           ["crates/oxc_language_server/**", "apps/oxlint/src/lsp/**", "apps/oxfmt/src/lsp/**"]
 
+A-ecmascript:
+  - changed-files:
+      - any-glob-to-any-file: ["crates/oxc_ecmascript/**"]
+
 A-formatter:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_formatter*/**", "apps/oxfmt/**"]
