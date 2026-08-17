@@ -2751,7 +2751,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 871usize] = [
+const RULE_NAME_STRINGS: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3624,6 +3624,44 @@ static RULE_NAMES: [&str; 871usize] = [
     VueValidDefineProps::NAME,
     VueValidNextTick::NAME,
 ];
+const fn rule_name_blob_len(names: &[&str; 871usize]) -> usize {
+    let mut len = 0;
+    let mut index = 0;
+    while index < names.len() {
+        len += names[index].len();
+        index += 1;
+    }
+    len
+}
+const RULE_NAME_BLOB_LEN: usize = rule_name_blob_len(&RULE_NAME_STRINGS);
+struct RuleNames {
+    blob: [u8; RULE_NAME_BLOB_LEN],
+    offsets: [u16; 872usize],
+}
+#[expect(
+    clippy::large_stack_arrays,
+    clippy::cast_possible_truncation,
+    reason = "evaluated at compile time and the u16 range is asserted"
+)]
+const fn build_rule_names(names: &[&str; 871usize]) -> RuleNames {
+    assert!(RULE_NAME_BLOB_LEN <= u16::MAX as usize, "rule names exceed u16 offset range");
+    let mut rule_names = RuleNames { blob: [0; RULE_NAME_BLOB_LEN], offsets: [0; 872usize] };
+    let mut name_index = 0;
+    let mut offset = 0;
+    while name_index < names.len() {
+        let name = names[name_index].as_bytes();
+        let mut byte_index = 0;
+        while byte_index < name.len() {
+            rule_names.blob[offset] = name[byte_index];
+            byte_index += 1;
+            offset += 1;
+        }
+        name_index += 1;
+        rule_names.offsets[name_index] = offset as u16;
+    }
+    rule_names
+}
+static RULE_NAMES: RuleNames = build_rule_names(&RULE_NAME_STRINGS);
 impl RuleEnum {
     pub fn id(&self) -> usize {
         match self {
@@ -4630,8 +4668,16 @@ impl RuleEnum {
             Self::VueValidNextTick(_) => VUE_VALID_NEXT_TICK_ID,
         }
     }
+    #[expect(
+        clippy::undocumented_unsafe_blocks,
+        reason = "the generated blob concatenates valid UTF-8 rule names"
+    )]
     pub fn name(&self) -> &'static str {
-        RULE_NAMES[self.id()]
+        let id = self.id();
+        let start = usize::from(RULE_NAMES.offsets[id]);
+        let end = usize::from(RULE_NAMES.offsets[id + 1]);
+        let name = &RULE_NAMES.blob[start..end];
+        unsafe { std::str::from_utf8_unchecked(name) }
     }
     pub fn category(&self) -> RuleCategory {
         match self {

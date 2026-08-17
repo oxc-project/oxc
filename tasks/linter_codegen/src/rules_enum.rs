@@ -157,6 +157,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
     let rule_count = rule_entries.len();
+    let rule_name_offset_count = rule_count + 1;
 
     let category_arms: Vec<TokenStream> = rule_entries
         .iter()
@@ -300,7 +301,52 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
     // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
 
     quote! {
-        static RULE_NAMES: [&str; #rule_count] = [#(#rule_names),*];
+        const RULE_NAME_STRINGS: [&str; #rule_count] = [#(#rule_names),*];
+
+        const fn rule_name_blob_len(names: &[&str; #rule_count]) -> usize {
+            let mut len = 0;
+            let mut index = 0;
+            while index < names.len() {
+                len += names[index].len();
+                index += 1;
+            }
+            len
+        }
+        const RULE_NAME_BLOB_LEN: usize = rule_name_blob_len(&RULE_NAME_STRINGS);
+
+        struct RuleNames {
+            blob: [u8; RULE_NAME_BLOB_LEN],
+            offsets: [u16; #rule_name_offset_count],
+        }
+
+        #[expect(
+            clippy::large_stack_arrays,
+            clippy::cast_possible_truncation,
+            reason = "evaluated at compile time and the u16 range is asserted"
+        )]
+        const fn build_rule_names(names: &[&str; #rule_count]) -> RuleNames {
+            assert!(RULE_NAME_BLOB_LEN <= u16::MAX as usize, "rule names exceed u16 offset range");
+            let mut rule_names = RuleNames {
+                blob: [0; RULE_NAME_BLOB_LEN],
+                offsets: [0; #rule_name_offset_count],
+            };
+            let mut name_index = 0;
+            let mut offset = 0;
+            while name_index < names.len() {
+                let name = names[name_index].as_bytes();
+                let mut byte_index = 0;
+                while byte_index < name.len() {
+                    rule_names.blob[offset] = name[byte_index];
+                    byte_index += 1;
+                    offset += 1;
+                }
+                name_index += 1;
+                rule_names.offsets[name_index] = offset as u16;
+            }
+            rule_names
+        }
+
+        static RULE_NAMES: RuleNames = build_rule_names(&RULE_NAME_STRINGS);
 
         impl RuleEnum {
             pub fn id(&self) -> usize {
@@ -309,8 +355,18 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 }
             }
 
+            #[expect(
+                clippy::undocumented_unsafe_blocks,
+                reason = "the generated blob concatenates valid UTF-8 rule names"
+            )]
             pub fn name(&self) -> &'static str {
-                RULE_NAMES[self.id()]
+                let id = self.id();
+                let start = usize::from(RULE_NAMES.offsets[id]);
+                let end = usize::from(RULE_NAMES.offsets[id + 1]);
+                let name = &RULE_NAMES.blob[start..end];
+                // SAFETY: `RULE_NAMES.blob` is the concatenation of valid UTF-8 strings and
+                // `RULE_NAMES.offsets` only contains their boundaries.
+                unsafe { std::str::from_utf8_unchecked(name) }
             }
 
             pub fn category(&self) -> RuleCategory {
