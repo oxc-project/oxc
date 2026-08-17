@@ -398,6 +398,7 @@ fn run_pipeline<'a>(
         memo_values: codegen_result.memo_values,
         pruned_memo_blocks: codegen_result.pruned_memo_blocks,
         pruned_memo_values: codegen_result.pruned_memo_values,
+        dynamic_import_spans: codegen_result.dynamic_import_spans,
         outlined: codegen_result.outlined,
     })))
 }

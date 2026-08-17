@@ -821,16 +821,6 @@ where
 }
 
 #[cold]
-pub fn todo_build_hir_lower_expression_handle_import_expressions<L, T>(labels: T) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(ErrorCategory::Todo, "(BuildHIR::lowerExpression) Handle Import expressions")
-        .with_labels(labels)
-}
-
-#[cold]
 pub fn todo_build_hir_lower_expression_handle_private_name_expressions<L, T>(
     labels: T,
 ) -> OxcDiagnostic

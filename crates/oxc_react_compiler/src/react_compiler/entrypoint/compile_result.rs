@@ -43,6 +43,8 @@ pub struct CodegenFunction<'a> {
     pub memo_values: u32,
     pub pruned_memo_blocks: u32,
     pub pruned_memo_values: u32,
+    /// Spans of dynamic imports emitted directly by this function.
+    pub dynamic_import_spans: Vec<Span>,
     pub outlined: Vec<OutlinedFunction<'a>>,
 }
 

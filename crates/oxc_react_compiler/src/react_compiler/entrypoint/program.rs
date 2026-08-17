@@ -2233,6 +2233,13 @@ struct OxcReplacement<'a> {
     gating: Option<GatingConfig>,
 }
 
+fn collect_dynamic_import_spans(codegen_fn: &CodegenFunction<'_>, spans: &mut Vec<Span>) {
+    spans.extend_from_slice(&codegen_fn.dynamic_import_spans);
+    for outlined in &codegen_fn.outlined {
+        collect_dynamic_import_spans(&outlined.func, spans);
+    }
+}
+
 /// The owned output of a [`compile`](crate::compile) that produced changes:
 /// everything the transform phase needs, carrying only the arena lifetime — no
 /// borrows of the input `Program` or `Semantic` — so the caller can drop its
@@ -2240,6 +2247,7 @@ struct OxcReplacement<'a> {
 pub struct CompileOutput<'a> {
     replacements: Vec<OxcReplacement<'a>>,
     context: ProgramContext<'a>,
+    dynamic_import_spans: Vec<Span>,
 }
 
 impl<'a> CompileOutput<'a> {
@@ -2251,23 +2259,35 @@ impl<'a> CompileOutput<'a> {
     /// `program` must be the same, unmodified program [`compile`](crate::compile)
     /// saw. Afterwards any previously computed `Semantic`/`Scoping` is stale.
     pub fn transform(self, program: &mut Program<'a>) {
-        let CompileOutput { replacements, mut context } = self;
+        let CompileOutput { replacements, mut context, dynamic_import_spans } = self;
         let ast = AstBuilder::new(context.allocator());
         ox_transform_program(&ast, program, &replacements, &mut context);
         // Diagnostics were extracted at the end of compilation; nothing in the
         // transform phase may add more.
         debug_assert!(context.diagnostics.is_empty());
-        prune_inner_comments(program);
+        prune_inner_comments(program, dynamic_import_spans);
     }
 }
 
-/// Drop comments left dangling by compilation.
-///
-/// Rewritten functions may no longer contain the statements comments were attached to.
-fn prune_inner_comments(program: &mut Program<'_>) {
+/// Drop comments left dangling by compilation while retaining comments inside
+/// rebuilt dynamic imports. Bundlers use those comments for directives such as
+/// chunk names and ignored runtime URLs.
+fn prune_inner_comments(program: &mut Program<'_>, mut import_spans: Vec<Span>) {
     if program.comments.is_empty() {
         return;
     }
+    import_spans.sort_unstable_by_key(|span| span.start);
+    let mut merged_import_spans: Vec<Span> = Vec::with_capacity(import_spans.len());
+    for span in import_spans {
+        if let Some(previous) = merged_import_spans.last_mut()
+            && span.start <= previous.end
+        {
+            previous.end = previous.end.max(span.end);
+        } else {
+            merged_import_spans.push(span);
+        }
+    }
+
     let mut top_level_starts = FxHashSet::default();
     top_level_starts.insert(0u32);
     for stmt in &program.body {
@@ -2276,7 +2296,13 @@ fn prune_inner_comments(program: &mut Program<'_>) {
             top_level_starts.insert(start);
         }
     }
-    program.comments.retain(|comment| top_level_starts.contains(&comment.attached_to));
+    program.comments.retain(|comment| {
+        if top_level_starts.contains(&comment.attached_to) {
+            return true;
+        }
+        let index = merged_import_spans.partition_point(|span| span.start <= comment.span.start);
+        index > 0 && comment.span.end <= merged_import_spans[index - 1].end
+    });
 }
 
 /// Copy the TS metadata (type annotation, decorators, optional/modifier flags)
@@ -3263,9 +3289,11 @@ pub fn compile_program<'a>(
     // (`use memo if(identifier)`) takes precedence over plugin-level gating; gating
     // only applies to 'original' (not 'outlined') functions. Mirrors the Babel path.
     let function_gating_config = options.gating.clone();
+    let mut dynamic_import_spans = Vec::new();
     let replacements: Vec<OxcReplacement<'a>> = compiled_fns
         .into_iter()
         .map(|cf| {
+            collect_dynamic_import_spans(&cf.codegen_fn, &mut dynamic_import_spans);
             let gating = if cf.kind == CompileSourceKind::Original {
                 let dynamic_gating =
                     find_directives_dynamic_gating(&cf.source.body_directives, &options)
@@ -3297,7 +3325,7 @@ pub fn compile_program<'a>(
     let output = if replacements.is_empty() {
         None
     } else {
-        Some(Box::new(CompileOutput { replacements, context }))
+        Some(Box::new(CompileOutput { replacements, context, dynamic_import_spans }))
     };
     CompileResult::Success { output, diagnostics }
 }
