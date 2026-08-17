@@ -1,0 +1,25 @@
+apps/oxlint/test/fixtures/eslintCompat_error_in_after/eslint.snap.md
+  s_6a85dfe90dd69f::t_a20d94d1e16364 32
+apps/oxlint/test/fixtures/eslintCompat_error_in_before/eslint.snap.md
+  s_6a85dfe90dd69f::t_b1c39230b276e8 20
+apps/oxlint/test/fixtures/eslintCompat_error_in_onCodePathEnd/eslint.snap.md
+  s_6a85dfe90dd69f::t_e42d0f6cc03146 31
+apps/oxlint/test/fixtures/eslintCompat_error_in_visit/eslint.snap.md
+  s_6a85dfe90dd69f::t_564feddbf53bcb 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8a72bc36e698d56e1fcfde1189f747c1015c54be",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
