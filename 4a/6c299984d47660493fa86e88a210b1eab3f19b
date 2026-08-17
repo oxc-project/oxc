@@ -1,0 +1,31 @@
+crates/oxc_linter/src/rules/jest/prefer_mock_return_shorthand.rs
+  s_9153bd2eba8a25::t_6a77c75ad71af7 331-333,555-556,927-934
+crates/oxc_linter/src/rules/shared/jest_vitest/prefer_mock_return_shorthand.rs
+  s_9153bd2eba8a25::t_6eba8623728b00 4-6,9,11,115,258,263-267,277-285
+crates/oxc_linter/src/snapshots/jest_prefer_mock_return_shorthand.snap
+  s_ba7902d33e91f2::t_84162c56fcb047 696-709
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4a6c299984d47660493fa86e88a210b1eab3f19b",
+  "prompts": {},
+  "sessions": {
+    "s_9153bd2eba8a25": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f76-5d15-7632-80d7-d4f8c422bf86",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_ba7902d33e91f2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00fce-b4ea-7942-abc9-0dbe425b0cd5",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
