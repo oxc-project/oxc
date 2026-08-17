@@ -1,0 +1,19 @@
+apps/oxlint/src-js/generated/envs.ts
+  s_a8a852172e8955::t_83b7554b1790d5 75-90,106,510,548,675,685,692,730,1019,1022,1342,1350,1379,1896,2334-2350,2353-2359,2522,2573,2576,2851-2867,2870-2876,3025-3026,3052,3120,3123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "95b955096354654343f57fc698b699613d58e0a2",
+  "prompts": {},
+  "sessions": {
+    "s_a8a852172e8955": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-627d-77c2-972c-1425d0836faf",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
