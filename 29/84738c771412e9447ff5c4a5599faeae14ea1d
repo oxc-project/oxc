@@ -1,0 +1,19 @@
+packages/codegen/README.md
+  s_6b5aa3ca33a1b5::t_f6d0486f5fab1c 89-93,101-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2984738c771412e9447ff5c4a5599faeae14ea1d",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

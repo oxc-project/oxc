@@ -1,0 +1,45 @@
+packages/codegen/README.md
+  s_6b5aa3ca33a1b5::t_774a10751d1963 82,85-94,104-106
+tasks/codegen_conformance/index.d.ts
+  s_6b5aa3ca33a1b5::t_6925ac241adfbc 23-24,70-79
+Cargo.lock
+  s_6b5aa3ca33a1b5::t_e570c7da252899 1923
+packages/codegen/DESIGN.md
+  s_6b5aa3ca33a1b5::t_5e0de2cfccfe26 71,303,510-512
+packages/codegen/bench.bench.ts
+  s_6b5aa3ca33a1b5::t_18499eeafe8173 3
+packages/codegen/src-js/index.ts
+  s_6b5aa3ca33a1b5::t_5397a1cd45857f 17,25,28,43,64,73
+packages/codegen/src-js/print/index.ts
+  s_6b5aa3ca33a1b5::t_edf351abcea10a 13,16,32,42-43,49
+packages/codegen/src-js/print/options.ts
+  s_6b5aa3ca33a1b5::t_ef492f76221389 1,3-9,12-15,61,63-66
+packages/codegen/src-js/print/source_map.ts
+  s_6b5aa3ca33a1b5::t_1a285a28068cb2 3-4,6,8,11-12,15,19-21,23,26-29,31-32,34,37-38,41-62,64-67,69-90,103-104
+packages/codegen/src-js/state.ts
+  s_6b5aa3ca33a1b5::t_d8c37dc13655db 84,147-148
+packages/codegen/test/source-maps.test.ts
+  s_6b5aa3ca33a1b5::t_691a33d32e3269 3,19,109-114,129-136,145-148,150-167,207,217-249,251-252,254-269,271-272,275-276,341-343,346-347,355,450,452-454,470
+packages/codegen/test/utils/common.ts
+  s_6b5aa3ca33a1b5::t_512c8c4a8d3056 24,177,179,182-183,189
+tasks/codegen_conformance/Cargo.toml
+  s_6b5aa3ca33a1b5::t_df7498d32333b1 29
+tasks/codegen_conformance/src/lib.rs
+  s_6b5aa3ca33a1b5::t_05023b583ded87 29,52-53,129,131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "38b4c26fae1926c4bfe3fafb9e0426bfa0ac60b9",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
