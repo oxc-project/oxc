@@ -183,6 +183,57 @@ let workers: Worker[] = [];
 // `terminate()` is not reported to Rust as a worker death.
 let shuttingDownJsWorkers = false;
 
+// Test-only SharedArrayBuffer so fixture plugins can `Atomics.add` in `createOnce`.
+// Created when `OXLINT_TEST_CREATE_ONCE_COUNTER` is set; read after `lint` returns.
+let testCreateOnceCounter: SharedArrayBuffer | null = null;
+
+// Debounce timer for `occupied_buffers=` stderr lines (test-only).
+let occupiedReportTimer: ReturnType<typeof setTimeout> | undefined;
+
+type WorkerMessage = { type: string; count?: number };
+
+/**
+ * Ask every live worker for `occupiedBufferCount()` and sum the replies.
+ *
+ * Used by the `OXLINT_TEST_OCCUPIED_BUFFERS` hook. Times out per worker so a dead isolate
+ * cannot hang the report.
+ */
+function queryOccupiedBufferCount(): Promise<number> {
+  if (workers.length === 0) return Promise.resolve(0);
+  return Promise.all(
+    workers.map(
+      (worker) =>
+        new Promise<number>((resolve) => {
+          const timer = setTimeout(() => {
+            worker.off("message", onMessage);
+            resolve(0);
+          }, 2000);
+          const onMessage = (message: WorkerMessage) => {
+            if (message.type !== "occupiedBufferCount") return;
+            clearTimeout(timer);
+            worker.off("message", onMessage);
+            resolve(message.count ?? 0);
+          };
+          worker.on("message", onMessage);
+          worker.postMessage({ type: "occupiedBufferCount" });
+        }),
+    ),
+  ).then((counts) => counts.reduce((sum, count) => sum + count, 0));
+}
+
+/**
+ * After a burst of `forgetBuffer` calls, print the sum of occupied JS buffers across workers.
+ */
+function scheduleOccupiedBufferReport(): void {
+  if (!process.env.OXLINT_TEST_OCCUPIED_BUFFERS) return;
+  clearTimeout(occupiedReportTimer);
+  occupiedReportTimer = setTimeout(() => {
+    void queryOccupiedBufferCount().then((count) => {
+      process.stderr.write(`occupied_buffers=${count}\n`);
+    });
+  }, 100);
+}
+
 /**
  * Report that a worker died after it had become ready.
  *
@@ -238,11 +289,20 @@ function startJsWorkersWrapper(k: number): Promise<undefined> {
     // Don't hold the event loop open just for the timeout
     timeout.unref?.();
 
+    if (process.env.OXLINT_TEST_CREATE_ONCE_COUNTER) {
+      testCreateOnceCounter = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
+    }
+    if (process.env.OXLINT_TEST_CREATE_ONCE_COUNTER || process.env.OXLINT_TEST_OCCUPIED_BUFFERS) {
+      process.stderr.write(`js_workers=${k}\n`);
+    }
+
     for (let id = 0; id < k; id++) {
       // `resourceLimits` caps each worker's JS heap. It does not cap the 2 GiB raw-transfer views,
       // which are external memory.
       const worker = new Worker(WORKER_URL, {
-        workerData: { id },
+        workerData: testCreateOnceCounter
+          ? { id, createOnceCounter: testCreateOnceCounter }
+          : { id },
         resourceLimits: { maxOldGenerationSizeMb: 256 },
         stdout: true,
         stderr: false,
@@ -254,8 +314,9 @@ function startJsWorkersWrapper(k: number): Promise<undefined> {
       // interleave with diagnostics, so redirect it to stderr.
       worker.stdout.on("data", (buf) => process.stderr.write(buf));
 
-      worker.on("message", (message: { type: string }) => {
+      worker.on("message", (message: WorkerMessage) => {
         if (message.type === "ready" && ++readyCount === k) settle();
+        if (message.type === "forgot") scheduleOccupiedBufferReport();
       });
       // Before all workers are ready, either event fails startup. Afterwards, startup is already
       // resolved, so the only thing left to do is release the Rust threads waiting on this worker.
@@ -287,6 +348,7 @@ function startJsWorkersWrapper(k: number): Promise<undefined> {
  */
 function terminateJsWorkers(): void {
   shuttingDownJsWorkers = true;
+  clearTimeout(occupiedReportTimer);
   const running = workers;
   workers = [];
   for (const worker of running) {
@@ -336,6 +398,10 @@ try {
     startJsWorkersWrapper,
   );
 } finally {
+  if (testCreateOnceCounter) {
+    const count = Atomics.load(new Int32Array(testCreateOnceCounter), 0);
+    process.stderr.write(`create_once_count=${count}\n`);
+  }
   terminateJsWorkers();
 }
 

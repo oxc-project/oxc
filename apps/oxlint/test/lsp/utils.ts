@@ -50,14 +50,23 @@ const PULL_DIAGNOSTICS_CAPABILITY = {
   },
 };
 
-export function createLspConnection(env: Record<string, string> = {}) {
-  const proc = spawn(process.execPath, [CLI_PATH, "--lsp"], {
+export function createLspConnection(
+  env: Record<string, string> = {},
+  options?: { extraArgs?: string[]; onStderr?: (chunk: string) => void },
+) {
+  const proc = spawn(process.execPath, [CLI_PATH, ...(options?.extraArgs ?? []), "--lsp"], {
     env: {
       ...process.env,
       OXC_LOG: "debug",
       ...env,
     },
   });
+
+  if (options?.onStderr) {
+    proc.stderr.on("data", (buf: Buffer) => {
+      options.onStderr!(buf.toString());
+    });
+  }
 
   const connection = createMessageConnection(
     new StreamMessageReader(proc.stdout),

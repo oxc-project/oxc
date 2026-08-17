@@ -1,0 +1,10 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": ["./plugin.ts"],
+  "rules": {
+    "threads-fixture/no-debugger": "error",
+    "threads-fixture/no-todo": "error"
+  }
+}
