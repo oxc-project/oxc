@@ -9,7 +9,9 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 
-use oxc_react_compiler::{CompileResult, ErrorCategory, PanicThreshold, PluginOptions, compile};
+use oxc_react_compiler::{
+    CompilationMode, CompileResult, ErrorCategory, PanicThreshold, PluginOptions, compile,
+};
 
 fn options() -> PluginOptions {
     PluginOptions::default()
@@ -338,6 +340,25 @@ fn ts_wrapped_assignment_targets_do_not_panic() {
         let allocator = Allocator::default();
         let _ = transform_source(source, SourceType::tsx(), &allocator, opts.clone());
     }
+}
+
+#[test]
+fn ts_type_assertion_assignment_target_compiles() {
+    let source = "function Component(props: {x: number}) {\n  let x = 0;\n  const obj = {x: 1};\n  (<number>x) = props.x;\n  (<number>x) += 1;\n  (<number>obj.x) *= x;\n  return x + obj.x;\n}\n";
+    let allocator = Allocator::default();
+    let mut opts = options();
+    opts.compilation_mode = CompilationMode::All;
+    let (program, result) = transform_source(source, SourceType::ts(), &allocator, opts);
+
+    assert!(result.changed, "component should compile; diagnostics: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    assert!(output.contains("x = props.x"), "type assertion assignment was lost:\n{output}");
+    assert!(output.contains("x = x + 1"), "type assertion compound assignment was lost:\n{output}");
+    assert!(
+        output.contains("obj.x = obj.x * x"),
+        "type assertion member compound assignment was lost:\n{output}"
+    );
 }
 
 /// Class bodies are stubbed by the converter and re-parsed from source on the
