@@ -46,18 +46,17 @@ use oxc_str::format_ident;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::environment::Environment;
-use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::visitors::{self, function_uses_new_target};
 use crate::react_compiler_hir::{
-    BasicBlock, BlockId, BlockKind, EvaluationOrder, FunctionId, GENERATED_SOURCE, GotoVariant,
-    HirFunction, IdentifierId, IdentifierName, Instruction, InstructionId, InstructionKind,
-    InstructionValue, LValue, Place, Terminal,
+    BasicBlock, BlockId, BlockKind, EvaluationOrder, FunctionExpressionType, FunctionId,
+    GENERATED_SOURCE, GotoVariant, HirFunction, IdentifierId, IdentifierName, Instruction,
+    InstructionId, InstructionKind, InstructionValue, LValue, Place, Terminal,
 };
 use crate::react_compiler_lowering::{
     create_temporary_place, get_reverse_postordered_blocks, mark_instruction_ids, mark_predecessors,
 };
 
 use crate::react_compiler_optimization::merge_consecutive_blocks::merge_consecutive_blocks;
-
 /// Inline immediately invoked function expressions into the enclosing function's
 /// control flow graph.
 pub fn inline_immediately_invoked_function_expressions<'a>(
@@ -65,9 +64,11 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
     env: &mut Environment<'a>,
 ) {
     // Track all function expressions that are assigned to a temporary
-    let mut functions: FxHashMap<IdentifierId, FunctionId> = FxHashMap::default();
+    let mut functions: FxHashMap<IdentifierId, (FunctionId, FunctionExpressionType)> =
+        FxHashMap::default();
     // Functions that are inlined (by identifier id of the callee)
     let mut inlined_functions: FxHashSet<IdentifierId> = FxHashSet::default();
+    let mut new_target_cache: FxHashMap<FunctionId, bool> = FxHashMap::default();
 
     // Iterate the *existing* blocks from the outer component to find IIFEs
     // and inline them. During iteration we will modify `func` (by inlining the CFG
@@ -98,10 +99,10 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
             let instr = &func.instructions[instr_id.index()];
 
             match &instr.value {
-                InstructionValue::FunctionExpression { lowered_func, .. } => {
+                InstructionValue::FunctionExpression { lowered_func, expr_type, .. } => {
                     let identifier_id = instr.lvalue.identifier;
                     if env.identifiers[identifier_id].name.is_none() {
-                        functions.insert(identifier_id, lowered_func.func);
+                        functions.insert(identifier_id, (lowered_func.func, *expr_type));
                     }
                     continue;
                 }
@@ -112,10 +113,19 @@ pub fn inline_immediately_invoked_function_expressions<'a>(
                     }
 
                     let callee_id = callee.identifier;
-                    let inner_func_id = match functions.get(&callee_id) {
-                        Some(id) => *id,
+                    let (inner_func_id, expr_type) = match functions.get(&callee_id) {
+                        Some(entry) => *entry,
                         None => continue, // Not invoking a local function expression
                     };
+
+                    // A regular function establishes its own `new.target`. Moving its body into
+                    // the caller would make direct uses and uses in nested arrows observe the
+                    // caller's value instead. Arrow IIFEs already share the caller's value.
+                    if expr_type != FunctionExpressionType::ArrowFunctionExpression
+                        && function_uses_new_target(inner_func_id, env, &mut new_target_cache)
+                    {
+                        continue;
+                    }
 
                     let inner_func = &env.functions[inner_func_id];
                     if !inner_func.params.is_empty() || inner_func.is_async || inner_func.generator

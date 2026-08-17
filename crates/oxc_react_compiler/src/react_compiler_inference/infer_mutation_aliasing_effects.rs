@@ -86,6 +86,34 @@ pub fn infer_mutation_aliasing_effects<'a>(
     is_function_expression: bool,
 ) -> Result<(), OxcDiagnostic> {
     let mut initial_state = InferenceState::empty(is_function_expression);
+    let new_target_place = func.body.blocks.values().find_map(|block| {
+        block.instructions.iter().find_map(|&instr_id| {
+            let instr = &func.instructions[instr_id.index()];
+            match &instr.value {
+                InstructionValue::MetaProperty { meta, property, .. }
+                    if meta == "new" && property == "target" =>
+                {
+                    Some(instr.lvalue)
+                }
+                _ => None,
+            }
+        })
+    });
+
+    // `new.target` is an implicit function-local binding: every evaluation in this
+    // function observes the same constructor object (or `undefined`). Seed its first
+    // HIR place so references in disjoint control-flow branches can all assign from it.
+    if let Some(place) = new_target_place {
+        let value_id = ValueId::new();
+        initial_state.initialize(
+            value_id,
+            AbstractValue {
+                kind: ValueKind::Context,
+                reason: ReasonSet::single(ValueReason::Other),
+            },
+        );
+        initial_state.define(place.identifier, value_id);
+    }
 
     // Map of blocks to the last (merged) incoming state that was processed
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
@@ -194,6 +222,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
         function_values: FxHashMap::default(),
         function_signature_cache: FxHashMap::default(),
         aliasing_config_temp_cache: FxHashMap::default(),
+        new_target_place,
     };
 
     // `states_by_block` is only ever read when a block is queued again after it
@@ -709,6 +738,8 @@ struct Context<'a> {
     /// Keyed by (lvalue_identifier_id, temp_name) to ensure stable allocation
     /// across fixpoint iterations.
     aliasing_config_temp_cache: FxHashMap<(IdentifierId, String), Place>,
+    /// Canonical place for the function-local `new.target` value.
+    new_target_place: Option<Place>,
 }
 
 impl<'a> Context<'a> {
@@ -2376,12 +2407,25 @@ fn compute_signature_for_instruction<'a>(
                 reason: ValueReason::Other,
             });
         }
+        InstructionValue::MetaProperty { meta, property, .. } => {
+            if meta == "new" && property == "target" {
+                let new_target = context.new_target_place.unwrap();
+                if new_target.identifier != lvalue.identifier {
+                    effects.push(AliasingEffect::Assign { from: new_target, into: *lvalue });
+                }
+            } else {
+                effects.push(AliasingEffect::Create {
+                    into: *lvalue,
+                    value: ValueKind::Primitive,
+                    reason: ValueReason::Other,
+                });
+            }
+        }
         // All primitive-creating instructions
         InstructionValue::BinaryExpression { .. }
         | InstructionValue::Debugger { .. }
         | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::JSXText { .. }
-        | InstructionValue::MetaProperty { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::TemplateLiteral { .. }

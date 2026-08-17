@@ -13,14 +13,16 @@
 
 use std::mem::replace;
 
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_allocator::CloneIn;
 use oxc_str::Ident;
 
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors::function_uses_new_target;
 use crate::react_compiler_hir::{
-    FunctionId, HirFunction, IdentifierId, InstructionValue, NonLocalBinding,
+    FunctionExpressionType, FunctionId, HirFunction, IdentifierId, InstructionValue,
+    NonLocalBinding,
 };
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
@@ -31,6 +33,16 @@ pub fn outline_functions<'a>(
     func: &mut HirFunction<'a>,
     env: &mut Environment<'a>,
     fbt_operands: &FxHashSet<IdentifierId>,
+) {
+    let mut lexical_new_target_cache = FxHashMap::default();
+    outline_functions_impl(func, env, fbt_operands, &mut lexical_new_target_cache);
+}
+
+fn outline_functions_impl<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+    fbt_operands: &FxHashSet<IdentifierId>,
+    lexical_new_target_cache: &mut FxHashMap<FunctionId, bool>,
 ) {
     // Collect per-instruction actions to maintain depth-first name allocation order.
     // Each entry: (instr index, function_id to recurse into, should_outline)
@@ -49,16 +61,25 @@ pub fn outline_functions<'a>(
             let lvalue_id = instr.lvalue.identifier;
 
             match &instr.value {
-                InstructionValue::FunctionExpression { lowered_func, .. } => {
+                InstructionValue::FunctionExpression { lowered_func, expr_type, .. } => {
                     let inner_func = &env.functions[lowered_func.func];
+                    let uses_lexical_new_target = *expr_type
+                        == FunctionExpressionType::ArrowFunctionExpression
+                        && function_uses_new_target(
+                            lowered_func.func,
+                            env,
+                            lexical_new_target_cache,
+                        );
 
                     // Check outlining conditions (TS only checks func.id === null, not name):
                     // 1. No captured context variables
                     // 2. Anonymous (no explicit id on the inner function)
                     // 3. Not an fbt operand
+                    // 4. Does not capture lexical `new.target`
                     if inner_func.context.is_empty()
                         && inner_func.id.is_none()
                         && !fbt_operands.contains(&lvalue_id)
+                        && !uses_lexical_new_target
                     {
                         actions.push(Action::RecurseAndOutline {
                             instr_idx: instr_id.index(),
@@ -85,14 +106,24 @@ pub fn outline_functions<'a>(
             Action::Recurse(function_id) => {
                 let mut inner_func =
                     replace(&mut env.functions[function_id], placeholder_function(env.allocator));
-                outline_functions(&mut inner_func, env, fbt_operands);
+                outline_functions_impl(
+                    &mut inner_func,
+                    env,
+                    fbt_operands,
+                    lexical_new_target_cache,
+                );
                 env.functions[function_id] = inner_func;
             }
             Action::RecurseAndOutline { instr_idx, function_id } => {
                 // First recurse into the inner function (depth-first)
                 let mut inner_func =
                     replace(&mut env.functions[function_id], placeholder_function(env.allocator));
-                outline_functions(&mut inner_func, env, fbt_operands);
+                outline_functions_impl(
+                    &mut inner_func,
+                    env,
+                    fbt_operands,
+                    lexical_new_target_cache,
+                );
                 env.functions[function_id] = inner_func;
 
                 // Then generate the name and outline (after recursion, matching TS order)

@@ -727,6 +727,9 @@ pub enum InstructionValue<'a> {
     MetaProperty {
         meta: Ident<'a>,
         property: Ident<'a>,
+        /// Lexical input used by `new.target` inside an arrow. This is an
+        /// analysis-only edge; codegen still emits the meta-property itself.
+        dependency: Option<Place>,
         span: Option<Span>,
     },
     PropertyStore {
@@ -1850,8 +1853,13 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             InstructionValue::RegExpLiteral { pattern, flags, span } => {
                 InstructionValue::RegExpLiteral { pattern: *pattern, flags: *flags, span: *span }
             }
-            InstructionValue::MetaProperty { meta, property, span } => {
-                InstructionValue::MetaProperty { meta: *meta, property: *property, span: *span }
+            InstructionValue::MetaProperty { meta, property, dependency, span } => {
+                InstructionValue::MetaProperty {
+                    meta: *meta,
+                    property: *property,
+                    dependency: *dependency,
+                    span: *span,
+                }
             }
             InstructionValue::PropertyStore { object, property, property_span, value, span } => {
                 InstructionValue::PropertyStore {

@@ -435,6 +435,8 @@ pub fn infer_mutation_aliasing_ranges<'a>(
     env: &mut Environment<'a>,
     is_function_expression: bool,
 ) -> Result<Vec<AliasingEffect<'a>>, OxcDiagnostic> {
+    rebase_new_target_aliasing_effects(func);
+
     let mut function_effects: Vec<AliasingEffect<'a>> = Vec::new();
 
     // =========================================================================
@@ -488,6 +490,24 @@ pub fn infer_mutation_aliasing_ranges<'a>(
     }
     for ctx in &func.context {
         state.create(ctx, NodeValue::Object);
+    }
+    // The first `new.target` place is seeded as an implicit function input by
+    // mutation/alias inference. Mirror params and context here so `Assign`
+    // effects from later occurrences participate in the alias graph.
+    if let Some(new_target) = func.body.blocks.values().find_map(|block| {
+        block.instructions.iter().find_map(|&instr_id| {
+            let instr = &func.instructions[instr_id.index()];
+            match &instr.value {
+                InstructionValue::MetaProperty { meta, property, .. }
+                    if meta == "new" && property == "target" =>
+                {
+                    Some(instr.lvalue)
+                }
+                _ => None,
+            }
+        })
+    }) {
+        state.create(&new_target, NodeValue::Object);
     }
     state.create(&func.returns, NodeValue::Object);
 
@@ -1058,6 +1078,49 @@ pub fn infer_mutation_aliasing_ranges<'a>(
     }
 
     Ok(function_effects)
+}
+
+/// Rebase `new.target` aliases onto the first occurrence that survived DCE.
+///
+/// Mutation/aliasing effects are inferred before DCE, which may remove the
+/// original canonical occurrence. The range pass runs afterward, so repair the
+/// remaining effects before constructing its alias graph.
+fn rebase_new_target_aliasing_effects(func: &mut HirFunction<'_>) {
+    let new_target_instructions: Vec<_> = func
+        .body
+        .blocks
+        .values()
+        .flat_map(|block| block.instructions.iter().copied())
+        .filter(|&instr_id| {
+            matches!(
+                &func.instructions[instr_id.index()].value,
+                InstructionValue::MetaProperty { meta, property, .. }
+                    if meta == "new" && property == "target"
+            )
+        })
+        .collect();
+    let Some((&canonical_id, remaining)) = new_target_instructions.split_first() else {
+        return;
+    };
+    let canonical = func.instructions[canonical_id.index()].lvalue;
+
+    for &instr_id in &new_target_instructions {
+        let instr = &mut func.instructions[instr_id.index()];
+        let lvalue = instr.lvalue;
+        let Some(effects) = &mut instr.effects else {
+            continue;
+        };
+        effects.retain(|effect| {
+            !matches!(effect, AliasingEffect::Assign { into, .. } if into.identifier == lvalue.identifier)
+        });
+    }
+
+    for &instr_id in remaining {
+        let instr = &mut func.instructions[instr_id.index()];
+        if let Some(effects) = &mut instr.effects {
+            effects.push(AliasingEffect::Assign { from: canonical, into: instr.lvalue });
+        }
+    }
 }
 
 // =============================================================================
