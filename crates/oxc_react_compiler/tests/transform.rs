@@ -632,18 +632,18 @@ fn diagnostics_preserve_compiler_severity() {
         result.diagnostics
     );
 
-    // A local named `fbt` is an unsupported-syntax bail-out — a warning, not an error.
-    let source = "function Component() {\n  const fbt = \"span\";\n  return <fbt desc=\"label\">Hello</fbt>;\n}\n";
+    // A `this` expression is an unsupported-syntax bail-out — a warning, not an error.
+    let source = "function Component() {\n  return <div>{this.value}</div>;\n}\n";
     let allocator = Allocator::default();
     let (_program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
     assert!(
         result.diagnostics.has_warnings(),
-        "fbt bail-out should be reported as a warning: {:?}",
+        "unsupported `this` should be reported as a warning: {:?}",
         result.diagnostics
     );
     assert!(
         !result.diagnostics.has_errors(),
-        "fbt warning must not be reported as an error: {:?}",
+        "unsupported `this` warning must not be reported as an error: {:?}",
         result.diagnostics
     );
 }

@@ -654,7 +654,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
     /// On subsequent encounters, returns the cached IdentifierId.
     /// Handles name collisions by appending `_0`, `_1`, etc.
     ///
-    /// Records errors for variables named 'fbt' or 'this'.
+    /// Records errors for variables named 'this'.
     pub fn resolve_binding(
         &mut self,
         name: Ident<'a>,
@@ -670,30 +670,6 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         symbol_id: SymbolId,
         span: Option<Span>,
     ) -> Result<IdentifierId, OxcDiagnostic> {
-        // Check for unsupported names BEFORE the cache check.
-        // In TS, resolveBinding records fbt errors when node.name === 'fbt'. After a name collision
-        // causes a rename (e.g., "fbt" -> "fbt_0"), TS's scope.rename changes the AST node's name,
-        // preventing subsequent fbt error recording. We simulate this by checking whether the
-        // resolved name for this binding is still "fbt" (not renamed to "fbt_0" etc.).
-        if name == "fbt" {
-            // Check if this binding was previously resolved to a renamed version
-            let should_record_fbt_error =
-                if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
-                    // Already resolved - check if the resolved name is still "fbt"
-                    match &self.env.identifiers[identifier_id].name {
-                        Some(IdentifierName::Named(resolved_name)) => resolved_name == "fbt",
-                        _ => false,
-                    }
-                } else {
-                    // First resolution - always record
-                    true
-                };
-            if should_record_fbt_error {
-                let error_span = self.declaration_span(symbol_id).or(span);
-                self.env.record_error(diagnostics::local_fbt_variable(error_span))?;
-            }
-        }
-
         // If we've already resolved this binding, return the cached IdentifierId
         if let Some(&identifier_id) = self.bindings.get(&symbol_id) {
             return Ok(identifier_id);
@@ -719,7 +695,7 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
 
         // Record the rename on each resolved reference of the binding, so codegen
         // can rename matching identifiers inside preserved TS type annotations.
-        if candidate != name {
+        if candidate != name && name != "fbt" {
             for &reference_id in self.scope.reference_ids(symbol_id) {
                 self.env.renames.insert(reference_id, candidate);
             }
@@ -729,6 +705,10 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         let id = self.env.next_identifier_id();
         // Update the name and span on the allocated identifier
         self.env.identifiers[id].name = Some(IdentifierName::Named(candidate));
+        if name == "fbt" {
+            let declaration_id = self.env.identifiers[id].declaration_id;
+            self.env.mark_local_fbt_identifier(declaration_id);
+        }
         // Prefer the binding's declaration span over the reference span.
         // This matches TS behavior where Babel's resolveBinding returns the
         // binding identifier's original span (the declaration site).

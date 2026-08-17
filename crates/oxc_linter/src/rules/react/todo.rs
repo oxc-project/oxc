@@ -50,15 +50,15 @@ function Component(props) {
   return <div>{props.text}</div>;
 }
 ",
+        "
+function Component() {
+  const fbt = 'span';
+  return <div>{fbt}</div>;
+}
+",
     ];
 
     let fail = vec![
-        // ---- oxlint-specific ----
-        // A bail-out (local named fbt) is a skipped optimization; enabling this rule surfaces it.
-        "function Component() {
-                const fbt = 'span';
-                return <fbt desc='label'>Hello</fbt>;
-            }",
         // User-facing unsupported-syntax diagnostics should not expose
         // internal compiler implementation names.
         "import { useEffect } from 'react';

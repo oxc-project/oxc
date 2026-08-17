@@ -5,16 +5,8 @@ input_file: crates/oxc_react_compiler/fixtures/fbt/bug-fbt-plural-multiple-mixed
 import { c as _c } from "react/compiler-runtime";
 import fbt from "fbt";
 /**
-* Similar to error.todo-multiple-fbt-plural, but note that we must
-* count fbt plurals across both <fbt:plural /> namespaced jsx tags
-* and fbt.plural(...) call expressions.
-*
-* Evaluator error:
-*   Found differences in evaluator results
-*   Non-forget (expected):
-*   (kind: ok) <div>1 apple and 2 bananas</div>
-*   Forget:
-*   (kind: ok) <div>1 apples and 2 bananas</div>
+* Source offsets must distinguish plurals across both <fbt:plural />
+* namespaced JSX tags and fbt.plural(...) call expressions.
 */
 function useFoo(t0) {
 	const $ = _c(3);

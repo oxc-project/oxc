@@ -1,0 +1,49 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fbt/fbt-plural-in-expression-container.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode(infer)
+import fbt from "fbt";
+function Component(props) {
+	const $ = _c(7);
+	let t0;
+	if ($[0] !== props.altCount || $[1] !== props.count || $[2] !== props.showAlt) {
+		let t1;
+		if ($[4] !== props.altCount || $[5] !== props.showAlt) {
+			t1 = props.showAlt ? <fbt desc="nested">
+            <fbt:plural count={props.altCount} many="things">
+              thing
+            </fbt:plural>
+          </fbt> : null;
+			$[4] = props.altCount;
+			$[5] = props.showAlt;
+			$[6] = t1;
+		} else {
+			t1 = $[6];
+		}
+		t0 = <fbt desc="test">
+      <fbt:plural count={props.count} many="items" showCount="yes">
+        item
+      </fbt:plural>
+      <fbt:param name="nested">
+        {t1}
+      </fbt:param>
+    </fbt>;
+		$[0] = props.altCount;
+		$[1] = props.count;
+		$[2] = props.showAlt;
+		$[3] = t0;
+	} else {
+		t0 = $[3];
+	}
+	return t0;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{
+		count: 1,
+		showAlt: true,
+		altCount: 2
+	}]
+};
