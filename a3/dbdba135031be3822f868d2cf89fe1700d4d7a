@@ -1,0 +1,19 @@
+packages/codegen/src-js/print/source_map.ts
+  s_6a85dfe90dd69f::t_3456368ceed51b 64-66,108-110,113,162-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a3dbdba135031be3822f868d2cf89fe1700d4d7a",
+  "prompts": {},
+  "sessions": {
+    "s_6a85dfe90dd69f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00ecd-1a31-76a0-b46f-8cc42b0da642",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
