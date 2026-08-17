@@ -286,6 +286,20 @@ pub fn terminal_successor_references_unknown_block(
 }
 
 #[cold]
+pub fn invalid_block_nesting(
+    parent_start: impl Display,
+    parent_end: impl Display,
+    current_start: impl Display,
+    current_end: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::Invariant, "Invalid nesting in program blocks or scopes").with_help(
+        format!(
+            "Items overlap but are not nested: {parent_start}:{parent_end}({current_start}:{current_end})"
+        ),
+    )
+}
+
+#[cold]
 pub fn expected_predecessor_block_to_exist(
     block: impl Display,
     predecessor: impl Display,
