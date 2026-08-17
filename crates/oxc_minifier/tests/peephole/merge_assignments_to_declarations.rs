@@ -202,8 +202,10 @@ fn take_leading_assignments_from_statements() {
 
 #[test]
 fn take_leading_assignments_edge_cases() {
-    // `let` may only take a literal, otherwise a TDZ error can be introduced
-    test_same("function f(b) { let a; return a = c(), b }");
+    // `let` takes a non-literal only when nothing can read the binding in its TDZ
+    test("function f(b) { let a; return a = c(), b }", "function f(b) { let a = c(); return b }");
+    test_same("function f(b) { let a; return a = c(a), b }");
+    test_same("function f(b) { function c() { return a } let a; return a = c(), b }");
     // Annex B initializer in a for-in head is evaluated before the right hand side
     test_same("function f() { var a; for (var x = (a = 1) in (a = 2, obj)) foo() }");
     // loop tests are re-evaluated per iteration, so `a = 1` must stay in place
@@ -216,4 +218,25 @@ fn take_leading_assignments_edge_cases() {
     test_same("function f() { var a; for (let a in (a = 1, {})) foo() }");
     test_same("function f() { var a; for (const a of (a = 1, [])) foo() }");
     test_same("function f() { var a; for (const a in (a = 1, {})) foo() }");
+}
+
+/// The two examples from <https://github.com/oxc-project/oxc/issues/14310>.
+#[test]
+fn merge_assignments_to_declarations_issue_14310() {
+    // The reported case. `deserializeBindingPatternKind` resolves outside the
+    // function, so nothing can observe `param` during its initialization; once the
+    // merge happens a later pass collapses the temporary away entirely, which is
+    // the reduction the issue asked for.
+    test(
+        "export function deserializeFormalParameter(pos) { let param; param = deserializeBindingPatternKind(pos + 32); return param; }",
+        "export function deserializeFormalParameter(pos) { return deserializeBindingPatternKind(pos + 32) }",
+    );
+    // The counter-example from the issue discussion: here
+    // `deserializeBindingPatternKind` closes over `param`, so merging would call it
+    // while `param` sits in its TDZ. The read lives in the inner function's scope,
+    // not the binding's, so the merge is rejected and the assignment stays put.
+    test(
+        "(function deserializeFormalParameter(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; param = deserializeBindingPatternKind(pos + 32); return param; })(0)",
+        "(function(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; return param = deserializeBindingPatternKind(pos + 32), param })(0)",
+    );
 }
