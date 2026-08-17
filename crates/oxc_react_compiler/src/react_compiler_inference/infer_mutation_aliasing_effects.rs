@@ -13,6 +13,7 @@
 
 use std::borrow::Cow;
 
+use crate::diagnostics;
 use crate::react_compiler_utils::FxIndexMap;
 use crate::react_compiler_utils::OrderedMap;
 use rustc_hash::FxHashMap;
@@ -23,7 +24,6 @@ use oxc_allocator::CloneIn;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
 use crate::react_compiler_hir::AliasingEffect;
 use crate::react_compiler_hir::AliasingSignature;
 use crate::react_compiler_hir::ArrayElement;
@@ -218,10 +218,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
     while !queued_states.is_empty() {
         iteration_count += 1;
         if iteration_count > 100 {
-            return Err(ErrorCategory::Invariant.diagnostic(
-                "[InferMutationAliasingEffects] Potential infinite loop: \
-                 A value, temporary place, or effect was not cached properly",
-            ));
+            return Err(diagnostics::invariant_infer_mutation_aliasing_effects_potential_infinite_loop_value_temporary_place_or_effect_no());
         }
 
         // Collect block IDs to process in order
@@ -258,12 +255,7 @@ pub fn infer_mutation_aliasing_effects<'a>(
                     .unwrap_or_default();
                 let description =
                     format!("<unknown> {}${}{}", name, uninitialized_id.index(), type_str);
-                let diag = ErrorCategory::Invariant
-                    .diagnostic(
-                        "[InferMutationAliasingEffects] Expected value kind to be initialized",
-                    )
-                    .with_help(description)
-                    .with_labels(error_span.map(|s| s.label("this is uninitialized")));
+                let diag = diagnostics::uninitialized_value(description, error_span);
                 return Err(diag);
             }
 
@@ -1337,14 +1329,12 @@ fn apply_signature<'a>(
                             }
                             _ => "value".to_string(),
                         };
-                        let diagnostic = ErrorCategory::Immutability
-                            .diagnostic("This value cannot be modified")
-                            .with_help(reason_str)
-                            .with_labels(
-                                mutate_value
-                                    .span
-                                    .map(|s| s.label(format!("{} cannot be modified", variable))),
-                            );
+                        let diagnostic = diagnostics::immutable_value(
+                            reason_str,
+                            &variable,
+                            mutate_value.span,
+                            ident.span,
+                        );
                         let error =
                             env.intern_aliasing_diagnostic(mutate_value.identifier, diagnostic);
                         effects.push(AliasingEffect::MutateFrozen { place: *mutate_value, error });
@@ -1785,17 +1775,8 @@ fn apply_effect<'a>(
                 if let Some(ref incompatible_msg) = sig.known_incompatible
                     && env.enable_validations()
                 {
-                    let diagnostic = ErrorCategory::IncompatibleLibrary
-                            .diagnostic("Use of incompatible library")
-                            .with_help(
-                                "This API returns functions which cannot be memoized without leading to stale UI. \
-                                 To prevent this, by default React Compiler will skip memoizing this component/hook. \
-                                 However, you may see issues if values from this API are passed to other components/hooks that are \
-                                 memoized",
-                            )
-                            .with_labels(
-                                receiver.span.map(|s| s.label(incompatible_msg.clone())),
-                            );
+                    let diagnostic =
+                        diagnostics::incompatible_library(incompatible_msg.clone(), receiver.span);
                     // TS throws here, aborting compilation for this function
                     return Err(diagnostic);
                 }
@@ -1951,28 +1932,15 @@ fn apply_effect<'a>(
                     };
                     let hoisted_access =
                         context.hoisted_context_declarations.get(&decl_id).cloned().flatten();
-                    let mut diagnostic = ErrorCategory::Immutability
-                        .diagnostic("Cannot access variable before it is declared")
-                        .with_help(format!(
-                            "{} is accessed before it is declared, which prevents the earlier access from updating when this value changes over time",
-                            variable.as_deref().unwrap_or("This variable")
-                        ));
-                    if let Some(ref access) = hoisted_access
-                        && access.span != value.span
-                    {
-                        diagnostic.labels.extend(access.span.map(|s| {
-                            s.label(format!(
-                                "{} accessed before it is declared",
-                                variable.as_deref().unwrap_or("variable")
-                            ))
-                        }));
-                    }
-                    diagnostic.labels.extend(value.span.map(|s| {
-                        s.label(format!(
-                            "{} is declared here",
-                            variable.as_deref().unwrap_or("variable")
-                        ))
-                    }));
+                    let access_span = hoisted_access
+                        .as_ref()
+                        .filter(|access| access.span != value.span)
+                        .and_then(|access| access.span);
+                    let diagnostic = diagnostics::variable_accessed_before_declaration(
+                        variable.as_deref(),
+                        access_span,
+                        None,
+                    );
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     apply_effect(
                         context,
@@ -1990,12 +1958,8 @@ fn apply_effect<'a>(
                         }
                         _ => "value".to_string(),
                     };
-                    let diagnostic = ErrorCategory::Immutability
-                        .diagnostic("This value cannot be modified")
-                        .with_help(reason_str)
-                        .with_labels(
-                            value.span.map(|s| s.label(format!("{} cannot be modified", variable))),
-                        );
+                    let diagnostic =
+                        diagnostics::immutable_value(reason_str, &variable, value.span, ident.span);
 
                     let error = env.intern_aliasing_diagnostic(value.identifier, diagnostic);
                     let error_kind = if abstract_value.kind == ValueKind::Frozen {
@@ -2081,10 +2045,10 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::Capture { from: *await_value, into: *lvalue });
         }
         InstructionValue::TaggedTemplateExpression { tag, subexprs, span, .. } => {
-            // A tagged template is a function call whose first argument is the
-            // call-site's frozen template object, followed by the interpolated
-            // expressions. There is no HIR place for the implicit template object,
-            // so preserve its parameter position with a hole.
+            // A primitive return type does not imply that invoking the tag is pure. Always retain
+            // call/aliasing effects so mutations of captured values remain in the same scope. A
+            // later pass flattens the containing scope unless the configured function signature
+            // independently proves the call safe to memoize.
             let mut args = ArenaVec::new_in(&alloc);
             args.push(PlaceOrSpreadOrHole::Hole);
             args.extend(subexprs.iter().copied().map(PlaceOrSpreadOrHole::Place));
@@ -2382,15 +2346,7 @@ fn compute_signature_for_instruction<'a>(
         }
         InstructionValue::StoreGlobal { name, value: sg_value, .. } => {
             let variable = format!("`{}`", name);
-            let diagnostic = ErrorCategory::Globals
-                .diagnostic("Cannot reassign variables declared outside of the component/hook")
-                .with_help(format!(
-                    "Variable {} is declared outside of the component/hook. Reassigning this value during render is a form of side effect, which can cause unpredictable behavior depending on when the component happens to re-render. If this variable is used in rendering, use useState instead. Otherwise, consider updating it in an effect. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#side-effects-must-run-outside-of-render)",
-                    variable
-                ))
-                .with_labels(
-                    instr.span.map(|s| s.label(format!("{} cannot be reassigned", variable))),
-                );
+            let diagnostic = diagnostics::global_reassignment(&variable, instr.span);
             let error = env.intern_aliasing_diagnostic(sg_value.identifier, diagnostic);
             effects.push(AliasingEffect::MutateGlobal { place: *sg_value, error });
             effects.push(AliasingEffect::Assign { from: *sg_value, into: *lvalue });
@@ -2423,6 +2379,7 @@ fn compute_signature_for_instruction<'a>(
         // All primitive-creating instructions
         InstructionValue::BinaryExpression { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::JSXText { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::Primitive { .. }
@@ -2466,17 +2423,8 @@ fn compute_effects_for_legacy_signature<'a>(
     });
 
     if signature.impure && env.config.validate_no_impure_functions_in_render {
-        let diagnostic = ErrorCategory::Purity
-            .diagnostic("Cannot call impure function during render")
-            .with_help(format!(
-                "{}Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent)",
-                if let Some(ref name) = signature.canonical_name {
-                    format!("`{}` is an impure function. ", name)
-                } else {
-                    String::new()
-                }
-            ))
-            .with_labels(span.copied().map(|s| s.label("Cannot call impure function")));
+        let diagnostic =
+            diagnostics::impure_function(signature.canonical_name.as_deref(), span.copied());
         let error = env.intern_aliasing_diagnostic(receiver.identifier, diagnostic);
         effects.push(AliasingEffect::Impure { place: *receiver, error });
     }
@@ -2589,11 +2537,7 @@ fn get_argument_effect(
         // Spread with Freeze effect is unsupported for hook arguments
         // (matches TS CompilerError.throwTodo)
         let detail = if sig_effect == Effect::Freeze {
-            Some(
-                ErrorCategory::Todo
-                    .diagnostic("Support spread syntax for hook arguments")
-                    .with_labels(spread_span),
-            )
+            Some(diagnostics::todo_support_spread_syntax_hook_arguments(spread_span))
         } else {
             None
         };
@@ -2749,9 +2693,9 @@ fn compute_effects_for_aliasing_signature_config<'a>(
                 let values = substitutions.get(*value).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(ErrorCategory::Todo
-                            .diagnostic("Support spread syntax for hook arguments")
-                            .with_labels(v.span));
+                        return Err(diagnostics::todo_support_spread_syntax_hook_arguments_2(
+                            v.span,
+                        ));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
@@ -2816,7 +2760,7 @@ fn compute_effects_for_aliasing_signature_config<'a>(
                 for v in values {
                     let error = env.intern_aliasing_diagnostic(
                         v.identifier,
-                        ErrorCategory::Purity.diagnostic("Impure function call"),
+                        diagnostics::purity_impure_function_call(),
                     );
                     effects.push(AliasingEffect::Impure { place: v, error });
                 }
@@ -3070,9 +3014,9 @@ fn compute_effects_for_aliasing_signature<'a>(
                 let values = substitutions.get(&value.identifier).cloned().unwrap_or_default();
                 for v in values {
                     if mutable_spreads.contains(&v.identifier) {
-                        return Err(ErrorCategory::Todo
-                            .diagnostic("Support spread syntax for hook arguments")
-                            .with_labels(v.span));
+                        return Err(diagnostics::todo_support_spread_syntax_hook_arguments_3(
+                            v.span,
+                        ));
                     }
                     effects.push(AliasingEffect::Freeze { value: v, reason: *reason });
                 }
@@ -3175,7 +3119,7 @@ fn get_write_error_reason(abstract_value: &AbstractValue) -> String {
         "Modifying a value returned from a function whose return value should not be mutated"
             .to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReactiveFunctionArgument) {
-        "Modifying component props or hook arguments is not allowed. Consider using a local variable instead".to_string()
+        "Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state".to_string()
     } else if abstract_value.reason.contains(&ValueReason::State) {
         "Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead".to_string()
     } else if abstract_value.reason.contains(&ValueReason::ReducerState) {

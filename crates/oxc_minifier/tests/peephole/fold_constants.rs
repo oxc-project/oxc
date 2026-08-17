@@ -671,7 +671,7 @@ fn test_fold_nullish_coalesce() {
     fold("a() ?? (1 ?? b())", "a() ?? 1");
     fold("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
 
-    test_same("var y; x = (y ?? 1)()"); // can compress to "var y; x = y()" if y is not null or undefined
+    test_same("v = function(y) { x = (y ?? 1)() }");
     test_same("var y; x = (y.z ?? 1)()"); // "var y; x = (0, y.z)()" if y is not null or undefined
     test("var y; x = (null ?? y)()", "var y; x = y()");
     test("var y; x = (null ?? y.z)()", "var y; x = (0, y.z)()");
@@ -1139,6 +1139,28 @@ fn test_fold_exponential() {
     fold("x = null ** 0", "x = 1");
 }
 
+/// `Number::exponentiate` is not IEEE 754 `pow`. It returns `NaN` whenever the
+/// exponent is `NaN`, and whenever the base has magnitude `1` and the exponent
+/// is infinite — both cases where `pow` is specified to return `1`.
+///
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Exponentiation>
+#[test]
+fn test_fold_exponential_disagrees_with_ieee_pow() {
+    fold("x = 1 ** Infinity", "x = NaN");
+    fold("x = 1 ** -Infinity", "x = NaN");
+    fold("x = (-1) ** Infinity", "x = NaN");
+    fold("x = (-1) ** -Infinity", "x = NaN");
+    fold("x = true ** Infinity", "x = NaN");
+    fold("x = 1 ** NaN", "x = NaN");
+    fold("x = (-1) ** NaN", "x = NaN");
+
+    // The cases `pow` and `Number::exponentiate` agree on.
+    fold("x = 2 ** Infinity", "x = Infinity");
+    fold("x = 2 ** NaN", "x = NaN");
+    fold("x = NaN ** 0", "x = 1");
+    fold("x = Infinity ** 0", "x = 1");
+}
+
 #[test]
 fn test_fold_arithmetic_undefined_null_operands() {
     // `undefined` has no literal form (it prints as `void 0`), so it never
@@ -1257,7 +1279,7 @@ fn test_fold_instance_of() {
 
     // An unknown value should never be folded.
     fold_same("x instanceof Foo");
-    test_same("var x; foo(x instanceof Object)");
+    test_same("v = function(x) { foo(x instanceof Object) }");
     fold_same("x instanceof Object");
     fold_same("0 instanceof Foo");
 }

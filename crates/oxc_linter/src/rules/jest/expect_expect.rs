@@ -46,6 +46,15 @@ fn test() {
         ("it('should pass', () => somePromise().then(() => expect(true).toBeDefined()))", None),
         ("it('should pass', myTest); function myTest() { expect(true).toBeDefined() }", None),
         (
+            "test('via function declaration', async () => {
+                async function check() {
+                    expect(1 + 1).toBe(2);
+                }
+                await check();
+            });",
+            None,
+        ),
+        (
             "
             test('should pass', () => {
                 expect(true).toBeDefined();

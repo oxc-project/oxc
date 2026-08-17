@@ -217,35 +217,16 @@ if (DEBUG) {
  * @param last - Category of the last character of `code`
  */
 export function write(state: State, code: string, last: Category): void {
-  if (DEBUG) {
-    debugAssertCategoryMatches(state, code, last);
-    state.lastIsStale = false;
-    state.lastCharWritten = code[code.length - 1];
-  }
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertCategoryMatches(state, code, last);
 
   state.last = last;
   state.output += code;
-}
 
-/**
- * Append `code` to the output, leaving `state.last` describing whatever came before it.
- *
- * Only sound where the value of `last` is provably dead - another `write` must follow before anything reads it.
- * The readers are `printSpaceBeforeIdentifier` and the `CAT_LT`, `CAT_REGEX_SLASH` and `CAT_QUESTION`
- * adjacency checks, all of which run at the start of printing a construct.
- *
- * In practice that means using it for all but the final fragment when one token is written in pieces.
- * Debug builds track the rule and throw if a reader sees a stale `last`.
- *
- * @param code - Text to append, which unlike `write` may be empty
- */
-export function writeNoLast(state: State, code: string): void {
   if (DEBUG) {
-    state.lastIsStale = true;
-    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
   }
-
-  state.output += code;
 }
 
 /**
@@ -262,11 +243,8 @@ export function writeNoLast(state: State, code: string): void {
  * @param node - Node this text came from
  */
 export function writeWithMap(state: State, code: string, last: Category, node: MappableNode): void {
-  if (DEBUG) {
-    debugAssertCategoryMatches(state, code, last);
-    state.lastIsStale = false;
-    state.lastCharWritten = code[code.length - 1];
-  }
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertCategoryMatches(state, code, last);
 
   if (SOURCEMAPS && node.loc != null) {
     debugAssert(
@@ -282,6 +260,32 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
 
   state.last = last;
   state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append `code` to the output, leaving `state.last` describing whatever came before it.
+ *
+ * Only sound where the value of `last` is provably dead - another `write` must follow before anything reads it.
+ * The readers are `printSpaceBeforeIdentifier` and the `CAT_LT`, `CAT_REGEX_SLASH` and `CAT_QUESTION`
+ * adjacency checks, all of which run at the start of printing a construct.
+ *
+ * In practice that means using it for all but the final fragment when one token is written in pieces.
+ * Debug builds track the rule and throw if a reader sees a stale `last`.
+ *
+ * @param code - Text to append, which unlike `write` may be empty
+ */
+export function writeNoLast(state: State, code: string): void {
+  state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = true;
+    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
+  }
 }
 
 /**
@@ -308,12 +312,12 @@ export function writeWithMapNoLast(state: State, code: string, node: MappableNod
     state.mapNames.push(node.name);
   }
 
+  state.output += code;
+
   if (DEBUG) {
     state.lastIsStale = true;
     if (code.length > 0) state.lastCharWritten = code[code.length - 1];
   }
-
-  state.output += code;
 }
 
 /**
@@ -342,8 +346,6 @@ const IDENT_CONTINUE_REGEX = /[\p{ID_Continue}$\u200C\u200D]/u;
  */
 function debugAssertCategoryMatches(state: State, code: string, last: Category): void {
   if (!DEBUG) return;
-
-  debugAssert(code.length > 0, "`code` should not be an empty string");
 
   const ch = code.at(-1)!;
 

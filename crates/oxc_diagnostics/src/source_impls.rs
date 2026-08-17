@@ -733,6 +733,11 @@ impl<'a> SpanScanner<'a> {
         }
     }
 
+    /// Whether this scanner indexes `input`.
+    pub fn is_for(&self, input: &[u8]) -> bool {
+        std::ptr::eq(self.index.input, input)
+    }
+
     /// Read a span while scanning only source bytes no earlier query scanned.
     pub fn read_span(&mut self, span: Span) -> Option<SpanContents<'a>> {
         let request = SpanRequest::new(span);

@@ -16,7 +16,10 @@ use crate::{
     print::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
     utils::{
         suppressed::FormatSuppressedNode,
-        typecast::{format_leading_comments_and_open_paren, format_type_cast_comment_node},
+        typecast::{
+            format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren,
+            format_type_cast_comment_node,
+        },
     },
 };
 
@@ -4424,9 +4427,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
             return;
         }
         let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f);
-        }
+        format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
         if is_suppressed {
             self.format_leading_comments(f);
             FormatSuppressedNode(self.span()).fmt(f);

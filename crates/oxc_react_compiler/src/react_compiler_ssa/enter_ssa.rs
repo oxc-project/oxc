@@ -5,7 +5,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::*;
@@ -92,12 +92,7 @@ impl<'a> SSABuilder<'a> {
                 Some(name) => format!("{}${}", name.value(), old_id.index()),
                 None => format!("${}", old_id.index()),
             };
-            return Err(ErrorCategory::Todo
-                .diagnostic(
-                    "[hoisting] EnterSSA: Expected identifier to be defined before being used",
-                )
-                .with_help(format!("Identifier {} is undefined", name))
-                .with_labels(old_place.span));
+            return Err(diagnostics::undefined_ssa_identifier(&name, old_place.span));
         }
 
         // Do not redefine context references.
@@ -286,8 +281,7 @@ fn enter_ssa_impl<'a>(
         let block_id = *block_id;
 
         if visited_blocks.contains(&block_id) {
-            return Err(ErrorCategory::Invariant
-                .diagnostic(format!("found a cycle! visiting bb{} again", block_id.index())));
+            return Err(diagnostics::enter_ssa_cycle(block_id.index()));
         }
 
         visited_blocks.insert(block_id);
@@ -296,9 +290,7 @@ fn enter_ssa_impl<'a>(
         // Handle params at the root entry
         if block_id == root_entry {
             if !func.context.is_empty() {
-                return Err(ErrorCategory::Invariant.diagnostic(
-                    "Expected function context to be empty for outer function declarations",
-                ));
+                return Err(diagnostics::invariant_expected_function_context_empty_outer_function_declarations());
             }
             let alloc = env.allocator;
             if let Some(self_binding) = func.self_binding {
@@ -381,9 +373,7 @@ fn enter_ssa_impl<'a>(
                 let entry_block = inner_func.body.blocks.get_mut(&inner_entry).unwrap();
 
                 if !entry_block.preds.is_empty() {
-                    return Err(ErrorCategory::Invariant.diagnostic(
-                        "Expected function expression entry block to have zero predecessors",
-                    ));
+                    return Err(diagnostics::invariant_expected_function_expression_entry_block_have_zero_predecessors());
                 }
                 entry_block.preds.insert(block_id);
 

@@ -11,11 +11,14 @@
 use oxc_allocator::GetAllocator;
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 
-use crate::diagnostics::ErrorCategory;
-use crate::react_compiler_hir::ReactFunctionType;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
+use crate::react_compiler_hir::{
+    ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
+    assert_terminal_successors_exist,
+};
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
 use crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir;
@@ -83,7 +86,6 @@ use crate::react_compiler_validation::validate_use_memo;
 use crate::scope::*;
 
 use super::compile_result::CodegenFunction;
-use super::compile_result::OutlinedFunction;
 use super::imports::ProgramContext;
 use crate::options::CompilerOutputMode;
 
@@ -152,7 +154,7 @@ fn run_pipeline<'a>(
         return Ok(Ok(None));
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -165,16 +167,16 @@ fn run_pipeline<'a>(
 
     merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator);
 
-    // TODO: port assertConsistentIdentifiers
-    // TODO: port assertTerminalSuccessorsExist
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
+    assert_terminal_successors_exist(&hir)?;
 
     enter_ssa(&mut hir, &mut env)?;
 
     eliminate_redundant_phi(&mut hir, &mut env);
 
-    // TODO: port assertConsistentIdentifiers
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
 
-    constant_propagation(&mut hir, &mut env);
+    constant_propagation(&mut hir, &mut env)?;
 
     infer_types(&mut hir, &mut env)?;
 
@@ -204,7 +206,7 @@ fn run_pipeline<'a>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 
@@ -256,7 +258,7 @@ fn run_pipeline<'a>(
         && env.config.validate_static_components
         && env.output_mode == OutputMode::Lint
     {
-        let errors = validate_static_components(&hir);
+        let errors = validate_static_components(&hir, &env.functions);
         log_errors_as_events(&errors, context);
     }
 
@@ -298,8 +300,8 @@ fn run_pipeline<'a>(
 
     flatten_scopes_with_hooks_or_use_hir(&mut hir, &env)?;
 
-    // TODO: port assertTerminalSuccessorsExist
-    // TODO: port assertTerminalPredsExist
+    assert_terminal_successors_exist(&hir)?;
+    assert_terminal_preds_exist(&hir)?;
 
     propagate_scope_dependencies_hir(&mut hir, &mut env);
 
@@ -362,7 +364,7 @@ fn run_pipeline<'a>(
 
     // Simulate unexpected exception for testing (matches TS Pipeline.ts)
     if env.config.throw_unknown_exception_testonly {
-        return Err(ErrorCategory::Invariant.diagnostic("unexpected error"));
+        return Err(diagnostics::invariant_unexpected_error());
     }
 
     // Check for accumulated errors at the end of the pipeline
@@ -377,41 +379,6 @@ fn run_pipeline<'a>(
             context.merge_uid_known_names(&uid_names);
         }
         return Ok(Err(env.take_errors()));
-    }
-
-    // Re-compile outlined functions through the full pipeline.
-    // This mirrors TS behavior where outlined functions from JSX outlining
-    // are pushed back onto the compilation queue and compiled as components.
-    let mut compiled_outlined: Vec<OutlinedFunction<'a>> = Vec::new();
-    for o in codegen_result.outlined {
-        let outlined_codegen = CodegenFunction {
-            span: o.func.span,
-            id: o.func.id,
-            name_hint: o.func.name_hint,
-            params: o.func.params,
-            body: o.func.body,
-            generator: o.func.generator,
-            is_async: o.func.is_async,
-            memo_slots_used: o.func.memo_slots_used,
-            memo_blocks: o.func.memo_blocks,
-            memo_values: o.func.memo_values,
-            pruned_memo_blocks: o.func.pruned_memo_blocks,
-            pruned_memo_values: o.func.pruned_memo_values,
-            outlined: Vec::new(),
-        };
-        if let Some(fn_type) = o.fn_type {
-            match compile_outlined_fn(outlined_codegen) {
-                Ok(compiled) => {
-                    compiled_outlined
-                        .push(OutlinedFunction { func: compiled, fn_type: Some(fn_type) });
-                }
-                Err(_err) => {
-                    // If re-compilation fails, skip the outlined function
-                }
-            }
-        } else {
-            compiled_outlined.push(OutlinedFunction { func: outlined_codegen, fn_type: o.fn_type });
-        }
     }
 
     if let Some(uid_names) = env.take_uid_known_names() {
@@ -431,20 +398,8 @@ fn run_pipeline<'a>(
         memo_values: codegen_result.memo_values,
         pruned_memo_blocks: codegen_result.pruned_memo_blocks,
         pruned_memo_values: codegen_result.pruned_memo_values,
-        outlined: compiled_outlined,
+        outlined: codegen_result.outlined,
     })))
-}
-
-/// Compile an outlined function's codegen AST through the full pipeline.
-///
-/// Creates a fresh Environment, builds a synthetic ScopeInfo with unique fake
-/// positions for identifier resolution, lowers from AST to HIR, then runs
-/// the full compilation pipeline. This mirrors the TS behavior where outlined
-/// functions are inserted into the program AST and re-compiled from scratch.
-pub fn compile_outlined_fn<'a>(
-    codegen_fn: CodegenFunction<'a>,
-) -> Result<CodegenFunction<'a>, OxcDiagnostic> {
-    Ok(codegen_fn)
 }
 
 /// Push a pass's diagnostics (validation / lint / telemetry path),

@@ -330,7 +330,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         constant: Option<ConstantValue<'a>>,
         kind: FreshValueKind,
         falsy_init: bool,
-        init_absent: bool,
+        implicit_undefined_source: bool,
     ) {
         let mut references = ReferenceCounts::default();
         for reference in self.scoping().get_resolved_references(symbol_id) {
@@ -376,9 +376,10 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         };
 
         // See `SymbolValue::implicit_undefined` — only meaningful when the
-        // recorded constant is the hoist-produced `undefined` of `let x;`.
-        let implicit_undefined =
-            init_absent && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
+        // recorded constant is the implicit `undefined` of an uninitialized
+        // binding or a direct alias of one.
+        let implicit_undefined = implicit_undefined_source
+            && initialized_constant.as_ref().is_some_and(ConstantValue::is_undefined);
 
         let symbol_value = SymbolValue {
             initialized_constant,

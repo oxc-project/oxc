@@ -111,7 +111,7 @@ export interface TSEnumDeclarationLegacyMembers {
 }
 
 /**
- * A node, as passed to `write`, which only records where the node started for source maps.
+ * A node, as passed to `writeWithMap` / `writeWithMapNoLast`, which record where the node started for source maps.
  *
  * `loc` is not part of Oxc's AST - that records byte spans - but producers such as Acorn add it.
  */

@@ -23,7 +23,7 @@ use oxc_allocator::CloneIn;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::ArrayElement;
 use crate::react_compiler_hir::DependencyPathEntry;
 use crate::react_compiler_hir::Effect;
@@ -222,6 +222,7 @@ fn process_manual_memo_call<'a>(
     let ExtractedMemoArgs { fn_place, deps_list, deps_span } = memo_details;
 
     let span = func.instructions[instr_id.index()].value.span().cloned();
+    let callee_span = func.instructions[manual_memo.load_instr_id.index()].value.span().copied();
 
     // Replace the instruction value with the memoization replacement
     let replacement =
@@ -231,17 +232,7 @@ fn process_manual_memo_call<'a>(
     if is_validation_enabled {
         // Bail out when we encounter manual memoization without inline function expressions
         if !sidemap.functions.contains(&fn_place.identifier) {
-            let diag = ErrorCategory::UseMemo
-                .diagnostic("Expected the first argument to be an inline function expression")
-                .with_help(
-                    "Expected the first argument to be an inline function expression".to_string(),
-                )
-                .with_labels(fn_place.span.map(|s| {
-                    s.label(
-                        "Expected the first argument to be an inline function expression"
-                            .to_string(),
-                    )
-                }));
+            let diag = diagnostics::expected_inline_memo_function(fn_place.span);
             env.record_diagnostic(diag);
             return;
         }
@@ -265,6 +256,7 @@ fn process_manual_memo_call<'a>(
             env,
             deps_list,
             deps_span,
+            callee_span,
             &memo_decl,
             manual_memo_id,
         );
@@ -467,6 +459,7 @@ fn make_manual_memoization_markers<'a>(
     env: &mut Environment<'a>,
     deps_list: Option<Vec<ManualMemoDependency<'a>>>,
     deps_span: Option<Span>,
+    callee_span: Option<Span>,
     memo_decl: &Place,
     manual_memo_id: u32,
 ) -> (Instruction<'a>, Instruction<'a>) {
@@ -478,6 +471,7 @@ fn make_manual_memoization_markers<'a>(
             deps: deps_list.map(|v| ArenaVec::from_iter_in(v, &env.allocator)),
             deps_span: Some(deps_span),
             has_invalid_deps: false,
+            callee_span,
             span: fn_expr.span,
         },
         span: fn_expr.span,
@@ -520,22 +514,11 @@ fn extract_manual_memoization_args<'a>(
         Some(PlaceOrSpread::Place(p)) => *p,
         _ => {
             let span = instr.value.span().cloned();
-            env.record_diagnostic(
-                ErrorCategory::UseMemo
-                    .diagnostic(format!("Expected a callback function to be passed to {kind_name}"))
-                    .with_help(if kind == ManualMemoKind::UseCallback {
-                        "The first argument to useCallback() must be a function to cache".to_string()
-                    } else {
-                        "The first argument to useMemo() must be a function that calculates a result to cache".to_string()
-                    })
-                    .with_labels(span.map(|s| {
-                        s.label(if kind == ManualMemoKind::UseCallback {
-                            "Expected a callback function".to_string()
-                        } else {
-                            "Expected a memoization function".to_string()
-                        })
-                    })),
-            );
+            env.record_diagnostic(diagnostics::expected_memo_callback(
+                kind_name,
+                kind == ManualMemoKind::UseCallback,
+                span,
+            ));
             return None;
         }
     };
@@ -558,20 +541,7 @@ fn extract_manual_memoization_args<'a>(
             Some(PlaceOrSpread::Place(p)) => p.span,
             _ => instr.span,
         };
-        env.record_diagnostic(
-            ErrorCategory::UseMemo
-                .diagnostic(format!(
-                    "Expected the dependency list for {kind_name} to be an array literal"
-                ))
-                .with_help(format!(
-                    "Expected the dependency list for {kind_name} to be an array literal"
-                ))
-                .with_labels(span.map(|s| {
-                    s.label(format!(
-                        "Expected the dependency list for {kind_name} to be an array literal"
-                    ))
-                })),
-        );
+        env.record_diagnostic(diagnostics::expected_memo_dependency_array(kind_name, span));
         return None;
     }
 
@@ -582,14 +552,7 @@ fn extract_manual_memoization_args<'a>(
         if let Some(d) = maybe_dep {
             deps_list.push(d.clone_in(env.allocator));
         } else {
-            env.record_diagnostic(
-                ErrorCategory::UseMemo
-                    .diagnostic("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)")
-                    .with_help("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string())
-                    .with_labels(dep.span.map(|s| {
-                        s.label("Expected the dependency list to be an array of simple expressions (e.g. `x`, `x.y.z`, `x?.y?.z`)".to_string())
-                    })),
-            );
+            env.record_diagnostic(diagnostics::expected_simple_memo_dependencies(dep.span));
         }
     }
 
@@ -638,10 +601,7 @@ fn find_optional_places(func: &HirFunction) -> Result<FxHashSet<IdentifierId>, O
                     other => {
                         // Invariant: unexpected terminal in optional
                         // In TS this throws CompilerError.invariant
-                        return Err(ErrorCategory::Invariant.diagnostic(format!(
-                            "Unexpected terminal kind in optional: {:?}",
-                            discriminant(other)
-                        )));
+                        return Err(diagnostics::unexpected_optional_terminal(discriminant(other)));
                     }
                 }
             }
