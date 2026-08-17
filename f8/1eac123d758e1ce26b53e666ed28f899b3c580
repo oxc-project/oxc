@@ -1,0 +1,21 @@
+crates/oxc_linter/src/snapshots/typescript_no_useless_empty_export.snap
+  s_e1c6fb4f73c11b::t_cbcffe2953c798 59-66,90-97
+crates/oxc_linter/src/rules/typescript/no_useless_empty_export.rs
+  s_e1c6fb4f73c11b::t_fc0dc3515b14c0 1,73-78,138-140,150-152,162,166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f81eac123d758e1ce26b53e666ed28f899b3c580",
+  "prompts": {},
+  "sessions": {
+    "s_e1c6fb4f73c11b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f51-6a3c-7ac3-aa0f-7208f196bf60",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
