@@ -15,11 +15,11 @@ catalog:
   emnapi: 2.0.0-alpha.3
   "@arethetypeswrong/core": 0.18.5
   "@napi-rs/cli": 3.8.6
-  "@napi-rs/wasm-runtime": 1.2.2
+  "@napi-rs/wasm-runtime": 1.2.3
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  degit: 3.6.6
-  eslint: 10.8.0
+  degit: 3.7.0
+  eslint: 10.8.1
   json-schema-to-typescript: ^15.0.4
   publint: 0.3.23
   rolldown: 1.2.4
