@@ -22,6 +22,18 @@ impl<'a> PeepholeOptimizations {
                 Self::remove_unused_expression(&mut expr, ctx);
                 return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             }
+            let mut new_consequent = if_stmt.alternate.take().unwrap();
+            if let Statement::ExpressionStatement(expr_stmt) = &mut new_consequent {
+                // `if (!a) b();` => `a || b();`
+                // `if (a)  b();` => `a && b();`
+                return Some(Self::fold_if_to_logical_expr(
+                    if_stmt.span,
+                    LogicalOperator::Or,
+                    &mut if_stmt.test,
+                    &mut expr_stmt.expression,
+                    ctx,
+                ));
+            }
             // `if (!a) {} else x;` => `if (a) x;`
             // `if (a)  {} else x;` => `if (!a) x;`
             let new_test = match &mut if_stmt.test {
@@ -30,7 +42,6 @@ impl<'a> PeepholeOptimizations {
                 }
                 _ => Self::minimize_not(if_stmt.test.span(), if_stmt.test.take_in(ctx), ctx),
             };
-            let new_consequent = if_stmt.alternate.take().unwrap();
             ctx.replace_expression(&mut if_stmt.test, new_test);
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
@@ -64,16 +75,13 @@ impl<'a> PeepholeOptimizations {
         } else if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             // `if (!a) b();` => `a || b();`
             // `if (a)  b();` => `a && b();`
-            let (op, e) = match &mut if_stmt.test {
-                Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                    (LogicalOperator::Or, &mut unary_expr.argument)
-                }
-                e => (LogicalOperator::And, e),
-            };
-            let a = e.take_in(ctx);
-            let b = expr_stmt.expression.take_in(ctx);
-            let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
-            return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
+            return Some(Self::fold_if_to_logical_expr(
+                if_stmt.span,
+                LogicalOperator::And,
+                &mut if_stmt.test,
+                &mut expr_stmt.expression,
+                ctx,
+            ));
         } else if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent
             && if2_stmt.alternate.is_none()
         {
@@ -94,6 +102,28 @@ impl<'a> PeepholeOptimizations {
 
         Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
         None
+    }
+
+    fn fold_if_to_logical_expr(
+        span: Span,
+        op: LogicalOperator,
+        test: &mut Expression<'a>,
+        expression: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        // `if (!a) b();` => `a || b();`
+        // `if (a)  b();` => `a && b();`
+        let (op, e) = match test {
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => (
+                if op.is_and() { LogicalOperator::Or } else { LogicalOperator::And },
+                &mut unary_expr.argument,
+            ),
+            e => (op, e),
+        };
+        let a = e.take_in(ctx);
+        let b = expression.take_in(ctx);
+        let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
+        Statement::new_expression_statement(span, expr, ctx)
     }
 
     /// Wrap to avoid ambiguous else.
