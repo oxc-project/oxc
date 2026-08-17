@@ -11,9 +11,10 @@ use oxc_index::IndexSlice;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, FunctionId, HirFunction, IdentifierId,
-    Instruction, InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot,
-    ObjectPropertyKey, ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
+    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, FunctionExpressionType, FunctionId,
+    HirFunction, IdentifierId, Instruction, InstructionValue, JsxAttribute, JsxTag,
+    ManualMemoDependencyRoot, ObjectPropertyKey, ObjectPropertyOrSpread, Pattern, Place,
+    PlaceOrSpread, ScopeId, Terminal,
 };
 
 // =============================================================================
@@ -26,6 +27,37 @@ pub type PlaceList = SmallVec<[Place; 4]>;
 
 /// Non-switch terminals reference at most five blocks; keep those block IDs inline.
 pub type TerminalBlockList = SmallVec<[BlockId; 5]>;
+
+/// Whether a function or one of its nested arrows reads the `new.target`
+/// established by the nearest enclosing non-arrow function. Nested normal
+/// functions and object methods establish their own `new.target`.
+pub fn function_uses_new_target(
+    function_id: FunctionId,
+    env: &Environment<'_>,
+    cache: &mut FxHashMap<FunctionId, bool>,
+) -> bool {
+    if let Some(&uses_new_target) = cache.get(&function_id) {
+        return uses_new_target;
+    }
+    let func = &env.functions[function_id];
+    let uses_new_target = func.body.blocks.values().any(|block| {
+        block.instructions.iter().any(|&instr_id| {
+            match &func.instructions[instr_id.index()].value {
+                InstructionValue::MetaProperty { meta, property, .. } => {
+                    meta == "new" && property == "target"
+                }
+                InstructionValue::FunctionExpression {
+                    lowered_func,
+                    expr_type: FunctionExpressionType::ArrowFunctionExpression,
+                    ..
+                } => function_uses_new_target(lowered_func.func, env, cache),
+                _ => false,
+            }
+        })
+    });
+    cache.insert(function_id, uses_new_target);
+    uses_new_target
+}
 
 /// Yields `instr.lvalue` plus the value's lvalues.
 /// Equivalent to TS `eachInstructionLValue`.
@@ -277,10 +309,14 @@ pub fn each_instruction_value_operand_with_functions(
         InstructionValue::FinishMemoize { decl, .. } => {
             result.push(*decl);
         }
+        InstructionValue::MetaProperty { dependency, .. } => {
+            if let Some(dependency) = dependency {
+                result.push(*dependency);
+            }
+        }
         InstructionValue::Debugger { .. }
         | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
-        | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {
@@ -1018,10 +1054,14 @@ pub fn for_each_instruction_value_operand_mut(
         InstructionValue::FinishMemoize { decl, .. } => {
             f(decl);
         }
+        InstructionValue::MetaProperty { dependency, .. } => {
+            if let Some(dependency) = dependency {
+                f(dependency);
+            }
+        }
         InstructionValue::Debugger { .. }
         | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
-        | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {}

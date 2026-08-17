@@ -286,6 +286,21 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
         &self.used_names
     }
 
+    /// Return a `new.target` value that dominates the current insertion point.
+    pub fn find_dominating_new_target_place(&self) -> Option<Place> {
+        self.current.instructions.iter().find_map(|&instruction_id| {
+            let instruction = &self.instruction_table[instruction_id.index()];
+            if let InstructionValue::MetaProperty { meta, property, .. } = &instruction.value
+                && meta == "new"
+                && property == "target"
+            {
+                Some(instruction.lvalue)
+            } else {
+                None
+            }
+        })
+    }
+
     /// Merge used names from a child builder back into this builder.
     /// This ensures name deduplication works across function scopes.
     pub fn merge_used_names(&mut self, child_used_names: IdentIndexMap<'a, SymbolId>) {

@@ -1,0 +1,78 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/new-target-meta-property.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { Stringify, mutate } from "shared-runtime";
+function foo() {
+	const $ = _c(2);
+	const nt = new.target;
+	let t0;
+	if ($[0] !== nt) {
+		t0 = <Stringify value={nt} />;
+		$[0] = nt;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}
+function Component() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = _temp();
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+}
+function _temp() {
+	return new.target;
+}
+function AliasingComponent() {
+	const $ = _c(2);
+	const Constructor = new.target;
+	mutate(Constructor);
+	const t0 = new.target;
+	let t1;
+	if ($[0] !== t0.x) {
+		t1 = <Stringify value={t0.x} />;
+		$[0] = t0.x;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}
+function ArrowDependencyComponent() {
+	const $ = _c(6);
+	const t0 = new.target;
+	let t1;
+	if ($[0] !== t0) {
+		t1 = () => new.target;
+		$[0] = t0;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const read = t1;
+	let t2;
+	if ($[2] !== read) {
+		t2 = read();
+		$[2] = read;
+		$[3] = t2;
+	} else {
+		t2 = $[3];
+	}
+	let t3;
+	if ($[4] !== t2.x) {
+		t3 = <Stringify value={t2.x} />;
+		$[4] = t2.x;
+		$[5] = t3;
+	} else {
+		t3 = $[5];
+	}
+	return t3;
+}

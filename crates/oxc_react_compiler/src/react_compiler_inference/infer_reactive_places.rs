@@ -56,6 +56,20 @@ pub fn infer_reactive_places(
         reactive_map.mark_reactive(place.identifier);
     }
 
+    // `new.target` is an implicit function input. Like a parameter, its value and
+    // properties may differ between invocations and must remain reactive.
+    for block in func.body.blocks.values() {
+        for &instr_id in &block.instructions {
+            let instr = &func.instructions[instr_id.index()];
+            if let InstructionValue::MetaProperty { meta, property, .. } = &instr.value
+                && meta == "new"
+                && property == "target"
+            {
+                reactive_map.mark_reactive(instr.lvalue.identifier);
+            }
+        }
+    }
+
     // Compute control dominators
     let post_dominators =
         compute_post_dominator_tree(func, env.next_block_id().index() as u32, false)?;

@@ -1,10 +1,11 @@
 use std::borrow::Cow;
 
 use cow_utils::CowUtils;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::*;
 use crate::react_compiler_utils::{FxIndexMap, FxIndexSet, IdentIndexMap};
 use crate::scope::BindingKind as AstBindingKind;
@@ -3078,6 +3079,45 @@ fn lower_function_to_value<'a>(
         }
     };
     let lowered_func = lower_function(builder, func)?;
+    if expr_type == FunctionExpressionType::ArrowFunctionExpression
+        && visitors::function_uses_new_target(
+            lowered_func.func,
+            builder.environment(),
+            &mut FxHashMap::default(),
+        )
+    {
+        // `new.target` is lexical in arrows, but it has no symbol for the normal
+        // captured-context machinery to connect to the enclosing function. Give
+        // the arrow an explicit dependency on the enclosing function's value so
+        // reactive inference treats the closure like any other captured input.
+        let lexical_new_target = if let Some(place) = builder.find_dominating_new_target_place() {
+            place
+        } else {
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::MetaProperty {
+                    meta: static_ident!("new"),
+                    property: static_ident!("target"),
+                    dependency: None,
+                    span: None,
+                },
+            )?
+        };
+        let inner_func = &mut builder.environment_mut().functions[lowered_func.func];
+        inner_func.context.push(Place { span: None, ..lexical_new_target });
+        for block in inner_func.body.blocks.values() {
+            for &instr_id in &block.instructions {
+                if let InstructionValue::MetaProperty { meta, property, dependency, .. } =
+                    &mut inner_func.instructions[instr_id.index()].value
+                    && meta == "new"
+                    && property == "target"
+                {
+                    *dependency =
+                        Some(Place { effect: Effect::Read, span: None, ..lexical_new_target });
+                }
+            }
+        }
+    }
     Ok(InstructionValue::FunctionExpression {
         name,
         name_span,
@@ -3929,15 +3969,15 @@ fn lower_expression<'a>(
         oxc::Expression::ImportMeta(import_meta) => Ok(InstructionValue::MetaProperty {
             meta: static_ident!("import"),
             property: static_ident!("meta"),
+            dependency: None,
             span: Some(import_meta.span),
         }),
-        oxc::Expression::NewTarget(new_target) => {
-            let span = Some(new_target.span);
-            builder.record_error(
-                diagnostics::todo_build_hir_lower_expression_handle_meta_property_expressions_other_than_import_meta(span),
-            )?;
-            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
-        }
+        oxc::Expression::NewTarget(new_target) => Ok(InstructionValue::MetaProperty {
+            meta: static_ident!("new"),
+            property: static_ident!("target"),
+            dependency: None,
+            span: Some(new_target.span),
+        }),
         oxc::Expression::ClassExpression(cls) => {
             let span = Some(cls.span);
             let diagnostic_span = Some(cls.id.as_ref().map_or_else(

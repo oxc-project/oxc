@@ -1,0 +1,52 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/new-target-arrow.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { Stringify } from "shared-runtime";
+function Component() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		const Factory = function Factory() {
+			return () => () => new.target;
+		};
+		const readNewTarget = new Factory()();
+		t0 = <Stringify value={readNewTarget()} />;
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+}
+function ConditionalComponent(flag) {
+	const $ = _c(6);
+	if (flag) {}
+	const t0 = new.target;
+	let t1;
+	if ($[0] !== t0) {
+		t1 = () => new.target;
+		$[0] = t0;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const readNewTarget = t1;
+	let t2;
+	if ($[2] !== readNewTarget) {
+		t2 = readNewTarget();
+		$[2] = readNewTarget;
+		$[3] = t2;
+	} else {
+		t2 = $[3];
+	}
+	let t3;
+	if ($[4] !== t2) {
+		t3 = <Stringify value={t2} />;
+		$[4] = t2;
+		$[5] = t3;
+	} else {
+		t3 = $[5];
+	}
+	return t3;
+}
