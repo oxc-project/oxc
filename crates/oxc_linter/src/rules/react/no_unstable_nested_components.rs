@@ -1226,20 +1226,6 @@ fn test() {
     ];
 
     let fail = vec![
-        // These must keep firing: the prop callback really does return JSX,
-        // which is the case the rule exists for.
-        (
-            "function MyComponent() {
-              return <Button onClick={() => <Cell />} />;
-            }",
-            None,
-        ),
-        (
-            "function MyComponent() {
-              return <Button onClick={() => { return <Cell />; }} />;
-            }",
-            None,
-        ),
         (
             "
                     function ParentComponent() {
@@ -1921,6 +1907,18 @@ fn test() {
                       );
                     }
                   ",
+            None,
+        ),
+        (
+            "function MyComponent() {
+              return <Button onClick={() => <Cell />} />;
+            }",
+            None,
+        ),
+        (
+            "function MyComponent() {
+              return <Button onClick={() => { return <Cell />; }} />;
+            }",
             None,
         ),
     ];
