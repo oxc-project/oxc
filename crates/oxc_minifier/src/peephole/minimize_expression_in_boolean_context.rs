@@ -82,13 +82,11 @@ impl<'a> PeepholeOptimizations {
                     let mut e = u2.argument.take_in(ctx);
                     Self::minimize_expression_in_boolean_context(&mut e, ctx);
                     ctx.replace_expression(expr, e);
+                } else if Self::try_negate_expression_in_boolean_context(&mut u1.argument, ctx) {
+                    let e = u1.argument.take_in(ctx);
+                    ctx.replace_expression(expr, e);
                 } else {
-                    if Self::try_negate_expression_in_boolean_context(&mut u1.argument, ctx) {
-                        let e = u1.argument.take_in(ctx);
-                        ctx.replace_expression(expr, e);
-                    } else {
-                        Self::minimize_expression_in_boolean_context(&mut u1.argument, ctx);
-                    }
+                    Self::minimize_expression_in_boolean_context(&mut u1.argument, ctx);
                 }
             }
             Expression::BinaryExpression(e)
