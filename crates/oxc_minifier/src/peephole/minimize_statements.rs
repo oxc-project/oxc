@@ -617,6 +617,12 @@ impl<'a> PeepholeOptimizations {
                     // "var a; a = b();" => "var a = b();"
                     // "let a; a = b();" => "let a = b();"
                     decl.init = Some(assign_expr.right.take_in(ctx));
+                    // TS forbids a definite assignment assertion on a declarator that
+                    // has an initializer (TS1263), so `let a!: number; a = b()` must
+                    // become `let a: number = b()` and not `let a!: number = b()`.
+                    // The assertion only ever suppressed a "used before assigned"
+                    // check that the initializer now satisfies outright.
+                    decl.definite = false;
                     return true;
                 }
                 // Note it is not possible to compress like:

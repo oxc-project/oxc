@@ -155,3 +155,29 @@ fn merge_assignments_to_declarations_other() {
     test_same("using a = 0; a = 1");
     test_same("await using a = 0; a = 1");
 }
+
+/// A definite assignment assertion cannot coexist with an initializer (TS1263),
+/// so the merge has to drop the `!` while keeping the type annotation. Covers all
+/// three branches that reach the merge: `var`, a literal RHS, and the lexical
+/// safety analysis.
+#[test]
+fn merge_assignments_to_declarations_drops_definite_assertion() {
+    test_options_source_type(
+        "export function f() { var a!: number; a = foo(); bar(a, a) }",
+        "export function f() { var a: number = foo(); bar(a, a) }",
+        SourceType::ts(),
+        &default_options(),
+    );
+    test_options_source_type(
+        "export function f() { let a!: number; a = 0; bar(a, a) }",
+        "export function f() { let a: number = 0; bar(0, 0) }",
+        SourceType::ts(),
+        &default_options(),
+    );
+    test_options_source_type(
+        "export function f() { let a!: number; a = foo(); bar(a, a) }",
+        "export function f() { let a: number = foo(); bar(a, a) }",
+        SourceType::ts(),
+        &default_options(),
+    );
+}
