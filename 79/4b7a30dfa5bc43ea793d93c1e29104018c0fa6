@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/typescript/no_useless_empty_export.rs
+  s_01b0963c7995ba::t_06988a436ffd3e 1,67,74-81,111-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "794b7a30dfa5bc43ea793d93c1e29104018c0fa6",
+  "prompts": {},
+  "sessions": {
+    "s_01b0963c7995ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f47-33d2-79c2-ba3f-0c7a8fdc46bf",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
