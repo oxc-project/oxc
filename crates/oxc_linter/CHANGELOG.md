@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.79.0] - 2026-08-17
+
+### 💥 BREAKING CHANGES
+
+- 8c4552d linter: [**BREAKING**] Split react/react-compiler into per-category rules (#25500) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c108d5c linter: Improve React Compiler diagnostics (#25742) (Boshen)
+- c9ec55e react-compiler: Improve diagnostic spans (#25731) (Boshen)
+- 1cbbcb7 linter/unicorn/prefer-string-replace-all: Apply fixes in one pass (#25709) (Mikhail Baev)
+- dec0a86 react-compiler: Standardize diagnostics (#25702) (Boshen)
+- 5fd77f7 linter/react/display-name: Report curried HOC inner component (#25662) (camc314)
+- 4dbb80e linter/import/no-named-as-default: Report local export conflicts (#25658) (camc314)
+- e8a7214 linter/react/rules-of-hooks: Report hooks inside try blocks (#25670) (camc314)
+- 36f8451 linter/eslint/no-eval: Align indirect default with ESLint (#25656) (camc314)
+- d901d24 linter/react/exhaustive-deps: Handle destructured object dependencies (#25669) (camc314)
+- beb724d linter/eslint/no-unused-vars: Report bare underscore parameters (#25663) (camc314)
+- fa36f26 linter/react/no-this-in-sfc: Detect this in nested arrow callbacks (#25653) (camc314)
+- 44d1be3 linter/typescript/no-var-requires: Run rule on JavaScript (#25664) (camc314)
+- 4004c10 linter/eslint/no-irregular-whitespace: Check comments by default (#25660) (camc314)
+- 625401d linter/import/no-named-default: Flag type-only named defaults (#25661) (camc314)
+- 8eacb2d linter/typescript/no-non-null-asserted-optional-chain: Detect assertions after continued optional chains (#25659) (camc314)
+- d55b76c linter/react/no-direct-mutation-state: Detect computed state mutations (#25654) (camc314)
+- f92c651 linter/unicorn/no-abusive-eslint-disable: Use directive prefix in diagnostic (#25657) (camc314)
+- ee44996 linter/eslint/max-classes-per-file: Anchor diagnostic at program start (#25652) (camc314)
+- 403ec40 linter/eslint/no-multi-assign: Handle parenthesized declarator initializers (#25651) (camc314)
+- 6c9ba37 linter/jest/expect-expect: Detect assertions in nested function declarations (#25650) (camc314)
+- 285820e linter/no-large-snapshots: Precompile and document allowed snapshot matchers (#25611) (Mikhail Baev)
+- 1be1e20 linter/eslint/prefer-promise-reject-errors: Report on spread arguments (#25648) (Mikhail Baev)
+- 509931b semantic: Classify global references per identifier (#25608) (camc314)
+- eaf80d8 linter/unicorn/prefer-node-protocol: Validate exact Node.js built-in specifiers (#25558) (camc314)
+- 57b94af linter/promise/no-multiple-resolved: Ignore unresolved globals (#25530) (Tushar Singh)
+- 80e64c2 linter/expect-expect: Validate assertion regex (#25504) (Mikhail Baev)
+- 7830604 linter/react/exhaustive-deps: Treat binary expressions as a stable dependency (#25508) (Hamody We)
+- 4df5835 linter: Allow capitalized built-in calls (#25516) (Boshen)
+- 9d49d27 react_compiler: Bail out instead of panicking on "Expected a node for all scopes" (#25506) (Boshen)
+- d43b562 linter/vitest/prefer-expect-assertions: Handle parameterized Vitest assertion suggestions (#25476) (camc314)
+
+### ⚡ Performance
+
+- 63ff8ef linter: Outline diagnostic construction (#25762) (Boshen)
+- 8e9b95f linter: Use table for rule names (#25458) (Boshen)
+
 ## [1.78.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES

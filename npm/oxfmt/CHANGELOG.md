@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.64.0] - 2026-08-17
+
+### 🚀 Features
+
+- c07fe7c oxfmt: Support `experimentalOperatorPosition` (#25643) (leaysgur)
+
+### 📚 Documentation
+
+- fed6681 oxfmt: Skip expanding overrides options (#25572) (leaysgur)
+
 ## [0.62.0] - 2026-08-03
 
 ### 🐛 Bug Fixes

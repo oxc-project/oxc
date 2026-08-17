@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.64.0] - 2026-08-17
+
+### 🐛 Bug Fixes
+
+- f405789 formatter_yaml: Consistent chomped eos behavior (#25523) (leaysgur)
+- a243311 formatter_yaml: Bump oxc-yaml-parser for contentless block scalar (#25519) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 🚀 Features
