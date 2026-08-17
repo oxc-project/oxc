@@ -227,7 +227,7 @@ impl OxlintRules {
 
         if !errors.is_empty() {
             // Sort by the error message so output is stable
-            errors.sort_by_key(std::string::ToString::to_string);
+            errors.sort_unstable_by_key(std::string::ToString::to_string);
             return Err(errors);
         }
 
