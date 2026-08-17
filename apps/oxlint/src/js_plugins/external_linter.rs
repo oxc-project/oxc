@@ -13,8 +13,8 @@ use serde::Deserialize;
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
-    ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-    LintFileResult, LoadPluginResult,
+    ExternalLinterForgetBufferCb, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+    ExternalLinterSetupRuleConfigsCb, LintFileResult, LoadPluginResult,
 };
 
 use crate::{
@@ -39,12 +39,17 @@ pub fn create_external_linter(
     let rust_create_workspace = wrap_create_workspace(create_workspace);
     let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
 
+    // k == 1: today's main-thread TSFNs. `forget_buffer` is a no-op until
+    // pool-drop wires the real JS callback.
+    let rust_forget_buffer: ExternalLinterForgetBufferCb = Arc::new(Box::new(|_buffer_id| Ok(())));
+
     ExternalLinter::new(
-        rust_load_plugin,
-        rust_setup_rule_configs,
-        rust_lint_file,
-        rust_create_workspace,
-        rust_destroy_workspace,
+        Box::new([rust_load_plugin]),
+        Box::new([rust_setup_rule_configs]),
+        Box::new([rust_lint_file]),
+        Box::new([rust_forget_buffer]),
+        Box::new([rust_create_workspace]),
+        Box::new([rust_destroy_workspace]),
     )
 }
 

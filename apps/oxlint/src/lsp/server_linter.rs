@@ -99,7 +99,7 @@ impl ServerLinterBuilder {
 
         // Setup JS workspace. This must be done before loading any configs
         if let Some(external_linter) = external_linter {
-            let res = (external_linter.create_workspace)(root_uri.as_str().to_string());
+            let res = external_linter.create_workspace(root_uri.as_str().to_string());
 
             if let Err(err) = res {
                 error!("Failed to setup JS workspace:\n{err}\n");
@@ -313,7 +313,7 @@ impl ToolBuilder for ServerLinterBuilder {
 
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
-            let res = (external_linter.destroy_workspace)(root_uri.as_str().to_string());
+            let res = external_linter.destroy_workspace(root_uri.as_str().to_string());
 
             if let Err(err) = res {
                 error!("Failed to destroy JS workspace:\n{err}\n");

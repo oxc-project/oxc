@@ -170,7 +170,7 @@ impl ExternalPluginStore {
     ) -> Result<(), String> {
         let json = serde_json::to_string(&ConfigSer::new(cwd, workspace_uri, self));
         match json {
-            Ok(options_json) => (external_linter.setup_rule_configs)(options_json),
+            Ok(options_json) => external_linter.setup_rule_configs(options_json),
             Err(err) => Err(format!("Failed to serialize external plugin options: {err}")),
         }
     }

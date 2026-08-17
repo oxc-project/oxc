@@ -1,7 +1,10 @@
 use std::{
     io::BufWriter,
     process::{ExitCode, Termination},
-    sync::{LazyLock, Mutex},
+    sync::{
+        LazyLock, Mutex,
+        atomic::{AtomicU32, Ordering},
+    },
 };
 
 use napi::{
@@ -155,6 +158,18 @@ pub struct RegisteredWorker {
 pub static REGISTERED_WORKERS: LazyLock<Mutex<FxHashMap<u32, RegisteredWorker>>> =
     LazyLock::new(|| Mutex::new(FxHashMap::default()));
 
+/// Process-wide JS plugin worker count `K`. `0` means unset (no `id >= K` check).
+static JS_PLUGIN_WORKER_COUNT: AtomicU32 = AtomicU32::new(0);
+
+/// Set the number of JS plugin worker isolates (`K`).
+///
+/// Call before workers register. `register_worker` then rejects `id >= k`.
+/// Pass `0` to clear the bound.
+#[napi]
+pub fn set_js_plugin_worker_count(k: u32) {
+    JS_PLUGIN_WORKER_COUNT.store(k, Ordering::SeqCst);
+}
+
 /// Register JS plugin callbacks for a worker isolate.
 ///
 /// Called from `worker.ts` after the worker starts. Callbacks are stored
@@ -162,7 +177,8 @@ pub static REGISTERED_WORKERS: LazyLock<Mutex<FxHashMap<u32, RegisteredWorker>>>
 ///
 /// # Errors
 ///
-/// Returns an error if any required field is missing from `options`.
+/// Returns an error if any required field is missing from `options`,
+/// if `id` is already registered, or if `K` is set and `id >= K`.
 #[napi]
 pub fn register_worker(
     #[napi(
@@ -171,6 +187,12 @@ pub fn register_worker(
     options: Object,
 ) -> napi::Result<()> {
     let id = require_field::<u32>(&options, "id")?;
+    let k = JS_PLUGIN_WORKER_COUNT.load(Ordering::SeqCst);
+    if k > 0 && id >= k {
+        return Err(napi::Error::from_reason(format!(
+            "registerWorker: worker id {id} is >= K ({k})"
+        )));
+    }
     let load_plugin = require_field::<JsLoadPluginCb>(&options, "loadPlugin")?;
     let lint_file = require_field::<JsLintFileCb>(&options, "lintFile")?;
     let forget_buffer = require_field::<JsForgetBufferCb>(&options, "forgetBuffer")?;
@@ -178,7 +200,11 @@ pub fn register_worker(
     let create_workspace = require_field::<JsCreateWorkspaceCb>(&options, "createWorkspace")?;
     let destroy_workspace = require_field::<JsDestroyWorkspaceCb>(&options, "destroyWorkspace")?;
 
-    REGISTERED_WORKERS.lock().unwrap_or_else(std::sync::PoisonError::into_inner).insert(
+    let mut workers = REGISTERED_WORKERS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    if workers.contains_key(&id) {
+        return Err(napi::Error::from_reason(format!("registerWorker: duplicate worker id {id}")));
+    }
+    workers.insert(
         id,
         RegisteredWorker {
             load_plugin,

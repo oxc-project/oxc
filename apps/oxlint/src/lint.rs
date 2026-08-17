@@ -234,7 +234,7 @@ impl CliRunner {
 
         // Setup JS workspace before loading any configs (config parsing can load JS plugins).
         if let Some(external_linter) = &external_linter {
-            let res = (external_linter.create_workspace)(self.cwd.to_string_lossy().into_owned());
+            let res = external_linter.create_workspace(self.cwd.to_string_lossy().into_owned());
 
             if let Err(err) = res {
                 print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
