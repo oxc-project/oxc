@@ -38,6 +38,21 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to drop a cached raw-transfer buffer.
+#[napi]
+pub type JsForgetBufferCb = ThreadsafeFunction<
+    // Arguments
+    u32, // Buffer ID
+    // Return value
+    (),
+    // Arguments (repeated)
+    u32,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// JS callback to lint a file.
 #[napi]
 pub type JsLintFileCb = ThreadsafeFunction<
@@ -129,9 +144,10 @@ pub type JsLoadJsConfigsCb = ThreadsafeFunction<
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `setup_rule_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
-/// 5. `create_workspace`: Create a workspace.
-/// 6. `destroy_workspace`: Destroy a workspace.
-/// 7. `load_js_configs`: Load JavaScript config files.
+/// 5. `forget_buffer`: Drop a cached raw-transfer buffer.
+/// 6. `create_workspace`: Create a workspace.
+/// 7. `destroy_workspace`: Destroy a workspace.
+/// 8. `load_js_configs`: Load JavaScript config files.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -142,6 +158,7 @@ pub async fn lint(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    forget_buffer: JsForgetBufferCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
@@ -151,6 +168,7 @@ pub async fn lint(
         load_plugin,
         setup_rule_configs,
         lint_file,
+        forget_buffer,
         create_workspace,
         destroy_workspace,
         load_js_configs,
@@ -166,6 +184,7 @@ async fn lint_impl(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    forget_buffer: JsForgetBufferCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
@@ -199,6 +218,7 @@ async fn lint_impl(
             load_plugin,
             setup_rule_configs,
             lint_file,
+            forget_buffer,
             create_workspace,
             destroy_workspace,
         ));
@@ -206,10 +226,11 @@ async fn lint_impl(
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let (external_linter, js_config_loader) = {
-        let (_, _, _, _, _, _) = (
+        let (_, _, _, _, _, _, _) = (
             load_plugin,
             setup_rule_configs,
             lint_file,
+            forget_buffer,
             create_workspace,
             destroy_workspace,
             load_js_configs,

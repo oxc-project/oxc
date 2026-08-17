@@ -99,7 +99,7 @@ impl ServerLinterBuilder {
 
         // Setup JS workspace. This must be done before loading any configs
         if let Some(external_linter) = external_linter {
-            let res = (external_linter.create_workspace)(root_uri.as_str().to_string());
+            let res = external_linter.create_workspace(root_uri.as_str().to_string());
 
             if let Err(err) = res {
                 error!("Failed to setup JS workspace:\n{err}\n");
@@ -221,10 +221,25 @@ impl ServerLinterBuilder {
             }
         }
 
+        // This folder gets its own pool of arenas. Building a pool here mints buffer ids
+        // that `ExternalLinter` routes by `buffer_id % K` (K is 1 on the main-thread path).
+        let mut buffer_ids = Vec::new();
+        let mut new_allocator_pools = || {
+            // `external_linter` was already cleared above if no JS plugins were loaded.
+            let pools =
+                crate::utils::create_allocator_pools(external_linter.is_some(), use_cross_module);
+            buffer_ids.extend_from_slice(pools.parse.buffer_ids());
+            if let Some(js_pool) = pools.js.as_ref() {
+                buffer_ids.extend_from_slice(js_pool.buffer_ids());
+            }
+            pools
+        };
+
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
             .with_fix_kind(fix_kind)
             .with_ignore_fixes(true)
+            .with_allocator_pools(new_allocator_pools())
             .build()
         {
             Ok(runner) => runner,
@@ -237,10 +252,18 @@ impl ServerLinterBuilder {
                     .with_type_aware(false)
                     .with_fix_kind(fix_kind)
                     .with_ignore_fixes(true)
+                    .with_allocator_pools(new_allocator_pools())
                     .build()
                     .expect("Failed to build LintRunner without type-aware linting")
             }
         };
+
+        // The failed builder above drops its pool, but JS still holds those buffers, so the guard
+        // has to forget every id minted during this build, not just the surviving pool's.
+        let js_buffers =
+            external_linter.filter(|_| !buffer_ids.is_empty()).map(|external_linter| {
+                JsBufferGuard { buffer_ids, external_linter: external_linter.clone() }
+            });
 
         (
             ServerLinter::new(
@@ -253,7 +276,8 @@ impl ServerLinterBuilder {
                 fix_kind,
                 lint_options.report_unused_directive,
                 options.rules_customization,
-            ),
+            )
+            .with_js_buffers(js_buffers),
             None,
         )
     }
@@ -313,7 +337,7 @@ impl ToolBuilder for ServerLinterBuilder {
 
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
-            let res = (external_linter.destroy_workspace)(root_uri.as_str().to_string());
+            let res = external_linter.destroy_workspace(root_uri.as_str().to_string());
 
             if let Err(err) = res {
                 error!("Failed to destroy JS workspace:\n{err}\n");
@@ -412,6 +436,29 @@ pub struct ServerLinter {
     fix_kind: FixKind,
     unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
+    /// Drops this folder's raw-transfer buffers on the JS side. Only the field's `Drop` matters.
+    js_buffers: Option<JsBufferGuard>,
+}
+
+/// Releases the JS-side references to a folder's fixed-size arenas when it is dropped.
+///
+/// Each fixed-size arena is exposed to JS as a `Uint8Array` that `lint.ts` caches, so the
+/// arena's finalizer never runs while that cache entry lives. Since the language server builds a
+/// fresh pool per folder and rebuilds on every config change, the buffers would otherwise pile up
+/// at 2 GiB of address space each. `forgetBuffer` clears the cache entry so the arena can be freed.
+struct JsBufferGuard {
+    buffer_ids: Vec<u32>,
+    external_linter: ExternalLinter,
+}
+
+impl Drop for JsBufferGuard {
+    fn drop(&mut self) {
+        for &buffer_id in &self.buffer_ids {
+            if let Err(err) = self.external_linter.forget_buffer(buffer_id) {
+                error!("Failed to drop JS buffer {buffer_id}:\n{err}\n");
+            }
+        }
+    }
 }
 
 impl Tool for ServerLinter {
@@ -721,7 +768,14 @@ impl ServerLinter {
             fix_kind,
             unused_directives_severity,
             rules_customization,
+            js_buffers: None,
         }
+    }
+
+    #[must_use]
+    fn with_js_buffers(mut self, js_buffers: Option<JsBufferGuard>) -> Self {
+        self.js_buffers = js_buffers;
+        self
     }
 
     fn get_code_actions_for_uri(

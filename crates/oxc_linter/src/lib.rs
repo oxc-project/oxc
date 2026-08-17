@@ -76,8 +76,9 @@ pub use crate::{
     context::{ContextSubHost, ContextSubHostOptions, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
-        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
+        ExternalLinterForgetBufferCb, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
+        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
@@ -88,7 +89,7 @@ pub use crate::{
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
-    service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    service::{AllocatorPools, LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
     tsgolint::TsGoLintState,
@@ -801,7 +802,7 @@ impl Linter {
         let external_linter = self.external_linter.as_ref().unwrap();
 
         // Pass AST and rule IDs + options IDs to JS
-        let result = (external_linter.lint_file)(
+        let result = external_linter.lint_file(
             path_string.to_owned(),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
