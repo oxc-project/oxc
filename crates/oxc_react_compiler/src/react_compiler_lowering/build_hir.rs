@@ -1952,20 +1952,20 @@ enum SimpleAssignmentTargetRef<'b, 'a> {
 fn simple_assignment_target_ref<'b, 'a>(
     target: &'b oxc::AssignmentTarget<'a>,
 ) -> Option<SimpleAssignmentTargetRef<'b, 'a>> {
-    target.as_simple_assignment_target().and_then(simple_assignment_target_ref_from_simple)
+    target.as_simple_assignment_target().map(simple_assignment_target_ref_from_simple)
 }
 
 fn simple_assignment_target_ref_from_simple<'b, 'a>(
     target: &'b oxc::SimpleAssignmentTarget<'a>,
-) -> Option<SimpleAssignmentTargetRef<'b, 'a>> {
+) -> SimpleAssignmentTargetRef<'b, 'a> {
     match target {
         oxc::SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
-            Some(SimpleAssignmentTargetRef::Identifier(id))
+            SimpleAssignmentTargetRef::Identifier(id)
         }
         oxc::SimpleAssignmentTarget::StaticMemberExpression(_)
         | oxc::SimpleAssignmentTarget::ComputedMemberExpression(_)
         | oxc::SimpleAssignmentTarget::PrivateFieldExpression(_) => {
-            Some(SimpleAssignmentTargetRef::Member(target.to_member_expression()))
+            SimpleAssignmentTargetRef::Member(target.to_member_expression())
         }
         oxc::SimpleAssignmentTarget::TSAsExpression(node) => {
             simple_assignment_target_expression_ref(&node.expression)
@@ -1984,11 +1984,16 @@ fn simple_assignment_target_ref_from_simple<'b, 'a>(
 
 fn simple_assignment_target_expression_ref<'b, 'a>(
     expression: &'b oxc::Expression<'a>,
-) -> Option<SimpleAssignmentTargetRef<'b, 'a>> {
+) -> SimpleAssignmentTargetRef<'b, 'a> {
     let expression = expression.get_inner_expression();
     match expression {
-        oxc::Expression::Identifier(id) => Some(SimpleAssignmentTargetRef::Identifier(id)),
-        _ => expression.as_member_expression().map(SimpleAssignmentTargetRef::Member),
+        oxc::Expression::Identifier(id) => SimpleAssignmentTargetRef::Identifier(id),
+        oxc::Expression::StaticMemberExpression(_)
+        | oxc::Expression::ComputedMemberExpression(_)
+        | oxc::Expression::PrivateFieldExpression(_) => {
+            SimpleAssignmentTargetRef::Member(expression.to_member_expression())
+        }
+        _ => unreachable!("TypeScript wrapper contains a non-assignable expression"),
     }
 }
 
@@ -4005,7 +4010,7 @@ fn lower_expression<'a>(
         oxc::Expression::UpdateExpression(update) => {
             let span = Some(update.span);
             match simple_assignment_target_ref_from_simple(&update.argument) {
-                Some(SimpleAssignmentTargetRef::Member(member)) => {
+                SimpleAssignmentTargetRef::Member(member) => {
                     let binary_op = match update.operator {
                         oxc::UpdateOperator::Increment => BinaryOperator::Addition,
                         oxc::UpdateOperator::Decrement => BinaryOperator::Subtraction,
@@ -4065,7 +4070,7 @@ fn lower_expression<'a>(
                     let result_place = if update.prefix { new_value_place } else { prev_value };
                     Ok(InstructionValue::LoadLocal { place: result_place, span: result_place.span })
                 }
-                Some(SimpleAssignmentTargetRef::Identifier(ident)) => {
+                SimpleAssignmentTargetRef::Identifier(ident) => {
                     let symbol = builder.scope().resolve_reference(ident);
                     if builder.is_context_identifier(symbol) {
                         builder.record_error(
@@ -4132,12 +4137,6 @@ fn lower_expression<'a>(
                             span,
                         })
                     }
-                }
-                None => {
-                    builder.record_error(
-                        diagnostics::todo_update_expression_unsupported_argument_type(span),
-                    )?;
-                    Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
                 }
             }
         }

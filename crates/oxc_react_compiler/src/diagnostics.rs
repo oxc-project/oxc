@@ -986,16 +986,6 @@ where
 }
 
 #[cold]
-pub fn todo_update_expression_unsupported_argument_type<L, T>(labels: T) -> OxcDiagnostic
-where
-    L: Into<oxc_diagnostics::LabeledSpan>,
-    T: IntoIterator<Item = L>,
-{
-    diagnostic(ErrorCategory::Todo, "UpdateExpression with unsupported argument type")
-        .with_labels(labels)
-}
-
-#[cold]
 pub fn todo_logical_assignment_operators_not_yet_supported<L, T>(labels: T) -> OxcDiagnostic
 where
     L: Into<oxc_diagnostics::LabeledSpan>,
