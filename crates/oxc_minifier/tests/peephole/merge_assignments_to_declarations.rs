@@ -181,3 +181,24 @@ fn merge_assignments_to_declarations_drops_definite_assertion() {
         &default_options(),
     );
 }
+
+/// The two examples from <https://github.com/oxc-project/oxc/issues/14310>.
+#[test]
+fn merge_assignments_to_declarations_issue_14310() {
+    // The reported case. `deserializeBindingPatternKind` resolves outside the
+    // function, so nothing can observe `param` during its initialization; once the
+    // merge happens a later pass collapses the temporary away entirely, which is
+    // the reduction the issue asked for.
+    test(
+        "export function deserializeFormalParameter(pos) { let param; param = deserializeBindingPatternKind(pos + 32); return param; }",
+        "export function deserializeFormalParameter(pos) { return deserializeBindingPatternKind(pos + 32) }",
+    );
+    // The counter-example from the issue discussion: here
+    // `deserializeBindingPatternKind` closes over `param`, so merging would call it
+    // while `param` sits in its TDZ. The read lives in the inner function's scope,
+    // not the binding's, so the merge is rejected and the assignment stays put.
+    test(
+        "(function deserializeFormalParameter(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; param = deserializeBindingPatternKind(pos + 32); return param; })(0)",
+        "(function(pos) { function deserializeBindingPatternKind() { console.log('param', param) } let param; return param = deserializeBindingPatternKind(pos + 32), param })(0)",
+    );
+}
