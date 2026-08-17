@@ -37,7 +37,7 @@ use crate::{
     utils::read_to_arena_str,
 };
 
-use super::LintServiceOptions;
+use super::{AllocatorPools, LintServiceOptions};
 
 type ModulesByPath =
     papaya::HashMap<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>, BuildHasherDefault<FxHasher>>;
@@ -254,7 +254,31 @@ impl Runtime {
         };
 
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-        let allocator_pool = AllocatorPool::new(thread_count);
+        let (allocator_pool, js_allocator_pool) = (AllocatorPool::new(thread_count), None);
+
+        Self::new_with_allocator_pools(
+            linter,
+            options,
+            AllocatorPools { parse: allocator_pool, js: js_allocator_pool },
+        )
+    }
+
+    /// Create a [`Runtime`] which uses `pools` instead of creating its own.
+    ///
+    /// Used by callers which must create the pools themselves, because JS plugin workers were
+    /// already started and the pools' buffer ids decide which worker owns each arena.
+    pub(super) fn new_with_allocator_pools(
+        linter: Linter,
+        options: LintServiceOptions,
+        pools: AllocatorPools,
+    ) -> Self {
+        // See `Runtime::new` for why the thread pool is initialized here too. Callers passing
+        // prebuilt pools have already locked the thread count, so this is a no-op for them.
+        let _ = rayon::ThreadPoolBuilder::new().build_global();
+
+        let AllocatorPools { parse: allocator_pool, js: js_allocator_pool } = pools;
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        drop(js_allocator_pool);
 
         let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
 

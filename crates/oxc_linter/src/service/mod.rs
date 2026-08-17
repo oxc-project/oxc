@@ -6,6 +6,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
+use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::DiagnosticSender;
 
 use crate::{Linter, RuleTimingStore, suppression::DiffManager};
@@ -60,6 +61,19 @@ impl LintServiceOptions {
     }
 }
 
+/// Allocator pools for a lint run.
+///
+/// Callers that own JS plugin worker startup (the CLI and the language server) build these
+/// themselves, because the pools' buffer ids have to be routable to already-running workers.
+/// Rust-only callers let [`Runtime`] pick pools for them.
+pub struct AllocatorPools {
+    /// Pool used for parsing and linting.
+    pub parse: AllocatorPool,
+    /// Pool used only to copy ASTs into fixed-size arenas before handing them to JS plugins.
+    /// `None` unless both JS plugins and the `import` plugin are enabled.
+    pub js: Option<AllocatorPool>,
+}
+
 pub struct LintService {
     runtime: Runtime,
 }
@@ -67,6 +81,16 @@ pub struct LintService {
 impl LintService {
     pub fn new(linter: Linter, options: LintServiceOptions) -> Self {
         let runtime = Runtime::new(linter, options);
+        Self { runtime }
+    }
+
+    /// Create a [`LintService`] which uses `pools` instead of creating its own.
+    pub fn new_with_allocator_pools(
+        linter: Linter,
+        options: LintServiceOptions,
+        pools: AllocatorPools,
+    ) -> Self {
+        let runtime = Runtime::new_with_allocator_pools(linter, options, pools);
         Self { runtime }
     }
 

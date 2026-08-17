@@ -80,6 +80,14 @@ export type JsSetupRuleConfigsCb =
   ((arg: string) => string | null)
 
 /**
+ * JS callback to start JS plugin worker isolates.
+ *
+ * Called once, with `K`. Resolves when every worker has registered its callbacks.
+ */
+export type JsStartWorkersCb =
+  ((arg: number) => Promise<undefined>)
+
+/**
  * NAPI entry point.
  *
  * JS side passes in:
@@ -87,13 +95,15 @@ export type JsSetupRuleConfigsCb =
  * 2. `load_plugin`: Load a JS plugin from a file path.
  * 3. `setup_rule_configs`: Setup configuration options.
  * 4. `lint_file`: Lint a file.
- * 5. `create_workspace`: Create a workspace.
- * 6. `destroy_workspace`: Destroy a workspace.
- * 7. `load_js_configs`: Load JavaScript config files.
+ * 5. `forget_buffer`: Drop a cached raw-transfer buffer.
+ * 6. `create_workspace`: Create a workspace.
+ * 7. `destroy_workspace`: Destroy a workspace.
+ * 8. `load_js_configs`: Load JavaScript config files.
+ * 9. `start_js_workers`: Start `K` JS plugin worker isolates.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb, startJsWorkers: JsStartWorkersCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
@@ -145,6 +155,15 @@ export declare function rawTransferSupported(): boolean
  *
  * # Errors
  *
- * Returns an error if any required field is missing from `options`.
+ * Returns an error if any required field is missing from `options`,
+ * if `id` is already registered, or if `K` is set and `id >= K`.
  */
 export declare function registerWorker(options: { id: number, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, setupRuleConfigs: JsSetupRuleConfigsCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb }): void
+
+/**
+ * Set the number of JS plugin worker isolates (`K`).
+ *
+ * Call before workers register. `register_worker` then rejects `id >= k`.
+ * Pass `0` to clear the bound.
+ */
+export declare function setJsPluginWorkerCount(k: number): void

@@ -103,6 +103,23 @@ impl AllocatorPool {
         self.len() == 0
     }
 
+    /// Buffer ids of every allocator in this pool.
+    ///
+    /// Empty for a standard pool, which does not stamp buffer ids.
+    ///
+    /// Callers use this to tell JS to drop its cached raw-transfer views before the pool is dropped.
+    pub fn buffer_ids(&self) -> &[u32] {
+        match &self.0 {
+            AllocatorPoolInner::Standard(_) => &[],
+            #[cfg(all(
+                feature = "fixed_size",
+                target_pointer_width = "64",
+                target_endian = "little"
+            ))]
+            AllocatorPoolInner::FixedSize(pool) => pool.buffer_ids(),
+        }
+    }
+
     /// `true` if this pool uses fixed-size raw-transfer allocators.
     pub fn is_fixed_size(&self) -> bool {
         match &self.0 {
@@ -217,5 +234,22 @@ mod buffer_id_tests {
         assert_eq!(pool.len(), 2);
         assert!(!pool.is_fixed_size());
         assert!(!pool.get().is_fixed_size());
+        assert!(pool.buffer_ids().is_empty());
+    }
+
+    /// The language server forgets a folder's buffers by id, so `buffer_ids` has to list exactly
+    /// the ids of the arenas the pool hands out — no more, no fewer.
+    #[test]
+    fn buffer_ids_match_the_arenas_the_pool_hands_out() {
+        let pool = AllocatorPool::new_fixed_size(3);
+        let expected = FxHashSet::from_iter(pool.buffer_ids().iter().copied());
+        assert_eq!(expected.len(), pool.len());
+
+        let guards = [pool.get(), pool.get(), pool.get()];
+        // SAFETY: these allocators came from a `new_fixed_size` pool.
+        let actual = unsafe {
+            FxHashSet::from_iter(guards.iter().map(|guard| guard.fixed_size_buffer_id()))
+        };
+        assert_eq!(actual, expected);
     }
 }

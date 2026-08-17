@@ -234,6 +234,13 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
 
   let lines = stdout.split("\n");
 
+  // Drop the JS plugin startup/lint timing lines that oxlint always writes to stderr.
+  // e.g. `worker_boot_ms=42 plugin_load_ms=17`, `lint_ms=123`
+  lines = lines.filter(
+    (line) => !/^(?:worker_boot_ms=\d+ plugin_load_ms=\d+|lint_ms=\d+)$/.test(line),
+  );
+  if (lines.length === 0) return "";
+
   // Remove timing and thread count info which can vary between runs.
   //
   // Examples, all need to be handled:

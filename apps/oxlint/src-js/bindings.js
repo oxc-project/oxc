@@ -703,7 +703,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Severity, applyFixes, getBufferOffset, lint, parseRawSync, rawTransferSupported, registerWorker } = nativeBinding
+const { Severity, applyFixes, getBufferOffset, lint, parseRawSync, rawTransferSupported, registerWorker, setJsPluginWorkerCount } = nativeBinding
 export { Severity }
 export { applyFixes }
 export { getBufferOffset }
@@ -711,3 +711,4 @@ export { lint }
 export { parseRawSync }
 export { rawTransferSupported }
 export { registerWorker }
+export { setJsPluginWorkerCount }

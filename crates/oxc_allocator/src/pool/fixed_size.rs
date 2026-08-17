@@ -106,6 +106,9 @@ pub struct FixedSizeAllocatorPool {
 
     /// Number of allocators actually created. On Windows this can be less than `thread_count`.
     len: usize,
+
+    /// Buffer ids of every allocator in this pool, in creation order.
+    buffer_ids: Box<[u32]>,
 }
 
 impl FixedSizeAllocatorPool {
@@ -126,6 +129,7 @@ impl FixedSizeAllocatorPool {
     #[cfg(not(target_os = "windows"))]
     pub fn new(thread_count: usize) -> Self {
         let mut allocators = Stack::with_capacity(thread_count);
+        let mut buffer_ids = Vec::with_capacity(thread_count);
 
         // Create `thread_count` allocators
         for _ in 0..thread_count {
@@ -133,10 +137,15 @@ impl FixedSizeAllocatorPool {
             // consume almost the entirety of a 64-bit address space. No platform has such a large address space.
             // Typically they use 48 bit address space, or 53 bit at most.
             let allocator = FixedSizeAllocator::try_new().unwrap();
+            buffer_ids.push(allocator.buffer_id());
             allocators.push(allocator);
         }
 
-        Self { allocators: Mutex::new(allocators), len: thread_count }
+        Self {
+            allocators: Mutex::new(allocators),
+            len: thread_count,
+            buffer_ids: buffer_ids.into_boxed_slice(),
+        }
     }
 
     /// Create a new [`FixedSizeAllocatorPool`] containing *up to* `thread_count` allocators.
@@ -174,6 +183,7 @@ impl FixedSizeAllocatorPool {
         let capacity = thread_count + 1;
 
         let mut allocators = Stack::with_capacity(capacity);
+        let mut buffer_ids = Vec::with_capacity(capacity);
 
         // Get as many allocators as possible, up to `capacity`
         for _ in 0..capacity {
@@ -182,6 +192,7 @@ impl FixedSizeAllocatorPool {
             // Typically they use 48 bit address space, or 53 bit at most.
             let allocator = FixedSizeAllocator::try_new();
             let Ok(allocator) = allocator else { break };
+            buffer_ids.push(allocator.buffer_id());
             allocators.push(allocator);
         }
 
@@ -197,11 +208,17 @@ impl FixedSizeAllocatorPool {
             // Otherwise, discard the last allocator we got, to leave memory free for other allocations
             _ => {
                 allocators.pop();
+                buffer_ids.pop();
             }
         }
 
         let len = allocators.len();
-        Self { allocators: Mutex::new(allocators), available: Condvar::new(), len }
+        Self {
+            allocators: Mutex::new(allocators),
+            available: Condvar::new(),
+            len,
+            buffer_ids: buffer_ids.into_boxed_slice(),
+        }
     }
 
     /// Retrieve an [`Allocator`] from the pool.
@@ -280,6 +297,11 @@ impl FixedSizeAllocatorPool {
     /// Number of allocators actually created for this pool.
     pub fn len(&self) -> usize {
         self.len
+    }
+
+    /// Buffer ids of every allocator in this pool.
+    pub fn buffer_ids(&self) -> &[u32] {
+        &self.buffer_ids
     }
 }
 
@@ -454,6 +476,14 @@ impl FixedSizeAllocator {
             debug_assert!(cursor_ptr.addr().get().is_multiple_of(CURSOR_MIN_ALIGN));
             self.allocator.set_cursor_ptr(cursor_ptr);
         }
+    }
+
+    /// Process-wide buffer id stamped into this allocator by [`try_new`].
+    ///
+    /// [`try_new`]: Self::try_new
+    fn buffer_id(&self) -> u32 {
+        // SAFETY: `try_new` wrote a `FixedSizeAllocatorMetadata` for this `Allocator`.
+        unsafe { self.allocator.fixed_size_buffer_id() }
     }
 
     /// Unwrap a [`FixedSizeAllocator`] into the [`Allocator`] it contains.

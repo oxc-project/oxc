@@ -5,7 +5,7 @@ use std::{
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use cow_utils::CowUtils;
@@ -39,19 +39,34 @@ pub struct CliRunner {
     options: LintCommand,
     cwd: PathBuf,
     external_linter: Option<ExternalLinter>,
+    /// Time spent booting JS plugin worker isolates before this runner was created.
+    /// Zero when JS plugins run on the main JS thread.
+    worker_boot_ms: Duration,
     /// Callback for loading JavaScript/TypeScript config files (experimental).
     /// This is only available when running via Node.js with NAPI.
     #[cfg(feature = "napi")]
     js_config_loader: Option<JsConfigLoaderCb>,
 }
 
+/// Print a JS-plugin-worker spike timing to stderr.
+///
+/// Stderr rather than stdout, so this doesn't land in the middle of diagnostics or break the
+/// language server protocol.
+#[expect(clippy::print_stderr, reason = "spike timings for measuring JS plugin worker parallelism")]
+fn print_spike_timing(timing: std::fmt::Arguments) {
+    eprintln!("{timing}");
+}
+
 impl Debug for CliRunner {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = f.debug_struct("CliRunner");
-        s.field("options", &self.options).field("cwd", &self.cwd).field(
-            "external_linter",
-            if self.external_linter.is_some() { &"Some(ExternalLinter)" } else { &"None" },
-        );
+        s.field("options", &self.options)
+            .field("cwd", &self.cwd)
+            .field(
+                "external_linter",
+                if self.external_linter.is_some() { &"Some(ExternalLinter)" } else { &"None" },
+            )
+            .field("worker_boot_ms", &self.worker_boot_ms);
         #[cfg(feature = "napi")]
         s.field(
             "js_config_loader",
@@ -68,9 +83,16 @@ impl CliRunner {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
             external_linter,
+            worker_boot_ms: Duration::ZERO,
             #[cfg(feature = "napi")]
             js_config_loader: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_worker_boot_ms(mut self, worker_boot_ms: Duration) -> Self {
+        self.worker_boot_ms = worker_boot_ms;
+        self
     }
 
     /// # Panics
@@ -79,6 +101,7 @@ impl CliRunner {
         let debug_files = self.options.output_options.debug.contains(DebugOption::Files);
         let debug_timings = self.options.output_options.debug.contains(DebugOption::Timings);
         let output_formatter = OutputFormatter::new(format_str);
+        let worker_boot_ms = self.worker_boot_ms;
 
         let LintCommand {
             paths,
@@ -479,7 +502,11 @@ impl CliRunner {
             }
         }
         let plugin_load_ms = plugin_load_start.elapsed();
-        eprintln!("worker_boot_ms=0 plugin_load_ms={}", plugin_load_ms.as_millis());
+        print_spike_timing(format_args!(
+            "worker_boot_ms={} plugin_load_ms={}",
+            worker_boot_ms.as_millis(),
+            plugin_load_ms.as_millis()
+        ));
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
@@ -520,6 +547,11 @@ impl CliRunner {
 
         let cwd = options.cwd().to_path_buf();
 
+        // Create the allocator pools here rather than letting `Runtime` do it, so that the JS
+        // plugin workers (already started at this point) own the arenas' buffer ids.
+        let allocator_pools =
+            crate::utils::create_allocator_pools(linter.has_external_linter(), use_cross_module);
+
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
@@ -529,6 +561,7 @@ impl CliRunner {
             .with_fix_kind(fix_options.fix_kind())
             .with_type_check_only(type_check_only)
             .with_timings(debug_timings)
+            .with_allocator_pools(allocator_pools)
             .build()
         {
             Ok(runner) => runner,
@@ -553,7 +586,7 @@ impl CliRunner {
             lint_runner.lint_files::<false>(&files_to_lint, tx_error.clone(), &diff_manager, None)
         };
         let lint_ms = lint_start.elapsed();
-        eprintln!("lint_ms={}", lint_ms.as_millis());
+        print_spike_timing(format_args!("lint_ms={}", lint_ms.as_millis()));
 
         match lint_result {
             Ok(lint_runner) => {

@@ -5,6 +5,7 @@ use std::{
         LazyLock, Mutex,
         atomic::{AtomicU32, Ordering},
     },
+    time::Duration,
 };
 
 use napi::{
@@ -142,6 +143,23 @@ pub type JsForgetBufferCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to start JS plugin worker isolates.
+///
+/// Called once, with `K`. Resolves when every worker has registered its callbacks.
+#[napi]
+pub type JsStartWorkersCb = ThreadsafeFunction<
+    // Arguments
+    u32, // Number of workers to start (`K`)
+    // Return value
+    Promise<()>,
+    // Arguments (repeated)
+    u32,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// Callbacks registered by a JS plugin worker isolate.
 ///
 /// Populated by [`register_worker`]. Later used to route `ExternalLinter` through workers.
@@ -231,9 +249,11 @@ fn require_field<T: FromNapiValue>(options: &Object, field: &'static str) -> nap
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `setup_rule_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
-/// 5. `create_workspace`: Create a workspace.
-/// 6. `destroy_workspace`: Destroy a workspace.
-/// 7. `load_js_configs`: Load JavaScript config files.
+/// 5. `forget_buffer`: Drop a cached raw-transfer buffer.
+/// 6. `create_workspace`: Create a workspace.
+/// 7. `destroy_workspace`: Destroy a workspace.
+/// 8. `load_js_configs`: Load JavaScript config files.
+/// 9. `start_js_workers`: Start `K` JS plugin worker isolates.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -244,18 +264,22 @@ pub async fn lint(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    forget_buffer: JsForgetBufferCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
+    start_js_workers: JsStartWorkersCb,
 ) -> bool {
     lint_impl(
         args,
         load_plugin,
         setup_rule_configs,
         lint_file,
+        forget_buffer,
         create_workspace,
         destroy_workspace,
         load_js_configs,
+        start_js_workers,
     )
     .await
     .report()
@@ -263,14 +287,17 @@ pub async fn lint(
 }
 
 /// Run the linter.
+#[expect(clippy::too_many_arguments)]
 async fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    forget_buffer: JsForgetBufferCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
     load_js_configs: JsLoadJsConfigsCb,
+    start_js_workers: JsStartWorkersCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -293,30 +320,63 @@ async fn lint_impl(
     // Both LSP and CLI use `tracing` for logging
     init_tracing();
 
+    // Lock the Rayon thread count before anything reads it. `K` is derived from it, and both the
+    // JS workers and the allocator pools that feed them have to agree on that number.
+    // The language server relies on this too, so it happens before the `--lsp` branch below.
+    command.handle_threads();
+
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let (external_linter, js_config_loader) = {
+    let (external_linter, js_config_loader, worker_boot_ms) = {
         let js_config_loader = Some(crate::js_config::create_js_config_loader(load_js_configs));
-        let external_linter = Some(crate::js_plugins::create_external_linter(
-            load_plugin,
-            setup_rule_configs,
-            lint_file,
-            create_workspace,
-            destroy_workspace,
-        ));
-        (external_linter, js_config_loader)
+
+        // Probe how many fixed-size arenas this machine will actually give us, then drop the probe
+        // pool. On Windows that count can be lower than the thread count, and `K` must match the
+        // real pools, otherwise a buffer would route to a worker that never sees it.
+        let k = oxc_allocator::AllocatorPool::new_fixed_size(rayon::current_num_threads()).len();
+        set_js_plugin_worker_count(u32::try_from(k).unwrap_or(u32::MAX));
+
+        if k <= 1 {
+            // One isolate: keep running JS plugins on the main JS thread, no workers to boot.
+            let external_linter = crate::js_plugins::create_external_linter(
+                load_plugin,
+                setup_rule_configs,
+                lint_file,
+                forget_buffer,
+                create_workspace,
+                destroy_workspace,
+            );
+            (Some(external_linter), js_config_loader, Duration::ZERO)
+        } else {
+            let boot_start = std::time::Instant::now();
+            if let Err(err) = start_workers(&start_js_workers, k).await {
+                print_startup_error(&err);
+                return CliRunResult::JsPluginWorkerStartupFailed;
+            }
+            let worker_boot_ms = boot_start.elapsed();
+
+            match crate::js_plugins::create_external_linter_from_workers(k) {
+                Ok(external_linter) => (Some(external_linter), js_config_loader, worker_boot_ms),
+                Err(err) => {
+                    print_startup_error(&err);
+                    return CliRunResult::JsPluginWorkerStartupFailed;
+                }
+            }
+        }
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    let (external_linter, js_config_loader) = {
-        let (_, _, _, _, _, _) = (
+    let (external_linter, js_config_loader, worker_boot_ms) = {
+        let (_, _, _, _, _, _, _, _) = (
             load_plugin,
             setup_rule_configs,
             lint_file,
+            forget_buffer,
             create_workspace,
             destroy_workspace,
             load_js_configs,
+            start_js_workers,
         );
-        (None, None)
+        (None, None, Duration::ZERO)
     };
 
     // If --lsp flag is set, run the language server
@@ -325,19 +385,35 @@ async fn lint_impl(
         return CliRunResult::LintSucceeded;
     }
 
-    command.handle_threads();
-
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
 
-    let mut cli_runner = CliRunner::new(command, external_linter);
+    let mut cli_runner =
+        CliRunner::new(command, external_linter).with_worker_boot_ms(worker_boot_ms);
     #[cfg(feature = "napi")]
     {
         cli_runner = cli_runner.with_config_loader(js_config_loader);
     }
 
     cli_runner.run(&mut stdout)
+}
+
+/// Ask JS to start `k` worker isolates, and wait until all of them have registered.
+async fn start_workers(cb: &JsStartWorkersCb, k: usize) -> Result<(), String> {
+    let k = u32::try_from(k).map_err(|_| format!("worker count {k} does not fit in u32"))?;
+    let promise =
+        cb.call_async(k).await.map_err(|err| format!("`startJsWorkers` threw an error: {err}"))?;
+    promise.into_future().await.map_err(|err| format!("`startJsWorkers` failed: {err}"))
+}
+
+/// Report a JS plugin worker startup failure.
+///
+/// Goes to stderr rather than stdout: at this point in startup the CLI's buffered stdout writer
+/// doesn't exist yet, and the language server owns stdout for its protocol.
+#[expect(clippy::print_stderr)]
+fn print_startup_error(err: &str) {
+    eprintln!("Failed to start JS plugin workers:\n{err}");
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

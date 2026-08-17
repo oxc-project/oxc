@@ -1,3 +1,4 @@
+import { Worker } from "node:worker_threads";
 import { lint } from "./bindings.js";
 import { debugAssertIsNonNull, debugAssertIsNotUndefined } from "./utils/asserts.ts";
 
@@ -7,6 +8,7 @@ import { debugAssertIsNonNull, debugAssertIsNotUndefined } from "./utils/asserts
 let loadPlugin: typeof import("./plugins/index.ts").loadPlugin | null = null;
 let setupRuleConfigs: typeof import("./plugins/index.ts").setupRuleConfigs | null = null;
 let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
+let forgetBuffer: typeof import("./plugins/index.ts").forgetBuffer | null = null;
 let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | null = null;
 let destroyWorkspace: typeof import("./workspace/index.ts").destroyWorkspace | null = null;
 // Lazy-loaded JS/TS config loader (experimental)
@@ -38,7 +40,7 @@ function loadPluginWrapper(
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, lintFile, setupRuleConfigs } = mod);
+      ({ loadPlugin, lintFile, setupRuleConfigs, forgetBuffer } = mod);
       return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
     });
   }
@@ -104,6 +106,19 @@ function lintFileWrapper(
 }
 
 /**
+ * Drop the cached buffer with this ID.
+ *
+ * Delegates to `forgetBuffer`, which was lazy-loaded by `loadPluginWrapper`. Rust only asks to
+ * forget buffers it previously sent to JS, so the plugins module is always loaded by then.
+ *
+ * @param bufferId - ID of buffer to forget
+ */
+function forgetBufferWrapper(bufferId: number): undefined {
+  debugAssertIsNonNull(forgetBuffer);
+  forgetBuffer(bufferId);
+}
+
+/**
  * Create a new workspace.
  *
  * Lazy-loads workspace code on first call, so that overhead is skipped if user doesn't use JS plugins.
@@ -156,6 +171,95 @@ function loadJsConfigsWrapper(paths: string[]): Promise<string> {
   return resolvedConfigLoader(paths);
 }
 
+const WORKER_URL = new URL("./worker.js", import.meta.url);
+
+// How long to wait for all workers to report `ready` before giving up.
+const WORKER_BOOT_TIMEOUT_MS = 5000;
+
+// Workers started by `startJsWorkersWrapper`. Terminated once `lint` returns.
+let workers: Worker[] = [];
+
+/**
+ * Start `k` JS plugin worker isolates, and wait until all of them have registered their callbacks.
+ *
+ * Each worker calls `registerWorker` on the Rust side and then posts `ready`, so once every worker
+ * is ready, Rust can route lint requests to any of them. Rust decides `k` and calls this at most
+ * once per process, and never with `k <= 1` (a single isolate runs plugins on this thread instead).
+ *
+ * @param k - Number of workers to start
+ * @returns Promise which resolves when all workers are ready
+ * @throws If any worker fails to start, exits early, or does not become ready in time
+ */
+function startJsWorkersWrapper(k: number): Promise<undefined> {
+  return new Promise((resolve, reject) => {
+    let readyCount = 0;
+    let settled = false;
+
+    const settle = (err?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (err) {
+        terminateJsWorkers();
+        reject(err);
+      } else {
+        resolve(undefined);
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      settle(
+        new Error(
+          `Timed out after ${WORKER_BOOT_TIMEOUT_MS}ms waiting for ${k} workers ` +
+            `to start (${readyCount} ready)`,
+        ),
+      );
+    }, WORKER_BOOT_TIMEOUT_MS);
+    // Don't hold the event loop open just for the timeout
+    timeout.unref?.();
+
+    for (let id = 0; id < k; id++) {
+      // `resourceLimits` caps each worker's JS heap. It does not cap the 2 GiB raw-transfer views,
+      // which are external memory.
+      const worker = new Worker(WORKER_URL, {
+        workerData: { id },
+        resourceLimits: { maxOldGenerationSizeMb: 256 },
+        stdout: true,
+        stderr: false,
+        stdin: false,
+      });
+      workers.push(worker);
+
+      // Anything a plugin writes to stdout would corrupt the LSP protocol, and in CLI mode it would
+      // interleave with diagnostics, so redirect it to stderr.
+      worker.stdout.on("data", (buf) => process.stderr.write(buf));
+
+      worker.on("message", (message: { type: string }) => {
+        if (message.type === "ready" && ++readyCount === k) settle();
+      });
+      worker.on("error", (err) => settle(err));
+      worker.on("exit", (code) => {
+        settle(new Error(`JS plugin worker ${id} exited with code ${code} before becoming ready`));
+      });
+    }
+  });
+}
+
+/**
+ * Terminate all JS plugin worker isolates.
+ *
+ * Workers hold raw-transfer buffers alive, and their `exit` listeners would otherwise keep the
+ * process from exiting cleanly, so drop both here.
+ */
+function terminateJsWorkers(): void {
+  const running = workers;
+  workers = [];
+  for (const worker of running) {
+    worker.removeAllListeners("exit");
+    void worker.terminate();
+  }
+}
+
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
@@ -182,15 +286,22 @@ if (!process.stdout.isTTY) {
 if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
 
 // Call Rust, passing callbacks and CLI arguments
-const success = await lint(
-  args,
-  loadPluginWrapper,
-  setupRuleConfigsWrapper,
-  lintFileWrapper,
-  createWorkspaceWrapper,
-  destroyWorkspaceWrapper,
-  loadJsConfigsWrapper,
-);
+let success: boolean;
+try {
+  success = await lint(
+    args,
+    loadPluginWrapper,
+    setupRuleConfigsWrapper,
+    lintFileWrapper,
+    forgetBufferWrapper,
+    createWorkspaceWrapper,
+    destroyWorkspaceWrapper,
+    loadJsConfigsWrapper,
+    startJsWorkersWrapper,
+  );
+} finally {
+  terminateJsWorkers();
+}
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
