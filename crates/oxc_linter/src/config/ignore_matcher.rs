@@ -52,11 +52,34 @@ impl LintIgnoreMatcher {
     }
 
     /// Returns true if the path should be ignored by any config.
-    /// Checks nested configs deepest-to-shallowest, so deepest config wins.
+    /// Checks nested configs deepest-to-shallowest, so the deepest config wins.
     pub fn should_ignore(&self, path: &Path) -> bool {
-        // If a nested config matches, only use its ignore patterns (do not fall back to base)
+        self.evaluate(path, true)
+    }
+
+    /// Core ignore evaluation.
+    ///
+    /// Finds the deepest nested config whose directory is an ancestor of `path`
+    /// (or equal to it, when `include_equal` is `true`). That config's
+    /// `ignorePatterns` govern `path` exclusively, *unless* the nested config's
+    /// own directory is itself ignored by a shallower config — in that case the
+    /// nested config never takes effect and `path` stays ignored. When no nested
+    /// config applies, the base (root) config decides.
+    ///
+    /// This makes a root config's directory-level `ignorePatterns` (e.g.
+    /// `"vendored"`) exclude a whole subtree even when that subtree contains its
+    /// own nested config, while still letting a nested config in a *non-ignored*
+    /// directory override the root's patterns for its own files.
+    /// See <https://github.com/oxc-project/oxc/issues/23182>.
+    fn evaluate(&self, path: &Path, include_equal: bool) -> bool {
         for (ignore, root) in &self.nested {
-            if path.starts_with(root) {
+            let covers = path.starts_with(root) && (include_equal || path != root);
+            if covers {
+                // If this nested config's own directory is excluded by a shallower
+                // config, the nested config must not "un-ignore" its subtree.
+                if self.evaluate(root, false) {
+                    return true;
+                }
                 return ignore
                     .as_ref()
                     .is_some_and(|gi| gi.matched_path_or_any_parents(path, false).is_ignore());
@@ -102,6 +125,45 @@ mod tests {
         // Path outside any nested config, only base applies
         assert!(matcher.should_ignore(Path::new("/repo/file.js")));
         assert!(!matcher.should_ignore(Path::new("/repo/file.ts")));
+    }
+
+    #[test]
+    fn test_base_ignores_directory_with_nested_config() {
+        // Root config ignores the whole `vendored` directory. A nested config
+        // living *inside* that ignored directory must not resurrect it.
+        // https://github.com/oxc-project/oxc/issues/23182
+        let base_patterns = vec!["vendored".to_string(), "vendored/**".to_string()];
+        let base_root = Path::new("/repo");
+
+        // Nested config inside the ignored directory, with no ignore patterns.
+        let nested = (vec![], PathBuf::from("/repo/vendored/pkg"));
+
+        let matcher = LintIgnoreMatcher::new(&base_patterns, base_root, vec![nested]);
+
+        // Files under the ignored directory stay ignored despite the nested config.
+        assert!(matcher.should_ignore(Path::new("/repo/vendored/pkg/src/file.ts")));
+        assert!(matcher.should_ignore(Path::new("/repo/vendored/pkg/index.ts")));
+
+        // Files outside the ignored directory are unaffected.
+        assert!(!matcher.should_ignore(Path::new("/repo/src/file.ts")));
+    }
+
+    #[test]
+    fn test_nested_config_in_non_ignored_dir_overrides_base() {
+        // Root ignores all `*.ts`, but a nested config in a directory that is
+        // itself *not* ignored may un-ignore its own files.
+        let base_patterns = vec!["**/*.ts".to_string()];
+        let base_root = Path::new("/repo");
+
+        let nested = (vec![], PathBuf::from("/repo/pkg"));
+
+        let matcher = LintIgnoreMatcher::new(&base_patterns, base_root, vec![nested]);
+
+        // `pkg` directory itself is not matched by `**/*.ts`, so its nested config
+        // takes effect and un-ignores the `.ts` files within it.
+        assert!(!matcher.should_ignore(Path::new("/repo/pkg/file.ts")));
+        // Files outside the nested config are still ignored by the base.
+        assert!(matcher.should_ignore(Path::new("/repo/file.ts")));
     }
 
     #[test]
