@@ -107,6 +107,22 @@ function checkCases(cases: Case[]): void {
 
 // --- Tests ----------------------------------------------------------------------------------
 
+describe("indent", () => {
+  const ast = e(id("x"));
+
+  test.each(["", "x", "\n", "\r\n", " x "])("rejects %j", (indent) => {
+    expect(() => printSync(ast, { indent })).toThrowError(
+      new TypeError("`indent` must be a non-empty string containing only spaces and tabs"),
+    );
+  });
+
+  test.each([4, null, {}])("rejects non-string value %j", (indent) => {
+    expect(() => printSync(ast, { indent: indent as unknown as string })).toThrowError(
+      new TypeError("`indent` must be a non-empty string containing only spaces and tabs"),
+    );
+  });
+});
+
 describe("starting indent level", () => {
   const ast = e(id("x"));
 

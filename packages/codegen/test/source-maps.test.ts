@@ -329,31 +329,9 @@ for (const fixture of FIXTURES) {
 // --- Indentation ----------------------------------------------------------------------------
 
 // `printIndent` goes through the same write path as everything else, so the `indent` option and
-// the mappings have to agree: indentation is honoured (or falls back to a tab), and no mapping
-// ever points into the middle of an indent run.
-//
-// The invalid values are typed `unknown` because they are what an untyped JS caller can pass -
-// that they fall back to a tab rather than corrupting the output is the point of testing them.
-const INDENT_CASES: unknown[] = [
-  // Valid - used as given
-  undefined,
-  "\t",
-  "  ",
-  "    ",
-  "\t\t",
-  " \t",
-  "\t ",
-  // Invalid - must fall back to a tab
-  "",
-  "x",
-  "\n",
-  "\r\n",
-  " x ",
-  "   ",
-  4,
-  null,
-  {},
-];
+// the mappings have to agree: indentation is honoured, and no mapping ever points into the middle
+// of an indent run.
+const INDENT_CASES = [undefined, "\t", "  ", "    ", "\t\t", " \t", "\t "];
 
 describe("indent option", () => {
   test.each(
@@ -362,11 +340,11 @@ describe("indent option", () => {
     const program = parseWithLocs("indent.js", INLINE_JS);
     const collector = new Collector("indent.js");
     const out = printSync(program, {
-      indent: indent as string | undefined,
+      indent,
       sourceMap: collector,
     }).code;
 
-    const expectedIndent = typeof indent === "string" && /^[ \t]+$/.test(indent) ? indent : "\t";
+    const expectedIndent = indent ?? "\t";
     const lines = out.split("\n");
     const indented = lines.filter((line) => line.startsWith("\t") || line.startsWith(" "));
     expect(indented.length).toBeGreaterThan(0);
