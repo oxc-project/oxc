@@ -1017,19 +1017,24 @@ fn template_quasi_from_oxc<'a>(q: &oxc::TemplateElement<'a>) -> TemplateQuasi<'a
     TemplateQuasi { raw: q.value.raw, cooked: q.value.cooked, span: q.span }
 }
 
-/// Lower the `import` keyword callee of an `ImportExpression`. The original Babel
-/// path treats this as the `Import` node, which bails (records an error) and
-/// returns an undefined primitive that is then loaded to a temporary.
+/// Lower the `import` keyword callee of an `ImportExpression` as a special global
+/// function reference. Keeping the call in the existing `CallExpression` HIR path
+/// preserves argument ordering and unknown-call effects, while codegen emits the
+/// identifier as the dynamic import keyword.
 fn lower_import_keyword_to_temporary(
     builder: &mut HirBuilder<'_, '_>,
     span: &Option<Span>,
+    name: &'static str,
 ) -> Result<Place, OxcDiagnostic> {
-    builder.record_error(
-        diagnostics::todo_build_hir_lower_expression_handle_import_expressions(*span),
-    )?;
     lower_value_to_temporary(
         builder,
-        InstructionValue::Primitive { value: PrimitiveValue::Undefined, span: *span },
+        InstructionValue::LoadGlobal {
+            // The synthetic dotted names preserve import phases until codegen.
+            // They cannot collide with source bindings because `.` is not valid
+            // in an identifier and the marker is never emitted as an identifier.
+            binding: NonLocalBinding::Global { name: Ident::from(name) },
+            span: *span,
+        },
     )
 }
 
@@ -4010,14 +4015,19 @@ fn lower_expression<'a>(
         oxc::Expression::ImportExpression(imp) => {
             // oxc's `import(source, options?)` maps to Babel's
             // `CallExpression { callee: Import, arguments: [source] + options? }`.
-            // The `Import` keyword callee bails (records an error), then the source
-            // and options arguments are lowered left-to-right.
+            // The source and options arguments are lowered left-to-right.
             let span = Some(imp.span);
             // The `import` keyword has no standalone node in oxc; synthesize its
-            // span ([start, start+6)) so the callee bail error and temporary carry
-            // the keyword span, matching Babel's `Import` node span.
+            // span ([start, start+6)) so the callee temporary carries the keyword
+            // span, matching Babel's `Import` node span.
             let import_keyword_span = Some(oxc_span::Span::new(imp.span.start, imp.span.start + 6));
-            let callee = lower_import_keyword_to_temporary(builder, &import_keyword_span)?;
+            let callee_name = match imp.phase {
+                None => "import",
+                Some(oxc::ImportPhase::Source) => "import.source",
+                Some(oxc::ImportPhase::Defer) => "import.defer",
+            };
+            let callee =
+                lower_import_keyword_to_temporary(builder, &import_keyword_span, callee_name)?;
             let alloc = builder.environment().allocator;
             let mut args = ArenaVec::new_in(&alloc);
             let source = lower_expression_to_temporary(builder, &imp.source)?;

@@ -160,6 +160,8 @@ pub fn codegen_function<'a>(
         )
     });
 
+    let dynamic_import_spans = std::mem::take(&mut cx.dynamic_import_spans);
+
     // Release the borrow of `env` held by `cx` so the outlined functions can be
     // compiled with fresh contexts (mirrors TS `codegenFunction`).
     drop(cx);
@@ -179,6 +181,7 @@ pub fn codegen_function<'a>(
         memo_values: compiled.memo_values,
         pruned_memo_blocks: compiled.pruned_memo_blocks,
         pruned_memo_values: compiled.pruned_memo_values,
+        dynamic_import_spans,
         outlined,
     })
 }
@@ -275,6 +278,7 @@ struct OxcContext<'a, 'env> {
     unique_identifiers: IdentHashSet<'a>,
     fbt_operands: FxHashSet<IdentifierId>,
     synthesized_names: IdentHashMap<'a, Ident<'a>>,
+    dynamic_import_spans: Vec<Span>,
 }
 
 impl<'a, 'env> OxcContext<'a, 'env> {
@@ -294,6 +298,7 @@ impl<'a, 'env> OxcContext<'a, 'env> {
             unique_identifiers,
             fbt_operands,
             synthesized_names: IdentHashMap::default(),
+            dynamic_import_spans: Vec::new(),
         }
     }
 
@@ -1950,6 +1955,37 @@ fn ox_codegen_base_instruction_value<'a>(
         )),
         InstructionValue::CallExpression { callee, args, .. } => {
             let callee_expr = ox_codegen_place_to_expression(cx, callee)?;
+            let import_phase = match &callee_expr {
+                oxc::Expression::Identifier(identifier) => match identifier.name.as_str() {
+                    "import" => Some(None),
+                    "import.source" => Some(Some(oxc::ImportPhase::Source)),
+                    "import.defer" => Some(Some(oxc::ImportPhase::Defer)),
+                    _ => None,
+                },
+                _ => None,
+            };
+            if let Some(phase) = import_phase {
+                cx.dynamic_import_spans.push(span);
+                let source = match args.first() {
+                    Some(PlaceOrSpread::Place(source)) => {
+                        ox_codegen_place_to_expression(cx, source)?
+                    }
+                    _ => unreachable!("dynamic import always has a source expression"),
+                };
+                let options = match args.get(1) {
+                    Some(PlaceOrSpread::Place(options)) => {
+                        Some(ox_codegen_place_to_expression(cx, options)?)
+                    }
+                    Some(PlaceOrSpread::Spread(_)) => {
+                        unreachable!("dynamic import options cannot be spread")
+                    }
+                    None => None,
+                };
+                assert!(args.len() <= 2, "dynamic import has at most two arguments");
+                return Ok(OxValue::Expression(oxc::Expression::new_import_expression(
+                    span, source, options, phase, &cx.ast,
+                )));
+            }
             let arguments = ox_codegen_arguments(cx, args)?;
             let call =
                 ox_create_call_expression(cx, callee_expr, arguments, callee.identifier, span);
