@@ -1814,22 +1814,6 @@ pub fn enter_ssa_cycle(block: impl Display) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn unsupported_object_destructuring_assignment_target(
-    type_name: &str,
-    span: Option<Span>,
-) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!(
-            "[FindContextIdentifiers] Cannot handle Object destructuring assignment target {type_name}"
-        ),
-    )
-    .with_labels(span.map(|span| {
-        span.primary_label(format!("Unsupported destructuring assignment target `{type_name}`"))
-    }))
-}
-
-#[cold]
 pub fn expected_scope_terminal(block: impl Display) -> OxcDiagnostic {
     diagnostic(
         ErrorCategory::Invariant,
