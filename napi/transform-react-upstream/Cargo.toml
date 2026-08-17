@@ -1,0 +1,48 @@
+[package]
+name = "oxc_transform_react_upstream_napi"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Benchmark-only Node API for the upstream React Compiler Rust crates"
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+test = false
+doctest = false
+
+[dependencies]
+oxc = { workspace = true, features = ["full"] }
+oxc_napi = { workspace = true }
+oxc_react_compiler_upstream = { workspace = true }
+napi = { workspace = true }
+napi-derive = { workspace = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
+
+[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+] }
+
+[target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = [
+  "skip_collect_on_exit",
+  "local_dynamic_tls",
+  "no_opt_arch",
+] }
+
+[build-dependencies]
+napi-build = { workspace = true }
+
+[features]
+default = []
+allocator = ["dep:mimalloc-safe"]
