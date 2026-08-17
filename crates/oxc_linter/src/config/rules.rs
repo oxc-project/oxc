@@ -445,8 +445,6 @@ impl JsonSchema for OxlintRules {
                                 "Expected rule to not contain items and additionalItems at the same time"
                             );
                             if array.additional_items.is_some() {
-                                // Options may come from an empty spread, while the severity-only
-                                // form is already valid through `RuleNoConfig`.
                                 array.items = Some(SingleOrVec::Vec(vec![
                                     r#gen.subschema_for::<AllowWarnDeny>(),
                                 ]));
