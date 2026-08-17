@@ -83,6 +83,17 @@ A-regular-expression:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_regular_expression/**"]
 
+A-react-compiler:
+  - changed-files:
+      - any-glob-to-any-file:
+          [
+            "crates/oxc_react_compiler/**",
+            "crates/oxc_linter/src/utils/react_compiler.rs",
+            "napi/transform-react/**",
+            "tasks/benchmark/benches/react_compiler.rs",
+            ".github/workflows/release_napi_transform_react.yml",
+          ]
+
 A-isolated-declarations:
   - changed-files:
       - any-glob-to-any-file: ["crates/oxc_isolated_declarations/**"]
