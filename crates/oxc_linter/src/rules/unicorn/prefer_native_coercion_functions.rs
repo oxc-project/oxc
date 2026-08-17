@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement},
+    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -62,36 +62,61 @@ impl Rule for PreferNativeCoercionFunctions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
-                if arrow_expr.r#async || arrow_expr.params.items.is_empty() {
+                if arrow_expr.r#async
+                    || arrow_expr.params.items.is_empty()
+                    || arrow_expr.return_type.as_ref().is_some_and(|ret| {
+                        matches!(ret.type_annotation, TSType::TSTypePredicate(_))
+                    })
+                {
                     return;
                 }
 
-                if let Some(call_expr_ident) =
-                    check_function(&arrow_expr.params, &arrow_expr.body, true)
-                {
+                let call_expr_ident = arrow_expr
+                    .get_expression()
+                    .and_then(|expression| {
+                        let first_parameter_name = get_first_parameter_name(&arrow_expr.params)?;
+                        is_matching_native_coercion_function_call(expression, first_parameter_name)
+                    })
+                    .or_else(|| {
+                        check_function(&arrow_expr.params, arrow_expr.get_function_body()?)
+                    });
+                if let Some(call_expr_ident) = call_expr_ident {
                     ctx.diagnostic(function(arrow_expr.span, call_expr_ident));
                 }
 
-                if check_array_callback_methods(
-                    node.id(),
-                    &arrow_expr.params,
-                    &arrow_expr.body,
-                    true,
-                    ctx,
-                ) {
+                let returned_ident = arrow_expr
+                    .get_expression()
+                    .and_then(|expression| {
+                        expression
+                            .without_parentheses()
+                            .get_identifier_reference()
+                            .map(|ident| ident.name.as_str())
+                    })
+                    .or_else(|| {
+                        arrow_expr
+                            .get_function_body()?
+                            .statements
+                            .first()
+                            .and_then(|statement| get_returned_ident(statement, false))
+                    });
+                if check_array_callback_methods(node.id(), &arrow_expr.params, returned_ident, ctx)
+                {
                     ctx.diagnostic(array_callback(arrow_expr.span));
                 }
             }
             AstKind::Function(func) => {
-                if func.r#async || func.generator || func.params.items.is_empty() {
-                    return;
-                }
-                if matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_)) {
+                if func.r#async
+                    || func.generator
+                    || func.params.items.is_empty()
+                    || func.return_type.as_ref().is_some_and(|ret| {
+                        matches!(ret.type_annotation, TSType::TSTypePredicate(_))
+                    })
+                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                {
                     return;
                 }
                 if let Some(function_body) = &func.body
-                    && let Some(call_expr_ident) =
-                        check_function(&func.params, function_body, false)
+                    && let Some(call_expr_ident) = check_function(&func.params, function_body)
                 {
                     ctx.diagnostic(function(func.span, call_expr_ident));
                 }
@@ -104,19 +129,11 @@ impl Rule for PreferNativeCoercionFunctions {
 fn check_function<'a>(
     arg: &'a FormalParameters,
     function_body: &'a FunctionBody,
-    is_arrow: bool,
 ) -> Option<&'a str> {
     let first_parameter_name = get_first_parameter_name(arg)?;
 
     if function_body.statements.len() != 1 {
         return None;
-    }
-
-    if is_arrow && let Statement::ExpressionStatement(expr_stmt) = &function_body.statements[0] {
-        return is_matching_native_coercion_function_call(
-            &expr_stmt.expression,
-            first_parameter_name,
-        );
     }
 
     if let Statement::ReturnStatement(return_statement) = &function_body.statements[0]
@@ -190,8 +207,7 @@ fn is_matching_native_coercion_function_call<'a>(
 fn check_array_callback_methods(
     node_id: NodeId,
     arg: &FormalParameters,
-    function_body: &FunctionBody,
-    is_arrow: bool,
+    returned_ident: Option<&str>,
     ctx: &LintContext,
 ) -> bool {
     let parent = ctx.nodes().parent_node(node_id);
@@ -227,11 +243,7 @@ fn check_array_callback_methods(
         return false;
     };
 
-    let Some(first_stmt) = function_body.statements.first() else {
-        return false;
-    };
-
-    let Some(returned_ident) = get_returned_ident(first_stmt, is_arrow) else {
+    let Some(returned_ident) = returned_ident else {
         return false;
     };
 
@@ -318,12 +330,11 @@ fn test() {
                 "use strict";
                 return v;
             })"#,
-        // TODO: Get these passing.
-        // "array.filter((value): value is string => value)", // {"parser": parsers.typescript},
-        // "array.filter((value): value is string => {
-        //         return value;
-        //     })", // {"parser": parsers.typescript},
-        // "array.some((value): value is string => value)", // {"parser": parsers.typescript}
+        "array.filter((value): value is string => value)", // {"parser": parsers.typescript},
+        "array.filter((value): value is string => {
+                return value;
+            })", // {"parser": parsers.typescript},
+        "array.some((value): value is string => value)",   // {"parser": parsers.typescript}
     ];
 
     let fail = vec![

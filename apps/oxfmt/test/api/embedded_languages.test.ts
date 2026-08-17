@@ -262,5 +262,27 @@ describe("Embedded languages", () => {
       expect(result.errors).toStrictEqual([]);
       expect(result.code).toMatchSnapshot();
     });
+
+    // (css-in-html)-in-js: For now, HTML is handled by Prettier, so CSS is also handled by Prettier too.
+    // The CSS `Doc` carries a trailing space after `prop: ` that only materializes when the value fits flat;
+    // when the value breaks, it must not leak (the Doc→IR conversion maps it to a pending space, dropped at the break).
+    it("should not leak a trailing space when a css-in-html declaration value breaks", async () => {
+      const input = `\
+export const BaseStyles = html\`
+  <style>
+    :root {
+      --ln-font-fallback:
+        -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif,
+        Apple Color Emoji, Segoe UI Emoji;
+      --ln-font-body: "Geist", var(--ln-font-fallback);
+    }
+  </style>
+\`;
+`;
+      const result = await format("styles.ts", input);
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).not.toMatch(/[ \t]+$/m);
+      expect(result.code).toMatchSnapshot();
+    });
   });
 });

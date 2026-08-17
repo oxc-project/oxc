@@ -3,20 +3,73 @@ name: Monitor Oxc
 on:
   pull_request:
     types: [labeled]
+  issue_comment:
+    types: [created]
 
-permissions: {}
+permissions:
+  pull-requests: read
 
 concurrency:
-  group: monitor-oxc-${{ github.event.pull_request.number }}
+  group: monitor-oxc-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
   trigger:
     if: >
-      github.event.label.name == 'run-monitor-oxc' &&
-      github.repository == 'oxc-project/oxc'
+      github.repository == 'oxc-project/oxc' &&
+      (
+        (
+          github.event_name == 'pull_request' &&
+          github.event.label.name == 'run-monitor-oxc' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        ) ||
+        (
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          github.event.comment.body == '/monitor-oxc run'
+        )
+      )
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        id: pr
+        with:
+          script: |
+            const fromComment = context.eventName === 'issue_comment';
+            let issueNumber;
+            let pr;
+
+            if (fromComment) {
+              const user = context.payload.sender.login;
+              const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: user,
+              });
+              if (!permission.user.permissions.triage) {
+                throw new Error(`${user} does not have permission to trigger Monitor Oxc`);
+              }
+
+              issueNumber = context.issue.number;
+              ({ data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: issueNumber,
+              }));
+              const commentCreatedAt = new Date(context.payload.comment.created_at);
+              const headRepoPushedAt = new Date(pr.head.repo.pushed_at);
+              if (headRepoPushedAt > commentCreatedAt) {
+                throw new Error('The PR was updated after the trigger command; review it and run the command again');
+              }
+            } else {
+              pr = context.payload.pull_request;
+              issueNumber = pr.number;
+            }
+
+            core.setOutput('issue-number', issueNumber);
+            core.setOutput('branch', pr.head.ref);
+            core.setOutput('head-sha', pr.head.sha);
+
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: app-token
         with:
@@ -29,11 +82,14 @@ jobs:
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         id: prepare
+        env:
+          BRANCH: ${{ steps.pr.outputs.branch }}
+          ISSUE_NUMBER: ${{ steps.pr.outputs.issue-number }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
-            const issueNumber = context.payload.pull_request.number;
-            const branch = context.payload.pull_request.head.ref;
+            const issueNumber = Number(process.env.ISSUE_NUMBER);
+            const branch = process.env.BRANCH;
             const body = `Triggering Monitor Oxc for \`${branch}\`\nhttps://github.com/oxc-project/monitor-oxc/actions/workflows/ci.yml`;
 
             const comments = await github.paginate(github.rest.issues.listComments, {
@@ -67,7 +123,6 @@ jobs:
               commentId = created.id;
             }
 
-            core.setOutput('ref', `refs/pull/${issueNumber}/head`);
             core.setOutput('comment-id', commentId);
 
       - uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
@@ -78,12 +133,15 @@ jobs:
           ref: main
           inputs: >-
             {
-              "issue-number": "${{ github.event.pull_request.number }}",
+              "issue-number": "${{ steps.pr.outputs.issue-number }}",
               "comment-id": "${{ steps.prepare.outputs.comment-id }}",
-              "ref": "${{ steps.prepare.outputs.ref }}"
+              "ref": "${{ steps.pr.outputs.head-sha }}"
             }
 
-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      - if: github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          ISSUE_NUMBER: ${{ steps.pr.outputs.issue-number }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
@@ -91,7 +149,7 @@ jobs:
               await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
+                issue_number: Number(process.env.ISSUE_NUMBER),
                 name: 'run-monitor-oxc',
               });
             } catch (error) {

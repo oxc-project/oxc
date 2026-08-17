@@ -211,18 +211,8 @@ impl PreferLowercaseTitleConfig {
             if first_char == lower {
                 return;
             }
-        } else {
-            for n in 0..literal.chars().count() {
-                let Some(next_char) = literal.chars().nth(n) else {
-                    return;
-                };
-
-                let next_lower = next_char.to_ascii_lowercase();
-
-                if next_char != next_lower {
-                    break;
-                }
-            }
+        } else if !literal.bytes().any(|b| b.is_ascii_uppercase()) {
+            return;
         }
 
         let replacement = if self.lowercase_first_character_only {

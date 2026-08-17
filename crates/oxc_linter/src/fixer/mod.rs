@@ -1,34 +1,29 @@
-use std::borrow::Cow;
-
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::OxcCode;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SourceType, Span};
-
-/// Identifies the lint rule that produced a [`Message`].
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct MessageRule {
-    /// Canonical plugin name, like `react`, `jsx-a11y`, `typescript`, etc.
-    pub plugin_name: Cow<'static, str>,
-    /// Canonical rule name: like `no-unused-vars` or `no-floating-promises`
-    pub rule_name: Cow<'static, str>,
-}
-
-impl MessageRule {
-    /// Returns the canonical name of the rule in the format `{plugin}/{rule}`. Omits
-    /// the plugin name for core rules (like `no-undef` instead of `eslint/no-undef`).
-    pub fn short_canonical_name(&self) -> String {
-        if self.plugin_name == "eslint" {
-            return self.rule_name.to_string();
-        }
-
-        format!("{}/{}", self.plugin_name, self.rule_name)
-    }
-}
+use std::borrow::Cow;
 
 use crate::LintContext;
 
+mod disable_fix;
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
+
+pub fn oxc_code_short_canonical_name(code: &OxcCode) -> Option<String> {
+    let Some(scope) = &code.scope else {
+        return None;
+    };
+    let Some(number) = &code.number else {
+        return None;
+    };
+
+    if scope == "eslint" {
+        return Some(number.to_string());
+    }
+
+    Some(format!("{scope}/{number}"))
+}
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -197,15 +192,6 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.new_fix(CompositeFix::Single(fix), message)
     }
 
-    /// Finds the next occurrence of the given token in the source code,
-    /// starting from the specified position, skipping over comments.
-    ///
-    /// Returns the offset from `start` if the token is found, otherwise `None`.
-    #[inline]
-    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
-        self.ctx.find_next_token_from(start, token)
-    }
-
     #[inline]
     pub fn find_next_token_within(&self, start: u32, end: u32, token: &str) -> Option<u32> {
         self.ctx.find_next_token_within(start, end, token)
@@ -266,13 +252,11 @@ pub struct Message {
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
     pub span: Span,
-    fixed: bool,
-    pub section_offset: u32,
-    /// The lint rule that produced this message, if any. Only defined for lint rule errors, and `None` otherwise.
-    pub rule: Option<MessageRule>,
 }
 
 impl Message {
+    #[cold]
+    #[inline(never)]
     pub fn new(error: OxcDiagnostic, fixes: PossibleFixes) -> Self {
         let span = error
             .labels
@@ -282,19 +266,7 @@ impl Message {
             .map(|span| Span::new(span.offset(), span.offset() + span.len()))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0, rule: None }
-    }
-
-    #[must_use]
-    pub fn with_rule(mut self, rule: MessageRule) -> Self {
-        self.rule = Some(rule);
-        self
-    }
-
-    #[must_use]
-    pub fn with_section_offset(mut self, section_offset: u32) -> Self {
-        self.section_offset = section_offset;
-        self
+        Self { error, fixes, span }
     }
 
     /// move the offset of all spans to the right
@@ -394,7 +366,7 @@ impl<'a> Fixer<'a> {
         // only keep messages that were not fixed
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
 
-        for mut m in self.messages {
+        for m in self.messages {
             let fix = match &m.fixes {
                 PossibleFixes::None => None,
                 PossibleFixes::Single(fix) => Some(fix),
@@ -425,7 +397,6 @@ impl<'a> Fixer<'a> {
                 continue;
             }
 
-            m.fixed = true;
             fixed = true;
             let offset = last_pos as usize;
             output.push_str(&source_text[offset..start as usize]);
@@ -434,8 +405,6 @@ impl<'a> Fixer<'a> {
         }
 
         output.push_str(&source_text[last_pos as usize..]);
-
-        filtered_messages.sort_unstable_by_key(GetSpan::span);
 
         #[cfg(debug_assertions)]
         if fixed && let Some(source_type) = self.source_type {
@@ -517,14 +486,6 @@ mod test {
 
     fn no_fix(span: Span) -> OxcDiagnostic {
         OxcDiagnostic::warn("nofix").with_label(span)
-    }
-
-    fn no_fix_1(span: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix1").with_label(span)
-    }
-
-    fn no_fix_2(span: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix2").with_label(span)
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
@@ -786,20 +747,6 @@ mod test {
         assert_eq!(result.messages.len(), 1);
         assert_eq!(result.messages[0].error.to_string(), "nofix");
         assert!(!result.fixed);
-    }
-
-    #[test]
-    fn sort_no_fix_messages_correctly() {
-        let result = get_fix_result(vec![
-            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
-            Message::new(no_fix_2(Span::new(1, 7)), PossibleFixes::None),
-            Message::new(no_fix_1(Span::new(1, 3)), PossibleFixes::None),
-        ]);
-        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
-        assert_eq!(result.messages.len(), 2);
-        assert_eq!(result.messages[0].error.to_string(), "nofix1");
-        assert_eq!(result.messages[1].error.to_string(), "nofix2");
-        assert!(result.fixed);
     }
 
     fn assert_fixed_corrected(source_text: &str, expected: &str, composite_fix: CompositeFix) {

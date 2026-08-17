@@ -1,0 +1,46 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* Consecutive same-line trailing block comments are one inline run:
+   each counts toward the print width (so the second alone can break the value, matching Prettier),
+   and a following statement keeps them on the previous line. */
+a {
+  color: red; /* x */ /* y */
+  color: blue;
+}
+b {
+  font-family: Arial, serif; /* x */ /* 0123456789012345678901234567890123456789012 */
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* Consecutive same-line trailing block comments are one inline run:
+   each counts toward the print width (so the second alone can break the value, matching Prettier),
+   and a following statement keeps them on the previous line. */
+a {
+  color: red; /* x */ /* y */
+  color: blue;
+}
+b {
+  font-family:
+    Arial, serif; /* x */ /* 0123456789012345678901234567890123456789012 */
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* Consecutive same-line trailing block comments are one inline run:
+   each counts toward the print width (so the second alone can break the value, matching Prettier),
+   and a following statement keeps them on the previous line. */
+a {
+  color: red; /* x */ /* y */
+  color: blue;
+}
+b {
+  font-family: Arial, serif; /* x */ /* 0123456789012345678901234567890123456789012 */
+}
+
+===================== End =====================

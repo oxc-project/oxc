@@ -80,6 +80,42 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────
    ╰────
 
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.replaceChild(newNode, cond ? c : d);
+   ·            ────────────
+   ╰────
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.insertBefore(newNode, p || q);
+   ·            ────────────
+   ╰────
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.replaceChild(getNode(), oldNode);
+   ·            ────────────
+   ╰────
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.replaceChild(...argumentsArray1, ...argumentsArray2);
+   ·            ────────────
+   ╰────
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertBefore`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.insertBefore(...argumentsArray1, ...argumentsArray2);
+   ·            ────────────
+   ╰────
+
+  ⚠ unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.replaceChild(newNode, undefined);
+   ·            ────────────
+   ╰────
+
   ⚠ unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentText`.
    ╭─[prefer_modern_dom_apis.tsx:1:15]
  1 │ referenceNode.insertAdjacentText("beforebegin", "text");

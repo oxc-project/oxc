@@ -3,7 +3,7 @@ use oxc_ast::ast::{
     Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
     ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{IsGlobalReference, ScopeFlags};
@@ -53,11 +53,15 @@ struct ThrowFinder<'a, 'ctx> {
     ctx: &'ctx LintContext<'a>,
 }
 
-impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
+impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
     fn visit_throw_statement(&mut self, throw_stmt: &ThrowStatement<'a>) {
-        let (callee, args) = match &throw_stmt.argument {
-            Expression::NewExpression(new_expr) => (&new_expr.callee, &new_expr.arguments),
-            Expression::CallExpression(call_expr) => (&call_expr.callee, &call_expr.arguments),
+        let (callee, type_arguments, args) = match &throw_stmt.argument {
+            Expression::NewExpression(new_expr) => {
+                (&new_expr.callee, &new_expr.type_arguments, &new_expr.arguments)
+            }
+            Expression::CallExpression(call_expr) => {
+                (&call_expr.callee, &call_expr.type_arguments, &call_expr.arguments)
+            }
             _ => return,
         };
 
@@ -84,15 +88,18 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
 
             match args.len() {
                 0 => {
-                    // find starting `(` of call after callee
-                    let src = throw_stmt.argument.span().source_text(fixer.source_text());
-                    if let Some(start_paren_idx) = src.find('(') {
+                    // find starting `(` of call after the callee and its type arguments
+                    let args_start = match type_arguments {
+                        Some(type_args) => type_args.span.end,
+                        None => callee.span().end,
+                    };
+                    if let Some(offset) = fixer.find_next_token_within(
+                        args_start,
+                        throw_stmt.argument.span().end,
+                        "(",
+                    ) {
                         let mut fix = fixer.new_fix_with_capacity(3);
-                        #[expect(clippy::cast_possible_truncation)]
-                        let span = Span::sized(
-                            throw_stmt.argument.span().start + start_paren_idx as u32,
-                            1,
-                        );
+                        let span = Span::sized(args_start + offset, 1);
                         if let Expression::Identifier(ident) = callee
                             && is_aggregate_error(ident, self.ctx)
                         {
@@ -234,9 +241,7 @@ fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &Lin
         return false;
     };
 
-    let Some(catch_symbol_id) = binding.symbol_id.get() else {
-        return false;
-    };
+    let catch_symbol_id = binding.symbol_id();
 
     let Expression::Identifier(ident) = expr else {
         return false;
@@ -417,6 +422,8 @@ fn test() {
     ];
 
     let fail = vec![
+        ("try { doSomething(); } catch (err) { throw new Error/* ( */(); }", None),
+        ("try { doSomething(); } catch (err) { throw new Error<() => void>(); }", None),
         (
             r#"try {
 			            doSomething();
@@ -669,6 +676,18 @@ fn test() {
     ];
 
     let fix = vec![
+        // the `(` inside the comment is not the start of the arguments
+        (
+            "try { doSomething(); } catch (err) { throw new Error/* ( */(); }",
+            "try { doSomething(); } catch (err) { throw new Error/* ( */(\"\", { cause: err }); }",
+            None,
+        ),
+        // the `(` inside the type arguments is not the start of the arguments
+        (
+            "try { doSomething(); } catch (err) { throw new Error<() => void>(); }",
+            "try { doSomething(); } catch (err) { throw new Error<() => void>(\"\", { cause: err }); }",
+            None,
+        ),
         (
             r#"try {
                         doSomething();

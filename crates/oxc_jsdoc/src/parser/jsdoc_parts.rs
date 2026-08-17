@@ -46,7 +46,7 @@ impl<'a> JSDocCommentPart<'a> {
     //
     // Since these are trimmed by `parsed()` output, this raw `Span` may not be suitable for linter diagnostics.
     //
-    // And if the passed `Span` for miette diagnostics is multiline,
+    // And if the passed `Span` for diagnostics is multiline,
     // it will just render arrow markers which is not intuitive.
     // (It renders a nice underline for single line span, but not for multiline)
     // ```
@@ -169,7 +169,7 @@ pub struct JSDocTagKindPart<'a> {
 impl<'a> JSDocTagKindPart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.starts_with('@'));
-        debug_assert!(part_content.trim() == part_content);
+        debug_assert_eq!(part_content.trim(), part_content);
 
         Self { raw: part_content, span }
     }
@@ -262,7 +262,7 @@ pub struct JSDocTagTypeNamePart<'a> {
 
 impl<'a> JSDocTagTypeNamePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
-        debug_assert!(part_content.trim() == part_content);
+        debug_assert_eq!(part_content.trim(), part_content);
 
         let optional = part_content.starts_with('[') && part_content.ends_with(']');
         let default = optional && part_content.contains('=');

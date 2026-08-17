@@ -1,0 +1,11 @@
+/* `@custom-media` preludes always print structured: `--name <media-query-list>`.
+   Known divergence (see AGENTS.md): with the name GLUED to the `(` (line 1),
+   Prettier 3.9.1 keeps the whole prelude verbatim
+   (`--viewport-medium(width<=50rem)`, one postcss-media-query-parser token);
+   we print `--viewport-medium (width <= 50rem)` like the spaced form. */
+@custom-media --viewport-medium(width<=50rem);
+@custom-media --viewport-medium (width <= 50rem);
+@custom-media --modern (color), (hover);
+/* Messy interior spacing (line below): Prettier only collapses whitespace RUNS
+   (`(width >=500px)`, glue kept); we print the structured form, same as `@media`. */
+@custom-media --only-medium-screen (    width    >=500px     ) and (width<=    1200px    ) ;

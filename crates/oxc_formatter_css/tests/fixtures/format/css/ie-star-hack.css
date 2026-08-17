@@ -1,0 +1,6 @@
+/* IE<=7 star hack: the `*` prefix must survive */
+a {
+  *zoom: 1;
+  *COLOR: red;
+  color: blue;
+}

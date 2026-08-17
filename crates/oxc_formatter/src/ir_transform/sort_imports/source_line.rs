@@ -1,14 +1,12 @@
 use std::ops::Range;
 
-use oxc_allocator::Vec as ArenaVec;
-
-use crate::{
-    JsLabels,
-    formatter::format_element::{
-        FormatElement, LineMode,
-        tag::{LabelId, Tag},
-    },
+use oxc_allocator::ArenaVec;
+use oxc_formatter_core::format_element::{
+    FormatElement, LineMode,
+    tag::{LabelId, Tag},
 };
+
+use crate::JsLabels;
 
 #[derive(Debug)]
 pub enum SourceLine<'a> {
@@ -50,12 +48,13 @@ impl<'a> SourceLine<'a> {
         let mut has_namespace_specifier = false;
         let mut has_named_specifier = false;
 
+        let import_label = LabelId::of(JsLabels::ImportDeclaration);
         for idx in range.clone() {
             let element = &elements[idx];
 
             // Special marker for `ImportDeclaration`
             if let FormatElement::Tag(Tag::StartLabelled(id)) = element {
-                if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                if *id == import_label {
                     has_import = true;
                 }
                 continue;

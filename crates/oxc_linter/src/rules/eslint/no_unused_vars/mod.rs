@@ -224,13 +224,15 @@ impl Rule for NoUnusedVars {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let precomputed_exported_names = Symbol::collect_exported_local_names(ctx.module_record());
+
         for symbol in ctx.scoping().symbol_ids() {
             let symbol = Symbol::new(ctx, ctx.module_record(), symbol);
             if Self::should_skip_symbol(&symbol) {
                 continue;
             }
 
-            self.run_on_symbol_internal(&symbol, ctx);
+            self.run_on_symbol_internal(&symbol, ctx, &precomputed_exported_names);
         }
     }
 
@@ -247,15 +249,19 @@ impl Rule for NoUnusedVars {
 }
 
 impl NoUnusedVars {
-    fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
+    fn run_on_symbol_internal<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        ctx: &LintContext<'a>,
+        exported_names: &rustc_hash::FxHashSet<&str>,
+    ) {
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored.is_some() && !self.report_used_ignore_pattern {
             return;
         }
 
-        // Order matters. We want to call cheap/high "yield" functions first.
-        let is_used = symbol.is_exported() || symbol.has_usages(self);
+        let is_used = symbol.is_exported(exported_names) || symbol.has_usages(self);
 
         match (is_used, *is_ignored) {
             // used, ignored because variable name matches one of several
@@ -296,7 +302,7 @@ impl NoUnusedVars {
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if self.is_allowed_variable_declaration(symbol, decl) {
+                if self.is_allowed_variable_declaration(symbol, decl, ctx) {
                     return;
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
@@ -360,7 +366,7 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
-            AstKind::TSModuleDeclaration(namespace) => {
+            AstKind::TSNamespaceDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
@@ -459,13 +465,18 @@ fn remove_unused_catch_parameter<'a>(
     catch: &CatchParameter<'a>,
 ) -> crate::fixer::RuleFix {
     let Span { start, end, .. } = catch.span();
-
-    let (Some(paren_start), Some(paren_end_offset)) =
-        (ctx.find_prev_token_from(start, "("), ctx.find_next_token_from(end, ")"))
-    else {
+    let AstKind::CatchClause(catch_clause) = ctx.nodes().parent_node(catch.node_id()).kind() else {
         return fixer.noop();
     };
 
+    let (Some(paren_start_offset), Some(paren_end_offset)) = (
+        ctx.find_prev_token_within(catch_clause.span.start, start, "("),
+        ctx.find_next_token_within(end, catch_clause.span.end, ")"),
+    ) else {
+        return fixer.noop();
+    };
+
+    let paren_start = catch_clause.span.start + paren_start_offset;
     let paren_end = end + paren_end_offset;
     let delete_span = Span::new(paren_start, paren_end + 1);
     fixer.delete_range(delete_span)

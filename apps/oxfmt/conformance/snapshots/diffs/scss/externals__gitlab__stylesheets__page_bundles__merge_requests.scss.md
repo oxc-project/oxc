@@ -1,0 +1,4979 @@
+# externals/gitlab/stylesheets/page_bundles/merge_requests.scss
+
+> Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -317,9 +317,9 @@
+   align-items: center;
+   height: var(--file-row-height);
+ }
+ 
+-@media (max-width: map-get($grid-breakpoints, lg)-1) {
++@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+   .diffs .files {
+     .diff-tree-list {
+       position: relative;
+       // height is fully handled on the javascript side in narrow view
+@@ -1116,9 +1116,9 @@
+   background: var(--white, $white);
+   border-top: 1px solid var(--border-color, $border-color);
+   transition: padding $gl-transition-duration-medium;
+ 
+-  @media (max-width: map-get($grid-breakpoints, sm)-1) {
++  @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+     padding-left: 0;
+     padding-right: 0;
+   }
+ 
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+$mr-widget-min-height: 69px;
+$tabs-holder-z-index: 250;
+
+.compare-versions-container {
+  min-width: 0;
+}
+
+.diff-comment-avatar-holders {
+  position: absolute;
+  margin-left: -$gl-padding;
+  z-index: 100;
+  @include code-icon-size();
+
+  &:hover {
+    .diff-comment-avatar,
+    .diff-comments-more-count {
+      @for $i from 1 through 4 {
+        $x-pos: 14px;
+
+        &:nth-child(#{$i}) {
+          @if $i == 4 {
+            $x-pos: 14.5px;
+          }
+
+          transform: translateX((($i * $x-pos) - $x-pos));
+
+          &:hover {
+            transform: translateX((($i * $x-pos) - $x-pos));
+          }
+        }
+      }
+    }
+
+    .diff-comments-more-count {
+      padding-left: 2px;
+      padding-right: 2px;
+      width: auto;
+    }
+  }
+}
+
+.diff-comment-avatar,
+.diff-comments-more-count {
+  position: absolute;
+  left: 0;
+  margin-right: 0;
+  border-color: var(--white, $white);
+  cursor: pointer;
+  transition: all 0.1s ease-out;
+  @include code-icon-size();
+
+  @for $i from 1 through 4 {
+    &:nth-child(#{$i}) {
+      z-index: (4 - $i);
+    }
+  }
+
+  .avatar {
+    @include code-icon-size();
+  }
+}
+
+.diff-comments-more-count {
+  padding-left: 0;
+  padding-right: 0;
+  overflow: hidden;
+  @include code-icon-size();
+}
+
+.diff-file-changes {
+  max-width: 560px;
+  width: 100%;
+  z-index: 150;
+  min-height: $dropdown-min-height;
+  max-height: $dropdown-max-height;
+  overflow-y: auto;
+  margin-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    left: $gl-padding;
+  }
+
+  .dropdown-input .dropdown-input-search {
+    pointer-events: all;
+  }
+
+  .diff-changed-file {
+    display: flex;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    min-width: 0;
+  }
+
+  .diff-file-changed-icon {
+    margin-top: 2px;
+  }
+
+  .diff-changed-file-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .diff-changed-file-name,
+  .diff-changed-blank-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .diff-changed-blank-file-name {
+    color: var(--gray-400, $gray-400);
+    font-style: italic;
+  }
+
+  .diff-changed-file-path {
+    color: var(--gray-400, $gray-400);
+  }
+
+  .diff-changed-stats {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}
+
+.diff-files-holder {
+  flex: 1;
+  min-width: 0;
+  z-index: 203;
+
+  .vue-recycle-scroller__item-wrapper {
+    overflow: visible;
+  }
+}
+
+.diff-grid {
+  .diff-td {
+    // By default min-width is auto with 1fr which causes some overflow problems
+    // https://gitlab.com/gitlab-org/gitlab/-/issues/296222
+    min-width: 0;
+  }
+
+  .diff-grid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    &.diff-grid-row-full {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .diff-grid-left,
+  .diff-grid-right {
+    display: grid;
+    // Zero width column is a placeholder for the EE inline code quality diff
+    // see ee/.../diffs.scss for more details
+    grid-template-columns: 50px 8px 0 1fr;
+  }
+
+  .diff-grid-2-col {
+    grid-template-columns: 100px 1fr !important;
+
+    &.parallel {
+      grid-template-columns: 50px 1fr !important;
+    }
+  }
+
+  .diff-grid-comments {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .diff-grid-drafts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    .content + .content {
+      @include gl-border-t;
+    }
+
+    .notes-content {
+      border: 0;
+    }
+  }
+
+  &.inline-diff-view {
+    .diff-grid-comments {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-drafts {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-row {
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-left,
+    .diff-grid-right {
+      // Zero width column is a placeholder for the EE inline code quality diff
+      // see ee/../diffs.scss for more details
+      grid-template-columns: 50px 50px 8px 0 1fr;
+    }
+  }
+}
+
+.diff-line-expand-button {
+  &:hover,
+  &:focus {
+    background-color: var(--gray-200, $gray-200);
+  }
+}
+
+.diff-table.code .diff-tr.line_holder .diff-td.line_content.parallel {
+  width: unset;
+}
+
+.diff-tr {
+  .timeline-discussion-body {
+    clear: left;
+
+    .note-body {
+      padding: 0 $gl-padding-8 $gl-padding-8 $gl-padding-32;
+    }
+  }
+
+  .timeline-entry img.avatar {
+    margin-top: -2px;
+    margin-right: $gl-padding-8;
+  }
+}
+
+// tiny adjustment to vertical align with the note header text
+.discussion-collapsible {
+  border: 0 !important;
+  margin: 0;
+
+  .timeline-icon {
+    padding-top: 2px;
+  }
+}
+
+.diff-tree-list {
+  // This 11px value should match the additional value found in
+  //      /assets/stylesheets/framework/diffs.scss
+  // for the $mr-file-header-top SCSS variable within the
+  //      .file-title,
+  //      .file-title-flex-parent {
+  // rule.
+  // If they don't match, the file tree and the diff files stick
+  // to the top at different heights, which is a bad-looking defect
+  $diff-file-header-top: 11px;
+
+  position: sticky;
+  top: calc(
+    #{$calc-application-header-height} + #{$mr-sticky-header-height} +
+      #{$diff-file-header-top}
+  );
+  // height calc is fully delegated to the tree_list_height.vue component
+  height: 100%;
+  min-height: 300px;
+
+  .drag-handle {
+    bottom: 16px;
+  }
+}
+
+.tree-list-holder {
+  --file-row-height: 32px;
+  height: 100%;
+
+  .file-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+.tree-list-scroll {
+  max-height: 100%;
+  padding-bottom: $grid-size;
+  overflow-y: scroll;
+  overflow-x: auto;
+}
+
+.tree-list-gutter {
+  height: $grid-size;
+}
+
+.tree-list-search {
+  flex: 0 0 34px;
+
+  .form-control {
+    padding-left: 30px;
+  }
+}
+
+.tree-list-icon {
+  &,
+  svg {
+    fill: var(--gray-400, $gray-400);
+  }
+}
+
+.tree-list-clear-icon {
+  right: 10px;
+  left: auto;
+  line-height: 0;
+}
+
+.file-row-header {
+  display: flex;
+  align-items: center;
+  height: var(--file-row-height);
+}
+
+@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+  .diffs .files {
+    .diff-tree-list {
+      position: relative;
+      // height is fully handled on the javascript side in narrow view
+      min-height: 0;
+      height: auto;
+      top: 0;
+      // !important is required to override inline styles of resizable sidebar
+      width: 100% !important;
+      // avoid sticky elements overlap header and other elements
+      z-index: 1;
+      margin-bottom: $gl-spacing-scale-3;
+    }
+
+    .tree-list-holder {
+      padding-right: 0;
+    }
+  }
+}
+
+.ci-widget-container {
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  flex-direction: row;
+
+  @include media-breakpoint-down(sm) {
+    align-items: initial;
+    flex-direction: column;
+
+    .dropdown .mini-pipeline-graph-dropdown-menu.dropdown-menu {
+      transform: initial;
+    }
+  }
+
+  .coverage {
+    font-size: 12px;
+    color: var(--gray-500, $gray-500);
+    line-height: initial;
+  }
+}
+
+.deploy-body {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  @include media-breakpoint-up(xs) {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  @container mr-widget-extension (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .deployment-info {
+      margin-bottom: $gl-padding-8;
+    }
+
+    .gl-button {
+      margin-left: 0;
+    }
+  }
+
+  > *:not(:last-child) {
+    margin-right: 0.3em;
+  }
+
+  svg {
+    vertical-align: text-top;
+  }
+
+  .deployment-info {
+    flex: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 100px;
+
+    display: grid;
+    grid-template-columns: max-content minmax(0, max-content) max-content;
+    grid-gap: $gl-spacing-scale-2;
+
+    @include media-breakpoint-up(xs) {
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  .dropdown-menu {
+    width: 400px;
+  }
+}
+
+.deploy-heading,
+.merge-train-position-indicator {
+  padding: $gl-padding-8 $gl-padding;
+
+  .media-body {
+    min-width: 0;
+    font-size: $gl-font-size-sm;
+    margin-left: 32px;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--border-color, $border-color);
+  }
+}
+
+.diff-file-row.is-active {
+  background-color: var(--gray-50, $gray-50);
+}
+
+.mr-widget-body-loading svg {
+  vertical-align: middle;
+}
+
+.mr-info-list {
+  clear: left;
+  position: relative;
+  padding-top: 4px;
+
+  p {
+    margin: 0;
+    position: relative;
+    padding: 4px 0;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+
+  &.mr-memory-usage {
+    p {
+      float: left;
+    }
+
+    .memory-graph-container {
+      float: left;
+      margin-left: 5px;
+    }
+  }
+}
+
+.mr-memory-usage {
+  width: 100%;
+
+  p.usage-info-loading .usage-info-load-spinner {
+    margin-right: 10px;
+    font-size: 16px;
+  }
+}
+
+.mr-ready-to-merge-loader {
+  max-width: 418px;
+
+  > svg {
+    vertical-align: middle;
+  }
+}
+
+.mr-section-container {
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  > .mr-widget-section {
+    > :last-child,
+    .deploy-heading:last-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+
+  > .mr-widget-border-top:first-of-type {
+    border-top: 0;
+  }
+}
+
+.mr-source-target {
+  flex-wrap: wrap;
+  padding: $gl-padding;
+  background: var(--white, $white);
+  min-height: $mr-widget-min-height;
+
+  @include media-breakpoint-up(md) {
+    align-items: center;
+  }
+
+  .git-merge-container {
+    justify-content: space-between;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+
+    @include media-breakpoint-down(md) {
+      flex-direction: column;
+      align-items: stretch;
+
+      .branch-actions {
+        margin-top: 16px;
+      }
+    }
+
+    @include media-breakpoint-up(lg) {
+      .branch-actions {
+        align-self: center;
+        margin-left: $gl-padding;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .diverged-commits-count {
+    color: var(--gray-500, $gl-text-color-secondary);
+  }
+}
+
+.mr-state-widget {
+  color: var(--gl-text-color, $gl-text-color);
+
+  .commit-message-edit {
+    border-radius: $border-radius-default;
+  }
+
+  .mr-widget-section:not(:first-child) > div,
+  .mr-widget-section:not(:first-child) > section,
+  .mr-widget-section .mr-widget-section > div:not(:first-child) {
+    border-top: solid 1px var(--border-color, $border-color);
+    // Avoid two lines being rendered
+    // instead of exessively adressing those
+    // edge cases we can use this as a boring
+    // solution
+    margin-top: -1px;
+  }
+
+  .mr-widget-alert-container + .mr-widget-section {
+    border-top: 0;
+  }
+
+  .mr-fast-forward-message {
+    padding-left: $gl-spacing-scale-9;
+    padding-bottom: $gl-padding;
+  }
+
+  .commits-list {
+    > li {
+      padding: $gl-padding;
+
+      @include media-breakpoint-up(md) {
+        margin-left: $gl-spacing-scale-7;
+      }
+    }
+  }
+
+  .mr-commit-dropdown {
+    .dropdown-menu {
+      @include media-breakpoint-up(md) {
+        width: 150%;
+      }
+    }
+  }
+
+  .mr-report {
+    padding: 0;
+  }
+
+  form {
+    margin-bottom: 0;
+
+    .clearfix {
+      margin-bottom: 0;
+    }
+  }
+
+  .btn {
+    font-size: $gl-font-size;
+  }
+
+  .accept-merge-holder {
+    .accept-action {
+      display: inline-block;
+      float: left;
+    }
+  }
+
+  .ci-widget {
+    color: var(--gl-text-color, $gl-text-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @include media-breakpoint-down(xs) {
+      flex-wrap: wrap;
+    }
+
+    .ci-widget-content {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+  }
+
+  .mr-widget-icon {
+    font-size: 22px;
+  }
+
+  .mr-loading-icon {
+    margin: 3px 0;
+  }
+
+  .normal {
+    flex: 1;
+    flex-basis: auto;
+  }
+
+  .capitalize {
+    text-transform: capitalize;
+  }
+
+  .mr-pipeline-title {
+    // NOTE: CSS Hack to make the force the pipeline
+    // to the end of the line or to force it to a
+    // new line if there is not enough space.
+    flex-grow: 999;
+    // Avoid layout shift of title when Mini Graph
+    // moves below title
+    padding-top: 5px;
+  }
+
+  .label-branch {
+    @include gl-font-monospace;
+    overflow: hidden;
+    word-break: break-all;
+  }
+
+  .label-branch {
+    &.label-truncate {
+      // NOTE: This selector targets its children because some of the HTML comes from
+      // 'source_branch_link'. Once this external HTML is no longer used, we could
+      // simplify this.
+      > a,
+      > span {
+        display: inline-block;
+        max-width: 12.5em;
+        margin-bottom: px-to-rem(-5px);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+    }
+  }
+
+  .mr-widget-body {
+    @include clearfix;
+
+    .approve-btn {
+      margin-right: 5px;
+    }
+
+    h4 {
+      float: left;
+      font-weight: $gl-font-weight-bold;
+      font-size: 14px;
+      line-height: inherit;
+      margin-top: 0;
+      margin-bottom: 0;
+
+      time {
+        font-weight: $gl-font-weight-normal;
+      }
+    }
+
+    .btn-grouped {
+      margin-left: 0;
+      margin-right: 7px;
+    }
+
+    .spacing {
+      margin: 0 0 0 10px;
+    }
+
+    .state-label {
+      font-weight: $gl-font-weight-bold;
+      padding-right: 10px;
+    }
+
+    .danger {
+      color: var(--red-500, $red-500);
+    }
+
+    .dropdown-menu {
+      li a {
+        padding: 5px;
+      }
+
+      .merge-opt-icon {
+        line-height: 1.5;
+      }
+
+      .merge-opt-title {
+        margin-left: 8px;
+      }
+    }
+
+    .has-custom-error {
+      display: inline-block;
+    }
+
+    @include media-breakpoint-down(xs) {
+      .btn-grouped {
+        float: none;
+        margin-right: 0;
+      }
+
+      .accept-action {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
+    .commit-message-editor {
+      label {
+        padding: 0;
+      }
+    }
+
+    &.mr-widget-empty-state {
+      line-height: 20px;
+      padding: $gl-padding;
+
+      .artwork {
+        @include media-breakpoint-down(md) {
+          margin-bottom: $gl-padding;
+        }
+      }
+
+      .text {
+        p {
+          margin-top: $gl-padding;
+        }
+
+        .highlight {
+          margin: 0 0 $gl-padding;
+          font-weight: $gl-font-weight-bold;
+        }
+      }
+    }
+
+    &.mr-pipeline-suggest {
+      border-radius: $border-radius-default;
+      line-height: 20px;
+      border: 1px solid var(--border-color, $border-color);
+
+      .circle-icon-container {
+        color: var(--gray-100, $gl-text-color-quaternary);
+      }
+    }
+  }
+
+  .ci-coverage {
+    float: right;
+  }
+
+  .stop-env-container {
+    color: var(--gl-text-color, $gl-text-color);
+    float: right;
+
+    a {
+      color: var(--gl-text-color, $gl-text-color);
+    }
+  }
+}
+
+.mr-widget-alert-container {
+  $radius: $border-radius-default - 1px;
+
+  border-radius: $radius $radius 0 0;
+
+  .gl-alert:not(:last-child) {
+    margin-bottom: 1px;
+  }
+}
+
+.mr-widget-body,
+.mr-widget-content {
+  padding: $gl-padding-12 $gl-padding;
+}
+
+.mr-widget-body-ready-merge {
+  @include media-breakpoint-down(sm) {
+    padding-top: $gl-spacing-scale-3;
+    padding-bottom: $gl-spacing-scale-3;
+    padding-right: $gl-spacing-scale-3;
+  }
+}
+
+.mr-widget-border-top {
+  border-top: 1px solid var(--border-color, $border-color);
+
+  &:last-child {
+    .report-block-container {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+}
+
+.mr-widget-grouped-section .report-block-container {
+  border-bottom-left-radius: $border-radius-default;
+  border-bottom-right-radius: $border-radius-default;
+}
+
+.mr-widget-extension {
+  border-top: 1px solid var(--border-color, $border-color);
+  background-color: var(--gray-10, $gray-10);
+  container-name: mr-widget-extension;
+  container-type: inline-size;
+  // Adds a fix for the view app dropdown not showing up
+  // correctly.
+  position: relative;
+  z-index: 1;
+
+  &.clickable:hover {
+    background-color: var(--gray-50, $gray-50);
+    cursor: pointer;
+  }
+}
+
+.mr-widget-extension-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  opacity: 0.3;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  border-radius: $gl-border-radius-full;
+
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-extension-icon::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  left: 50%;
+  top: 50%;
+
+  width: 16px;
+  height: 16px;
+  border: 4px solid;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-heading {
+  position: relative;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  .gl-skeleton-loader {
+    display: block;
+  }
+}
+
+.mr-widget-info {
+  padding-left: $gl-padding;
+  padding-right: $gl-padding;
+}
+
+.mr-widget-section {
+  .code-text {
+    flex: 1;
+  }
+}
+
+.mr-widget-workflow {
+  position: relative;
+
+  &:not(:first-child) {
+    margin-top: $gl-padding;
+  }
+}
+
+.mr-version-controls {
+  background: var(--white, $white);
+  color: var(--gl-text-color, $gl-text-color);
+
+  .mr-version-menus-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    z-index: 199;
+    white-space: nowrap;
+
+    .gl-dropdown-toggle {
+      width: auto;
+      max-width: 170px;
+
+      svg {
+        top: 10px;
+        right: 8px;
+      }
+    }
+  }
+
+  .content-block {
+    padding: $gl-padding-8 $gl-padding;
+    border-bottom: 0;
+  }
+
+  .mr-version-dropdown,
+  .mr-version-compare-dropdown {
+    top: 1px;
+    margin: 0 $gl-spacing-scale-1;
+
+    .dropdown-toggle.gl-button {
+      padding: $gl-spacing-scale-2 2px $gl-spacing-scale-2 $gl-spacing-scale-2;
+      font-weight: $gl-font-weight-bold;
+
+      .gl-button-icon {
+        margin-left: $gl-spacing-scale-1;
+      }
+    }
+  }
+
+  .dropdown-title {
+    color: var(--gl-text-color, $gl-text-color);
+  }
+}
+
+.mr-section-container .resize-observer > object {
+  height: 0;
+}
+
+// TODO: Move to GitLab UI
+.mr-extenson-scrim {
+  background: linear-gradient(
+    to bottom,
+    rgba($gray-light, 0),
+    rgba($gray-light, 1)
+  );
+
+  .gl-dark & {
+    background: linear-gradient(to bottom, rgba(#333, 0), rgba(#333, 1));
+  }
+}
+
+.attention-request-sidebar-popover {
+  z-index: 999;
+}
+
+.merge-request-overview {
+  @include media-breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: calc(97% - #{$right-sidebar-width}) auto;
+    grid-gap: 3%;
+  }
+}
+
+.container-fluid:not(.container-limited) {
+  .detail-page-header,
+  .detail-page-description,
+  .merge-request-tabs-container {
+    &.is-merge-request {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: $fixed-layout-width - ($container-margin-xl * 2);
+    }
+  }
+}
+
+.container-fluid.diffs-container-limited {
+  .flash-container {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $container-xl;
+    padding-left: $gl-spacing-scale-5;
+    padding-right: $gl-spacing-scale-5;
+  }
+}
+
+.submit-review-dropdown .gl-new-dropdown-panel {
+  max-width: none;
+}
+
+.submit-review-dropdown-form {
+  width: calc(100vw - 20px);
+  max-width: 680px;
+}
+
+.submit-review-dropdown-animated {
+  animation: review-btn-animate 300ms ease-in;
+}
+
+@include keyframes(review-btn-animate) {
+  0% {
+    transform: scale(1);
+  }
+
+  75% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.mr-widget-merge-details {
+  *,
+  & {
+    font-size: $gl-font-size-sm;
+  }
+
+  p {
+    font-size: $gl-font-size;
+  }
+
+  li:not(:last-child) {
+    margin-bottom: $gl-spacing-scale-2;
+  }
+}
+
+.mr-ready-merge-related-links a,
+.mr-widget-merge-details a,
+.mr-widget-author {
+  text-decoration: underline;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+}
+
+.merge-request-sticky-header {
+  z-index: $top-bar-z-index;
+  height: $mr-sticky-header-height;
+}
+
+.merge-request-notification-toggle {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: $gl-font-weight-normal;
+  }
+}
+
+.mr-widget-status-icon-level-1::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  opacity: 0.3;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+}
+
+.mr-widget-status-icon-level-1::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  left: $gl-spacing-scale-2;
+  right: $gl-spacing-scale-2;
+  top: $gl-spacing-scale-2;
+  bottom: $gl-spacing-scale-2;
+}
+
+.memory-graph-container {
+  background: var(--white, $white);
+  border: 1px solid var(--gray-100, $gray-100);
+}
+
+.review-bar-component {
+  position: fixed;
+  bottom: $calc-application-footer-height;
+  left: 0;
+  z-index: $zindex-dropdown-menu;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--mr-review-bar-height);
+  padding-left: $contextual-sidebar-width;
+  padding-right: $right-sidebar-collapsed-width;
+  background: var(--white, $white);
+  border-top: 1px solid var(--border-color, $border-color);
+  transition: padding $gl-transition-duration-medium;
+
+  @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .submit-review-dropdown {
+    margin-left: $grid-size;
+
+    .md-header {
+      top: -$gl-spacing-scale-2;
+    }
+  }
+}
+
+.review-bar-content {
+  max-width: $limited-layout-width;
+  padding: 0 $container-margin;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.review-preview-item-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+
+  > .bold {
+    display: flex;
+    min-width: 0;
+    line-height: 16px;
+  }
+}
+
+.review-preview-item-footer {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.review-preview-item-content {
+  width: 100%;
+
+  p {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+}
+
+.commits ol:not(:last-of-type) {
+  margin-bottom: 0;
+}
+
+.mr-section-container {
+  .media-body {
+    column-gap: 0;
+  }
+
+  .state-container-action-buttons {
+    @include media-breakpoint-up(md) {
+      flex-direction: row-reverse;
+    }
+  }
+}
+
+.mr-state-loader {
+  svg {
+    vertical-align: middle;
+  }
+
+  .gl-skeleton-loader {
+    max-width: 334px;
+  }
+}
+
+.diff-file-discussions-wrapper {
+  width: 100%;
+
+  .diff-discussions:not(:first-child) > .notes {
+    padding-top: 0;
+  }
+
+  .note-discussion {
+    border-bottom: 1px solid var(--gray-100, $gray-100) !important;
+  }
+
+  .discussion-collapsible {
+    margin: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+.merge-request-overview .md-header {
+  top: calc(#{$calc-application-header-height} + #{$mr-sticky-header-height});
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+$mr-widget-min-height: 69px;
+$tabs-holder-z-index: 250;
+
+.compare-versions-container {
+  min-width: 0;
+}
+
+.diff-comment-avatar-holders {
+  position: absolute;
+  margin-left: -$gl-padding;
+  z-index: 100;
+  @include code-icon-size();
+
+  &:hover {
+    .diff-comment-avatar,
+    .diff-comments-more-count {
+      @for $i from 1 through 4 {
+        $x-pos: 14px;
+
+        &:nth-child(#{$i}) {
+          @if $i == 4 {
+            $x-pos: 14.5px;
+          }
+
+          transform: translateX((($i * $x-pos) - $x-pos));
+
+          &:hover {
+            transform: translateX((($i * $x-pos) - $x-pos));
+          }
+        }
+      }
+    }
+
+    .diff-comments-more-count {
+      padding-left: 2px;
+      padding-right: 2px;
+      width: auto;
+    }
+  }
+}
+
+.diff-comment-avatar,
+.diff-comments-more-count {
+  position: absolute;
+  left: 0;
+  margin-right: 0;
+  border-color: var(--white, $white);
+  cursor: pointer;
+  transition: all 0.1s ease-out;
+  @include code-icon-size();
+
+  @for $i from 1 through 4 {
+    &:nth-child(#{$i}) {
+      z-index: (4 - $i);
+    }
+  }
+
+  .avatar {
+    @include code-icon-size();
+  }
+}
+
+.diff-comments-more-count {
+  padding-left: 0;
+  padding-right: 0;
+  overflow: hidden;
+  @include code-icon-size();
+}
+
+.diff-file-changes {
+  max-width: 560px;
+  width: 100%;
+  z-index: 150;
+  min-height: $dropdown-min-height;
+  max-height: $dropdown-max-height;
+  overflow-y: auto;
+  margin-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    left: $gl-padding;
+  }
+
+  .dropdown-input .dropdown-input-search {
+    pointer-events: all;
+  }
+
+  .diff-changed-file {
+    display: flex;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    min-width: 0;
+  }
+
+  .diff-file-changed-icon {
+    margin-top: 2px;
+  }
+
+  .diff-changed-file-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .diff-changed-file-name,
+  .diff-changed-blank-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .diff-changed-blank-file-name {
+    color: var(--gray-400, $gray-400);
+    font-style: italic;
+  }
+
+  .diff-changed-file-path {
+    color: var(--gray-400, $gray-400);
+  }
+
+  .diff-changed-stats {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}
+
+.diff-files-holder {
+  flex: 1;
+  min-width: 0;
+  z-index: 203;
+
+  .vue-recycle-scroller__item-wrapper {
+    overflow: visible;
+  }
+}
+
+.diff-grid {
+  .diff-td {
+    // By default min-width is auto with 1fr which causes some overflow problems
+    // https://gitlab.com/gitlab-org/gitlab/-/issues/296222
+    min-width: 0;
+  }
+
+  .diff-grid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    &.diff-grid-row-full {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .diff-grid-left,
+  .diff-grid-right {
+    display: grid;
+    // Zero width column is a placeholder for the EE inline code quality diff
+    // see ee/.../diffs.scss for more details
+    grid-template-columns: 50px 8px 0 1fr;
+  }
+
+  .diff-grid-2-col {
+    grid-template-columns: 100px 1fr !important;
+
+    &.parallel {
+      grid-template-columns: 50px 1fr !important;
+    }
+  }
+
+  .diff-grid-comments {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .diff-grid-drafts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    .content + .content {
+      @include gl-border-t;
+    }
+
+    .notes-content {
+      border: 0;
+    }
+  }
+
+  &.inline-diff-view {
+    .diff-grid-comments {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-drafts {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-row {
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-left,
+    .diff-grid-right {
+      // Zero width column is a placeholder for the EE inline code quality diff
+      // see ee/../diffs.scss for more details
+      grid-template-columns: 50px 50px 8px 0 1fr;
+    }
+  }
+}
+
+.diff-line-expand-button {
+  &:hover,
+  &:focus {
+    background-color: var(--gray-200, $gray-200);
+  }
+}
+
+.diff-table.code .diff-tr.line_holder .diff-td.line_content.parallel {
+  width: unset;
+}
+
+.diff-tr {
+  .timeline-discussion-body {
+    clear: left;
+
+    .note-body {
+      padding: 0 $gl-padding-8 $gl-padding-8 $gl-padding-32;
+    }
+  }
+
+  .timeline-entry img.avatar {
+    margin-top: -2px;
+    margin-right: $gl-padding-8;
+  }
+}
+
+// tiny adjustment to vertical align with the note header text
+.discussion-collapsible {
+  border: 0 !important;
+  margin: 0;
+
+  .timeline-icon {
+    padding-top: 2px;
+  }
+}
+
+.diff-tree-list {
+  // This 11px value should match the additional value found in
+  //      /assets/stylesheets/framework/diffs.scss
+  // for the $mr-file-header-top SCSS variable within the
+  //      .file-title,
+  //      .file-title-flex-parent {
+  // rule.
+  // If they don't match, the file tree and the diff files stick
+  // to the top at different heights, which is a bad-looking defect
+  $diff-file-header-top: 11px;
+
+  position: sticky;
+  top: calc(
+    #{$calc-application-header-height} + #{$mr-sticky-header-height} +
+      #{$diff-file-header-top}
+  );
+  // height calc is fully delegated to the tree_list_height.vue component
+  height: 100%;
+  min-height: 300px;
+
+  .drag-handle {
+    bottom: 16px;
+  }
+}
+
+.tree-list-holder {
+  --file-row-height: 32px;
+  height: 100%;
+
+  .file-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+.tree-list-scroll {
+  max-height: 100%;
+  padding-bottom: $grid-size;
+  overflow-y: scroll;
+  overflow-x: auto;
+}
+
+.tree-list-gutter {
+  height: $grid-size;
+}
+
+.tree-list-search {
+  flex: 0 0 34px;
+
+  .form-control {
+    padding-left: 30px;
+  }
+}
+
+.tree-list-icon {
+  &,
+  svg {
+    fill: var(--gray-400, $gray-400);
+  }
+}
+
+.tree-list-clear-icon {
+  right: 10px;
+  left: auto;
+  line-height: 0;
+}
+
+.file-row-header {
+  display: flex;
+  align-items: center;
+  height: var(--file-row-height);
+}
+
+@media (max-width: map-get($grid-breakpoints, lg)-1) {
+  .diffs .files {
+    .diff-tree-list {
+      position: relative;
+      // height is fully handled on the javascript side in narrow view
+      min-height: 0;
+      height: auto;
+      top: 0;
+      // !important is required to override inline styles of resizable sidebar
+      width: 100% !important;
+      // avoid sticky elements overlap header and other elements
+      z-index: 1;
+      margin-bottom: $gl-spacing-scale-3;
+    }
+
+    .tree-list-holder {
+      padding-right: 0;
+    }
+  }
+}
+
+.ci-widget-container {
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  flex-direction: row;
+
+  @include media-breakpoint-down(sm) {
+    align-items: initial;
+    flex-direction: column;
+
+    .dropdown .mini-pipeline-graph-dropdown-menu.dropdown-menu {
+      transform: initial;
+    }
+  }
+
+  .coverage {
+    font-size: 12px;
+    color: var(--gray-500, $gray-500);
+    line-height: initial;
+  }
+}
+
+.deploy-body {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  @include media-breakpoint-up(xs) {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  @container mr-widget-extension (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .deployment-info {
+      margin-bottom: $gl-padding-8;
+    }
+
+    .gl-button {
+      margin-left: 0;
+    }
+  }
+
+  > *:not(:last-child) {
+    margin-right: 0.3em;
+  }
+
+  svg {
+    vertical-align: text-top;
+  }
+
+  .deployment-info {
+    flex: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 100px;
+
+    display: grid;
+    grid-template-columns: max-content minmax(0, max-content) max-content;
+    grid-gap: $gl-spacing-scale-2;
+
+    @include media-breakpoint-up(xs) {
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  .dropdown-menu {
+    width: 400px;
+  }
+}
+
+.deploy-heading,
+.merge-train-position-indicator {
+  padding: $gl-padding-8 $gl-padding;
+
+  .media-body {
+    min-width: 0;
+    font-size: $gl-font-size-sm;
+    margin-left: 32px;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--border-color, $border-color);
+  }
+}
+
+.diff-file-row.is-active {
+  background-color: var(--gray-50, $gray-50);
+}
+
+.mr-widget-body-loading svg {
+  vertical-align: middle;
+}
+
+.mr-info-list {
+  clear: left;
+  position: relative;
+  padding-top: 4px;
+
+  p {
+    margin: 0;
+    position: relative;
+    padding: 4px 0;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+
+  &.mr-memory-usage {
+    p {
+      float: left;
+    }
+
+    .memory-graph-container {
+      float: left;
+      margin-left: 5px;
+    }
+  }
+}
+
+.mr-memory-usage {
+  width: 100%;
+
+  p.usage-info-loading .usage-info-load-spinner {
+    margin-right: 10px;
+    font-size: 16px;
+  }
+}
+
+.mr-ready-to-merge-loader {
+  max-width: 418px;
+
+  > svg {
+    vertical-align: middle;
+  }
+}
+
+.mr-section-container {
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  > .mr-widget-section {
+    > :last-child,
+    .deploy-heading:last-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+
+  > .mr-widget-border-top:first-of-type {
+    border-top: 0;
+  }
+}
+
+.mr-source-target {
+  flex-wrap: wrap;
+  padding: $gl-padding;
+  background: var(--white, $white);
+  min-height: $mr-widget-min-height;
+
+  @include media-breakpoint-up(md) {
+    align-items: center;
+  }
+
+  .git-merge-container {
+    justify-content: space-between;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+
+    @include media-breakpoint-down(md) {
+      flex-direction: column;
+      align-items: stretch;
+
+      .branch-actions {
+        margin-top: 16px;
+      }
+    }
+
+    @include media-breakpoint-up(lg) {
+      .branch-actions {
+        align-self: center;
+        margin-left: $gl-padding;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .diverged-commits-count {
+    color: var(--gray-500, $gl-text-color-secondary);
+  }
+}
+
+.mr-state-widget {
+  color: var(--gl-text-color, $gl-text-color);
+
+  .commit-message-edit {
+    border-radius: $border-radius-default;
+  }
+
+  .mr-widget-section:not(:first-child) > div,
+  .mr-widget-section:not(:first-child) > section,
+  .mr-widget-section .mr-widget-section > div:not(:first-child) {
+    border-top: solid 1px var(--border-color, $border-color);
+    // Avoid two lines being rendered
+    // instead of exessively adressing those
+    // edge cases we can use this as a boring
+    // solution
+    margin-top: -1px;
+  }
+
+  .mr-widget-alert-container + .mr-widget-section {
+    border-top: 0;
+  }
+
+  .mr-fast-forward-message {
+    padding-left: $gl-spacing-scale-9;
+    padding-bottom: $gl-padding;
+  }
+
+  .commits-list {
+    > li {
+      padding: $gl-padding;
+
+      @include media-breakpoint-up(md) {
+        margin-left: $gl-spacing-scale-7;
+      }
+    }
+  }
+
+  .mr-commit-dropdown {
+    .dropdown-menu {
+      @include media-breakpoint-up(md) {
+        width: 150%;
+      }
+    }
+  }
+
+  .mr-report {
+    padding: 0;
+  }
+
+  form {
+    margin-bottom: 0;
+
+    .clearfix {
+      margin-bottom: 0;
+    }
+  }
+
+  .btn {
+    font-size: $gl-font-size;
+  }
+
+  .accept-merge-holder {
+    .accept-action {
+      display: inline-block;
+      float: left;
+    }
+  }
+
+  .ci-widget {
+    color: var(--gl-text-color, $gl-text-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @include media-breakpoint-down(xs) {
+      flex-wrap: wrap;
+    }
+
+    .ci-widget-content {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+  }
+
+  .mr-widget-icon {
+    font-size: 22px;
+  }
+
+  .mr-loading-icon {
+    margin: 3px 0;
+  }
+
+  .normal {
+    flex: 1;
+    flex-basis: auto;
+  }
+
+  .capitalize {
+    text-transform: capitalize;
+  }
+
+  .mr-pipeline-title {
+    // NOTE: CSS Hack to make the force the pipeline
+    // to the end of the line or to force it to a
+    // new line if there is not enough space.
+    flex-grow: 999;
+    // Avoid layout shift of title when Mini Graph
+    // moves below title
+    padding-top: 5px;
+  }
+
+  .label-branch {
+    @include gl-font-monospace;
+    overflow: hidden;
+    word-break: break-all;
+  }
+
+  .label-branch {
+    &.label-truncate {
+      // NOTE: This selector targets its children because some of the HTML comes from
+      // 'source_branch_link'. Once this external HTML is no longer used, we could
+      // simplify this.
+      > a,
+      > span {
+        display: inline-block;
+        max-width: 12.5em;
+        margin-bottom: px-to-rem(-5px);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+    }
+  }
+
+  .mr-widget-body {
+    @include clearfix;
+
+    .approve-btn {
+      margin-right: 5px;
+    }
+
+    h4 {
+      float: left;
+      font-weight: $gl-font-weight-bold;
+      font-size: 14px;
+      line-height: inherit;
+      margin-top: 0;
+      margin-bottom: 0;
+
+      time {
+        font-weight: $gl-font-weight-normal;
+      }
+    }
+
+    .btn-grouped {
+      margin-left: 0;
+      margin-right: 7px;
+    }
+
+    .spacing {
+      margin: 0 0 0 10px;
+    }
+
+    .state-label {
+      font-weight: $gl-font-weight-bold;
+      padding-right: 10px;
+    }
+
+    .danger {
+      color: var(--red-500, $red-500);
+    }
+
+    .dropdown-menu {
+      li a {
+        padding: 5px;
+      }
+
+      .merge-opt-icon {
+        line-height: 1.5;
+      }
+
+      .merge-opt-title {
+        margin-left: 8px;
+      }
+    }
+
+    .has-custom-error {
+      display: inline-block;
+    }
+
+    @include media-breakpoint-down(xs) {
+      .btn-grouped {
+        float: none;
+        margin-right: 0;
+      }
+
+      .accept-action {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
+    .commit-message-editor {
+      label {
+        padding: 0;
+      }
+    }
+
+    &.mr-widget-empty-state {
+      line-height: 20px;
+      padding: $gl-padding;
+
+      .artwork {
+        @include media-breakpoint-down(md) {
+          margin-bottom: $gl-padding;
+        }
+      }
+
+      .text {
+        p {
+          margin-top: $gl-padding;
+        }
+
+        .highlight {
+          margin: 0 0 $gl-padding;
+          font-weight: $gl-font-weight-bold;
+        }
+      }
+    }
+
+    &.mr-pipeline-suggest {
+      border-radius: $border-radius-default;
+      line-height: 20px;
+      border: 1px solid var(--border-color, $border-color);
+
+      .circle-icon-container {
+        color: var(--gray-100, $gl-text-color-quaternary);
+      }
+    }
+  }
+
+  .ci-coverage {
+    float: right;
+  }
+
+  .stop-env-container {
+    color: var(--gl-text-color, $gl-text-color);
+    float: right;
+
+    a {
+      color: var(--gl-text-color, $gl-text-color);
+    }
+  }
+}
+
+.mr-widget-alert-container {
+  $radius: $border-radius-default - 1px;
+
+  border-radius: $radius $radius 0 0;
+
+  .gl-alert:not(:last-child) {
+    margin-bottom: 1px;
+  }
+}
+
+.mr-widget-body,
+.mr-widget-content {
+  padding: $gl-padding-12 $gl-padding;
+}
+
+.mr-widget-body-ready-merge {
+  @include media-breakpoint-down(sm) {
+    padding-top: $gl-spacing-scale-3;
+    padding-bottom: $gl-spacing-scale-3;
+    padding-right: $gl-spacing-scale-3;
+  }
+}
+
+.mr-widget-border-top {
+  border-top: 1px solid var(--border-color, $border-color);
+
+  &:last-child {
+    .report-block-container {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+}
+
+.mr-widget-grouped-section .report-block-container {
+  border-bottom-left-radius: $border-radius-default;
+  border-bottom-right-radius: $border-radius-default;
+}
+
+.mr-widget-extension {
+  border-top: 1px solid var(--border-color, $border-color);
+  background-color: var(--gray-10, $gray-10);
+  container-name: mr-widget-extension;
+  container-type: inline-size;
+  // Adds a fix for the view app dropdown not showing up
+  // correctly.
+  position: relative;
+  z-index: 1;
+
+  &.clickable:hover {
+    background-color: var(--gray-50, $gray-50);
+    cursor: pointer;
+  }
+}
+
+.mr-widget-extension-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  opacity: 0.3;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  border-radius: $gl-border-radius-full;
+
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-extension-icon::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  left: 50%;
+  top: 50%;
+
+  width: 16px;
+  height: 16px;
+  border: 4px solid;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-heading {
+  position: relative;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  .gl-skeleton-loader {
+    display: block;
+  }
+}
+
+.mr-widget-info {
+  padding-left: $gl-padding;
+  padding-right: $gl-padding;
+}
+
+.mr-widget-section {
+  .code-text {
+    flex: 1;
+  }
+}
+
+.mr-widget-workflow {
+  position: relative;
+
+  &:not(:first-child) {
+    margin-top: $gl-padding;
+  }
+}
+
+.mr-version-controls {
+  background: var(--white, $white);
+  color: var(--gl-text-color, $gl-text-color);
+
+  .mr-version-menus-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    z-index: 199;
+    white-space: nowrap;
+
+    .gl-dropdown-toggle {
+      width: auto;
+      max-width: 170px;
+
+      svg {
+        top: 10px;
+        right: 8px;
+      }
+    }
+  }
+
+  .content-block {
+    padding: $gl-padding-8 $gl-padding;
+    border-bottom: 0;
+  }
+
+  .mr-version-dropdown,
+  .mr-version-compare-dropdown {
+    top: 1px;
+    margin: 0 $gl-spacing-scale-1;
+
+    .dropdown-toggle.gl-button {
+      padding: $gl-spacing-scale-2 2px $gl-spacing-scale-2 $gl-spacing-scale-2;
+      font-weight: $gl-font-weight-bold;
+
+      .gl-button-icon {
+        margin-left: $gl-spacing-scale-1;
+      }
+    }
+  }
+
+  .dropdown-title {
+    color: var(--gl-text-color, $gl-text-color);
+  }
+}
+
+.mr-section-container .resize-observer > object {
+  height: 0;
+}
+
+// TODO: Move to GitLab UI
+.mr-extenson-scrim {
+  background: linear-gradient(
+    to bottom,
+    rgba($gray-light, 0),
+    rgba($gray-light, 1)
+  );
+
+  .gl-dark & {
+    background: linear-gradient(to bottom, rgba(#333, 0), rgba(#333, 1));
+  }
+}
+
+.attention-request-sidebar-popover {
+  z-index: 999;
+}
+
+.merge-request-overview {
+  @include media-breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: calc(97% - #{$right-sidebar-width}) auto;
+    grid-gap: 3%;
+  }
+}
+
+.container-fluid:not(.container-limited) {
+  .detail-page-header,
+  .detail-page-description,
+  .merge-request-tabs-container {
+    &.is-merge-request {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: $fixed-layout-width - ($container-margin-xl * 2);
+    }
+  }
+}
+
+.container-fluid.diffs-container-limited {
+  .flash-container {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $container-xl;
+    padding-left: $gl-spacing-scale-5;
+    padding-right: $gl-spacing-scale-5;
+  }
+}
+
+.submit-review-dropdown .gl-new-dropdown-panel {
+  max-width: none;
+}
+
+.submit-review-dropdown-form {
+  width: calc(100vw - 20px);
+  max-width: 680px;
+}
+
+.submit-review-dropdown-animated {
+  animation: review-btn-animate 300ms ease-in;
+}
+
+@include keyframes(review-btn-animate) {
+  0% {
+    transform: scale(1);
+  }
+
+  75% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.mr-widget-merge-details {
+  *,
+  & {
+    font-size: $gl-font-size-sm;
+  }
+
+  p {
+    font-size: $gl-font-size;
+  }
+
+  li:not(:last-child) {
+    margin-bottom: $gl-spacing-scale-2;
+  }
+}
+
+.mr-ready-merge-related-links a,
+.mr-widget-merge-details a,
+.mr-widget-author {
+  text-decoration: underline;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+}
+
+.merge-request-sticky-header {
+  z-index: $top-bar-z-index;
+  height: $mr-sticky-header-height;
+}
+
+.merge-request-notification-toggle {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: $gl-font-weight-normal;
+  }
+}
+
+.mr-widget-status-icon-level-1::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  opacity: 0.3;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+}
+
+.mr-widget-status-icon-level-1::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  left: $gl-spacing-scale-2;
+  right: $gl-spacing-scale-2;
+  top: $gl-spacing-scale-2;
+  bottom: $gl-spacing-scale-2;
+}
+
+.memory-graph-container {
+  background: var(--white, $white);
+  border: 1px solid var(--gray-100, $gray-100);
+}
+
+.review-bar-component {
+  position: fixed;
+  bottom: $calc-application-footer-height;
+  left: 0;
+  z-index: $zindex-dropdown-menu;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--mr-review-bar-height);
+  padding-left: $contextual-sidebar-width;
+  padding-right: $right-sidebar-collapsed-width;
+  background: var(--white, $white);
+  border-top: 1px solid var(--border-color, $border-color);
+  transition: padding $gl-transition-duration-medium;
+
+  @media (max-width: map-get($grid-breakpoints, sm)-1) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .submit-review-dropdown {
+    margin-left: $grid-size;
+
+    .md-header {
+      top: -$gl-spacing-scale-2;
+    }
+  }
+}
+
+.review-bar-content {
+  max-width: $limited-layout-width;
+  padding: 0 $container-margin;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.review-preview-item-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+
+  > .bold {
+    display: flex;
+    min-width: 0;
+    line-height: 16px;
+  }
+}
+
+.review-preview-item-footer {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.review-preview-item-content {
+  width: 100%;
+
+  p {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+}
+
+.commits ol:not(:last-of-type) {
+  margin-bottom: 0;
+}
+
+.mr-section-container {
+  .media-body {
+    column-gap: 0;
+  }
+
+  .state-container-action-buttons {
+    @include media-breakpoint-up(md) {
+      flex-direction: row-reverse;
+    }
+  }
+}
+
+.mr-state-loader {
+  svg {
+    vertical-align: middle;
+  }
+
+  .gl-skeleton-loader {
+    max-width: 334px;
+  }
+}
+
+.diff-file-discussions-wrapper {
+  width: 100%;
+
+  .diff-discussions:not(:first-child) > .notes {
+    padding-top: 0;
+  }
+
+  .note-discussion {
+    border-bottom: 1px solid var(--gray-100, $gray-100) !important;
+  }
+
+  .discussion-collapsible {
+    margin: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+.merge-request-overview .md-header {
+  top: calc(#{$calc-application-header-height} + #{$mr-sticky-header-height});
+}
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -316,9 +316,9 @@
+   align-items: center;
+   height: var(--file-row-height);
+ }
+ 
+-@media (max-width: map-get($grid-breakpoints, lg)-1) {
++@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+   .diffs .files {
+     .diff-tree-list {
+       position: relative;
+       // height is fully handled on the javascript side in narrow view
+@@ -1111,9 +1111,9 @@
+   background: var(--white, $white);
+   border-top: 1px solid var(--border-color, $border-color);
+   transition: padding $gl-transition-duration-medium;
+ 
+-  @media (max-width: map-get($grid-breakpoints, sm)-1) {
++  @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+     padding-left: 0;
+     padding-right: 0;
+   }
+ 
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+$mr-widget-min-height: 69px;
+$tabs-holder-z-index: 250;
+
+.compare-versions-container {
+  min-width: 0;
+}
+
+.diff-comment-avatar-holders {
+  position: absolute;
+  margin-left: -$gl-padding;
+  z-index: 100;
+  @include code-icon-size();
+
+  &:hover {
+    .diff-comment-avatar,
+    .diff-comments-more-count {
+      @for $i from 1 through 4 {
+        $x-pos: 14px;
+
+        &:nth-child(#{$i}) {
+          @if $i == 4 {
+            $x-pos: 14.5px;
+          }
+
+          transform: translateX((($i * $x-pos) - $x-pos));
+
+          &:hover {
+            transform: translateX((($i * $x-pos) - $x-pos));
+          }
+        }
+      }
+    }
+
+    .diff-comments-more-count {
+      padding-left: 2px;
+      padding-right: 2px;
+      width: auto;
+    }
+  }
+}
+
+.diff-comment-avatar,
+.diff-comments-more-count {
+  position: absolute;
+  left: 0;
+  margin-right: 0;
+  border-color: var(--white, $white);
+  cursor: pointer;
+  transition: all 0.1s ease-out;
+  @include code-icon-size();
+
+  @for $i from 1 through 4 {
+    &:nth-child(#{$i}) {
+      z-index: (4 - $i);
+    }
+  }
+
+  .avatar {
+    @include code-icon-size();
+  }
+}
+
+.diff-comments-more-count {
+  padding-left: 0;
+  padding-right: 0;
+  overflow: hidden;
+  @include code-icon-size();
+}
+
+.diff-file-changes {
+  max-width: 560px;
+  width: 100%;
+  z-index: 150;
+  min-height: $dropdown-min-height;
+  max-height: $dropdown-max-height;
+  overflow-y: auto;
+  margin-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    left: $gl-padding;
+  }
+
+  .dropdown-input .dropdown-input-search {
+    pointer-events: all;
+  }
+
+  .diff-changed-file {
+    display: flex;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    min-width: 0;
+  }
+
+  .diff-file-changed-icon {
+    margin-top: 2px;
+  }
+
+  .diff-changed-file-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .diff-changed-file-name,
+  .diff-changed-blank-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .diff-changed-blank-file-name {
+    color: var(--gray-400, $gray-400);
+    font-style: italic;
+  }
+
+  .diff-changed-file-path {
+    color: var(--gray-400, $gray-400);
+  }
+
+  .diff-changed-stats {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}
+
+.diff-files-holder {
+  flex: 1;
+  min-width: 0;
+  z-index: 203;
+
+  .vue-recycle-scroller__item-wrapper {
+    overflow: visible;
+  }
+}
+
+.diff-grid {
+  .diff-td {
+    // By default min-width is auto with 1fr which causes some overflow problems
+    // https://gitlab.com/gitlab-org/gitlab/-/issues/296222
+    min-width: 0;
+  }
+
+  .diff-grid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    &.diff-grid-row-full {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .diff-grid-left,
+  .diff-grid-right {
+    display: grid;
+    // Zero width column is a placeholder for the EE inline code quality diff
+    // see ee/.../diffs.scss for more details
+    grid-template-columns: 50px 8px 0 1fr;
+  }
+
+  .diff-grid-2-col {
+    grid-template-columns: 100px 1fr !important;
+
+    &.parallel {
+      grid-template-columns: 50px 1fr !important;
+    }
+  }
+
+  .diff-grid-comments {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .diff-grid-drafts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    .content + .content {
+      @include gl-border-t;
+    }
+
+    .notes-content {
+      border: 0;
+    }
+  }
+
+  &.inline-diff-view {
+    .diff-grid-comments {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-drafts {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-row {
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-left,
+    .diff-grid-right {
+      // Zero width column is a placeholder for the EE inline code quality diff
+      // see ee/../diffs.scss for more details
+      grid-template-columns: 50px 50px 8px 0 1fr;
+    }
+  }
+}
+
+.diff-line-expand-button {
+  &:hover,
+  &:focus {
+    background-color: var(--gray-200, $gray-200);
+  }
+}
+
+.diff-table.code .diff-tr.line_holder .diff-td.line_content.parallel {
+  width: unset;
+}
+
+.diff-tr {
+  .timeline-discussion-body {
+    clear: left;
+
+    .note-body {
+      padding: 0 $gl-padding-8 $gl-padding-8 $gl-padding-32;
+    }
+  }
+
+  .timeline-entry img.avatar {
+    margin-top: -2px;
+    margin-right: $gl-padding-8;
+  }
+}
+
+// tiny adjustment to vertical align with the note header text
+.discussion-collapsible {
+  border: 0 !important;
+  margin: 0;
+
+  .timeline-icon {
+    padding-top: 2px;
+  }
+}
+
+.diff-tree-list {
+  // This 11px value should match the additional value found in
+  //      /assets/stylesheets/framework/diffs.scss
+  // for the $mr-file-header-top SCSS variable within the
+  //      .file-title,
+  //      .file-title-flex-parent {
+  // rule.
+  // If they don't match, the file tree and the diff files stick
+  // to the top at different heights, which is a bad-looking defect
+  $diff-file-header-top: 11px;
+
+  position: sticky;
+  top: calc(
+    #{$calc-application-header-height} + #{$mr-sticky-header-height} + #{$diff-file-header-top}
+  );
+  // height calc is fully delegated to the tree_list_height.vue component
+  height: 100%;
+  min-height: 300px;
+
+  .drag-handle {
+    bottom: 16px;
+  }
+}
+
+.tree-list-holder {
+  --file-row-height: 32px;
+  height: 100%;
+
+  .file-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+.tree-list-scroll {
+  max-height: 100%;
+  padding-bottom: $grid-size;
+  overflow-y: scroll;
+  overflow-x: auto;
+}
+
+.tree-list-gutter {
+  height: $grid-size;
+}
+
+.tree-list-search {
+  flex: 0 0 34px;
+
+  .form-control {
+    padding-left: 30px;
+  }
+}
+
+.tree-list-icon {
+  &,
+  svg {
+    fill: var(--gray-400, $gray-400);
+  }
+}
+
+.tree-list-clear-icon {
+  right: 10px;
+  left: auto;
+  line-height: 0;
+}
+
+.file-row-header {
+  display: flex;
+  align-items: center;
+  height: var(--file-row-height);
+}
+
+@media (max-width: map-get($grid-breakpoints, lg) - 1) {
+  .diffs .files {
+    .diff-tree-list {
+      position: relative;
+      // height is fully handled on the javascript side in narrow view
+      min-height: 0;
+      height: auto;
+      top: 0;
+      // !important is required to override inline styles of resizable sidebar
+      width: 100% !important;
+      // avoid sticky elements overlap header and other elements
+      z-index: 1;
+      margin-bottom: $gl-spacing-scale-3;
+    }
+
+    .tree-list-holder {
+      padding-right: 0;
+    }
+  }
+}
+
+.ci-widget-container {
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  flex-direction: row;
+
+  @include media-breakpoint-down(sm) {
+    align-items: initial;
+    flex-direction: column;
+
+    .dropdown .mini-pipeline-graph-dropdown-menu.dropdown-menu {
+      transform: initial;
+    }
+  }
+
+  .coverage {
+    font-size: 12px;
+    color: var(--gray-500, $gray-500);
+    line-height: initial;
+  }
+}
+
+.deploy-body {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  @include media-breakpoint-up(xs) {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  @container mr-widget-extension (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .deployment-info {
+      margin-bottom: $gl-padding-8;
+    }
+
+    .gl-button {
+      margin-left: 0;
+    }
+  }
+
+  > *:not(:last-child) {
+    margin-right: 0.3em;
+  }
+
+  svg {
+    vertical-align: text-top;
+  }
+
+  .deployment-info {
+    flex: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 100px;
+
+    display: grid;
+    grid-template-columns: max-content minmax(0, max-content) max-content;
+    grid-gap: $gl-spacing-scale-2;
+
+    @include media-breakpoint-up(xs) {
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  .dropdown-menu {
+    width: 400px;
+  }
+}
+
+.deploy-heading,
+.merge-train-position-indicator {
+  padding: $gl-padding-8 $gl-padding;
+
+  .media-body {
+    min-width: 0;
+    font-size: $gl-font-size-sm;
+    margin-left: 32px;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--border-color, $border-color);
+  }
+}
+
+.diff-file-row.is-active {
+  background-color: var(--gray-50, $gray-50);
+}
+
+.mr-widget-body-loading svg {
+  vertical-align: middle;
+}
+
+.mr-info-list {
+  clear: left;
+  position: relative;
+  padding-top: 4px;
+
+  p {
+    margin: 0;
+    position: relative;
+    padding: 4px 0;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+
+  &.mr-memory-usage {
+    p {
+      float: left;
+    }
+
+    .memory-graph-container {
+      float: left;
+      margin-left: 5px;
+    }
+  }
+}
+
+.mr-memory-usage {
+  width: 100%;
+
+  p.usage-info-loading .usage-info-load-spinner {
+    margin-right: 10px;
+    font-size: 16px;
+  }
+}
+
+.mr-ready-to-merge-loader {
+  max-width: 418px;
+
+  > svg {
+    vertical-align: middle;
+  }
+}
+
+.mr-section-container {
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  > .mr-widget-section {
+    > :last-child,
+    .deploy-heading:last-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+
+  > .mr-widget-border-top:first-of-type {
+    border-top: 0;
+  }
+}
+
+.mr-source-target {
+  flex-wrap: wrap;
+  padding: $gl-padding;
+  background: var(--white, $white);
+  min-height: $mr-widget-min-height;
+
+  @include media-breakpoint-up(md) {
+    align-items: center;
+  }
+
+  .git-merge-container {
+    justify-content: space-between;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+
+    @include media-breakpoint-down(md) {
+      flex-direction: column;
+      align-items: stretch;
+
+      .branch-actions {
+        margin-top: 16px;
+      }
+    }
+
+    @include media-breakpoint-up(lg) {
+      .branch-actions {
+        align-self: center;
+        margin-left: $gl-padding;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .diverged-commits-count {
+    color: var(--gray-500, $gl-text-color-secondary);
+  }
+}
+
+.mr-state-widget {
+  color: var(--gl-text-color, $gl-text-color);
+
+  .commit-message-edit {
+    border-radius: $border-radius-default;
+  }
+
+  .mr-widget-section:not(:first-child) > div,
+  .mr-widget-section:not(:first-child) > section,
+  .mr-widget-section .mr-widget-section > div:not(:first-child) {
+    border-top: solid 1px var(--border-color, $border-color);
+    // Avoid two lines being rendered
+    // instead of exessively adressing those
+    // edge cases we can use this as a boring
+    // solution
+    margin-top: -1px;
+  }
+
+  .mr-widget-alert-container + .mr-widget-section {
+    border-top: 0;
+  }
+
+  .mr-fast-forward-message {
+    padding-left: $gl-spacing-scale-9;
+    padding-bottom: $gl-padding;
+  }
+
+  .commits-list {
+    > li {
+      padding: $gl-padding;
+
+      @include media-breakpoint-up(md) {
+        margin-left: $gl-spacing-scale-7;
+      }
+    }
+  }
+
+  .mr-commit-dropdown {
+    .dropdown-menu {
+      @include media-breakpoint-up(md) {
+        width: 150%;
+      }
+    }
+  }
+
+  .mr-report {
+    padding: 0;
+  }
+
+  form {
+    margin-bottom: 0;
+
+    .clearfix {
+      margin-bottom: 0;
+    }
+  }
+
+  .btn {
+    font-size: $gl-font-size;
+  }
+
+  .accept-merge-holder {
+    .accept-action {
+      display: inline-block;
+      float: left;
+    }
+  }
+
+  .ci-widget {
+    color: var(--gl-text-color, $gl-text-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @include media-breakpoint-down(xs) {
+      flex-wrap: wrap;
+    }
+
+    .ci-widget-content {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+  }
+
+  .mr-widget-icon {
+    font-size: 22px;
+  }
+
+  .mr-loading-icon {
+    margin: 3px 0;
+  }
+
+  .normal {
+    flex: 1;
+    flex-basis: auto;
+  }
+
+  .capitalize {
+    text-transform: capitalize;
+  }
+
+  .mr-pipeline-title {
+    // NOTE: CSS Hack to make the force the pipeline
+    // to the end of the line or to force it to a
+    // new line if there is not enough space.
+    flex-grow: 999;
+    // Avoid layout shift of title when Mini Graph
+    // moves below title
+    padding-top: 5px;
+  }
+
+  .label-branch {
+    @include gl-font-monospace;
+    overflow: hidden;
+    word-break: break-all;
+  }
+
+  .label-branch {
+    &.label-truncate {
+      // NOTE: This selector targets its children because some of the HTML comes from
+      // 'source_branch_link'. Once this external HTML is no longer used, we could
+      // simplify this.
+      > a,
+      > span {
+        display: inline-block;
+        max-width: 12.5em;
+        margin-bottom: px-to-rem(-5px);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+    }
+  }
+
+  .mr-widget-body {
+    @include clearfix;
+
+    .approve-btn {
+      margin-right: 5px;
+    }
+
+    h4 {
+      float: left;
+      font-weight: $gl-font-weight-bold;
+      font-size: 14px;
+      line-height: inherit;
+      margin-top: 0;
+      margin-bottom: 0;
+
+      time {
+        font-weight: $gl-font-weight-normal;
+      }
+    }
+
+    .btn-grouped {
+      margin-left: 0;
+      margin-right: 7px;
+    }
+
+    .spacing {
+      margin: 0 0 0 10px;
+    }
+
+    .state-label {
+      font-weight: $gl-font-weight-bold;
+      padding-right: 10px;
+    }
+
+    .danger {
+      color: var(--red-500, $red-500);
+    }
+
+    .dropdown-menu {
+      li a {
+        padding: 5px;
+      }
+
+      .merge-opt-icon {
+        line-height: 1.5;
+      }
+
+      .merge-opt-title {
+        margin-left: 8px;
+      }
+    }
+
+    .has-custom-error {
+      display: inline-block;
+    }
+
+    @include media-breakpoint-down(xs) {
+      .btn-grouped {
+        float: none;
+        margin-right: 0;
+      }
+
+      .accept-action {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
+    .commit-message-editor {
+      label {
+        padding: 0;
+      }
+    }
+
+    &.mr-widget-empty-state {
+      line-height: 20px;
+      padding: $gl-padding;
+
+      .artwork {
+        @include media-breakpoint-down(md) {
+          margin-bottom: $gl-padding;
+        }
+      }
+
+      .text {
+        p {
+          margin-top: $gl-padding;
+        }
+
+        .highlight {
+          margin: 0 0 $gl-padding;
+          font-weight: $gl-font-weight-bold;
+        }
+      }
+    }
+
+    &.mr-pipeline-suggest {
+      border-radius: $border-radius-default;
+      line-height: 20px;
+      border: 1px solid var(--border-color, $border-color);
+
+      .circle-icon-container {
+        color: var(--gray-100, $gl-text-color-quaternary);
+      }
+    }
+  }
+
+  .ci-coverage {
+    float: right;
+  }
+
+  .stop-env-container {
+    color: var(--gl-text-color, $gl-text-color);
+    float: right;
+
+    a {
+      color: var(--gl-text-color, $gl-text-color);
+    }
+  }
+}
+
+.mr-widget-alert-container {
+  $radius: $border-radius-default - 1px;
+
+  border-radius: $radius $radius 0 0;
+
+  .gl-alert:not(:last-child) {
+    margin-bottom: 1px;
+  }
+}
+
+.mr-widget-body,
+.mr-widget-content {
+  padding: $gl-padding-12 $gl-padding;
+}
+
+.mr-widget-body-ready-merge {
+  @include media-breakpoint-down(sm) {
+    padding-top: $gl-spacing-scale-3;
+    padding-bottom: $gl-spacing-scale-3;
+    padding-right: $gl-spacing-scale-3;
+  }
+}
+
+.mr-widget-border-top {
+  border-top: 1px solid var(--border-color, $border-color);
+
+  &:last-child {
+    .report-block-container {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+}
+
+.mr-widget-grouped-section .report-block-container {
+  border-bottom-left-radius: $border-radius-default;
+  border-bottom-right-radius: $border-radius-default;
+}
+
+.mr-widget-extension {
+  border-top: 1px solid var(--border-color, $border-color);
+  background-color: var(--gray-10, $gray-10);
+  container-name: mr-widget-extension;
+  container-type: inline-size;
+  // Adds a fix for the view app dropdown not showing up
+  // correctly.
+  position: relative;
+  z-index: 1;
+
+  &.clickable:hover {
+    background-color: var(--gray-50, $gray-50);
+    cursor: pointer;
+  }
+}
+
+.mr-widget-extension-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  opacity: 0.3;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  border-radius: $gl-border-radius-full;
+
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-extension-icon::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  left: 50%;
+  top: 50%;
+
+  width: 16px;
+  height: 16px;
+  border: 4px solid;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-heading {
+  position: relative;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  .gl-skeleton-loader {
+    display: block;
+  }
+}
+
+.mr-widget-info {
+  padding-left: $gl-padding;
+  padding-right: $gl-padding;
+}
+
+.mr-widget-section {
+  .code-text {
+    flex: 1;
+  }
+}
+
+.mr-widget-workflow {
+  position: relative;
+
+  &:not(:first-child) {
+    margin-top: $gl-padding;
+  }
+}
+
+.mr-version-controls {
+  background: var(--white, $white);
+  color: var(--gl-text-color, $gl-text-color);
+
+  .mr-version-menus-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    z-index: 199;
+    white-space: nowrap;
+
+    .gl-dropdown-toggle {
+      width: auto;
+      max-width: 170px;
+
+      svg {
+        top: 10px;
+        right: 8px;
+      }
+    }
+  }
+
+  .content-block {
+    padding: $gl-padding-8 $gl-padding;
+    border-bottom: 0;
+  }
+
+  .mr-version-dropdown,
+  .mr-version-compare-dropdown {
+    top: 1px;
+    margin: 0 $gl-spacing-scale-1;
+
+    .dropdown-toggle.gl-button {
+      padding: $gl-spacing-scale-2 2px $gl-spacing-scale-2 $gl-spacing-scale-2;
+      font-weight: $gl-font-weight-bold;
+
+      .gl-button-icon {
+        margin-left: $gl-spacing-scale-1;
+      }
+    }
+  }
+
+  .dropdown-title {
+    color: var(--gl-text-color, $gl-text-color);
+  }
+}
+
+.mr-section-container .resize-observer > object {
+  height: 0;
+}
+
+// TODO: Move to GitLab UI
+.mr-extenson-scrim {
+  background: linear-gradient(to bottom, rgba($gray-light, 0), rgba($gray-light, 1));
+
+  .gl-dark & {
+    background: linear-gradient(to bottom, rgba(#333, 0), rgba(#333, 1));
+  }
+}
+
+.attention-request-sidebar-popover {
+  z-index: 999;
+}
+
+.merge-request-overview {
+  @include media-breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: calc(97% - #{$right-sidebar-width}) auto;
+    grid-gap: 3%;
+  }
+}
+
+.container-fluid:not(.container-limited) {
+  .detail-page-header,
+  .detail-page-description,
+  .merge-request-tabs-container {
+    &.is-merge-request {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: $fixed-layout-width - ($container-margin-xl * 2);
+    }
+  }
+}
+
+.container-fluid.diffs-container-limited {
+  .flash-container {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $container-xl;
+    padding-left: $gl-spacing-scale-5;
+    padding-right: $gl-spacing-scale-5;
+  }
+}
+
+.submit-review-dropdown .gl-new-dropdown-panel {
+  max-width: none;
+}
+
+.submit-review-dropdown-form {
+  width: calc(100vw - 20px);
+  max-width: 680px;
+}
+
+.submit-review-dropdown-animated {
+  animation: review-btn-animate 300ms ease-in;
+}
+
+@include keyframes(review-btn-animate) {
+  0% {
+    transform: scale(1);
+  }
+
+  75% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.mr-widget-merge-details {
+  *,
+  & {
+    font-size: $gl-font-size-sm;
+  }
+
+  p {
+    font-size: $gl-font-size;
+  }
+
+  li:not(:last-child) {
+    margin-bottom: $gl-spacing-scale-2;
+  }
+}
+
+.mr-ready-merge-related-links a,
+.mr-widget-merge-details a,
+.mr-widget-author {
+  text-decoration: underline;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+}
+
+.merge-request-sticky-header {
+  z-index: $top-bar-z-index;
+  height: $mr-sticky-header-height;
+}
+
+.merge-request-notification-toggle {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: $gl-font-weight-normal;
+  }
+}
+
+.mr-widget-status-icon-level-1::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  opacity: 0.3;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+}
+
+.mr-widget-status-icon-level-1::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  left: $gl-spacing-scale-2;
+  right: $gl-spacing-scale-2;
+  top: $gl-spacing-scale-2;
+  bottom: $gl-spacing-scale-2;
+}
+
+.memory-graph-container {
+  background: var(--white, $white);
+  border: 1px solid var(--gray-100, $gray-100);
+}
+
+.review-bar-component {
+  position: fixed;
+  bottom: $calc-application-footer-height;
+  left: 0;
+  z-index: $zindex-dropdown-menu;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--mr-review-bar-height);
+  padding-left: $contextual-sidebar-width;
+  padding-right: $right-sidebar-collapsed-width;
+  background: var(--white, $white);
+  border-top: 1px solid var(--border-color, $border-color);
+  transition: padding $gl-transition-duration-medium;
+
+  @media (max-width: map-get($grid-breakpoints, sm) - 1) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .submit-review-dropdown {
+    margin-left: $grid-size;
+
+    .md-header {
+      top: -$gl-spacing-scale-2;
+    }
+  }
+}
+
+.review-bar-content {
+  max-width: $limited-layout-width;
+  padding: 0 $container-margin;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.review-preview-item-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+
+  > .bold {
+    display: flex;
+    min-width: 0;
+    line-height: 16px;
+  }
+}
+
+.review-preview-item-footer {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.review-preview-item-content {
+  width: 100%;
+
+  p {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+}
+
+.commits ol:not(:last-of-type) {
+  margin-bottom: 0;
+}
+
+.mr-section-container {
+  .media-body {
+    column-gap: 0;
+  }
+
+  .state-container-action-buttons {
+    @include media-breakpoint-up(md) {
+      flex-direction: row-reverse;
+    }
+  }
+}
+
+.mr-state-loader {
+  svg {
+    vertical-align: middle;
+  }
+
+  .gl-skeleton-loader {
+    max-width: 334px;
+  }
+}
+
+.diff-file-discussions-wrapper {
+  width: 100%;
+
+  .diff-discussions:not(:first-child) > .notes {
+    padding-top: 0;
+  }
+
+  .note-discussion {
+    border-bottom: 1px solid var(--gray-100, $gray-100) !important;
+  }
+
+  .discussion-collapsible {
+    margin: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+.merge-request-overview .md-header {
+  top: calc(#{$calc-application-header-height} + #{$mr-sticky-header-height});
+}
+
+`````
+
+### Expected (prettier)
+
+`````scss
+@import "mixins_and_variables_and_functions";
+
+$mr-widget-min-height: 69px;
+$tabs-holder-z-index: 250;
+
+.compare-versions-container {
+  min-width: 0;
+}
+
+.diff-comment-avatar-holders {
+  position: absolute;
+  margin-left: -$gl-padding;
+  z-index: 100;
+  @include code-icon-size();
+
+  &:hover {
+    .diff-comment-avatar,
+    .diff-comments-more-count {
+      @for $i from 1 through 4 {
+        $x-pos: 14px;
+
+        &:nth-child(#{$i}) {
+          @if $i == 4 {
+            $x-pos: 14.5px;
+          }
+
+          transform: translateX((($i * $x-pos) - $x-pos));
+
+          &:hover {
+            transform: translateX((($i * $x-pos) - $x-pos));
+          }
+        }
+      }
+    }
+
+    .diff-comments-more-count {
+      padding-left: 2px;
+      padding-right: 2px;
+      width: auto;
+    }
+  }
+}
+
+.diff-comment-avatar,
+.diff-comments-more-count {
+  position: absolute;
+  left: 0;
+  margin-right: 0;
+  border-color: var(--white, $white);
+  cursor: pointer;
+  transition: all 0.1s ease-out;
+  @include code-icon-size();
+
+  @for $i from 1 through 4 {
+    &:nth-child(#{$i}) {
+      z-index: (4 - $i);
+    }
+  }
+
+  .avatar {
+    @include code-icon-size();
+  }
+}
+
+.diff-comments-more-count {
+  padding-left: 0;
+  padding-right: 0;
+  overflow: hidden;
+  @include code-icon-size();
+}
+
+.diff-file-changes {
+  max-width: 560px;
+  width: 100%;
+  z-index: 150;
+  min-height: $dropdown-min-height;
+  max-height: $dropdown-max-height;
+  overflow-y: auto;
+  margin-bottom: 0;
+
+  @include media-breakpoint-up(sm) {
+    left: $gl-padding;
+  }
+
+  .dropdown-input .dropdown-input-search {
+    pointer-events: all;
+  }
+
+  .diff-changed-file {
+    display: flex;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    min-width: 0;
+  }
+
+  .diff-file-changed-icon {
+    margin-top: 2px;
+  }
+
+  .diff-changed-file-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .diff-changed-file-name,
+  .diff-changed-blank-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .diff-changed-blank-file-name {
+    color: var(--gray-400, $gray-400);
+    font-style: italic;
+  }
+
+  .diff-changed-file-path {
+    color: var(--gray-400, $gray-400);
+  }
+
+  .diff-changed-stats {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}
+
+.diff-files-holder {
+  flex: 1;
+  min-width: 0;
+  z-index: 203;
+
+  .vue-recycle-scroller__item-wrapper {
+    overflow: visible;
+  }
+}
+
+.diff-grid {
+  .diff-td {
+    // By default min-width is auto with 1fr which causes some overflow problems
+    // https://gitlab.com/gitlab-org/gitlab/-/issues/296222
+    min-width: 0;
+  }
+
+  .diff-grid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    &.diff-grid-row-full {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .diff-grid-left,
+  .diff-grid-right {
+    display: grid;
+    // Zero width column is a placeholder for the EE inline code quality diff
+    // see ee/.../diffs.scss for more details
+    grid-template-columns: 50px 8px 0 1fr;
+  }
+
+  .diff-grid-2-col {
+    grid-template-columns: 100px 1fr !important;
+
+    &.parallel {
+      grid-template-columns: 50px 1fr !important;
+    }
+  }
+
+  .diff-grid-comments {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .diff-grid-drafts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    .content + .content {
+      @include gl-border-t;
+    }
+
+    .notes-content {
+      border: 0;
+    }
+  }
+
+  &.inline-diff-view {
+    .diff-grid-comments {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-drafts {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-row {
+      grid-template-columns: 1fr;
+    }
+
+    .diff-grid-left,
+    .diff-grid-right {
+      // Zero width column is a placeholder for the EE inline code quality diff
+      // see ee/../diffs.scss for more details
+      grid-template-columns: 50px 50px 8px 0 1fr;
+    }
+  }
+}
+
+.diff-line-expand-button {
+  &:hover,
+  &:focus {
+    background-color: var(--gray-200, $gray-200);
+  }
+}
+
+.diff-table.code .diff-tr.line_holder .diff-td.line_content.parallel {
+  width: unset;
+}
+
+.diff-tr {
+  .timeline-discussion-body {
+    clear: left;
+
+    .note-body {
+      padding: 0 $gl-padding-8 $gl-padding-8 $gl-padding-32;
+    }
+  }
+
+  .timeline-entry img.avatar {
+    margin-top: -2px;
+    margin-right: $gl-padding-8;
+  }
+}
+
+// tiny adjustment to vertical align with the note header text
+.discussion-collapsible {
+  border: 0 !important;
+  margin: 0;
+
+  .timeline-icon {
+    padding-top: 2px;
+  }
+}
+
+.diff-tree-list {
+  // This 11px value should match the additional value found in
+  //      /assets/stylesheets/framework/diffs.scss
+  // for the $mr-file-header-top SCSS variable within the
+  //      .file-title,
+  //      .file-title-flex-parent {
+  // rule.
+  // If they don't match, the file tree and the diff files stick
+  // to the top at different heights, which is a bad-looking defect
+  $diff-file-header-top: 11px;
+
+  position: sticky;
+  top: calc(
+    #{$calc-application-header-height} + #{$mr-sticky-header-height} + #{$diff-file-header-top}
+  );
+  // height calc is fully delegated to the tree_list_height.vue component
+  height: 100%;
+  min-height: 300px;
+
+  .drag-handle {
+    bottom: 16px;
+  }
+}
+
+.tree-list-holder {
+  --file-row-height: 32px;
+  height: 100%;
+
+  .file-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+.tree-list-scroll {
+  max-height: 100%;
+  padding-bottom: $grid-size;
+  overflow-y: scroll;
+  overflow-x: auto;
+}
+
+.tree-list-gutter {
+  height: $grid-size;
+}
+
+.tree-list-search {
+  flex: 0 0 34px;
+
+  .form-control {
+    padding-left: 30px;
+  }
+}
+
+.tree-list-icon {
+  &,
+  svg {
+    fill: var(--gray-400, $gray-400);
+  }
+}
+
+.tree-list-clear-icon {
+  right: 10px;
+  left: auto;
+  line-height: 0;
+}
+
+.file-row-header {
+  display: flex;
+  align-items: center;
+  height: var(--file-row-height);
+}
+
+@media (max-width: map-get($grid-breakpoints, lg)-1) {
+  .diffs .files {
+    .diff-tree-list {
+      position: relative;
+      // height is fully handled on the javascript side in narrow view
+      min-height: 0;
+      height: auto;
+      top: 0;
+      // !important is required to override inline styles of resizable sidebar
+      width: 100% !important;
+      // avoid sticky elements overlap header and other elements
+      z-index: 1;
+      margin-bottom: $gl-spacing-scale-3;
+    }
+
+    .tree-list-holder {
+      padding-right: 0;
+    }
+  }
+}
+
+.ci-widget-container {
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  flex-direction: row;
+
+  @include media-breakpoint-down(sm) {
+    align-items: initial;
+    flex-direction: column;
+
+    .dropdown .mini-pipeline-graph-dropdown-menu.dropdown-menu {
+      transform: initial;
+    }
+  }
+
+  .coverage {
+    font-size: 12px;
+    color: var(--gray-500, $gray-500);
+    line-height: initial;
+  }
+}
+
+.deploy-body {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  @include media-breakpoint-up(xs) {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  @container mr-widget-extension (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .deployment-info {
+      margin-bottom: $gl-padding-8;
+    }
+
+    .gl-button {
+      margin-left: 0;
+    }
+  }
+
+  > *:not(:last-child) {
+    margin-right: 0.3em;
+  }
+
+  svg {
+    vertical-align: text-top;
+  }
+
+  .deployment-info {
+    flex: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 100px;
+
+    display: grid;
+    grid-template-columns: max-content minmax(0, max-content) max-content;
+    grid-gap: $gl-spacing-scale-2;
+
+    @include media-breakpoint-up(xs) {
+      min-width: 0;
+      max-width: 100%;
+    }
+  }
+
+  .dropdown-menu {
+    width: 400px;
+  }
+}
+
+.deploy-heading,
+.merge-train-position-indicator {
+  padding: $gl-padding-8 $gl-padding;
+
+  .media-body {
+    min-width: 0;
+    font-size: $gl-font-size-sm;
+    margin-left: 32px;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--border-color, $border-color);
+  }
+}
+
+.diff-file-row.is-active {
+  background-color: var(--gray-50, $gray-50);
+}
+
+.mr-widget-body-loading svg {
+  vertical-align: middle;
+}
+
+.mr-info-list {
+  clear: left;
+  position: relative;
+  padding-top: 4px;
+
+  p {
+    margin: 0;
+    position: relative;
+    padding: 4px 0;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+
+  &.mr-memory-usage {
+    p {
+      float: left;
+    }
+
+    .memory-graph-container {
+      float: left;
+      margin-left: 5px;
+    }
+  }
+}
+
+.mr-memory-usage {
+  width: 100%;
+
+  p.usage-info-loading .usage-info-load-spinner {
+    margin-right: 10px;
+    font-size: 16px;
+  }
+}
+
+.mr-ready-to-merge-loader {
+  max-width: 418px;
+
+  > svg {
+    vertical-align: middle;
+  }
+}
+
+.mr-section-container {
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  > .mr-widget-section {
+    > :last-child,
+    .deploy-heading:last-child {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+
+  > .mr-widget-border-top:first-of-type {
+    border-top: 0;
+  }
+}
+
+.mr-source-target {
+  flex-wrap: wrap;
+  padding: $gl-padding;
+  background: var(--white, $white);
+  min-height: $mr-widget-min-height;
+
+  @include media-breakpoint-up(md) {
+    align-items: center;
+  }
+
+  .git-merge-container {
+    justify-content: space-between;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+
+    @include media-breakpoint-down(md) {
+      flex-direction: column;
+      align-items: stretch;
+
+      .branch-actions {
+        margin-top: 16px;
+      }
+    }
+
+    @include media-breakpoint-up(lg) {
+      .branch-actions {
+        align-self: center;
+        margin-left: $gl-padding;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .diverged-commits-count {
+    color: var(--gray-500, $gl-text-color-secondary);
+  }
+}
+
+.mr-state-widget {
+  color: var(--gl-text-color, $gl-text-color);
+
+  .commit-message-edit {
+    border-radius: $border-radius-default;
+  }
+
+  .mr-widget-section:not(:first-child) > div,
+  .mr-widget-section:not(:first-child) > section,
+  .mr-widget-section .mr-widget-section > div:not(:first-child) {
+    border-top: solid 1px var(--border-color, $border-color);
+    // Avoid two lines being rendered
+    // instead of exessively adressing those
+    // edge cases we can use this as a boring
+    // solution
+    margin-top: -1px;
+  }
+
+  .mr-widget-alert-container + .mr-widget-section {
+    border-top: 0;
+  }
+
+  .mr-fast-forward-message {
+    padding-left: $gl-spacing-scale-9;
+    padding-bottom: $gl-padding;
+  }
+
+  .commits-list {
+    > li {
+      padding: $gl-padding;
+
+      @include media-breakpoint-up(md) {
+        margin-left: $gl-spacing-scale-7;
+      }
+    }
+  }
+
+  .mr-commit-dropdown {
+    .dropdown-menu {
+      @include media-breakpoint-up(md) {
+        width: 150%;
+      }
+    }
+  }
+
+  .mr-report {
+    padding: 0;
+  }
+
+  form {
+    margin-bottom: 0;
+
+    .clearfix {
+      margin-bottom: 0;
+    }
+  }
+
+  .btn {
+    font-size: $gl-font-size;
+  }
+
+  .accept-merge-holder {
+    .accept-action {
+      display: inline-block;
+      float: left;
+    }
+  }
+
+  .ci-widget {
+    color: var(--gl-text-color, $gl-text-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @include media-breakpoint-down(xs) {
+      flex-wrap: wrap;
+    }
+
+    .ci-widget-content {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+  }
+
+  .mr-widget-icon {
+    font-size: 22px;
+  }
+
+  .mr-loading-icon {
+    margin: 3px 0;
+  }
+
+  .normal {
+    flex: 1;
+    flex-basis: auto;
+  }
+
+  .capitalize {
+    text-transform: capitalize;
+  }
+
+  .mr-pipeline-title {
+    // NOTE: CSS Hack to make the force the pipeline
+    // to the end of the line or to force it to a
+    // new line if there is not enough space.
+    flex-grow: 999;
+    // Avoid layout shift of title when Mini Graph
+    // moves below title
+    padding-top: 5px;
+  }
+
+  .label-branch {
+    @include gl-font-monospace;
+    overflow: hidden;
+    word-break: break-all;
+  }
+
+  .label-branch {
+    &.label-truncate {
+      // NOTE: This selector targets its children because some of the HTML comes from
+      // 'source_branch_link'. Once this external HTML is no longer used, we could
+      // simplify this.
+      > a,
+      > span {
+        display: inline-block;
+        max-width: 12.5em;
+        margin-bottom: px-to-rem(-5px);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+    }
+  }
+
+  .mr-widget-body {
+    @include clearfix;
+
+    .approve-btn {
+      margin-right: 5px;
+    }
+
+    h4 {
+      float: left;
+      font-weight: $gl-font-weight-bold;
+      font-size: 14px;
+      line-height: inherit;
+      margin-top: 0;
+      margin-bottom: 0;
+
+      time {
+        font-weight: $gl-font-weight-normal;
+      }
+    }
+
+    .btn-grouped {
+      margin-left: 0;
+      margin-right: 7px;
+    }
+
+    .spacing {
+      margin: 0 0 0 10px;
+    }
+
+    .state-label {
+      font-weight: $gl-font-weight-bold;
+      padding-right: 10px;
+    }
+
+    .danger {
+      color: var(--red-500, $red-500);
+    }
+
+    .dropdown-menu {
+      li a {
+        padding: 5px;
+      }
+
+      .merge-opt-icon {
+        line-height: 1.5;
+      }
+
+      .merge-opt-title {
+        margin-left: 8px;
+      }
+    }
+
+    .has-custom-error {
+      display: inline-block;
+    }
+
+    @include media-breakpoint-down(xs) {
+      .btn-grouped {
+        float: none;
+        margin-right: 0;
+      }
+
+      .accept-action {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
+    .commit-message-editor {
+      label {
+        padding: 0;
+      }
+    }
+
+    &.mr-widget-empty-state {
+      line-height: 20px;
+      padding: $gl-padding;
+
+      .artwork {
+        @include media-breakpoint-down(md) {
+          margin-bottom: $gl-padding;
+        }
+      }
+
+      .text {
+        p {
+          margin-top: $gl-padding;
+        }
+
+        .highlight {
+          margin: 0 0 $gl-padding;
+          font-weight: $gl-font-weight-bold;
+        }
+      }
+    }
+
+    &.mr-pipeline-suggest {
+      border-radius: $border-radius-default;
+      line-height: 20px;
+      border: 1px solid var(--border-color, $border-color);
+
+      .circle-icon-container {
+        color: var(--gray-100, $gl-text-color-quaternary);
+      }
+    }
+  }
+
+  .ci-coverage {
+    float: right;
+  }
+
+  .stop-env-container {
+    color: var(--gl-text-color, $gl-text-color);
+    float: right;
+
+    a {
+      color: var(--gl-text-color, $gl-text-color);
+    }
+  }
+}
+
+.mr-widget-alert-container {
+  $radius: $border-radius-default - 1px;
+
+  border-radius: $radius $radius 0 0;
+
+  .gl-alert:not(:last-child) {
+    margin-bottom: 1px;
+  }
+}
+
+.mr-widget-body,
+.mr-widget-content {
+  padding: $gl-padding-12 $gl-padding;
+}
+
+.mr-widget-body-ready-merge {
+  @include media-breakpoint-down(sm) {
+    padding-top: $gl-spacing-scale-3;
+    padding-bottom: $gl-spacing-scale-3;
+    padding-right: $gl-spacing-scale-3;
+  }
+}
+
+.mr-widget-border-top {
+  border-top: 1px solid var(--border-color, $border-color);
+
+  &:last-child {
+    .report-block-container {
+      border-bottom-left-radius: $border-radius-default - 1px;
+      border-bottom-right-radius: $border-radius-default - 1px;
+    }
+  }
+}
+
+.mr-widget-grouped-section .report-block-container {
+  border-bottom-left-radius: $border-radius-default;
+  border-bottom-right-radius: $border-radius-default;
+}
+
+.mr-widget-extension {
+  border-top: 1px solid var(--border-color, $border-color);
+  background-color: var(--gray-10, $gray-10);
+  container-name: mr-widget-extension;
+  container-type: inline-size;
+  // Adds a fix for the view app dropdown not showing up
+  // correctly.
+  position: relative;
+  z-index: 1;
+
+  &.clickable:hover {
+    background-color: var(--gray-50, $gray-50);
+    cursor: pointer;
+  }
+}
+
+.mr-widget-extension-icon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  opacity: 0.3;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  border-radius: $gl-border-radius-full;
+
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-extension-icon::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  left: 50%;
+  top: 50%;
+
+  width: 16px;
+  height: 16px;
+  border: 4px solid;
+  transform: translate(-50%, -50%);
+}
+
+.mr-widget-heading {
+  position: relative;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-default;
+  background: var(--white, $white);
+
+  .gl-skeleton-loader {
+    display: block;
+  }
+}
+
+.mr-widget-info {
+  padding-left: $gl-padding;
+  padding-right: $gl-padding;
+}
+
+.mr-widget-section {
+  .code-text {
+    flex: 1;
+  }
+}
+
+.mr-widget-workflow {
+  position: relative;
+
+  &:not(:first-child) {
+    margin-top: $gl-padding;
+  }
+}
+
+.mr-version-controls {
+  background: var(--white, $white);
+  color: var(--gl-text-color, $gl-text-color);
+
+  .mr-version-menus-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    z-index: 199;
+    white-space: nowrap;
+
+    .gl-dropdown-toggle {
+      width: auto;
+      max-width: 170px;
+
+      svg {
+        top: 10px;
+        right: 8px;
+      }
+    }
+  }
+
+  .content-block {
+    padding: $gl-padding-8 $gl-padding;
+    border-bottom: 0;
+  }
+
+  .mr-version-dropdown,
+  .mr-version-compare-dropdown {
+    top: 1px;
+    margin: 0 $gl-spacing-scale-1;
+
+    .dropdown-toggle.gl-button {
+      padding: $gl-spacing-scale-2 2px $gl-spacing-scale-2 $gl-spacing-scale-2;
+      font-weight: $gl-font-weight-bold;
+
+      .gl-button-icon {
+        margin-left: $gl-spacing-scale-1;
+      }
+    }
+  }
+
+  .dropdown-title {
+    color: var(--gl-text-color, $gl-text-color);
+  }
+}
+
+.mr-section-container .resize-observer > object {
+  height: 0;
+}
+
+// TODO: Move to GitLab UI
+.mr-extenson-scrim {
+  background: linear-gradient(to bottom, rgba($gray-light, 0), rgba($gray-light, 1));
+
+  .gl-dark & {
+    background: linear-gradient(to bottom, rgba(#333, 0), rgba(#333, 1));
+  }
+}
+
+.attention-request-sidebar-popover {
+  z-index: 999;
+}
+
+.merge-request-overview {
+  @include media-breakpoint-up(lg) {
+    display: grid;
+    grid-template-columns: calc(97% - #{$right-sidebar-width}) auto;
+    grid-gap: 3%;
+  }
+}
+
+.container-fluid:not(.container-limited) {
+  .detail-page-header,
+  .detail-page-description,
+  .merge-request-tabs-container {
+    &.is-merge-request {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: $fixed-layout-width - ($container-margin-xl * 2);
+    }
+  }
+}
+
+.container-fluid.diffs-container-limited {
+  .flash-container {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $container-xl;
+    padding-left: $gl-spacing-scale-5;
+    padding-right: $gl-spacing-scale-5;
+  }
+}
+
+.submit-review-dropdown .gl-new-dropdown-panel {
+  max-width: none;
+}
+
+.submit-review-dropdown-form {
+  width: calc(100vw - 20px);
+  max-width: 680px;
+}
+
+.submit-review-dropdown-animated {
+  animation: review-btn-animate 300ms ease-in;
+}
+
+@include keyframes(review-btn-animate) {
+  0% {
+    transform: scale(1);
+  }
+
+  75% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.mr-widget-merge-details {
+  *,
+  & {
+    font-size: $gl-font-size-sm;
+  }
+
+  p {
+    font-size: $gl-font-size;
+  }
+
+  li:not(:last-child) {
+    margin-bottom: $gl-spacing-scale-2;
+  }
+}
+
+.mr-ready-merge-related-links a,
+.mr-widget-merge-details a,
+.mr-widget-author {
+  text-decoration: underline;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+  }
+}
+
+.merge-request-sticky-header {
+  z-index: $top-bar-z-index;
+  height: $mr-sticky-header-height;
+}
+
+.merge-request-notification-toggle {
+  .gl-toggle {
+    margin-left: auto;
+  }
+
+  .gl-toggle-label {
+    font-weight: $gl-font-weight-normal;
+  }
+}
+
+.mr-widget-status-icon-level-1::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  opacity: 0.3;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+}
+
+.mr-widget-status-icon-level-1::after {
+  content: "";
+  position: absolute;
+  border-radius: $gl-border-radius-full;
+  border-style: solid;
+  border-width: $gl-border-size-4;
+  left: $gl-spacing-scale-2;
+  right: $gl-spacing-scale-2;
+  top: $gl-spacing-scale-2;
+  bottom: $gl-spacing-scale-2;
+}
+
+.memory-graph-container {
+  background: var(--white, $white);
+  border: 1px solid var(--gray-100, $gray-100);
+}
+
+.review-bar-component {
+  position: fixed;
+  bottom: $calc-application-footer-height;
+  left: 0;
+  z-index: $zindex-dropdown-menu;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: var(--mr-review-bar-height);
+  padding-left: $contextual-sidebar-width;
+  padding-right: $right-sidebar-collapsed-width;
+  background: var(--white, $white);
+  border-top: 1px solid var(--border-color, $border-color);
+  transition: padding $gl-transition-duration-medium;
+
+  @media (max-width: map-get($grid-breakpoints, sm)-1) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .submit-review-dropdown {
+    margin-left: $grid-size;
+
+    .md-header {
+      top: -$gl-spacing-scale-2;
+    }
+  }
+}
+
+.review-bar-content {
+  max-width: $limited-layout-width;
+  padding: 0 $container-margin;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.review-preview-item-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 4px;
+
+  > .bold {
+    display: flex;
+    min-width: 0;
+    line-height: 16px;
+  }
+}
+
+.review-preview-item-footer {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.review-preview-item-content {
+  width: 100%;
+
+  p {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+}
+
+.commits ol:not(:last-of-type) {
+  margin-bottom: 0;
+}
+
+.mr-section-container {
+  .media-body {
+    column-gap: 0;
+  }
+
+  .state-container-action-buttons {
+    @include media-breakpoint-up(md) {
+      flex-direction: row-reverse;
+    }
+  }
+}
+
+.mr-state-loader {
+  svg {
+    vertical-align: middle;
+  }
+
+  .gl-skeleton-loader {
+    max-width: 334px;
+  }
+}
+
+.diff-file-discussions-wrapper {
+  width: 100%;
+
+  .diff-discussions:not(:first-child) > .notes {
+    padding-top: 0;
+  }
+
+  .note-discussion {
+    border-bottom: 1px solid var(--gray-100, $gray-100) !important;
+  }
+
+  .discussion-collapsible {
+    margin: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+.merge-request-overview .md-header {
+  top: calc(#{$calc-application-header-height} + #{$mr-sticky-header-height});
+}
+
+`````

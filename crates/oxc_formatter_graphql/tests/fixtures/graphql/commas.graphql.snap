@@ -1,0 +1,55 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+query (
+  $a: Int,
+  ,
+  $b: Int,
+) {
+  f(x: 1, y: 2,) { a, b, c }
+  list(v: [1, 2, 3,])
+}
+
+type T {
+  a: String
+  ,
+  b: String
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+query ($a: Int, $b: Int) {
+  f(x: 1, y: 2) {
+    a
+    b
+    c
+  }
+  list(v: [1, 2, 3])
+}
+
+type T {
+  a: String
+  b: String
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+query ($a: Int, $b: Int) {
+  f(x: 1, y: 2) {
+    a
+    b
+    c
+  }
+  list(v: [1, 2, 3])
+}
+
+type T {
+  a: String
+  b: String
+}
+
+===================== End =====================

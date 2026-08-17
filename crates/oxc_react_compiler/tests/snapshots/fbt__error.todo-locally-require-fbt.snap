@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fbt/error.todo-locally-require-fbt.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Support local variables named `fbt`", labels: [LabeledSpan { label: Some("Local variables named `fbt` are not supported"), span: Span { start: 36, end: 39 }, primary: true }], help: Some("Local variables named `fbt` may conflict with the fbt plugin and are not yet supported"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+No changes.

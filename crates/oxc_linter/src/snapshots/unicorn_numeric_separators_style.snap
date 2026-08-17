@@ -4,34 +4,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0b10_10_0001
-   ·             ────────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0b0_00_0
-   ·             ────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0b10101010101010
-   ·             ────────────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0B10101010101010
-   ·             ────────────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
  1 │ const foo = 0xA_B_CDE_F0
    ·             ────────────
    ╰────
@@ -88,29 +60,29 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0b10_10_0001n
-   ·             ─────────────
+ 1 │ const foo = 0b10_10_0001
+   ·             ────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0b0_00_0n
-   ·             ─────────
+ 1 │ const foo = 0b0_00_0
+   ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0b10101010101010n
-   ·             ─────────────────
+ 1 │ const foo = 0b10101010101010
+   ·             ────────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0B10101010101010n
-   ·             ─────────────────
+ 1 │ const foo = 0B10101010101010
+   ·             ────────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
@@ -132,6 +104,97 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[numeric_separators_style.tsx:1:13]
  1 │ const foo = 123456789_100n
    ·             ──────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 1_2_345_678
+   ·             ───────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 12_3
+   ·             ────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 1234567890
+   ·             ──────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 0.552_284_749_83
+   ·             ────────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 3819.123_4325
+   ·             ─────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 138789.12343_2_42
+   ·             ─────────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = .000000_1
+   ·             ─────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 12345678..toString()
+   ·             ─────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 12345678 .toString()
+   ·             ────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 1.234567
+   ·             ────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ const foo = 1789.123_432_42
+   ·             ───────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:47]
+ 1 │ const foo = -282_932 - (1938 / 10_000) * .1 + 18.100_000_2
+   ·                                               ────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:14]
+ 1 │ const foo = -100000_1
+   ·              ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
@@ -200,29 +263,179 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 9807.1234567
-   ·             ────────────
+ 1 │ const foo = 1000000
+   ·             ───────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 3819.123_4325
-   ·             ─────────────
+ 1 │ const foo = 10_000_000_000
+   ·             ──────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 138789.12343_2_42
-   ·             ─────────────────
+ 1 │ const foo = 0xA_B_CD
+   ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
   ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = .000000_1
-   ·             ─────────
+ 1 │ const foo = 0b1_11
+   ·             ──────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:14]
+ 1 │ const foo = -100000e+100000
+   ·              ──────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:16]
+ 1 │ const binary = 0b10_101010;
+   ·                ───────────
+ 2 │             const octal = 0o76_543210;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:2:27]
+ 1 │ const binary = 0b10_101010;
+ 2 │             const octal = 0o76_543210;
+   ·                           ───────────
+ 3 │             const hexadecimal = 0xfe_dcba97;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:3:33]
+ 2 │             const octal = 0o76_543210;
+ 3 │             const hexadecimal = 0xfe_dcba97;
+   ·                                 ───────────
+ 4 │             const number = 12_345678.12345678e12345678;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:4:28]
+ 3 │             const hexadecimal = 0xfe_dcba97;
+ 4 │             const number = 12_345678.12345678e12345678;
+   ·                            ───────────────────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:16]
+ 1 │ const binary = 0b10101010;
+   ·                ──────────
+ 2 │             const octal = 0o76_543210;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:2:27]
+ 1 │ const binary = 0b10101010;
+ 2 │             const octal = 0o76_543210;
+   ·                           ───────────
+ 3 │             const hexadecimal = 0xfe_dcba97;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:3:33]
+ 2 │             const octal = 0o76_543210;
+ 3 │             const hexadecimal = 0xfe_dcba97;
+   ·                                 ───────────
+ 4 │             const number = 12_345678.12345678e12345678;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:4:28]
+ 3 │             const hexadecimal = 0xfe_dcba97;
+ 4 │             const number = 12_345678.12345678e12345678;
+   ·                            ───────────────────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:16]
+ 1 │ const binary = 0b10101010;
+   ·                ──────────
+ 2 │             const octal = 0o76_543210;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:2:27]
+ 1 │ const binary = 0b10101010;
+ 2 │             const octal = 0o76_543210;
+   ·                           ───────────
+ 3 │             const hexadecimal = 0xfe_dcba97;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:3:33]
+ 2 │             const octal = 0o76_543210;
+ 3 │             const hexadecimal = 0xfe_dcba97;
+   ·                                 ───────────
+ 4 │             const number = 12_345678.12345678e12345678;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:4:28]
+ 3 │             const hexadecimal = 0xfe_dcba97;
+ 4 │             const number = 12_345678.12345678e12345678;
+   ·                            ───────────────────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:16]
+ 1 │ const binary = 0b10_101010;
+   ·                ───────────
+ 2 │             const octal = 0o76543210;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:2:27]
+ 1 │ const binary = 0b10_101010;
+ 2 │             const octal = 0o76543210;
+   ·                           ──────────
+ 3 │             const hexadecimal = 0xfedcba97;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:3:33]
+ 2 │             const octal = 0o76543210;
+ 3 │             const hexadecimal = 0xfedcba97;
+   ·                                 ──────────
+ 4 │             const number = 12345678.12345678e12345678;
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:4:28]
+ 3 │             const hexadecimal = 0xfedcba97;
+ 4 │             const number = 12345678.12345678e12345678;
+   ·                            ──────────────────────────
+   ╰────
+  help: Group digits with numeric separators (_) so longer numbers are easier to read.
+
+  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
+   ╭─[numeric_separators_style.tsx:1:13]
+ 1 │ console.log(0XdeEdBeeFn)
+   ·             ───────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
 
@@ -230,54 +443,5 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[numeric_separators_style.tsx:1:13]
  1 │ const foo = 12345678..toString()
    ·             ─────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 12345678 .toString()
-   ·             ────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = .00000
-   ·             ──────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 0.00000
-   ·             ───────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 1_2_345_678
-   ·             ───────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 12_3
-   ·             ────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:13]
- 1 │ const foo = 1234567890
-   ·             ──────────
-   ╰────
-  help: Group digits with numeric separators (_) so longer numbers are easier to read.
-
-  ⚠ unicorn(numeric-separators-style): Invalid group length in numeric value.
-   ╭─[numeric_separators_style.tsx:1:14]
- 1 │ const foo = -100000_1
-   ·              ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.

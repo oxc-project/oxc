@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.demo {
+  color: $primary;
+  padding: $padding;
+  border: 1px solid $border-color;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.demo {
+  color: $primary;
+  padding: $padding;
+  border: 1px solid $border-color;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.demo {
+  color: $primary;
+  padding: $padding;
+  border: 1px solid $border-color;
+}
+
+===================== End =====================

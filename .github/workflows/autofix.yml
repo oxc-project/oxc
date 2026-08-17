@@ -5,8 +5,7 @@ permissions: {}
 on:
   pull_request:
     types: [opened, synchronize]
-    branches-ignore:
-      - "**/graphite-base/**"
+  merge_group:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
@@ -18,13 +17,13 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
 
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           restore-cache: true
           cache-key: warm
-          tools: just,cargo-shear@1.12.4
+          tools: just,cargo-shear@1.13.1
           components: rustfmt
 
       - name: cargo-shear
@@ -41,6 +40,11 @@ jobs:
 
       - run: just fmt
 
+      - name: Verify no fixes are needed
+        if: ${{ github.event_name == 'merge_group' }}
+        run: git diff --exit-code
+
       - uses: autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a # v1.3.4
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           fail-fast: false

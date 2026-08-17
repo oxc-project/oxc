@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -121,7 +122,7 @@ impl ConsistentGenericConstructors {
     fn check<'a>(
         &self,
         node: &AstNode<'a>,
-        type_annotation: Option<&oxc_allocator::Box<'a, TSTypeAnnotation<'a>>>,
+        type_annotation: Option<&ArenaBox<'a, TSTypeAnnotation<'a>>>,
         init: Option<&Expression<'a>>,
         ctx: &LintContext<'a>,
     ) {
@@ -138,15 +139,13 @@ impl ConsistentGenericConstructors {
             return;
         }
         if let Some(type_annotation) = type_annotation {
-            if let TSType::TSTypeReference(type_annotation) = &type_annotation.type_annotation {
-                if let TSTypeName::IdentifierReference(ident) = &type_annotation.type_name {
-                    if ident.name != identifier.name {
-                        return;
-                    }
-                } else {
-                    return;
-                }
-            } else {
+            let TSType::TSTypeReference(type_annotation) = &type_annotation.type_annotation else {
+                return;
+            };
+            let TSTypeName::IdentifierReference(ident) = &type_annotation.type_name else {
+                return;
+            };
+            if ident.name != identifier.name {
                 return;
             }
         }
@@ -394,8 +393,8 @@ impl ConsistentGenericConstructors {
                 if prop_def.computed {
                     // Find the closing bracket after the key
                     let key_end = prop_def.key.span().end;
-                    // find_next_token_from returns offset from key_end, add 1 for position after ']'
-                    ctx.find_next_token_from(key_end, "]").map(|offset| key_end + offset + 1)
+                    ctx.find_next_token_within(key_end, prop_def.span.end, "]")
+                        .map(|offset| key_end + offset + 1)
                 } else {
                     // Insert after the property key
                     Some(prop_def.key.span().end)
@@ -404,7 +403,8 @@ impl ConsistentGenericConstructors {
             AstKind::AccessorProperty(accessor) => {
                 if accessor.computed {
                     let key_end = accessor.key.span().end;
-                    ctx.find_next_token_from(key_end, "]").map(|offset| key_end + offset + 1)
+                    ctx.find_next_token_within(key_end, accessor.span.end, "]")
+                        .map(|offset| key_end + offset + 1)
                 } else {
                     Some(accessor.key.span().end)
                 }

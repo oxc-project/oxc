@@ -2,7 +2,7 @@ use oxc_ast::ast::{
     NumericLiteral, ObjectExpression, ObjectPropertyKind, PropertyKey, StringLiteral,
 };
 use oxc_formatter_core::{
-    Buffer, Format, FormatContext,
+    Buffer, Format, FormatContext, arena_cow_str,
     builders::{block_indent, group, soft_block_indent_with_maybe_space, space, text},
     spec::{format_trimmed_number, is_simple_number, normalize_string},
     write,
@@ -21,8 +21,8 @@ use crate::{
 };
 
 use super::{
-    FmtJsonValue, FormatInvalidJson, JsonFormatter, arena_cow_str, format_with,
-    literal::FmtJsonString, number_string_round_trips, write_quoted_str,
+    FmtJsonValue, FormatInvalidJson, JsonFormatter, format_with, literal::FmtJsonString,
+    number_string_round_trips, write_quoted_str,
 };
 
 pub struct FmtJsonObject<'a, 'b> {
@@ -237,7 +237,7 @@ fn json5_unquoted_key<'a>(lit: &StringLiteral<'a>) -> Option<&'a str> {
 fn json5_write_quoted_key<'a>(content: &'a str, f: &mut JsonFormatter<'_, 'a>) {
     let quote_byte = f.context().options().preferred_quote(content);
     let normalized = normalize_string(content, quote_byte, /* quotes_will_change */ false);
-    write_quoted_str(f, quote_byte, arena_cow_str(normalized, f));
+    write_quoted_str(f, quote_byte, arena_cow_str(&normalized, f));
 }
 
 /// Resolves Prettier's `quoteProps: "consistent"` for `object`:
@@ -264,7 +264,7 @@ fn normalized_numeric_key<'a>(lit: &NumericLiteral<'a>, f: &JsonFormatter<'_, 'a
     let raw = lit.raw.as_ref().map_or("", oxc_ast::ast::Str::as_str);
     // JSON keeps one trailing decimal zero (`x.00000` -> `x.0`); see `format_trimmed_number`.
     let printed = format_trimmed_number(raw, /* keep_one_trailing_decimal_zero */ true);
-    arena_cow_str(printed, f)
+    arena_cow_str(&printed, f)
 }
 
 /// Returns `true` if a normalized numeric key should be wrapped in double quotes.

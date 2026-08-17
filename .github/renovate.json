@@ -16,6 +16,13 @@
       "groupName": "emnapi",
       "matchManagers": ["npm"],
       "matchPackageNames": ["emnapi", "/^@emnapi\\//"]
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchFileNames": ["tasks/lint_rules/package.json"],
+      "matchPackageNames": ["eslint"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }

@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* IE<=7 star hack: the `*` prefix must survive */
+a {
+  *zoom: 1;
+  *COLOR: red;
+  color: blue;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* IE<=7 star hack: the `*` prefix must survive */
+a {
+  *zoom: 1;
+  *color: red;
+  color: blue;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* IE<=7 star hack: the `*` prefix must survive */
+a {
+  *zoom: 1;
+  *color: red;
+  color: blue;
+}
+
+===================== End =====================

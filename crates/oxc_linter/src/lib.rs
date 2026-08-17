@@ -7,7 +7,6 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
-    borrow::Cow,
     iter, mem,
     path::Path,
     ptr::{self, NonNull},
@@ -15,7 +14,7 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, AllocatorPool, ArenaVec, CloneIn, TakeIn};
 use oxc_ast::{
     ast::{Comment, CommentContent, CommentKind, Program},
     ast_kind::AST_TYPE_MAX,
@@ -64,7 +63,7 @@ mod tester;
 
 mod lint_runner;
 
-pub use crate::config::plugins::normalize_plugin_name;
+pub use crate::config::{normalize_rule_name, plugins::normalize_plugin_name};
 pub use crate::disable_directives::{
     DirectivePrefix, DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
     create_unused_directives_diagnostics,
@@ -81,7 +80,7 @@ pub use crate::{
         JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
-    fixer::{Fix, FixKind, Fixer, Message, MessageRule, PossibleFixes},
+    fixer::{Fix, FixKind, Fixer, Message, PossibleFixes, oxc_code_short_canonical_name},
     frameworks::FrameworkFlags,
     lint_runner::{DirectivesStore, LintRunner, LintRunnerBuilder},
     loader::LINTABLE_EXTENSIONS,
@@ -127,9 +126,31 @@ fn get_timing_stat<const TIMINGS: bool>(
     }
 }
 
+#[cfg(debug_assertions)]
+fn cmp_diagnostics_for_runtime_optimization_assertion(
+    left: &Message,
+    right: &Message,
+) -> std::cmp::Ordering {
+    left.error
+        .labels
+        .iter()
+        .map(|label| (label.offset(), label.len(), label.primary()))
+        .cmp(right.error.labels.iter().map(|label| (label.offset(), label.len(), label.primary())))
+        .then_with(|| left.error.message.cmp(&right.error.message))
+        .then_with(|| left.error.help.cmp(&right.error.help))
+        .then_with(|| left.error.note.cmp(&right.error.note))
+        .then_with(|| left.error.severity.cmp(&right.error.severity))
+        .then_with(|| left.error.code.cmp(&right.error.code))
+        .then_with(|| left.error.url.cmp(&right.error.url))
+        .then_with(|| left.span.cmp(&right.span))
+        .then_with(|| left.fixes.cmp_fix_sequence(&right.fixes))
+}
+
 /// Per-thread scratch buffers for dispatching rules to AST nodes by node type.
 ///
-/// Reused across files, so the bucketed dispatch path incurs no per-file allocation.
+/// Reused across files, so the single traversal in [`execute_rules`] — which visits each node once
+/// and dispatches it only to the rules registered for its type — incurs no per-file allocation.
+/// (Per-file allocation is what previously made bucketing worthwhile only for very large files.)
 struct RuleBuckets {
     /// `by_type[ast_type]` = indices, into the per-file `rules` slice, of rules that run on that AST
     /// node type. A boxed fixed-size array so indexing by an `AstType` elides bounds checks.
@@ -164,110 +185,57 @@ fn execute_rules<'a, const TIMINGS: bool>(
     let mut timing_stats = TIMINGS.then(|| vec![RuleTimingStat::default(); rules.len()]);
 
     if with_runtime_optimization {
-        // IMPORTANT: We have two branches here for performance reasons:
-        //
-        // 1) Branch where we iterate over each node, then each rule
-        // 2) Branch where we iterate over each rule, then each node
-        //
-        // When the number of nodes is relatively small, most of them can fit
-        // in the cache and we can save iterating over the rules multiple times.
-        // But for large files, the number of nodes can be so large that it
-        // starts to not fit into the cache and pushes out other data, like the rules.
-        // So we end up thrashing the cache with each rule iteration. In this case,
-        // it's better to put rules in the inner loop, as the rules data is smaller
-        // and is more likely to fit in the cache.
-        //
-        // The threshold here is chosen to balance between performance improvement
-        // from not iterating over rules multiple times, but also ensuring that we
-        // don't thrash the cache too much. Feel free to tweak based on benchmarking.
-        //
-        // See https://github.com/oxc-project/oxc/pull/6600 for more context.
-        if semantic.nodes().len() > 200_000 {
-            RULE_BUCKETS.with_borrow_mut(|buckets| {
-                buckets.clear();
+        // Bucket rules by the AST node types they care about into a reused per-thread buffer, then
+        // make a single pass over the AST, dispatching each node only to the rules registered for
+        // its type. This replaces "every rule tests every node" (which dominated dispatch cost in
+        // profiles), and because the buffer is reused there is no per-file allocation — so this is
+        // a win for files of all sizes, not just large ones.
+        RULE_BUCKETS.with_borrow_mut(|buckets| {
+            buckets.clear();
 
-                for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
-                    let run_info = rule.run_info();
-                    // Collect node type information for rules. In large files, benchmarking showed it was worth
-                    // collecting rules into buckets by AST node type to avoid iterating over all rules for each node.
-                    if let Some(ast_types) = rule.types_info()
-                        && run_info.is_run_implemented()
-                    {
-                        for ty in ast_types {
-                            buckets.by_type[ty as usize].push(rule_index);
-                        }
-                    } else if run_info.is_run_implemented() {
-                        buckets.any_type.push(rule_index);
-                    }
-
-                    if run_info.is_run_once_implemented() {
-                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                        rule.run_once::<TIMINGS>(ctx, timing_stat);
-                    }
-                }
-
-                // Run rules on nodes
-                for node in semantic.nodes() {
-                    for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
-                        let (rule, ctx) = &rules[rule_index];
-                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                        rule.run::<TIMINGS>(node, ctx, timing_stat);
-                    }
-                    for &rule_index in &buckets.any_type {
-                        let (rule, ctx) = &rules[rule_index];
-                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                        rule.run::<TIMINGS>(node, ctx, timing_stat);
-                    }
-                }
-
-                if should_run_on_jest_node {
-                    for jest_node in iter_possible_jest_call_node(semantic) {
-                        for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
-                            if rule.run_info().is_run_on_jest_node_implemented() {
-                                let timing_stat =
-                                    get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                                rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
-                            }
-                        }
-                    }
-                }
-            });
-        } else {
             for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
                 let run_info = rule.run_info();
+                if let Some(ast_types) = rule.types_info()
+                    && run_info.is_run_implemented()
+                {
+                    for ty in ast_types {
+                        buckets.by_type[ty as usize].push(rule_index);
+                    }
+                } else if run_info.is_run_implemented() {
+                    buckets.any_type.push(rule_index);
+                }
+
                 if run_info.is_run_once_implemented() {
                     let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
                     rule.run_once::<TIMINGS>(ctx, timing_stat);
                 }
+            }
 
-                if run_info.is_run_implemented() {
-                    // For smaller files, benchmarking showed it was faster to iterate over all rules and just check the
-                    // node types as we go, rather than pre-bucketing rules by AST node type and doing extra allocations.
-                    if let Some(ast_types) = rule.types_info() {
-                        for node in semantic.nodes() {
-                            if ast_types.has(node.kind().ty()) {
-                                let timing_stat =
-                                    get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                                rule.run::<TIMINGS>(node, ctx, timing_stat);
-                            }
-                        }
-                    } else {
-                        for node in semantic.nodes() {
+            for node in semantic.nodes() {
+                for &rule_index in &buckets.by_type[node.kind().ty() as usize] {
+                    let (rule, ctx) = &rules[rule_index];
+                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                    rule.run::<TIMINGS>(node, ctx, timing_stat);
+                }
+                for &rule_index in &buckets.any_type {
+                    let (rule, ctx) = &rules[rule_index];
+                    let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
+                    rule.run::<TIMINGS>(node, ctx, timing_stat);
+                }
+            }
+
+            if should_run_on_jest_node {
+                for jest_node in iter_possible_jest_call_node(semantic) {
+                    for (rule_index, (rule, ctx)) in rules.iter().enumerate() {
+                        if rule.run_info().is_run_on_jest_node_implemented() {
                             let timing_stat =
                                 get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                            rule.run::<TIMINGS>(node, ctx, timing_stat);
+                            rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
                         }
-                    }
-                }
-
-                if should_run_on_jest_node && run_info.is_run_on_jest_node_implemented() {
-                    for jest_node in iter_possible_jest_call_node(semantic) {
-                        let timing_stat = get_timing_stat::<TIMINGS>(&mut timing_stats, rule_index);
-                        rule.run_on_jest_node::<TIMINGS>(&jest_node, ctx, timing_stat);
                     }
                 }
             }
-        }
+        });
     } else {
         // Unoptimized reference path: every rule runs on every node, with no type filtering. Used
         // only in debug builds, to assert the optimized path produces identical diagnostics.
@@ -389,7 +357,8 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
+        let mut ctx_host =
+            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
@@ -450,26 +419,24 @@ impl Linter {
                         unoptimized_diagnostics.len()
                     );
 
+                    let mut sorted_optimized = optimized_diagnostics.iter().collect::<Vec<_>>();
+                    let mut sorted_unoptimized = unoptimized_diagnostics.iter().collect::<Vec<_>>();
 
-                    let mut sorted_optimized = optimized_diagnostics.to_vec();
-                    let mut sorted_unoptimized = unoptimized_diagnostics.to_vec();
-                    let sort = |m: &Message| {
-                        let labels = m
-                            .error
-                            .labels
-                            .iter()
-                            .map(|label| (label.offset(), label.len(), label.primary()))
-                            .collect::<Vec<_>>();
-                        let fix_span = m.fixes.span();
-                        (labels, m.error.code.clone(), (m.span.start, m.span.end), (fix_span.start, fix_span.end))
-                    };
-                    sorted_optimized.sort_unstable_by_key(sort);
-                    sorted_unoptimized.sort_unstable_by_key(sort);
+                    sorted_optimized
+                        .sort_unstable_by(|left, right| {
+                            cmp_diagnostics_for_runtime_optimization_assertion(left, right)
+                        });
+                    sorted_unoptimized
+                        .sort_unstable_by(|left, right| {
+                            cmp_diagnostics_for_runtime_optimization_assertion(left, right)
+                        });
 
-                    for (opt_diag, unopt_diag) in sorted_optimized.iter().zip(sorted_unoptimized.iter()){
+                    for (opt_diag, unopt_diag) in
+                        sorted_optimized.iter().zip(sorted_unoptimized.iter())
+                    {
                         assert_eq!(
-                            opt_diag,
-                            unopt_diag,
+                            *opt_diag,
+                            *unopt_diag,
                             "Diagnostic differs between optimized and unoptimized runs",
                         );
                     }
@@ -519,9 +486,16 @@ impl Linter {
 
         let result = (diagnostics, disable_directives);
         if TIMINGS {
-            rule_timing_store
-                .expect("missing rule timing store")
-                .merge(timing_recorder.expect("missing rule timing recorder"));
+            let timing_recorder = timing_recorder.expect("missing rule timing recorder");
+            rule_timing_store.expect("missing rule timing store").merge(
+                timing_recorder.into_timings().into_iter().map(|(key, stat)| RuleTimingRecord {
+                    source: key.source,
+                    plugin_name: key.plugin_name.into_owned(),
+                    rule_name: key.rule_name.into_owned(),
+                    duration: stat.duration,
+                    calls: stat.calls,
+                }),
+            );
         }
         result
     }
@@ -586,7 +560,7 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        let tokens = ctx_host.parser_tokens_mut().take_in(allocator).into_arena_slice_mut();
+        let tokens = ctx_host.parser_tokens_mut().take_in(&allocator).into_arena_slice_mut();
 
         // If file has a hashbang, add it to comments.
         // It will be converted to a `Shebang` comment on JS side.
@@ -632,7 +606,8 @@ impl Linter {
         original_program: &mut Program<'_>,
         js_allocator_pool: &AllocatorPool,
     ) {
-        let js_allocator = js_allocator_pool.get();
+        let js_allocator_guard = js_allocator_pool.get();
+        let js_allocator = &*js_allocator_guard;
 
         // Get the original source text from the `Program`, and replace it with an empty string.
         // This avoids cloning the original source text, which can be large.
@@ -655,7 +630,7 @@ impl Linter {
                 hashbang.span.end,
                 CommentKind::Line,
             ));
-            comments_with_hashbang.extend(original_program.comments.iter().copied());
+            comments_with_hashbang.extend_from_slice_copy(&original_program.comments);
 
             original_program.comments.clear();
 
@@ -668,7 +643,7 @@ impl Linter {
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
         // `clone_in` returns a value on the stack, but we need it in the allocator for raw transfer.
         let program = {
-            let mut program = original_program.clone_in(&js_allocator);
+            let mut program = original_program.clone_in(js_allocator);
             program.source_text = new_source_text;
             js_allocator.alloc(program)
         };
@@ -687,10 +662,10 @@ impl Linter {
             ctx_host,
             program,
             tokens,
-            &js_allocator,
+            js_allocator,
         );
 
-        // The `AllocatorGuard` (`js_allocator`) is dropped here, returning the allocator to the pool.
+        // The `AllocatorGuard` (`js_allocator_guard`) is dropped here, returning the allocator to the pool.
         // This ensures that we never have too many allocators in play at once, avoiding OOM.
     }
 
@@ -905,19 +880,13 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(
-                        Message::new(
-                            OxcDiagnostic::error(diagnostic.message)
-                                .with_label(span)
-                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                .with_severity(severity.into()),
-                            possible_fixes,
-                        )
-                        .with_rule(MessageRule {
-                            plugin_name: Cow::Owned(plugin_name.to_string()),
-                            rule_name: Cow::Owned(rule_name.to_string()),
-                        }),
-                    );
+                    ctx_host.push_diagnostic(Message::new(
+                        OxcDiagnostic::error(diagnostic.message)
+                            .with_label(span)
+                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                            .with_severity(severity.into()),
+                        possible_fixes,
+                    ));
                 }
             }
             Err(err) => {

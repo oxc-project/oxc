@@ -1,15 +1,16 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _},
+    formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
 pub struct BindingPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+    properties: &'b AstNode<'a, ArenaVec<'a, BindingProperty<'a>>>,
     rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
 }
 
@@ -55,7 +56,7 @@ impl<'a, 'b> Iterator for BindingPropertyListIter<'a, 'b> {
 
 impl<'a, 'b> BindingPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+        properties: &'b AstNode<'a, ArenaVec<'a, BindingProperty<'a>>>,
         rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
     ) -> Self {
         Self { properties, rest }

@@ -95,7 +95,8 @@ pub fn is_jestlike_file(path: &Path) -> bool {
 #[cfg(not(test))]
 pub fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| {
-        entry.module_request.name() == "vitest" || entry.module_request.name() == "vite-plus/test"
+        let name = entry.module_request.name();
+        name == "vitest" || name == "vite-plus/test" || name == "@effect/vitest"
     })
 }
 

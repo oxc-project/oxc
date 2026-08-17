@@ -1,0 +1,56 @@
+// NOTE: line-ending BLOCK comments (cType, jType) inline with the member
+// (`= /* Comment */ "VALUE"`): with no `&`/`|` printed for a single member, the
+// multi-member "line-ending comments stay before the operator" guard does not
+// apply (matches Prettier; the guard's rationale lives in `union_type.rs`).
+
+export type aType = & // Comment
+"VALUE";
+
+export type bType = &
+// Comment
+"VALUE";
+
+export type cType = & /* Comment */
+"VALUE";
+
+export type dType = /* Comment */
+& "VALUE";
+
+export type eType = // Comment
+& "VALUE";
+
+export type fType = &
+/* Comment */
+"VALUE";
+
+export type gType = &
+// Comment
+// Comment
+"VALUE";
+
+export type hType = &
+"VALUE";
+
+export type iType = /* Comment */ /* Comment */ & "VALUE";
+
+export type jType = /* Comment */
+/* Comment */ & "VALUE";
+
+export type kType = /* Comment */
+&
+// Comment
+"VALUE";
+
+export type lType = /* Comment */ &
+// Comment
+"VALUE";
+
+export type mType = & "VALUE" /* Comment */;
+
+export type nType = // Comment
+& /* Comment */
+"VALUE";
+
+type oType = // Comment
+& // Comment
+"VALUE" 

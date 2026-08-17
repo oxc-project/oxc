@@ -1,9 +1,10 @@
 use std::{path::Path, str::FromStr};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind},
+    builder::AstBuilder,
 };
 use oxc_codegen::{Context, Gen};
 use oxc_diagnostics::OxcDiagnostic;
@@ -29,28 +30,36 @@ fn use_top_level_for_declaration_file_import_diagnostic(span: Span) -> OxcDiagno
 }
 
 fn consistent_type_specifier_style_diagnostic(span: Span, mode: &Mode) -> OxcDiagnostic {
-    let (warn_msg, help_msg) = if *mode == Mode::PreferInline {
-        (
+    let (warn_msg, help_msg) = match mode {
+        Mode::Inline => (
             "Prefer using inline type specifiers instead of a top-level type-only import.",
             "Replace top‐level import type with an inline type specifier.",
-        )
-    } else {
-        (
+        ),
+        Mode::TopLevel => (
             "Prefer using a top-level type-only import instead of inline type specifiers.",
             "Replace inline type specifiers with a top‐level import type statement.",
-        )
+        ),
+        Mode::TopLevelIfOnlyTypeImports => (
+            "Prefer using a top-level type-only import instead of inline type specifiers when there are only type imports.",
+            "Replace inline type specifiers with a top‐level import type statement.",
+        ),
     };
     OxcDiagnostic::warn(warn_msg).with_help(help_msg).with_label(span)
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
 enum Mode {
     /// Prefer `import type { Foo } from 'foo'` for type imports.
     #[default]
-    PreferTopLevel,
+    #[serde(rename = "prefer-top-level")]
+    TopLevel,
     /// Prefer `import { type Foo } from 'foo'` for type imports.
-    PreferInline,
+    #[serde(rename = "prefer-inline")]
+    Inline,
+    /// Prefer `import type { Foo } from 'foo'` when all named imports are types, but allow
+    /// `import { type Foo, bar } from 'foo'` when value imports are present.
+    #[serde(rename = "prefer-top-level-if-only-type-imports")]
+    TopLevelIfOnlyTypeImports,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -78,6 +87,19 @@ declare_oxc_lint!(
     /// Examples of correct code for the default option:
     /// ```typescript
     /// import type { Foo } from 'Foo';
+    /// import type Foo, { Bar } from 'Foo';
+    /// ```
+    ///
+    /// Examples of incorrect code for the `prefer-top-level-if-only-type-imports` option:
+    /// ```typescript
+    /// import { type Foo } from 'Foo';
+    /// import { type Foo, type Bar } from 'Foo';
+    /// ```
+    ///
+    /// Examples of correct code for the `prefer-top-level-if-only-type-imports` option:
+    /// ```typescript
+    /// import type { Foo } from 'Foo';
+    /// import { type Foo, someValue } from 'Foo';
     /// import type Foo, { Bar } from 'Foo';
     /// ```
     ///
@@ -121,21 +143,26 @@ impl Rule for ConsistentTypeSpecifierStyle {
             return;
         }
 
-        // Declaration file imports should always be top-level type imports
-        if (self.0 == Mode::PreferTopLevel || is_declaration_file_import(import_decl))
-            && import_decl.import_kind.is_value()
-        {
+        // Declaration file imports should always be top-level type imports.
+        if import_decl.import_kind.is_value() {
+            let is_declaration_file_import = is_declaration_file_import(import_decl);
+            if self.0 == Mode::Inline && !is_declaration_file_import {
+                return;
+            }
+
             let (value_specifiers, type_specifiers) = split_import_specifiers_by_kind(specifiers);
             if type_specifiers.is_empty() {
                 return;
             }
 
-            for item in &type_specifiers {
-                let diagnostic = if is_declaration_file_import(import_decl) {
-                    use_top_level_for_declaration_file_import_diagnostic(item.span())
-                } else {
-                    consistent_type_specifier_style_diagnostic(item.span(), &self.0)
-                };
+            let should_use_top_level = is_declaration_file_import
+                || self.0 == Mode::TopLevel
+                || (self.0 == Mode::TopLevelIfOnlyTypeImports && value_specifiers.is_empty());
+            if !should_use_top_level {
+                return;
+            }
+
+            let report = |diagnostic| {
                 ctx.diagnostic_with_fix(diagnostic, |fixer| {
                     let mut import_source = String::new();
 
@@ -153,8 +180,21 @@ impl Rule for ConsistentTypeSpecifierStyle {
                         .replace(import_decl.span, import_source.trim_end().to_string())
                         .with_message("Convert to a `top-level` type import")
                 });
+            };
+
+            if self.0 == Mode::TopLevelIfOnlyTypeImports && !is_declaration_file_import {
+                report(consistent_type_specifier_style_diagnostic(import_decl.span, &self.0));
+            } else {
+                for item in &type_specifiers {
+                    let diagnostic = if is_declaration_file_import {
+                        use_top_level_for_declaration_file_import_diagnostic(item.span())
+                    } else {
+                        consistent_type_specifier_style_diagnostic(item.span(), &self.0)
+                    };
+                    report(diagnostic);
+                }
             }
-        } else if self.0 == Mode::PreferInline && import_decl.import_kind.is_type() {
+        } else if self.0 == Mode::Inline && import_decl.import_kind.is_type() {
             if is_declaration_file_import(import_decl) {
                 return;
             }
@@ -167,7 +207,11 @@ impl Rule for ConsistentTypeSpecifierStyle {
                         rule_fixes.push(fixer.insert_text_before(item, "type "));
                     }
                     // find the 'type' keyword and remove it
-                    if let Some(pos) = ctx.find_next_token_from(import_decl.span.start, "type") {
+                    if let Some(pos) = ctx.find_next_token_within(
+                        import_decl.span.start,
+                        import_decl.span.end,
+                        "type",
+                    ) {
                         let type_token_span = Span::sized(import_decl.span.start + pos, 4);
                         let remove_fix = fixer.delete_range(type_token_span);
                         rule_fixes.push(remove_fix);
@@ -216,13 +260,14 @@ fn gen_value_import_declaration<'c, 'a: 'c>(
     let ast_builder = AstBuilder::new(&alloc);
 
     let specifiers: Vec<_> = specifiers.iter().map(|it| it.clone_in(&alloc)).collect();
-    let import_declaration = ast_builder.alloc_import_declaration(
+    let import_declaration = ImportDeclaration::boxed(
         SPAN,
-        Some(oxc_allocator::Vec::from_iter_in(specifiers, &alloc)),
+        Some(ArenaVec::from_iter_in(specifiers, &ast_builder)),
         import_decl.source.clone_in(&alloc),
         None,
         import_decl.with_clause.clone_in(&alloc),
         ImportOrExportKind::Value,
+        &ast_builder,
     );
 
     import_declaration.print(&mut codegen, Context::empty());
@@ -243,23 +288,25 @@ fn gen_type_import_declaration<'c, 'a: 'c>(
         .iter()
         .filter_map(|it| match it {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                Some(ast_builder.import_declaration_specifier_import_specifier(
+                Some(ImportDeclarationSpecifier::new_import_specifier(
                     SPAN,
                     specifier.imported.clone_in(&alloc),
                     specifier.local.clone_in(&alloc),
                     ImportOrExportKind::Value,
+                    &ast_builder,
                 ))
             }
             _ => None,
         })
         .collect();
-    let import_declaration = ast_builder.alloc_import_declaration(
+    let import_declaration = ImportDeclaration::boxed(
         SPAN,
-        Some(oxc_allocator::Vec::from_iter_in(specifiers, &alloc)),
+        Some(ArenaVec::from_iter_in(specifiers, &ast_builder)),
         import_decl.source.clone_in(&alloc),
         None,
         import_decl.with_clause.clone_in(&alloc),
         ImportOrExportKind::Type,
+        &ast_builder,
     );
 
     import_declaration.print(&mut codegen, Context::empty());
@@ -301,6 +348,42 @@ fn test() {
         ("import type { Foo as Bar } from 'Foo';", Some(json!(["prefer-top-level"]))),
         ("import type { Foo, Bar, Baz, Bam } from 'Foo';", Some(json!(["prefer-top-level"]))),
         ("import type {Foo} from 'Foo'", Some(json!(["prefer-top-level"]))),
+        ("import Foo from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        ("import type Foo from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        ("import { Foo } from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        (
+            "import { Foo as Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        ("import * as Foo from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        ("import 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        ("import {} from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        ("import type {} from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        ("import type { Foo } from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        (
+            "import type { Foo as Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import type { Foo, Bar, Baz, Bam } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import { Foo, type Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import { type Foo, Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import Foo, { type Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import Foo, { type Bar, Baz } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
         ("import {type Foo} from 'Foo'", Some(json!(["prefer-inline"]))),
         ("import Foo from 'Foo';", Some(json!(["prefer-inline"]))),
         ("import type Foo from 'Foo';", Some(json!(["prefer-inline"]))),
@@ -323,6 +406,10 @@ fn test() {
         ("import type { Foo } from './index.d.cts';", Some(json!(["prefer-inline"]))),
         ("import type { Foo } from './app.d.css.ts';", Some(json!(["prefer-top-level"]))),
         ("import type { Foo } from './app.d.css.ts';", Some(json!(["prefer-inline"]))),
+        (
+            "import type { Foo } from './index.d.ts';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
     ];
 
     let fail = vec![
@@ -336,6 +423,15 @@ fn test() {
         ("import Foo, { type Bar, Baz } from 'Foo';", None),
         ("import { Component, type ComponentProps } from 'package-1';", None),
         ("import type { Foo, Bar, Baz } from 'Foo';", Some(json!(["prefer-inline"]))),
+        ("import { type Foo } from 'Foo';", Some(json!(["prefer-top-level-if-only-type-imports"]))),
+        (
+            "import { type Foo as Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import { type Foo, type Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
         // declaration files always require `import type` syntax
         ("import { type Foo } from './index.d.ts';", Some(json!(["prefer-top-level"]))),
         ("import { type Foo } from './index.d.ts';", Some(json!(["prefer-inline"]))),
@@ -345,6 +441,10 @@ fn test() {
         ("import { type Foo } from './index.d.cts';", Some(json!(["prefer-inline"]))),
         ("import { type Foo } from './app.d.css.ts';", Some(json!(["prefer-top-level"]))),
         ("import { type Foo } from './app.d.css.ts';", Some(json!(["prefer-inline"]))),
+        (
+            "import { Foo, type Bar } from './index.d.ts';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
     ];
 
     let fix = vec![
@@ -435,6 +535,26 @@ fn test() {
             "import { type Foo } from 'index.d.ts';",
             "import type { Foo } from 'index.d.ts';",
             Some(json!(["prefer-inline"])),
+        ),
+        (
+            "import { type Foo } from 'Foo';",
+            "import type { Foo } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import { type Foo as Bar } from 'Foo';",
+            "import type { Foo as Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import { type Foo, type Bar } from 'Foo';",
+            "import type { Foo, Bar } from 'Foo';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
+        ),
+        (
+            "import { Foo, type Bar } from './index.d.ts';",
+            "import { Foo } from './index.d.ts';\nimport type { Bar } from './index.d.ts';",
+            Some(json!(["prefer-top-level-if-only-type-imports"])),
         ),
     ];
 

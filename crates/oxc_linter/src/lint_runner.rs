@@ -127,6 +127,14 @@ impl DirectivesStore {
     pub fn remove(&self, path: &Path) {
         self.map.lock().expect("DirectivesStore mutex poisoned in remove").remove(path);
     }
+
+    /// Take and remove disable directives for a specific file in a single lock acquisition.
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
+    pub fn take(&self, path: &Path) -> Option<DisableDirectives> {
+        self.map.lock().expect("DirectivesStore mutex poisoned in take").remove(path)
+    }
 }
 
 impl Default for DirectivesStore {
@@ -144,6 +152,8 @@ pub struct LintRunnerBuilder {
     silent: bool,
     fix_kind: FixKind,
     type_check_only: bool,
+    timings: bool,
+    with_ignore_fixes: bool,
 }
 
 impl LintRunnerBuilder {
@@ -156,6 +166,8 @@ impl LintRunnerBuilder {
             silent: false,
             fix_kind: FixKind::None,
             type_check_only: false,
+            timings: false,
+            with_ignore_fixes: false,
         }
     }
 
@@ -189,6 +201,18 @@ impl LintRunnerBuilder {
         self
     }
 
+    #[must_use]
+    pub fn with_timings(mut self, timings: bool) -> Self {
+        self.timings = timings;
+        self
+    }
+
+    #[must_use]
+    pub fn with_ignore_fixes(mut self, with_ignore_fixes: bool) -> Self {
+        self.with_ignore_fixes = with_ignore_fixes;
+        self
+    }
+
     /// # Errors
     /// Returns an error if the type-aware linter fails to initialize.
     pub fn build(self) -> Result<LintRunner, String> {
@@ -200,7 +224,13 @@ impl LintRunnerBuilder {
                 self.regular_linter.config.clone(),
                 self.fix_kind,
             ) {
-                Ok(state) => Some(state.with_silent(self.silent).with_type_check(self.type_check)),
+                Ok(state) => Some(
+                    state
+                        .with_silent(self.silent)
+                        .with_type_check(self.type_check)
+                        .with_timings(self.timings)
+                        .with_ignore_fixes(self.with_ignore_fixes),
+                ),
                 Err(e) => return Err(e),
             }
         } else {
@@ -258,6 +288,7 @@ impl LintRunner {
                 tx_error,
                 fs,
                 diff_manager,
+                rule_timing_store,
             )?;
         } else {
             drop(tx_error);
@@ -278,7 +309,7 @@ impl LintRunner {
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
             let tsgo_messages =
-                type_aware_linter.lint_source(files, file_system, self.directives_store.map())?;
+                type_aware_linter.lint_source(files, file_system, &self.directives_store.map())?;
             messages.extend(tsgo_messages);
         }
 

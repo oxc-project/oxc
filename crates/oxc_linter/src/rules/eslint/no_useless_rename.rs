@@ -189,6 +189,28 @@ impl Rule for NoUselessRename {
                     }
                 }
             }
+            AstKind::ExportFromDeclaration(export_from_decl) => {
+                if self.ignore_export {
+                    return;
+                }
+                for specifier in &export_from_decl.specifiers {
+                    if specifier.local.span() != specifier.exported.span()
+                        && specifier.local.name() == specifier.exported.name()
+                    {
+                        ctx.diagnostic_with_fix(
+                            no_useless_rename_diagnostic(specifier.local.span()),
+                            |fixer| {
+                                let local_text = specifier
+                                    .local
+                                    .span()
+                                    .source_text(ctx.source_text())
+                                    .to_string();
+                                fixer.replace(specifier.span, local_text)
+                            },
+                        );
+                    }
+                }
+            }
             _ => {}
         }
     }

@@ -92,3 +92,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:11]
+ 1 │ (require)("../plugin.js")
+   ·           ──────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.

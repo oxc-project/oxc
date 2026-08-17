@@ -1,0 +1,91 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+`PLACEHOLDER-0` `PLACEHOLDER-1`
+html {
+  margin: 0;
+}
+
+`PLACEHOLDER-2`:hover {
+  fill: rebeccapurple;
+}
+
+`PLACEHOLDER-3`: `PLACEHOLDER-4`;
+
+`PLACEHOLDER-5`:
+`PLACEHOLDER-6`;
+
+`PLACEHOLDER-7`
+/* a comment */
+
+.aRule {
+  color: red;
+}
+
+`PLACEHOLDER-8`
+
+:disabled {
+  cursor: not-allowed;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+`PLACEHOLDER-0` `PLACEHOLDER-1`
+html {
+  margin: 0;
+}
+
+`PLACEHOLDER-2`:hover {
+  fill: rebeccapurple;
+}
+
+`PLACEHOLDER-3`: `PLACEHOLDER-4`;
+
+`PLACEHOLDER-5`: `PLACEHOLDER-6`;
+
+`PLACEHOLDER-7`
+/* a comment */
+
+.aRule {
+  color: red;
+}
+
+`PLACEHOLDER-8`
+
+:disabled {
+  cursor: not-allowed;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+`PLACEHOLDER-0` `PLACEHOLDER-1`
+html {
+  margin: 0;
+}
+
+`PLACEHOLDER-2`:hover {
+  fill: rebeccapurple;
+}
+
+`PLACEHOLDER-3`: `PLACEHOLDER-4`;
+
+`PLACEHOLDER-5`: `PLACEHOLDER-6`;
+
+`PLACEHOLDER-7`
+/* a comment */
+
+.aRule {
+  color: red;
+}
+
+`PLACEHOLDER-8`
+
+:disabled {
+  cursor: not-allowed;
+}
+
+===================== End =====================

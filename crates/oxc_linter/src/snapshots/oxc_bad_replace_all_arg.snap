@@ -10,6 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── `replaceAll` called here
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+  note: Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.
 
   ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
@@ -19,6 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── `replaceAll` called here
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+  note: Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.
 
   ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
@@ -28,6 +30,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── `replaceAll` called here
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+  note: Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.
 
   ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
@@ -37,6 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── `replaceAll` called here
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+  note: Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.
 
   ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:2:25]
@@ -51,6 +55,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │         
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+  note: Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.
 
   ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:2:25]
@@ -65,6 +70,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │         
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+  note: Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.
 
   ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:2:25]
@@ -79,3 +85,4 @@ source: crates/oxc_linter/src/tester.rs
  5 │         
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
+  note: Unlike `replace`, `replaceAll` throws a `TypeError` when passed a non-global regular expression instead of replacing only the first match.

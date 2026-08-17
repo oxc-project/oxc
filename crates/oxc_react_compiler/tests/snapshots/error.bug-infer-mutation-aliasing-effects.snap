@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.bug-infer-mutation-aliasing-effects.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot access refs during render", labels: [LabeledSpan { label: Some("Cannot update ref value during render"), span: Span { start: 158, end: 166 }, primary: true }, LabeledSpan { label: Some("This value is a ref"), span: Span { start: 150, end: 158 }, primary: false }], help: Some("React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Refs") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/refs") } }
+
+No changes.

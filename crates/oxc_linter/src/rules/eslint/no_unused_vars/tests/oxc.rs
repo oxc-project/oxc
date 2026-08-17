@@ -1089,6 +1089,7 @@ fn test_arguments() {
     let pass = vec![
         ("function foo(a) { return a } foo()", None),
         ("function foo(a, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("function foo(_) {} foo()", Some(json!([{ "argsIgnorePattern": "^_" }]))),
         ("let a; a = function(a = a) {}; a();", None),
         ("let ids = arr.map(el => el.id); f(ids)", None),
         (
@@ -1109,6 +1110,10 @@ fn test_arguments() {
         // Sequence expressions with member expressions in operations with side effects
 
         // UpdateExpression cases
+        (
+            "let count = 0; export function a(c = count++) { console.log(c) } export function b(c = ++count) { console.log(c) } export function c(d = count--) { console.log(d) } export function d(c = --count) { console.log(c) }",
+            None,
+        ),
         ("items.reduce((acc, item) => (acc[item.action]++, acc), {})", None),
         ("items.reduce((acc, item) => (acc[item.action]--, acc), {})", None),
         ("items.reduce((acc, item) => (++acc[item.action], acc), {})", None),
@@ -1148,6 +1153,7 @@ fn test_arguments() {
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
+        ("window.addEventListener('logModel', function (_) { doSomething() })", None),
         ("function foo(a: number) {} foo()", None),
         ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
         ("function foo(...args: typeof args) {} foo()", None),
@@ -1155,6 +1161,7 @@ fn test_arguments() {
         ("function foo(...unused) {} foo()", Some(json!([{ "argsIgnorePattern": "^ignored" }]))),
         ("function foo(...args) { return 1 } foo()", Some(json!([{ "args": "after-used" }]))),
         ("function foo(...args: unknown[]) { return 1 } foo()", Some(json!([{ "args": "all" }]))),
+        ("let count = 0; function foo(c = (count++, 0)) { console.log(c) } foo()", None),
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)

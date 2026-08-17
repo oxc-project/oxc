@@ -1,13 +1,9 @@
 use cow_utils::CowUtils;
-use oxc_allocator::Allocator;
-use oxc_ast::{
-    AstBuilder, AstKind,
-    ast::{Argument, CallExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::Argument};
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
@@ -15,6 +11,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
+    utils::call_uses_optional_chain,
 };
 
 fn set(span: Span) -> OxcDiagnostic {
@@ -245,33 +242,9 @@ fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
     false
 }
 
-fn call_uses_optional_chain(call_expr: &CallExpression) -> bool {
-    call_expr.optional || expression_uses_optional_chain(&call_expr.callee)
-}
-
-fn expression_uses_optional_chain(expr: &Expression) -> bool {
-    let expr = expr.get_inner_expression();
-
-    if matches!(expr, Expression::ChainExpression(_)) {
-        return true;
-    }
-
-    if let Some(member_expr) = expr.as_member_expression() {
-        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
-    }
-
-    if let Expression::CallExpression(call_expr) = expr {
-        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
-    }
-
-    false
-}
-
 fn to_string_literal_text(fixer: RuleFixer, text: &str) -> String {
     let mut codegen = fixer.codegen().with_options(CodegenOptions::default());
-    let alloc = Allocator::default();
-    let ast = AstBuilder::new(&alloc);
-    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.str(text), None));
+    codegen.print_string(text);
     codegen.into_source_text()
 }
 

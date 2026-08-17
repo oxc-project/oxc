@@ -47,7 +47,7 @@ Examples of **correct** code for this rule:
 ```javascript
 expect('something').toEqual('something');
 expect(true).toBeDefined();
-expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
+await expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
 ```
 ";
 
@@ -205,7 +205,7 @@ impl ValidExpectConfig {
         let parent = ctx.nodes().parent_node(node.id());
 
         let should_be_awaited =
-            jest_fn_call.modifiers().iter().any(|modifier| modifier.is_name_unequal("not"))
+            jest_fn_call.modifiers().any(|modifier| modifier.is_name_unequal("not"))
                 || self.async_matchers.contains(&matcher_name.to_string());
 
         if matches!(parent.kind(), AstKind::Program(_)) || !should_be_awaited {
@@ -356,7 +356,7 @@ fn is_acceptable_return_node<'a, 'b>(
             | AstKind::FunctionBody(_) => {
                 node = ctx.nodes().parent_node(node.id());
             }
-            AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.expression,
+            AstKind::ArrowFunctionExpression(arrow_expr) => return arrow_expr.is_expression(),
             AstKind::AwaitExpression(_) => return true,
             _ => return false,
         }

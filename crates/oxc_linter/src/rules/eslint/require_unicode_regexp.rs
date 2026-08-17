@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, IdentifierReference, RegExpFlags, TemplateLiteral},
@@ -14,6 +14,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use crate::{
     AstNode,
     ast_util::get_declaration_of_variable,
+    ast_util::variable_declaration_kind,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
     utils::is_regexp_callee,
@@ -220,7 +221,7 @@ impl RequireUnicodeRegexp {
 }
 
 fn extract_regex_flags<'a>(
-    args: &'a Vec<'a, Argument<'a>>,
+    args: &'a ArenaVec<'a, Argument<'a>>,
     ctx: &LintContext<'a>,
 ) -> Option<RegExpFlags> {
     if args.iter().any(oxc_ast::ast::Argument::is_spread) {
@@ -326,7 +327,7 @@ fn resolve_const_initializer<'a>(
     let declaration = get_declaration_of_variable(ident, ctx.semantic())?;
     let AstKind::VariableDeclarator(decl) = declaration.kind() else { return None };
 
-    if !decl.kind.is_const() || !decl.id.is_binding_identifier() {
+    if !variable_declaration_kind(decl, ctx).is_const() || !decl.id.is_binding_identifier() {
         return None;
     }
 

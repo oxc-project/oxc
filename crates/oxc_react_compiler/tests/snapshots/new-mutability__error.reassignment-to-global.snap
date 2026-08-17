@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/new-mutability/error.reassignment-to-global.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot reassign variables declared outside of the component/hook", labels: [LabeledSpan { label: Some("`someUnknownGlobal` cannot be reassigned"), span: Span { start: 90, end: 107 }, primary: true }], help: Some("Variable `someUnknownGlobal` is declared outside of the component/hook. Reassigning this value during render is a side effect which can cause unpredictable behavior. If this variable is used in rendering, use useState instead. Otherwise, update it in an effect"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Globals") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/globals") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot reassign variables declared outside of the component/hook", labels: [LabeledSpan { label: Some("`moduleLocal` cannot be reassigned"), span: Span { start: 118, end: 129 }, primary: true }], help: Some("Variable `moduleLocal` is declared outside of the component/hook. Reassigning this value during render is a side effect which can cause unpredictable behavior. If this variable is used in rendering, use useState instead. Otherwise, update it in an effect"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Globals") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/globals") } }
+
+No changes.

@@ -120,9 +120,8 @@ fn verify(node: &AstNode<'_>, report_span: Span, ctx: &LintContext<'_>) {
         AstKind::VariableDeclarator(var)
             if var.init.as_ref().is_some_and(|init| init.span() == node.kind().span()) =>
         {
-            if let Some(binding_ident) = var.id.get_binding_identifier()
-                && let Some(symbol_id) = binding_ident.symbol_id.get()
-            {
+            if let Some(binding_ident) = var.id.get_binding_identifier() {
+                let symbol_id = binding_ident.symbol_id();
                 follow_references(symbol_id, report_span, ctx);
             }
         }

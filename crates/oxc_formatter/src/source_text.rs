@@ -90,9 +90,10 @@ impl SourceTextExt for SourceText<'_> {
             && comment.end <= start
         {
             start = comment.start;
-        } else if start != 0 && matches!(bytes.get((start - 1) as usize).copied(), Some(b';')) {
-            // Skip leading semicolon if present
-            // `;(function() {});`
+        }
+        // Skip leading semicolon if present
+        // `;(function() {});` or `;/* comment */ (function() {});`
+        if start != 0 && matches!(bytes.get((start - 1) as usize).copied(), Some(b';')) {
             start -= 1;
         }
 

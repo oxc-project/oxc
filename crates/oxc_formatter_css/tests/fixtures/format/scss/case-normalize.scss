@@ -1,0 +1,25 @@
+HTML#KeepId.KeepClass,
+a[HREF=KeepAttrValue]:HOVER::FIRST-letter,
+svg[viewBox] linearGradient,
+:Not(:NTH-child(2N+1)) {
+    COLOR: #AAbbCC;
+    BACKGROUND-image: URL("KeepString");
+    Margin: 5PX .2E10Em;
+    --Keep-custom-Prop: red;
+    background: Var(--Keep-custom-Prop);
+    animation-name: KeepAnimationName;
+    important: something !IMPORTANT;
+    font-family: INITIAL;
+    -WEBKIT-USER-SELECT: none;
+    USER-SELECT: none;
+}
+@keyframes KeepAnimationName {
+  FROM {
+    prop: val;
+  }
+  #{$KeepInterpolationVar},
+  #{$Keep + 15PX + Keep15PX + '15PX' + "15PX"},
+  #{$Keep + $Keep15PX} {
+    prop: val;
+  }
+}

@@ -1,17 +1,13 @@
 use oxc_ast::{AstKind, AstType, ast::VariableDeclarationKind};
-use oxc_cfg::{
-    EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
-    graph::{
-        Direction,
-        visit::{Control, DfsEvent, EdgeRef, set_depth_first_search},
-    },
-};
+use oxc_cfg::{Instruction, InstructionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::ContextHost, context::LintContext, rule::Rule};
+use crate::{
+    context::ContextHost, context::LintContext, rule::Rule, utils::effective_unreachable_blocks,
+};
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unreachable code.")
@@ -28,12 +24,6 @@ const NEEDED_NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
     AstType::ThrowStatement,
     AstType::BreakStatement,
     AstType::ContinueStatement,
-    AstType::WhileStatement,
-    AstType::DoWhileStatement,
-    AstType::ForStatement,
-]);
-
-const LOOP_NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
     AstType::WhileStatement,
     AstType::DoWhileStatement,
     AstType::ForStatement,
@@ -81,121 +71,10 @@ impl Rule for NoUnreachable {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let nodes = ctx.nodes();
-        let root = nodes.get_node(NodeId::ROOT);
         let cfg = ctx.cfg();
         let graph = cfg.graph();
         let mut unreachable_statement_ids = Vec::new();
-
-        if !nodes.contains_any(LOOP_NODE_TYPES) {
-            for node in graph.node_indices() {
-                if cfg.basic_block(node).is_unreachable() {
-                    unreachable_statement_ids.extend(
-                        cfg.basic_block(node).instructions().iter().filter_map(statement_node_id),
-                    );
-                }
-            }
-
-            report_unreachable_statements(ctx, unreachable_statement_ids);
-            return;
-        }
-
-        // A pre-allocated vector containing the reachability status of all the basic blocks.
-        // We initialize this vector with all nodes set to `unreachable` since if we don't visit a
-        // node in our paths then it should be unreachable by definition.
-        let mut unreachables = vec![true; cfg.basic_blocks.len()];
-
-        // All of the end points of infinite loops we encountered.
-        let mut infinite_loops = Vec::new();
-
-        // Set the root as reachable.
-        let root_cfg_id = ctx.nodes().cfg_id(root.id());
-        unreachables[root_cfg_id.index()] = false;
-
-        // In our first path we first check if each block is definitely unreachable, If it is then
-        // we set it as such, If we encounter an infinite loop we keep its end block since it can
-        // prevent other reachable blocks from ever getting executed.
-        let _: Control<()> = set_depth_first_search(graph, Some(root_cfg_id), |event| {
-            if let DfsEvent::Finish(node, _) = event {
-                let unreachable = cfg.basic_block(node).is_unreachable();
-                unreachables[node.index()] = unreachable;
-
-                if !unreachable
-                    && let Some(it) = cfg.is_infinite_loop_start(node, |instruction| {
-                        use oxc_cfg::EvalConstConditionResult::{Eval, Fail, NotFound};
-                        match instruction {
-                            Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
-                                match nodes.kind(*id) {
-                                    AstKind::BooleanLiteral(lit) => Eval(lit.value),
-                                    _ => Fail,
-                                }
-                            }
-                            _ => NotFound,
-                        }
-                    })
-                {
-                    infinite_loops.push(it);
-                }
-            }
-            Control::Continue
-        });
-
-        // In the second path we go for each infinite loop end block and follow it marking all
-        // edges as unreachable unless they have a reachable jump (eg. break).
-        for loop_ in infinite_loops {
-            // A loop end block usually is also its condition and start point but what is common
-            // in all cases is that it may have `Jump` or `Backedge` edges so we only want to
-            // follow the `Normal` edges as these are the exiting edges.
-            let starts: Vec<_> = graph
-                .edges_directed(loop_.1, Direction::Outgoing)
-                .filter(|it| matches!(it.weight(), EdgeType::Normal))
-                .map(|it| it.target())
-                .collect();
-
-            // Search with all `Normal` edges as starting point(s).
-            let _: Control<()> = set_depth_first_search(graph, starts, |event| match event {
-                DfsEvent::Discover(node, _) => {
-                    let mut incoming = graph.edges_directed(node, Direction::Incoming);
-                    if incoming.any(|e| match e.weight() {
-                        // `NewFunction` is always reachable
-                        | EdgeType::NewFunction
-                        // `Finalize` can be reachable if we encounter an error in the loop.
-                        | EdgeType::Finalize
-                        // Explicit `Error` can also be reachable if we encounter an error in the loop.
-                        | EdgeType::Error(ErrorEdgeKind::Explicit) => true,
-
-                        // This block can still be reachable through another control-flow path.
-                        EdgeType::Normal | EdgeType::Jump
-                            if e.source() != loop_.1 && !unreachables[e.source().index()] =>
-                        {
-                            true
-                        }
-
-                        // If we have an incoming `Jump` and it is from a `Break` instruction,
-                        // We know with high confidence that we are visiting a reachable block.
-                        // NOTE: May cause false negatives but I couldn't think of one.
-                        EdgeType::Jump
-                            if cfg
-                                .basic_block(e.source())
-                                .instructions()
-                                .iter()
-                                .any(|it| matches!(it.kind, InstructionKind::Break(_))) =>
-                        {
-                            true
-                        }
-                        _ => false,
-                    }) {
-                        // We prune this branch if it is reachable from this point forward.
-                        Control::Prune
-                    } else {
-                        // Otherwise we set it to unreachable and continue.
-                        unreachables[node.index()] = true;
-                        Control::Continue
-                    }
-                }
-                _ => Control::Continue,
-            });
-        }
+        let unreachables = effective_unreachable_blocks(ctx);
 
         for node in graph.node_indices() {
             if !unreachables[node.index()] {

@@ -24,10 +24,10 @@ impl RuleTimingSource {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct RuleTimingKey {
-    source: RuleTimingSource,
-    plugin_name: Cow<'static, str>,
-    rule_name: Cow<'static, str>,
+pub struct RuleTimingKey {
+    pub source: RuleTimingSource,
+    pub plugin_name: Cow<'static, str>,
+    pub rule_name: Cow<'static, str>,
 }
 
 impl RuleTimingKey {
@@ -37,6 +37,17 @@ impl RuleTimingKey {
             plugin_name: Cow::Borrowed(plugin_name),
             rule_name: Cow::Borrowed(rule_name),
         }
+    }
+
+    fn from_record(record: RuleTimingRecord) -> (Self, RuleTimingStat) {
+        (
+            Self {
+                source: record.source,
+                plugin_name: Cow::Owned(record.plugin_name),
+                rule_name: Cow::Owned(record.rule_name),
+            },
+            RuleTimingStat { duration: record.duration, calls: record.calls },
+        )
     }
 }
 
@@ -97,7 +108,7 @@ impl RuleTimingRecorder {
         self.timings.entry(RuleTimingKey::native(plugin_name, rule_name)).or_default().add(stat);
     }
 
-    fn into_timings(self) -> FxHashMap<RuleTimingKey, RuleTimingStat> {
+    pub(crate) fn into_timings(self) -> FxHashMap<RuleTimingKey, RuleTimingStat> {
         self.timings
     }
 }
@@ -112,15 +123,19 @@ impl RuleTimingStore {
         Self::default()
     }
 
-    pub(crate) fn merge(&self, recorder: RuleTimingRecorder) {
-        let local_timings = recorder.into_timings();
-        if local_timings.is_empty() {
+    pub(crate) fn merge<I>(&self, local_timings: I)
+    where
+        I: IntoIterator<Item = RuleTimingRecord>,
+    {
+        let mut local_timings = local_timings.into_iter().peekable();
+        if local_timings.peek().is_none() {
             return;
         }
 
         let mut timings = self.timings.lock().expect("rule timing store mutex poisoned");
-        timings.reserve(local_timings.len());
-        for (key, stat) in local_timings {
+        timings.reserve(local_timings.size_hint().0);
+        for record in local_timings {
+            let (key, stat) = RuleTimingKey::from_record(record);
             timings.entry(key).or_default().add(stat);
         }
     }

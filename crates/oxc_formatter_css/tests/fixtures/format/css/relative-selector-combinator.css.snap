@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+[part~="control"]:has(> input:focus-visible:not(:disabled)) {
+  outline: red;
+}
+.a:has(+ .b, ~ .c) {
+  color: red;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+[part~="control"]:has(> input:focus-visible:not(:disabled)) {
+  outline: red;
+}
+.a:has(+ .b, ~ .c) {
+  color: red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+[part~="control"]:has(> input:focus-visible:not(:disabled)) {
+  outline: red;
+}
+.a:has(+ .b, ~ .c) {
+  color: red;
+}
+
+===================== End =====================

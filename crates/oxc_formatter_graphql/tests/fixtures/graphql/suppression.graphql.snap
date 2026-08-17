@@ -1,0 +1,63 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# prettier-ignore
+type   Weird   {
+  a:   String
+}
+
+# oxfmt-ignore
+query   Q   {
+  weird   {   layout   }
+}
+
+{
+  normal
+  # oxfmt-ignore
+  weird   (  a : 1 )   {   x   }
+  alsoNormal
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# prettier-ignore
+type   Weird   {
+  a:   String
+}
+
+# oxfmt-ignore
+query   Q   {
+  weird   {   layout   }
+}
+
+{
+  normal
+  # oxfmt-ignore
+  weird   (  a : 1 )   {   x   }
+  alsoNormal
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# prettier-ignore
+type   Weird   {
+  a:   String
+}
+
+# oxfmt-ignore
+query   Q   {
+  weird   {   layout   }
+}
+
+{
+  normal
+  # oxfmt-ignore
+  weird   (  a : 1 )   {   x   }
+  alsoNormal
+}
+
+===================== End =====================

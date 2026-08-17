@@ -44,7 +44,8 @@ working directory: fixtures/cli/tsgolint_disable_directives
     ,-[unused.ts:14:1]
  13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
  14 | myPromise
-    : ^^^^^^^^^
+    : ^^^^|^^^^^
+    :     `-- This unhandled promise-like value has type `Promise<unknown>`.
  15 | 
     `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
@@ -77,7 +78,7 @@ working directory: fixtures/cli/tsgolint_disable_directives
     `----
 
 Found 8 warnings and 0 errors.
-Finished in <variable>ms on 1 file with 110 rules using 1 threads.
+Finished in <variable>ms on 1 file with 111 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

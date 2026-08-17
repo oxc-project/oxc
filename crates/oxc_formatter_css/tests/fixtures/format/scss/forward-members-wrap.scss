@@ -1,0 +1,19 @@
+// `@forward` show/hide members are fill chunks: pack as many per line as fit,
+// continuation lines indent at +2 (Prettier's no-open paren-group params path).
+@forward "src/list" show list-remove, list-append, list-prepend, list-insert, list-delete;
+@forward "src/list" hide list-remove, list-append, list-prepend, list-insert, list-delete;
+@forward "src/library" as lib-* show gray-scale-colors, brand-colors, spacing-tokens, typography;
+@forward "src/list" show aa, bb;
+@forward "module/with/very/long/path/name" show first-member-name, second-member-name, third-member-name, fourth-member-name, fifth-member-name;
+// KNOWN DIVERGENCE (members + config, see AGENTS.md): Prettier treats the whole
+// prelude as one comma list, so the config's forced break spills into the member
+// commas (`show b,\n  c with (`) and the config body lands one level deeper
+// (+4 body / +2 `)`). We keep the head inline while it fits and keep the config
+// at the standalone `with (...)` indent (+2 body / 0 `)`) — both statements
+// below deviate from Prettier in those two ways.
+@forward "a" show b, c with (
+  $a: 1
+);
+@forward "src/library" show gray-scale-colors, brand-colors, spacing-tokens, typography-rules with (
+  $base: 10px
+);

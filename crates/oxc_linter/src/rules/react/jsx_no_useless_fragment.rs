@@ -5,7 +5,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::is_jsx_fragment,
 };
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -240,7 +240,7 @@ fn trim_like_react(text: &str) -> &str {
     &text[start..end]
 }
 
-fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext) -> bool {
+fn can_fix(node: &AstNode, children: &ArenaVec<'_, JSXChild<'_>>, ctx: &LintContext) -> bool {
     let parent = ctx.nodes().parent_kind(node.id());
 
     if !matches!(parent, AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
@@ -293,7 +293,7 @@ fn jsx_elem_has_key_attr(elem: &JSXElement) -> bool {
     })
 }
 
-fn is_fragment_with_single_expression(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -> bool {
+fn is_fragment_with_single_expression(children: &ArenaVec<'_, JSXChild<'_>>) -> bool {
     let mut non_padding_children = children.iter().filter(|child| is_padding_spaces(child));
 
     matches!(non_padding_children.next(), Some(JSXChild::ExpressionContainer(_)))
@@ -326,7 +326,7 @@ fn is_html_element(elem_name: &JSXElementName) -> bool {
     ident.name.starts_with(char::is_lowercase)
 }
 
-fn has_less_than_two_children(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -> bool {
+fn has_less_than_two_children(children: &ArenaVec<'_, JSXChild<'_>>) -> bool {
     let mut non_padding_child_count = 0;
     let mut has_call_expression_child = false;
 
@@ -348,7 +348,7 @@ fn has_less_than_two_children(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -
 
 fn is_fragment_with_only_text_and_is_not_child<'a>(
     id: NodeId,
-    node: &oxc_allocator::Vec<'a, JSXChild<'a>>,
+    node: &ArenaVec<'a, JSXChild<'a>>,
     ctx: &LintContext,
 ) -> bool {
     if node.len() != 1 {

@@ -1,0 +1,8 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/optional-computed-load-static.js
+---
+function Component(props) {
+	const x = a?.b.c[0];
+	return x;
+}

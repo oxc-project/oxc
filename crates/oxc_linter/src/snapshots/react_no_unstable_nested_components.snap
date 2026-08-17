@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 490
 ---
 
   ⚠ react(no-unstable-nested-components): Do not define components during render.

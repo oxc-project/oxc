@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
 use oxc_span::SPAN;
 
@@ -29,6 +29,8 @@ fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
+    test("import {} from './a\"b.mjs';", "import {} from \"./a\\\"b.mjs\";\n");
+    test("import {} from './a\\nb.mjs';", "import {} from \"./a\\nb.mjs\";\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
     test(
         "export { default } from './foo.js' with { type: 'json' }",
@@ -41,6 +43,7 @@ fn module_decl() {
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
     );
+    test_minify("import {} from './a\"b.mjs';", "import{}from'./a\"b.mjs';");
     test_minify(
         "export { default } from './foo.js' with { type: 'json' }",
         "export{default}from\"./foo.js\"with{type:\"json\"};",
@@ -655,6 +658,52 @@ fn directive() {
 }
 
 #[test]
+fn directive_prologue_boundary() {
+    // A parenthesized string expression statement has to keep its parentheses while it sits at the
+    // end of the directive prologue, or it re-parses as a directive.
+
+    // No directives before it
+    test_same("(\"use strict\");\nfoo();\n");
+    // After real directives - printed bare, this would switch the program to strict mode
+    test_same("\"use asm\";\n(\"use strict\");\nfoo();\n");
+    // Indented, in a function body
+    test_same("function f() {\n\t(\"x\");\n}\n");
+    test_same("function f() {\n\t\"use strict\";\n\t(\"x\");\n}\n");
+    // A TS module block has a directive prologue too
+    test_same("module Foo {\n\t(\"x\");\n}\n");
+    // A class static block does not, so there is nothing to protect against there
+    test(
+        "class C {\n\tstatic {\n\t\t(\"x\");\n\t}\n}\n",
+        "class C {\n\tstatic {\n\t\t\"x\";\n\t}\n}\n",
+    );
+
+    // Only the statement which closes the prologue needs the parentheses - a string statement
+    // after it cannot be a directive
+    test_same("(\"a\");\n\"b\";\n");
+    test("foo();\n(\"a\");\n", "foo();\n\"a\";\n");
+    test("\"use strict\";\nfoo();\n(\"a\");\n", "\"use strict\";\nfoo();\n\"a\";\n");
+}
+
+#[test]
+fn directive_prologue_boundary_minify() {
+    // Minified output has the same hazard. A string usually prints as a template literal, which
+    // cannot be a directive, but only where that is the shortest form - one backtick in the string
+    // is enough to make quotes shorter, and then nothing else would stop it printing as a
+    // directive. So the template literal is printed whatever the contents.
+    test_minify("(\"`\");", "`\\``;");
+    // `${` costs a backtick the same as a backtick does
+    test_minify("(\"${}\");", "`\\${}`;");
+    // Strings which would have chosen a template literal anyway are unaffected
+    test_minify("(\"use strict\");", "`use strict`;");
+    // After real directives
+    test_minify("\"use asm\"; (\"`\");", "\"use asm\";`\\``;");
+    // A newline pays for a backtick, so quotes were never shorter for this one
+    test_minify("(\"\\n`\");", "`\n\\``;");
+    // Only the statement which closes the prologue is at risk
+    test_minify("foo(); (\"`\");", "foo();\"`\";");
+}
+
+#[test]
 fn getter_setter() {
     test_minify("({ get [foo]() {} })", "({get[foo](){}});");
     test_minify("({ set [foo](v) {} })", "({set[foo](v){}});");
@@ -765,6 +814,24 @@ fn string() {
 }
 
 #[test]
+fn print_string() {
+    fn print(value: &str, options: CodegenOptions) -> String {
+        let mut codegen = Codegen::new().with_options(options);
+        codegen.print_string(value);
+        codegen.into_source_text()
+    }
+
+    assert_eq!(print("hello \"world\"", CodegenOptions::default()), r#""hello \"world\"""#);
+    assert_eq!(
+        print("hello 'world'", CodegenOptions { single_quote: true, ..Default::default() }),
+        r"'hello \'world\''"
+    );
+    assert_eq!(print("line\n\u{00a0}🦄", CodegenOptions::default()), "\"line\\n\\xA0🦄\"");
+    assert_eq!(print("\"\"''", CodegenOptions::minify()), r#""\"\"''""#);
+    assert_eq!(print("\"\"''${", CodegenOptions::minify()), r#""\"\"''${""#);
+}
+
+#[test]
 fn v8_intrinsics() {
     let parse_opts = oxc_parser::ParseOptions {
         allow_v8_intrinsics: true,
@@ -830,8 +897,6 @@ fn indentation() {
 
 #[test]
 fn template_literal_escape_when_building_ast() {
-    use oxc_ast::ast::TemplateElementValue;
-
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
@@ -839,26 +904,21 @@ fn template_literal_escape_when_building_ast() {
     // backtick, ${, and backslash
     // Use `template_element_escape_raw` to automatically escape the raw field
     let cooked = "hello`world${foo}\\bar";
-    let value = TemplateElementValue { raw: ast.str(cooked), cooked: Some(ast.str(cooked)) };
-    let element = ast.template_element_escape_raw(SPAN, value, true);
-    let quasis = ast.vec1(element);
-    let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
+    let value = TemplateElementValue {
+        raw: Str::from_str_in(cooked, &ast),
+        cooked: Some(Str::from_str_in(cooked, &ast)),
+    };
+    let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
+    let template_literal = TemplateLiteral::new(SPAN, [element], [], &ast);
 
-    let expr = ast.expression_template_literal(
+    let expr = Expression::new_template_literal(
         SPAN,
         template_literal.quasis,
         template_literal.expressions,
+        &ast,
     );
-    let stmt = ast.statement_expression(SPAN, expr);
-    let program = ast.program(
-        SPAN,
-        oxc_span::SourceType::mjs(),
-        "",
-        ast.vec(),
-        None,
-        ast.vec(),
-        ast.vec1(stmt),
-    );
+    let stmt = Statement::new_expression_statement(SPAN, expr, &ast);
+    let program = Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
 
     let result = Codegen::new().build(&program).code;
     // The raw value should have been escaped by template_element with escape_raw: true

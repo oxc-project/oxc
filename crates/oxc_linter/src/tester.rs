@@ -722,7 +722,7 @@ impl Tester {
             .iter()
             .find(|rule| rule.plugin_name() == self.plugin_name && rule.name() == self.rule_name)
             .unwrap_or_else(|| {
-                panic!("Rule in plugin {} not found: {}", &self.plugin_name, &self.rule_name)
+                panic!("Rule in plugin {} not found: {}", self.plugin_name, self.rule_name)
             })
     }
 }

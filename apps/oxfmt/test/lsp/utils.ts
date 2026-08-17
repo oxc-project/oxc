@@ -274,6 +274,7 @@ ${formatted2}
 // aligned with https://github.com/oxc-project/oxc/blob/7e6c15baaebf206ab540191da0e4e103e4fabf06/apps/oxfmt/src/lsp/options.rs
 type OxfmtLSPConfig = {
   "fmt.configPath"?: string | null;
+  "fmt.disableNestedConfig"?: boolean;
 };
 
 function applyEdits(content: string, edits: TextEdit[] | null, languageId: string): string {

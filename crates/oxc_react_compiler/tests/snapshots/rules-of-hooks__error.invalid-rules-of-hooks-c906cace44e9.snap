@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/error.invalid-rules-of-hooks-c906cace44e9.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Hooks must always be called in a consistent order and may not be called conditionally", labels: [LabeledSpan { label: Some("This Hook is called conditionally"), span: Span { start: 152, end: 160 }, primary: true }], help: Some("Call Hooks unconditionally at the top level of the component or custom Hook"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Hooks") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/rules-of-hooks") } }
+
+No changes.

@@ -1,0 +1,199 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-methods.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function)",
+            "id": 2,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function | GetAccessor)",
+            "id": 3,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function)",
+            "id": 4,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(AmbientFoo)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function)",
+            "id": 6,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function | SetAccessor)",
+            "id": 7,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 8,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function)",
+            "id": 8,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode | Function)",
+            "id": 9,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 5,
+        "node": "Class(AbstractFoo)",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeImport)",
+        "id": 0,
+        "name": "importedKey",
+        "node": "ImportDefaultSpecifier",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 7,
+            "name": "importedKey",
+            "node_id": 46,
+            "scope_id": 1
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 10,
+            "name": "importedKey",
+            "node_id": 69,
+            "scope_id": 5
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "declaredMethodKey",
+        "node": "VariableDeclarator(declaredMethodKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 5,
+            "name": "declaredMethodKey",
+            "node_id": 34,
+            "scope_id": 1
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "declaredGetterKey",
+        "node": "VariableDeclarator(declaredGetterKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 6,
+            "name": "declaredGetterKey",
+            "node_id": 40,
+            "scope_id": 1
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 3,
+        "name": "abstractMethodKey",
+        "node": "VariableDeclarator(abstractMethodKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 8,
+            "name": "abstractMethodKey",
+            "node_id": 55,
+            "scope_id": 5
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 4,
+        "name": "abstractSetterKey",
+        "node": "VariableDeclarator(abstractSetterKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 9,
+            "name": "abstractSetterKey",
+            "node_id": 61,
+            "scope_id": 5
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 5,
+        "name": "runtimeMethodKey",
+        "node": "VariableDeclarator(runtimeMethodKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 11,
+            "name": "runtimeMethodKey",
+            "node_id": 75,
+            "scope_id": 5
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Class | Ambient)",
+        "id": 6,
+        "name": "AmbientFoo",
+        "node": "Class(AmbientFoo)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 7,
+        "name": "AbstractFoo",
+        "node": "Class(AbstractFoo)",
+        "references": []
+      }
+    ]
+  }
+]

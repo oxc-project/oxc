@@ -72,8 +72,8 @@ fn main() -> std::io::Result<()> {
     }
 
     let program = parser_ret.program;
-    std::fs::write(ast_file_path, format!("{:#?}", &program))?;
-    println!("Wrote AST to: {}", &ast_file_name);
+    std::fs::write(ast_file_path, format!("{program:#?}"))?;
+    println!("Wrote AST to: {ast_file_name}");
 
     let semantic =
         SemanticBuilder::new_compiler().with_build_nodes(true).with_cfg(true).build(&program);
@@ -120,7 +120,7 @@ fn main() -> std::io::Result<()> {
         .join("\n\n");
 
     std::fs::write(cfg_file_path, basic_blocks_printed)?;
-    println!("Wrote CFG blocks to: {}", &cfg_file_name);
+    println!("Wrote CFG blocks to: {cfg_file_name}");
 
     let cfg_dot_diagram = format!(
         "{:?}",
@@ -163,7 +163,7 @@ fn main() -> std::io::Result<()> {
         )
     );
     std::fs::write(dot_file_path, cfg_dot_diagram)?;
-    println!("Wrote CFG dot diagram to: {}", &dot_file_name);
+    println!("Wrote CFG dot diagram to: {dot_file_name}");
 
     Ok(())
 }

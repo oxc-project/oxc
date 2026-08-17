@@ -71,11 +71,10 @@ fn main() -> Result<(), String> {
         Utf8ToUtf16::new(&source_text).convert_program(&mut program);
         if source_type.is_javascript() {
             println!("ESTree AST:");
-            println!("{}", program.to_pretty_estree_js_json(false));
         } else {
             println!("TS-ESTree AST:");
-            println!("{}", program.to_pretty_estree_ts_json(false));
         }
+        println!("{}", program.to_pretty_estree_json(!source_type.is_javascript(), false));
     }
 
     // Report parsing results
@@ -83,8 +82,7 @@ fn main() -> Result<(), String> {
         println!("Parsed Successfully.");
     } else {
         for error in ret.diagnostics {
-            let error = error.with_source_code(source_text.clone());
-            println!("{error:?}");
+            println!("{}", error.render_with_source_code(source_text.clone()));
         }
         println!("Parsed with Errors.");
     }

@@ -1,18 +1,18 @@
-use cow_utils::CowUtils;
-
-use oxc_allocator::StringBuilder;
+use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
-use oxc_syntax::line_terminator::LineTerminatorSplitter;
+use oxc_formatter_core::{
+    DispatchRequest, DispatchResponse, FormatElement, IndentWidth, InputKind,
+    format_element::{LineMode, TextWidth},
+};
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::EmbeddedDocResult,
+    embed_context::HtmlEmbedMeta,
     format_args,
-    formatter::{
-        FormatElement, buffer::RemoveSoftLinesBuffer, prelude::*, trivia::FormatTrailingComments,
+    formatter::prelude::*,
+    print::template::{
+        FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
     },
-    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
 };
 
@@ -53,21 +53,30 @@ pub(super) fn format_html_doc<'a>(
         let has_leading_ws = cooked.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = cooked.ends_with(|c: char| c.is_ascii_whitespace());
 
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
-            ir,
-            html_has_multiple_root_elements,
-            ..
-        })) = f.context().external_callbacks().format_embedded_doc(
-            allocator,
-            group_id_builder,
-            embedded_language,
-            &[cooked],
-        )
+        let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
+            language: embedded_language,
+            text: cooked,
+            input_kind: InputKind::Fragment,
+            parent_context: None,
+        }) else {
+            return false;
+        };
+        let Some(html_has_multiple_root_elements) = result
+            .child_context
+            .as_ref()
+            .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
+            .map(|meta| meta.has_multiple_root_elements)
         else {
             return false;
         };
+        // Remap is a no-op today (the Prettier Doc path never carries classes),
+        // but the boundary contract is "merge at every embed site".
+        // A Rust HTML formatter collecting `class` attributes will rely on this.
+        let ir = result.into_doc(f.context_mut());
+
+        // Re-escape template chars in `Text` runs:
+        // the IR is reinserted into a JS template literal built from `.cooked` values.
+        let ir = super::escape_template_chars_in_ir(&ir, f);
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
@@ -86,7 +95,7 @@ pub(super) fn format_html_doc<'a>(
     // quasis[0].cooked + "PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS" + quasis[1].cooked + ...
     let allocator = f.allocator();
     let joined = {
-        let mut sb = StringBuilder::new_in(allocator);
+        let mut sb = ArenaStringBuilder::new_in(allocator);
         for (idx, quasi_elem) in quasis.iter().enumerate() {
             if idx > 0 {
                 sb.push_str(PLACEHOLDER_PREFIX);
@@ -106,155 +115,82 @@ pub(super) fn format_html_doc<'a>(
     let has_leading_ws = joined.starts_with(|c: char| c.is_ascii_whitespace());
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
 
-    // Phase 2: Format via the Doc->IR path
-    let allocator = f.allocator();
-    let group_id_builder = f.group_id_builder();
-    let Some(Ok(EmbeddedDocResult::DocWithPlaceholders {
-        ir,
-        placeholder_count,
-        html_has_multiple_root_elements,
-    })) = f.context().external_callbacks().format_embedded_doc(
-        allocator,
-        group_id_builder,
-        embedded_language,
-        &[joined],
-    )
-    else {
-        // NOTE: If this html-in-js part contains `<script>` (= js-in-html-in-js),
-        // returned Prettier's `Doc` output may contain `conditionalGroup`.
-        // But currently, `oxfmt/prettier_compat/from_prettier_doc.rs` does not support this.
-        // So `format_embedded_doc()` will return `Err`.
-        //
-        // In Prettier, `conditionalGroup` is only used by JS and YAML formatting.
-        // And we want to format JS by `oxc_formatter` via oxfmt-plugin,
-        // so for now, fall back to string-based rather than give up entirely.
-        // Of course, there will be formatting differences.
-        // Support `conditionalGroup` and convert to our `BestFitting` may be possible,
-        // but it also requires placeholder replacement, which is non-trivial.
-        return format_js_in_html_as_fallback(joined, &expressions, f);
+    // Phase 2: Format via the dispatcher (IR path)
+    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
+        language: embedded_language,
+        text: joined,
+        input_kind: InputKind::Fragment,
+        parent_context: None,
+    }) else {
+        return false;
     };
 
-    // Verify all placeholders survived HTML formatting.
-    if placeholder_count != expressions.len() {
+    let Some(html_has_multiple_root_elements) = result
+        .child_context
+        .as_ref()
+        .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
+        .map(|meta| meta.has_multiple_root_elements)
+    else {
+        return false;
+    };
+    // See the Phase 0 note: remap is no-op today, load-bearing once `oxc_formatter_html` lands
+    let ir = result.into_doc(f.context_mut());
+
+    // Validate before formatting any expression.
+    // Formatting consumes comment state,
+    // so discovering an unusable placeholder layout afterwards would make the verbatim fallback unsafe.
+    let mut next_placeholder = 0;
+    if !placeholders_are_sequential(&ir, &mut next_placeholder)
+        || next_placeholder != expressions.len()
+    {
         return false;
     }
 
-    // Phase 3: Replace placeholders in IR with expressions
+    // Format every expression exactly once.
+    // These elements are cloned into all `BestFitting` variants.
+    let mut formatted_expressions = Vec::with_capacity(expressions.len());
+    for expr in expressions {
+        let te = TemplateExpression::Expression(expr);
+        let element = f
+            .intern(&FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default()))
+            .expect("a template expression always emits non-empty IR");
+        formatted_expressions.push(element);
+    }
+
+    // Phase 3: Rebuild the IR in one pass, re-escaping template chars in `Text` runs
+    // (the IR is reinserted into a JS template literal built from `.cooked` values)
+    // and substituting placeholders inside every `BestFitting` variant.
+    // Escaping cannot alter placeholders: the sentinel is ASCII word characters only.
     let indent_width = f.options().indent_width;
-    let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
-        for element in ir {
-            match &element {
-                FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts =
-                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
-                    for (i, part) in parts.iter().enumerate() {
-                        if i.is_multiple_of(2) {
-                            if !part.is_empty() {
-                                super::write_text_with_line_breaks(
-                                    f,
-                                    part,
-                                    allocator,
-                                    indent_width,
-                                );
-                            }
-                        } else if let Some(idx) = part.parse::<usize>().ok()
-                            && let Some(expr) = expressions.get(idx)
-                        {
-                            // Format `${expr}` directly (like css-in-js, see `css.rs`)
-                            // instead of using `FormatTemplateExpression` which adds
-                            // `soft_block_indent` that causes double-indentation
-                            // for e.g. `ConditionalExpression`.
-                            //
-                            // Detect comments between expr and `}` for wrapping.
-                            // Use `expr.span().end` (not `.start`) to only find
-                            // comments BETWEEN the expr and `}`, not INSIDE the expression.
-                            let has_comment = {
-                                let comments = f.context().comments();
-                                !comments.comments_before(expr.span().start).is_empty()
-                                    || !comments
-                                        .comments_before_character(expr.span().end, b'}')
-                                        .is_empty()
-                            };
-
-                            if has_comment {
-                                // Intern with explicit comment handling
-                                // (same pattern as `FormatTemplateExpression`):
-                                // 1. `FormatNodeWithoutTrailingComments` sets
-                                //    `view_limit` to hide trailing comments
-                                // 2. After `view_limit` is restored,
-                                //    format trailing comments explicitly via `FormatTrailingComments`
-                                //
-                                // This ensures trailing comments between expr and `}`
-                                // stay with this expression and don't shift to the next.
-                                let trailing_comments = f
-                                    .context()
-                                    .comments()
-                                    .comments_before_character(expr.span().end, b'}');
-                                let has_trailing = !trailing_comments.is_empty();
-
-                                let interned = f.intern(&format_once(|f| {
-                                    FormatNodeWithoutTrailingComments(expr).fmt(f);
-                                    // After `view_limit` is restored by `FormatNodeWithoutTrailingComments`,
-                                    // trailing comments are visible again for `FormatTrailingComments` to consume.
-                                    let trailing = f
-                                        .context()
-                                        .comments()
-                                        .comments_before_character(expr.span().end, b'}');
-                                    FormatTrailingComments::Comments(trailing).fmt(f);
-                                }));
-
-                                // When source has newlines around the expression,
-                                // use `RemoveSoftLinesBuffer` to keep it flat while
-                                // preserving hard line breaks (from comments).
-                                // Otherwise let it break naturally based on line width.
-                                let has_newline = has_trailing
-                                    && (f
-                                        .source_text()
-                                        .has_line_terminator_before(expr.span().start)
-                                        || f.source_text()
-                                            .has_line_terminator_after(expr.span().end));
-
-                                let format_expr = format_with(|f| {
-                                    let Some(element) = &interned else { return };
-                                    write!(
-                                        f,
-                                        [
-                                            indent(&format_args!(
-                                                soft_line_break(),
-                                                format_with(|f| {
-                                                    if has_newline {
-                                                        let mut buffer =
-                                                            RemoveSoftLinesBuffer::new(f);
-                                                        buffer.write_element(element.clone());
-                                                    } else {
-                                                        f.write_element(element.clone());
-                                                    }
-                                                }),
-                                                line_suffix_boundary()
-                                            )),
-                                            soft_line_break()
-                                        ]
-                                    );
-                                });
-                                write!(f, [group(&format_args!("${", format_expr, "}"))]);
-                            } else {
-                                write!(
-                                    f,
-                                    [group(&format_args!(
-                                        "${",
-                                        *expr,
-                                        line_suffix_boundary(),
-                                        "}"
-                                    ))]
-                                );
-                            }
-                        }
+    let ir = super::map_text_in_ir(&ir, f, &mut |text, out| {
+        let escaped = super::escape_template_chars(text, allocator);
+        let text = escaped.unwrap_or(text);
+        if text.contains(PLACEHOLDER_PREFIX) {
+            let parts = super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
+            if parts.len() > 1 {
+                for (index, part) in parts.iter().enumerate() {
+                    if index.is_multiple_of(2) {
+                        push_text_with_line_breaks(out, part, indent_width);
+                    } else {
+                        let expression = part
+                            .parse::<usize>()
+                            .ok()
+                            .and_then(|index| formatted_expressions.get(index))
+                            .expect(
+                                "placeholder indices were validated before expression formatting",
+                            );
+                        out.push(expression.clone());
                     }
                 }
-                _ => f.write_element(element),
+                return true;
             }
         }
+        // No placeholder to substitute; push the escaped text if escaping changed it
+        let Some(text) = escaped else { return false };
+        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        true
     });
+    let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| f.write_elements(ir));
 
     let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
     write_html_template(
@@ -324,41 +260,127 @@ fn write_html_template<'a>(
     }
 }
 
-/// Fallback formatting for JS-in-HTML-in-JS cases where
-/// Prettier's HTML formatting returns unsupported IR (e.g. with `conditionalGroup`).
-fn format_js_in_html_as_fallback<'a>(
-    joined: &str,
-    expressions: &[&AstNode<'a, Expression<'a>>],
-    f: &mut JsFormatter<'_, 'a>,
-) -> bool {
-    let Some(Ok(formatted)) = f.context().external_callbacks().format_embedded("html", joined)
-    else {
-        return false;
+/// Check that placeholders appear in index order starting at `*next`, one occurrence each.
+///
+/// `BestFitting` alternatives describe the same logical content,
+/// so every variant must contain the same index sequence and contributes it only once to its parent sequence.
+/// On success `*next` is one past the last index seen; the caller checks it against the expression count.
+fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bool {
+    for element in ir {
+        match element {
+            FormatElement::Text { text, .. } => {
+                if !text.contains(PLACEHOLDER_PREFIX) {
+                    continue;
+                }
+                let parts =
+                    super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
+                for part in parts.iter().skip(1).step_by(2) {
+                    if !part.parse::<usize>().is_ok_and(|index| index == *next) {
+                        return false;
+                    }
+                    *next += 1;
+                }
+            }
+            FormatElement::BestFitting(best_fitting) => {
+                let start = *next;
+                let mut variants = best_fitting.variants().iter();
+                let Some(first) = variants.next() else { return false };
+                if !placeholders_are_sequential(first, next) {
+                    return false;
+                }
+                for variant in variants {
+                    let mut variant_next = start;
+                    if !placeholders_are_sequential(variant, &mut variant_next)
+                        || variant_next != *next
+                    {
+                        return false;
+                    }
+                }
+            }
+            FormatElement::Interned(interned) if !placeholders_are_sequential(interned, next) => {
+                return false;
+            }
+            _ => {}
+        }
+    }
+    true
+}
+
+/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
+///
+/// Uses [`LineMode::Literal`] instead of a hard line break to avoid adding indentation:
+/// the returned HTML Doc already carries its indentation in the text content,
+/// so the surrounding `block_indent` must not add more.
+fn push_text_with_line_breaks<'a>(
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
+    text: &'a str,
+    indent_width: IndentWidth,
+) {
+    let mut first = true;
+    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks
+    for line in text.split('\n') {
+        if !first {
+            out.push(FormatElement::Line(LineMode::Literal));
+        }
+        first = false;
+        if !line.is_empty() {
+            out.push(FormatElement::Text {
+                text: line,
+                width: TextWidth::from_text(line, indent_width),
+            });
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::{Allocator, ArenaVec};
+    use oxc_formatter_core::{
+        BestFittingElement, FormatElement, IndentWidth, format_element::TextWidth,
     };
 
-    // Replace placeholders with `${source_text}` from the original expressions
-    let mut result = formatted;
-    for (idx, expr) in expressions.iter().enumerate() {
-        let placeholder = format!("{PLACEHOLDER_PREFIX}{idx}_{COUNTER}{PLACEHOLDER_SUFFIX}");
-        if !result.contains(&placeholder) {
-            return false;
-        }
-        let source = f.source_text().text_for(expr);
-        result = result.cow_replace(&placeholder, &format!("${{{source}}}")).into_owned();
+    use super::placeholders_are_sequential;
+
+    fn text(text: &'static str) -> FormatElement<'static> {
+        FormatElement::Text { text, width: TextWidth::from_text(text, IndentWidth::default()) }
     }
 
-    // Write line by line, same as `format_embedded_template()`
-    let format_content = format_with(|f: &mut JsFormatter<'_, 'a>| {
-        let content = f.allocator().alloc_str(&result);
-        for line in LineTerminatorSplitter::new(content) {
-            if line.is_empty() {
-                write!(f, [empty_line()]);
-            } else {
-                write!(f, [text(line), hard_line_break()]);
-            }
-        }
-    });
+    fn best_fitting<'a>(
+        allocator: &'a Allocator,
+        first: FormatElement<'a>,
+        second: FormatElement<'a>,
+    ) -> FormatElement<'a> {
+        let first = ArenaVec::from_array_in([first], &allocator).into_arena_slice();
+        let second = ArenaVec::from_array_in([second], &allocator).into_arena_slice();
+        let variants = ArenaVec::from_array_in([first as &[_], second as &[_]], &allocator);
+        // SAFETY: The helper always constructs exactly two variants
+        FormatElement::BestFitting(unsafe { BestFittingElement::from_vec_unchecked(variants) })
+    }
 
-    write!(f, ["`", block_indent(&format_content), "`"]);
-    true
+    #[test]
+    fn placeholder_indices_count_best_fitting_variants_once() {
+        let allocator = Allocator::default();
+        let element = best_fitting(
+            &allocator,
+            text("aPRETTIER_HTML_PLACEHOLDER_0_0_IN_JSbPRETTIER_HTML_PLACEHOLDER_1_0_IN_JSc"),
+            text("PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS PRETTIER_HTML_PLACEHOLDER_1_0_IN_JS"),
+        );
+
+        let mut next = 0;
+        assert!(placeholders_are_sequential(&[element], &mut next));
+        assert_eq!(next, 2);
+    }
+
+    #[test]
+    fn placeholder_indices_reject_different_best_fitting_variants() {
+        let allocator = Allocator::default();
+        let element = best_fitting(
+            &allocator,
+            text("PRETTIER_HTML_PLACEHOLDER_0_0_IN_JS"),
+            text("PRETTIER_HTML_PLACEHOLDER_1_0_IN_JS"),
+        );
+
+        let mut next = 0;
+        assert!(!placeholders_are_sequential(&[element], &mut next));
+    }
 }

@@ -51,6 +51,6 @@ pub fn create_js_config_loader(cb: JsLoadJsConfigCb) -> JsConfigLoaderCb {
         } else {
             handle.block_on(fut)
         };
-        res.map_err(|e| e.reason.clone())
+        res.map_err(|e| e.reason)
     })
 }

@@ -149,13 +149,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    let name_arms: Vec<TokenStream> = rule_entries
+    let rule_names: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::NAME }
+            quote! { #enum_name::NAME }
         })
         .collect();
+    let rule_count = rule_entries.len();
 
     let category_arms: Vec<TokenStream> = rule_entries
         .iter()
@@ -200,6 +201,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
     let from_configuration_arms: Vec<TokenStream> = rule_entries
         .iter()
+        .filter(|rule| rule.has_custom_from_configuration)
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(_) => Ok(Self::#enum_name(#enum_name::from_configuration(value)?)) }
@@ -297,6 +299,8 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
     // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
 
     quote! {
+        static RULE_NAMES: [&str; #rule_count] = [#(#rule_names),*];
+
         impl RuleEnum {
             pub fn id(&self) -> usize {
                 match self {
@@ -305,9 +309,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             }
 
             pub fn name(&self) -> &'static str {
-                match self {
-                    #(#name_arms),*
-                }
+                RULE_NAMES[self.id()]
             }
 
             pub fn category(&self) -> RuleCategory {
@@ -345,13 +347,28 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
             pub fn from_configuration(&self, value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
                 match self {
-                    #(#from_configuration_arms),*
+                    #(#from_configuration_arms,)*
+                    _ => Ok(RULES[self.id()].clone()),
                 }
             }
 
             pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
                 match self {
                     #(#to_configuration_arms),*
+                }
+            }
+
+            // The dispatch `match` has one arm per rule, so it is large. Keep it in a
+            // single non-generic `#[inline(never)]` helper so the giant `match` is
+            // emitted *once*, rather than being duplicated across both arms of the
+            // `if TIMINGS` below *and* across both monomorphizations of the
+            // `const TIMINGS: bool` parameter (i.e. up to 4 copies per dispatcher).
+            // `--timing` is a cold diagnostic path, so paying one direct call on the
+            // hot path to share the table is a good size trade.
+            #[inline(never)]
+            fn run_dispatch<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+                match self {
+                    #(#run_arms),*
                 }
             }
 
@@ -362,13 +379,16 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 timing_stat: Option<&mut RuleTimingStat>,
             ) {
                 if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| match self {
-                        #(#run_arms),*
-                    });
+                    timing_stat.expect("missing rule timing stat").time(|| self.run_dispatch(node, ctx));
                 } else {
-                    match self {
-                        #(#run_arms),*
-                    }
+                    self.run_dispatch(node, ctx);
+                }
+            }
+
+            #[inline(never)]
+            fn run_once_dispatch(&self, ctx: &LintContext<'_>) {
+                match self {
+                    #(#run_once_arms),*
                 }
             }
 
@@ -378,13 +398,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 timing_stat: Option<&mut RuleTimingStat>,
             ) {
                 if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| match self {
-                        #(#run_once_arms),*
-                    });
+                    timing_stat.expect("missing rule timing stat").time(|| self.run_once_dispatch(ctx));
                 } else {
-                    match self {
-                        #(#run_once_arms),*
-                    }
+                    self.run_once_dispatch(ctx);
+                }
+            }
+
+            #[inline(never)]
+            fn run_on_jest_node_dispatch<'a, 'c>(
+                &self,
+                jest_node: &PossibleJestNode<'a, 'c>,
+                ctx: &'c LintContext<'a>,
+            ) {
+                match self {
+                    #(#run_on_jest_node_arms),*
                 }
             }
 
@@ -395,13 +422,9 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 timing_stat: Option<&mut RuleTimingStat>,
             ) {
                 if TIMINGS {
-                    timing_stat.expect("missing rule timing stat").time(|| match self {
-                        #(#run_on_jest_node_arms),*
-                    });
+                    timing_stat.expect("missing rule timing stat").time(|| self.run_on_jest_node_dispatch(jest_node, ctx));
                 } else {
-                    match self {
-                        #(#run_on_jest_node_arms),*
-                    }
+                    self.run_on_jest_node_dispatch(jest_node, ctx);
                 }
             }
 

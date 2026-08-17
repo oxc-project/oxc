@@ -75,7 +75,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
                     (function.params.parameters_count(), true)
                 }
                 Argument::ArrowFunctionExpression(arrow) => {
-                    (arrow.params.parameters_count(), !arrow.expression)
+                    (arrow.params.parameters_count(), !arrow.is_expression())
                 }
                 _ => return false,
             };

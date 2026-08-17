@@ -1,0 +1,21 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@import "rounded-corners", "text-shadow";
+@import 'rounded-corners', 'text-shadow';
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@import "rounded-corners", "text-shadow";
+@import "rounded-corners", "text-shadow";
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@import "rounded-corners", "text-shadow";
+@import "rounded-corners", "text-shadow";
+
+===================== End =====================

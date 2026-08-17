@@ -7,10 +7,9 @@
 use std::marker::PhantomData;
 use std::{borrow::Cow, cmp, slice};
 
-use cow_utils::CowUtils;
-
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
+use oxc_ecmascript::with_number_literal;
 use oxc_index::IndexVec;
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -139,9 +138,10 @@ pub struct Codegen<'a> {
     /// or (d) source text isn't available.
     annotation_comments: FxHashMap<u32, Comment>,
 
-    /// Sorted, deduped `attached_to` keys for pending legal comments. Lets
-    /// `print_legal_orphans_before` flush via `partition_point` + `drain`.
-    legal_comment_keys: Vec<u32>,
+    /// Sorted, deduped `attached_to` keys for comments that must survive a
+    /// removed anchor. Lets `print_orphan_comments_before` flush via
+    /// `partition_point` + `drain`.
+    orphan_comment_keys: Vec<u32>,
 
     #[cfg(feature = "sourcemap")]
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
@@ -196,7 +196,7 @@ impl<'a> Codegen<'a> {
             quote: Quote::Double,
             comments: CommentsMap::default(),
             annotation_comments: FxHashMap::default(),
-            legal_comment_keys: Vec::new(),
+            orphan_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]
             sourcemap_builder: None,
         }
@@ -329,7 +329,7 @@ impl<'a> Codegen<'a> {
             loop {
                 // SAFETY: `ptr` is always less than or equal to `last_ptr`.
                 // `last_ptr` is within bounds of `bytes`, so safe to read a byte at `ptr`.
-                let byte = unsafe { *ptr.as_ref().unwrap_unchecked() };
+                let byte = unsafe { *ptr.as_ref_unchecked() };
                 if byte == b'<' {
                     // SAFETY: `ptr <= last_ptr`, and `last_ptr` points to no later than
                     // 8 bytes before end of string, so safe to read 8 bytes from `ptr`
@@ -421,6 +421,11 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.print_expr(self, Precedence::Lowest, Context::empty());
+    }
+
+    /// Print a string as a JavaScript string literal.
+    pub fn print_string(&mut self, s: &str) {
+        self.print_string_impl(s, false, false);
     }
 }
 
@@ -526,7 +531,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn current_class_ids(&self) -> impl Iterator<Item = ClassId> {
+    fn current_class_ids(&self) -> impl ExactSizeIterator<Item = ClassId> {
         self.class_stack.iter().rev().copied()
     }
 
@@ -560,7 +565,7 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn consume_pending_indent_space(&mut self) -> bool {
         if self.print_next_indent_as_space {
-            self.print_hard_space();
+            self.print_soft_space();
             self.print_next_indent_as_space = false;
             true
         } else {
@@ -660,14 +665,14 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        let single_line = stmt.body.is_empty() && !self.has_legal_orphans_before(stmt.span.end);
+        let single_line = stmt.body.is_empty() && !self.has_orphan_comments_before(stmt.span.end);
         self.print_curly_braces(stmt.span, single_line, |p| {
             p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
         });
         self.needs_semicolon = false;
     }
 
-    /// Print `stmts`, flushing legal-comment orphans before each and at `scope_end`.
+    /// Print `stmts`, flushing orphan comments before each and at `scope_end`.
     fn print_stmts_with_orphan_flush(
         &mut self,
         stmts: &[Statement<'_>],
@@ -675,11 +680,11 @@ impl<'a> Codegen<'a> {
         ctx: Context,
     ) {
         for stmt in stmts {
-            self.print_legal_orphans_before(stmt.span().start);
+            self.print_orphan_comments_before(stmt.span().start);
             self.print_semicolon_if_needed();
             stmt.print(self, ctx);
         }
-        self.print_legal_orphans_before(scope_end);
+        self.print_orphan_comments_before(scope_end);
     }
 
     fn print_directives_and_statements(
@@ -692,30 +697,49 @@ impl<'a> Codegen<'a> {
         for directive in directives {
             directive.print(self, ctx);
         }
+
         let Some((first, rest)) = stmts.split_first() else {
-            self.print_legal_orphans_before(scope_end);
+            self.print_orphan_comments_before(scope_end);
             return;
         };
 
-        self.print_legal_orphans_before(first.span().start);
+        self.print_orphan_comments_before(first.span().start);
 
-        // Ensure first string literal is not a directive.
-        let mut first_needs_parens = false;
-        if directives.is_empty()
-            && !self.options.minify
-            && let Statement::ExpressionStatement(s) = first
+        // If first statement is a string literal, wrap it in parentheses, to prevent it being parsed as a directive.
+        // Only a parenthesized string expression can reach here (a bare one would have been parsed as a directive),
+        // so the parentheses have to be printed back.
+        //
+        // Need to do this regardless of whether or any real directives precede it or not.
+        // Parentheses must be retained for any of:
+        // * `("use strict");`
+        // * `"use asm"; ("use strict");`
+        // * `"use server"; "use asm"; ("use strict");`
+        //
+        // The same hazard exists in minify mode.
+        // Usually strings are printed as template literals, which are not parsed as directives.
+        // But if the string contains a backtick or `${`, it's printed with `"` or `'` quotes,
+        // which *would* be re-parsed as a directive.
+        // So in minify mode, we force printing as a template literal, regardless of the string's content.
+        // In almost all cases, this is shorter than wrapping in parentheses.
+        if let Statement::ExpressionStatement(stmt) = first
+            && let expr = stmt.expression.without_parentheses()
+            && let Expression::StringLiteral(string) = expr
         {
-            let s = s.expression.without_parentheses();
-            if matches!(s, Expression::StringLiteral(_)) {
-                first_needs_parens = true;
-                self.print_ascii_byte(b'(');
-                s.print_expr(self, Precedence::Lowest, ctx);
-                self.print_ascii_byte(b')');
-                self.print_semicolon_after_statement();
+            // Mirror `ExpressionStatement`'s printer, which this path stands in for
+            self.print_comments_at(stmt.span.start);
+            if self.indent > 0 || self.print_next_indent_as_space {
+                self.print_indent();
+                self.add_source_mapping(stmt.span);
             }
-        }
-
-        if !first_needs_parens {
+            if self.options.minify {
+                self.print_string_literal_as_template(string);
+            } else {
+                self.print_ascii_byte(b'(');
+                self.print_string_literal(string, /* allow_backtick */ true);
+                self.print_ascii_byte(b')');
+            }
+            self.print_semicolon_after_statement();
+        } else {
             first.print(self, ctx);
         }
 
@@ -865,14 +889,12 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_non_negative_float(&mut self, num: f64) {
-        // Inline the buffer here to avoid heap allocation on `buffer.format(*self).to_string()`.
-        let mut buffer = dragonbox_ecma::Buffer::new();
-        if num < 1000.0 && num.fract() == 0.0 {
-            self.print_str(buffer.format(num));
-            self.need_space_before_dot = self.code_len();
-        } else {
-            self.print_minified_number(num, &mut buffer);
-        }
+        with_number_literal(num, |literal| {
+            self.print_str(literal);
+            if !literal.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
+                self.need_space_before_dot = self.code_len();
+            }
+        });
     }
 
     fn print_decorators(&mut self, decorators: &[Decorator<'_>], ctx: Context) {
@@ -882,92 +904,6 @@ impl<'a> Codegen<'a> {
             // identifier char (`@dec class`); `@dec() class` can be `@dec()class`.
             self.print_soft_space();
             self.print_space_before_identifier();
-        }
-    }
-
-    // Optimized version of `get_minified_number` from terser
-    // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
-    // Instead of building all candidates and finding the shortest, we track the shortest as we go
-    // and use self.print_str directly instead of returning intermediate strings
-    #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
-        if num < 1000.0 && num.fract() == 0.0 {
-            self.print_str(buffer.format(num));
-            self.need_space_before_dot = self.code_len();
-            return;
-        }
-
-        let mut s = buffer.format(num);
-
-        if s.starts_with("0.") {
-            s = &s[1..];
-        }
-
-        let mut best_candidate = s.cow_replacen("e+", "e", 1);
-        let mut is_hex = false;
-
-        // Track the best candidate found so far
-        if num.fract() == 0.0 {
-            // For integers, check hex format and other optimizations
-            let hex_candidate = format!("0x{:x}", num as u128);
-            if hex_candidate.len() < best_candidate.len() {
-                is_hex = true;
-                best_candidate = hex_candidate.into();
-            }
-        }
-        // Check for scientific notation optimizations for numbers starting with ".0"
-        else if best_candidate.starts_with(".0") {
-            // Skip the first '0' since we know it's there from the starts_with check
-            if let Some(i) = best_candidate.bytes().skip(2).position(|c| c != b'0') {
-                let len = i + 2; // `+2` to include the dot and first zero.
-                let digits = &best_candidate[len..];
-                let exp = digits.len() + len - 1;
-                let exp_str_len = itoa::Buffer::new().format(exp).len();
-                // Calculate expected length: digits + 'e-' + exp_length
-                let expected_len = digits.len() + 2 + exp_str_len;
-                if expected_len < best_candidate.len() {
-                    best_candidate = format!("{digits}e-{exp}").into();
-                    debug_assert_eq!(best_candidate.len(), expected_len);
-                }
-            }
-        }
-
-        // Check for numbers ending with zeros (but not hex numbers)
-        // The `!is_hex` check is necessary to prevent hex numbers like `0x8000000000000000`
-        // from being incorrectly converted to scientific notation
-        if !is_hex
-            && best_candidate.ends_with('0')
-            && let Some(len) = best_candidate.bytes().rev().position(|c| c != b'0')
-        {
-            let base = &best_candidate[0..best_candidate.len() - len];
-            let exp_str_len = itoa::Buffer::new().format(len).len();
-            // Calculate expected length: base + 'e' + len
-            let expected_len = base.len() + 1 + exp_str_len;
-            if expected_len < best_candidate.len() {
-                best_candidate = format!("{base}e{len}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
-            }
-        }
-
-        // Check for scientific notation optimization: `1.2e101` -> `12e100`
-        if let Some((integer, point, exponent)) = best_candidate
-            .split_once('.')
-            .and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
-        {
-            let new_expr = exponent.parse::<isize>().unwrap() - point.len() as isize;
-            let new_exp_str_len = itoa::Buffer::new().format(new_expr).len();
-            // Calculate expected length: integer + point + 'e' + new_exp_str_len
-            let expected_len = integer.len() + point.len() + 1 + new_exp_str_len;
-            if expected_len < best_candidate.len() {
-                best_candidate = format!("{integer}{point}e{new_expr}").into();
-                debug_assert_eq!(best_candidate.len(), expected_len);
-            }
-        }
-
-        // Print the best candidate and update need_space_before_dot
-        self.print_str(&best_candidate);
-        if !best_candidate.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
-            self.need_space_before_dot = self.code_len();
         }
     }
 

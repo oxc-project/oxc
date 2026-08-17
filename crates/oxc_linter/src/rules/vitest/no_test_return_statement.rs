@@ -16,7 +16,7 @@ declare_oxc_lint!(NoTestReturnStatement, vitest, style, docs = DOCUMENTATION, ve
 impl Rule for NoTestReturnStatement {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::CallExpression(_) | AstKind::Function(_) => {}
+            AstKind::ReturnStatement(_) => {}
             _ => return,
         }
         run(node, ctx);
@@ -63,6 +63,24 @@ fn test() {
             "
                 it('one', () => expect(1).toBe(1));
                 function myHelper() {}
+            ",
+            None,
+        ),
+        (
+            "
+                function myHelper() {
+                    return expect(1).toBe(1);
+                }
+            ",
+            None,
+        ),
+        (
+            "
+                it('one', () => {
+                    function myHelper() {
+                        return expect(1).toBe(1);
+                    }
+                });
             ",
             None,
         ),

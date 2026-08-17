@@ -8,7 +8,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{AllowedOrDisallowInFunc, is_es5_component, is_es6_component},
+    utils::{AllowedOrDisallowInFunc, function_count_before_lifecycle_component},
 };
 
 fn no_did_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -95,52 +95,11 @@ impl Rule for NoDidUpdateSetState {
             return;
         }
 
-        let ancestors: Vec<_> = ctx.nodes().ancestors(node.id()).skip(1).collect();
-
-        let component_did_update_index =
-            ancestors.iter().position(|ancestor| match ancestor.kind() {
-                AstKind::ObjectProperty(prop)
-                    if prop.key.static_name().is_some_and(|key| key == "componentDidUpdate") =>
-                {
-                    true
-                }
-                AstKind::MethodDefinition(method)
-                    if method
-                        .key
-                        .static_name()
-                        .is_some_and(|name| name == "componentDidUpdate") =>
-                {
-                    true
-                }
-                AstKind::PropertyDefinition(prop)
-                    if prop.key.static_name().is_some_and(|name| name == "componentDidUpdate") =>
-                {
-                    true
-                }
-                _ => false,
-            });
-
-        let Some(component_did_update_idx) = component_did_update_index else {
+        let Some(function_count_before_component_did_update) =
+            function_count_before_lifecycle_component(node, ctx, "componentDidUpdate")
+        else {
             return;
         };
-
-        let in_component_did_update = ancestors[component_did_update_idx..]
-            .iter()
-            .any(|ancestor| is_es5_component(ancestor) || is_es6_component(ancestor));
-
-        if !in_component_did_update {
-            return;
-        }
-
-        let function_count_before_component_did_update = ancestors[..component_did_update_idx]
-            .iter()
-            .filter(|ancestor| {
-                matches!(
-                    ancestor.kind(),
-                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-                )
-            })
-            .count();
 
         let in_nested_function = function_count_before_component_did_update > 1;
 

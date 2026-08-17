@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.141.0] - 2026-07-20
+
+### ⚡ Performance
+
+- d3f07a0 diagnostics: Box OxcDiagnosticInner to reduce binary size (#24665) (Boshen)
+
 ## [0.136.0] - 2026-06-15
 
 ### ⚡ Performance

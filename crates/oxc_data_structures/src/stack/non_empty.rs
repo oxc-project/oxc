@@ -993,4 +993,17 @@ mod tests {
 
         assert_eq!(drops(), &[10, 20, 31, 40, 50]);
     }
+
+    /// `NonEmptyStack<T>` is `Send` / `Sync` only if `T` is.
+    #[test]
+    fn send_sync() {
+        use std::rc::Rc;
+
+        use crate::types::implements;
+
+        assert!(implements!(NonEmptyStack<u32>: Send));
+        assert!(implements!(NonEmptyStack<u32>: Sync));
+        assert!(implements!(NonEmptyStack<Rc<u32>>: !Send));
+        assert!(implements!(NonEmptyStack<Rc<u32>>: !Sync));
+    }
 }

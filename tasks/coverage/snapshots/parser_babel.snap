@@ -1,9 +1,9 @@
-commit: 1fb0b771
+commit: 1eac4481
 
 parser_babel Summary:
-AST Parsed     : 2236/2236 (100.00%)
-Positive Passed: 2221/2236 (99.33%)
-Negative Passed: 1709/1723 (99.19%)
+AST Parsed     : 2234/2234 (100.00%)
+Positive Passed: 2218/2234 (99.28%)
+Negative Passed: 1728/1742 (99.20%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -26,11 +26,11 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-body-export-named/input.ts
 
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-declare-module-identifier/input.ts
+
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable-in-module/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
@@ -162,14 +162,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
 
-  × TS(1015): A parameter cannot have a question mark and an initializer.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:10:16]
-  9 │         readonly x = 0,
- 10 │         public y?: number = 0) {}
-    ·                ─
- 11 │ }
-    ╰────
-
   × TS(1016): A required parameter cannot follow an optional parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:7:9]
  6 │         private pi?: number,
@@ -178,25 +170,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │         // Also works on AssignmentPattern
    ╰────
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts
-
-  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields/input.ts:5:5]
- 4 │   #c?: number;
- 5 │   #d!;
-   ·     ─
- 6 │   #e!: boolean;
-   ╰────
+  × TS(1015): A parameter cannot have a question mark and an initializer.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts:10:16]
+  9 │         readonly x = 0,
+ 10 │         public y?: number = 0) {}
+    ·                ─
+ 11 │ }
+    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
-
-  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:6]
- 5 │     x: number = 1;
- 6 │     x!;
-   ·      ─
- 7 │     x!: number;
-   ╰────
 
   × Identifier `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:2:5]
@@ -231,7 +213,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     x: number = 1;
    ·     ┬
    ·     ╰── It can not be redeclared here
- 6 │     x!;
+ 6 │     x!: number;
    ╰────
 
   × Identifier `x` has already been declared
@@ -240,22 +222,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     x: number = 1;
    ·     ┬
    ·     ╰── `x` has already been declared here
- 6 │     x!;
+ 6 │     x!: number;
    ·     ┬
    ·     ╰── It can not be redeclared here
- 7 │     x!: number;
-   ╰────
-
-  × Identifier `x` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts:6:5]
- 5 │     x: number = 1;
- 6 │     x!;
-   ·     ┬
-   ·     ╰── `x` has already been declared here
- 7 │     x!: number;
-   ·     ┬
-   ·     ╰── It can not be redeclared here
- 8 │ }
+ 7 │ }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
@@ -274,6 +244,34 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts:3:8]
+ 2 │ namespace M.N.O {}
+ 3 │ module "m" {}
+   ·        ───
+ 4 │ module 'n' {}
+   ╰────
+
+  × TS(1035): Only ambient modules can use quoted names.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts:4:8]
+ 3 │ module "m" {}
+ 4 │ module 'n' {}
+   ·        ───
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts:3:3]
+ 2 │       import type { JSONSchema7 } from 'json-schema';
+ 3 │ ╭─▶   module 'test/sub2' {
+ 4 │ │       export { JSONSchema7 }
+ 5 │ ╰─▶   }
+ 6 │     }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
@@ -792,7 +790,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove parameters except the first one here
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowAwaitOutsideFunction-false/input.js:1:5]
  1 │ for await (const i of imports) {}
    ·     ─────
@@ -813,7 +811,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: new.target is only allowed in constructors, functions, and class field initializers
 
-  × TS(1108): A 'return' statement can only be used within a function body.
+  × TS(18041): A 'return' statement cannot be used inside a class static block.
    ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowReturnOutsideFunction-true-invalid-in-static-block/input.js:3:5]
  2 │   static {
  3 │     return 0;
@@ -1384,7 +1382,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ [
    ╰────
 
-  × Unexpected token
+  × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/376/input.js:1:3]
  1 │ [,
    ╰────
@@ -1399,7 +1397,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 1 + { t:t
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/379/input.js:1:11]
  1 │ 1 + { t:t,
    ╰────
@@ -1993,186 +1991,217 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function hello() {'use strict'; var eval = 10; }
    ·                                     ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/469/input.js:1:37]
  1 │ function hello() {'use strict'; var arguments = 10; }
    ·                                     ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/470/input.js:1:48]
  1 │ function hello() {'use strict'; try { } catch (eval) { } }
    ·                                                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/471/input.js:1:48]
  1 │ function hello() {'use strict'; try { } catch (arguments) { } }
    ·                                                ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/472/input.js:1:33]
  1 │ function hello() {'use strict'; eval = 10; }
    ·                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/473/input.js:1:33]
  1 │ function hello() {'use strict'; arguments = 10; }
    ·                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/474/input.js:1:35]
  1 │ function hello() {'use strict'; ++eval; }
    ·                                   ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/475/input.js:1:35]
  1 │ function hello() {'use strict'; --eval; }
    ·                                   ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/476/input.js:1:35]
  1 │ function hello() {'use strict'; ++arguments; }
    ·                                   ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/477/input.js:1:35]
  1 │ function hello() {'use strict'; --arguments; }
    ·                                   ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/478/input.js:1:33]
  1 │ function hello() {'use strict'; eval++; }
    ·                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/479/input.js:1:33]
  1 │ function hello() {'use strict'; eval--; }
    ·                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/480/input.js:1:33]
  1 │ function hello() {'use strict'; arguments++; }
    ·                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/481/input.js:1:33]
  1 │ function hello() {'use strict'; arguments--; }
    ·                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/482/input.js:1:42]
  1 │ function hello() {'use strict'; function eval() { } }
    ·                                          ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/483/input.js:1:42]
  1 │ function hello() {'use strict'; function arguments() { } }
    ·                                          ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/484/input.js:1:10]
  1 │ function eval() {'use strict'; }
    ·          ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/485/input.js:1:10]
  1 │ function arguments() {'use strict'; }
    ·          ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/486/input.js:1:43]
  1 │ function hello() {'use strict'; (function eval() { }()) }
    ·                                           ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/487/input.js:1:43]
  1 │ function hello() {'use strict'; (function arguments() { }()) }
    ·                                           ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/488/input.js:1:11]
  1 │ (function eval() {'use strict'; })()
    ·           ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/489/input.js:1:11]
  1 │ (function arguments() {'use strict'; })()
    ·           ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/490/input.js:1:48]
  1 │ function hello() {'use strict'; ({ s: function eval() { } }); }
    ·                                                ────
    ╰────
+  note: This is strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/491/input.js:1:11]
  1 │ (function package() {'use strict'; })()
    ·           ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/492/input.js:1:49]
  1 │ function hello() {'use strict'; ({ i: 10, set s(eval) { } }); }
    ·                                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/493/input.js:1:42]
  1 │ function hello() {'use strict'; ({ set s(eval) { } }); }
    ·                                          ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/494/input.js:1:50]
  1 │ function hello() {'use strict'; ({ s: function s(eval) { } }); }
    ·                                                  ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/495/input.js:1:16]
  1 │ function hello(eval) {'use strict';}
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/496/input.js:1:16]
  1 │ function hello(arguments) {'use strict';}
    ·                ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/497/input.js:1:49]
  1 │ function hello() { 'use strict'; function inner(eval) {} }
    ·                                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/498/input.js:1:49]
  1 │ function hello() { 'use strict'; function inner(arguments) {} }
    ·                                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/500/input.js:1:34]
@@ -2193,60 +2222,70 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function hello() { "use strict"; var implements; }
    ·                                      ──────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/505/input.js:1:38]
  1 │ function hello() { "use strict"; var interface; }
    ·                                      ─────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/506/input.js:1:38]
  1 │ function hello() { "use strict"; var package; }
    ·                                      ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/507/input.js:1:38]
  1 │ function hello() { "use strict"; var private; }
    ·                                      ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/508/input.js:1:38]
  1 │ function hello() { "use strict"; var protected; }
    ·                                      ─────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/509/input.js:1:38]
  1 │ function hello() { "use strict"; var public; }
    ·                                      ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/510/input.js:1:38]
  1 │ function hello() { "use strict"; var static; }
    ·                                      ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/511/input.js:1:16]
  1 │ function hello(static) { "use strict"; }
    ·                ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/512/input.js:1:10]
  1 │ function static() { "use strict"; }
    ·          ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/513/input.js:1:24]
  1 │ "use strict"; function static() { }
    ·                        ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `t` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/514/input.js:1:12]
@@ -2261,12 +2300,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function a(eval) { "use strict"; }
    ·            ────
    ╰────
+  note: This is strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/516/input.js:1:12]
  1 │ function a(package) { "use strict"; }
    ·            ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `t` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/517/input.js:1:41]
@@ -2297,12 +2338,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ (function a(eval) { "use strict"; })
    ·             ────
    ╰────
+  note: This is strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/521/input.js:1:13]
  1 │ (function a(package) { "use strict"; })
    ·             ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/522/input.js:1:66]
@@ -2340,12 +2383,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ const { public } = foo();
    ·         ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/545/input.js:1:9]
  1 │ const { public } = foo();
    ·         ──────
    ╰────
+  note: Modules are always strict mode code
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/550/input.js:2:11]
@@ -2694,6 +2739,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ const { arguments } = foo();
    ·         ─────────
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/destructuring/binding-arguments-strict/input.js:2:9]
@@ -2701,12 +2747,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ const { arguments } = foo();
    ·         ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/destructuring/binding-eval/input.js:1:17]
  1 │ 'use strict'; ({eval = defValue} = obj)
    ·                 ────
    ╰────
+  note: This is strict mode code
 
   × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/destructuring/binding-this/input.js:1:12]
@@ -2940,6 +2988,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ let + 1
    · ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × `let` cannot be declared as a variable name inside of a `let` declaration
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-at-binding-list-fail-1/input.js:1:7]
@@ -3665,6 +3714,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ var x = ({ implements, interface, package });
    ·            ──────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/shorthand/reserved-word-strict/input.js:2:24]
@@ -3672,6 +3722,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ var x = ({ implements, interface, package });
    ·                        ─────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/shorthand/reserved-word-strict/input.js:2:35]
@@ -3679,6 +3730,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ var x = ({ implements, interface, package });
    ·                                   ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Invalid class declaration
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/statements/label-invalid-class/input.js:1:6]
@@ -3956,6 +4008,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function hello() {'use strict'; ({ i: 10, s(eval) { } }); }
    ·                                             ────
    ╰────
+  note: This is strict mode code
 
   × Identifier `t` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/228/input.js:1:35]
@@ -3994,12 +4047,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ "use strict"; ({ v: eval } = obj)
    ·                     ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/234/input.js:1:21]
  1 │ "use strict"; ({ v: arguments } = obj)
    ·                     ─────────
    ╰────
+  note: This is strict mode code
 
   × for-in loop variable declaration may not have an initializer
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/235/input.js:1:6]
@@ -4034,36 +4089,42 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ "use strict"; (eval = 10) => 42
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/243/input.js:1:15]
  1 │ "use strict"; eval => 42
    ·               ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/244/input.js:1:15]
  1 │ "use strict"; arguments => 42
    ·               ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/245/input.js:1:16]
  1 │ "use strict"; (eval, a) => 42
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/246/input.js:1:16]
  1 │ "use strict"; (arguments, a) => 42
    ·                ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/247/input.js:1:16]
  1 │ "use strict"; (eval, a = 10) => 42
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Identifier `a` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/248/input.js:1:16]
@@ -4246,6 +4307,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ ({ t(eval) { "use strict"; } });
    ·      ────
    ╰────
+  note: This is strict mode code
 
   × Bad escape sequence in untagged template literal
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/290/input.js:1:23]
@@ -4283,12 +4345,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ "use strict"; (eval) => 42
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/297/input.js:1:2]
  1 │ (eval) => { "use strict"; 42 }
    ·  ────
    ╰────
+  note: This is strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/298/input.js:1:21]
@@ -4356,12 +4420,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 'use strict'; [...eval] = arr
    ·                   ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/334/input.js:1:5]
  1 │ [...eval] = arr
    ·     ────
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/335/input.js:1:14]
@@ -4455,6 +4521,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ const await = foo();
    ·       ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/361/input.js:1:9]
@@ -4467,12 +4534,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ const { await } = foo();
    ·         ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/363/input.js:1:16]
  1 │ function foo({ await }) {}
    ·                ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/365/input.js:1:10]
@@ -4485,6 +4554,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function await() {}
    ·          ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/367/input.js:1:7]
@@ -4497,6 +4567,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class await {}
    ·       ─────
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/368/input.js:1:1]
@@ -4663,12 +4734,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ function yield() {}
    ·          ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/function-name-strict-body/input.js:1:10]
  1 │ function yield() { "use strict"; }
    ·          ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected `{` but found `Identifier`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/in-class-heritage/input.js:1:23]
@@ -4772,6 +4845,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ function fn(x = yield) {}
    ·                 ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parameter-name-arrow-inside-generator-1/input.js:2:4]
@@ -4824,12 +4898,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ function fn(yield) {}
    ·             ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/parameter-name-strict-body/input.js:1:13]
  1 │ function fn(yield) { "use strict"; }
    ·             ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × yield expression not allowed in formal parameter
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/yield-star-parameter-default-inside-generator/input.js:1:25]
@@ -4845,26 +4921,26 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                        ╰── yield expression not allowed in formal parameter
    ╰────
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/10/input.js:1:1]
  1 │ -5 ** 6;
    · ──
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/11/input.js:1:1]
  1 │ -(5) ** 6;
    · ────
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/12/input.js:1:2]
  1 │ (-5 ** 6);
    ·  ──
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/13/input.js:1:4]
@@ -4878,40 +4954,40 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ──
    ╰────
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/15/input.js:1:1]
  1 │ -(5) ** 6;
    · ────
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/16/input.js:1:2]
  1 │ (-5 ** 6);
    ·  ──
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/await-before-exponential/input.js:1:13]
  1 │ async () => await 5 ** 6;
    ·             ───────
    ╰────
-  help: Wrap await expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/await-unary-before-exponential/input.js:1:13]
  1 │ async () => await -5 ** 6;
    ·             ────────
    ╰────
-  help: Wrap await expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '-' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/nested-unary-before-exponential/input.js:1:2]
  1 │ (-+5 ** 6);
    ·  ───
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
   × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/simple-parameter-list/array-pattern/input.js:2:3]
@@ -5536,7 +5612,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the trailing comma here
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/async-generators/for-await-async-context/input.js:2:7]
  1 │ function f() {
  2 │   for await (let x of y);
@@ -5878,7 +5954,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import/invalid-arguments-spread/input.js:1:8]
  1 │ import(...[1])
    ·        ───
@@ -5917,7 +5993,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[babel/packages/babel-parser/test/fixtures/es2020/dynamic-import-createImportExpression-false/invalid-arguments-spread/input.js:1:8]
  1 │ import(...[1])
    ·        ───
@@ -8261,6 +8337,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ─────
  5 │   }
    ╰────
+  note: Classes are always strict mode code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-async-arrow-function-in-static-block/input.js:3:29]
@@ -8338,7 +8415,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × TS(1108): A 'return' statement can only be used within a function body.
+  × TS(18041): A 'return' statement cannot be used inside a class static block.
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-return/input.js:4:5]
  3 │   static {
  4 │     return this;
@@ -8500,7 +8577,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  × `for await` loops are only allowed within async functions and at the top levels of modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-script/for-await/input.js:1:5]
  1 │ for await (const a of b);
    ·     ─────
@@ -8565,7 +8642,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected token
+  × TS(1325): Argument of dynamic import cannot be a spread element.
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-spread-element-import-call/input.js:1:22]
  1 │ import("./foo.json", ...[]);
    ·                      ───
@@ -8800,7 +8877,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-module-bare-case-await-using-binding/input.js:5:7]
  4 │       {}
  5 │       await using x = bar();
@@ -8809,7 +8886,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-module-bare-case-await-using-binding/input.js:8:7]
  7 │       {}
  8 │       await using y = bar();
@@ -8818,7 +8895,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-bare-case-await-using-binding/input.js:5:7]
  4 │       {}
  5 │       await using x = bar();
@@ -8827,7 +8904,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'await using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-bare-case-await-using-binding/input.js:8:7]
  7 │       {}
  8 │       await using y = bar();
@@ -8904,6 +8981,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ─────
  3 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:5:15]
@@ -8912,6 +8990,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ──────────
  6 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:8:24]
@@ -8920,6 +8999,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                        ─────
  9 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
     ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-module/input.js:11:20]
@@ -8928,6 +9008,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·                    ─────
  12 │ }
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-binding-await-script/input.js:2:15]
@@ -9159,7 +9240,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-module-bare-case-using-binding/input.js:5:7]
  4 │       {}
  5 │       using x = bar();
@@ -9168,7 +9249,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-module-bare-case-using-binding/input.js:8:7]
  7 │       {}
  8 │       using y = bar();
@@ -9177,7 +9258,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-bare-case-using-binding/input.js:5:7]
  4 │       {}
  5 │       using x = bar();
@@ -9186,7 +9267,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Using declaration cannot appear in the bare case statement.
+  × 'using' declaration cannot appear in the bare case statement.
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-bare-case-using-binding/input.js:8:7]
  7 │       {}
  8 │       using y = bar();
@@ -9255,6 +9336,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ─────
  3 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:5:9]
@@ -9263,6 +9345,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ──────────
  6 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:8:18]
@@ -9271,6 +9354,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                  ─────
  9 │ }
    ╰────
+  note: The identifier `await` is reserved in module code
 
   × The keyword 'await' is reserved
     ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:11:14]
@@ -9279,6 +9363,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·              ─────
  12 │ }
     ╰────
+  note: The identifier `await` is reserved in module code
 
   × `let` cannot be declared as a variable name inside of a `using` declaration
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-let/input.js:2:9]
@@ -9406,6 +9491,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ eval => {"use strict"};
    · ────
    ╰────
+  note: This is strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/non-arrow-param-followed-by-arrow/input.js:1:6]
@@ -9467,6 +9553,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class A {a(eval){}}
    ·            ────
    ╰────
+  note: Classes are always strict mode code
 
   × Invalid assignment in object literal
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-destructuring-assignment/invalid-cover-grammar/input.js:1:22]
@@ -10130,6 +10217,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ export default function *yield() {}
    ·                          ─────
    ╰────
+  note: Modules are always strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-generator-expression-name/input.js:1:11]
@@ -10184,12 +10272,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ "use strict"; function *g(){ var y = function yield(){}; }
    ·                                               ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-generator-strict-function-parameter/input.js:1:48]
  1 │ "use strict"; function *g() { var z = function(yield) {} }
    ·                                                ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-generator-variable-declaration/input.js:1:21]
@@ -10202,72 +10292,84 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ "use strict"; ([yield] = x)
    ·                 ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-arrow-parameter-default/input.js:1:20]
  1 │ "use strict"; (x = yield) => {}
    ·                    ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-arrow-parameter-name/input.js:1:16]
  1 │ "use strict"; (yield) => 42
    ·                ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-binding-element/input.js:1:24]
  1 │ "use strict"; var { x: yield } = foo;
    ·                        ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-catch-parameter/input.js:1:29]
  1 │ "use strict"; try {} catch (yield) {}
    ·                             ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-formal-parameter/input.js:1:26]
  1 │ "use strict"; function f(yield) {}
    ·                          ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-function-declaration/input.js:1:10]
  1 │ function yield(){ "use strict"; }
    ·          ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-function-expression/input.js:1:11]
  1 │ (function yield(){ "use strict"; })
    ·           ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-identifier/input.js:1:30]
  1 │ "use strict"; function f() { yield }
    ·                              ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-lexical-declaration/input.js:1:19]
  1 │ "use strict"; let yield = 42;
    ·                   ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-rest-parameter/input.js:1:29]
  1 │ "use strict"; function f(...yield) {}
    ·                             ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/invalid-yield-strict-variable-declaration/input.js:1:19]
  1 │ "use strict"; var yield;
    ·                   ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × yield expression not allowed in formal parameter
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-yield/yield-generator-arrow-default/input.js:1:22]
@@ -10759,7 +10861,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ [
    ╰────
 
-  × Unexpected token
+  × Expected `]` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0058/input.js:2:1]
  1 │ [,
    ╰────
@@ -10774,7 +10876,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 1 + { t:t
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0061/input.js:2:1]
  1 │ 1 + { t:t,
    ╰────
@@ -10936,30 +11038,35 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ "use strict"; (eval = 10) => 42
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0088/input.js:1:15]
  1 │ "use strict"; eval => 42
    ·               ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0089/input.js:1:15]
  1 │ "use strict"; arguments => 42
    ·               ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0090/input.js:1:16]
  1 │ "use strict"; (eval, a) => 42
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0091/input.js:1:16]
  1 │ "use strict"; (arguments, a) => 42
    ·                ─────────
    ╰────
+  note: This is strict mode code
 
   × Identifier `a` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0092/input.js:1:2]
@@ -11021,12 +11128,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ "use strict"; (eval) => 42
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0101/input.js:1:2]
  1 │ (eval) => { "use strict"; 42 }
    ·  ────
    ╰────
+  note: This is strict mode code
 
   × Expected `,` or `}` but found `/`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0102/input.js:1:8]
@@ -11534,186 +11643,217 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function hello() {'use strict'; var eval = 10; }
    ·                                     ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0186/input.js:1:37]
  1 │ function hello() {'use strict'; var arguments = 10; }
    ·                                     ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0187/input.js:1:48]
  1 │ function hello() {'use strict'; try { } catch (eval) { } }
    ·                                                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0188/input.js:1:48]
  1 │ function hello() {'use strict'; try { } catch (arguments) { } }
    ·                                                ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0189/input.js:1:33]
  1 │ function hello() {'use strict'; eval = 10; }
    ·                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0190/input.js:1:33]
  1 │ function hello() {'use strict'; arguments = 10; }
    ·                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0191/input.js:1:35]
  1 │ function hello() {'use strict'; ++eval; }
    ·                                   ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0192/input.js:1:35]
  1 │ function hello() {'use strict'; --eval; }
    ·                                   ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0193/input.js:1:35]
  1 │ function hello() {'use strict'; ++arguments; }
    ·                                   ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0194/input.js:1:35]
  1 │ function hello() {'use strict'; --arguments; }
    ·                                   ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0195/input.js:1:33]
  1 │ function hello() {'use strict'; eval++; }
    ·                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0196/input.js:1:33]
  1 │ function hello() {'use strict'; eval--; }
    ·                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0197/input.js:1:33]
  1 │ function hello() {'use strict'; arguments++; }
    ·                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0198/input.js:1:33]
  1 │ function hello() {'use strict'; arguments--; }
    ·                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0199/input.js:1:42]
  1 │ function hello() {'use strict'; function eval() { } }
    ·                                          ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0200/input.js:1:42]
  1 │ function hello() {'use strict'; function arguments() { } }
    ·                                          ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0201/input.js:1:10]
  1 │ function eval() {'use strict'; }
    ·          ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0202/input.js:1:10]
  1 │ function arguments() {'use strict'; }
    ·          ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0203/input.js:1:43]
  1 │ function hello() {'use strict'; (function eval() { }()) }
    ·                                           ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0204/input.js:1:43]
  1 │ function hello() {'use strict'; (function arguments() { }()) }
    ·                                           ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0205/input.js:1:11]
  1 │ (function eval() {'use strict'; })()
    ·           ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0206/input.js:1:11]
  1 │ (function arguments() {'use strict'; })()
    ·           ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0207/input.js:1:48]
  1 │ function hello() {'use strict'; ({ s: function eval() { } }); }
    ·                                                ────
    ╰────
+  note: This is strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0208/input.js:1:11]
  1 │ (function package() {'use strict'; })()
    ·           ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0209/input.js:1:49]
  1 │ function hello() {'use strict'; ({ i: 10, set s(eval) { } }); }
    ·                                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0210/input.js:1:42]
  1 │ function hello() {'use strict'; ({ set s(eval) { } }); }
    ·                                          ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0211/input.js:1:50]
  1 │ function hello() {'use strict'; ({ s: function s(eval) { } }); }
    ·                                                  ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0212/input.js:1:16]
  1 │ function hello(eval) {'use strict';}
    ·                ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0213/input.js:1:16]
  1 │ function hello(arguments) {'use strict';}
    ·                ─────────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0214/input.js:1:49]
  1 │ function hello() { 'use strict'; function inner(eval) {} }
    ·                                                 ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0215/input.js:1:49]
  1 │ function hello() { 'use strict'; function inner(arguments) {} }
    ·                                                 ─────────
    ╰────
+  note: This is strict mode code
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0216/input.js:1:1]
@@ -11783,84 +11923,98 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function hello() { "use strict"; var implements; }
    ·                                      ──────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'interface' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0225/input.js:1:38]
  1 │ function hello() { "use strict"; var interface; }
    ·                                      ─────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0226/input.js:1:38]
  1 │ function hello() { "use strict"; var package; }
    ·                                      ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'private' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0227/input.js:1:38]
  1 │ function hello() { "use strict"; var private; }
    ·                                      ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'protected' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0228/input.js:1:38]
  1 │ function hello() { "use strict"; var protected; }
    ·                                      ─────────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'public' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0229/input.js:1:38]
  1 │ function hello() { "use strict"; var public; }
    ·                                      ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0230/input.js:1:38]
  1 │ function hello() { "use strict"; var static; }
    ·                                      ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'yield' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0231/input.js:1:38]
  1 │ function hello() { "use strict"; var yield; }
    ·                                      ─────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'let' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0232/input.js:1:38]
  1 │ function hello() { "use strict"; var let; }
    ·                                      ───
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0233/input.js:1:16]
  1 │ function hello(static) { "use strict"; }
    ·                ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0234/input.js:1:10]
  1 │ function static() { "use strict"; }
    ·          ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Cannot assign to 'eval' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0235/input.js:1:10]
  1 │ function eval(a) { "use strict"; }
    ·          ────
    ╰────
+  note: This is strict mode code
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0236/input.js:1:10]
  1 │ function arguments(a) { "use strict"; }
    ·          ─────────
    ╰────
+  note: This is strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0239/input.js:1:24]
  1 │ "use strict"; function static() { }
    ·                        ──────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `t` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0240/input.js:1:12]
@@ -11875,12 +12029,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ function a(eval) { "use strict"; }
    ·            ────
    ╰────
+  note: This is strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0242/input.js:1:12]
  1 │ function a(package) { "use strict"; }
    ·            ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Identifier `t` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0243/input.js:1:41]
@@ -11911,12 +12067,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ (function a(eval) { "use strict"; })
    ·             ────
    ╰────
+  note: This is strict mode code
 
   × The keyword 'package' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0247/input.js:1:13]
  1 │ (function a(package) { "use strict"; })
    ·             ───────
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Label `__proto__` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0248/input.js:1:1]
@@ -12098,6 +12256,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class A {static [static](){};}
    ·                  ──────
    ╰────
+  note: Classes are always strict mode code
 
   × A 'set' accessor cannot have rest parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/rest-parameter/invalid-setter-rest/input.js:1:13]
@@ -12535,6 +12694,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Private identifiers are enforced at runtime, while accessibility modifiers only affect type checking, so using both is redundant.
 
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:5:13]
+ 4 │ 
+ 5 │   accessor a!;
+   ·             ─
+ 6 │   abstract accessor #s;
+   ╰────
+
   × TS(1276): An 'accessor' property cannot be declared optional.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:7:14]
  6 │   abstract accessor #s;
@@ -12801,8 +12968,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ──
    ╰────
 
-  × Expected `{` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-empty/input.ts:3:1]
+  × TS(1097): 'extends' list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-empty/input.ts:1:15]
+ 1 │ interface foo extends {
+   ·               ───────
  2 │ }
    ╰────
 
@@ -12840,10 +13009,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:13]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:11]
  6 │   readonly *e() {}
  7 │   declare *f() {}
-   ·             ─────
+   ·           ───────
  8 │   protected *g() {}
    ╰────
 
@@ -12876,6 +13045,70 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │     readonly static [x: string]: any;
    ·              ──────
  3 │ }
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:2:4]
+ 1 │ class C {
+ 2 │   x!: number = 1;
+   ·    ─
+ 3 │   #x!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:3:5]
+ 2 │   x!: number = 1;
+ 3 │   #x!: number = 1;
+   ·     ─
+ 4 │   accessor a!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:4:13]
+ 3 │   #x!: number = 1;
+ 4 │   accessor a!: number = 1;
+   ·             ─
+ 5 │   accessor #a!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-initializer/input.ts:5:14]
+ 4 │   accessor a!: number = 1;
+ 5 │   accessor #a!: number = 1;
+   ·              ─
+ 6 │ }
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:2:4]
+ 1 │ class C {
+ 2 │   x!;
+   ·    ─
+ 3 │   #x!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:3:5]
+ 2 │   x!;
+ 3 │   #x!;
+   ·     ─
+ 4 │   accessor a!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:4:13]
+ 3 │   #x!;
+ 4 │   accessor a!;
+   ·             ─
+ 5 │   accessor #a!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-definite-without-type/input.ts:5:14]
+ 4 │   accessor a!;
+ 5 │   accessor #a!;
+   ·              ─
+ 6 │ }
    ╰────
 
   × TS(1029): 'private' modifier must precede 'override' modifier.
@@ -12934,6 +13167,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ───────
  3 │   }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'public' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifier-name-parameters/input.ts:2:24]
@@ -12942,6 +13176,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                        ──────
  3 │   }
    ╰────
+  note: Classes are always strict mode code
 
   × The keyword 'static' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifier-name-parameters/input.ts:2:32]
@@ -12950,6 +13185,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                                ──────
  3 │   }
    ╰────
+  note: Classes are always strict mode code
 
   × TS(1243): 'static' modifier cannot be used with 'abstract' modifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts:2:10]
@@ -13145,10 +13381,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1221): Generators are not allowed in an ambient context.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:14]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:11]
  3 │   readonly *e?() { }
  4 │   declare *f?() { }
-   ·              ──────
+   ·           ─────────
  5 │ }
    ╰────
 
@@ -13187,10 +13423,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
   × TS(1221): Generators are not allowed in an ambient context.
-    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:19]
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:11]
   9 │   readonly *[e?.e]?() { }
  10 │   declare *[f?.f]?() { }
-    ·                   ──────
+    ·           ──────────────
  11 │ }
     ╰────
 
@@ -13288,6 +13524,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
+ 6 │         private pi?: number,
+ 7 │         public readonly pur,
+   ·         ───────────────────
+ 8 │         // Also works on AssignmentPattern
+   ╰────
+
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:9:9]
   8 │         // Also works on AssignmentPattern
@@ -13313,14 +13557,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·                ─
  11 │ }
     ╰────
-
-  × TS(1016): A required parameter cannot follow an optional parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-not-constructor/input.ts:7:9]
- 6 │         private pi?: number,
- 7 │         public readonly pur,
-   ·         ───────────────────
- 8 │         // Also works on AssignmentPattern
-   ╰────
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:12]
@@ -13422,6 +13658,132 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-await-using-declaration-with-initializer/input.ts:1:8]
  1 │ declare await using basic = null;
    ·        ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:1:26]
+ 1 │ declare var w!: number = 1;
+   ·                          ─
+ 2 │ declare let x!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:1:14]
+ 1 │ declare var w!: number = 1;
+   ·              ─
+ 2 │ declare let x!: number = 1;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:2:26]
+ 1 │ declare var w!: number = 1;
+ 2 │ declare let x!: number = 1;
+   ·                          ─
+ 3 │ declare const y!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:2:14]
+ 1 │ declare var w!: number = 1;
+ 2 │ declare let x!: number = 1;
+   ·              ─
+ 3 │ declare const y!: number = 1;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:3:28]
+ 2 │ declare let x!: number = 1;
+ 3 │ declare const y!: number = 1;
+   ·                            ─
+ 4 │ {
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:3:16]
+ 2 │ declare let x!: number = 1;
+ 3 │ declare const y!: number = 1;
+   ·                ─
+ 4 │ {
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-assignment/input.ts:5:10]
+ 4 │ {
+ 5 │   declare using z!: number = 1;
+   ·          ▲
+ 6 │   declare await using za!: number = 1;
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-await-using/input.ts:2:10]
+ 1 │ {
+ 2 │   declare await using {}! = {};
+   ·          ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-const/input.ts:1:17]
+ 1 │ declare const {}! = {};
+   ·                 ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-let/input.ts:1:15]
+ 1 │ declare let {}! = {};
+   ·               ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-using/input.ts:2:10]
+ 1 │ {
+ 2 │   declare using {}! = {};
+   ·          ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-pattern-assignment-var/input.ts:1:15]
+ 1 │ declare var {}! = {};
+   ·               ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:1:14]
+ 1 │ declare var w!;
+   ·              ─
+ 2 │ declare let x!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:2:14]
+ 1 │ declare var w!;
+ 2 │ declare let x!;
+   ·              ─
+ 3 │ declare const y!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:3:16]
+ 2 │ declare let x!;
+ 3 │ declare const y!;
+   ·                ─
+ 4 │ {
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-definite-without-type/input.ts:5:10]
+ 4 │ {
+ 5 │   declare using z!;
+   ·          ▲
+ 6 │   declare await using za!;
    ╰────
   help: Try inserting a semicolon here
 
@@ -13616,19 +13978,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ────
    ╰────
 
-  × Unexpected exponentiation expression
+  × A unary expression with the 'await' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/await-non-null-before-exponential/input.ts:1:14]
  1 │ async (a) => await a! ** 6;
    ·              ────────
    ╰────
-  help: Wrap await expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
-  × Unexpected exponentiation expression
+  × A unary expression with the '+' operator cannot be used as the left operand of an exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/unary-non-null-before-exponential/input.ts:1:8]
  1 │ (a) => +a! ** 6;
    ·        ───
    ╰────
-  help: Wrap unary expression in parentheses to enforce operator precedence
+  help: Wrap the unary expression in parentheses to make the precedence explicit
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/declare-invalid/input.ts:1:16]
@@ -13703,6 +14065,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1016): A required parameter cannot follow an optional parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
+ 5 │   private pi?: number,
+ 6 │   public readonly pur,
+   ·   ───────────────────
+ 7 │   readonly x = 0,
+   ╰────
+
   × TS(1090): 'readonly' modifier cannot appear on a parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:7:3]
  6 │   public readonly pur,
@@ -13727,14 +14097,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │   public y?: number = 0
    ·          ─
  9 │ ) {}
-   ╰────
-
-  × TS(1016): A required parameter cannot follow an optional parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/parameter-properties/input.ts:6:3]
- 5 │   private pi?: number,
- 6 │   public readonly pur,
-   ·   ───────────────────
- 7 │   readonly x = 0,
    ╰────
 
   × TS(1016): A required parameter cannot follow an optional parameter.
@@ -13842,23 +14204,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor cannot have rest parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:11]
- 1 │ interface Foo {
- 2 │   set bar(...v);
-   ·           ────
- 3 │ }
-   ╰────
-
-  × TS(1049): A 'set' accessor must have exactly one parameter.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:10]
- 1 │ interface Foo {
- 2 │   set bar(...v);
-   ·          ──────
- 3 │ }
-   ╰────
-  help: Add a parameter here
-
   × TS(1095): A 'set' accessor cannot have a return type annotation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-return-types/input.ts:2:17]
  1 │ interface Foo {
@@ -13914,6 +14259,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ // Every extend element here is invalid
  2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
    ·                           ─────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:38]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                      ─────────
    ╰────
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
@@ -14099,6 +14451,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─────────
  2 │ F
    ╰────
+  note: Modules are always strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/new-line-error/input.ts:2:2]
@@ -14266,6 +14619,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-declare-module-number/input.ts:1:8]
+ 1 │ declare module 0 {}
+   ·        ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-declare-module-without-name/input.ts:1:8]
+ 1 │ declare module {}
+   ·        ▲
+   ╰────
+  help: Try inserting a semicolon here
+
   × TS(2670): Augmentations for the global scope should have 'declare' modifier unless they appear in already ambient context.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-global-redeclare-block-level-variable/input.ts:3:1]
  2 │ 
@@ -14280,6 +14647,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·           ──────
  2 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'private' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-reserved-word/input.ts:3:11]
@@ -14288,6 +14656,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·           ───────
  4 │ 
    ╰────
+  note: Modules are always strict mode code
 
   × The keyword 'protected' is reserved
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/invalid-reserved-word/input.ts:5:11]
@@ -14295,6 +14664,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │ namespace protected.foo {}
    ·           ─────────
    ╰────
+  note: Modules are always strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-declare-new-line/input.ts:6:8]
@@ -14338,6 +14708,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts:3:21]
+ 2 │ // but they are always type-checking errors.
+ 3 │ interface A extends this.B {}
+   ·                     ──────
+ 4 │ type T = typeof var.bar;
+   ╰────
 
   × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts:2:12]
@@ -15178,16 +15556,218 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·           ╰── Opened here
    ╰────
 
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-with-type/input.ts:3:7]
+ 2 │ let x!: number;
+ 3 │ const y!: number;
+   ·       ─
+ 4 │ {
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-with-type/input.ts:5:9]
+ 4 │ {
+ 5 │   using z!: number;
+   ·         ─
+ 6 │   await using za!: number;
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-with-type/input.ts:6:15]
+ 5 │   using z!: number;
+ 6 │   await using za!: number;
+   ·               ──
+ 7 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:1:6]
+ 1 │ var w!: number = 1;
+   ·      ─
+ 2 │ let x!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:2:6]
+ 1 │ var w!: number = 1;
+ 2 │ let x!: number = 1;
+   ·      ─
+ 3 │ const y!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:3:8]
+ 2 │ let x!: number = 1;
+ 3 │ const y!: number = 1;
+   ·        ─
+ 4 │ {
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:5:10]
+ 4 │ {
+ 5 │   using z!: number = 1;
+   ·          ─
+ 6 │   await using za!: number = 1;
+   ╰────
+
+  × TS(1263): Declarations with initializers cannot also have definite assignment assertions.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-assignment/input.ts:6:17]
+ 5 │   using z!: number = 1;
+ 6 │   await using za!: number = 1;
+   ·                 ─
+ 7 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-like-not-eq/input.ts:1:6]
+ 1 │ var w!=null;
+   ·      ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-await-using/input.ts:2:14]
+ 1 │ {
+ 2 │   await using {}! = {};
+   ·              ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
   × Missing initializer in destructuring declaration
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:5]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-const/input.ts:1:7]
+ 1 │ const {}! = {};
+   ·       ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-const/input.ts:1:9]
+ 1 │ const {}! = {};
+   ·         ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-let/input.ts:1:5]
  1 │ let {}! = {};
    ·     ──
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:7]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-let/input.ts:1:7]
  1 │ let {}! = {};
    ·       ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-using/input.ts:2:9]
+ 1 │ {
+ 2 │   using {}! = {};
+   ·         ──
+ 3 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations may not have binding patterns.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-using/input.ts:2:9]
+ 1 │ {
+ 2 │   using {}! = {};
+   ·         ──
+ 3 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-using/input.ts:2:11]
+ 1 │ {
+ 2 │   using {}! = {};
+   ·           ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Missing initializer in destructuring declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-var/input.ts:1:5]
+ 1 │ var {}! = {};
+   ·     ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-pattern-assignment-var/input.ts:1:7]
+ 1 │ var {}! = {};
+   ·       ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:1:6]
+ 1 │ var w!;
+   ·      ─
+ 2 │ let x!;
+   ╰────
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:2:6]
+ 1 │ var w!;
+ 2 │ let x!;
+   ·      ─
+ 3 │ const y!;
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:3:7]
+ 2 │ let x!;
+ 3 │ const y!;
+   ·       ─
+ 4 │ {
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:3:8]
+ 2 │ let x!;
+ 3 │ const y!;
+   ·        ─
+ 4 │ {
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:5:9]
+ 4 │ {
+ 5 │   using z!;
+   ·         ─
+ 6 │   await using za!;
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:5:10]
+ 4 │ {
+ 5 │   using z!;
+   ·          ─
+ 6 │   await using za!;
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:6:15]
+ 5 │   using z!;
+ 6 │   await using za!;
+   ·               ──
+ 7 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × TS(1264): Declarations with definite assignment assertions must also have type annotations.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/variable-declarator/invalid-definite-without-type/input.ts:6:17]
+ 5 │   using z!;
+ 6 │   await using za!;
+   ·                 ─
+ 7 │ }
+   ╰────

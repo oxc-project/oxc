@@ -1,19 +1,17 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format, RemoveSoftLinesBuffer, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter, SourceText, buffer::RemoveSoftLinesBuffer,
-        prelude::*, trivia::FormatTrailingComments,
-    },
+    formatter::{JsFormatContext, JsFormatter, prelude::*, trivia::FormatTrailingComments},
     options::FormatTrailingCommas,
     print::function::FormatContentWithCacheMode,
     utils::{
         assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::FormatSuppressedNode,
+        suppressed::FormatSuppressedNode, typecast::format_leading_comments_and_open_paren,
     },
     write,
 };
@@ -118,11 +116,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     );
                 });
 
-                let format_body = FormatMaybeCachedFunctionBody {
-                    body,
-                    expression: arrow.expression(),
-                    mode: self.options.cache_mode,
-                };
+                let format_body =
+                    FormatContentWithCacheMode::new(body.span(), body, self.options.cache_mode);
 
                 // With arrays, arrow self and objects, they have a natural line breaking strategy:
                 // Arrays and objects become blocks:
@@ -169,7 +164,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
-                            !f.comments().has_leading_own_line_comment(body.span().start)
+                            !has_own_line_comment_before_body(arrow, f)
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
                         _ => {
@@ -181,7 +176,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                 if body_has_soft_line_break {
                     write!(f, [space(), format_body]);
                 } else {
-                    let should_add_parens = arrow.expression && should_add_parens(body);
+                    let should_add_parens = body.as_expression().is_some_and(should_add_parens);
 
                     let is_last_call_arg = matches!(
                         self.options.call_argument_layout,
@@ -193,24 +188,34 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
-                    write!(
-                        f,
-                        group(&format_args!(
-                            soft_line_indent_or_space(&format_with(|f| {
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&"("));
-                                }
-
-                                write!(f, format_body);
-
-                                if should_add_parens {
-                                    write!(f, if_group_fits_on_line(&")"));
-                                }
-                            })),
-                            is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                            should_add_soft_line.then_some(soft_line_break())
-                        ))
-                    );
+                    if should_add_parens {
+                        // The leading space must be a literal space rather than a soft line:
+                        // it is counted when measuring whether the signature fits,
+                        // so a signature that fills the line exactly gets broken,
+                        // matching Prettier's `printArrowFunctionBody`.
+                        write!(
+                            f,
+                            [
+                                space(),
+                                group(&format_args!(
+                                    if_group_fits_on_line(&token("(")),
+                                    indent(&format_args!(soft_line_break(), format_body)),
+                                    if_group_fits_on_line(&token(")")),
+                                    is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                                    should_add_soft_line.then_some(soft_line_break())
+                                ))
+                            ]
+                        );
+                    } else {
+                        write!(
+                            f,
+                            group(&format_args!(
+                                soft_line_indent_or_space(&format_body),
+                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                                should_add_soft_line.then_some(soft_line_break())
+                            ))
+                        );
+                    }
                 }
             }
         }
@@ -263,11 +268,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 
         loop {
             if is_non_grouped_or_grouped_last_argument
-                && current.expression()
-                && let Some(AstNodes::ExpressionStatement(expr_stmt)) =
-                    current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
-                && let AstNodes::ArrowFunctionExpression(next) =
-                    &expr_stmt.expression().as_ast_nodes()
+                && let AstNodes::ArrowFunctionExpression(next) = current.body().as_ast_nodes()
             {
                 should_break = should_break || Self::should_break_chain(current);
 
@@ -500,6 +501,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
             )
         });
 
+        // An own-line comment before the tail body forces the body onto its own line even for the kinds above,
+        // matching Prettier's `shouldPutBodyOnSameLine`.
+        // Sequence expressions are excluded:
+        // their body formatting already places the leading comment (see `format_sequence_with_leading_comment`).
+        let tail_body_has_leading_own_line_comment =
+            !matches!(tail.get_expression(), Some(Expression::SequenceExpression(_)))
+                && has_own_line_comment_before_body(tail, f);
+        let body_on_separate_line = body_on_separate_line || tail_body_has_leading_own_line_comment;
+
+        // Each non-tail arrow's "body" is the next arrow in the chain,
+        // so this covers own-line comments before any chain link as well as before the tail body.
+        let should_expand_grouped_tail = is_grouped_call_arg_layout
+            && (tail_body_has_leading_own_line_comment
+                || std::iter::once(self.head)
+                    .chain(self.middle.iter().copied())
+                    .any(|arrow| has_own_line_comment_before_body(arrow, f)));
+
         // If the arrow chain will break onto multiple lines, either because
         // it's a callee or because the body is printed on its own line, then
         // the signatures should be expanded first.
@@ -609,11 +627,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         });
 
         let format_tail_body_inner = format_with(|f| {
-            let format_tail_body = FormatMaybeCachedFunctionBody {
-                body: tail_body,
-                expression: tail.expression(),
-                mode: self.options.cache_mode,
-            };
+            let format_tail_body = FormatContentWithCacheMode::new(
+                tail_body.span(),
+                tail_body,
+                self.options.cache_mode,
+            );
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
@@ -626,8 +644,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     write!(f, [token("("), format_tail_body, token(")")]);
                 }
             } else {
-                let should_add_parens = tail.expression && should_add_parens(tail_body);
+                let should_add_parens = tail_body.as_expression().is_some_and(should_add_parens);
                 if should_add_parens {
+                    // Known divergence from Prettier: with a signature that exactly fills the line,
+                    // Prettier breaks it because the hug layout's literal space is counted
+                    // when measuring fits (see the single-arrow branch above), while this soft-line
+                    // wrapping (`soft_line_indent_or_space` in `format_tail_body`) stops the measurement.
+                    // Porting the literal-space structure here is NOT enough: Prettier gates the hug
+                    // on `!shouldBreakChain` (`expand_signatures` here) and otherwise breaks without
+                    // parens; a naive port regresses `js/arrows/currying-4.js`.
                     write!(
                         f,
                         [
@@ -682,7 +707,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
             write!(f, [space(), "=>"]);
 
             if is_grouped_call_arg_layout {
-                write!(f, [group(&format_tail_body)]);
+                // Prettier does not print curried arrows as a chain when expanding the last call argument (prettier#14633);
+                // an own-line comment then forces the non-hug arrow layout,
+                // which appends the trailing comma and puts the closing `)` on its own line.
+                // Emulate that outcome on the chain.
+                if should_expand_grouped_tail {
+                    write!(
+                        f,
+                        [group(&format_args!(
+                            indent_if_group_breaks(&format_tail_body, group_id),
+                            FormatTrailingCommas::All,
+                            soft_line_break()
+                        ))
+                        .should_expand(true)]
+                    );
+                } else {
+                    write!(f, [group(&format_tail_body)]);
+                }
             } else {
                 write!(f, [indent_if_group_breaks(&format_tail_body, group_id)]);
             }
@@ -696,18 +737,28 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
     }
 }
 
-fn should_add_parens(body: &AstNode<'_, FunctionBody<'_>>) -> bool {
-    let AstNodes::ExpressionStatement(stmt) = body.statements().first().unwrap().as_ast_nodes()
-    else {
-        unreachable!()
-    };
+/// Whether an own-line comment sits between the arrow's `=>` and its body.
+///
+/// Queried by position (see `Comments::has_own_line_comment_in_range`) because
+/// as a grouped call argument this decision runs again in the re-format pass.
+/// An own-line comment cannot appear before the `=>` (no line terminator is allowed there),
+/// so any hit in this range belongs to the body.
+fn has_own_line_comment_before_body<'a>(
+    arrow: &AstNode<'a, ArrowFunctionExpression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
+    let signature_end =
+        arrow.return_type().map_or_else(|| arrow.params().span().end, |rt| rt.span().end);
+    f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
+}
 
+fn should_add_parens(expression: &AstNode<'_, Expression<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    if matches!(&stmt.expression, Expression::ConditionalExpression(_)) {
+    if matches!(&**expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(stmt.expression()).as_ref(),
+            ExpressionLeftSide::leftmost(expression).as_ref(),
             Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)
@@ -775,33 +826,6 @@ fn format_signature<'a, 'b>(
     })
 }
 
-/// Formats a function body with additional caching depending on [`mode`](Self::mode).
-pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
-    /// The body to format.
-    pub body: &'b AstNode<'a, FunctionBody<'a>>,
-
-    /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
-    pub expression: bool,
-
-    /// If the body should be cached or if the formatter should try to retrieve it from the cache.
-    pub mode: FunctionCacheMode,
-}
-
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatMaybeCachedFunctionBody<'a, '_> {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let content = format_with(|f| {
-            if self.expression
-                && let AstNodes::ExpressionStatement(s) =
-                    &self.body.statements().first().unwrap().as_ast_nodes()
-            {
-                return s.expression().fmt(f);
-            }
-            self.body.fmt(f);
-        });
-        FormatContentWithCacheMode::new(self.body.span, content, self.mode).fmt(f);
-    }
-}
-
 /// Format a sequence expression in an arrow function body that has a leading comment.
 ///
 /// When an arrow function body is a sequence expression (e.g., `() => (a, b, c)`) and has
@@ -829,7 +853,7 @@ fn format_sequence_with_leading_comment<'a, 'b>(
     let is_suppressed = f.comments().is_suppressed(sequence_span.start);
 
     let format_sequence = format_with(move |f| {
-        write!(f, [format_leading_comments(sequence_span), "("]);
+        format_leading_comments_and_open_paren(sequence_span, true, f);
         if is_suppressed {
             write!(f, FormatSuppressedNode(sequence_span));
         } else {

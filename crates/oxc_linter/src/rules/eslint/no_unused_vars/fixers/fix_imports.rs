@@ -54,7 +54,7 @@ impl NoUnusedVars {
             }
             ImportDeclarationSpecifier::ImportSpecifier(_) => {
                 if named_import_count == 1 {
-                    return Self::remove_named_imports_block(fixer, specifiers);
+                    return Self::remove_named_imports_block(fixer, import, specifiers);
                 }
 
                 Self::remove_specifier_from_list(fixer, specifiers, position, specifier)
@@ -73,7 +73,7 @@ impl NoUnusedVars {
                 Symbol::new(ctx, ctx.module_record(), specifier.local().symbol_id());
             !Self::should_skip_symbol(&specifier_symbol)
                 && self.is_ignored(&specifier_symbol).is_none()
-                && !specifier_symbol.is_exported()
+                && !specifier_symbol.is_exported_binding()
                 && !specifier_symbol.has_usages(self)
         })
     }
@@ -112,6 +112,7 @@ impl NoUnusedVars {
     /// Transforms: `import Default, { Unused } from 'module'` -> `import Default from 'module'`
     fn remove_named_imports_block<'a>(
         fixer: RuleFixer<'_, 'a>,
+        import: &ImportDeclaration<'a>,
         specifiers: &[ImportDeclarationSpecifier<'a>],
     ) -> RuleFix {
         let default_specifier = specifiers
@@ -133,11 +134,15 @@ impl NoUnusedVars {
             return fixer.noop();
         };
 
-        let comma_offset = fixer.find_next_token_from(default_spec.span().end, ",").unwrap_or(0);
+        let comma_offset = fixer
+            .find_next_token_within(default_spec.span().end, last_named.span().start, ",")
+            .expect("default and named import specifiers must be separated by a comma");
         let delete_start = default_spec.span().end + comma_offset;
 
-        let brace_offset =
-            fixer.find_next_token_from(last_named.span().end, "}").map_or(0, |i| i + 1);
+        let brace_offset = fixer
+            .find_next_token_within(last_named.span().end, import.span.end, "}")
+            .expect("named import specifiers must be followed by a closing brace")
+            + 1;
         let delete_end = last_named.span().end + brace_offset;
 
         let span = Span::new(delete_start, delete_end);

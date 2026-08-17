@@ -1,10 +1,11 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
@@ -145,7 +146,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectPatternLike<'a, '_> {
 
         match self.layout(f) {
             ObjectPatternLayout::Empty => {
-                write!(f, format_dangling_comments(self.span()).with_block_indent());
+                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
             }
             ObjectPatternLayout::Inline => {
                 write!(f, format_properties);

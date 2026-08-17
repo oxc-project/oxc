@@ -8,21 +8,23 @@ use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Comments, Format, JsFormatter, prelude::*},
+    formatter::{Comments, JsFormatter, prelude::*},
+    parentheses::NeedsParentheses,
     utils::{
         is_long_curried_call,
         member_chain::{
             chain_member::{CallExpressionPosition, ChainMember},
-            groups::{MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
+            groups::{ChainMembers, MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
             simple_argument::SimpleArgument,
         },
     },
     write,
 };
 use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
 use oxc_span::GetSpan;
 
-use super::typecast::is_type_cast_node;
+use super::typecast::classify_type_cast;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -36,7 +38,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         call_expression: &'b AstNode<'a, CallExpression<'a>>,
         f: &JsFormatter<'_, 'a>,
     ) -> Self {
-        let mut chain_members = chain_members_iter(call_expression, f).collect::<Vec<_>>();
+        let mut chain_members = chain_members_iter(call_expression, f).collect::<ChainMembers>();
         chain_members.reverse();
 
         // as explained before, the first group is particular, so we calculate it
@@ -92,7 +94,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                     has_computed_property ||
                     is_factory(&identifier.name) ||
                     // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
-                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
+                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(_))
                         && has_short_name(&identifier.name, f.options().indent_width.value()))
                 }
                 Expression::ThisExpression(_) => true,
@@ -209,7 +211,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
         let has_new_line_or_comment_between =
             self.tail.iter().any(MemberChainGroup::needs_empty_line);
 
-        if self.tail.len() <= 1 && !has_comment && !has_new_line_or_comment_between {
+        // If `tail` is empty (merged into `head`), early-return; any comment lives in `head`
+        if self.tail.is_empty()
+            || (self.tail.len() == 1 && !has_comment && !has_new_line_or_comment_between)
+        {
             return if is_long_curried_call(self.root) {
                 write!(f, [format_one_line]);
             } else {
@@ -431,11 +436,25 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if is_type_cast_node(expression, f).is_some() {
+        if classify_type_cast(expression.span(), f).is_target() {
             return ChainMember::Node(expression).into();
         }
 
-        let member = match expression.as_ast_nodes() {
+        // A nested `ChainExpression` whose parentheses do not survive
+        // (e.g. the head of `(a?.b!)?.c`) is transparent:
+        // flatten through it so the whole chain is laid out as one, matching Prettier's `printMemberChain`.
+        // The type-cast case is already handled above:
+        // on the first iteration `chain` is `expression` itself,
+        // and a `ChainElement` can never be another `ChainExpression`, so no re-check is needed here.
+        let mut node = expression.as_ast_nodes();
+        while let AstNodes::ChainExpression(chain) = node {
+            if chain.needs_parentheses(f) {
+                break;
+            }
+            node = chain.expression().as_ast_nodes();
+        }
+
+        let member = match node {
             AstNodes::CallExpression(expr) => {
                 let callee = expr.callee();
                 let is_chain = matches!(

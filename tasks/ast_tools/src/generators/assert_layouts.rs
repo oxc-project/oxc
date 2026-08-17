@@ -12,11 +12,10 @@ use std::{
 };
 
 use itertools::Itertools;
-use phf_codegen::Map as PhfMapGen;
 use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashMap;
-use syn::{Expr, Ident, parse_str};
+use syn::Ident;
 
 use crate::{
     AST_MACROS_CRATE_PATH, Codegen, Generator,
@@ -26,17 +25,17 @@ use crate::{
         StructOrEnum, TypeDef, TypeId, Visibility,
         extensions::layout::{GetLayout, GetOffset, Layout, Niche, Offset, PlatformLayout},
     },
-    utils::{format_cow, number_lit},
+    utils::{format_cow, generate_phf_map, number_lit},
 };
 
 use super::define_generator;
 
 /// Generator for memory layout assertions.
-pub struct AssertLayouts;
+pub struct AssertLayoutsGenerator;
 
-define_generator!(AssertLayouts);
+define_generator!(AssertLayoutsGenerator);
 
-impl Generator for AssertLayouts {
+impl Generator for AssertLayoutsGenerator {
     /// Calculate layouts of all types.
     fn prepare(&self, schema: &mut Schema, _codegen: &Codegen) {
         LayoutCalculator::calculate(schema);
@@ -793,8 +792,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
 ///
 /// `#[ast]` macro will re-order struct fields in order we provide here.
 fn generate_struct_details(schema: &Schema) -> Output {
-    let mut map = PhfMapGen::new();
-    for struct_def in schema.structs() {
+    let map = generate_phf_map(schema.structs().map(|struct_def| {
         // Get layout indexes of fields in source order.
         // If struct as written already has fields in layout order, then no-reordering is required,
         // in which case output `None`.
@@ -818,11 +816,28 @@ fn generate_struct_details(schema: &Schema) -> Output {
 
         let is_node = struct_def.kind.has_kind;
 
-        let details = quote!( StructDetails { field_order: #field_order, is_node: #is_node } );
+        // Struct can be `#[repr(transparent)]` if it has at most 1 field with non-zero size or non-trivial alignment.
+        // Zero-sized fields (e.g. `PhantomData`) don't affect layout, so don't count them.
+        let mut is_transparent = true;
+        let mut seen_non_trivial_field = false;
 
-        map.entry(struct_def.name(), details.to_string());
-    }
-    let map = parse_str::<Expr>(&map.build().to_string()).unwrap();
+        for field in &struct_def.fields {
+            let layout64 = field.type_def(schema).layout_64();
+            if layout64.size > 0 || layout64.align > 1 {
+                if seen_non_trivial_field {
+                    is_transparent = false;
+                    break;
+                }
+                seen_non_trivial_field = true;
+            }
+        }
+
+        let details = quote! {
+            StructDetails { field_order: #field_order, is_node: #is_node, is_transparent: #is_transparent }
+        };
+
+        (struct_def.name(), details)
+    }));
 
     let code = quote! {
         use crate::ast::StructDetails;

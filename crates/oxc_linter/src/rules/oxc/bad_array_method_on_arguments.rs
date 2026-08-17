@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, MemberExpressionKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -64,18 +64,20 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::IdentifierReference(ident) = node.kind() else {
-            return;
+        let member_expr = match node.kind() {
+            AstKind::ComputedMemberExpression(member_expr) => {
+                MemberExpressionKind::Computed(member_expr)
+            }
+            AstKind::StaticMemberExpression(member_expr) => {
+                MemberExpressionKind::Static(member_expr)
+            }
+            _ => return,
         };
-        if ident.name != "arguments" {
+        if !member_expr.object().is_specific_id("arguments") {
             return;
         }
 
-        let parent = ctx.nodes().parent_node(node.id());
-        let Some(member_expr) = parent.kind().as_member_expression_kind() else {
-            return;
-        };
-        let AstKind::CallExpression(_) = ctx.nodes().parent_kind(parent.id()) else {
+        let AstKind::CallExpression(_) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
         let Some(name) = member_expr.static_property_name() else {

@@ -1,0 +1,146 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-fields.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(Foo)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(AmbientFoo)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "Class(AbstractFoo)",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeImport)",
+        "id": 0,
+        "name": "importedKey",
+        "node": "ImportDefaultSpecifier",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "importedKey",
+            "node_id": 29,
+            "scope_id": 1
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 4,
+            "name": "importedKey",
+            "node_id": 44,
+            "scope_id": 2
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 6,
+            "name": "importedKey",
+            "node_id": 55,
+            "scope_id": 3
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "declaredKey",
+        "node": "VariableDeclarator(declaredKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "declaredKey",
+            "node_id": 25,
+            "scope_id": 1
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "ambientKey",
+        "node": "VariableDeclarator(ambientKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 3,
+            "name": "ambientKey",
+            "node_id": 40,
+            "scope_id": 2
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 3,
+        "name": "abstractKey",
+        "node": "VariableDeclarator(abstractKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 5,
+            "name": "abstractKey",
+            "node_id": 51,
+            "scope_id": 3
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 4,
+        "name": "runtimeKey",
+        "node": "VariableDeclarator(runtimeKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 2,
+            "name": "runtimeKey",
+            "node_id": 33,
+            "scope_id": 1
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 5,
+        "name": "Foo",
+        "node": "Class(Foo)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Class | Ambient)",
+        "id": 6,
+        "name": "AmbientFoo",
+        "node": "Class(AmbientFoo)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 7,
+        "name": "AbstractFoo",
+        "node": "Class(AbstractFoo)",
+        "references": []
+      }
+    ]
+  }
+]

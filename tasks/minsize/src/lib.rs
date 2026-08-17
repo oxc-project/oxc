@@ -131,7 +131,7 @@ pub fn run() -> Result<(), io::Error> {
             format_size(gzip_size(&minified), DECIMAL),
             gzip_targets[file.file_name.as_str()],
             iterations,
-            &file.file_name,
+            file.file_name,
             width = width
         );
         out.push_str(&s);

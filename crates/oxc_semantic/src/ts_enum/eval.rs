@@ -21,6 +21,12 @@ struct EnumEvalCtx<'s> {
     scoping: &'s Scoping,
 }
 
+enum SiblingLookup {
+    Missing,
+    Unknown,
+    Value(ConstantValue),
+}
+
 /// Evaluate all enum member values in a `TSEnumDeclaration` and store them in `Scoping`.
 ///
 /// Runs during semantic analysis so the transformer can look up pre-computed values
@@ -42,6 +48,9 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
     let enum_symbol_id = decl.id.symbol_id.get();
     if let Some(id) = enum_symbol_id {
         scoping.add_enum_body_scope(id, scope_id);
+        if decl.r#const {
+            scoping.add_const_enum(id);
+        }
     }
 
     // Sentinel: the first member with no initializer evaluates to `-1.0 + 1.0 = 0.0`.
@@ -117,9 +126,9 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
 /// Resolve an identifier or member expression to a previously evaluated enum value.
 ///
 /// Uses a three-level lookup strategy for bare identifiers:
-/// 1. Resolved reference — `enum A { X = 1, Y = X }` (X is resolved in the same scope)
-/// 2. Scope binding fallback — handles cases where references aren't yet resolved
-/// 3. Sibling enum fallback — `enum A { X = 1 } enum A { Y = X }` (merged declarations)
+/// 1. Sibling enum fallback — `enum A { X = 1 } enum A { Y = X }` (merged declarations)
+/// 2. Lexical binding — `enum A { X = 1, Y = X }` (X is resolved in the same scope)
+/// 3. Unbound globals — `Infinity` and `NaN`
 ///
 /// Also handles cross-enum member access:
 /// ```ts
@@ -130,34 +139,28 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
 fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<ConstantValue> {
     match expr {
         Expression::Identifier(ident) => {
-            if ident.name == "Infinity" {
-                return Some(ConstantValue::Number(f64::INFINITY));
-            }
-            if ident.name == "NaN" {
-                return Some(ConstantValue::Number(f64::NAN));
-            }
-
-            if let Some(ref_id) = ident.reference_id.get()
-                && let Some(symbol_id) = ctx.scoping.get_reference(ref_id).symbol_id()
-            {
-                return ctx.scoping.get_enum_member_value(symbol_id).cloned();
-            }
-
-            // Fallback: look up as a binding in the current enum body scope.
-            if let Some(symbol_id) =
-                ctx.scoping.get_binding(ctx.scope_id, ident.name.as_str().into())
-                && let Some(value) = ctx.scoping.get_enum_member_value(symbol_id)
-            {
-                return Some(value.clone());
-            }
-
-            // Sibling enum fallback for merged enums.
-            find_in_sibling_enum_scopes(
+            match find_in_sibling_enum_scopes(
                 ident.name.as_str(),
                 ctx.scope_id,
                 ctx.enum_symbol_id,
                 ctx.scoping,
-            )
+            ) {
+                SiblingLookup::Value(value) => return Some(value),
+                SiblingLookup::Unknown => return None,
+                SiblingLookup::Missing => {}
+            }
+
+            if let Some(symbol_id) = resolve_identifier_symbol(ident, ctx) {
+                return ctx.scoping.get_enum_member_value(symbol_id).cloned();
+            }
+
+            match ident.name.as_str() {
+                "Infinity" => return Some(ConstantValue::Number(f64::INFINITY)),
+                "NaN" => return Some(ConstantValue::Number(f64::NAN)),
+                _ => {}
+            }
+
+            None
         }
         Expression::StaticMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
@@ -309,20 +312,29 @@ fn find_in_enum_body_scopes(
 /// enum Foo { A = 1 }
 /// enum Foo { B = A + 1 }  // `A` is in the first Foo's scope, not the current one
 /// ```
+///
+/// Returns [`SiblingLookup::Unknown`] when the member exists but could not be evaluated, so
+/// callers do not fall back to a global with the same name.
 fn find_in_sibling_enum_scopes(
     name: &str,
     current_scope_id: ScopeId,
     enum_symbol_id: Option<SymbolId>,
     scoping: &Scoping,
-) -> Option<ConstantValue> {
-    let body_scopes = scoping.get_enum_body_scopes(enum_symbol_id?)?;
+) -> SiblingLookup {
+    let Some(enum_symbol_id) = enum_symbol_id else { return SiblingLookup::Missing };
+    let Some(body_scopes) = scoping.get_enum_body_scopes(enum_symbol_id) else {
+        return SiblingLookup::Missing;
+    };
+
     for &body_scope in body_scopes {
         if body_scope != current_scope_id
             && let Some(member_sym) = scoping.get_binding(body_scope, name.into())
-            && let Some(value) = scoping.get_enum_member_value(member_sym)
         {
-            return Some(value.clone());
+            return scoping
+                .get_enum_member_value(member_sym)
+                .cloned()
+                .map_or(SiblingLookup::Unknown, SiblingLookup::Value);
         }
     }
-    None
+    SiblingLookup::Missing
 }

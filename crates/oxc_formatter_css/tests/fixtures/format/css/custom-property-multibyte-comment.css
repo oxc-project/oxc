@@ -1,0 +1,4 @@
+:host {
+  /* The diamond corners are mitred at 22.5º to merge any arrow border. */
+  --arrow-size-diagonal: calc((var(--arrow-size) + var(--arrow-base-offset)) * 0.7071);
+}

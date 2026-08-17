@@ -1,10 +1,8 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::Buffer;
+use oxc_span::GetSpan;
 
-use crate::{
-    ast_nodes::AstNode,
-    formatter::{Buffer, prelude::*},
-    write,
-};
+use crate::{ast_nodes::AstNode, formatter::prelude::*, write};
 
 use super::array_element_list::ArrayElementList;
 
@@ -29,10 +27,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
         write!(f, "[");
 
         if self.array.elements().is_empty() {
-            write!(f, format_dangling_comments(self.array.span).with_block_indent());
+            write!(f, format_dangling_comments(self.array.span).with_soft_block_indent());
         } else {
             let group_id = f.group_id("array");
-            let should_expand = !self.options.is_force_flat_mode && should_break(self.array);
+            // A line comment after the last element (e.g. after a trailing hole)
+            // is printed right before the `]` and needs the array to break
+            let has_trailing_line_comment = || {
+                self.array.elements().last().is_some_and(|last| {
+                    f.comments()
+                        .comments_in_range(last.span().end, self.array.span.end)
+                        .iter()
+                        .any(|comment| comment.is_line())
+                })
+            };
+            let should_expand = !self.options.is_force_flat_mode
+                && (should_break(self.array) || has_trailing_line_comment());
 
             let elements = ArrayElementList::new(self.array.elements(), group_id);
 

@@ -1,0 +1,345 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# Comments at positions INSIDE a node's significant span (after its first token),
+# where the sequence-level leading flush cannot claim them.
+# Formerly these were mispositioned, or left the positional cursor behind a
+# later flush point, inverting its gap range and panicking (issue #24927).
+
+"""
+description then comment (the issue #24927 shape)
+"""
+# own-line comment after a description stays before the keyword
+type A {
+  """
+  field description
+  """
+  # comment between description and field name
+  f: String!
+}
+
+"""
+comment on the description's own line stays there (line_suffix)
+""" # inline
+type DescInline {
+  "field desc" # inline
+  f: String
+}
+
+"""
+comment after the keyword stays between keyword and name:
+pulling it backwards across `type` (as Prettier does) would cross a token
+""" type # after-keyword
+DescThenKeywordComment {
+  f: String
+}
+
+# same-line trailing comments in front of formatter literals stay on their line
+# (line_suffix + boundary; Prettier scatters these — attachment artifacts we diverge from)
+type ForwardCrossing # after name
+implements I {
+  f(
+    x: Int # after type
+    = 1
+  ) # after close paren
+  : String
+  g: # after colon
+    String
+}
+
+union ForwardUnion # after name
+= A | B
+
+fragment ForwardFragment # after name
+on T {
+  aliased # after alias
+  : field # before selection set
+  {
+    leaf
+  }
+}
+
+# comments before sigil-prefixed constructs stay before the whole construct
+# (claimed at the span start, not between `@`/`$` and the name)
+query SigilAnchors(
+  """
+  d
+  """
+  # before variable
+  $x: Int
+) {
+  field
+    # before directive
+    @dir(a: $x)
+}
+
+enum E {
+  """
+  enum value description
+  """
+  # comment before the enum value
+  A
+}
+
+input I {
+  """
+  input field description
+  """
+  # comment before the input field name
+  x: Int
+  # comment between `=` and the default value
+  y: Int =
+    # before default
+    1
+}
+
+type WithArguments {
+  f(
+    """
+    argument description
+    """
+    # comment before the argument name
+    x: Int
+  ): String
+  # comment between a field's `:` and its type
+  g:
+    # before type
+    String
+  # comment in an unclaimed position (between the type and its `!`):
+  # falls back to a trailing comment on its own line
+  h: String
+    # before bang
+    !
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# Comments at positions INSIDE a node's significant span (after its first token),
+# where the sequence-level leading flush cannot claim them.
+# Formerly these were mispositioned, or left the positional cursor behind a
+# later flush point, inverting its gap range and panicking (issue #24927).
+
+"""
+description then comment (the issue #24927 shape)
+"""
+# own-line comment after a description stays before the keyword
+type A {
+  """
+  field description
+  """
+  # comment between description and field name
+  f: String!
+}
+
+"""
+comment on the description's own line stays there (line_suffix)
+""" # inline
+type DescInline {
+  "field desc" # inline
+  f: String
+}
+
+"""
+comment after the keyword stays between keyword and name:
+pulling it backwards across `type` (as Prettier does) would cross a token
+"""
+type # after-keyword
+DescThenKeywordComment {
+  f: String
+}
+
+# same-line trailing comments in front of formatter literals stay on their line
+# (line_suffix + boundary; Prettier scatters these — attachment artifacts we diverge from)
+type ForwardCrossing # after name
+implements I {
+  f(
+    x: Int # after type
+    = 1
+  ) # after close paren
+  : String
+  g: # after colon
+  String
+}
+
+union ForwardUnion # after name
+=
+  | A
+  | B
+
+fragment ForwardFragment # after name
+on T {
+  aliased # after alias
+  : field # before selection set
+  {
+    leaf
+  }
+}
+
+# comments before sigil-prefixed constructs stay before the whole construct
+# (claimed at the span start, not between `@`/`$` and the name)
+query SigilAnchors(
+  """
+  d
+  """
+  # before variable
+  $x: Int
+) {
+  field
+    # before directive
+    @dir(a: $x)
+}
+
+enum E {
+  """
+  enum value description
+  """
+  # comment before the enum value
+  A
+}
+
+input I {
+  """
+  input field description
+  """
+  # comment before the input field name
+  x: Int
+  # comment between `=` and the default value
+  y: Int = # before default
+  1
+}
+
+type WithArguments {
+  f(
+    """
+    argument description
+    """
+    # comment before the argument name
+    x: Int
+  ): String
+  # comment between a field's `:` and its type
+  g: # before type
+  String
+  # comment in an unclaimed position (between the type and its `!`):
+  # falls back to a trailing comment on its own line
+  h: String!
+  # before bang
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# Comments at positions INSIDE a node's significant span (after its first token),
+# where the sequence-level leading flush cannot claim them.
+# Formerly these were mispositioned, or left the positional cursor behind a
+# later flush point, inverting its gap range and panicking (issue #24927).
+
+"""
+description then comment (the issue #24927 shape)
+"""
+# own-line comment after a description stays before the keyword
+type A {
+  """
+  field description
+  """
+  # comment between description and field name
+  f: String!
+}
+
+"""
+comment on the description's own line stays there (line_suffix)
+""" # inline
+type DescInline {
+  "field desc" # inline
+  f: String
+}
+
+"""
+comment after the keyword stays between keyword and name:
+pulling it backwards across `type` (as Prettier does) would cross a token
+"""
+type # after-keyword
+DescThenKeywordComment {
+  f: String
+}
+
+# same-line trailing comments in front of formatter literals stay on their line
+# (line_suffix + boundary; Prettier scatters these — attachment artifacts we diverge from)
+type ForwardCrossing # after name
+implements I {
+  f(
+    x: Int # after type
+    = 1
+  ) # after close paren
+  : String
+  g: # after colon
+  String
+}
+
+union ForwardUnion # after name
+=
+  | A
+  | B
+
+fragment ForwardFragment # after name
+on T {
+  aliased # after alias
+  : field # before selection set
+  {
+    leaf
+  }
+}
+
+# comments before sigil-prefixed constructs stay before the whole construct
+# (claimed at the span start, not between `@`/`$` and the name)
+query SigilAnchors(
+  """
+  d
+  """
+  # before variable
+  $x: Int
+) {
+  field
+    # before directive
+    @dir(a: $x)
+}
+
+enum E {
+  """
+  enum value description
+  """
+  # comment before the enum value
+  A
+}
+
+input I {
+  """
+  input field description
+  """
+  # comment before the input field name
+  x: Int
+  # comment between `=` and the default value
+  y: Int = # before default
+  1
+}
+
+type WithArguments {
+  f(
+    """
+    argument description
+    """
+    # comment before the argument name
+    x: Int
+  ): String
+  # comment between a field's `:` and its type
+  g: # before type
+  String
+  # comment in an unclaimed position (between the type and its `!`):
+  # falls back to a trailing comment on its own line
+  h: String!
+  # before bang
+}
+
+===================== End =====================

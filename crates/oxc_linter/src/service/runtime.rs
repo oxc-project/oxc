@@ -19,7 +19,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Box as ArenaBox};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_resolver::Resolver;
@@ -119,7 +119,14 @@ struct ModuleContentDependent<'a> {
     section_contents: SectionContents<'a>,
 }
 
-// Safety: dependent borrows from owner. They're safe to be sent together.
+// SAFETY: `dependent` borrows from `owner` (the `Allocator`). They're safe to send together.
+//
+// One case doesn't fit that "sent together" picture: `ReplaceWith`'s panic path (in `oxc_allocator`)
+// writes a dummy backed by its own dedicated, global `'static` allocator, which does not travel with
+// this bundle. Sending is still sound, because each such dummy allocator is exclusively owned -
+// reachable only through the single value that holds it, and mutated only via `&mut` to that value -
+// so no two threads can touch one. The invariant this really rests on is single-ownership of each
+// referenced allocator, not co-location.
 unsafe impl Send for ModuleContent<'_> {}
 
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
@@ -333,10 +340,11 @@ impl Runtime {
         }
 
         let file_result = file_system.read_to_arena_str(path, allocator).map_err(|e| {
-            Error::new(OxcDiagnostic::error(format!(
+            OxcDiagnostic::error(format!(
                 "Failed to open file {} with error \"{e}\"",
                 path.display()
-            )))
+            ))
+            .into()
         });
         Some(match file_result {
             Ok(source_text) => Ok((source_type, source_text)),
@@ -722,10 +730,13 @@ impl Runtime {
                             && let Err(error) = file_system.write_file(path, new_source_text)
                         {
                             tx_error
-                                .send(vec![Error::new(OxcDiagnostic::error(format!(
-                                    "Failed to write file {} with error \"{error}\"",
-                                    path.display()
-                                )))])
+                                .send(vec![
+                                    OxcDiagnostic::error(format!(
+                                        "Failed to write file {} with error \"{error}\"",
+                                        path.display()
+                                    ))
+                                    .into(),
+                                ])
                                 .unwrap();
                         }
                     });

@@ -1,0 +1,41 @@
+// `:extend()` prints the SAME layout in both positions: inline when it fits,
+// parens on their own lines + one selector per line on overflow.
+// The statement form DIVERGES from Prettier 3.9.5, which always breaks
+// multiple selectors there (see "Known divergences" in AGENTS.md);
+// lines that fit match Prettier as-is.
+.a {
+  &:extend(.b);
+}
+// fits -> inline (Prettier: always one per line)
+.c {
+  &:extend(.d, .e);
+}
+.f {
+  &:extend(.g all, .h);
+}
+.i {
+  &:extend(.this-is-a-really-long-selector-name-that-overflows-the-print-width);
+}
+// overflow -> parens on their own lines, one selector per line
+// (same shape as Prettier's break, prettier#19550)
+.j {
+  &:extend(.first-long-selector-name-goes-here-xx, .second-long-selector-name-here);
+}
+// `all` breaks together with its selector, like one more descendant term
+.k {
+  &:extend(.one-really-long-single-selector .with-descendant-part-making-it-overflow all);
+}
+// a source `;` is not required
+.l {
+  &:extend(.b)
+}
+// selector-position `:extend()` normalizes spacing (matching Prettier)
+.x:extend( .a ,   .b ) {
+  color: red;
+}
+.z:extend(.g   all) {
+  color: red;
+}
+.long:extend(.first-long-selector-name-goes-here, .second-long-selector-name-here) {
+  color: green;
+}

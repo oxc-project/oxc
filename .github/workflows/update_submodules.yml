@@ -1,4 +1,3 @@
-# NOTE: Prettier version is now pinned to v3.7.0 (not updated by this workflow)
 name: Update Submodules
 
 permissions: {}
@@ -48,7 +47,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: oxc-project/setup-node@4c588e9266bd930b6ddc34307df0659ed511d187 # v1.3.1
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
           cache-key: conformance
@@ -128,14 +127,12 @@ jobs:
           TEST262_CURRENT=$(grep 'const TEST262_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
           BABEL_CURRENT=$(grep 'const BABEL_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
           TYPESCRIPT_CURRENT=$(grep 'const TYPESCRIPT_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
-          # PRETTIER_CURRENT=$(grep 'const PRETTIER_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
           ESTREE_CONFORMANCE_CURRENT=$(grep 'const ESTREE_CONFORMANCE_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
           NODE_COMPAT_TABLE_CURRENT=$(grep 'const NODE_COMPAT_TABLE_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
 
           echo "TEST262_CURRENT=$TEST262_CURRENT" >> $GITHUB_OUTPUT
           echo "BABEL_CURRENT=$BABEL_CURRENT" >> $GITHUB_OUTPUT
           echo "TYPESCRIPT_CURRENT=$TYPESCRIPT_CURRENT" >> $GITHUB_OUTPUT
-          # echo "PRETTIER_CURRENT=$PRETTIER_CURRENT" >> $GITHUB_OUTPUT
           echo "ESTREE_CONFORMANCE_CURRENT=$ESTREE_CONFORMANCE_CURRENT" >> $GITHUB_OUTPUT
           echo "NODE_COMPAT_TABLE_CURRENT=$NODE_COMPAT_TABLE_CURRENT" >> $GITHUB_OUTPUT
 
@@ -143,7 +140,6 @@ jobs:
           echo "  TEST262: $TEST262_CURRENT"
           echo "  BABEL: $BABEL_CURRENT"
           echo "  TYPESCRIPT: $TYPESCRIPT_CURRENT"
-          # echo "  PRETTIER: $PRETTIER_CURRENT"
           echo "  ESTREE_CONFORMANCE: $ESTREE_CONFORMANCE_CURRENT"
           echo "  NODE_COMPAT_TABLE: $NODE_COMPAT_TABLE_CURRENT"
 
@@ -156,8 +152,6 @@ jobs:
           BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
           TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
           TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
-          # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
-          # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
           ESTREE_CONFORMANCE_LATEST: ${{ steps.get-shas.outputs.ESTREE_CONFORMANCE_LATEST }}
           ESTREE_CONFORMANCE_CURRENT: ${{ steps.current-shas.outputs.ESTREE_CONFORMANCE_CURRENT }}
           NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
@@ -184,12 +178,6 @@ jobs:
             update_summary="${update_summary}- TypeScript: \`${TYPESCRIPT_CURRENT:0:7}\` → \`${TYPESCRIPT_LATEST:0:7}\`\n"
             echo "TYPESCRIPT needs update: $TYPESCRIPT_CURRENT -> $TYPESCRIPT_LATEST"
           fi
-
-          # if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
-          #   updates_needed=true
-          #   update_summary="${update_summary}- prettier: \`${PRETTIER_CURRENT:0:7}\` → \`${PRETTIER_LATEST:0:7}\`\n"
-          #   echo "PRETTIER needs update: $PRETTIER_CURRENT -> $PRETTIER_LATEST"
-          # fi
 
           if [ "$ESTREE_CONFORMANCE_LATEST" != "$ESTREE_CONFORMANCE_CURRENT" ]; then
             updates_needed=true
@@ -220,13 +208,11 @@ jobs:
           TEST262_LATEST: ${{ steps.get-shas.outputs.TEST262_LATEST }}
           BABEL_LATEST: ${{ steps.get-shas.outputs.BABEL_LATEST }}
           TYPESCRIPT_LATEST: ${{ steps.get-shas.outputs.TYPESCRIPT_LATEST }}
-          # PRETTIER_LATEST: ${{ steps.get-shas.outputs.PRETTIER_LATEST }}
           ESTREE_CONFORMANCE_LATEST: ${{ steps.get-shas.outputs.ESTREE_CONFORMANCE_LATEST }}
           NODE_COMPAT_TABLE_LATEST: ${{ steps.get-shas.outputs.NODE_COMPAT_TABLE_LATEST }}
           TEST262_CURRENT: ${{ steps.current-shas.outputs.TEST262_CURRENT }}
           BABEL_CURRENT: ${{ steps.current-shas.outputs.BABEL_CURRENT }}
           TYPESCRIPT_CURRENT: ${{ steps.current-shas.outputs.TYPESCRIPT_CURRENT }}
-          # PRETTIER_CURRENT: ${{ steps.current-shas.outputs.PRETTIER_CURRENT }}
           ESTREE_CONFORMANCE_CURRENT: ${{ steps.current-shas.outputs.ESTREE_CONFORMANCE_CURRENT }}
           NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
         run: |
@@ -247,11 +233,6 @@ jobs:
             sed -i "s/const TYPESCRIPT_SHA = \"$TYPESCRIPT_CURRENT\";/const TYPESCRIPT_SHA = \"$TYPESCRIPT_LATEST\";/g" "$js_script"
             echo "Updated TYPESCRIPT_SHA"
           fi
-
-          # if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
-          #   sed -i "s/const PRETTIER_SHA = \"$PRETTIER_CURRENT\";/const PRETTIER_SHA = \"$PRETTIER_LATEST\";/g" "$js_script"
-          #   echo "Updated PRETTIER_SHA"
-          # fi
 
           if [ "$ESTREE_CONFORMANCE_LATEST" != "$ESTREE_CONFORMANCE_CURRENT" ]; then
             sed -i "s/const ESTREE_CONFORMANCE_SHA = \"$ESTREE_CONFORMANCE_CURRENT\";/const ESTREE_CONFORMANCE_SHA = \"$ESTREE_CONFORMANCE_LATEST\";/g" "$js_script"
@@ -280,6 +261,16 @@ jobs:
         env:
           UPDATE_SNAPSHOT: 1
         run: just coverage
+
+      # `just coverage` runs the default task, which skips the runtime suite
+      # (it needs Node). Run it explicitly so `runtime.snap` is regenerated
+      # against the new test262 pin; a stale sha header aborts monitor-oxc's
+      # Test262 job on every run.
+      - name: Update runtime snapshot
+        if: steps.check-updates.outputs.updates_needed == 'true'
+        env:
+          UPDATE_SNAPSHOT: 1
+        run: cargo coverage runtime
 
       - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: app-token

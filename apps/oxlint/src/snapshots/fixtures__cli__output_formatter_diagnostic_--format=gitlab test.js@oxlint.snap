@@ -7,19 +7,6 @@ working directory: fixtures/cli/output_formatter_diagnostic
 ----------
 [
   {
-    "description": "`debugger` statement is not allowed",
-    "check_name": "eslint(no-debugger)",
-    "fingerprint": "9333a3278325994",
-    "severity": "critical",
-    "location": {
-      "path": "apps/oxlint/test.js",
-      "lines": {
-        "begin": 5,
-        "end": 5
-      }
-    }
-  },
-  {
     "description": "Function 'foo' is declared but never used.",
     "check_name": "eslint(no-unused-vars)",
     "fingerprint": "b1e9b343a9c1e457",
@@ -42,6 +29,19 @@ working directory: fixtures/cli/output_formatter_diagnostic
       "lines": {
         "begin": 1,
         "end": 1
+      }
+    }
+  },
+  {
+    "description": "`debugger` statement is not allowed",
+    "check_name": "eslint(no-debugger)",
+    "fingerprint": "9333a3278325994",
+    "severity": "critical",
+    "location": {
+      "path": "apps/oxlint/test.js",
+      "lines": {
+        "begin": 5,
+        "end": 5
       }
     }
   }

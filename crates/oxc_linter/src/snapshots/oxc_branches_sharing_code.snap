@@ -181,22 +181,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the shared code outside the `if` statement to reduce code duplication
 
   ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
-    ╭─[branches_sharing_code.tsx:5:16]
-  4 │             doA();
-  5 │         } else if (otherFlag) {
-    ·                ─┬
-    ·                 ╰── `if` statement declared here
-  6 │             console.log('start');
-    ·             ─────────────────────
-  7 │             doB();
-  8 │         } else {
-  9 │             console.log('start');
-    ·             ─────────────────────
- 10 │             doC();
-    ╰────
-  help: Move the shared code outside the `if` statement to reduce code duplication
-
-  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
     ╭─[branches_sharing_code.tsx:2:9]
   1 │ 
   2 │         if (x === 1) {
@@ -206,22 +190,6 @@ source: crates/oxc_linter/src/tester.rs
     ·             ────────
   4 │             return 1;
   5 │         } else if (x === 2) {
-  6 │             setup();
-    ·             ────────
-  7 │             return 2;
-  8 │         } else {
-  9 │             setup();
-    ·             ────────
- 10 │             return 3;
-    ╰────
-  help: Move the shared code outside the `if` statement to reduce code duplication
-
-  ⚠ oxc(branches-sharing-code): All `if` blocks contain the same code at the start
-    ╭─[branches_sharing_code.tsx:5:16]
-  4 │             return 1;
-  5 │         } else if (x === 2) {
-    ·                ─┬
-    ·                 ╰── `if` statement declared here
   6 │             setup();
     ·             ────────
   7 │             return 2;

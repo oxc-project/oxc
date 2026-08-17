@@ -1,7 +1,6 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
@@ -10,8 +9,11 @@ use crate::{
     formatter::{
         JsFormatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
-    print::semicolon::OptionalSemicolon,
-    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
+    print::semicolon::{FormatContentWithSemicolon, OptionalSemicolon},
+    utils::{
+        object::should_preserve_string_quote,
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
+    },
     write,
 };
 
@@ -31,25 +33,34 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ImportPhase {
     }
 }
 
-pub fn format_import_and_export_source_with_clause<'a>(
+/// Formats `prefix` followed by the module source and its optional with-clause,
+/// then the semicolon, moving a same-line trailing comment behind it.
+pub fn format_source_with_clause_and_semicolon<'a>(
+    prefix: &impl Format<'a, JsFormatContext<'a>>,
     source: &AstNode<'a, StringLiteral>,
     with_clause: Option<&AstNode<'a, WithClause>>,
+    span_end: u32,
     f: &mut JsFormatter<'_, 'a>,
 ) {
-    source.fmt(f);
+    let content = format_with(|f| {
+        prefix.fmt(f);
+        source.fmt(f);
 
-    if let Some(with_clause) = with_clause {
-        if f.comments().has_comment_before(with_clause.span.start) {
-            write!(f, [space()]);
+        if let Some(with_clause) = with_clause {
+            if f.comments().has_comment_before(with_clause.span.start) {
+                write!(f, [space()]);
+            }
+
+            write!(f, [with_clause]);
         }
-
-        write!(f, [with_clause]);
-    }
+    });
+    let content_end = with_clause.map_or(source.span.end, |with| with.span.end);
+    write!(f, FormatContentWithSemicolon::new(&content, content_end, span_end));
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let decl = &format_with(|f| {
+        let prefix = format_with(|f| {
             write!(f, ["import", space()]);
             if let Some(phase) = self.phase() {
                 write!(f, phase);
@@ -60,21 +71,28 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
             if let Some(specifiers) = self.specifiers() {
                 write!(f, [specifiers, space(), "from", space()]);
             }
-
-            format_import_and_export_source_with_clause(self.source(), self.with_clause(), f);
-
-            write!(f, [OptionalSemicolon]);
+        });
+        let decl = format_with(|f| {
+            format_source_with_clause_and_semicolon(
+                &prefix,
+                self.source(),
+                self.with_clause(),
+                self.span.end,
+                f,
+            );
         });
 
         if f.options().sort_imports.is_some() {
-            write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)]);
+            write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), &decl)]);
         } else {
             write!(f, decl);
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'a, ArenaVec<'a, ImportDeclarationSpecifier<'a>>>
+{
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let mut specifiers_iter = self.iter().peekable();
 
@@ -181,10 +199,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.with_entries.iter().any(|attribute| {
-                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string) if {
-                    let quote_less_content = f.source_text().text_for(&string.span.shrink(1));
-                    !is_identifier_name_patched(quote_less_content)
-                })
+                matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)
+                    if should_preserve_string_quote(string, f))
             });
 
             f.context_mut().push_quote_needed(quote_needed);
@@ -204,7 +220,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ImportAttribute<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.is_empty() {
             return write!(f, "{}");

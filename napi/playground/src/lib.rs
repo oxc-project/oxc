@@ -30,9 +30,9 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties,
-    QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
-    default_internal_patterns,
+    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, OperatorPosition,
+    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
+    default_groups, default_internal_patterns,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
@@ -222,6 +222,7 @@ impl Oxc {
             allow_return_outside_function: parser_options.allow_return_outside_function,
             preserve_parens: parser_options.preserve_parens,
             allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
+            ..ParseOptions::default()
         };
         let ParserReturn { program, diagnostics, module_record, .. } =
             Parser::new(allocator, source_text, source_type).with_options(parser_options).parse();
@@ -342,7 +343,7 @@ impl Oxc {
             options.mangle.map(|o| MangleOptions {
                 top_level: Some(o.top_level),
                 keep_names: MangleOptionsKeepNames { function: o.keep_names, class: o.keep_names },
-                debug: false,
+                ..MangleOptions::default()
             })
         } else {
             None
@@ -360,7 +361,7 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         let mut comments = convert_utf8_to_utf16(source_text, program, module_record, &mut []);
 
-        self.ast_json = if source_type.is_javascript() {
+        if source_type.is_javascript() {
             // Add hashbang to start of comments
             if let Some(hashbang) = &program.hashbang {
                 comments.insert(
@@ -373,11 +374,10 @@ impl Oxc {
                     },
                 );
             }
+        }
 
-            program.to_pretty_estree_js_json_with_fixes(false)
-        } else {
-            program.to_pretty_estree_ts_json_with_fixes(false)
-        };
+        let include_ts_fields = !source_type.is_javascript();
+        self.ast_json = program.to_pretty_estree_json_with_fixes(include_ts_fields, false);
         self.comments = comments;
     }
 
@@ -517,6 +517,12 @@ impl Oxc {
             }
         }
 
+        if let Some(ref operator_position) = options.experimental_operator_position
+            && let Ok(position) = operator_position.parse::<OperatorPosition>()
+        {
+            format_options.operator_position = position;
+        }
+
         if let Some(ref sort_imports_config) = options.sort_imports {
             let order = sort_imports_config
                 .order
@@ -626,24 +632,18 @@ impl Oxc {
                 source_text,
                 source_type,
                 format_options.clone(),
-                None,
             ) {
                 Ok(formatted) => formatted.document().display(source_text).to_string(),
                 Err(err) => err.to_string(),
             };
-            self.formatter_formatted_text = match oxc_formatter::format(
-                &allocator,
-                source_text,
-                source_type,
-                format_options,
-                None,
-            ) {
-                Ok(formatted) => match formatted.print() {
-                    Ok(printer) => printer.into_code(),
+            self.formatter_formatted_text =
+                match oxc_formatter::format(&allocator, source_text, source_type, format_options) {
+                    Ok(formatted) => match formatted.print() {
+                        Ok(printer) => printer.into_code(),
+                        Err(err) => err.to_string(),
+                    },
                     Err(err) => err.to_string(),
-                },
-                Err(err) => err.to_string(),
-            };
+                };
         }
     }
 

@@ -87,12 +87,12 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    AstBuilder,
-    ast::{Expression, Program},
+    ast::{Expression, Program, Statement},
+    builder::{AstBuilder, GetAstBuilder},
 };
-use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
@@ -102,6 +102,7 @@ use crate::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
     context::{Context, StatementContext},
+    diagnostics::ParserDiagnostic,
     error_handler::FatalError,
     lexer::Lexer,
     module_record::ModuleRecordBuilder,
@@ -176,7 +177,7 @@ pub struct ParserReturn<'a> {
     /// Lexed tokens in source order.
     ///
     /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
-    pub tokens: oxc_allocator::Vec<'a, Token>,
+    pub tokens: ArenaVec<'a, Token>,
 
     /// Whether the parser panicked and terminated early.
     ///
@@ -231,6 +232,19 @@ pub struct ParseOptions {
     ///
     /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
     pub allow_v8_intrinsics: bool,
+
+    /// Precompute hashes for identifier names (`Ident`s) in the AST.
+    ///
+    /// Precomputed hashes speed up `Ident`-keyed hash map operations in semantic analysis
+    /// and later compilation stages, at a small cost to parsing speed.
+    ///
+    /// Only disable this for parse-only pipelines that never rely on `Ident` hashing, such as
+    /// parse + serialize or formatting. Unhashed `Ident`s do not compare equal to hashed ones,
+    /// so semantic analysis and anything else relying on `Ident` hashing must not run on an AST
+    /// parsed with this option disabled.
+    ///
+    /// Default: `true`
+    pub enable_ident_hashes: bool,
 }
 
 impl Default for ParseOptions {
@@ -241,6 +255,7 @@ impl Default for ParseOptions {
             allow_return_outside_function: false,
             preserve_parens: true,
             allow_v8_intrinsics: false,
+            enable_ident_hashes: true,
         }
     }
 }
@@ -392,7 +407,7 @@ mod parser_parse {
         /// use oxc_parser::Parser;
         /// use oxc_span::SourceType;
         ///
-        /// let src = "let x = 1 + 2;";
+        /// let src = "1 + 2";
         /// let allocator = Allocator::new();
         /// let source_type = SourceType::default();
         ///
@@ -597,16 +612,18 @@ struct ParserImpl<'a, C: ParserConfig> {
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
-    errors: Vec<OxcDiagnostic>,
+    ///
+    /// Stored in deferred (unmaterialized) form and materialized once at parse exit.
+    errors: Vec<ParserDiagnostic<'a>>,
 
     /// Errors that are only valid if the file is determined to be a Script (not a Module).
     /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
     /// until we know whether the file is ESM or Script.
     /// If resolved to Module → discard these errors.
     /// If resolved to Script → emit these errors.
-    deferred_script_errors: Vec<OxcDiagnostic>,
+    deferred_script_errors: Vec<ParserDiagnostic<'a>>,
 
-    fatal_error: Option<FatalError>,
+    fatal_error: Option<FatalError<'a>>,
 
     /// The current parsing token
     token: Token,
@@ -681,7 +698,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 self.error(fatal_error.error);
             }
 
-            program = Program::dummy(self.ast.allocator);
+            program = Program::dummy(self.allocator());
             program.source_type = self.source_type;
             program.source_text = self.source_text;
         }
@@ -702,14 +719,14 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             && let Some(error) = self.flow_error()
         {
             is_flow_language = true;
-            errors.push(error);
+            errors.push(error.into_diagnostic());
         }
         let (module_record, mut module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
             errors
                 .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
-            errors.append(&mut self.lexer.errors);
-            errors.append(&mut self.errors);
+            errors.extend(self.lexer.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
+            errors.extend(self.errors.drain(..).map(ParserDiagnostic::into_diagnostic));
             errors.append(&mut module_record_errors);
         }
         let irregular_whitespaces =
@@ -721,20 +738,24 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
                 // but emit deferred module errors (HTML comments are invalid in ESM)
                 program.source_type = source_type.with_module(true);
-                errors.append(&mut self.lexer.deferred_module_errors);
+                errors.extend(
+                    self.lexer
+                        .deferred_module_errors
+                        .drain(..)
+                        .map(ParserDiagnostic::into_diagnostic),
+                );
             } else {
                 // Resolved to Script - emit deferred script errors
                 // discard deferred module errors (HTML comments are valid in scripts)
                 program.source_type = source_type.with_script(true);
-                errors.extend(self.deferred_script_errors);
+                errors.extend(
+                    self.deferred_script_errors.into_iter().map(ParserDiagnostic::into_diagnostic),
+                );
             }
         }
 
-        let tokens = if panicked {
-            ArenaVec::new_in(self.ast.allocator)
-        } else {
-            self.lexer.finalize_tokens()
-        };
+        let tokens =
+            if panicked { ArenaVec::new_in(&self.ast) } else { self.lexer.finalize_tokens() };
 
         program.comments = self.lexer.trivia_builder.comments;
 
@@ -753,11 +774,20 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
         let expr = self.parse_expr();
+        if !self.at(Kind::Eof) {
+            self.set_unexpected();
+        }
         if let Some(FatalError { error, .. }) = self.fatal_error.take() {
-            return Err(error.into());
+            return Err(error.into_diagnostic().into());
         }
         self.check_unfinished_errors();
-        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Diagnostics>();
+        let errors = self
+            .lexer
+            .errors
+            .into_iter()
+            .chain(self.errors)
+            .map(ParserDiagnostic::into_diagnostic)
+            .collect::<Diagnostics>();
         if !errors.is_empty() {
             return Err(errors);
         }
@@ -779,7 +809,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         // we need to reparse statements that were originally parsed with `await` as identifier.
         // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
         // await expression with regex when ESM is detected.
-        if self.source_type.is_unambiguous()
+        // Preserve a fatal error from the initial parse instead of rewinding past it.
+        if self.fatal_error.is_none()
+            && self.source_type.is_unambiguous()
             && self.module_record_builder.has_module_syntax()
             && !self.state.potential_await_reparse.is_empty()
         {
@@ -787,16 +819,16 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
-        // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`.
-        let comments = self.ast.vec();
-        self.ast.program(
+        Program::new(
             span,
             self.source_type,
             self.source_text,
-            comments,
+            // Populated at the end of `parse` after `flow_error` has read from `trivia_builder.comments`
+            [],
             hashbang,
             directives,
             statements,
+            self,
         )
     }
 
@@ -805,10 +837,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// In unambiguous mode, statements like `await /x/u` are initially parsed as
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(
-        &mut self,
-        statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
-    ) {
+    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
         // Token stream is already complete from the first parse.
         // Reparsing here is only to patch AST nodes, so keep the original token stream.
         let original_tokens =
@@ -854,7 +883,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&mut self) -> Option<OxcDiagnostic> {
+    fn flow_error(&mut self) -> Option<ParserDiagnostic<'a>> {
         if !self.source_type.is_javascript() {
             return None;
         }
@@ -879,7 +908,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
     /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
     #[cold]
-    fn overlong_error(&self) -> Option<OxcDiagnostic> {
+    fn overlong_error(&self) -> Option<ParserDiagnostic<'a>> {
         if self.source_text.len() > MAX_LEN {
             return Some(diagnostics::overlong_source());
         }
@@ -888,7 +917,23 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
     #[inline]
     fn alloc<T>(&self, value: T) -> ArenaBox<'a, T> {
-        self.ast.alloc(value)
+        ArenaBox::new_in(value, self)
+    }
+}
+
+impl<'a, C: ParserConfig> GetAllocator<'a> for ParserImpl<'a, C> {
+    #[inline]
+    fn allocator(&self) -> &'a Allocator {
+        self.ast.allocator()
+    }
+}
+
+impl<'a, C: ParserConfig> GetAstBuilder<'a> for ParserImpl<'a, C> {
+    type Builder = AstBuilder<'a>;
+
+    #[inline]
+    fn builder(&self) -> &AstBuilder<'a> {
+        &self.ast
     }
 }
 
@@ -896,7 +941,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::ast::{CommentKind, Expression, Statement};
+    use oxc_ast::ast::{
+        CommentKind, Expression, Statement, TSNamespaceDeclarationBody, TSNamespaceDeclarationKind,
+    };
     use oxc_span::GetSpan;
 
     use super::*;
@@ -919,6 +966,15 @@ mod test {
         let source = "a";
         let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
         assert!(matches!(expr, Expression::Identifier(_)));
+    }
+
+    #[test]
+    fn parse_expression_rejects_trailing_tokens() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        for source in ["a b", "a;", "let x = 1"] {
+            assert!(Parser::new(&allocator, source, source_type).parse_expression().is_err());
+        }
     }
 
     #[test]
@@ -947,9 +1003,40 @@ mod test {
     fn ts_module_declaration() {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new("module.ts")).unwrap();
-        let source = "declare module 'test'\n";
+        let source =
+            "declare module 'test'; namespace Foo.Bar {} module Baz {} declare module 'raw' {}";
         let ret = Parser::new(&allocator, source, source_type).parse();
-        assert_eq!(ret.diagnostics.len(), 0);
+        assert!(ret.diagnostics.is_empty());
+
+        let Statement::TSExternalModuleDeclaration(external) = &ret.program.body[0] else {
+            panic!("expected external module declaration");
+        };
+        assert_eq!(external.id.value, "test");
+        assert!(external.body.is_none());
+        assert!(external.declare);
+
+        let Statement::TSNamespaceDeclaration(namespace) = &ret.program.body[1] else {
+            panic!("expected namespace declaration");
+        };
+        assert_eq!(namespace.id.name, "Foo");
+        assert_eq!(namespace.kind, TSNamespaceDeclarationKind::Namespace);
+        let TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner) = &namespace.body else {
+            panic!("expected dotted namespace declaration");
+        };
+        assert_eq!(inner.id.name, "Bar");
+
+        let Statement::TSNamespaceDeclaration(module) = &ret.program.body[2] else {
+            panic!("expected identifier module declaration");
+        };
+        assert_eq!(module.id.name, "Baz");
+        assert_eq!(module.kind, TSNamespaceDeclarationKind::Module);
+
+        let Statement::TSExternalModuleDeclaration(external) = &ret.program.body[3] else {
+            panic!("expected external module declaration");
+        };
+        assert_eq!(external.id.value, "raw");
+        assert!(external.body.is_some());
+        assert!(external.declare);
     }
 
     #[test]

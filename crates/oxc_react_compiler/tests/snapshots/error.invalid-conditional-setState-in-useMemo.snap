@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.invalid-conditional-setState-in-useMemo.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Calling setState from useMemo may trigger an infinite loop", labels: [LabeledSpan { label: Some("Found setState() within useMemo()"), span: Span { start: 167, end: 178 }, primary: true }], help: Some("Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("RenderSetState") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-render") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Calling setState from useMemo may trigger an infinite loop", labels: [LabeledSpan { label: Some("Found setState() within useMemo()"), span: Span { start: 192, end: 200 }, primary: true }], help: Some("Each time the memo callback is evaluated it will change state. This can cause a memoization dependency to change, running the memo function again and causing an infinite loop. Instead of setting state in useMemo(), prefer deriving the value during render"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("RenderSetState") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-render") } }
+
+No changes.

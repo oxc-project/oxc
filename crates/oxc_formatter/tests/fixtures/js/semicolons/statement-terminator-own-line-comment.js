@@ -1,0 +1,31 @@
+// An own-line comment between a statement's content and its distant `;`
+// terminator stays own-line: it leads the next statement (or ends the block),
+// and never drags a single-statement body onto its own line.
+
+if (1) foo
+
+// leading of the next statement
+;[].sort()
+
+if (1) foo
+
+// a run of own-line comments
+// escapes as a whole
+;[].sort()
+
+function f() {
+  if (1) foo
+  // stays at the end of the block
+  ;
+}
+
+function g() {
+  return
+  // stays at the end of the block
+  ;
+}
+
+function h() {
+  return; // stays behind the terminator
+  /* stays at the end of the block */
+}

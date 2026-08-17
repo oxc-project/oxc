@@ -2,7 +2,7 @@ use std::{
     fs,
     path::Path,
     sync::{Arc, mpsc},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use cow_utils::CowUtils;
@@ -14,7 +14,8 @@ use super::command::OutputMode;
 use crate::core::{FormatResult, FormatStrategy, SourceFormatter, utils};
 
 pub enum SuccessResult {
-    Changed(String),
+    /// Path with elapsed time, only measured in check mode
+    Changed(String, Option<Duration>),
     Unchanged,
 }
 
@@ -108,12 +109,8 @@ impl FormatService {
                         .cow_replace('\\', "/")
                         .to_string();
 
-                    if matches!(self.format_mode, OutputMode::Check) {
-                        let elapsed = start_time.unwrap().elapsed().as_millis();
-                        SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
-                    } else {
-                        SuccessResult::Changed(display_path)
-                    }
+                    let elapsed = start_time.map(|start| start.elapsed());
+                    SuccessResult::Changed(display_path, elapsed)
                 }
                 _ => SuccessResult::Unchanged,
             };

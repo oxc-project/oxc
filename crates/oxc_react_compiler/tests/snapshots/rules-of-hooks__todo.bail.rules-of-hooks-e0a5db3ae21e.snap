@@ -1,0 +1,37 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/todo.bail.rules-of-hooks-e0a5db3ae21e.js
+---
+// @skip
+// Unsupported input
+// Valid because hooks can call hooks.
+function useHook() {
+	useState();
+}
+const whatever = function useHook() {
+	useState();
+};
+const useHook1 = () => {
+	useState();
+};
+let useHook2 = () => {
+	return useState();
+};
+useHook2 = () => {
+	useState();
+};
+({ useHook: () => {
+	useState();
+} });
+({ useHook() {
+	useState();
+} });
+const { useHook3 = () => {
+	useState();
+} } = {};
+({useHook = () => {
+	useState();
+}} = {});
+Namespace.useHook = () => {
+	useState();
+};

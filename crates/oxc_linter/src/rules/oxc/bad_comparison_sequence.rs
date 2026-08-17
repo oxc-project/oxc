@@ -4,12 +4,20 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn bad_comparison_sequence_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Bad comparison sequence").with_help("Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)").with_label(span)
+fn bad_comparison_sequence_diagnostic(
+    comparison_result: Span,
+    compared_against: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Bad comparison sequence")
+        .with_help("Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)")
+        .with_labels([
+            comparison_result.label("This comparison expression produces a boolean"),
+            compared_against.label("That boolean is then compared with this operand"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,8 +60,10 @@ impl Rule for BadComparisonSequence {
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };
-        if is_bad_comparison(expr) && has_no_bad_comparison_in_parents(node, ctx) {
-            ctx.diagnostic(bad_comparison_sequence_diagnostic(expr.span));
+        if let Some((comparison_result, compared_against)) = bad_comparison_sequence(expr)
+            && has_no_bad_comparison_in_parents(node, ctx)
+        {
+            ctx.diagnostic(bad_comparison_sequence_diagnostic(comparison_result, compared_against));
         }
     }
 }
@@ -72,27 +82,23 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
             return true;
         }
 
-        if matches!(ancestor_kind, AstKind::BinaryExpression(expr) if is_bad_comparison(expr)) {
+        if matches!(ancestor_kind, AstKind::BinaryExpression(expr) if bad_comparison_sequence(expr).is_some())
+        {
             return false;
         }
     }
     false
 }
 
-fn is_bad_comparison(expr: &BinaryExpression) -> bool {
-    if expr.operator.is_equality()
-        && matches!(&expr.left, Expression::BinaryExpression(left_expr) if left_expr.operator.is_equality())
-    {
-        return true;
-    }
+fn bad_comparison_sequence(expr: &BinaryExpression) -> Option<(Span, Span)> {
+    let Expression::BinaryExpression(left_expr) = &expr.left else {
+        return None;
+    };
 
-    if expr.operator.is_compare()
-        && matches!(&expr.left, Expression::BinaryExpression(left_expr) if left_expr.operator.is_compare())
-    {
-        return true;
-    }
+    let same_comparison_kind = (expr.operator.is_equality() && left_expr.operator.is_equality())
+        || (expr.operator.is_compare() && left_expr.operator.is_compare());
 
-    false
+    same_comparison_kind.then_some((left_expr.span, expr.right.span()))
 }
 
 #[test]

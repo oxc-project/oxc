@@ -708,7 +708,7 @@ impl Kind {
             Is => "is",
             KeyOf => "keyof",
             Module => "module",
-            Namespace => "namaespace",
+            Namespace => "namespace",
             Never => "never",
             Out => "out",
             Require => "require",

@@ -29,7 +29,7 @@ fn test_fold_one_child_blocks() {
     test_same("function f(){try{foo()}catch(e){bar(e)}finally{baz()}}");
 
     // Try it out with switch statements
-    test_same("function f(){switch(x){case 1:break}}");
+    test("function f(){switch(x){case 1:break}}", "function f(){x;}");
 
     // Do while loops stay in a block if that's where they started
     test(
@@ -53,13 +53,22 @@ fn test_fold_one_child_blocks() {
     test("if(e1){with(e2){if(e3){foo()}}}else{bar()}", "if(e1)with(e2)e3&&foo();else bar()");
 
     // test("if(a||b){if(c||d){var x;}}", "if(a||b)if(c||d)var x");
-    test("if(x){ if(y){var x;}else{var z;} }", "if(x)if(y)var x;else var z");
+    test(
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } }",
+    );
 
     // NOTE - technically we can remove the blocks since both the parent
     // and child have elses. But we don't since it causes ambiguities in
     // some cases where not all descendent ifs having elses
-    test("if(x){ if(y){var x;}else{var z;} }else{var w}", "if(x)if(y)var x;else var z;else var w");
-    test("if (x) {var x;}else { if (y) { var y;} }", "if(x)var x;else if(y)var y");
+    test(
+        "v = function(x, y) { if(x) { if(y) { var x } else { var z } } else { var w } }",
+        "v = function(x, y) { if(x) { if(y) var x; else var z } else var w }",
+    );
+    test(
+        "v = function(x, y) { if(x) { var x } else { if(y) { var y } } }",
+        "v = function(x, y) { if(x) var x; else if(y) var y }",
+    );
 
     // Here's some of the ambiguous cases
     test(
@@ -1020,6 +1029,56 @@ fn test_negate_empty_if_stmt_consequent() {
 #[test]
 fn test_compress_conditional_expression_inside() {
     test("x ? a = 0 : a = 1", "a = +!x");
+    test("let a = {}; x ? a.b = 0 : a.b = 1", "let a = {}; a.b = +!x");
+    test(
+        "globalThis.x = 0
+        let a_
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } })
+        x ? a = 0 : a = 1,
+        console.log(x, a)",
+        "globalThis.x = 0
+        let a_;
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } }),
+        a = +!x,
+        console.log(x, a)",
+    ); // both outputs `0, 1`
+    test("let a = [], i = 0; x ? a[i] = 0 : a[i] = 1", "let a = [], i = 0; a[0] = +!x");
+    test("x ? this.b = 0 : this.b = 1", "this.b = +!x");
+    // The assignment target must not move before `super()` initializes `this`.
+    test_same(
+        "class B extends A {
+            constructor() {
+                super() ? this.b = 0 : this.b = 1;
+            }
+        }",
+    );
+    // An unconditional preceding `super()` makes moving the later `this` safe.
+    test(
+        "class B extends A {
+            constructor() {
+                super();
+                x ? this.b = 0 : this.b = 1;
+            }
+        }",
+        "class B extends A {
+            constructor() {
+                super(), this.b = +!x;
+            }
+        }",
+    );
+    test(
+        "var a = {};
+        async function f(p) {
+            await p ? a.b = 0 : a.b = 1;
+        }
+        const promise = f();
+        await promise, console.log(a.b);",
+        "var a = {};
+        async function f(p) {
+            a.b = +!await p;
+        }
+        await f(), console.log(a.b);",
+    );
     test(
         "x ? a = function foo() { return 'a' } : a = function bar() { return 'b' }",
         "a = x ? function () { return 'a' } : function () { return 'b' }",
@@ -1027,14 +1086,208 @@ fn test_compress_conditional_expression_inside() {
 
     // a.b might have a side effect
     test_same("x ? a.b = 0 : a.b = 1");
+    // outputs `1, {b:1}`, but outputs `1, {b:0`} if merged
+    test_same(
+        "globalThis.x = 0
+        let a_ = {};
+        Object.defineProperty(globalThis, 'a', { get: () => (globalThis.x++, a_), set: a => { a_ = a } }),
+        x ? a.b = 0 : a.b = 1,
+        console.log(x, a)",
+    );
+    // outputs `1, {b:1}`, but outputs `1, {b:0`} if merged
+    test_same(
+        "globalThis.x = 0; let a = {}; x ? (x = 1, a).b = 0 : (x = 1, a).b = 1, console.log(x, a)",
+    );
+    // outputs `0 1`, but `1 0` if merged
+    test_same(
+        "let a = { b: 0 }, saved = a;
+        function f() {
+            return a = { b: 0 }, !0;
+        }
+        f() ? a.b = 1 : a.b = 2, console.log(saved.b, a.b);",
+    );
+    // outputs `[0,8]`, but `[8,0]` if merged
+    test_same(
+        "let a = [0, 0], i = 0;
+        function f() {
+            return i = 1, !0;
+        }
+        f() ? a[i] = 8 : a[i] = 9, console.log(a);",
+    );
+    // logs `x, g`, but `g, x` if merged
+    test_same("let a = []; x() ? a[g()] = 1 : a[g()] = 2, console.log(a)");
+    // outputs `1`, but throws a TDZ ReferenceError if merged
+    // (merging reads `a` before the `await` suspension during which `let a` is initialized)
+    test_same(
+        "async function f(p) {
+            await p ? a.b = 0 : a.b = 1;
+        }
+        const promise = f();
+        let a = {};
+        await promise, console.log(a.b);",
+    );
+    // outputs `{ x: 'f' }`, but throws a TDZ ReferenceError if merged
+    // (same hazard for a closed-over computed key)
+    test_same(
+        "var a = {};
+        async function f(p) {
+            await p ? a[k] = 't' : a[k] = 'f';
+        }
+        const promise = f();
+        let k = 'x';
+        await promise, console.log(a);",
+    );
     // `a = x ? () => 'a' : () => 'b'` does not set the name property of the function, but we ignore that difference
     test("x ? a = () => 'a' : a = () => 'b'", "a = x ? () => 'a' : () => 'b'");
 
-    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`
-    // so cannot be fold to `a += x ? 0 : 1`
+    // for non `=` operators, `GetValue(lref)` is called before `Evaluation of AssignmentExpression`,
+    // so the merged form reads the target's value before evaluating `x`;
+    // merging is allowed only when both evaluating `x` and reading the target are side-effect-free
+    test(
+        "let a = foo, x = bar; x ? a += 1 : a += 2, console.log(a, x)",
+        "let a = foo, x = bar; a += x ? 1 : 2, console.log(a, x)",
+    );
+    test(
+        "let a = foo, x = bar; x ? a ||= 1 : a ||= 2, console.log(a, x)",
+        "let a = foo, x = bar; a ||= x ? 1 : 2, console.log(a, x)",
+    );
+
+    // different operators cannot be merged
+    test_same("let a = foo, x = bar; x ? a += 1 : a -= 2, console.log(a, x)");
+    // `x` and `a` are global reads that may have side effects
     // example case: `(()=>{"use strict"; (console.log("log"), 1) ? a += 0 : a += 1; })()`
     test_same("x ? a += 0 : a += 1");
     test_same("x ? a &&= 0 : a &&= 1");
+    // outputs `3`, but outputs `1` if merged
+    test_same(
+        "let a = 0;
+        function f() {
+            return a = 2, !0;
+        }
+        f() ? a += 1 : a += 2, console.log(a);",
+    );
+    // outputs `1 3`, but outputs `1 2` if merged
+    test_same(
+        "let x = 0, a_ = 1;
+        Object.defineProperty(globalThis, 'a', { get: () => (x++, a_), set: (v) => { a_ = v } }),
+        x ? a += 1 : a += 2,
+        console.log(x, a_);",
+    );
+    // `a.b` may have a getter; the merged form calls it before evaluating `x`
+    test_same("let a = {}, x = bar; x ? a.b += 1 : a.b += 2, console.log(a, x)");
+    // logs `f called` and `1`, but only `1` if merged
+    test_same(
+        "let a = 1;
+        function f() {
+            return console.log('f called'), !0;
+        }
+        f() ? a ||= 1 : a ||= 2, console.log(a);",
+    );
+}
+
+#[test]
+fn test_derived_constructor_parameter_default_does_not_use_outer_super_state() {
+    test_same(
+        "class Outer extends P {
+            constructor() {
+                super();
+                class Inner extends Q {
+                    constructor(a = f() ? this.x = 1 : this.x = 2) {
+                        super();
+                    }
+                }
+                new Inner();
+            }
+        }",
+    );
+}
+
+#[test]
+fn test_derived_constructor_this_captured_by_arrow() {
+    test(
+        "class Outer extends P { constructor() {
+            super();
+            use(() => f() ? this.k = 1 : this.k = 2);
+        } }",
+        "class Outer extends P { constructor() {
+            super(), use(() => this.k = f() ? 1 : 2);
+        } }",
+    );
+
+    test(
+        "class Outer extends P { constructor() {
+            use(() => f() ? this.k = 1 : this.k = 2);
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            use(() => f() ? this.k = 1 : this.k = 2), super();
+        } }",
+    );
+
+    test(
+        "class Outer extends P { constructor() {
+            use(() => {
+                super();
+                f() ? this.k = 1 : this.k = 2;
+            });
+        } }",
+        "class Outer extends P { constructor() {
+            use(() => {
+                super(), this.k = f() ? 1 : 2;
+            });
+        } }",
+    );
+}
+
+#[test]
+fn test_derived_constructor_this_in_nested_class_computed_key() {
+    // Evaluating the computed key calls `f()` before accessing the outer
+    // constructor's uninitialized `this`.
+    test_same(
+        "class Outer extends P { constructor() {
+            class Inner { [f() ? this.k = 1 : this.k = 2]() {} }
+            super();
+        } }",
+    );
+
+    // Once `super()` has initialized the outer `this`, the assignment can
+    // still be merged inside a nested computed key.
+    test(
+        "class Outer extends P { constructor() {
+            super();
+            class Inner { [f() ? this.k = 1 : this.k = 2]() {} }
+        } }",
+        "class Outer extends P { constructor() {
+            super();
+            class Inner { [this.k = f() ? 1 : 2]() {} }
+        } }",
+    );
+
+    // A nested method body has its own initialized `this` binding, so the
+    // assignment can still be merged there.
+    test(
+        "class Outer extends P { constructor() {
+            class Inner { method() { f() ? this.k = 1 : this.k = 2 } }
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            class Inner { method() { this.k = f() ? 1 : 2 } }
+            super();
+        } }",
+    );
+
+    // A field initializer also has its own initialized `this` binding, despite
+    // not introducing a function scope.
+    test(
+        "class Outer extends P { constructor() {
+            class Inner { field = f() ? this.k = 1 : this.k = 2 }
+            super();
+        } }",
+        "class Outer extends P { constructor() {
+            class Inner { field = this.k = f() ? 1 : 2 }
+            super();
+        } }",
+    );
 }
 
 #[test]
@@ -1136,6 +1389,8 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test_same("var x = {}; x.y || (a, x = {}, x.y = 3)");
     test_same("var x = {}; x.y || (foo(x = {}), x.y = 3)");
     test_same("var x = { y: {} }; x.y.z || (x.y = {}, x.y.z = 3)");
+    // ESM imports are live bindings and can be updated by `mutate`.
+    test_same("import { x, mutate } from 'm'; x.y || (mutate(), x.y = 3)");
     test("x || (a, x = 3)", "x ||= (a, 3)");
     test("var x = {}; x.y || (foo(), x.y = 3)", "var x = {}; x.y ||= (foo(), 3)");
     test("var x = {}; x.y || (new Foo(), x.y = 3)", "var x = {}; x.y ||= (new Foo(), 3)");
@@ -1148,6 +1403,14 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test_same("var x = {}; x.y.z.w || (x.y = {}, x.y.z.w = 3)");
     // `x` is not mutated anywhere, and the preceding expression `x.y.z = {}` doesn't affect `x`
     test("var x = {}; x.y || (x.y.z = {}, x.y = 3)", "var x = {}; x.y ||= (x.y.z = {}, 3)");
+
+    // reading `x.y` reassigns `x` via the getter, so the original evaluates
+    // the write target `x.y` against the NEW object, while `x.y ||= 3`
+    // (which captures the object once) would write to the OLD one. Each case
+    // leaves `x.y === 3`; the merged form would leave `x.y === 9`.
+    test_same("var x = { get y() { return x = { y: 9 }, 0 } }; x.y || (x.y = 3)");
+    test_same("var x = { get y() { return x = { y: 9 }, 1 } }; x.y && (x.y = 3)");
+    test_same("var x = { get y() { x = { y: 9 } } }; x.y ?? (x.y = 3)");
 }
 
 #[test]
@@ -1182,6 +1445,8 @@ fn test_compress_is_loose_boolean() {
     test("v = x != !0", "v = x != 1");
     test("v = x == !1", "v = x == 0");
     test("v = x != !1", "v = x != 0");
+    test_same("v = ![f()] == x");
+    test_same("v = x == ![f()]");
 }
 
 #[test]
@@ -1190,6 +1455,22 @@ fn try_minimize_binary() {
     test("f(!a === !1)", "f(!!a)");
     test("f(!a === true)", "f(!a)");
     test("f(!a === false)", "f(!!a)");
+
+    test("f((a & 1) != 0)", "f(!!(a & 1))");
+    test("f((a & 2) == 0)", "f(!(a & 2))");
+    test("f((a | 1) !== 0)", "f(!!(a | 1))");
+    test("f((a ^ 2) === 0)", "f(!(a ^ 2))");
+    test("f((a >>> b) !== 0)", "f(!!(a >>> b))");
+    test("f(0 === (a & 4))", "f(!(a & 4))");
+
+    // Arithmetic can produce `NaN`, whose truthiness differs from comparison with zero.
+    test_same("f((a + b) != 0)");
+    test_same("f((a * 2) == 0)");
+    test("f(+a === 0)", "f(+a == 0)");
+    // Unknown bitwise operands can be BigInts, so their comparison must remain unchanged.
+    test_same("f((a & b) !== 0)");
+    test_same("f((a & 1n) !== 0)");
+    test_same("f((a & 1) != 1)");
 }
 
 #[test]

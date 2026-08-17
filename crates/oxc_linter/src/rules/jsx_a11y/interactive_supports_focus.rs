@@ -10,6 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::RuleFixer,
+    globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
     utils::{
         KEYBOARD_EVENT_HANDLERS, MOUSE_EVENT_HANDLERS, get_element_type,
@@ -107,29 +108,41 @@ impl Rule for InteractiveSupportsFocus {
             return;
         };
 
-        let role_str =
-            has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_string_literal_prop_value);
-        let element_type = get_element_type(ctx, jsx_el);
         let has_interactive_handler = EVENT_HANDLERS
             .iter()
             .flat_map(|handlers| handlers.iter())
             .any(|handler| has_jsx_prop(jsx_el, handler).is_some());
-        let has_tab_index = has_jsx_prop_ignore_case(jsx_el, "tabIndex").is_some();
+        if !has_interactive_handler {
+            return;
+        }
 
-        if !has_interactive_handler
-            || is_disabled_element(jsx_el)
+        let Some(role) =
+            has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_string_literal_prop_value)
+        else {
+            return;
+        };
+
+        if is_disabled_element(jsx_el)
             || is_hidden_from_screen_reader(ctx, jsx_el)
             || is_presentation_role(jsx_el)
+            || has_jsx_prop_ignore_case(jsx_el, "tabIndex").is_some()
         {
             return;
         }
 
-        let Some(role) = role_str else { return };
-        if !is_interactive_role(role)
-            || is_interactive_element(&element_type, jsx_el)
-            || is_non_interactive_role(role)
+        if !is_interactive_role(role) || is_non_interactive_role(role) {
+            return;
+        }
+
+        let element_type = get_element_type(ctx, jsx_el);
+
+        // Do not test unresolved custom components because their rendered DOM element is unknown.
+        if !HTML_TAG.contains(element_type.as_ref()) {
+            return;
+        }
+
+        if is_interactive_element(&element_type, jsx_el)
             || is_non_interactive_element(&element_type, jsx_el)
-            || has_tab_index
         {
             return;
         }
@@ -209,6 +222,8 @@ fn test() {
         (r#"<a onClick={() => void 0} href="http://x.y.z" tabIndex={0} />"#, None, None),
         (r#"<a onClick={() => void 0} href="http://x.y.z" role="button" />"#, None, None),
         (r"<TestComponent onClick={doFoo} />", None, None),
+        (r#"<HigherLevelComponent role="button" onClick={() => void 0} />"#, None, None),
+        (r#"<Foo.Bar role="button" onClick={() => void 0} />"#, None, None),
         (r#"<input onClick={() => void 0} type="hidden" />;"#, None, None),
         (r"<span onClick='submitForm();'>Submit</span>", None, None),
         (r"<span onClick='submitForm();' tabIndex={undefined}>Submit</span>", None, None),

@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.function-expression-references-variable-its-assigned-to.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot reassign variable after render completes", labels: [LabeledSpan { label: Some("Cannot reassign `callback` after render completes"), span: Span { start: 52, end: 60 }, primary: true }, LabeledSpan { label: Some("`callback` is declared here"), span: Span { start: 29, end: 37 }, primary: false }], help: Some("Reassigning `callback` after render has completed can cause inconsistent behavior on subsequent renders. Consider using state instead"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+
+No changes.

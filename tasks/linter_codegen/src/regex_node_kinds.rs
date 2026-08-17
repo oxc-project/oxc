@@ -25,7 +25,11 @@ pub fn get_regex_node_kinds() -> Option<NodeTypeSet> {
             for stmt in &func.block.stmts {
                 if let Stmt::Expr(Expr::Match(match_expr), _) = stmt {
                     for arm in &match_expr.arms {
-                        if let Pat::TupleStruct(ts) = &arm.pat
+                        let pat = match &arm.pat {
+                            Pat::Guard(guard) => guard.pat.as_ref(),
+                            pat => pat,
+                        };
+                        if let Pat::TupleStruct(ts) = pat
                             && let Some(variant) = astkind_variant_from_path(&ts.path)
                         {
                             node_type_set.insert(variant);

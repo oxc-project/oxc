@@ -3,18 +3,32 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     ast_util::{self, IsConstant},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 /// `https://eslint.org/docs/latest/rules/no-constant-binary-expression`
 /// Original Author: Jordan Eldredge <https://jordaneldredge.com>
-#[derive(Debug, Default, Clone)]
-pub struct NoConstantBinaryExpression;
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct NoConstantBinaryExpression(NoConstantBinaryExpressionConfig);
+
+#[derive(Debug, Clone, Copy, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct NoConstantBinaryExpressionConfig {
+    check_relational_comparisons: bool,
+}
+
+impl Default for NoConstantBinaryExpressionConfig {
+    fn default() -> Self {
+        Self { check_relational_comparisons: true }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -25,6 +39,8 @@ declare_oxc_lint!(
     ///
     /// Comparisons which will always evaluate to true or false and logical expressions (`||`, `&&`, `??`) which either always
     /// short-circuit or never short-circuit are both likely indications of programmer error.
+    /// By default, this rule also reports relational comparisons
+    /// (`<`, `<=`, `>`, `>=`) where both sides are literal values.
     ///
     /// These errors are especially common in complex expressions where operator precedence is easy to misjudge.
     ///
@@ -57,6 +73,7 @@ declare_oxc_lint!(
     NoConstantBinaryExpression,
     eslint,
     correctness,
+    config = NoConstantBinaryExpressionConfig,
     version = "0.0.3",
     short_description = "Disallow expressions where the operation doesn't affect the value.",
 );
@@ -89,7 +106,17 @@ fn constant_both_always_new(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn constant_relational_comparison(operator: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected constant relational comparison")
+        .with_help(format!("Both sides of the {operator} are literal values"))
+        .with_label(span)
+}
+
 impl Rule for NoConstantBinaryExpression {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::LogicalExpression(expr) => match expr.operator {
@@ -147,6 +174,14 @@ impl Rule for NoConstantBinaryExpression {
                 {
                     ctx.diagnostic(constant_both_always_new(expr.span));
                 }
+
+                if self.0.check_relational_comparisons
+                    && operator.is_compare()
+                    && Self::is_static_literal(left, ctx)
+                    && Self::is_static_literal(right, ctx)
+                {
+                    ctx.diagnostic(constant_relational_comparison(operator.as_str(), expr.span));
+                }
             }
             _ => {}
         }
@@ -154,6 +189,25 @@ impl Rule for NoConstantBinaryExpression {
 }
 
 impl NoConstantBinaryExpression {
+    fn is_static_literal<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+        match expr.get_inner_expression() {
+            Expression::UnaryExpression(unary_expr)
+                if matches!(
+                    unary_expr.operator,
+                    UnaryOperator::UnaryNegation
+                        | UnaryOperator::UnaryPlus
+                        | UnaryOperator::BitwiseNot
+                ) =>
+            {
+                unary_expr.argument.get_inner_expression().is_literal()
+            }
+            Expression::Identifier(ident) => {
+                ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
+            }
+            expr => expr.is_literal() || expr.is_no_substitution_template(),
+        }
+    }
+
     ///  Test if an AST node has a statically knowable constant nullishness. Meaning,
     /// it will always resolve to a constant value of either: `null`, `undefined`
     /// or not `null` _or_ `undefined`. An expression that can vary between those
@@ -380,9 +434,13 @@ impl NoConstantBinaryExpression {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{TestCase, Tester};
 
-    let pass = vec![
+    let check_relational_comparisons = Some(serde_json::json!([{
+        "checkRelationalComparisons": true
+    }]));
+
+    let mut pass = vec![
         // While this _would_ be a constant condition in React, ESLint has a policy of not attributing any specific behavior to JSX.
         "<p /> && foo",
         "<></> && foo",
@@ -423,9 +481,38 @@ fn test() {
         "foo ?? null ?? bar",
         "a ?? (doSomething(), undefined) ?? b",
         "a ?? (something = null) ?? b",
-    ];
+    ]
+    .into_iter()
+    .map(Into::into)
+    .collect::<Vec<TestCase>>();
 
-    let fail = vec![
+    pass.extend(
+        [
+            ("5 < 10", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("5 <= 10", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("10 > 5", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("10 >= 5", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("'a' < 'b'", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("undefined >= 5", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("`` < ``", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("1n < 2n", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("null >= 5", Some(serde_json::json!([{ "checkRelationalComparisons": false }]))),
+            ("x < 5", check_relational_comparisons.clone()),
+            ("5 < x", check_relational_comparisons.clone()),
+            ("x > y", check_relational_comparisons.clone()),
+            ("x >= undefined", check_relational_comparisons.clone()),
+            ("`${x}` < 5", check_relational_comparisons.clone()),
+            ("5 > `${x}`", check_relational_comparisons.clone()),
+            ("~x < 10", check_relational_comparisons.clone()),
+            ("-x >= 5", check_relational_comparisons.clone()),
+            ("x < /a/", check_relational_comparisons.clone()),
+            ("/a/ >= x", check_relational_comparisons.clone()),
+        ]
+        .into_iter()
+        .map(Into::into),
+    );
+
+    let mut fail = vec![
         // Error messages
         "[] && greeting",
         "[] || greeting",
@@ -663,7 +750,36 @@ fn test() {
         "window.abc && false && anything",
         "window.abc || true || anything",
         "window.abc ?? 'non-nullish' ?? anything",
-    ];
+    ]
+    .into_iter()
+    .map(Into::into)
+    .collect::<Vec<TestCase>>();
+
+    fail.extend(
+        [
+            ("5 < 10", None),
+            ("5 <= 10", None),
+            ("10 > 5", None),
+            ("10 >= 5", None),
+            ("'a' < 'b'", None),
+            ("true >= false", check_relational_comparisons.clone()),
+            ("undefined < 5", None),
+            ("5 > undefined", None),
+            ("`` < ``", None),
+            ("`` >= 5", check_relational_comparisons.clone()),
+            ("`foo` < `bar`", check_relational_comparisons.clone()),
+            ("1n < 2n", None),
+            ("null >= 5", None),
+            ("-5 < 10", check_relational_comparisons.clone()),
+            ("10 >= +5", check_relational_comparisons.clone()),
+            ("~5 <= 10", check_relational_comparisons.clone()),
+            ("~1 > ~2", check_relational_comparisons.clone()),
+            ("/a/ < /b/", check_relational_comparisons.clone()),
+            ("/a/ >= /b/", check_relational_comparisons),
+        ]
+        .into_iter()
+        .map(Into::into),
+    );
 
     Tester::new(NoConstantBinaryExpression::NAME, NoConstantBinaryExpression::PLUGIN, pass, fail)
         .test_and_snapshot();

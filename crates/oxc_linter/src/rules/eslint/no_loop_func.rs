@@ -7,7 +7,7 @@ use oxc_ast::{
         Function, IdentifierReference, Statement, WhileStatement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ScopeId, SymbolId};
@@ -192,7 +192,7 @@ impl NoLoopFunc {
         finder.found
     }
 
-    fn visit_function_node<'a, V: Visit<'a>>(func_node: &AstNode<'a>, visitor: &mut V) {
+    fn visit_function_node<'a, V: VisitJs<'a>>(func_node: &AstNode<'a>, visitor: &mut V) {
         match func_node.kind() {
             AstKind::Function(function) => visitor.visit_function(function, ScopeFlags::Function),
             AstKind::ArrowFunctionExpression(arrow) => {
@@ -220,6 +220,13 @@ impl NoLoopFunc {
         // Import bindings are always safe (immutable)
         if flags.is_import() {
             return false;
+        }
+
+        // Catch parameters are lexical bindings. A catch clause inside the loop creates a fresh
+        // binding each iteration, while a catch clause outside the loop may share a mutable binding.
+        if flags.is_catch_variable() {
+            let symbol_decl_node = nodes.get_node(scoping.symbol_declaration(symbol_id));
+            return Self::is_let_unsafe_in_loop(symbol_id, symbol_decl_node, loop_node, ctx);
         }
 
         // Get the declaration node for the symbol
@@ -514,7 +521,7 @@ struct LoopFunctionCollector {
     function_node_ids: Vec<NodeId>,
 }
 
-impl<'a> Visit<'a> for LoopFunctionCollector {
+impl<'a> VisitJs<'a> for LoopFunctionCollector {
     fn visit_function(&mut self, function: &Function<'a>, _flags: ScopeFlags) {
         if function.is_expression() || function.is_declaration() {
             self.function_node_ids.push(function.node_id());
@@ -592,16 +599,16 @@ impl<'a, 'ctx> NestedFunctionFinder<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for NestedFunctionFinder<'a, '_> {
+impl<'a> VisitJs<'a> for NestedFunctionFinder<'a, '_> {
     fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
         if self.should_walk_function(function.node_id(), function.r#async || function.generator) {
-            walk::walk_function(self, function, flags);
+            walk_js::walk_function(self, function, flags);
         }
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
         if self.should_walk_function(arrow.node_id(), arrow.r#async) {
-            walk::walk_arrow_function_expression(self, arrow);
+            walk_js::walk_arrow_function_expression(self, arrow);
         }
     }
 }
@@ -622,7 +629,7 @@ impl<'a, 'ctx> UnsafeReferenceFinder<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for UnsafeReferenceFinder<'a, '_> {
+impl<'a> VisitJs<'a> for UnsafeReferenceFinder<'a, '_> {
     fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
         if self.found {
             return;
@@ -673,9 +680,13 @@ fn test() {
         "for (const i of {}) { (function() { i; }) }",
         "for (using i of foo) { (function() { i; }) }",
         "for (await using i of foo) { (function() { i; }) }",
+        "for (let i = 0; i < 10; i++) { try {} catch (e) { setTimeout(() => console.log(e)); } }",
+        "for (let i = 0; i < 10; i++) { try {} catch (e) { setTimeout(() => console.log(e)); e = next(); } }",
         "for (var i = 0; i < 10; ++i) { using foo = bar(i); (function() { foo; }) }",
         "for (var i = 0; i < 10; ++i) { await using foo = bar(i); (function() { foo; }) }",
         "for (let i = 0; i < 10; ++i) { for (let x in xs.filter(x => x != i)) {  } }",
+        "for (var i=0; i<l; i++) { try { } catch (e) { (function() { e; }) }  }",
+        "while (i<l) { try { } catch (e) { (function() { e; }) }  }",
         "let a = 0; for (let i=0; i<l; i++) { (function() { a; }); }",
         "let a = 0; for (let i in {}) { (function() { a; }); }",
         "let a = 0; for (let i of {}) { (function() { a; }); }",
@@ -810,6 +821,10 @@ fn test() {
                   };
                 }
                   ",
+        // A value binding referenced only from type-space is not captured at runtime.
+        "for (var i = 0; i < 10; i++) {
+            const callback = function (): typeof i { return 0; };
+        }",
         // Function in the for-update slot is not in the loop body.
         "for (var i = 0; i < l; i++, (function () { i; })()) { }",
         r"
@@ -1103,6 +1118,13 @@ fn test() {
             arr.push(function () { return i; });
             arr.push(() => i);
         } while (i++ < 5);",
+        // A catch parameter declared outside the loop is shared across iterations.
+        "try {} catch (e) {
+            for (let i = 0; i < 10; i++) {
+                callbacks.push(() => e);
+                e = next();
+            }
+        }",
     ];
 
     Tester::new(NoLoopFunc::NAME, NoLoopFunc::PLUGIN, pass, fail).test_and_snapshot();

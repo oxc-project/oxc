@@ -1,0 +1,3 @@
+{
+  f(list: [], obj: {}, nested: { a: [], b: {} }, mixed: [[], {}])
+}

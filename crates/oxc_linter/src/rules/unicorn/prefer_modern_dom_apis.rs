@@ -100,11 +100,7 @@ impl Rule for PreferModernDomApis {
             Some(&["replaceChild", "insertBefore"]),
             Some(2),
             Some(2),
-        ) && call_expr
-            .arguments
-            .iter()
-            .all(|argument| matches!(argument.as_expression(), Some(expr) if !expr.is_undefined()))
-            && matches!(member_expr.object, Expression::Identifier(_))
+        ) && matches!(member_expr.object, Expression::Identifier(_))
             && !call_expr.optional
             && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
         {
@@ -114,7 +110,12 @@ impl Rule for PreferModernDomApis {
                 member_expr.property.span,
             );
 
-            if is_value_not_usable(node, ctx) {
+            // Reordering complex arguments can change evaluation semantics.
+            let has_safe_arguments = call_expr.arguments.iter().all(|argument| {
+                matches!(argument, Argument::Identifier(identifier) if identifier.name != "undefined")
+            });
+
+            if has_safe_arguments && is_value_not_usable(node, ctx) {
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let new_node = ctx.source_range(call_expr.arguments[0].span());
                     let old_node = ctx.source_range(call_expr.arguments[1].span());
@@ -204,8 +205,6 @@ fn test() {
         "parentNode.insertBefore(newNode, referenceNode, extra);",
         "referenceNode.insertAdjacentText('beforebegin', 'text', extra);",
         "referenceNode.insertAdjacentElement('beforebegin', newNode, extra);",
-        "parentNode.replaceChild(...argumentsArray1, ...argumentsArray2);",
-        "parentNode.insertBefore(...argumentsArray1, ...argumentsArray2);",
         "referenceNode.insertAdjacentText(...argumentsArray1, ...argumentsArray2);",
         "referenceNode.insertAdjacentElement(...argumentsArray1, ...argumentsArray2);",
         "referenceNode.insertAdjacentText('foo', 'text');",
@@ -230,6 +229,14 @@ fn test() {
         "foo = parentNode.insertBefore(alfa, beta);",
         "new Dom(parentNode.insertBefore(alfa, beta))",
         "`${parentNode.insertBefore(alfa, beta)}`",
+        // Non-identifier arguments are reported without a suggestion. Rewriting them before
+        // `.replaceWith` or `.before` could change precedence or evaluation order.
+        "parentNode.replaceChild(newNode, cond ? c : d);",
+        "parentNode.insertBefore(newNode, p || q);",
+        "parentNode.replaceChild(getNode(), oldNode);",
+        "parentNode.replaceChild(...argumentsArray1, ...argumentsArray2);",
+        "parentNode.insertBefore(...argumentsArray1, ...argumentsArray2);",
+        "parentNode.replaceChild(newNode, undefined);",
         r#"referenceNode.insertAdjacentText("beforebegin", "text");"#,
         r#"referenceNode.insertAdjacentText("afterbegin", "text");"#,
         r#"referenceNode.insertAdjacentText("beforeend", "text");"#,

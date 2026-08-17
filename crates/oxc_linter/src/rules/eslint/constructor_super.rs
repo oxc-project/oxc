@@ -220,9 +220,9 @@ impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::Class(class) = node.kind() else { return };
 
-        let super_class_type = Self::classify_super_class(class.super_class.as_ref());
+        let super_class_type = Self::classify_super_class(class.heritage_expression());
         let super_class_context =
-            Self::super_class_context(super_class_type, class.super_class.as_ref());
+            Self::super_class_context(super_class_type, class.heritage_expression());
 
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
             if let ClassElement::MethodDefinition(method) = elem

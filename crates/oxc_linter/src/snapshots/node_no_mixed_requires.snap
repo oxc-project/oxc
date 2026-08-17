@@ -1,0 +1,63 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ node(no-mixed-requires): Do not mix 'require' and other declarations.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var fs = require('fs'), foo = 42
+   · ────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix 'require' and other declarations.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var fs = require('fs'), foo
+   · ───────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var a = require(42), b = require(), c = require('y'), d = require(doStuff())
+   · ────────────────────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var fs = require('fs'), foo = require('foo')
+   · ────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var fs = require('fs'), foo = require('foo')
+   · ────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var exec = require('child_process').exec, foo = require('foo')
+   · ──────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var fs = require('fs'), foo = require('./foo')
+   · ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var foo = require('foo'), foo2 = require('./foo')
+   · ─────────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix core, module, file and computed requires.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var foo = require('foo'), bar = require(getName())
+   · ──────────────────────────────────────────────────
+   ╰────
+
+  ⚠ node(no-mixed-requires): Do not mix 'require' and other declarations.
+   ╭─[no_mixed_requires.tsx:1:1]
+ 1 │ var async = require('async'), debug = require('diagnostics').someFun('my-module')
+   · ─────────────────────────────────────────────────────────────────────────────────
+   ╰────

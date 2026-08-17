@@ -1,0 +1,15 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/static-components/invalid-dynamically-constructed-component-function.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Cannot create components during render", labels: [LabeledSpan { label: Some("This component is created during render"), span: Span { start: 149, end: 158 }, primary: true }, LabeledSpan { label: Some("The component is created during render here"), span: Span { start: 92, end: 114 }, primary: false }], help: Some("Components created during render will reset their state each time they are created. Declare components outside of render"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("StaticComponents") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/static-components") } }
+
+// @loggerTestOnly @validateStaticComponents @outputMode:"lint"
+function Example(props) {
+	function Component() {
+		return <div />;
+	}
+	return <Component />;
+}

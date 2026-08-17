@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+$primary: red;
+$breakpoint-md: 62em;
+$padding: 10px 20px;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+$primary: red;
+$breakpoint-md: 62em;
+$padding: 10px 20px;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+$primary: red;
+$breakpoint-md: 62em;
+$padding: 10px 20px;
+
+===================== End =====================

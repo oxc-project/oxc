@@ -2,7 +2,10 @@ use std::borrow::Cow;
 
 use serde::Deserialize;
 
-use oxc_ast::ast::{BindingPattern, Expression, FunctionBody};
+use oxc_ast::ast::{
+    Argument, ArrayExpressionElement, BindingPattern, CallExpression, Expression, MemberExpression,
+};
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -14,10 +17,10 @@ use crate::{
     fixer::RuleFix,
     rule::{DefaultRuleConfig, Rule},
     rules::shared::prefer_expect_assertions::{
-        DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
+        CallbackBody, DOCUMENTATION, PreferExpectAssertionsConfig, PreferExpectAssertionsRuleImpl,
         resolve_expect_local_name, should_check,
     },
-    utils::collect_possible_jest_call_node,
+    utils::{collect_possible_jest_call_node, get_node_name},
 };
 
 fn have_expect_assertions(span: Span, prefix: &str) -> OxcDiagnostic {
@@ -62,7 +65,8 @@ impl Rule for PreferExpectAssertions {
         // Resolve the file-level expect local name once (e.g. `"expect"` or `"e"`
         // for `import { expect as e }`). Per-callback vitest fixture overrides
         // are handled in `resolve_expect_source`.
-        let file_expect_prefix = resolve_expect_local_name(ctx, &["vitest", "vite-plus/test"]);
+        let file_expect_prefix =
+            resolve_expect_local_name(ctx, &["vitest", "vite-plus/test", "@effect/vitest"]);
 
         let mut covered_describe_ids: Vec<NodeId> = Vec::new();
 
@@ -83,11 +87,31 @@ impl PreferExpectAssertionsRuleImpl for PreferExpectAssertions {
         file_expect_prefix: &'r str,
         _ctx: &LintContext<'a>,
     ) -> Option<Cow<'r, str>> {
-        let Some(expect_param) = resolve_expect_parameter_prefix(callback) else {
+        let Some(expect_param) = resolve_expect_parameter_prefix(callback, 0) else {
             return Some(Cow::Borrowed(file_expect_prefix));
         };
 
         Some(Cow::Owned(expect_param.to_string()))
+    }
+
+    fn resolve_expect_for_parameterized_test<'a, 'r>(
+        &self,
+        call_expr: &CallExpression<'a>,
+        callback: &Expression<'a>,
+        file_expect_prefix: &'r str,
+        _ctx: &LintContext<'a>,
+    ) -> Option<Cow<'r, str>> {
+        if let Some(context_index) = parameterized_context_parameter_index(call_expr)
+            && let Some(expect_param) = resolve_expect_parameter_prefix(callback, context_index)
+        {
+            return Some(Cow::Owned(expect_param.to_string()));
+        }
+
+        if let Some(expect_param) = resolve_used_parameterized_context_prefix(callback) {
+            return Some(Cow::Owned(expect_param.to_string()));
+        }
+
+        Some(Cow::Borrowed(file_expect_prefix))
     }
 
     fn report_have_expect_assertions(
@@ -100,21 +124,133 @@ impl PreferExpectAssertionsRuleImpl for PreferExpectAssertions {
         ctx.diagnostic_with_suggestions(have_expect_assertions(span, prefix), suggestions);
     }
 
-    fn should_check_node(&self, body: &FunctionBody<'_>, is_async: bool, prefix: &str) -> bool {
+    fn should_check_node(&self, body: CallbackBody<'_>, is_async: bool, prefix: &str) -> bool {
         should_check(self.0.as_ref(), body, is_async, prefix)
+    }
+
+    fn should_check_node_with_file_expect(
+        &self,
+        body: CallbackBody<'_>,
+        is_async: bool,
+        prefix: &str,
+        file_expect_prefix: &str,
+    ) -> bool {
+        should_check(self.0.as_ref(), body, is_async, prefix)
+            || (prefix != file_expect_prefix
+                && should_check(self.0.as_ref(), body, is_async, file_expect_prefix))
     }
 }
 
-fn resolve_expect_parameter_prefix(callback: &Expression<'_>) -> Option<CompactStr> {
+fn callback_uses_expect_prefix(callback: &Expression<'_>, prefix: &str) -> bool {
+    let mut scanner = ExpectPrefixScanner {
+        prefix,
+        prefix_dot: CompactStr::from(format!("{prefix}.")),
+        found: false,
+    };
+    scanner.visit_expression(callback);
+    scanner.found
+}
+
+fn resolve_used_parameterized_context_prefix(callback: &Expression<'_>) -> Option<CompactStr> {
     let params = match callback {
         Expression::FunctionExpression(func) => &func.params,
         Expression::ArrowFunctionExpression(func) => &func.params,
         _ => return None,
     };
 
-    let first_param = params.items.first()?;
+    params.items.iter().enumerate().rev().find_map(|(index, param)| {
+        if index == 0 && !matches!(&param.pattern, BindingPattern::ObjectPattern(_)) {
+            return None;
+        }
 
-    match &first_param.pattern {
+        let prefix = resolve_expect_parameter_prefix_from_pattern(&param.pattern)?;
+        callback_uses_expect_prefix(callback, &prefix).then_some(prefix)
+    })
+}
+
+struct ExpectPrefixScanner<'p> {
+    prefix: &'p str,
+    prefix_dot: CompactStr,
+    found: bool,
+}
+
+impl<'a> VisitJs<'a> for ExpectPrefixScanner<'_> {
+    fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
+        if self.found {
+            return;
+        }
+
+        let name = get_node_name(&call_expr.callee);
+        if name == self.prefix || name.starts_with(self.prefix_dot.as_str()) {
+            self.found = true;
+            return;
+        }
+
+        oxc_ast_visit::walk_js::walk_call_expression(self, call_expr);
+    }
+}
+
+fn parameterized_context_parameter_index(call_expr: &CallExpression<'_>) -> Option<usize> {
+    let Expression::CallExpression(parameterized_call) = &call_expr.callee else {
+        return None;
+    };
+    let method = parameterized_call
+        .callee
+        .as_member_expression()
+        .and_then(MemberExpression::static_property_name)?;
+
+    if method == "for" {
+        return Some(1);
+    }
+    if method != "each" {
+        return None;
+    }
+
+    let Some(Expression::ArrayExpression(rows)) = parameterized_call
+        .arguments
+        .first()
+        .and_then(Argument::as_expression)
+        .map(Expression::get_inner_expression)
+    else {
+        return None;
+    };
+
+    let mut argument_counts = rows.elements.iter().map(each_row_argument_count);
+    let argument_count = argument_counts.next()??;
+    argument_counts.all(|count| count == Some(argument_count)).then_some(argument_count)
+}
+
+fn each_row_argument_count(row: &ArrayExpressionElement<'_>) -> Option<usize> {
+    let expression = row.as_expression()?.get_inner_expression();
+    let Expression::ArrayExpression(arguments) = expression else {
+        return Some(1);
+    };
+    arguments
+        .elements
+        .iter()
+        .all(|argument| !argument.is_spread())
+        .then_some(arguments.elements.len())
+}
+
+fn resolve_expect_parameter_prefix(
+    callback: &Expression<'_>,
+    parameter_index: usize,
+) -> Option<CompactStr> {
+    let params = match callback {
+        Expression::FunctionExpression(func) => &func.params,
+        Expression::ArrowFunctionExpression(func) => &func.params,
+        _ => return None,
+    };
+
+    let context_param = params.items.get(parameter_index)?;
+
+    resolve_expect_parameter_prefix_from_pattern(&context_param.pattern)
+}
+
+fn resolve_expect_parameter_prefix_from_pattern(
+    pattern: &BindingPattern<'_>,
+) -> Option<CompactStr> {
+    match pattern {
         BindingPattern::BindingIdentifier(id) => {
             Some(CompactStr::from(format!("{}.expect", id.name)))
         }
@@ -221,6 +357,14 @@ fn test() {
         (
             r#"import { expect } from 'vite-plus/test';
             test("re-exported vitest global", () => {
+                expect.assertions(1);
+                expect(true).toBe(true);
+              });"#,
+            None,
+        ),
+        (
+            r#"import { expect } from '@effect/vitest';
+            test("re-exported effect vitest global", () => {
                 expect.assertions(1);
                 expect(true).toBe(true);
               });"#,
@@ -349,6 +493,32 @@ fn test() {
             Some(serde_json::json!([{ "onlyFunctionsWithExpectInLoop": true }])),
         ),
         (
+            r#"test.each([[1]])("case", (value, { expect: e }) => {
+                consume(() => e(value).toBe(1));
+            });"#,
+            Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }])),
+        ),
+        (
+            r#"test.each([{ value: 1 }])("case", ({ value }, ctx) => {
+                consume(() => expect(value).toBe(1));
+            });"#,
+            Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }])),
+        ),
+        (
+            r#"test.each([{ value: 1 }])("case", ({ value }, ctx) => {
+                ctx.expect(value).toBe(1);
+                consume(() => expect(value).toBe(1));
+            });"#,
+            Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }])),
+        ),
+        (
+            r#"const rows = [[1]];
+            test.each(rows)("case", (value, { expect: e }) => {
+                consume(() => e(value).toBe(1));
+            });"#,
+            Some(serde_json::json!([{ "onlyFunctionsWithExpectInCallback": true }])),
+        ),
+        (
             r#"it("it1", () => {
                 const foo = { bar({ baz }) { baz(); } };
               });
@@ -399,6 +569,11 @@ fn test() {
         (
             r#"import { expect as e } from 'vite-plus/test';
             test("re-exported missing", () => { e(true).toBe(true); });"#,
+            None,
+        ),
+        (
+            r#"import { expect as e } from '@effect/vitest';
+            test("re-exported effect missing", () => { e(true).toBe(true); });"#,
             None,
         ),
         (
@@ -569,6 +744,148 @@ fn test() {
             it('missing assertions', (ctx) => {ctx.expect.assertions();
               ctx.expect(true).toBe(true);
             })",
+            ),
+        ),
+        // Direct test callbacks always receive TestContext first.
+        (
+            r#"test("x", ({ expect: e }) => doWork())"#,
+            (
+                r#"test("x", ({ expect: e }) => {e.hasAssertions();return doWork();})"#,
+                r#"test("x", ({ expect: e }) => {e.assertions();return doWork();})"#,
+            ),
+        ),
+        // The first parameter of a parameterized test is iteration data.
+        (
+            r#"it.each([{ abc: 123 }])("$abc", async (props) => {
+              await expect(Promise.resolve(props.abc)).resolves.toBe(props.abc);
+            });"#,
+            (
+                r#"it.each([{ abc: 123 }])("$abc", async (props) => {expect.hasAssertions();
+              await expect(Promise.resolve(props.abc)).resolves.toBe(props.abc);
+            });"#,
+                r#"it.each([{ abc: 123 }])("$abc", async (props) => {expect.assertions();
+              await expect(Promise.resolve(props.abc)).resolves.toBe(props.abc);
+            });"#,
+            ),
+        ),
+        (
+            r#"test.only.for([{ abc: 123 }])("$abc", async (props) => {
+              await expect(Promise.resolve(props.abc)).resolves.toBe(props.abc);
+            });"#,
+            (
+                r#"test.only.for([{ abc: 123 }])("$abc", async (props) => {expect.hasAssertions();
+              await expect(Promise.resolve(props.abc)).resolves.toBe(props.abc);
+            });"#,
+                r#"test.only.for([{ abc: 123 }])("$abc", async (props) => {expect.assertions();
+              await expect(Promise.resolve(props.abc)).resolves.toBe(props.abc);
+            });"#,
+            ),
+        ),
+        // Parameterized tests append TestContext after the iteration values.
+        (
+            r#"test.each([[1]])("case", (value, { expect: e }) => {
+              e(value).toBe(1);
+            });"#,
+            (
+                r#"test.each([[1]])("case", (value, { expect: e }) => {e.hasAssertions();
+              e(value).toBe(1);
+            });"#,
+                r#"test.each([[1]])("case", (value, { expect: e }) => {e.assertions();
+              e(value).toBe(1);
+            });"#,
+            ),
+        ),
+        (
+            r#"test.for([[1]])("case", (value, ctx) => {
+              ctx.expect(value).toEqual([1]);
+            });"#,
+            (
+                r#"test.for([[1]])("case", (value, ctx) => {ctx.expect.hasAssertions();
+              ctx.expect(value).toEqual([1]);
+            });"#,
+                r#"test.for([[1]])("case", (value, ctx) => {ctx.expect.assertions();
+              ctx.expect(value).toEqual([1]);
+            });"#,
+            ),
+        ),
+        // A declared context remains a valid suggestion target when global expect is used.
+        (
+            r#"test.each([{ value: 1 }])("case", ({ value }, ctx) => {
+              expect(value).toBe(1);
+            });"#,
+            (
+                r#"test.each([{ value: 1 }])("case", ({ value }, ctx) => {ctx.expect.hasAssertions();
+              expect(value).toBe(1);
+            });"#,
+                r#"test.each([{ value: 1 }])("case", ({ value }, ctx) => {ctx.expect.assertions();
+              expect(value).toBe(1);
+            });"#,
+            ),
+        ),
+        // Nonliteral and tagged tables resolve a used trailing TestContext.
+        (
+            r#"const rows = [[1]];
+            test.each(rows)("case", (value, { expect: e }) => {
+              e(value).toBe(1);
+            });"#,
+            (
+                r#"const rows = [[1]];
+            test.each(rows)("case", (value, { expect: e }) => {e.hasAssertions();
+              e(value).toBe(1);
+            });"#,
+                r#"const rows = [[1]];
+            test.each(rows)("case", (value, { expect: e }) => {e.assertions();
+              e(value).toBe(1);
+            });"#,
+            ),
+        ),
+        (
+            r#"test.each`
+              value
+              ${1}
+            `("case", ({ value }, { expect: e }) => {
+              e(value).toBe(1);
+            });"#,
+            (
+                r#"test.each`
+              value
+              ${1}
+            `("case", ({ value }, { expect: e }) => {e.hasAssertions();
+              e(value).toBe(1);
+            });"#,
+                r#"test.each`
+              value
+              ${1}
+            `("case", ({ value }, { expect: e }) => {e.assertions();
+              e(value).toBe(1);
+            });"#,
+            ),
+        ),
+        // With no row arguments, `.each` passes TestContext first.
+        (
+            r#"test.each([[]])("uses context", ({ expect: e }) => {
+              e(value).toBe(value);
+            });"#,
+            (
+                r#"test.each([[]])("uses context", ({ expect: e }) => {e.hasAssertions();
+              e(value).toBe(value);
+            });"#,
+                r#"test.each([[]])("uses context", ({ expect: e }) => {e.assertions();
+              e(value).toBe(value);
+            });"#,
+            ),
+        ),
+        (
+            r#"test.each([[]] as const)("uses context", (ctx) => {
+              ctx.expect(value).toBe(value);
+            });"#,
+            (
+                r#"test.each([[]] as const)("uses context", (ctx) => {ctx.expect.hasAssertions();
+              ctx.expect(value).toBe(value);
+            });"#,
+                r#"test.each([[]] as const)("uses context", (ctx) => {ctx.expect.assertions();
+              ctx.expect(value).toBe(value);
+            });"#,
             ),
         ),
     ];

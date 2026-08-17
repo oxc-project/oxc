@@ -479,15 +479,14 @@ fn get_formatter_options_list() -> [JsFormatOptions; 3] {
 fn run_formatter(code: &str, source_type: SourceType) -> TestResult {
     for options in get_formatter_options_list() {
         let allocator = Allocator::default();
-        let text1 =
-            match oxc_formatter::format(&allocator, code, source_type, options.clone(), None) {
-                Ok(formatted) => formatted.print().unwrap().into_code(),
-                Err(_) => return TestResult::Passed, // Skip if parse error
-            };
+        let text1 = match oxc_formatter::format(&allocator, code, source_type, options.clone()) {
+            Ok(formatted) => formatted.print().unwrap().into_code(),
+            Err(_) => return TestResult::Passed, // Skip if parse error
+        };
 
         // Re-format the output: a parse error on the second pass is a real formatter bug.
         let allocator2 = Allocator::default();
-        let text2 = match oxc_formatter::format(&allocator2, &text1, source_type, options, None) {
+        let text2 = match oxc_formatter::format(&allocator2, &text1, source_type, options) {
             Ok(formatted) => formatted.print().unwrap().into_code(),
             Err(err) => return TestResult::ParseError(err.to_string(), false),
         };
@@ -712,7 +711,7 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            program.to_pretty_estree_js_json(false)
+            program.to_pretty_estree_json(false, false)
         },
     )
 }
@@ -804,7 +803,7 @@ pub fn run_estree_acorn_jsx(files: &[AcornJsxFile]) -> Vec<CoverageResult> {
             let mut program = parser_ret.program;
             let source_text = program.source_text;
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-            program.to_pretty_estree_js_json(false)
+            program.to_pretty_estree_json(false, false)
         },
     )
 }
@@ -903,7 +902,6 @@ static TS_SKIP_PATHS: &[&str] = &[
     "typescript/tests/cases/compiler/arrayFromAsync.ts",
     "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
     "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-    "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
     "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
     // Skip tests where TS-ESLint is incorrect
     "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
@@ -914,7 +912,7 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
         let mut program = ret.program;
         let source_text = program.source_text;
         Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
-        program.to_pretty_estree_ts_json(false)
+        program.to_pretty_estree_json(true, false)
     })
 }
 

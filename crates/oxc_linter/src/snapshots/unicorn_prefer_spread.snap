@@ -833,13 +833,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
    ╭─[prefer_spread.tsx:1:1]
- 1 │ "".slice()
-   · ──────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
-   ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(0)
    · ──────────────
    ╰────

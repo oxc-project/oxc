@@ -1,0 +1,17 @@
+{
+  "categories": { "correctness": "off" },
+  "rules": {
+    "@tanstack/query/exhaustive-deps": "error",
+    "@tanstack/query/infinite-query-property-order": "error",
+    "@tanstack/query/mutation-property-order": "error",
+    "@tanstack/query/no-rest-destructuring": "error",
+    "@tanstack/query/no-unstable-deps": "error",
+    "@tanstack/query/no-void-query-fn": "error",
+    "@tanstack/query/stable-query-client": "error",
+    "XXXX/rule": "error",
+    "XXXX/rule-2": "error",
+    "XXXX/rule-3": "error",
+    "YYYY/rule": "error",
+    "ZZZZ/rule": "error"
+  }
+}

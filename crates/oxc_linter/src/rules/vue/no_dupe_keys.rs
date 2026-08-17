@@ -184,7 +184,7 @@ fn has_vue_component_annotation(node: &AstNode, ctx: &LintContext) -> bool {
         if matches!(
             ancestor.kind(),
             AstKind::ExportDefaultDeclaration(_)
-                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportDeclaration(_)
                 | AstKind::ExpressionStatement(_)
                 | AstKind::VariableDeclaration(_)
         ) {
@@ -231,14 +231,18 @@ fn collect_group_keys<'a>(
             }
         }
         Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                    && let Expression::ObjectExpression(obj) = es.expression.without_parentheses()
+            if arrow.is_expression() {
+                if let Some(expression) = arrow.get_expression()
+                    && let Expression::ObjectExpression(obj) = expression.without_parentheses()
                 {
                     collect_object_keys(obj, seen, ctx);
                 }
             } else {
-                collect_returned_object_keys(&arrow.body.statements, seen, ctx);
+                collect_returned_object_keys(
+                    &arrow.get_function_body().unwrap().statements,
+                    seen,
+                    ctx,
+                );
             }
         }
         _ => {}
@@ -378,9 +382,7 @@ fn collect_props_bindings<'a>(
 fn collect_binding_symbol_ids(pattern: &BindingPattern, ids: &mut Vec<SymbolId>) {
     match pattern {
         BindingPattern::BindingIdentifier(id) => {
-            if let Some(sym) = id.symbol_id.get() {
-                ids.push(sym);
-            }
+            ids.push(id.symbol_id());
         }
         BindingPattern::ObjectPattern(obj) => {
             for prop in &obj.properties {

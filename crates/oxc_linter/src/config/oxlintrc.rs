@@ -276,12 +276,29 @@ pub struct Oxlintrc {
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
-    /// Globs to ignore during linting. These are resolved from the configuration file path.
+    /// Globs to ignore during linting. Patterns use gitignore-style matching,
+    /// rooted at the directory containing the configuration file.
+    /// Files outside that directory cannot be matched; patterns containing `..`
+    /// are rejected as a configuration error.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
-    /// Paths of configuration files that this configuration file extends (inherits from). The files
-    /// are resolved relative to the location of the configuration file that contains the `extends`
-    /// property. The configuration files are merged from the first to the last, with the last file
+    /// Configurations that this configuration file extends (inherits from).
+    ///
+    /// In `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration
+    /// file, resolved relative to the location of the configuration file that contains the
+    /// `extends` property.
+    ///
+    /// In `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and
+    /// pass the configuration object directly:
+    ///
+    /// ```ts
+    /// import { defineConfig } from "oxlint";
+    /// import baseConfig from "./base-config.ts";
+    ///
+    /// export default defineConfig({ extends: [baseConfig] });
+    /// ```
+    ///
+    /// Configurations are merged from the first to the last, with the last configuration
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,
@@ -330,6 +347,13 @@ impl Oxlintrc {
             ))
         })?;
 
+        if !json.is_object() {
+            return Err(OxcDiagnostic::error(format!(
+                "Failed to parse oxlint config {}.\nExpected a JSON object.",
+                path.display()
+            )));
+        }
+
         let mut config = Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
@@ -344,12 +368,26 @@ impl Oxlintrc {
         Ok(config)
     }
 
+    /// Returns the directory containing this configuration file.
+    ///
+    /// Returns `None` when the configuration was not loaded from a file (`path` is empty),
+    /// e.g. when no configuration file was found.
+    pub fn dir(&self) -> Option<&Path> {
+        self.path.parent()
+    }
+
     /// # Errors
     ///
     /// * Parse Failure
     pub fn from_string(json_string: &str) -> Result<Self, OxcDiagnostic> {
         let json = serde_json::from_str::<serde_json::Value>(json_string)
             .unwrap_or(serde_json::Value::Null);
+
+        if !json.is_object() {
+            return Err(OxcDiagnostic::error(
+                "Failed to parse config: expected a JSON object.".to_string(),
+            ));
+        }
 
         Self::deserialize(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
@@ -492,6 +530,19 @@ mod test {
         assert_eq!(config.options.max_warnings, None);
         assert_eq!(config.options.report_unused_disable_directives, None);
         assert_eq!(config.options.respect_eslint_disable_directives, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_reject_non_object() {
+        // A non-object top-level config must be rejected, not silently deserialized positionally.
+        assert!(Oxlintrc::from_string("[]").is_err());
+        assert!(Oxlintrc::from_string(r#"["error"]"#).is_err());
+        assert!(Oxlintrc::from_string(r#""foo""#).is_err());
+        assert!(Oxlintrc::from_string("42").is_err());
+        assert!(Oxlintrc::from_string("true").is_err());
+        assert!(Oxlintrc::from_string("null").is_err());
+        // A valid object still parses.
+        assert!(Oxlintrc::from_string("{}").is_ok());
     }
 
     #[test]

@@ -1,8 +1,10 @@
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::{Format, JsFormatter, prelude::*},
+    formatter::{JsFormatter, prelude::*},
+    print::semicolon::write_trailing_comments_inside_parens,
     write,
 };
 
@@ -10,10 +12,7 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_arrow_body = matches!(
-            self.parent(),
-            AstNodes::ExpressionStatement(statement) if statement.is_arrow_function_body()
-        );
+        let is_arrow_body = matches!(self.parent(), AstNodes::ArrowFunctionExpression(_));
 
         let format_inner = format_with(|f| {
             let mut expressions = self.expressions().iter();
@@ -35,13 +34,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
             });
 
             if matches!(self.parent(), AstNodes::ForStatement(_))
-                || (matches!(self.parent(), AstNodes::ExpressionStatement(statement)
-                    if !statement.is_arrow_function_body()))
+                || matches!(self.parent(), AstNodes::ExpressionStatement(_))
             {
                 write!(f, [indent(&rest)]);
             } else {
                 rest.fmt(f);
             }
+
+            // Print the comments before the closing paren inside the group,
+            // so they stay on the last expression's line.
+            write_trailing_comments_inside_parens(f, self.parent(), self.span.end, true);
         });
 
         // For arrow bodies, own the `soft_block_indent` so the break decision is made

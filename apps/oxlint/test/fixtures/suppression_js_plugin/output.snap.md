@@ -5,7 +5,7 @@
 ```
 Found 0 warnings and 0 errors.
 Updated 'oxlint-suppressions.json'.
-Finished in Xms on 1 file with 94 rules using X threads.
+Finished in Xms on 1 file with 95 rules using X threads.
 ```
 
 # stderr

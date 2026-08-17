@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/round2_loc_diff.js
+---
+// Round 2 HIR: LOC_DIFF (10 files)
+// Source locations differ for for-in loop variables with forEach callbacks
+/**
+*/
+window.ClientLogger = (function() {})();

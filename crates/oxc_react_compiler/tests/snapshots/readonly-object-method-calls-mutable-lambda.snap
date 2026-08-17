@@ -1,0 +1,31 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/readonly-object-method-calls-mutable-lambda.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { useFragment } from "shared-runtime";
+function Component(props) {
+	const $ = _c(2);
+	const x = makeObject();
+	const user = useFragment(graphql`
+      fragment Component_user on User {
+        name
+      }
+    `, props.user);
+	const posts = user.timeline.posts.edges.nodes.map((node) => {
+		x.y = true;
+		return <Post post={node} />;
+	});
+	posts.push({});
+	const count = posts.length;
+	foo(count);
+	let t0;
+	if ($[0] !== posts) {
+		t0 = <>{posts}</>;
+		$[0] = posts;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	return t0;
+}

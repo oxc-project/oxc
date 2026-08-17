@@ -66,6 +66,18 @@ source: crates/oxc_linter/src/tester.rs
  2 │             constructor(message) {
    ╰────
 
+  ⚠ unicorn(custom-error-definition): Invalid class name, use `ºrrorError`.
+   ╭─[custom_error_definition.tsx:1:7]
+ 1 │ class ºrror extends Error {}
+   ·       ─────
+   ╰────
+
+  ⚠ unicorn(custom-error-definition): The `name` property should be set to `ºrror`.
+   ╭─[custom_error_definition.tsx:1:1]
+ 1 │ class ºrror extends Error {}
+   · ────────────────────────────
+   ╰────
+
   ⚠ unicorn(custom-error-definition): Missing call to `super()` in constructor.
    ╭─[custom_error_definition.tsx:2:27]
  1 │ class FooError extends Error {

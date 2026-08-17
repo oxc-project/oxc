@@ -1,0 +1,72 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# DIVERGENCE (AGENTS.md "trailing comment width"):
+# a same-line trailing comment is a line_suffix and never counts toward the fits measurement,
+# so the header stays on the key line.
+run: | # this trailing comment is long enough to push the header line far beyond every print width
+  set -euo pipefail
+short: | # fits
+  ok
+# The KEY does count: a header that overflows on the key alone breaks the pair
+# (comment excluded, so the same rule composes with the divergence above).
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler: |
+  jsonPointers:
+    - /status
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscalr: | # trailing
+  jsonPointers:
+    - /status
+# Props-carrying block collections take the same width-based routing.
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscale: !!map &m
+  a: 1
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# DIVERGENCE (AGENTS.md "trailing comment width"):
+# a same-line trailing comment is a line_suffix and never counts toward the fits measurement,
+# so the header stays on the key line.
+run: | # this trailing comment is long enough to push the header line far beyond every print width
+  set -euo pipefail
+short: | # fits
+  ok
+# The KEY does count: a header that overflows on the key alone breaks the pair
+# (comment excluded, so the same rule composes with the divergence above).
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler:
+  |
+  jsonPointers:
+    - /status
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscalr:
+  | # trailing
+  jsonPointers:
+    - /status
+# Props-carrying block collections take the same width-based routing.
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscale:
+  !!map &m
+  a: 1
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# DIVERGENCE (AGENTS.md "trailing comment width"):
+# a same-line trailing comment is a line_suffix and never counts toward the fits measurement,
+# so the header stays on the key line.
+run: | # this trailing comment is long enough to push the header line far beyond every print width
+  set -euo pipefail
+short: | # fits
+  ok
+# The KEY does count: a header that overflows on the key alone breaks the pair
+# (comment excluded, so the same rule composes with the divergence above).
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler: |
+  jsonPointers:
+    - /status
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscalr: | # trailing
+  jsonPointers:
+    - /status
+# Props-carrying block collections take the same width-based routing.
+resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscale: !!map &m
+  a: 1
+
+===================== End =====================

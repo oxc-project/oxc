@@ -4,7 +4,9 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
+use oxc_allocator::{
+    Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
+};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -36,6 +38,12 @@ impl Str<'static> {
 }
 
 impl<'a> Str<'a> {
+    /// Allocate provided `&str` into arena, and return a [`Str<'a>`].
+    #[inline]
+    pub fn from_str_in(s: &str, allocator: &impl GetAllocator<'a>) -> Self {
+        Self(allocator.allocator().alloc_str(s))
+    }
+
     /// Borrow a string slice.
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op
@@ -78,7 +86,7 @@ impl<'a> Str<'a> {
     /// use oxc_str::Str;
     ///
     /// let allocator = Allocator::new();
-    /// let s = Str::from_strs_array_in(["hello", " ", "world", "!"], &allocator);
+    /// let s = Str::from_strs_array_in(["hello", " ", "world", "!"], &&allocator);
     /// assert_eq!(s.as_str(), "hello world!");
     /// ```
     // `#[inline(always)]` because want compiler to be able to optimize where some of `strings`
@@ -87,9 +95,9 @@ impl<'a> Str<'a> {
     #[inline(always)]
     pub fn from_strs_array_in<const N: usize>(
         strings: [&str; N],
-        allocator: &'a Allocator,
+        allocator: &impl GetAllocator<'a>,
     ) -> Str<'a> {
-        Self::from(allocator.alloc_concat_strs_array(strings))
+        Self::from(allocator.allocator().alloc_concat_strs_array(strings))
     }
 
     /// Convert a [`Cow<'a, str>`] to a [`Str<'a>`].
@@ -99,10 +107,10 @@ impl<'a> Str<'a> {
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Str`.
     #[inline]
-    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &'a Allocator) -> Str<'a> {
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &impl GetAllocator<'a>) -> Str<'a> {
         match value {
             Cow::Borrowed(s) => Str::from(*s),
-            Cow::Owned(s) => Str::from_in(s, allocator),
+            Cow::Owned(s) => Str::from_str_in(s, allocator),
         }
     }
 }
@@ -111,7 +119,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Str<'_> {
     type Cloned = Str<'new_alloc>;
 
     #[inline]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
         Str::from_in(self.as_str(), allocator)
     }
 }
@@ -294,6 +306,45 @@ impl ESTree for Str<'_> {
     }
 }
 
+/// Create a [`Str<'static>`] for a string literal, evaluated at compile time.
+///
+/// Why this macro? [`Str`] in time will likely evolve to have more features and constraints
+/// than it currently does. e.g. constrain max length to `u32::MAX`, add a flag for "is all ASCII".
+/// [`Str::from`] will likely gain runtime checks, whereas this macro will perform any checks
+/// or calculations at compile time. So using this macro in preference to [`Str::from`]
+/// is future-proof.
+///
+/// ```
+/// use oxc_str::static_str;
+///
+/// let str = static_str!("undefined");
+/// assert_eq!(str.as_str(), "undefined");
+/// ```
+///
+/// Can also be used in const context:
+///
+/// ```
+/// use oxc_str::{Str, static_str};
+///
+/// const UNDEFINED: Str<'static> = static_str!("undefined");
+/// assert_eq!(UNDEFINED.as_str(), "undefined");
+/// ```
+///
+/// Only accepts string literals, not variables:
+///
+/// ```compile_fail
+/// use oxc_str::static_str;
+///
+/// let s = "hello";
+/// let str = static_str!(s);
+/// ```
+#[macro_export]
+macro_rules! static_str {
+    ($s:literal) => {
+        $crate::Str::new_const($s)
+    };
+}
+
 /// Creates a [`Str`] using interpolation of runtime expressions.
 ///
 /// Identical to [`std`'s `format!` macro](std::format), except:
@@ -322,11 +373,106 @@ impl ESTree for Str<'_> {
 #[macro_export]
 macro_rules! format_str {
     ($alloc:expr, $($arg:tt)*) => {{
-        use ::std::{write, fmt::Write};
-        use $crate::{Str, __internal::ArenaStringBuilder};
-
-        let mut s = ArenaStringBuilder::new_in($alloc);
-        write!(s, $($arg)*).unwrap();
-        Str::from(s)
+        let mut s = $crate::__internal::ArenaStringBuilder::new_in($alloc);
+        ::std::fmt::Write::write_fmt(&mut s, ::std::format_args!($($arg)*)).unwrap();
+        $crate::Str::from(s)
     }}
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use super::*;
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn str_from_str_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let s = Str::from_str_in("world", &allocator);
+        assert_eq!(s.as_str(), "world");
+        assert_eq!(s, Str::from("world"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let s = Str::from_str_in("hello", &wrapper);
+        assert_eq!(s.as_str(), "hello");
+        assert_eq!(s, Str::from("hello"));
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn str_from_strs_array_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let s = Str::from_strs_array_in(["hello", " ", "world", "!"], &allocator);
+        assert_eq!(s.as_str(), "hello world!");
+        assert_eq!(s, Str::from("hello world!"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let s = Str::from_strs_array_in(["foo", "_", "bar"], &wrapper);
+        assert_eq!(s.as_str(), "foo_bar");
+        assert_eq!(s, Str::from("foo_bar"));
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn str_from_cow_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // `Cow::Borrowed` references the same string, without allocating in arena
+        let borrowed = "world";
+        let used_before = allocator.used_bytes();
+        let s = Str::from_cow_in(&Cow::Borrowed(borrowed), &allocator);
+        assert_eq!(s.as_str(), "world");
+        assert_eq!(s, Str::from("world"));
+        assert_eq!(s.as_str().as_ptr(), borrowed.as_ptr());
+        assert_eq!(allocator.used_bytes(), used_before);
+
+        // `Cow::Owned` allocates a new string in arena
+        let owned = "owned".to_string();
+        let owned_ptr = owned.as_ptr();
+        let s = Str::from_cow_in(&Cow::Owned(owned), &allocator);
+        assert_eq!(s.as_str(), "owned");
+        assert_eq!(s, Str::from("owned"));
+        assert_ne!(s.as_str().as_ptr(), owned_ptr);
+        assert!(allocator.used_bytes() > used_before);
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let s = Str::from_cow_in(&Cow::Borrowed("hello"), &wrapper);
+        assert_eq!(s.as_str(), "hello");
+        assert_eq!(s, Str::from("hello"));
+    }
 }

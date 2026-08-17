@@ -17,7 +17,7 @@ declare_oxc_lint!(
     NoNegatedCondition,
     eslint,
     pedantic,
-    pending,
+    fix,
     docs = DOCUMENTATION,
     version = "0.0.18",
     short_description = "Disallow negated conditions.",
@@ -30,7 +30,7 @@ impl Rule for NoNegatedCondition {
                 run_on_if_statement(if_stmt, ctx);
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                run_on_conditional_expression(conditional_expr, ctx);
+                run_on_conditional_expression(node, conditional_expr, ctx);
             }
             _ => {}
         }
@@ -66,6 +66,16 @@ fn test() {
         "a !== b ? c : d",
     ];
 
+    let fix = vec![
+        ("if (!a) {;} else {;}", "if (a) {;} else {;}"),
+        ("if (a != b) {;} else {;}", "if (a == b) {;} else {;}"),
+        ("if (a !== b) {;} else {;}", "if (a === b) {;} else {;}"),
+        ("!a ? b : c", "a ? c : b"),
+        ("a != b ? c : d", "a == b ? d : c"),
+        ("a !== b ? c : d", "a === b ? d : c"),
+    ];
+
     Tester::new(NoNegatedCondition::NAME, NoNegatedCondition::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

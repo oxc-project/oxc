@@ -4,7 +4,7 @@
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
-mod external_formatter;
+mod embed_context;
 mod formatter;
 mod ir_transform;
 mod options;
@@ -17,6 +17,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_formatter_core::{FormatSession, Formatted, InputKind};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
@@ -24,10 +25,7 @@ use oxc_span::SourceType;
 // External call-sites use the text-in `format`, `format_fragment`,
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
-pub use crate::external_formatter::{
-    EmbeddedDocFormatterCallback, EmbeddedDocResult, EmbeddedFormatterCallback, ExternalCallbacks,
-    TailwindCallback,
-};
+pub use crate::embed_context::{CssInJsTemplate, HtmlEmbedMeta};
 // `JsFormatContext` is public solely as the type parameter of the `Formatted`
 // returned by `format` / `format_fragment`.
 // Its methods are not part of the public contract.
@@ -42,9 +40,8 @@ pub use detect_code_removal::detect_code_removal;
 pub(crate) use oxc_formatter_core::{best_fitting, format_args, write};
 // Internal-only re-exports so crate-local `use crate::{Buffer, Format};` continues to work
 // without leaking these IR primitives in the public API.
-pub(crate) use crate::formatter::{Buffer, Format};
+pub(crate) use oxc_formatter_core::{Buffer, Format};
 
-use self::formatter::Formatted;
 use self::formatter::prelude::tag::Label;
 use crate::print::{FormatFunctionParams, FormatTypeParameters};
 
@@ -77,15 +74,38 @@ pub enum FragmentContext {
 ///
 /// # Errors
 /// Returns the first parse error as an [`OxcDiagnostic`].
+/// For now, any parse diagnostic is an error, even when the parser could recover.
 pub fn format<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
     options: JsFormatOptions,
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
-    let program = parse(allocator, source_text, source_type)?;
-    Ok(format_program(allocator, program, options, external_callbacks))
+    // Compatibility wrapper: a service-less `PhysicalFile` session,
+    // so embedded languages stay as-is.
+    // Hosts that install services (oxfmt) use [`format_with_session`].
+    format_with_session(
+        &FormatSession::new(allocator, InputKind::PhysicalFile),
+        source_text,
+        source_type,
+        options,
+    )
+}
+
+/// Like [`format()`], but on a caller-supplied [`FormatSession`]:
+/// the root whose session carries the host's `SessionServices`
+/// (embedded dispatch, string embedding, Tailwind sorting).
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn format_with_session<'a>(
+    session: &FormatSession<'a>,
+    source_text: &'a str,
+    source_type: SourceType,
+    options: JsFormatOptions,
+) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
+    let program = parse(session.allocator(), source_text, source_type)?;
+    Ok(format_program_with_session(session, program, options))
 }
 
 /// Format a pre-wrapped JS/TS-in-xxx fragment from source text.
@@ -114,6 +134,10 @@ pub fn format_fragment<'a>(
     // But it seems fine for almost all cases, so leave it for now.
     let options = JsFormatOptions { quote_style: QuoteStyle::Single, ..options };
 
+    // A js-in-xxx fragment never owns file envelopes (BOM / front matter)
+    // and never dispatches embedded languages of its own.
+    let session = FormatSession::new(allocator, InputKind::Fragment);
+
     let formatted = match context {
         FragmentContext::FunctionParamsAsBindingLhs | FragmentContext::FunctionParamsAsBinding => {
             let Some(Statement::FunctionDeclaration(func)) = program.body.first() else {
@@ -128,13 +152,12 @@ pub fn format_fragment<'a>(
             let node = AstNode::new(params, AstNodes::Dummy(), allocator);
             let content = FormatFunctionParams::new(&node, with_parens);
             format_node(
-                allocator,
+                &session,
                 options,
                 &content,
                 program.source_text,
                 source_type,
                 &program.comments,
-                None,
             )
         }
         FragmentContext::TypeParameters => {
@@ -149,13 +172,12 @@ pub fn format_fragment<'a>(
             let node = AstNode::new(type_params, AstNodes::Dummy(), allocator);
             let content = FormatTypeParameters::new(&node);
             format_node(
-                allocator,
+                &session,
                 options,
                 &content,
                 program.source_text,
                 source_type,
                 &program.comments,
-                None,
             )
         }
     };
@@ -176,17 +198,28 @@ pub fn format_program<'a>(
     allocator: &'a Allocator,
     program: &'a Program<'a>,
     options: JsFormatOptions,
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let node = AstNode::new(program, AstNodes::Dummy(), allocator);
+    format_program_with_session(
+        &FormatSession::new(allocator, InputKind::PhysicalFile),
+        program,
+        options,
+    )
+}
+
+/// Shared AST-in funnel for [`format_with_session`] / [`format_program`].
+fn format_program_with_session<'a>(
+    session: &FormatSession<'a>,
+    program: &'a Program<'a>,
+    options: JsFormatOptions,
+) -> Formatted<'a, JsFormatContext<'a>> {
+    let node = AstNode::new(program, AstNodes::Dummy(), session.allocator());
     format_node(
-        allocator,
+        session,
         options,
         &node,
         program.source_text,
         program.source_type,
         &program.comments,
-        external_callbacks,
     )
 }
 
@@ -211,11 +244,20 @@ pub fn parse_for_format<'a>(
         allow_return_outside_function: true, // accept all syntax the formatter may be handed
         allow_v8_intrinsics: true,
         preserve_parens: false, // MUST be false: the formatter panics otherwise
+        // The formatter does not use `Ident` hashes, but `detect_code_removal` runs semantic
+        // analysis on this AST, and semantic requires hashed `Ident`s.
+        enable_ident_hashes: cfg!(feature = "detect_code_removal"),
     };
     Parser::new(allocator, source_text, source_type).with_options(options).parse()
 }
 
 /// Parse `source_text` and promote the `Program` to the arena lifetime.
+///
+/// NOTE: Reject ANY parse diagnostic, not only `panicked`: we format valid code only, by design.
+/// A recovered AST may be an unfaithful "fix" of the source
+/// (e.g. invalid modifiers are reported but not all of them are representable),
+/// so formatting it can silently rewrite what the user wrote.
+/// Prettier instead formats invalid inputs through parser recovery, which also hides the error from the user;
 fn parse<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -234,20 +276,18 @@ fn parse<'a>(
 /// Callers ([`format_program`] / [`format_fragment`]) construct the node (a whole-`Program` wrapper or a fragment),
 /// and pass the surrounding `source_text` / `comments`.
 fn format_node<'a, F: Format<'a, JsFormatContext<'a>>>(
-    allocator: &'a Allocator,
+    session: &FormatSession<'a>,
     options: JsFormatOptions,
     node: &F,
     source_text: &'a str,
     source_type: SourceType,
     comments: &'a [Comment],
-    external_callbacks: Option<ExternalCallbacks>,
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let context =
-        JsFormatContext::new(source_text, source_type, comments, options, external_callbacks);
+    let context = JsFormatContext::new(source_text, source_type, comments, options);
     formatter::format(
         context,
-        allocator,
-        formatter::Arguments::new(&[formatter::Argument::new(node)]),
+        session,
+        oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(node)]),
     )
 }
 

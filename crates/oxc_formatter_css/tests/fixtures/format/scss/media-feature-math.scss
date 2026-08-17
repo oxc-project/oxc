@@ -1,0 +1,10 @@
+.panel {
+  @media (min-width: map-get($grid-breakpoints, md)) and (max-width: map-get($grid-breakpoints, xl) - 1px) {
+    color: red;
+  }
+}
+@media (max-width: $screen-lg - 1) {
+  body {
+    display: none;
+  }
+}

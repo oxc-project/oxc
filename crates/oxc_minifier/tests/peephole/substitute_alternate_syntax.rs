@@ -43,8 +43,9 @@ fn test_undefined() {
     test("for (undefined in {}) {}", "for(undefined in {});");
     test("undefined++;", "undefined++");
     test("undefined += undefined;", "undefined+=void 0");
-    // shadowed
-    test_same("(function(undefined) { let x = typeof undefined; })()");
+    // shadowed: a parameter named `undefined` must not be substituted with
+    // `void 0`. `foo()` keeps the IIFE from being dropped as dead code.
+    test_same("(function(undefined) { foo(typeof undefined); })()");
     // destructuring throw error side effect
     test_same("var {} = void 0");
     test_same("var [] = void 0");
@@ -327,6 +328,9 @@ fn test_string_array_splitting() {
 #[test]
 fn test_template_string_to_string() {
     test("x = `abcde`", "x = 'abcde'");
+    // Lone surrogates are stored escaped in the cooked value; converting to a
+    // string literal would materialize the escape encoding as literal text.
+    test_same("x = `\\ud800y`");
     test("x = `ab cd ef`", "x = 'ab cd ef'");
     test_same("x = `hello ${name}`");
     test_same("tag `hello ${name}`");
@@ -334,6 +338,7 @@ fn test_template_string_to_string() {
     test("x = `hello ${'foo'}`", "x = 'hello foo'");
     test("x = `${2} bananas`", "x = '2 bananas'");
     test("x = `This is ${true}`", "x = 'This is true'");
+    test_same("x = `a${void f()}b`");
 }
 
 #[test]
@@ -427,19 +432,43 @@ fn test_fold_arrow_function_return() {
 
 #[test]
 fn test_fold_is_typeof_equals_undefined_resolved() {
-    test("var x; v = typeof x !== 'undefined'", "var x; v = x !== void 0");
-    test("var x; v = typeof x != 'undefined'", "var x; v = x !== void 0");
-    test("var x; v = 'undefined' !== typeof x", "var x; v = x !== void 0");
-    test("var x; v = 'undefined' != typeof x", "var x; v = x !== void 0");
-
-    test("var x; v = typeof x === 'undefined'", "var x; v = x === void 0");
-    test("var x; v = typeof x == 'undefined'", "var x; v = x === void 0");
-    test("var x; v = 'undefined' === typeof x", "var x; v = x === void 0");
-    test("var x; v = 'undefined' == typeof x", "var x; v = x === void 0");
+    test(
+        "v = function(x) { return typeof x !== 'undefined' }",
+        "v = function(x) { return x !== void 0 }",
+    );
+    test(
+        "v = function(x) { return typeof x != 'undefined' }",
+        "v = function(x) { return x !== void 0 }",
+    );
+    test(
+        "v = function(x) { return 'undefined' !== typeof x }",
+        "v = function(x) { return x !== void 0 }",
+    );
+    test(
+        "v = function(x) { return 'undefined' != typeof x }",
+        "v = function(x) { return x !== void 0 }",
+    );
 
     test(
-        "var x; function foo() { v = typeof x !== 'undefined' }",
-        "var x; function foo() { v = x !== void 0 }",
+        "v = function(x) { return typeof x === 'undefined' }",
+        "v = function(x) { return x === void 0 }",
+    );
+    test(
+        "v = function(x) { return typeof x == 'undefined' }",
+        "v = function(x) { return x === void 0 }",
+    );
+    test(
+        "v = function(x) { return 'undefined' === typeof x }",
+        "v = function(x) { return x === void 0 }",
+    );
+    test(
+        "v = function(x) { return 'undefined' == typeof x }",
+        "v = function(x) { return x === void 0 }",
+    );
+
+    test(
+        "v = function(x) { return function() { return typeof x !== 'undefined' } }",
+        "v = function(x) { return function() { return x !== void 0 } }",
     );
     test(
         "v = typeof x !== 'undefined'; function foo() { var x }",
@@ -454,6 +483,9 @@ fn test_fold_is_typeof_equals_undefined_resolved() {
     test("v = typeof x.y === 'undefined'", "v = x.y === void 0");
     test("v = typeof x.y !== 'undefined'", "v = x.y !== void 0");
     test("v = typeof (x + '') === 'undefined'", "v = x + '' === void 0");
+
+    test("var x; v = typeof x !== 'undefined'", "var x; v = !1");
+    test("var x; v = typeof x === 'undefined'", "var x; v = !0");
 }
 
 /// Port from <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser_test.go#L4658>
@@ -473,79 +505,81 @@ fn test_fold_is_typeof_equals_undefined() {
 #[test]
 fn test_fold_is_object_and_not_null() {
     test(
-        "var foo; v = typeof foo === 'object' && foo !== null",
-        "var foo; v = typeof foo == 'object' && !!foo",
+        "v = function(foo) { return typeof foo === 'object' && foo !== null }",
+        "v = function(foo) { return typeof foo == 'object' && !!foo }",
     );
     test(
-        "var foo; v = typeof foo == 'object' && foo !== null",
-        "var foo; v = typeof foo == 'object' && !!foo",
+        "v = function(foo) { return typeof foo == 'object' && foo !== null }",
+        "v = function(foo) { return typeof foo == 'object' && !!foo }",
     );
     test(
-        "var foo; v = typeof foo === 'object' && foo != null",
-        "var foo; v = typeof foo == 'object' && !!foo",
+        "v = function(foo) { return typeof foo === 'object' && foo != null }",
+        "v = function(foo) { return typeof foo == 'object' && !!foo }",
     );
     test(
-        "var foo; v = typeof foo == 'object' && foo != null",
-        "var foo; v = typeof foo == 'object' && !!foo",
+        "v = function(foo) { return typeof foo == 'object' && foo != null }",
+        "v = function(foo) { return typeof foo == 'object' && !!foo }",
     );
     test(
-        "var foo; v = typeof foo !== 'object' || foo === null",
-        "var foo; v = typeof foo != 'object' || !foo",
+        "v = function(foo) { return typeof foo !== 'object' || foo === null }",
+        "v = function(foo) { return typeof foo != 'object' || !foo }",
     );
     test(
-        "var foo; v = typeof foo != 'object' || foo === null",
-        "var foo; v = typeof foo != 'object' || !foo",
+        "v = function(foo) { return typeof foo != 'object' || foo === null }",
+        "v = function(foo) { return typeof foo != 'object' || !foo }",
     );
     test(
-        "var foo; v = typeof foo !== 'object' || foo == null",
-        "var foo; v = typeof foo != 'object' || !foo",
+        "v = function(foo) { return typeof foo !== 'object' || foo == null }",
+        "v = function(foo) { return typeof foo != 'object' || !foo }",
     );
     test(
-        "var foo; v = typeof foo != 'object' || foo == null",
-        "var foo; v = typeof foo != 'object' || !foo",
+        "v = function(foo) { return typeof foo != 'object' || foo == null }",
+        "v = function(foo) { return typeof foo != 'object' || !foo }",
     );
     test(
-        "var foo, bar; v = typeof foo === 'object' && foo !== null && bar !== 1",
-        "var foo, bar; v = typeof foo == 'object' && !!foo && bar !== 1",
+        "v = function(foo, bar) { return typeof foo === 'object' && foo !== null && bar !== 1 }",
+        "v = function(foo, bar) { return typeof foo == 'object' && !!foo && bar !== 1 }",
     );
     test(
-        "var foo, bar; v = bar !== 1 && typeof foo === 'object' && foo !== null",
-        "var foo, bar; v = bar !== 1 && typeof foo == 'object' && !!foo",
+        "v = function(foo, bar) { return bar !== 1 && typeof foo === 'object' && foo !== null }",
+        "v = function(foo, bar) { return bar !== 1 && typeof foo == 'object' && !!foo }",
     );
     test(
-        "var foo, bar; v = typeof foo === 'object' && foo !== null || bar !== 1",
-        "var foo, bar; v = typeof foo == 'object' && !!foo || bar !== 1",
+        "v = function(foo, bar) { return typeof foo === 'object' && foo !== null || bar !== 1 }",
+        "v = function(foo, bar) { return typeof foo == 'object' && !!foo || bar !== 1 }",
     );
     test(
-        "var foo, bar; v = bar !== 1 || typeof foo === 'object' && foo !== null",
-        "var foo, bar; v = bar !== 1 || typeof foo == 'object' && !!foo",
+        "v = function(foo, bar) { return bar !== 1 || typeof foo === 'object' && foo !== null }",
+        "v = function(foo, bar) { return bar !== 1 || typeof foo == 'object' && !!foo }",
     );
     test(
-        "var foo, bar; v = (typeof foo !== 'object' || foo === null) && bar !== 1",
-        "var foo, bar; v = (typeof foo != 'object' || !foo) && bar !== 1",
+        "v = function(foo, bar) { return (typeof foo !== 'object' || foo === null) && bar !== 1 }",
+        "v = function(foo, bar) { return (typeof foo != 'object' || !foo) && bar !== 1 }",
     );
     test(
-        "var foo, bar; v = bar !== 1 && (typeof foo !== 'object' || foo === null)",
-        "var foo, bar; v = bar !== 1 && (typeof foo != 'object' || !foo)",
+        "v = function(foo, bar) { return bar !== 1 && (typeof foo !== 'object' || foo === null) }",
+        "v = function(foo, bar) { return bar !== 1 && (typeof foo != 'object' || !foo) }",
     );
-    test_same("var foo, bar; v = bar !== 1 && typeof foo != 'object' || foo === null");
-    test_same("var foo, bar; v = typeof foo != 'object' || foo === null && bar !== 1");
+    test_same(
+        "v = function(foo, bar) { return bar !== 1 && typeof foo != 'object' || foo === null }",
+    );
+    test_same(
+        "v = function(foo, bar) { return typeof foo != 'object' || foo === null && bar !== 1 }",
+    );
     test_same("var foo; v = typeof foo.a == 'object' && foo.a !== null"); // cannot be folded because accessing foo.a might have a side effect
     test_same("v = foo !== null && typeof foo == 'object'"); // cannot be folded because accessing foo might have a side effect
     test_same("v = typeof foo == 'object' && foo !== null"); // cannot be folded because accessing foo might have a side effect
-    test_same("var foo, bar; v = typeof foo == 'object' && bar !== null");
-    test_same("var foo; v = typeof foo == 'string' && foo !== null");
+    test_same("v = function(foo, bar) { return typeof foo == 'object' && bar !== null }");
+    test_same("v = function(foo) { return typeof foo == 'string' && foo !== null }");
+
+    test("var foo; v = typeof foo === 'object' && foo !== null", "var foo; v = !1");
 }
 
 #[test]
 fn test_fold_is_object_and_not_null_minted_then_dropped() {
-    // Exercises the same-pass mint-then-drop flow through `DropDiff`'s
-    // capacity guard: `substitute_is_object_and_not_null` mints fresh
-    // references (indices beyond the pass bitset's capacity) at
-    // `exit_expression`, then the unreachable statement containing them is
-    // dropped at `exit_statements` in the same pass. The guard must treat
-    // the minted refs as live (conservative — callers rebuild scoping), not
-    // panic.
+    // Exercises same-pass mint-then-drop through `DroppedSubtreeCollector`'s capacity guard.
+    // The fresh references carry their semantic scope, so post-flush
+    // reachability observes them without a separate mint log.
     test(
         "function f(a) { return 1; if (typeof a === 'object' && a !== null) b(a); } f();",
         "function f(a) { return 1; }",
@@ -760,6 +794,8 @@ fn test_fold_number_constructor() {
     test("x = Number(true)", "x = 1");
     test("x = Number(false)", "x = 0");
     test("x = Number('foo')", "x = NaN");
+    test_same("x = Number(void f())");
+    test_same("x = Number([f(), 1])");
 }
 
 #[test]
@@ -788,10 +824,9 @@ fn optional_catch_binding() {
 
     // var inside a function does NOT interact with the catch parameter;
     // var doesn't hoist out of functions, so the catch param can be removed.
-    test(
-        "try { foo } catch(e) { (function() { var e = 2 })() }",
-        "try { foo } catch { (function() { var e = 2;})();}",
-    );
+    // The side-effect-free IIFE itself is then dropped; the empty `catch`
+    // still proves the param was safely removed.
+    test("try { foo } catch(e) { (function() { var e = 2 })() }", "try { foo } catch {}");
     test(
         "try { foo } catch(e) { function f() { var e = 2 } }",
         "try { foo } catch { function f() { var e = 2 } }",
@@ -1021,4 +1056,29 @@ fn test_flatten_array_spread_elements() {
     test("var x=[30,40];var y = [10,...[],20,...x,50];", "var y = [10,20,30,40,50]");
     test_same("var y = [0, ...[1, , , 3]]");
     test("var y = [...[1, , ,], ...[, 2], , 2];", "var y = [...[1, , , ], void 0, 2, , 2];");
+}
+
+#[test]
+fn fold_sequence_expression() {
+    test("(a(), b) + c", "a(), b + c");
+    test("(a(), b, c) + d", "a(), b, c + d");
+
+    test("(a(), b) || c", "a(), b || c");
+    test("(a(), b) && c", "a(), b && c");
+    test("(a(), b, c) || d", "a(), b, c || d");
+
+    test("-(a(), b)", "a(), -b");
+    test("~(a(), b)", "a(), ~b");
+    test("-(a(), b, c)", "a(), b, -c");
+
+    test("function* a() { yield (c(1), 2) }", "function* a() { c(1), yield 2 }");
+    test("function* a() { b(yield (c(1), 2)) }", "function* a() { b((c(1), yield 2)) }");
+    test("function* a() { yield (c(1), d(2), 3) }", "function* a() { c(1), d(2), yield 3 }");
+
+    test("async function a() { await (c(1), 2) }", "async function a() { c(1), await 2 }");
+    test("async function a() { b(await (c(1), 2)) }", "async function a() { b((c(1), await 2)) }");
+    test(
+        "async function a() { await (c(1), d(2), 3) }",
+        "async function a() { c(1), d(2), await 3 }",
+    );
 }

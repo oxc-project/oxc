@@ -9,7 +9,9 @@ use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tracing::instrument;
 
-use oxc_config::{all_paths_have_vcs_boundary, configure_walk_builder};
+use oxc_config::{
+    GitignoreChecker, all_paths_have_vcs_boundary, configure_walk_builder, validate_glob_pattern,
+};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 
 use super::resolve::{build_global_ignore_matchers, is_ignored};
@@ -34,11 +36,16 @@ use crate::core::{
 /// - Phase 2: Resolve & format file targets directly (no walk).
 /// - Phase 3: Walk directory targets in parallel with on-demand nested config discovery.
 ///
-/// # Ignore model
-/// Three layers, applied in `filter_entry()` and `visit()`:
-/// 1. Hardcoded VCS / `node_modules` skips
-/// 2. Global ignores (`.prettierignore`, `--ignore-path`, CLI `!path`)
-/// 3. Scope-local `ignorePatterns` from each resolved config
+/// # Ignore handling
+/// `filter_entry()` and `visit()` apply:
+/// - Hardcoded VCS / `node_modules` skips
+/// - Global CLI ignores (`.prettierignore`, `--ignore-path`, CLI `!path`)
+/// - Scope-local `ignorePatterns` from each resolved config
+///
+/// Git-derived ignores separately scope discovery through the underlying walker.
+/// Because the walker does not filter its roots,
+/// directory roots are checked with [`GitignoreChecker::is_gitignored_walk_root`].
+/// Explicit file targets are handled directly in Phase 2 and therefore are not excluded by Git-derived ignores.
 pub struct ScopedWalker {
     cwd: PathBuf,
     paths: Vec<PathBuf>,
@@ -50,7 +57,10 @@ impl ScopedWalker {
     /// Create a new `ScopedWalker` by classifying CLI path arguments.
     ///
     /// Paths are split into target paths, glob patterns, and exclude patterns (`!` prefix).
-    pub fn new(cwd: PathBuf, paths: &[PathBuf]) -> Self {
+    ///
+    /// # Errors
+    /// Returns an error when an argument classified as a glob pattern is invalid.
+    pub fn new(cwd: PathBuf, paths: &[PathBuf]) -> Result<Self, String> {
         let mut target_paths = vec![];
         let mut glob_patterns = vec![];
         let mut exclude_patterns = vec![];
@@ -73,6 +83,7 @@ impl ScopedWalker {
             };
 
             if is_glob_pattern(normalized, &cwd) {
+                validate_glob_pattern(normalized)?;
                 glob_patterns.push(normalized.to_string());
                 continue;
             }
@@ -88,7 +99,7 @@ impl ScopedWalker {
             target_paths.push(full_path);
         }
 
-        Self { cwd, paths: target_paths, glob_patterns, exclude_patterns }
+        Ok(Self { cwd, paths: target_paths, glob_patterns, exclude_patterns })
     }
 
     /// Run the walk across all scopes.
@@ -134,17 +145,22 @@ impl ScopedWalker {
 
             let mut dirs = vec![];
             let mut files = vec![];
+            let mut gitignore_checker = GitignoreChecker::new();
             for path in &initial_targets {
                 // Base paths passed to `WalkBuilder` are not filtered by `filter_entry()`,
                 // so we need to filter them here before passing to the walker.
                 // This is needed for cases like `husky`, may specify ignored paths as staged files.
-                // NOTE: Git ignored paths are not filtered here.
-                // But it's OK because in cases like `husky`, they are never staged.
                 let Ok(metadata) = path.metadata() else { continue };
                 let is_dir = metadata.is_dir();
                 if is_ignored(&ignore_file_matchers, path, is_dir, true) {
                     continue;
                 }
+                // Also, the walker never filters gitignored walk roots.
+                // (including roots inside a gitignored directory)
+                if gitignore_checker.is_gitignored_walk_root(path, &self.cwd) {
+                    continue;
+                }
+
                 if is_dir {
                     dirs.push(path.clone());
                 } else if metadata.is_file() {

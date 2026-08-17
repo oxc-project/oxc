@@ -64,6 +64,12 @@ pub enum Tag {
     /// See [crate::builders::labelled] for documentation.
     StartLabelled(LabelId),
     EndLabelled,
+
+    /// Marks the current indention as the root that [LineMode::Literal](super::LineMode::Literal)
+    /// line breaks and [DedentMode::Root] dedents return to.
+    /// See [crate::builders::mark_as_root] for documentation.
+    StartMarkAsRoot,
+    EndMarkAsRoot,
 }
 
 impl Tag {
@@ -81,6 +87,7 @@ impl Tag {
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
                 | Tag::StartLabelled(_)
+                | Tag::StartMarkAsRoot
         )
     }
 
@@ -92,9 +99,9 @@ impl Tag {
     pub const fn kind(&self) -> TagKind {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
             StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
         };
 
         match self {
@@ -108,6 +115,7 @@ impl Tag {
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
+            StartMarkAsRoot | EndMarkAsRoot => TagKind::MarkAsRoot,
         }
     }
 }
@@ -128,6 +136,7 @@ pub enum TagKind {
     LineSuffix,
     Labelled,
     TailwindClass,
+    MarkAsRoot,
 }
 
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]
@@ -240,39 +249,63 @@ impl Align {
     }
 }
 
-#[derive(Debug, Eq, Copy, Clone)]
+/// Identifies a label applied via [crate::builders::labelled].
+///
+/// The label's debug name lives in a side table, not an inline field,
+/// to keep the layout of [crate::FormatElement] (which embeds `LabelId` through [`Tag::StartLabelled`]) identical
+/// in debug and release builds. (See the size assertion in `format_element/mod.rs`.)
+/// Registering the name also asserts that no two labels share a `value`.
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub struct LabelId {
     value: u64,
-    #[cfg(debug_assertions)]
-    name: &'static str,
 }
 
-impl PartialEq for LabelId {
-    fn eq(&self, other: &Self) -> bool {
-        let is_equal = self.value == other.value;
-
+impl std::fmt::Debug for LabelId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         #[cfg(debug_assertions)]
-        {
-            if is_equal {
-                assert_eq!(
-                    self.name, other.name,
-                    "Two `LabelId`s with different names have the same `value`. Are you mixing labels of two different `LabelDefinition` or are the values returned by the `LabelDefinition` not unique?"
-                );
-            }
+        if let Some(name) = debug_names::lookup(self.value) {
+            return f.write_str(name);
         }
-
-        is_equal
+        write!(f, "#{}", self.value)
     }
 }
 
 impl LabelId {
     #[expect(clippy::needless_pass_by_value)] // The `Label` trait is unnecessary, would refactor it later.
     pub fn of<T: Label>(label: T) -> Self {
-        Self {
-            value: label.id(),
-            #[cfg(debug_assertions)]
-            name: label.debug_name(),
+        let value = label.id();
+        #[cfg(debug_assertions)]
+        debug_names::record(value, label.debug_name());
+        Self { value }
+    }
+}
+
+#[cfg(debug_assertions)]
+mod debug_names {
+    use std::sync::Mutex;
+
+    /// All `(value, name)` pairs ever registered.
+    /// Labels are few (one `Label` impl per language with a handful of variants), so a linear scan is fine.
+    static NAMES: Mutex<Vec<(u64, &'static str)>> = Mutex::new(Vec::new());
+
+    pub(super) fn record(value: u64, name: &'static str) {
+        let mut names = NAMES.lock().unwrap();
+        if let Some((_, existing_name)) = names.iter().find(|(existing, _)| *existing == value) {
+            assert_eq!(
+                *existing_name, name,
+                "Two labels with different names have the same `value` ({value}). Are you mixing labels of two different `LabelDefinition` or are the values returned by the `LabelDefinition` not unique?"
+            );
+        } else {
+            names.push((value, name));
         }
+    }
+
+    pub(super) fn lookup(value: u64) -> Option<&'static str> {
+        NAMES
+            .lock()
+            .unwrap()
+            .iter()
+            .find_map(|&(existing, name)| (existing == value).then_some(name))
     }
 }
 

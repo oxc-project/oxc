@@ -2,7 +2,7 @@
 
 use std::array;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::{AssignmentOperator, Expression};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
@@ -111,7 +111,7 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
         | Expression::BigIntLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_) => {
-            let references = array::from_fn(|_| expr.clone_in(ctx.ast.allocator));
+            let references = array::from_fn(|_| expr.clone_in(ctx.allocator()));
             return (expr, references);
         }
         // Template literal cannot have side effects if it has no expressions.
@@ -121,10 +121,11 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
         // Note: "`x${foo}`" *can* have side effects if `foo` is an object with a `toString` method.
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
             let references = array::from_fn(|_| {
-                ctx.ast.expression_template_literal(
+                Expression::new_template_literal(
                     lit.span,
-                    ctx.ast.vec_from_iter(lit.quasis.iter().cloned()),
-                    ctx.ast.vec(),
+                    ArenaVec::from_iter_in(lit.quasis.iter().cloned(), ctx),
+                    [],
+                    ctx,
                 )
             });
             return (expr, references);
@@ -133,11 +134,12 @@ pub fn duplicate_expression_multiple<'a, const N: usize>(
         _ => VarDeclarationsStore::create_uid_var_based_on_node(&expr, ctx),
     };
 
-    let assignment = ctx.ast.expression_assignment(
+    let assignment = Expression::new_assignment_expression(
         SPAN,
         AssignmentOperator::Assign,
         temp_var_binding.create_target(ReferenceFlags::Write, ctx),
         expr,
+        ctx,
     );
 
     let references = array::from_fn(|_| temp_var_binding.create_read_expression(ctx));

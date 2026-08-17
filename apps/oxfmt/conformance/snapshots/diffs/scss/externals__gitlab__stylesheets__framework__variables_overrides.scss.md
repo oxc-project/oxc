@@ -1,0 +1,495 @@
+# externals/gitlab/stylesheets/framework/variables_overrides.scss
+
+> Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md
+
+## Option 1
+
+`````json
+{"printWidth":80}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -40,33 +40,17 @@
+ $headings-font-weight: $gl-font-weight-bold;
+ $spacer: $grid-size;
+ $spacers: (
+   0: 0,
+-  1: (
+-    $spacer * 0.5,
+-  ),
++  1: ($spacer * 0.5),
+   2: ($spacer),
+-  3: (
+-    $spacer * 2,
+-  ),
+-  4: (
+-    $spacer * 3,
+-  ),
+-  5: (
+-    $spacer * 4,
+-  ),
+-  6: (
+-    $spacer * 5,
+-  ),
+-  7: (
+-    $spacer * 6,
+-  ),
+-  8: (
+-    $spacer * 7,
+-  ),
+-  9: (
+-    $spacer * 8,
+-  ),
++  3: ($spacer * 2),
++  4: ($spacer * 3),
++  5: ($spacer * 4),
++  6: ($spacer * 5),
++  7: ($spacer * 6),
++  8: ($spacer * 7),
++  9: ($spacer * 8),
+ );
+ $pagination-color: $gl-text-color;
+ $tooltip-padding-y: 0.5rem;
+ $tooltip-padding-x: 0.75rem;
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+/*
+ * This file is only for overriding Bootstrap 4 variables.
+ * Please add any new variables to variables.scss
+ */
+
+$secondary: $gray-light;
+$input-disabled-bg: $gray-light;
+$input-border-color: $gray-400;
+$input-color: $gl-text-color;
+$input-font-size: $gl-font-size;
+$font-family-sans-serif: $regular-font;
+$font-family-monospace: $monospace-font;
+$btn-line-height: 20px;
+$table-accent-bg: $gray-light;
+$table-border-color: $gray-100;
+$card-border-color: $border-color;
+$card-cap-bg: $gray-light !default;
+$success: $green-500;
+$info: $blue-500;
+$warning: $orange-500;
+$danger: $red-500;
+$zindex-modal-backdrop: 1040;
+$nav-divider-margin-y: ($grid-size / 2);
+$dropdown-divider-bg: $gray-100;
+$dropdown-item-padding-y: 8px;
+$dropdown-item-padding-x: 12px;
+$popover-max-width: 300px;
+$popover-border-width: 1px;
+$popover-border-color: $border-color;
+$popover-box-shadow: 0 $border-radius-small $border-radius-default 0
+  $shadow-color;
+$popover-arrow-outer-color: $shadow-color;
+$h1-font-size: 14px * 2.5;
+$h2-font-size: 14px * 2;
+$h3-font-size: 14px * 1.75;
+$h4-font-size: 14px * 1.5;
+$h5-font-size: 14px * 1.25;
+$h6-font-size: 14px;
+$headings-color: $gl-text-color;
+$headings-font-weight: $gl-font-weight-bold;
+$spacer: $grid-size;
+$spacers: (
+  0: 0,
+  1: ($spacer * 0.5),
+  2: ($spacer),
+  3: ($spacer * 2),
+  4: ($spacer * 3),
+  5: ($spacer * 4),
+  6: ($spacer * 5),
+  7: ($spacer * 6),
+  8: ($spacer * 7),
+  9: ($spacer * 8),
+);
+$pagination-color: $gl-text-color;
+$tooltip-padding-y: 0.5rem;
+$tooltip-padding-x: 0.75rem;
+$tooltip-arrow-height: 0.5rem;
+$tooltip-arrow-width: 1rem;
+$b-table-sort-icon-bg-descending: url('data:image/svg+xml, <svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M11.707085,11.7071 \
+  L7.999975,15.4142 L4.292875,11.7071 C3.902375,11.3166 3.902375, \
+  10.6834 4.292875,10.2929 C4.683375,9.90237 \
+  5.316575,9.90237 5.707075,10.2929 L6.999975, \
+  11.5858 L6.999975,2 C6.999975,1.44771 \
+  7.447695,1 7.999975,1 C8.552255,1 8.999975,1.44771 \
+  8.999975,2 L8.999975,11.5858 L10.292865,10.2929 C10.683395 \
+  ,9.90237 11.316555,9.90237 11.707085,10.2929 \
+  C12.097605,10.6834 12.097605,11.3166 11.707085,11.7071 Z"/> \
+  </svg>') !default;
+$b-table-sort-icon-bg-ascending: url('data:image/svg+xml,<svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M4.29289,4.2971 L8,0.59 \
+  L11.7071,4.2971 C12.0976,4.6876 \
+  12.0976,5.3208 11.7071,5.7113 C11.3166,6.10183 10.6834, \
+  6.10183 10.2929,5.7113 L9,4.4184 L9,14.0042 C9,14.55649 \
+  8.55228,15.0042 8,15.0042 C7.44772,15.0042 7,14.55649 \
+  7,14.0042 L7,4.4184 L5.70711,5.7113 C5.31658,6.10183 4.68342,6.10183 4.29289,5.7113 \
+  C3.90237,5.3208 3.90237,4.6876 4.29289,4.2971 Z"/> \
+  </svg> ') !default;
+$b-table-sort-icon-bg-not-sorted: "";
+
+`````
+
+### Expected (prettier)
+
+`````scss
+/*
+ * This file is only for overriding Bootstrap 4 variables.
+ * Please add any new variables to variables.scss
+ */
+
+$secondary: $gray-light;
+$input-disabled-bg: $gray-light;
+$input-border-color: $gray-400;
+$input-color: $gl-text-color;
+$input-font-size: $gl-font-size;
+$font-family-sans-serif: $regular-font;
+$font-family-monospace: $monospace-font;
+$btn-line-height: 20px;
+$table-accent-bg: $gray-light;
+$table-border-color: $gray-100;
+$card-border-color: $border-color;
+$card-cap-bg: $gray-light !default;
+$success: $green-500;
+$info: $blue-500;
+$warning: $orange-500;
+$danger: $red-500;
+$zindex-modal-backdrop: 1040;
+$nav-divider-margin-y: ($grid-size / 2);
+$dropdown-divider-bg: $gray-100;
+$dropdown-item-padding-y: 8px;
+$dropdown-item-padding-x: 12px;
+$popover-max-width: 300px;
+$popover-border-width: 1px;
+$popover-border-color: $border-color;
+$popover-box-shadow: 0 $border-radius-small $border-radius-default 0
+  $shadow-color;
+$popover-arrow-outer-color: $shadow-color;
+$h1-font-size: 14px * 2.5;
+$h2-font-size: 14px * 2;
+$h3-font-size: 14px * 1.75;
+$h4-font-size: 14px * 1.5;
+$h5-font-size: 14px * 1.25;
+$h6-font-size: 14px;
+$headings-color: $gl-text-color;
+$headings-font-weight: $gl-font-weight-bold;
+$spacer: $grid-size;
+$spacers: (
+  0: 0,
+  1: (
+    $spacer * 0.5,
+  ),
+  2: ($spacer),
+  3: (
+    $spacer * 2,
+  ),
+  4: (
+    $spacer * 3,
+  ),
+  5: (
+    $spacer * 4,
+  ),
+  6: (
+    $spacer * 5,
+  ),
+  7: (
+    $spacer * 6,
+  ),
+  8: (
+    $spacer * 7,
+  ),
+  9: (
+    $spacer * 8,
+  ),
+);
+$pagination-color: $gl-text-color;
+$tooltip-padding-y: 0.5rem;
+$tooltip-padding-x: 0.75rem;
+$tooltip-arrow-height: 0.5rem;
+$tooltip-arrow-width: 1rem;
+$b-table-sort-icon-bg-descending: url('data:image/svg+xml, <svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M11.707085,11.7071 \
+  L7.999975,15.4142 L4.292875,11.7071 C3.902375,11.3166 3.902375, \
+  10.6834 4.292875,10.2929 C4.683375,9.90237 \
+  5.316575,9.90237 5.707075,10.2929 L6.999975, \
+  11.5858 L6.999975,2 C6.999975,1.44771 \
+  7.447695,1 7.999975,1 C8.552255,1 8.999975,1.44771 \
+  8.999975,2 L8.999975,11.5858 L10.292865,10.2929 C10.683395 \
+  ,9.90237 11.316555,9.90237 11.707085,10.2929 \
+  C12.097605,10.6834 12.097605,11.3166 11.707085,11.7071 Z"/> \
+  </svg>') !default;
+$b-table-sort-icon-bg-ascending: url('data:image/svg+xml,<svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M4.29289,4.2971 L8,0.59 \
+  L11.7071,4.2971 C12.0976,4.6876 \
+  12.0976,5.3208 11.7071,5.7113 C11.3166,6.10183 10.6834, \
+  6.10183 10.2929,5.7113 L9,4.4184 L9,14.0042 C9,14.55649 \
+  8.55228,15.0042 8,15.0042 C7.44772,15.0042 7,14.55649 \
+  7,14.0042 L7,4.4184 L5.70711,5.7113 C5.31658,6.10183 4.68342,6.10183 4.29289,5.7113 \
+  C3.90237,5.3208 3.90237,4.6876 4.29289,4.2971 Z"/> \
+  </svg> ') !default;
+$b-table-sort-icon-bg-not-sorted: "";
+
+`````
+
+## Option 2
+
+`````json
+{"printWidth":100}
+`````
+
+### Diff
+
+`````diff
+===================================================================
+--- prettier
++++ oxfmt
+@@ -39,33 +39,17 @@
+ $headings-font-weight: $gl-font-weight-bold;
+ $spacer: $grid-size;
+ $spacers: (
+   0: 0,
+-  1: (
+-    $spacer * 0.5,
+-  ),
++  1: ($spacer * 0.5),
+   2: ($spacer),
+-  3: (
+-    $spacer * 2,
+-  ),
+-  4: (
+-    $spacer * 3,
+-  ),
+-  5: (
+-    $spacer * 4,
+-  ),
+-  6: (
+-    $spacer * 5,
+-  ),
+-  7: (
+-    $spacer * 6,
+-  ),
+-  8: (
+-    $spacer * 7,
+-  ),
+-  9: (
+-    $spacer * 8,
+-  ),
++  3: ($spacer * 2),
++  4: ($spacer * 3),
++  5: ($spacer * 4),
++  6: ($spacer * 5),
++  7: ($spacer * 6),
++  8: ($spacer * 7),
++  9: ($spacer * 8),
+ );
+ $pagination-color: $gl-text-color;
+ $tooltip-padding-y: 0.5rem;
+ $tooltip-padding-x: 0.75rem;
+
+`````
+
+### Actual (oxfmt)
+
+`````scss
+/*
+ * This file is only for overriding Bootstrap 4 variables.
+ * Please add any new variables to variables.scss
+ */
+
+$secondary: $gray-light;
+$input-disabled-bg: $gray-light;
+$input-border-color: $gray-400;
+$input-color: $gl-text-color;
+$input-font-size: $gl-font-size;
+$font-family-sans-serif: $regular-font;
+$font-family-monospace: $monospace-font;
+$btn-line-height: 20px;
+$table-accent-bg: $gray-light;
+$table-border-color: $gray-100;
+$card-border-color: $border-color;
+$card-cap-bg: $gray-light !default;
+$success: $green-500;
+$info: $blue-500;
+$warning: $orange-500;
+$danger: $red-500;
+$zindex-modal-backdrop: 1040;
+$nav-divider-margin-y: ($grid-size / 2);
+$dropdown-divider-bg: $gray-100;
+$dropdown-item-padding-y: 8px;
+$dropdown-item-padding-x: 12px;
+$popover-max-width: 300px;
+$popover-border-width: 1px;
+$popover-border-color: $border-color;
+$popover-box-shadow: 0 $border-radius-small $border-radius-default 0 $shadow-color;
+$popover-arrow-outer-color: $shadow-color;
+$h1-font-size: 14px * 2.5;
+$h2-font-size: 14px * 2;
+$h3-font-size: 14px * 1.75;
+$h4-font-size: 14px * 1.5;
+$h5-font-size: 14px * 1.25;
+$h6-font-size: 14px;
+$headings-color: $gl-text-color;
+$headings-font-weight: $gl-font-weight-bold;
+$spacer: $grid-size;
+$spacers: (
+  0: 0,
+  1: ($spacer * 0.5),
+  2: ($spacer),
+  3: ($spacer * 2),
+  4: ($spacer * 3),
+  5: ($spacer * 4),
+  6: ($spacer * 5),
+  7: ($spacer * 6),
+  8: ($spacer * 7),
+  9: ($spacer * 8),
+);
+$pagination-color: $gl-text-color;
+$tooltip-padding-y: 0.5rem;
+$tooltip-padding-x: 0.75rem;
+$tooltip-arrow-height: 0.5rem;
+$tooltip-arrow-width: 1rem;
+$b-table-sort-icon-bg-descending: url('data:image/svg+xml, <svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M11.707085,11.7071 \
+  L7.999975,15.4142 L4.292875,11.7071 C3.902375,11.3166 3.902375, \
+  10.6834 4.292875,10.2929 C4.683375,9.90237 \
+  5.316575,9.90237 5.707075,10.2929 L6.999975, \
+  11.5858 L6.999975,2 C6.999975,1.44771 \
+  7.447695,1 7.999975,1 C8.552255,1 8.999975,1.44771 \
+  8.999975,2 L8.999975,11.5858 L10.292865,10.2929 C10.683395 \
+  ,9.90237 11.316555,9.90237 11.707085,10.2929 \
+  C12.097605,10.6834 12.097605,11.3166 11.707085,11.7071 Z"/> \
+  </svg>') !default;
+$b-table-sort-icon-bg-ascending: url('data:image/svg+xml,<svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M4.29289,4.2971 L8,0.59 \
+  L11.7071,4.2971 C12.0976,4.6876 \
+  12.0976,5.3208 11.7071,5.7113 C11.3166,6.10183 10.6834, \
+  6.10183 10.2929,5.7113 L9,4.4184 L9,14.0042 C9,14.55649 \
+  8.55228,15.0042 8,15.0042 C7.44772,15.0042 7,14.55649 \
+  7,14.0042 L7,4.4184 L5.70711,5.7113 C5.31658,6.10183 4.68342,6.10183 4.29289,5.7113 \
+  C3.90237,5.3208 3.90237,4.6876 4.29289,4.2971 Z"/> \
+  </svg> ') !default;
+$b-table-sort-icon-bg-not-sorted: "";
+
+`````
+
+### Expected (prettier)
+
+`````scss
+/*
+ * This file is only for overriding Bootstrap 4 variables.
+ * Please add any new variables to variables.scss
+ */
+
+$secondary: $gray-light;
+$input-disabled-bg: $gray-light;
+$input-border-color: $gray-400;
+$input-color: $gl-text-color;
+$input-font-size: $gl-font-size;
+$font-family-sans-serif: $regular-font;
+$font-family-monospace: $monospace-font;
+$btn-line-height: 20px;
+$table-accent-bg: $gray-light;
+$table-border-color: $gray-100;
+$card-border-color: $border-color;
+$card-cap-bg: $gray-light !default;
+$success: $green-500;
+$info: $blue-500;
+$warning: $orange-500;
+$danger: $red-500;
+$zindex-modal-backdrop: 1040;
+$nav-divider-margin-y: ($grid-size / 2);
+$dropdown-divider-bg: $gray-100;
+$dropdown-item-padding-y: 8px;
+$dropdown-item-padding-x: 12px;
+$popover-max-width: 300px;
+$popover-border-width: 1px;
+$popover-border-color: $border-color;
+$popover-box-shadow: 0 $border-radius-small $border-radius-default 0 $shadow-color;
+$popover-arrow-outer-color: $shadow-color;
+$h1-font-size: 14px * 2.5;
+$h2-font-size: 14px * 2;
+$h3-font-size: 14px * 1.75;
+$h4-font-size: 14px * 1.5;
+$h5-font-size: 14px * 1.25;
+$h6-font-size: 14px;
+$headings-color: $gl-text-color;
+$headings-font-weight: $gl-font-weight-bold;
+$spacer: $grid-size;
+$spacers: (
+  0: 0,
+  1: (
+    $spacer * 0.5,
+  ),
+  2: ($spacer),
+  3: (
+    $spacer * 2,
+  ),
+  4: (
+    $spacer * 3,
+  ),
+  5: (
+    $spacer * 4,
+  ),
+  6: (
+    $spacer * 5,
+  ),
+  7: (
+    $spacer * 6,
+  ),
+  8: (
+    $spacer * 7,
+  ),
+  9: (
+    $spacer * 8,
+  ),
+);
+$pagination-color: $gl-text-color;
+$tooltip-padding-y: 0.5rem;
+$tooltip-padding-x: 0.75rem;
+$tooltip-arrow-height: 0.5rem;
+$tooltip-arrow-width: 1rem;
+$b-table-sort-icon-bg-descending: url('data:image/svg+xml, <svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M11.707085,11.7071 \
+  L7.999975,15.4142 L4.292875,11.7071 C3.902375,11.3166 3.902375, \
+  10.6834 4.292875,10.2929 C4.683375,9.90237 \
+  5.316575,9.90237 5.707075,10.2929 L6.999975, \
+  11.5858 L6.999975,2 C6.999975,1.44771 \
+  7.447695,1 7.999975,1 C8.552255,1 8.999975,1.44771 \
+  8.999975,2 L8.999975,11.5858 L10.292865,10.2929 C10.683395 \
+  ,9.90237 11.316555,9.90237 11.707085,10.2929 \
+  C12.097605,10.6834 12.097605,11.3166 11.707085,11.7071 Z"/> \
+  </svg>') !default;
+$b-table-sort-icon-bg-ascending: url('data:image/svg+xml,<svg \
+  xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="4 0 8 16"> \
+  <path style="fill: #666;" fill-rule="evenodd" d="M4.29289,4.2971 L8,0.59 \
+  L11.7071,4.2971 C12.0976,4.6876 \
+  12.0976,5.3208 11.7071,5.7113 C11.3166,6.10183 10.6834, \
+  6.10183 10.2929,5.7113 L9,4.4184 L9,14.0042 C9,14.55649 \
+  8.55228,15.0042 8,15.0042 C7.44772,15.0042 7,14.55649 \
+  7,14.0042 L7,4.4184 L5.70711,5.7113 C5.31658,6.10183 4.68342,6.10183 4.29289,5.7113 \
+  C3.90237,5.3208 3.90237,4.6876 4.29289,4.2971 Z"/> \
+  </svg> ') !default;
+$b-table-sort-icon-bg-not-sorted: "";
+
+`````

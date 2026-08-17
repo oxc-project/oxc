@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.bug-invariant-expected-consistent-destructuring.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected consistent kind for destructuring", labels: [LabeledSpan { label: Some("Expected consistent kind for destructuring"), span: Span { start: 155, end: 156 }, primary: true }], help: Some("Other places were `Reassign` but 'mutate? #t8$46[7:9]{reactive}' is const"), note: Some("This is an internal React Compiler error; the component or hook was not optimized"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Invariant") }, url: Some("https://github.com/oxc-project/oxc/issues/new/choose") } }
+
+No changes.

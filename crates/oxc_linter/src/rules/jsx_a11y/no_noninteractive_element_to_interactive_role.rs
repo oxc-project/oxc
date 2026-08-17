@@ -75,7 +75,6 @@ pub struct NoNoninteractiveElementToInteractiveRole(
 );
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
 struct NoNoninteractiveElementToInteractiveRoleConfig {
     /// A mapping of HTML element names to arrays of ARIA role strings that are
     /// allowed overrides for that element. For example, `{ "ul": ["menu", "tablist"] }`
@@ -215,6 +214,12 @@ fn test() {
         })
     }
 
+    fn custom_allowed_roles_config() -> serde_json::Value {
+        serde_json::json!([{
+            "table": ["grid"],
+        }])
+    }
+
     // Default config uses recommended allowed roles.
     let pass = vec![
         // Custom components (not in HTML_TAG — skipped)
@@ -334,6 +339,7 @@ fn test() {
         (r#"<li role="treeitem" />"#, None, None),
         (r#"<fieldset role="radiogroup" />"#, None, None),
         (r#"<fieldset role="presentation" />"#, None, None),
+        (r#"<table role="grid" />"#, Some(custom_allowed_roles_config()), None),
     ];
 
     let fail = vec![
@@ -420,6 +426,7 @@ fn test() {
         (r#"<thead role="menuitem" />"#, None, None),
         // Custom component mapped via settings to non-interactive element
         (r#"<Article role="button" />"#, None, Some(components_settings())),
+        (r#"<table role="button" />"#, Some(custom_allowed_roles_config()), None),
     ];
 
     // Strict mode tests: recommended allowed overrides become invalid.

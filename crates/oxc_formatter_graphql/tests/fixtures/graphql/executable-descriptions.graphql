@@ -1,0 +1,46 @@
+# Descriptions on executable definitions (GraphQL 2025 spec, graphql-js 16.12+)
+# and legacy fragment variables (graphql-js allowLegacyFragmentVariables).
+"Op description"
+query q {
+  f
+}
+
+"""
+Block description
+"""
+mutation m @dir {
+  f
+}
+
+"desc"   query withVars("var desc" $x: Int, "another"
+$y: String = "z" @upper) {
+  f
+}
+
+"Fragment description"
+fragment F($a: Int = 1, "b desc" $b: [B!]!) on T {
+  f
+}
+
+fragment G($veryLongVariableName: SomeLongTypeName = DEFAULT, "described" $another: AlsoQuiteLongTypeName) on SomeType @dir {
+  f
+}
+
+query noDesc(
+  "single line stays"
+  $x: Int
+  """
+  block forces line
+  """
+  $y: Int
+) {
+  f
+}
+
+fragment H(
+  # leading comment in vars
+  "a desc"
+  $a: Int # trailing var comment
+) on T {
+  f
+}

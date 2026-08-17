@@ -1,0 +1,50 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment after a trailing hole stays inside the brackets, like Prettier
+const a = [,, /* comment */];
+const b = [
+  , /* comment */
+];
+const c = [
+  ,, /* comment */
+];
+// A trailing line comment forces the array to break
+const d = [,, // line
+];
+// Comments trailing a real element are unaffected
+const e = [1, 2 /* t */];
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment after a trailing hole stays inside the brackets, like Prettier
+const a = [, ,/* comment */];
+const b = [,/* comment */];
+const c = [, ,/* comment */];
+// A trailing line comment forces the array to break
+const d = [
+  ,
+  ,// line
+];
+// Comments trailing a real element are unaffected
+const e = [1, 2 /* t */];
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment after a trailing hole stays inside the brackets, like Prettier
+const a = [, ,/* comment */];
+const b = [,/* comment */];
+const c = [, ,/* comment */];
+// A trailing line comment forces the array to break
+const d = [
+  ,
+  ,// line
+];
+// Comments trailing a real element are unaffected
+const e = [1, 2 /* t */];
+
+===================== End =====================

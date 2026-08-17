@@ -52,7 +52,8 @@ working directory: fixtures/cli/tsgolint_rule_options
     ,-[test.ts:78:5]
  77 | // This SHOULD error because this object is always truthy
  78 | if (alwaysTruthyObject) {
-    :     ^^^^^^^^^^^^^^^^^^
+    :     ^^^^^^^^^|^^^^^^^^^
+    :              `-- Type: object
  79 |   result += 1;
     `----
 

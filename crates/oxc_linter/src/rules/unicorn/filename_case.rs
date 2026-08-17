@@ -35,6 +35,8 @@ pub struct FilenameCaseConfig {
     camel_case: bool,
     snake_case: bool,
     pascal_case: bool,
+    lowercase: bool,
+    screaming_snake_case: bool,
     ignore: Vec<Regex>,
     multiple_file_extensions: bool,
 }
@@ -46,6 +48,8 @@ impl Default for FilenameCaseConfig {
             camel_case: false,
             snake_case: false,
             pascal_case: false,
+            lowercase: false,
+            screaming_snake_case: false,
             ignore: vec![],
             multiple_file_extensions: true,
         }
@@ -126,17 +130,22 @@ struct FilenameCaseConfigJsonCases {
     snake_case: bool,
     /// Whether pascal case is allowed, e.g. `SomeFileName.js`.
     pascal_case: bool,
+    /// Whether lowercase is allowed, e.g. `somefilename.js`.
+    lowercase: bool,
+    /// Whether screaming snake case is allowed, e.g. `SOME_FILE_NAME.js`.
+    screaming_snake_case: bool,
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[expect(clippy::enum_variant_names)]
 enum FilenameCaseJsonOptions {
     #[default]
     KebabCase,
     CamelCase,
     SnakeCase,
     PascalCase,
+    Lowercase,
+    ScreamingSnakeCase,
 }
 
 declare_oxc_lint!(
@@ -181,6 +190,20 @@ declare_oxc_lint!(
     /// - `SomeFileName.js`
     /// - `SomeFileName.Test.js`
     /// - `SomeFileName.TestUtils.js`
+    ///
+    /// #### `lowercase`
+    ///
+    /// Only rejects uppercase letters; separators are allowed.
+    ///
+    /// - `somefilename.js`
+    /// - `some-file-name.js`
+    /// - `some_file_name.js`
+    ///
+    /// #### `screamingSnakeCase`
+    ///
+    /// - `SOME_FILE_NAME.js`
+    /// - `SOME_FILE_NAME.TEST.js`
+    /// - `SOME_FILE_NAME.TEST_UTILS.js`
     FilenameCase,
     unicorn,
     style,
@@ -188,6 +211,38 @@ declare_oxc_lint!(
     version = "0.0.14",
     short_description = "Enforce a consistent case style for filenames.",
 );
+
+/// How a filename is normalized for a given `filename-case` option.
+#[derive(Clone, Copy)]
+enum CaseCheck {
+    /// Normalize with `convert_case` (kebab/camel/snake/pascal/screaming-snake).
+    Convert(Case<'static>),
+    /// Lowercase only: reject uppercase letters but keep separators (ls-lint `lowercase`).
+    Lowercase,
+}
+
+impl CaseCheck {
+    fn convert(self, name: &str) -> String {
+        match self {
+            CaseCheck::Convert(case) => {
+                // SCREAMING_SNAKE_CASE keeps digits attached to their word (e.g. `V2_API`,
+                // `FOO2BAR`), so drop the upper/digit boundaries too.
+                let boundaries: &[Boundary] = if case == Case::UpperSnake {
+                    &[
+                        Boundary::LowerDigit,
+                        Boundary::DigitLower,
+                        Boundary::UpperDigit,
+                        Boundary::DigitUpper,
+                    ]
+                } else {
+                    &[Boundary::LowerDigit, Boundary::DigitLower]
+                };
+                Converter::new().remove_boundaries(boundaries).to_case(case).convert(name)
+            }
+            CaseCheck::Lowercase => name.cow_to_lowercase().into_owned(),
+        }
+    }
+}
 
 impl Rule for FilenameCase {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
@@ -204,11 +259,16 @@ impl Rule for FilenameCase {
             config.camel_case = matches!(case, FilenameCaseJsonOptions::CamelCase);
             config.snake_case = matches!(case, FilenameCaseJsonOptions::SnakeCase);
             config.pascal_case = matches!(case, FilenameCaseJsonOptions::PascalCase);
+            config.lowercase = matches!(case, FilenameCaseJsonOptions::Lowercase);
+            config.screaming_snake_case =
+                matches!(case, FilenameCaseJsonOptions::ScreamingSnakeCase);
         } else if let Some(cases) = json.cases {
             config.kebab_case = cases.kebab_case;
             config.camel_case = cases.camel_case;
             config.snake_case = cases.snake_case;
             config.pascal_case = cases.pascal_case;
+            config.lowercase = cases.lowercase;
+            config.screaming_snake_case = cases.screaming_snake_case;
         }
 
         Ok(Self(Box::new(config)))
@@ -241,24 +301,26 @@ impl Rule for FilenameCase {
         let trimmed_filename = filename.trim_matches('_');
 
         let cases = [
-            (self.camel_case, Case::Camel, "camelCase"),
-            (self.kebab_case, Case::Kebab, "kebab-case"),
-            (self.snake_case, Case::Snake, "snake_case"),
-            (self.pascal_case, Case::Pascal, "PascalCase"),
+            (self.camel_case, CaseCheck::Convert(Case::Camel), "camelCase"),
+            (self.kebab_case, CaseCheck::Convert(Case::Kebab), "kebab-case"),
+            (self.snake_case, CaseCheck::Convert(Case::Snake), "snake_case"),
+            (self.pascal_case, CaseCheck::Convert(Case::Pascal), "PascalCase"),
+            (self.lowercase, CaseCheck::Lowercase, "lowercase"),
+            (
+                self.screaming_snake_case,
+                CaseCheck::Convert(Case::UpperSnake),
+                "SCREAMING_SNAKE_CASE",
+            ),
         ];
 
         let mut valid_cases = Vec::new();
         for (enabled, case, name) in cases {
             if enabled {
-                let converter = Converter::new()
-                    .remove_boundaries(&[Boundary::LowerDigit, Boundary::DigitLower]);
-                let converter = converter.to_case(case);
-
-                if converter.convert(trimmed_filename) == trimmed_filename {
+                if case.convert(trimmed_filename) == trimmed_filename {
                     return;
                 }
 
-                valid_cases.push((converter, name));
+                valid_cases.push((case, name));
             }
         }
 
@@ -267,10 +329,10 @@ impl Rule for FilenameCase {
         let mut message = String::from("Filename should be in ");
         let mut help_message = String::from("Rename the file to ");
 
-        for (i, (converter, name)) in valid_cases.into_iter().enumerate() {
+        for (i, (case, name)) in valid_cases.into_iter().enumerate() {
             let filename = format!(
                 "'{}'",
-                raw_filename.cow_replace(trimmed_filename, &converter.convert(trimmed_filename))
+                raw_filename.cow_replace(trimmed_filename, &case.convert(trimmed_filename))
             );
 
             let (name, filename) = if i == 0 {
@@ -396,6 +458,25 @@ fn test() {
         test_case("spec/Iss47Spec.js", "pascalCase"),
         test_case("spec/Iss47.100spec.js", "pascalCase"),
         test_case("spec/I18n.js", "pascalCase"),
+        test_case("src/foo/foo.js", "lowercase"),
+        test_case("src/foo/foobar.js", "lowercase"),
+        test_case("src/foo/foobar.test.js", "lowercase"),
+        test_case("src/foo/foobar.test-utils.js", "lowercase"),
+        test_case("src/foo/_foobar.js", "lowercase"),
+        test_case("spec/i18n.js", "lowercase"),
+        // `lowercase` allows separators; only uppercase letters are rejected
+        test_case("src/foo/foo-bar.js", "lowercase"),
+        test_case("src/foo/foo_bar.js", "lowercase"),
+        test_case("src/foo/FOO.js", "screamingSnakeCase"),
+        test_case("src/foo/FOO_BAR.js", "screamingSnakeCase"),
+        test_case("src/foo/FOO_BAR.test.js", "screamingSnakeCase"),
+        test_case("src/foo/FOO_BAR.test_utils.js", "screamingSnakeCase"),
+        test_case("src/foo/_FOO_BAR.js", "screamingSnakeCase"),
+        // digits stay attached to their word
+        test_case("src/foo/V2_API.js", "screamingSnakeCase"),
+        test_case("src/foo/FOO2BAR.js", "screamingSnakeCase"),
+        test_case("", "lowercase"),
+        test_case("", "screamingSnakeCase"),
         test_case("", "camelCase"),
         test_case("", "snakeCase"),
         test_case("", "kebabCase"),
@@ -415,6 +496,11 @@ fn test() {
         test_cases("src/foo/fooBar.js", ["camelCase"]),
         test_cases("src/foo/FooBar.js", ["kebabCase", "pascalCase"]),
         test_cases("src/foo/___foo_bar.js", ["snakeCase", "pascalCase"]),
+        test_cases("src/foo/foobar.js", ["lowercase"]),
+        test_cases("src/foo/foo_bar.js", ["lowercase"]),
+        test_cases("src/foo/FOO_BAR.js", ["screamingSnakeCase"]),
+        test_cases("src/foo/FooBar.js", ["pascalCase", "screamingSnakeCase"]),
+        test_cases("src/foo/FOO_BAR.js", ["lowercase", "screamingSnakeCase"]),
         // `ignore` option (array of regular expression patterns).
         // An undefined/empty filename should not crash.
         test_case_with_options(
@@ -571,6 +657,8 @@ fn test() {
         test_case("index.vue", "snakeCase"),
         test_case("index.vue", "kebabCase"),
         test_case("index.vue", "pascalCase"),
+        test_case("index.js", "lowercase"),
+        test_case("index.js", "screamingSnakeCase"),
         test_case("foo/bar/index.vue", "pascalCase"),
     ];
 
@@ -594,6 +682,12 @@ fn test() {
         test_case("test/foo/fooBar.js", "pascalCase"),
         test_case("test/foo/foo_bar.test.js", "pascalCase"),
         test_case("test/foo/foo-bar.test-utils.js", "pascalCase"),
+        test_case("src/foo/fooBar.js", "lowercase"),
+        test_case("src/foo/FooBar.js", "lowercase"),
+        test_case("src/foo/foo_bar.js", "screamingSnakeCase"),
+        test_case("src/foo/FooBar.js", "screamingSnakeCase"),
+        test_case("src/foo/fooBar.js", "screamingSnakeCase"),
+        test_case("src/foo/FOO-BAR.js", "screamingSnakeCase"),
         test_case("src/foo/_FOO-BAR.js", "camelCase"),
         test_case("src/foo/___FOO-BAR.js", "camelCase"),
         test_case("src/foo/_FOO-BAR.js", "snakeCase"),
@@ -606,6 +700,7 @@ fn test() {
         test_cases("src/foo/foo-bar.js", ["camelCase", "pascalCase"]),
         test_cases("src/foo/_foo_bar.js", ["camelCase", "pascalCase", "kebabCase"]),
         test_cases("src/foo/_FOO-BAR.js", ["snakeCase"]),
+        test_cases("src/foo/fooBar.js", ["lowercase", "screamingSnakeCase"]),
         test_case("src/foo/[foo_bar].js", ""),
         test_case("src/foo/$foo_bar.js", ""),
         test_case("src/foo/$fooBar.js", ""),

@@ -65,7 +65,7 @@ declare_oxc_lint!(
     unicorn,
     style,
     config = MaxNestedCalls,
-    version = "next",
+    version = "1.71.0",
     short_description = "Limit the depth of nested calls.",
 );
 

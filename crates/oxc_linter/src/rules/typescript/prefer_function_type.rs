@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
+    ast::{ExportDefaultDeclarationKind, TSInterfaceDeclaration, TSSignature, TSType, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -97,8 +97,8 @@ fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
         _ => return true,
     }
 
-    let expr = &decl.extends[0].expression;
-    if let Expression::Identifier(identifier) = expr {
+    let expr = &decl.extends[0].type_name;
+    if let TSTypeName::IdentifierReference(identifier) = expr {
         return &identifier.name != "Function";
     }
 
@@ -151,7 +151,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                     let mut is_parent_exported = false;
                     let mut node_start = interface_decl.span.start;
                     let mut node_end = interface_decl.span.end;
-                    if let AstKind::ExportNamedDeclaration(export_name_decl) =
+                    if let AstKind::ExportDeclaration(export_name_decl) =
                         ctx.nodes().parent_kind(node.id())
                     {
                         is_parent_exported = true;
@@ -173,8 +173,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 "{}{}{} = {};",
                                 comments_text,
                                 if is_parent_exported { "export type " } else { "type " },
-                                &interface_decl.id.name,
-                                &suggestion
+                                interface_decl.id.name,
+                                suggestion
                             ),
                             Span::new(node_start, node_end),
                         )
@@ -185,8 +185,8 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         format!(
                             "{} {} = {};",
                             if is_parent_exported { "export type" } else { "type" },
-                            &interface_decl.id.name,
-                            &suggestion
+                            interface_decl.id.name,
+                            suggestion
                         ),
                         Span::new(node_start, node_end),
                     )
@@ -290,7 +290,7 @@ impl Rule for PreferFunctionType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
-                let body: &oxc_allocator::Vec<'_, TSSignature<'_>> = &decl.body.body;
+                let body = &decl.body.body;
 
                 if !has_one_super_type(decl) && body.len() == 1 {
                     check_member(&body[0], node, ctx);

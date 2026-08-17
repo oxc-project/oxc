@@ -1,16 +1,17 @@
-use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstBuilder, AstKind,
+    AstKind,
     ast::{Argument, MemberExpression, RegExpFlags},
 };
 use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::Term;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
-use crate::{AstNode, ast_util::extract_regex_flags, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::extract_regex_flags, context::LintContext, fixer::RuleFixer, rule::Rule,
+};
 
 fn string_literal(span: Span, replacement: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("This pattern can be replaced with `{replacement}`."))
@@ -88,30 +89,39 @@ impl Rule for PreferStringReplaceAll {
                 if let Some(k) = get_pattern_replacement(pattern) {
                     ctx.diagnostic_with_fix(string_literal(pattern.span(), &k), |fixer| {
                         // foo.replaceAll(/hello world/g, bar) => foo.replaceAll('hello world', bar)
-                        let mut codegen = fixer.codegen().with_options(CodegenOptions {
-                            single_quote: true,
-                            ..Default::default()
-                        });
-                        let alloc = Allocator::default();
-                        let ast = AstBuilder::new(&alloc);
-                        codegen.print_expression(&ast.expression_string_literal(
-                            SPAN,
-                            ast.str(&k),
-                            None,
-                        ));
-                        fixer.replace(pattern.span(), codegen.into_source_text())
+                        fixer.replace(pattern.span(), generate_string_literal(fixer, &k))
                     });
                 }
             }
             "replace" if is_reg_exp_with_global_flag(pattern) => {
-                ctx.diagnostic_with_fix(
-                    use_replace_all(static_member_expr.property.span),
-                    |fixer| fixer.replace(static_member_expr.property.span, "replaceAll"),
-                );
+                let diagnostic = use_replace_all(static_member_expr.property.span);
+
+                if let Some(k) = get_pattern_replacement(pattern) {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        let string_literal = generate_string_literal(fixer, &k);
+
+                        let fixer = fixer.for_multifix();
+                        let mut fix = fixer.new_fix_with_capacity(2);
+                        fix.push(fixer.replace(static_member_expr.property.span, "replaceAll"));
+                        fix.push(fixer.replace(pattern.span(), string_literal));
+                        fix.with_message("Replace `replace` with `replaceAll`.")
+                    });
+                } else {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        fixer.replace(static_member_expr.property.span, "replaceAll")
+                    });
+                }
             }
             _ => {}
         }
     }
+}
+
+fn generate_string_literal(fixer: RuleFixer<'_, '_>, value: &str) -> String {
+    let mut codegen =
+        fixer.codegen().with_options(CodegenOptions { single_quote: true, ..Default::default() });
+    codegen.print_string(value);
+    codegen.into_source_text()
 }
 
 fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
@@ -273,9 +283,296 @@ fn test() {
     ];
 
     let fix = vec![
-        ("foo.replace(/a/g, bar)", "foo.replaceAll(/a/g, bar)"),
-        ("foo.replaceAll(/a/g, bar)", "foo.replaceAll('a', bar)"),
+        (r"foo.replace(/a/g, bar)", r"foo.replaceAll('a', bar)"),
+        (r"foo?.replace(/a/g, bar)", r"foo?.replaceAll('a', bar)"),
+        (
+            r"foo?.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');",
+            r"foo?.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&');",
+        ),
+        (
+            r"foo/* comment 1 */
+	.replace/* comment 2 */(
+		/* comment 3 */
+		/a/g // comment 4
+		,
+		bar
+	)",
+            r"foo/* comment 1 */
+	.replaceAll/* comment 2 */(
+		/* comment 3 */
+		'a' // comment 4
+		,
+		bar
+	)",
+        ),
+        (r#"foo.replace(/"'/g, '\'')"#, r#"foo.replaceAll('"\'', '\'')"#),
+        (r"foo.replace(/\./g, bar)", r"foo.replaceAll('.', bar)"),
+        (r"foo.replace(/\\\./g, bar)", r"foo.replaceAll('\\.', bar)"),
+        (r"foo.replace(/\|/g, bar)", r"foo.replaceAll('|', bar)"),
+        (r"foo.replace(/a/gu, bar)", r"foo.replaceAll('a', bar)"),
+        (r"foo.replace(/a/ug, bar)", r"foo.replaceAll('a', bar)"),
+        (r"foo.replace(/[)-|.*+?^$]/g, '\\$&')", r"foo.replaceAll(/[)-|.*+?^$]/g, '\\$&')"),
+        (
+            r"foo.replace(/[.*+?^${}()|]\[\]\\]/g, '\\$&')",
+            r"foo.replaceAll(/[.*+?^${}()|]\[\]\\]/g, '\\$&')",
+        ),
+        (r"foo.replace(/a?/g, bar)", r"foo.replaceAll(/a?/g, bar)"),
+        (r"foo.replace(/.*/g, bar)", r"foo.replaceAll(/.*/g, bar)"),
+        (r"foo.replace(/a|b/g, bar)", r"foo.replaceAll(/a|b/g, bar)"),
+        (r"foo.replace(/\W/g, bar)", r"foo.replaceAll(/\W/g, bar)"),
+        (r"foo.replace(/\u{61}/g, bar)", r"foo.replaceAll(/\u{61}/g, bar)"),
+        (r#"foo.replace(/]/g, "bar")"#, r#"foo.replaceAll(']', "bar")"#),
+        (r"foo.replace(/a/gi, bar)", r"foo.replaceAll(/a/gi, bar)"),
+        (r"foo.replace(/a/dgims, bar)", r"foo.replaceAll(/a/dgims, bar)"),
+        (r"foo.replace(/a/gy, bar)", r"foo.replaceAll(/a/gy, bar)"),
+        (r"foo.replace(/./gs, bar)", r"foo.replaceAll(/./gs, bar)"),
+        (r"foo.replace(/^a/gm, bar)", r"foo.replaceAll(/^a/gm, bar)"),
+        (r"foo.replace(/a/gui, bar)", r"foo.replaceAll(/a/gui, bar)"),
+        (r"foo.replace(/a/uig, bar)", r"foo.replaceAll(/a/uig, bar)"),
+        (r"foo.replace(/a/vig, bar)", r"foo.replaceAll(/a/vig, bar)"),
+        (
+            r#"foo.replace(new RegExp("foo", "g"), bar)"#,
+            r#"foo.replaceAll(new RegExp("foo", "g"), bar)"#,
+        ),
+        (r"foo.replace(/a]/g, _)", r"foo.replaceAll('a]', _)"),
+        (r"foo.replace(/[ab]/g, _)", r"foo.replaceAll(/[ab]/g, _)"),
+        (r"foo.replace(/[a-z]/g, _)", r"foo.replaceAll(/[a-z]/g, _)"),
+        (r"foo.replace(/[^a]/g, _)", r"foo.replaceAll(/[^a]/g, _)"),
+        (r"foo.replace(/a{1/g, _)", r"foo.replaceAll('a{1', _)"),
+        (r"foo.replace(/(a)/g, _)", r"foo.replaceAll(/(a)/g, _)"),
+        (r"foo.replace(/(?:a|b)/g, _)", r"foo.replaceAll(/(?:a|b)/g, _)"),
+        (r"foo.replace(/\n/g, _)", r"foo.replaceAll('\n', _)"),
+        (r"foo.replace(/\8/g, _)", r"foo.replaceAll('8', _)"),
+        (r"foo.replace(/\c_/g, _)", r"foo.replaceAll('\\c_', _)"),
+        (r"foo.replaceAll(/a]/g, _)", r"foo.replaceAll('a]', _)"),
+        (r"foo?.replaceAll(/a/g, _)", r"foo?.replaceAll('a', _)"),
+        (
+            r"foo.replaceAll(/a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string/g, _)",
+            r"foo.replaceAll('a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string', _)",
+        ),
+        (r#"foo.replace(/(?!a)+/g, "")"#, r#"foo.replaceAll(/(?!a)+/g, "")"#),
+        (r"foo.replaceAll(/a/g, bar)", r"foo.replaceAll('a', bar)"),
         (r"text.replaceAll(/\\`/g, '`')", r"text.replaceAll('\\`', '`')"),
+        (
+            r"JSON.stringify(data).replace(/'/g, '&#39')",
+            r"JSON.stringify(data).replaceAll('\'', '&#39')",
+        ),
+        // (
+        //     r"foo.replace(/[a]/g, bar)",
+        //     r"foo.replaceAll('a', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/[.]/g, bar)",
+        //     r"foo.replaceAll('.', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/[\n]/g, bar)",
+        //     r"foo.replaceAll('\n', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/\u{61}/gu, bar)",
+        //     r"foo.replaceAll('\u{61}', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/\u{61}/gv, bar)",
+        //     r"foo.replaceAll('\u{61}', bar)",
+        // ),
+        // (
+        //     r"str.replace(/\u200B/g, '')",
+        //     r"str.replaceAll('\u200B', '')",
+        // ),
+        // (
+        //     r"str.replace(/\x20/g, '')",
+        //     r"str.replaceAll('\x20', '')",
+        // ),
+        // (
+        //     r"foo.replace(/a/gs, bar)",
+        //     r"foo.replaceAll('a', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/\./gs, bar)",
+        //     r"foo.replaceAll('.', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/a/gm, bar)",
+        //     r"foo.replaceAll('a', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/a/dg, bar)",
+        //     r"foo.replaceAll('a', bar)",
+        // ),
+        // (
+        //     r"foo.replace(/a/dgms, bar)",
+        //     r"foo.replaceAll('a', bar)",
+        // ),
+        // (
+        //     r"foo.replaceAll(/a/gms, bar)",
+        //     r"foo.replaceAll('a', bar)",
+        // ),
+        // (
+        //     r#"const pattern = new RegExp("foo", "g"); foo.replace(pattern, bar)"#,
+        //     r#"const pattern = new RegExp("foo", "g"); foo.replaceAll(pattern, bar)"#,
+        // ),
+        // (
+        //     r"foo.replace(/a{1}/g, _)",
+        //     r"foo.replaceAll('a', _)",
+        // ),
+        // (
+        //     r"foo.replace(/[a]{1}/g, _)",
+        //     r"foo.replaceAll('a', _)",
+        // ),
+        // (
+        //     r"foo.replace(/(?:a)/g, _)",
+        //     r"foo.replaceAll('a', _)",
+        // ),
+        // (
+        //     r"foo.replace(/(?:[a])/g, _)",
+        //     r"foo.replaceAll('a', _)",
+        // ),
+        // (
+        //     r"foo.replace(/(?:ab)/g, _)",
+        //     r"foo.replaceAll('ab', _)",
+        // ),
+        // (
+        //     r"foo.replace(/(?:a)(?:b)/g, _)",
+        //     r"foo.replaceAll('ab', _)",
+        // ),
+        // (
+        //     r"foo.replace(/(?:a){1}/g, _)",
+        //     r"foo.replaceAll('a', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\u0022/g, _)",
+        //     r"foo.replaceAll('\u0022', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\u0027/g, _)",
+        //     r"foo.replaceAll('\u0027', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\cM\cj\cI/g, _)",
+        //     r"foo.replaceAll('\r\n\t', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\cZ/g, _)",
+        //     r"foo.replaceAll('\u{1A}', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\377/g, _)",
+        //     r"foo.replaceAll('\u{FF}', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\x0d\x0a\x09/g, _)",
+        //     r"foo.replaceAll('\x0d\x0a\x09', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\u000d\u000a\u0009/g, _)",
+        //     r"foo.replaceAll('\u000d\u000a\u0009', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\x22/g, _)",
+        //     r"foo.replaceAll('\x22', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\x27/g, _)",
+        //     r"foo.replaceAll('\x27', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\uD83D\ude00/g, _)",
+        //     r"foo.replaceAll('\uD83D\ude00', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\u{1f600}/gu, _)",
+        //     r"foo.replaceAll('\u{1f600}', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\u{20}/gu, _)",
+        //     r"foo.replaceAll('\u{20}', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\u{20}/gv, _)",
+        //     r"foo.replaceAll('\u{20}', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\1/g, _)",
+        //     r"foo.replaceAll('\u{1}', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\00/g, _)",
+        //     r"foo.replaceAll('\u{0}', _)",
+        // ),
+        // (
+        //     r"foo.replace(/\08/g, _)",
+        //     r"foo.replaceAll('\u{0}8', _)",
+        // ),
+        // (
+        //     r"foo.replaceAll(/\r\n\u{1f600}/gu, _)",
+        //     r"foo.replaceAll('\r\n\u{1f600}', _)",
+        // ),
+        // (
+        //     r"foo.replaceAll(/\r\n\u{1f600}/gv, _)",
+        //     r"foo.replaceAll('\r\n\u{1f600}', _)",
+        // ),
+        // (
+        //     r#"foo.split("a").join("b")"#,
+        //     r"foo.replaceAll('a', 'b')",
+        // ),
+        // (
+        //     r#"foo.split(`a`).join("b")"#,
+        //     r"foo.replaceAll('a', 'b')",
+        // ),
+        // (
+        //     r#"foo.split("a").join(`b`)"#,
+        //     r"foo.replaceAll('a', 'b')",
+        // ),
+        // (
+        //     r#"foo.split("_").join("$&")"#,
+        //     r"foo.replaceAll('_', '$$&')",
+        // ),
+        // (
+        //     r#"foo.split("_").join("$1")"#,
+        //     r"foo.replaceAll('_', '$$1')",
+        // ),
+        // (
+        //     r#"foo.split("_").join("$$")"#,
+        //     r"foo.replaceAll('_', '$$$$')",
+        // ),
+        // (
+        //     r#"(foo).split("a").join("b")"#,
+        //     r"(foo).replaceAll('a', 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/a+/).join("b")"#,
+        //     r"foo.replaceAll(/a+/g, 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/(?:a)/).join("b")"#,
+        //     r"foo.replaceAll(/(?:a)/g, 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/[ab]+/).join("b")"#,
+        //     r"foo.replaceAll(/[ab]+/g, 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/\s+/).join("b")"#,
+        //     r"foo.replaceAll(/\s+/g, 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/a|b/).join("b")"#,
+        //     r"foo.replaceAll(/a|b/g, 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/a/i).join("b")"#,
+        //     r"foo.replaceAll(/a/gi, 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/a/g).join("b")"#,
+        //     r"foo.replaceAll(/a/g, 'b')",
+        // ),
+        // (
+        //     r#"foo.split(/a/gi).join("b")"#,
+        //     r"foo.replaceAll(/a/gi, 'b')",
+        // ),
     ];
 
     Tester::new(PreferStringReplaceAll::NAME, PreferStringReplaceAll::PLUGIN, pass, fail)

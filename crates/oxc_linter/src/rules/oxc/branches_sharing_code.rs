@@ -5,6 +5,7 @@ use oxc_ast::{
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{ContentEq, GetSpan, Span};
@@ -99,6 +100,16 @@ impl Rule for BranchesSharingCode {
         let AstKind::IfStatement(if_stmt) = node.kind() else {
             return;
         };
+
+        // Analyze the entire chain from its root instead of reporting on an `else if` suffix.
+        if let AstKind::IfStatement(parent_if) = ctx.nodes().parent_kind(node.id())
+            && parent_if
+                .alternate
+                .as_ref()
+                .is_some_and(|alternate| alternate.span() == if_stmt.span)
+        {
+            return;
+        }
 
         let (conditions, bodies) = extract_if_sequence(if_stmt);
 
@@ -253,7 +264,9 @@ fn collect_lexical_declaration_symbols(stmt: &Statement, symbols: &mut FxHashSet
     if let Statement::VariableDeclaration(decl) = stmt
         && decl.kind.is_lexical()
     {
-        symbols.extend(decl.declarations.iter().flat_map(|decl| decl.id.get_symbol_ids()));
+        decl.bound_names(&mut |ident| {
+            symbols.insert(ident.symbol_id());
+        });
     }
 }
 
@@ -404,6 +417,18 @@ fn test() {
             if (maybe2) { console.log("not maybe and maybe2"); }
         }
         "#,
+        r"
+        if (someCondition) {
+            y = somethingElse;
+            x = '1';
+        } else if (someOtherCondition) {
+            y = somethingElse;
+            x = 'b';
+        } else {
+            viewId = accountId;
+            x = 'b';
+        }
+        ",
     ];
 
     let fail = vec![

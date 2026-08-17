@@ -1,0 +1,13 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/inadvertent-mutability-readonly-class.js
+---
+function Component(props) {
+	const env = useRelayEnvironment();
+	const mutator = new Mutator(env);
+	useOtherHook();
+	const x = {};
+	foo(x, mutator);
+	return x;
+}
+class Mutator {}

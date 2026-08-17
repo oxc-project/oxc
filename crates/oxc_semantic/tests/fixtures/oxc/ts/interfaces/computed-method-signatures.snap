@@ -1,0 +1,117 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/computed-method-signatures.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "TSMethodSignature",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSMethodSignature",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 3,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 4,
+            "node": "TSMethodSignature",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 5,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeImport)",
+        "id": 0,
+        "name": "importedKey",
+        "node": "ImportDefaultSpecifier",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 5,
+            "name": "importedKey",
+            "node_id": 32,
+            "scope_id": 4
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "valueKey",
+        "node": "VariableDeclarator(valueKey)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "valueKey",
+            "node_id": 14,
+            "scope_id": 2
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 3,
+            "name": "valueKey",
+            "node_id": 22,
+            "scope_id": 3
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 6,
+            "name": "valueKey",
+            "node_id": 39,
+            "scope_id": 5
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Interface)",
+        "id": 2,
+        "name": "Foo",
+        "node": "TSInterfaceDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 4,
+        "name": "T",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

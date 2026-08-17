@@ -17,6 +17,10 @@ impl Rule for PreferEach {
     fn run_once(&self, ctx: &LintContext<'_>) {
         SharedPreferEach::PreferEachConfig::run_once(ctx);
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        SharedPreferEach::PreferEachConfig::should_run(ctx)
+    }
 }
 
 #[test]

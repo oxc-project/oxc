@@ -7,7 +7,7 @@ use std::{
 use oxc_language_server::{LanguageId, run_server};
 use tower_lsp_server::ls_types::Uri;
 
-use crate::core::{ExternalFormatter, JsConfigLoaderCb, utils};
+use crate::core::{ExternalServices, JsConfigLoaderCb, utils};
 
 mod options;
 mod server_formatter;
@@ -60,7 +60,7 @@ pub fn create_fake_file_path_from_language_id(
 }
 
 /// Run the language server
-pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) {
+pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_services: ExternalServices) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
         if let Some(vp_version) = utils::vp_version() {
@@ -73,7 +73,7 @@ pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: Ext
         "oxfmt".to_string(),
         version,
         oxc_language_server::WorkerManager::new_dynamic(Arc::new(
-            server_formatter::ServerFormatterBuilder::new(js_config_loader, external_formatter),
+            server_formatter::ServerFormatterBuilder::new(js_config_loader, external_services),
         )),
     )
     .await;
@@ -95,12 +95,12 @@ mod test {
 
         let uri = Uri::from_str("vscode-userdata:/c%3A/Users/User/settings.json").unwrap();
         let result = create_fake_file_path_from_language_id(&language_id, &root, &uri).unwrap();
-        assert!(result.extension().unwrap() == "jsonc");
+        assert_eq!(result.extension().unwrap(), "jsonc");
         assert!(result.starts_with(&root));
 
         let uri = Uri::from_str("Untitled://Untitled-1").unwrap();
         let result = create_fake_file_path_from_language_id(&language_id, &root, &uri).unwrap();
-        assert!(result.extension().unwrap() == "jsonc");
+        assert_eq!(result.extension().unwrap(), "jsonc");
         assert!(result.starts_with(&root));
     }
 }

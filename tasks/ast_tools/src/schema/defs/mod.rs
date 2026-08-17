@@ -1,4 +1,3 @@
-use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
@@ -6,7 +5,7 @@ use syn::Ident;
 use crate::{
     codegen::DeriveId,
     schema::{File, Schema},
-    utils::create_ident,
+    utils::{create_ident, snake_case},
 };
 
 use super::{Derives, FileId, TypeId, extensions};
@@ -50,11 +49,8 @@ pub trait Def {
     fn has_lifetime(&self, schema: &Schema) -> bool;
 
     /// Get type name in snake case.
-    ///
-    /// `convert_case` splits `V8` into `v` + `8`, producing `v_8_intrinsic_expression`.
-    /// We fix this to `v8_intrinsic_expression` to match the conventional naming.
     fn snake_name(&self) -> String {
-        fix_snake_case(&self.name().to_case(Case::Snake))
+        snake_case(self.name())
     }
 
     /// Get type name as an [`Ident`].
@@ -118,27 +114,6 @@ pub trait Def {
             &schema.types[self.id()]
         }
     }
-}
-
-/// Fix `convert_case`'s snake_case output which inserts underscores between letters and digits.
-///
-/// e.g. `v_8_intrinsic_expression` -> `v8_intrinsic_expression`.
-fn fix_snake_case(s: &str) -> String {
-    let bytes = s.as_bytes();
-    let mut result = String::with_capacity(s.len());
-    for (i, &byte) in bytes.iter().enumerate() {
-        // Skip underscores between a letter and a digit
-        if byte == b'_'
-            && i > 0
-            && i + 1 < bytes.len()
-            && bytes[i - 1].is_ascii_alphabetic()
-            && bytes[i + 1].is_ascii_digit()
-        {
-            continue;
-        }
-        result.push(byte as char);
-    }
-    result
 }
 
 /// IDs of container types containing a type.

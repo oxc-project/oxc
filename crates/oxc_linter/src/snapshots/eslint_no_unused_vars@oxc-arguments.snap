@@ -10,6 +10,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this parameter.
 
+  ⚠ eslint(no-unused-vars): Parameter '_' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:47]
+ 1 │ window.addEventListener('logModel', function (_) { doSomething() })
+   ·                                               ┬
+   ·                                               ╰── '_' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
  1 │ function foo(a: number) {} foo()
@@ -65,3 +73,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ╰── 'args' is declared here
    ╰────
   help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Variable 'count' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:5]
+ 1 │ let count = 0; function foo(c = (count++, 0)) { console.log(c) } foo()
+   ·     ──┬──                        ──┬──
+   ·       │                            ╰── it was last assigned here
+   ·       ╰── 'count' is declared here
+   ╰────
+  help: Did you mean to use this variable?

@@ -1,0 +1,115 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/*
+ * Divergence: Prettier double-indents a function call that directly follows
+ * a `//` inline comment in nested-args position.
+ *
+ * Prettier marks this case as a bug (prettier/prettier#4878 was filed and
+ * partially fixed by PR #7844 with the changelog entry "Fix extra indentation
+ * of lines following comments in scss"). PR #7844's fix only covers the
+ * SCSS-map / direct paren-group child case; the nested function-args case
+ * was left in their fixture as-is and never followed up. PR #18228 (3.7.0,
+ * 2025-11) similarly addressed only the block-comment + comma-separated-value
+ * variant. So the `//` + nested-function-args double indent is a forgotten
+ * leftover from an incomplete fix, not an intentional design.
+ *
+ * We diverge — oxc's args sit at the normal +1 / `)` +0, matching what every
+ * other comment-free function call does. Tracked for upstream report.
+ *
+ * Same pattern as upstream `tests/format/scss/comments/4878.scss`, shrunk
+ * from 12 nest levels to 3 so the divergence is visible without overflowing
+ * the test runner's stack.
+ */
+.foo {
+  width: someVeryLongFunctionNameForJustAPow(2, someVeryLongFunctionNameForJustAPow(2, someVeryLongFunctionNameForJustAPow(2,
+  // This next pow is really powerful
+  someVeryLongFunctionNameForJustAPow(2, someVeryLongFunctionNameForJustAPow(2, someVeryLongFunctionNameForJustAPow(2, 2))))));
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/*
+ * Divergence: Prettier double-indents a function call that directly follows
+ * a `//` inline comment in nested-args position.
+ *
+ * Prettier marks this case as a bug (prettier/prettier#4878 was filed and
+ * partially fixed by PR #7844 with the changelog entry "Fix extra indentation
+ * of lines following comments in scss"). PR #7844's fix only covers the
+ * SCSS-map / direct paren-group child case; the nested function-args case
+ * was left in their fixture as-is and never followed up. PR #18228 (3.7.0,
+ * 2025-11) similarly addressed only the block-comment + comma-separated-value
+ * variant. So the `//` + nested-function-args double indent is a forgotten
+ * leftover from an incomplete fix, not an intentional design.
+ *
+ * We diverge — oxc's args sit at the normal +1 / `)` +0, matching what every
+ * other comment-free function call does. Tracked for upstream report.
+ *
+ * Same pattern as upstream `tests/format/scss/comments/4878.scss`, shrunk
+ * from 12 nest levels to 3 so the divergence is visible without overflowing
+ * the test runner's stack.
+ */
+.foo {
+  width: someVeryLongFunctionNameForJustAPow(
+    2,
+    someVeryLongFunctionNameForJustAPow(
+      2,
+      someVeryLongFunctionNameForJustAPow(
+        2,
+        // This next pow is really powerful
+        someVeryLongFunctionNameForJustAPow(
+          2,
+          someVeryLongFunctionNameForJustAPow(
+            2,
+            someVeryLongFunctionNameForJustAPow(2, 2)
+          )
+        )
+      )
+    )
+  );
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/*
+ * Divergence: Prettier double-indents a function call that directly follows
+ * a `//` inline comment in nested-args position.
+ *
+ * Prettier marks this case as a bug (prettier/prettier#4878 was filed and
+ * partially fixed by PR #7844 with the changelog entry "Fix extra indentation
+ * of lines following comments in scss"). PR #7844's fix only covers the
+ * SCSS-map / direct paren-group child case; the nested function-args case
+ * was left in their fixture as-is and never followed up. PR #18228 (3.7.0,
+ * 2025-11) similarly addressed only the block-comment + comma-separated-value
+ * variant. So the `//` + nested-function-args double indent is a forgotten
+ * leftover from an incomplete fix, not an intentional design.
+ *
+ * We diverge — oxc's args sit at the normal +1 / `)` +0, matching what every
+ * other comment-free function call does. Tracked for upstream report.
+ *
+ * Same pattern as upstream `tests/format/scss/comments/4878.scss`, shrunk
+ * from 12 nest levels to 3 so the divergence is visible without overflowing
+ * the test runner's stack.
+ */
+.foo {
+  width: someVeryLongFunctionNameForJustAPow(
+    2,
+    someVeryLongFunctionNameForJustAPow(
+      2,
+      someVeryLongFunctionNameForJustAPow(
+        2,
+        // This next pow is really powerful
+        someVeryLongFunctionNameForJustAPow(
+          2,
+          someVeryLongFunctionNameForJustAPow(2, someVeryLongFunctionNameForJustAPow(2, 2))
+        )
+      )
+    )
+  );
+}
+
+===================== End =====================

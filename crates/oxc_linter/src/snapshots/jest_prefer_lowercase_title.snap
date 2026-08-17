@@ -96,6 +96,13 @@ source: crates/oxc_linter/src/tester.rs
   help: `"Some longer description"`s should begin with lowercase
 
   ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:1:10]
+ 1 │ describe(`some longer Description`, function () {})
+   ·          ─────────────────────────
+   ╰────
+  help: `"some longer Description"`s should begin with lowercase
+
+  ⚠ jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:11]
  1 │ fdescribe(`Some longer description`, function () {})
    ·           ─────────────────────────

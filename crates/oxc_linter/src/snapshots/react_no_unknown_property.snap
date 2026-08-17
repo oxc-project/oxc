@@ -133,7 +133,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div crossOrigin />
    ·      ───────────
    ╰────
-  help: Property 'crossOrigin' is only allowed on: link, script, audio, image, img, video
+  help: Property 'crossOrigin' is only allowed on: audio, script, link, image, video, img
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
@@ -147,77 +147,77 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·      ───────
    ╰────
-  help: Property 'onAbort' is only allowed on: video, audio
+  help: Property 'onAbort' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:27]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                           ────────────────
    ╰────
-  help: Property 'onDurationChange' is only allowed on: video, audio
+  help: Property 'onDurationChange' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:66]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                  ─────────
    ╰────
-  help: Property 'onEmptied' is only allowed on: video, audio
+  help: Property 'onEmptied' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:91]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                                           ───────
    ╰────
-  help: Property 'onEnded' is only allowed on: video, audio
+  help: Property 'onEnded' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:110]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                                                              ────────
    ╰────
-  help: Property 'onResize' is only allowed on: video, audio
+  help: Property 'onResize' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:133]
  1 │ <div onAbort={this.abort} onDurationChange={this.durationChange} onEmptied={this.emptied} onEnded={this.end} onResize={this.resize} onError={this.error} />
    ·                                                                                                                                     ───────
    ╰────
-  help: Property 'onError' is only allowed on: source, picture, video, link, script, audio, img, iframe
+  help: Property 'onError' is only allowed on: img, iframe, video, picture, audio, link, source, script
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div onLoad={this.load} />
    ·      ──────
    ╰────
-  help: Property 'onLoad' is only allowed on: source, body, img, link, script, picture, object, iframe
+  help: Property 'onLoad' is only allowed on: iframe, link, body, script, source, object, img, picture
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div fill="pink" />
    ·      ────
    ╰────
-  help: Property 'fill' is only allowed on: polyline, animateMotion, g, animateTransform, polygon, svg, set, path, mask, symbol, tref, textPath, ellipse, animateColor, altGlyph, marker, circle, line, animate, tspan, text, use, rect
+  help: Property 'fill' is only allowed on: tspan, set, animateColor, line, svg, path, text, ellipse, use, marker, tref, rect, polygon, symbol, g, mask, textPath, altGlyph, animateMotion, polyline, circle, animateTransform, animate
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·      ────────
    ╰────
-  help: Property 'controls' is only allowed on: video, audio
+  help: Property 'controls' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:31]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·                               ────
    ╰────
-  help: Property 'loop' is only allowed on: video, audio
+  help: Property 'loop' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:43]
  1 │ <div controls={this.controls} loop={true} muted={false} src={this.videoSrc} playsInline={true} allowFullScreen></div>
    ·                                           ─────
    ╰────
-  help: Property 'muted' is only allowed on: video, audio
+  help: Property 'muted' is only allowed on: audio, video
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:77]
@@ -273,7 +273,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div fetchPriority="high" />
    ·      ─────────────
    ╰────
-  help: Property 'fetchPriority' is only allowed on: link, img, script
+  help: Property 'fetchPriority' is only allowed on: script, img, link
 
   ⚠ react(no-unknown-property): Unknown property found
    ╭─[no_unknown_property.tsx:1:6]
@@ -322,7 +322,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div abbr="abbr" />
    ·      ────
    ╰────
-  help: Property 'abbr' is only allowed on: th, td
+  help: Property 'abbr' is only allowed on: td, th
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]
@@ -359,11 +359,11 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div precedence="default" />
    ·      ──────────
    ╰────
-  help: Property 'precedence' is only allowed on: style, link
+  help: Property 'precedence' is only allowed on: link, style
 
   ⚠ react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:9]
  1 │ <script precedence="high" src="foo.js" />
    ·         ──────────
    ╰────
-  help: Property 'precedence' is only allowed on: style, link
+  help: Property 'precedence' is only allowed on: link, style

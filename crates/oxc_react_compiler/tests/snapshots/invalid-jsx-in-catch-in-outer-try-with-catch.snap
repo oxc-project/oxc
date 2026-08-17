@@ -1,0 +1,24 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/invalid-jsx-in-catch-in-outer-try-with-catch.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Avoid constructing JSX within try/catch", labels: [LabeledSpan { label: Some("Avoid constructing JSX within try/catch"), span: Span { start: 242, end: 245 }, primary: true }], help: Some("React does not immediately render components when JSX is constructed, so rendering errors will not be caught by the try/catch. Wrap the component in an error boundary instead"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("ErrorBoundaries") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/error-boundaries") } }
+
+// @loggerTestOnly @validateNoJSXInTryStatements @outputMode:"lint"
+import { identity } from "shared-runtime";
+function Component(props) {
+	let el;
+	try {
+		let value;
+		try {
+			value = identity(props.foo);
+		} catch {
+			el = <div value={value} />;
+		}
+	} catch {
+		return null;
+	}
+	return el;
+}

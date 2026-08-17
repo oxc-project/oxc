@@ -8,5 +8,10 @@
   { "cwd": "tailwind_empty", "args": ["--migrate", "prettier"] },
   { "cwd": "tailwind_regex", "args": ["--migrate", "prettier"] },
   { "cwd": "sort_pkg_disabled", "args": ["--migrate", "prettier"] },
-  { "cwd": "sort_pkg_enabled", "args": ["--migrate", "prettier"] }
+  { "cwd": "sort_pkg_enabled", "args": ["--migrate", "prettier"] },
+  { "cwd": "svelte_plugin", "args": ["--migrate", "prettier"] },
+  { "cwd": "unsupported_opts", "args": ["--migrate", "prettier"] },
+  { "cwd": "overrides_json", "args": ["--migrate", "prettier"] },
+  { "cwd": "overrides_jsonc", "args": ["--migrate", "prettier"] },
+  { "cwd": "overrides_yaml", "args": ["--migrate", "prettier"] }
 ]

@@ -345,7 +345,7 @@ impl TestCaseContent {
     //   * `filename(module=es2022).errors.txt`
     //   * `filename(target=esnext).errors.txt`
     //   * `filename.errors.txt`
-    fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
+    pub(crate) fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
         #[must_use]
         fn create_suffixes<T: Display>(name: &str, flags: &[T]) -> Option<Vec<String>> {
             if flags.len() < 2 {
@@ -439,8 +439,8 @@ impl Baseline {
         let source = Arc::new(NamedSource::new(&self.name, self.original.clone()));
         self.oxc_diagnostics
             .iter()
-            .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .fold(String::new(), |s, error| s + &format!("{error:?}"))
+            .map(|d| d.clone().render_with_source_code(Arc::clone(&source)))
+            .join("")
     }
 }
 

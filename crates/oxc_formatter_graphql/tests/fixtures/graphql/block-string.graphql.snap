@@ -1,0 +1,101 @@
+---
+source: crates/oxc_formatter_graphql/tests/fixtures/mod.rs
+---
+==================== Input ====================
+"""
+Line one
+
+
+Two blank lines above stay intact
+
+
+
+Three blank lines above stay intact
+"""
+type A {
+  """   single line gets trimmed   """
+  a: String
+  """
+  Escaped \""" quotes
+  """
+  b: String
+  """
+
+  """
+  c: String
+  """
+      deeply
+        indented
+      dedents
+  """
+  d: String
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+"""
+Line one
+
+
+Two blank lines above stay intact
+
+
+
+Three blank lines above stay intact
+"""
+type A {
+  """
+  single line gets trimmed
+  """
+  a: String
+  """
+  Escaped \""" quotes
+  """
+  b: String
+  """
+  """
+  c: String
+  """
+  deeply
+    indented
+  dedents
+  """
+  d: String
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+"""
+Line one
+
+
+Two blank lines above stay intact
+
+
+
+Three blank lines above stay intact
+"""
+type A {
+  """
+  single line gets trimmed
+  """
+  a: String
+  """
+  Escaped \""" quotes
+  """
+  b: String
+  """
+  """
+  c: String
+  """
+  deeply
+    indented
+  dedents
+  """
+  d: String
+}
+
+===================== End =====================

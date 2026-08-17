@@ -1,6 +1,7 @@
 use std::cmp::max;
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
+use oxc_data_structures::branch_hints::cold_path;
 
 use crate::{config::LexerConfig as Config, diagnostics};
 
@@ -109,7 +110,7 @@ macro_rules! handle_string_literal_escape {
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
-        let mut str = StringBuilder::with_capacity_in(capacity, $lexer.allocator);
+        let mut str = ArenaStringBuilder::with_capacity_in(capacity, $lexer.allocator);
 
         // Push chunk before `\` into `str`.
         str.push_str(so_far);
@@ -156,12 +157,13 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
                         continue 'outer;
                     }
-                    LOSSY_REPLACEMENT_CHAR_FIRST_BYTE => cold_branch(|| {
+                    LOSSY_REPLACEMENT_CHAR_FIRST_BYTE => {
                         // If the string contains lone surrogates, the lossy replacement character (U+FFFD)
                         // is used as start of an escape sequence.
                         // So an actual lossy escape character has to be escaped too.
                         // Output it as `\u{FFFD}fffd`.
                         // Cold branch because this should be very rare in real-world code.
+                        cold_path();
 
                         // SAFETY: A byte is available, as we just peeked it, and it's 0xEF.
                         // 0xEF is always 1st byte of a 3-byte Unicode sequence, so safe to consume 3 bytes.
@@ -176,7 +178,7 @@ macro_rules! handle_string_literal_escape {
                             str.push_str("fffd");
                             chunk_start = $lexer.source.position();
                         }
-                    }),
+                    }
                     _ => {
                         // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {

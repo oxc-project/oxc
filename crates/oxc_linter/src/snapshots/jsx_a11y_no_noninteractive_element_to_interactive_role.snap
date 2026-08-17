@@ -563,6 +563,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove the interactive role or use an appropriate interactive element instead.
 
   ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
+   ╭─[no_noninteractive_element_to_interactive_role.tsx:1:8]
+ 1 │ <table role="button" />
+   ·        ─────────────
+   ╰────
+  help: Remove the interactive role or use an appropriate interactive element instead.
+
+  ⚠ jsx-a11y(no-noninteractive-element-to-interactive-role): Non-interactive elements should not be assigned interactive roles.
    ╭─[no_noninteractive_element_to_interactive_role.tsx:1:5]
  1 │ <ul role="menu" />
    ·     ───────────

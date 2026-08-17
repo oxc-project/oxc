@@ -1,10 +1,9 @@
-use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::starts_with_ignore_case};
 
 fn no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `javascript:` url")
@@ -46,21 +45,17 @@ impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
-                if literal.value.cow_to_ascii_lowercase().starts_with("javascript:") =>
+                if starts_with_ignore_case(&literal.value, "javascript:") =>
             {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
             AstKind::TemplateLiteral(literal)
                 if !is_tagged_template_expression(ctx, node, literal.span)
                     && literal.quasis.len() == 1
-                    && literal
-                        .quasis
-                        .first()
-                        .unwrap()
-                        .value
-                        .raw
-                        .cow_to_ascii_lowercase()
-                        .starts_with("javascript:") =>
+                    && starts_with_ignore_case(
+                        &literal.quasis.first().unwrap().value.raw,
+                        "javascript:",
+                    ) =>
             {
                 ctx.diagnostic(no_script_url_diagnostic(literal.span));
             }
@@ -87,6 +82,9 @@ fn test() {
         "var url = `xjavascript:`",
         "var url = `${foo}javascript:`",
         "var a = foo`javaScript:`;",
+        "var a = 'js:';",
+        "var url = `js:`",
+        "var a = 'über cool stuff';",
     ];
 
     let fail = vec![

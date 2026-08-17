@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.panel {
+  @media (min-width: map-get($grid-breakpoints, md)) and (max-width: map-get($grid-breakpoints, xl) - 1px) {
+    color: red;
+  }
+}
+@media (max-width: $screen-lg - 1) {
+  body {
+    display: none;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.panel {
+  @media (min-width: map-get($grid-breakpoints, md)) and (max-width: map-get($grid-breakpoints, xl) - 1px) {
+    color: red;
+  }
+}
+@media (max-width: $screen-lg - 1) {
+  body {
+    display: none;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.panel {
+  @media (min-width: map-get($grid-breakpoints, md)) and (max-width: map-get($grid-breakpoints, xl) - 1px) {
+    color: red;
+  }
+}
+@media (max-width: $screen-lg - 1) {
+  body {
+    display: none;
+  }
+}
+
+===================== End =====================

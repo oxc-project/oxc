@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.useMemo-callback-generator.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "(BuildHIR::lowerExpression) Handle YieldExpression expressions", labels: [LabeledSpan { label: None, span: Span { start: 225, end: 232 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "useMemo() callbacks may not be async or generator functions", labels: [LabeledSpan { label: Some("Async and generator functions are not supported"), span: Span { start: 206, end: 220 }, primary: true }], help: Some("useMemo() callbacks are called once and must synchronously return a value"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("UseMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/use-memo") } }
+
+No changes.

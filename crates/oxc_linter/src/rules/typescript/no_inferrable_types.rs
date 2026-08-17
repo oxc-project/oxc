@@ -1,3 +1,4 @@
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -148,7 +149,7 @@ impl Rule for NoInferrableTypes {
 impl NoInferrableTypes {
     fn check_formal_parameters<'a>(
         &self,
-        params: &oxc_allocator::Vec<'a, FormalParameter<'a>>,
+        params: &ArenaVec<'a, FormalParameter<'a>>,
         ctx: &LintContext<'a>,
     ) {
         if self.ignore_parameters {

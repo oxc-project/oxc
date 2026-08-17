@@ -2,6 +2,7 @@ use std::{path::Path, sync::Arc};
 
 use phf::phf_set;
 
+use oxc_formatter_css::CssVariant;
 use oxc_formatter_json::JsonVariant;
 use oxc_span::SourceType;
 
@@ -56,15 +57,28 @@ pub fn classify_file_kind(path: Arc<Path>) -> Option<FileKind> {
     if is_json5_file(extension) {
         return Some(FileKind::OxcFormatterJson { path, variant: JsonVariant::Json5 });
     }
+    if is_graphql_file(extension) {
+        return Some(FileKind::OxcFormatterGraphql { path });
+    }
+    if let Some(variant) = classify_css_variant(extension) {
+        return Some(FileKind::OxcFormatterCss { path, variant });
+    }
+    // Check these before generic YAML check, because Prettier tries to format them as JSON(-in-YAML) first
+    if YAML_RC_FILENAMES.contains(file_name) {
+        return Some(FileKind::OxcFormatterYamlRc { path });
+    }
+    if is_yaml_file(file_name, extension) {
+        return Some(FileKind::OxcFormatterYaml { path });
+    }
 
-    // External formatter files are only supported with the `napi` feature
+    // Prettier-delegated files are only supported with the `napi` feature
     #[cfg(feature = "napi")]
     {
-        if let Some(parser_name) = get_external_parser_name(file_name, extension) {
+        if let Some(parser_name) = get_prettier_parser_name(file_name, extension) {
             let supports_tailwind = TAILWIND_PARSERS.contains(parser_name);
             let supports_oxfmt = OXFMT_PARSERS.contains(parser_name);
             let supports_svelte = SVELTE_PARSERS.contains(parser_name);
-            return Some(FileKind::ExternalFormatter {
+            return Some(FileKind::Prettier {
                 path,
                 parser_name,
                 supports_tailwind,
@@ -90,16 +104,25 @@ pub enum FileKind {
     /// `package.json` is special: sorted by `sort-package-json` then formatted
     /// by `oxc_formatter_json` with the `json-stringify` variant.
     OxcFormatterJsonPackageJson { path: Arc<Path> },
+    /// GraphQL files formatted by `oxc_formatter_graphql`.
+    OxcFormatterGraphql { path: Arc<Path> },
+    /// CSS/SCSS/Less files formatted by `oxc_formatter_css`.
+    OxcFormatterCss { path: Arc<Path>, variant: CssVariant },
+    /// YAML files formatted by `oxc_formatter_yaml`.
+    OxcFormatterYaml { path: Arc<Path> },
+    /// Files like `.prettierrc`:
+    /// mirroring Prettier's yaml embed, they are formatted as JSON first, then fall back to YAML if that fails.
+    OxcFormatterYamlRc { path: Arc<Path> },
     /// TOML files formatted by taplo (Pure Rust).
     OxfmtToml { path: Arc<Path> },
-    /// Files formatted by external formatter (Prettier).
+    /// Files formatted by delegating to Prettier (Tier 3/4).
     ///
     /// `supports_tailwind` / `supports_oxfmt` / `supports_svelte` are capability
     /// flags that say "this file kind CAN use the corresponding plugin".
     /// Whether the plugin is actually activated is decided at the format step by resolved config.
     /// Only available with the `napi` feature; without it, the classifier rejects such files.
     #[cfg(feature = "napi")]
-    ExternalFormatter {
+    Prettier {
         path: Arc<Path>,
         parser_name: &'static str,
         supports_tailwind: bool,
@@ -114,9 +137,13 @@ impl FileKind {
             Self::OxcFormatter { path, .. }
             | Self::OxcFormatterJson { path, .. }
             | Self::OxcFormatterJsonPackageJson { path }
+            | Self::OxcFormatterGraphql { path }
+            | Self::OxcFormatterCss { path, .. }
+            | Self::OxcFormatterYaml { path }
+            | Self::OxcFormatterYamlRc { path }
             | Self::OxfmtToml { path } => path,
             #[cfg(feature = "napi")]
-            Self::ExternalFormatter { path, .. } => path,
+            Self::Prettier { path, .. } => path,
         }
     }
 
@@ -129,7 +156,7 @@ impl FileKind {
     /// [`super::ResolveOutcome::MissingPlugin`] in that case.
     #[cfg(feature = "napi")]
     pub fn requires_plugin(&self, config: &FormatConfig) -> Option<&'static str> {
-        if let Self::ExternalFormatter { parser_name: "svelte", .. } = self
+        if let Self::Prettier { parser_name: "svelte", .. } = self
             && !config.is_svelte_enabled()
         {
             return Some("svelte");
@@ -141,15 +168,14 @@ impl FileKind {
 // ---
 
 /// Parsers(files) that benefit from Tailwind plugin.
+/// CSS/SCSS/Less also benefit, but are classified as [`FileKind::OxcFormatterCss`];
+/// their Tailwind gating happens at the format step.
 #[cfg(feature = "napi")]
 static TAILWIND_PARSERS: phf::Set<&'static str> = phf_set! {
     "html",
     "vue",
     "angular",
     "glimmer",
-    "css",
-    "scss",
-    "less",
     "svelte",
 };
 
@@ -315,20 +341,83 @@ fn is_json5_file(extension: Option<&str>) -> bool {
 
 // ---
 
-/// Returns parser name for external formatter, if supported.
+/// Returns `true` if this is a GraphQL file (handled by `oxc_formatter_graphql`).
+fn is_graphql_file(extension: Option<&str>) -> bool {
+    extension.is_some_and(|ext| GRAPHQL_EXTENSIONS.contains(ext))
+}
+
+static GRAPHQL_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "graphql",
+    "gql",
+    "graphqls",
+};
+
+// ---
+
+/// Classify the CSS dialect (handled by `oxc_formatter_css`) from the extension.
+fn classify_css_variant(extension: Option<&str>) -> Option<CssVariant> {
+    let extension = extension?;
+    if CSS_EXTENSIONS.contains(extension) {
+        return Some(CssVariant::Css);
+    }
+    match extension {
+        "scss" => Some(CssVariant::Scss),
+        "less" => Some(CssVariant::Less),
+        _ => None,
+    }
+}
+
+static CSS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "css",
+    "wxss",
+    "pcss",
+    "postcss",
+};
+
+// ---
+
+/// Prettier tries to format these as JSON first, and falls back to YAML when that fails.
+static YAML_RC_FILENAMES: phf::Set<&'static str> = phf_set! {
+    ".prettierrc",
+    ".stylelintrc",
+    ".lintstagedrc",
+};
+
+/// Returns `true` if this is a YAML file (handled by `oxc_formatter_yaml`).
+fn is_yaml_file(file_name: &str, extension: Option<&str>) -> bool {
+    if YAML_FILENAMES.contains(file_name) {
+        return true;
+    }
+    extension.is_some_and(|ext| YAML_EXTENSIONS.contains(ext))
+}
+
+static YAML_FILENAMES: phf::Set<&'static str> = phf_set! {
+    ".clang-format",
+    ".clang-tidy",
+    ".clangd",
+    ".gemrc",
+    "CITATION.cff",
+    "glide.lock",
+    "pixi.lock",
+};
+
+static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
+    "yml",
+    "mir",
+    "reek",
+    "rviz",
+    "sublime-syntax",
+    "syntax",
+    "yaml",
+    "yaml-tmlanguage",
+};
+
+// ---
+
+/// Returns the Prettier parser name for the file, if supported.
 /// See also `prettier --support-info | jq '.languages[]'`
 #[cfg(feature = "napi")]
-fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
-    // YAML
-    if YAML_FILENAMES.contains(file_name) {
-        return Some("yaml");
-    }
-    if let Some(ext) = extension
-        && YAML_EXTENSIONS.contains(ext)
-    {
-        return Some("yaml");
-    }
-
+fn get_prettier_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // Markdown and variants
     if MARKDOWN_FILENAMES.contains(file_name) {
         return Some("markdown");
@@ -365,26 +454,6 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
         return Some("mjml");
     }
 
-    // CSS and variants
-    if let Some(ext) = extension
-        && CSS_EXTENSIONS.contains(ext)
-    {
-        return Some("css");
-    }
-    if extension == Some("less") {
-        return Some("less");
-    }
-    if extension == Some("scss") {
-        return Some("scss");
-    }
-
-    // GraphQL
-    if let Some(ext) = extension
-        && GRAPHQL_EXTENSIONS.contains(ext)
-    {
-        return Some("graphql");
-    }
-
     // Handlebars
     if let Some(ext) = extension
         && HANDLEBARS_EXTENSIONS.contains(ext)
@@ -403,21 +472,6 @@ static HTML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "inc",
     "xht",
     "xhtml",
-};
-
-#[cfg(feature = "napi")]
-static CSS_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "css",
-    "wxss",
-    "pcss",
-    "postcss",
-};
-
-#[cfg(feature = "napi")]
-static GRAPHQL_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "graphql",
-    "gql",
-    "graphqls",
 };
 
 #[cfg(feature = "napi")]
@@ -445,32 +499,6 @@ static MARKDOWN_EXTENSIONS: phf::Set<&'static str> = phf_set! {
     "ronn",
     "scd",
     "workbook",
-};
-
-#[cfg(feature = "napi")]
-static YAML_FILENAMES: phf::Set<&'static str> = phf_set! {
-    ".clang-format",
-    ".clang-tidy",
-    ".clangd",
-    ".gemrc",
-    "CITATION.cff",
-    "glide.lock",
-    "pixi.lock",
-    ".prettierrc",
-    ".stylelintrc",
-    ".lintstagedrc",
-};
-
-#[cfg(feature = "napi")]
-static YAML_EXTENSIONS: phf::Set<&'static str> = phf_set! {
-    "yml",
-    "mir",
-    "reek",
-    "rviz",
-    "sublime-syntax",
-    "syntax",
-    "yaml",
-    "yaml-tmlanguage",
 };
 
 // ---
@@ -597,11 +625,11 @@ mod tests {
 
     #[test]
     #[cfg(feature = "napi")]
-    fn test_get_external_parser_name() {
+    fn test_get_prettier_parser_name() {
         fn get_parser_name(file_name: &str) -> Option<&'static str> {
             let path = Path::new(file_name);
             let extension = path.extension().and_then(|ext| ext.to_str());
-            get_external_parser_name(file_name, extension)
+            get_prettier_parser_name(file_name, extension)
         }
 
         let test_cases = vec![
@@ -620,17 +648,16 @@ mod tests {
             ("email.mjml", Some("mjml")),
             // Vue
             ("App.vue", Some("vue")),
-            // CSS
-            ("styles.css", Some("css")),
-            ("app.wxss", Some("css")),
-            ("styles.pcss", Some("css")),
-            ("styles.postcss", Some("css")),
-            ("theme.less", Some("less")),
-            ("main.scss", Some("scss")),
-            // GraphQL
-            ("schema.graphql", Some("graphql")),
-            ("query.gql", Some("graphql")),
-            ("types.graphqls", Some("graphql")),
+            // CSS files are routed to `oxc_formatter_css` in `classify_file_kind`
+            // and excluded from this map.
+            ("styles.css", None),
+            ("theme.less", None),
+            ("main.scss", None),
+            // GraphQL files are routed to `oxc_formatter_graphql` in `classify_file_kind`
+            // and excluded from this map.
+            ("schema.graphql", None),
+            ("query.gql", None),
+            ("types.graphqls", None),
             // Handlebars
             ("template.handlebars", Some("glimmer")),
             ("partial.hbs", Some("glimmer")),
@@ -641,12 +668,13 @@ mod tests {
             ("guide.markdown", Some("markdown")),
             ("notes.mdown", Some("markdown")),
             ("page.mdx", Some("mdx")),
-            // YAML
-            (".clang-format", Some("yaml")),
-            (".prettierrc", Some("yaml")),
-            ("config.yml", Some("yaml")),
-            ("settings.yaml", Some("yaml")),
-            ("grammar.sublime-syntax", Some("yaml")),
+            // YAML files are routed to `oxc_formatter_yaml` in `classify_file_kind`
+            // and excluded from this map.
+            (".clang-format", None),
+            (".prettierrc", None),
+            ("config.yml", None),
+            ("settings.yaml", None),
+            ("grammar.sublime-syntax", None),
             // Unknown
             ("unknown.txt", None),
             ("prof.png", None),
@@ -696,6 +724,68 @@ mod tests {
         // but is the lone dedicated kind for the sorting pre-process
         let kind = classify_file_kind(Arc::from(Path::new("package.json"))).unwrap();
         assert!(matches!(kind, FileKind::OxcFormatterJsonPackageJson { .. }));
+    }
+
+    #[test]
+    fn test_graphql_files_route_to_oxc_formatter_graphql() {
+        for file_name in ["schema.graphql", "query.gql", "types.graphqls"] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterGraphql { .. })),
+                "`{file_name}` should be routed to oxc_formatter_graphql"
+            );
+        }
+    }
+
+    #[test]
+    fn test_css_files_route_to_oxc_formatter_css() {
+        let test_cases = vec![
+            ("styles.css", CssVariant::Css),
+            ("app.wxss", CssVariant::Css),
+            ("styles.pcss", CssVariant::Css),
+            ("styles.postcss", CssVariant::Css),
+            ("main.scss", CssVariant::Scss),
+            ("theme.less", CssVariant::Less),
+        ];
+
+        for (file_name, expected) in test_cases {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterCss { variant, .. }) if variant == expected),
+                "`{file_name}` should be routed to oxc_formatter_css ({expected:?})"
+            );
+        }
+    }
+
+    #[test]
+    fn test_yaml_files_route_to_oxc_formatter_yaml() {
+        // YAML_EXTENSIONS and YAML_FILENAMES
+        for file_name in [
+            "config.yml",
+            "settings.yaml",
+            "grammar.sublime-syntax",
+            ".clang-format",
+            "CITATION.cff",
+        ] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterYaml { .. })),
+                "`{file_name}` should be routed to oxc_formatter_yaml"
+            );
+        }
+
+        // rc files Prettier tries as JSON first
+        for file_name in [".prettierrc", ".stylelintrc", ".lintstagedrc"] {
+            let result = classify_file_kind(Arc::from(Path::new(file_name)));
+            assert!(
+                matches!(result, Some(FileKind::OxcFormatterYamlRc { .. })),
+                "`{file_name}` should be routed to the JSON-first YAML rc kind"
+            );
+        }
+
+        // YAML lock files are excluded, not formatted
+        let result = classify_file_kind(Arc::from(Path::new("pnpm-lock.yaml")));
+        assert!(result.is_none(), "`pnpm-lock.yaml` should be excluded");
     }
 
     #[test]

@@ -1,0 +1,107 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+   ╭─[padding_around_test_blocks.tsx:1:23]
+ 1 │ test('foo', () => {});test('bar', () => {});
+   ·                       ▲
+   ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+   ╭─[padding_around_test_blocks.tsx:2:1]
+ 1 │ test('foo', () => {});
+ 2 │ test('bar', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+   ╭─[padding_around_test_blocks.tsx:4:1]
+ 3 │ /* two */
+ 4 │ test('foo', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before it block
+   ╭─[padding_around_test_blocks.tsx:4:1]
+ 3 │ const bar = 'baz';
+ 4 │ it('foo', () => {
+   · ▲
+ 5 │   // stuff
+   ╰────
+  help: Make sure there is an empty new line before the it block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before it block
+    ╭─[padding_around_test_blocks.tsx:16:6]
+ 15 │      // With a comment
+ 16 │      it('is another bar w/ it', () => {
+    ·      ▲
+ 17 │      });
+    ╰────
+  help: Make sure there is an empty new line before the it block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before it block
+    ╭─[padding_around_test_blocks.tsx:19:6]
+ 18 │      test.skip('skipping', () => {}); // Another comment
+ 19 │      it.skip('skipping too', () => {});
+    ·      ▲
+ 20 │  });
+    ╰────
+  help: Make sure there is an empty new line before the it block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+   ╭─[padding_around_test_blocks.tsx:7:1]
+ 6 │ });
+ 7 │ test('foo foo', () => {});
+   · ▲
+ 8 │ test('bar bar', () => {});
+   ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+   ╭─[padding_around_test_blocks.tsx:8:1]
+ 7 │ test('foo foo', () => {});
+ 8 │ test('bar bar', () => {});
+   · ▲
+ 9 │ 
+   ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+    ╭─[padding_around_test_blocks.tsx:13:6]
+ 12 │      const thing = 123;
+ 13 │      test('is another bar w/ test', () => {
+    ·      ▲
+ 14 │      });
+    ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+    ╭─[padding_around_test_blocks.tsx:18:6]
+ 17 │      });
+ 18 │      test.skip('skipping', () => {}); // Another comment
+    ·      ▲
+ 19 │      it.skip('skipping too', () => {});
+    ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before test block
+    ╭─[padding_around_test_blocks.tsx:21:2]
+ 20 │  });
+ 21 │  test
+    ·  ▲
+ 22 │    .skip('skippy skip', () => {});
+    ╰────
+  help: Make sure there is an empty new line before the test block
+
+  ⚠ vitest(padding-around-test-blocks): Missing padding before it block
+   ╭─[padding_around_test_blocks.tsx:5:5]
+ 4 │     });
+ 5 │     it('is another bar w/ it', () => {
+   ·     ▲
+ 6 │     });
+   ╰────
+  help: Make sure there is an empty new line before the it block

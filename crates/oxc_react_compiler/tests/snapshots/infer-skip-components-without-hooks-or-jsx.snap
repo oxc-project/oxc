@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/infer-skip-components-without-hooks-or-jsx.js
+---
+// @expectNothingCompiled @compilationMode:"infer"
+// This component is skipped bc it doesn't call any hooks or
+// use JSX:
+function Component(props) {
+	return render();
+}

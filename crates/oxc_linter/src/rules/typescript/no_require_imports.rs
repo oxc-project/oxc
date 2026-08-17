@@ -8,7 +8,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
-use oxc_str::CompactStr;
 use oxc_str::static_ident;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -17,6 +16,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_regex_vec,
 };
 
 fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
@@ -42,7 +42,8 @@ pub struct NoRequireImportsConfig {
     /// ```ts
     /// console.log(require('../package.json').version);
     /// ```
-    allow: Vec<CompactStr>,
+    #[serde(default, deserialize_with = "deserialize_regex_vec")]
+    allow: Vec<Regex>,
     /// When set to `true`, `import ... = require(...)` declarations won't be reported.
     /// This is useful if you use certain module options that require strict CommonJS interop semantics.
     ///
@@ -120,11 +121,8 @@ declare_oxc_lint!(
     short_description = "Forbids the use of CommonJS `require` calls.",
 );
 
-fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -> bool {
-    allow
-        .iter()
-        .map(|pattern| Regex::new(pattern).unwrap())
-        .any(|regex| regex.is_match(argument_value))
+fn match_argument_value_with_regex(allow: &[Regex], argument_value: &str) -> bool {
+    allow.iter().any(|regex| regex.is_match(argument_value))
 }
 
 impl Rule for NoRequireImports {

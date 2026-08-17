@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 4eb074e mangler: Add `reserved` option for names that must not be mangled (#24041) (Dunqing)
+
 ## [0.135.0] - 2026-06-08
 
 ### 📚 Documentation

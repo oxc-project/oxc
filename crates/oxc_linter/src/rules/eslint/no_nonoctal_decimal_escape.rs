@@ -85,13 +85,16 @@ impl StickyRegex for Regex {
     }
 }
 
+// Fast path scan for non-octal decimal escape sequences (`\8` or `\9`).
 fn quick_test(s: &str) -> bool {
-    let mut chars = s.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c == '\\' && chars.peek().is_some_and(|c| *c == '8' || *c == '9') {
+    let bytes = s.as_bytes();
+
+    for [a, b] in bytes.array_windows() {
+        if *a == b'\\' && (*b == b'8' || *b == b'9') {
             return true;
         }
     }
+
     false
 }
 

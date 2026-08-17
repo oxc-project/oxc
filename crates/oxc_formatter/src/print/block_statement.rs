@@ -1,19 +1,20 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Buffer;
 
 use super::FormatWrite;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Buffer, prelude::*},
+    formatter::prelude::*,
+    utils::is_dropped_statement,
     write,
 };
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, Statement<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        f.join_nodes_with_hardline().entries(
-            self.iter().filter(|stmt| !matches!(stmt.as_ref(), Statement::EmptyStatement(_))),
-        );
+        f.join_nodes_with_hardline()
+            .entries(self.iter().filter(|stmt| !is_dropped_statement(stmt.as_ref())));
     }
 }
 
@@ -65,7 +66,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
 }
 
 pub fn is_empty_block(block: &[Statement<'_>]) -> bool {
-    block.is_empty() || block.iter().all(|s| matches!(s, Statement::EmptyStatement(_)))
+    block.iter().all(is_dropped_statement)
 }
 
 /// Formatting of curly braces for an:
@@ -79,7 +80,8 @@ fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
         | AstNodes::ForStatement(_)
         | AstNodes::WhileStatement(_)
         | AstNodes::DoWhileStatement(_)
-        | AstNodes::TSModuleDeclaration(_)
+        | AstNodes::TSExternalModuleDeclaration(_)
+        | AstNodes::TSNamespaceDeclaration(_)
         | AstNodes::TSGlobalDeclaration(_) => false,
         AstNodes::CatchClause(catch) => {
             // prettier collapse the catch block when it don't have `finalizer`, insert a new line when it has `finalizer`

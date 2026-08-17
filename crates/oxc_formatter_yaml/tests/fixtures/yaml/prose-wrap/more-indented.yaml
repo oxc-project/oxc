@@ -1,0 +1,5 @@
+folded-keeps-more-indented:
+  - >
+    First Line.
+             This line is indented and exceeds the print width, but must not be broken, since a break would change the parsed value (prettier#16126).
+    This is another line, which is at the base indent and is safe to break!

@@ -99,9 +99,6 @@ impl Generator for AstKindGenerator {
 
         let output = quote! {
             ///@@line_break
-            use std::ptr;
-
-            ///@@line_break
             use oxc_allocator::{Address, GetAddress, UnstableAddress};
             use oxc_span::{GetSpan, Span};
             use oxc_syntax::node::NodeId;
@@ -130,16 +127,6 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             impl AstKind<'_> {
-                /// Get the [`AstType`] of an [`AstKind`].
-                #[inline]
-                pub fn ty(&self) -> AstType {
-                    ///@ SAFETY: `AstKind` is `#[repr(C, u8)]`, so discriminant is stored in first byte,
-                    ///@ and it's valid to read it.
-                    ///@ `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
-                    ///@ discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
-                    unsafe { *ptr::from_ref(self).cast::<AstType>().as_ref().unwrap_unchecked() }
-                }
-
                 ///@@line_break
                 /// Get [`NodeId`] of an [`AstKind`].
                 ///@ `node_id` field is in consistent position in all AST structs, so this boils down to 1 instruction.

@@ -12,8 +12,6 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    branches-ignore:
-      - "**/graphite-base/**"
     paths: &paths
       - "crates/**/*.rs"
       - "tasks/benchmark/**/*.rs"
@@ -75,6 +73,8 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
+      # Memory mode reuses these binaries: cargo-codspeed maps both simulation and
+      # memory modes to the same `analysis` build (`--cfg codspeed`) and directory.
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
@@ -92,8 +92,8 @@ jobs:
           rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@c145068895e045cc725ee76fcd2307624b65c3af # v4.17.5
+        uses: CodSpeedHQ/action@4296e51e7041e24dadb86d1d6e8b9320d223dbe8 # v5.0.3
         timeout-minutes: 30
         with:
-          mode: simulation
+          mode: ${{ matrix.mode }}
           run: cargo codspeed run ${{ matrix.component }}

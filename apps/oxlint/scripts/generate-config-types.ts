@@ -262,7 +262,8 @@ if (
 }
 // Named rule properties are optional, so the string index signature must
 // accept `undefined` to keep the generated declaration internally valid.
-dummyRuleMapAdditionalProperties.tsType = "DummyRule | undefined";
+// Set the type manually, so `strictIndexSignatures` will append `| undefined` to it.
+dummyRuleMapAdditionalProperties.tsType = "DummyRule";
 
 const bannerComment =
   "/*\n" +
@@ -273,7 +274,7 @@ const bannerComment =
 const enumDefinitionTypes = getEnumDefinitionTypes(schema);
 const definitionPrimitiveTypes = getDefinitionPrimitiveTypes(schema);
 
-let ts = await compile(schema, "OxlintConfig", { bannerComment });
+let ts = await compile(schema, "OxlintConfig", { bannerComment, strictIndexSignatures: true });
 ts = collapseEnumPrimitiveIntersections(ts, enumDefinitionTypes, definitionPrimitiveTypes);
 
 writeFileSync(outputPath, ts);

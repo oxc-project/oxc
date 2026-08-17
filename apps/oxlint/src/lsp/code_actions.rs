@@ -48,11 +48,7 @@ pub fn apply_fix_code_actions(action: LinterCodeAction, uri: &Uri) -> Vec<CodeAc
     let mut preferred_possible = true;
     for fixed in action.fixed_content {
         // only rule fixes and unused directive fixes can be preferred, ignore fixes are not preferred.
-        let preferred = preferred_possible
-            && matches!(
-                fixed.lsp_kind,
-                FixedContentKind::LintRule(_) | FixedContentKind::UnusedDirective
-            );
+        let preferred = preferred_possible && !matches!(fixed.kind, FixKind::IgnoreFix);
         if preferred {
             // only the first fix can be preferred, if there are multiple fixes available.
             preferred_possible = false;
@@ -160,12 +156,7 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
     for action in actions {
         // Applying all possible fixes at once is not possible in this context.
         // Search for the first "real" fix for the rule, and ignore the rest of the fixes for the same rule.
-        let Some(fixed_content) = action.fixed_content.into_iter().find(|fixed| {
-            matches!(
-                fixed.lsp_kind,
-                FixedContentKind::LintRule(_) | FixedContentKind::UnusedDirective
-            )
-        }) else {
+        let Some(fixed_content) = action.fixed_content.into_iter().next() else {
             continue;
         };
 
@@ -186,12 +177,7 @@ fn dangerous_fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) 
     let mut text_edits: Vec<TextEdit> = vec![];
 
     for action in actions {
-        let Some(fixed_content) = action.fixed_content.into_iter().find(|fixed| {
-            matches!(
-                fixed.lsp_kind,
-                FixedContentKind::LintRule(_) | FixedContentKind::UnusedDirective
-            )
-        }) else {
+        let Some(fixed_content) = action.fixed_content.into_iter().next() else {
             continue;
         };
 

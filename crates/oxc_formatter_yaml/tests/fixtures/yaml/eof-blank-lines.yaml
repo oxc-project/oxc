@@ -1,0 +1,5 @@
+# DIVERGENCE: the file always ends with exactly one newline (`|+` verbatim
+# tails excepted); Prettier YAML alone keeps EOF blank lines verbatim.
+last: value
+
+

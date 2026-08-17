@@ -11,15 +11,17 @@ use std::{
 };
 
 use oxc_allocator::{
-    Allocator, CloneIn, Dummy, FromIn, IdentBuildHasher, StringBuilder as ArenaStringBuilder,
-    ident_hash,
+    Allocator, ArenaStringBuilder, CloneIn, CloneInSemanticIds, Dummy, FromIn, GetAllocator,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{CompactStr, Str};
+use crate::{
+    CompactStr, Str,
+    ident_hasher::{IdentBuildHasher, ident_hash},
+};
 
 /// A packed representation of `len` and `hash` for `Ident` - 64-bit platforms version.
 ///
@@ -35,6 +37,17 @@ impl LenAndHash {
     #[inline(always)]
     const fn new(len: u32, hash: u32) -> Self {
         Self((len as u64) | ((hash as u64) << 32))
+    }
+
+    /// Create a `LenAndHash` with a `0` hash directly from a `usize` `len`.
+    ///
+    /// Converting the `usize` straight to `u64` (rather than truncating to `u32` and widening
+    /// back) is a no-op, because identifier lengths always fit in 32 bits, so the top 32 bits
+    /// (the hash) are `0`. This lets [`Ident::new_unhashed`] compile to a no-op reinterpret of
+    /// `&str`, which has identical layout.
+    #[inline(always)]
+    const fn unhashed(len: usize) -> Self {
+        Self(len as u64)
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -72,6 +85,15 @@ impl LenAndHash {
     #[inline(always)]
     const fn new(len: u32, hash: u32) -> Self {
         Self { len, hash }
+    }
+
+    /// Create a `LenAndHash` with a `0` hash directly from a `usize` `len`.
+    ///
+    /// See the 64-bit version of this method for why it takes a `usize`.
+    #[expect(clippy::cast_possible_truncation)]
+    #[inline(always)]
+    const fn unhashed(len: usize) -> Self {
+        Self { len: len as u32, hash: 0 }
     }
 
     #[inline(always)]
@@ -130,13 +152,38 @@ pub const fn new_const_ident(s: &str) -> Ident<'_> {
 }
 
 impl<'a> Ident<'a> {
+    /// Allocate provided `&str` into arena, and return an [`Ident<'a>`].
+    #[inline]
+    pub fn from_str_in(s: &str, allocator: &impl GetAllocator<'a>) -> Self {
+        new_const_ident(allocator.allocator().alloc_str(s))
+    }
+
+    /// Create an [`Ident`] without precomputing its hash (hash field is `0`).
+    ///
+    /// `Eq` and `Hash` include the stored hash, so an unhashed `Ident` does not compare equal to,
+    /// or hash the same as, a hashed `Ident` of the same string. Only use this when nothing
+    /// downstream relies on `Ident` hashing (e.g. parse-only pipelines that skip semantic analysis).
+    ///
+    /// On 64-bit platforms this compiles to a no-op: an unhashed `Ident` has the same layout and
+    /// bit representation as `&str` (a pointer plus the `usize` length, whose top 32 bits are the
+    /// `0` hash), so no work is done beyond reinterpreting the `&str`.
+    #[inline]
+    pub const fn new_unhashed(s: &'a str) -> Self {
+        let bytes = s.as_bytes();
+        let ptr = NonNull::from_ref(bytes).cast::<u8>();
+        // `ptr` points to a `&str` with lifetime `'a`, of length `bytes.len()`, whose memory is
+        // immutable for lifetime `'a`. The stored hash is `0` (unhashed).
+        Self { ptr, len_and_hash: LenAndHash::unhashed(bytes.len()), _marker: PhantomData }
+    }
+
     /// Create an [`Ident`] from raw components.
     ///
     /// # SAFETY
     ///
     /// * `ptr` must point to the start of a valid UTF-8 string, of length `len`.
     /// * The memory pointed to `len` bytes starting at `ptr` must be valid for reads and immutable for lifetime `'a`.
-    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`.
+    /// * `hash` must be an accurate hash of the string, calculated with `ident_hash`,
+    ///   or `0` for an unhashed `Ident` (see [`Ident::new_unhashed`]).
     #[inline]
     const unsafe fn from_raw(ptr: NonNull<u8>, len: u32, hash: u32) -> Self {
         Self { ptr, len_and_hash: LenAndHash::new(len, hash), _marker: PhantomData }
@@ -213,9 +260,9 @@ impl<'a> Ident<'a> {
     #[inline(always)]
     pub fn from_strs_array_in<const N: usize>(
         strings: [&str; N],
-        allocator: &'a Allocator,
+        allocator: &impl GetAllocator<'a>,
     ) -> Ident<'a> {
-        Self::from(allocator.alloc_concat_strs_array(strings))
+        Self::from(allocator.allocator().alloc_concat_strs_array(strings))
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
@@ -225,10 +272,10 @@ impl<'a> Ident<'a> {
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
     #[inline]
-    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &'a Allocator) -> Ident<'a> {
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &impl GetAllocator<'a>) -> Ident<'a> {
         match value {
             Cow::Borrowed(s) => Ident::from(*s),
-            Cow::Owned(s) => Ident::from_in(s, allocator),
+            Cow::Owned(s) => Ident::from_str_in(s, allocator),
         }
     }
 }
@@ -333,7 +380,7 @@ impl<'a> From<Ident<'a>> for Cow<'a, str> {
 impl PartialEq for Ident<'_> {
     /// Fast-reject equality: compare packed len+hash first, then bytes.
     #[inline]
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, other: &Ident<'_>) -> bool {
         self.len_and_hash == other.len_and_hash && self.as_str() == other.as_str()
     }
 }
@@ -407,7 +454,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
 
     /// Clone the identifier into a new allocator, preserving the precomputed hash.
     #[inline]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
         let s = allocator.alloc_str(self.as_str());
         let ptr = NonNull::from_ref(s).cast::<u8>();
         // SAFETY: `ptr` points to a `&str`, with length `self.ident_len()`.
@@ -486,7 +537,7 @@ pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, IdentBuildHasher
 
 /// Arena-allocated hash map keyed by [`Ident`], using precomputed ident hash.
 pub type ArenaIdentHashMap<'alloc, V> =
-    oxc_allocator::HashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
+    oxc_allocator::ArenaHashMap<'alloc, Ident<'alloc>, V, IdentBuildHasher>;
 
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;
@@ -552,12 +603,9 @@ macro_rules! static_ident {
 #[macro_export]
 macro_rules! format_ident {
     ($alloc:expr, $($arg:tt)*) => {{
-        use ::std::{write, fmt::Write};
-        use $crate::{Ident, __internal::ArenaStringBuilder};
-
-        let mut s = ArenaStringBuilder::new_in($alloc);
-        write!(s, $($arg)*).unwrap();
-        Ident::from(s)
+        let mut s = $crate::__internal::ArenaStringBuilder::new_in($alloc);
+        ::std::fmt::Write::write_fmt(&mut s, ::std::format_args!($($arg)*)).unwrap();
+        $crate::Ident::from(s)
     }}
 }
 
@@ -566,6 +614,7 @@ mod test {
     use std::hash::BuildHasher;
 
     use oxc_allocator::Allocator;
+    use oxc_data_structures::types::implements;
 
     use super::*;
 
@@ -579,16 +628,13 @@ mod test {
 
     #[test]
     fn ident_send_sync() {
-        fn assert_send<T: Send>() {}
-        fn assert_sync<T: Sync>() {}
-        assert_send::<Ident<'_>>();
-        assert_sync::<Ident<'_>>();
+        assert!(implements!(Ident: Send));
+        assert!(implements!(Ident: Sync));
     }
 
     #[test]
     fn ident_copy() {
-        fn assert_copy<T: Copy>() {}
-        assert_copy::<Ident<'_>>();
+        assert!(implements!(Ident: Copy));
     }
 
     #[test]
@@ -704,6 +750,97 @@ mod test {
     fn static_ident_const_context() {
         const IDENT: Ident<'static> = static_ident!("hello");
         assert_eq!(IDENT.as_str(), "hello");
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_str_in() {
+        let allocator = Allocator::new();
+        let allocator: &Allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let ident = Ident::from_str_in("world", &allocator);
+        assert_eq!(ident.as_str(), "world");
+        assert_eq!(ident, Ident::from("world"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_str_in("hello", &wrapper);
+        assert_eq!(ident.as_str(), "hello");
+        assert_eq!(ident, Ident::from("hello"));
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_strs_array_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // Pass an actual `Allocator`
+        let ident = Ident::from_strs_array_in(["hello", " ", "world", "!"], &allocator);
+        assert_eq!(ident.as_str(), "hello world!");
+        assert_eq!(ident, Ident::from("hello world!"));
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_strs_array_in(["foo", "_", "bar"], &wrapper);
+        assert_eq!(ident.as_str(), "foo_bar");
+        assert_eq!(ident, Ident::from("foo_bar"));
+    }
+
+    #[test]
+    #[expect(clippy::items_after_statements)]
+    fn ident_from_cow_in() {
+        let allocator = Allocator::new();
+        let allocator = &allocator;
+
+        // `Cow::Borrowed` references the same string, without allocating in arena
+        let borrowed = "world";
+        let used_before = allocator.used_bytes();
+        let ident = Ident::from_cow_in(&Cow::Borrowed(borrowed), &allocator);
+        assert_eq!(ident.as_str(), "world");
+        assert_eq!(ident, Ident::from("world"));
+        assert_eq!(ident.as_str().as_ptr(), borrowed.as_ptr());
+        assert_eq!(allocator.used_bytes(), used_before);
+
+        // `Cow::Owned` allocates a new string in arena
+        let owned = "owned".to_string();
+        let owned_ptr = owned.as_ptr();
+        let ident = Ident::from_cow_in(&Cow::Owned(owned), &allocator);
+        assert_eq!(ident.as_str(), "owned");
+        assert_eq!(ident, Ident::from("owned"));
+        assert_ne!(ident.as_str().as_ptr(), owned_ptr);
+        assert!(allocator.used_bytes() > used_before);
+
+        // Pass a struct which implements `GetAllocator`
+        struct Wrapper<'a>(&'a Allocator);
+
+        impl<'a> GetAllocator<'a> for Wrapper<'a> {
+            fn allocator(&self) -> &'a Allocator {
+                self.0
+            }
+        }
+
+        let wrapper = Wrapper(allocator);
+        let ident = Ident::from_cow_in(&Cow::Borrowed("hello"), &wrapper);
+        assert_eq!(ident.as_str(), "hello");
+        assert_eq!(ident, Ident::from("hello"));
     }
 
     #[test]

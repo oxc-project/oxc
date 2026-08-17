@@ -1,9 +1,9 @@
 use bitflags::bitflags;
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{ContentEq, Span};
+use oxc_span::{ContentEq, GetSpan, Span};
 
 /// Indicates a line or block comment.
 #[ast]
@@ -97,6 +97,13 @@ pub enum CommentContent {
     /// e.g. `/* turbopackOptional: true */`
     /// <https://nextjs.org/docs/app/guides/lazy-loading#turbopackoptional-turbopack-only>
     Turbopack = 10,
+
+    /// File-level code coverage ignore.
+    ///
+    /// `v8 ignore file`, `istanbul ignore file`.
+    /// Classified separately because its meaning remains valid if the next AST
+    /// node is removed, unlike position-sensitive coverage annotations.
+    CoverageIgnoreFile = 11,
 }
 
 bitflags! {
@@ -126,14 +133,18 @@ impl ContentEq for CommentNewlines {
 impl<'alloc> CloneIn<'alloc> for CommentNewlines {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        _: &'alloc Allocator,
+    ) -> Self::Cloned {
         *self
     }
 }
 
 /// A comment in source code.
 #[ast]
-#[generate_derive(CloneIn, ContentEq, ESTree)]
+#[generate_derive(CloneIn, ContentEq, ESTree, GetSpan)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[estree(add_fields(value = CommentValue), no_ts_def, no_parent)]
 pub struct Comment {
@@ -287,7 +298,14 @@ impl Comment {
     /// Is coverage ignore comment.
     #[inline]
     pub fn is_coverage_ignore(self) -> bool {
-        self.content == CommentContent::CoverageIgnore && self.is_leading()
+        matches!(self.content, CommentContent::CoverageIgnore | CommentContent::CoverageIgnoreFile)
+            && self.is_leading()
+    }
+
+    /// Is a file-level coverage ignore comment.
+    #[inline]
+    pub fn is_coverage_ignore_file(self) -> bool {
+        self.content == CommentContent::CoverageIgnoreFile && self.is_leading()
     }
 
     /// Returns `true` if this comment is preceded by a newline.

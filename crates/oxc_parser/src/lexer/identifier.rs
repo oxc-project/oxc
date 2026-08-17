@@ -1,6 +1,7 @@
 use std::cmp::max;
 
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
+use oxc_data_structures::branch_hints::cold_path;
 use oxc_span::Span;
 use oxc_syntax::identifier::{
     is_identifier_part, is_identifier_part_unicode, is_identifier_start_unicode,
@@ -70,20 +71,18 @@ impl<'a, C: Config> Lexer<'a, C> {
         // Handle uncommon cases in cold branches to keep the common ASCII path
         // as fast as possible.
         if !next_byte.is_ascii() {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_tail_unicode(start_pos)[1..]
-            });
+            cold_path();
+            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+            // makes `start_pos` `source`'s position as it was at start of this function
+            let start_pos = unsafe { after_first.sub(1) };
+            return &self.identifier_tail_unicode(start_pos)[1..];
         }
         if next_byte == b'\\' {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_backslash(start_pos, false)[1..]
-            });
+            cold_path();
+            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+            // makes `start_pos` `source`'s position as it was at start of this function
+            let start_pos = unsafe { after_first.sub(1) };
+            return &self.identifier_backslash(start_pos, false)[1..];
         }
 
         // Return identifier minus its first char.
@@ -122,7 +121,8 @@ impl<'a, C: Config> Lexer<'a, C> {
                 self.consume_char();
             } else if c == '\\' {
                 // This branch marked cold as escapes are uncommon
-                return cold_branch(|| self.identifier_backslash(start_pos, false));
+                cold_path();
+                return self.identifier_backslash(start_pos, false);
             } else {
                 break;
             }
@@ -136,7 +136,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     pub fn identifier_backslash_handler(&mut self) -> Kind {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being, so guess.
-        let str = StringBuilder::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
+        let str = ArenaStringBuilder::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
 
         // Process escape and get rest of identifier
         let id = self.identifier_on_backslash(str, true);
@@ -153,7 +153,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = self.source.str_from_pos_to_current(start_pos);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
-        let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
+        let mut str = ArenaStringBuilder::with_capacity_in(capacity, self.allocator);
 
         // Push identifier up this point into `str`
         str.push_str(so_far);
@@ -169,7 +169,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// `is_start` should be `true` if this is first char in the identifier, `false` otherwise.
     fn identifier_on_backslash(
         &mut self,
-        mut str: StringBuilder<'a>,
+        mut str: ArenaStringBuilder<'a>,
         mut is_start: bool,
     ) -> &'a str {
         'outer: loop {
@@ -252,22 +252,20 @@ impl<'a, C: Config> Lexer<'a, C> {
         // Handle uncommon cases in cold branches to keep the common ASCII path
         // as fast as possible.
         if !next_byte.is_ascii() {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                self.identifier_tail_unicode(start_pos);
-                Kind::PrivateIdentifier
-            });
+            cold_path();
+            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+            // makes `start_pos` `source`'s position as it was at start of this function
+            let start_pos = unsafe { after_first.sub(1) };
+            self.identifier_tail_unicode(start_pos);
+            return Kind::PrivateIdentifier;
         }
         if next_byte == b'\\' {
-            return cold_branch(|| {
-                // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
-                // makes `start_pos` `source`'s position as it was at start of this function
-                let start_pos = unsafe { after_first.sub(1) };
-                self.identifier_backslash(start_pos, false);
-                Kind::PrivateIdentifier
-            });
+            cold_path();
+            // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
+            // makes `start_pos` `source`'s position as it was at start of this function
+            let start_pos = unsafe { after_first.sub(1) };
+            self.identifier_backslash(start_pos, false);
+            return Kind::PrivateIdentifier;
         }
 
         Kind::PrivateIdentifier
@@ -287,10 +285,9 @@ impl<'a, C: Config> Lexer<'a, C> {
             }
         } else if b == b'\\' {
             // Assume Unicode characters are more common than `\` escapes, so this branch as cold
-            return cold_branch(|| {
-                self.identifier_backslash_handler();
-                Kind::PrivateIdentifier
-            });
+            cold_path();
+            self.identifier_backslash_handler();
+            return Kind::PrivateIdentifier;
         }
 
         // No identifier found

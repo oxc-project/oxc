@@ -1,6 +1,5 @@
-use oxc_allocator::Vec as AllocatorVec;
-use oxc_ast::ast::{ArrowFunctionExpression, Function, FunctionBody, ReturnStatement, Statement};
-use oxc_ast_visit::Visit;
+use oxc_ast::ast::{ArrowFunctionExpression, Function, FunctionBody, ReturnStatement};
+use oxc_ast_visit::VisitJs;
 use oxc_cfg::{
     EdgeType, InstructionKind, ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
@@ -11,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
-/// the statement is termitated by return statement in all/some/nome of
+/// the statement is terminated by return statement in all/some/nome of
 /// its exit blocks.
 ///
 /// For example, an "if" statement is terminated by explicit return if and only if either:
@@ -210,7 +209,7 @@ struct ReturnStatementFinder {
     has_void_expression: bool,
 }
 
-impl Visit<'_> for ReturnStatementFinder {
+impl VisitJs<'_> for ReturnStatementFinder {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement) {
         let Some(argument) = &return_statement.argument else {
             return;
@@ -229,24 +228,4 @@ impl Visit<'_> for ReturnStatementFinder {
     fn visit_function(&mut self, _func: &Function<'_>, _flags: ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {}
-}
-
-pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
-    if statements.is_empty() {
-        return false;
-    }
-
-    if statements.len() > 1 {
-        return false;
-    }
-
-    let Some(statement_return) = statements.first() else {
-        return false;
-    };
-
-    let Statement::ExpressionStatement(expression_return) = statement_return else {
-        return false;
-    };
-
-    expression_return.expression.is_void()
 }

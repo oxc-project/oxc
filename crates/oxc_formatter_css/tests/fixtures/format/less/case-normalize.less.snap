@@ -1,0 +1,54 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+HTML#KeepId.KeepClass,
+a[HREF=KeepAttrValue]:HOVER::FIRST-letter,
+svg[viewBox] linearGradient,
+:Not(:NTH-child(2N+1)) {
+    COLOR: #AAbbCC;
+    BACKGROUND-image: URL("KeepString");
+    Margin: 5PX .2E10Em;
+    --Keep-custom-Prop: red;
+    background: Var(--Keep-custom-Prop);
+    important: something !IMPORTANT;
+    font-family: INITIAL;
+    -WEBKIT-USER-SELECT: none;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+HTML#KeepId.KeepClass,
+a[HREF="KeepAttrValue"]:hover::first-letter,
+svg[viewBox] linearGradient,
+:not(:nth-child(2n + 1)) {
+  color: #aabbcc;
+  background-image: URL("KeepString");
+  margin: 5px 0.2e10em;
+  --Keep-custom-Prop: red;
+  background: Var(--Keep-custom-Prop);
+  important: something !important;
+  font-family: initial;
+  -webkit-user-select: none;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+HTML#KeepId.KeepClass,
+a[HREF="KeepAttrValue"]:hover::first-letter,
+svg[viewBox] linearGradient,
+:not(:nth-child(2n + 1)) {
+  color: #aabbcc;
+  background-image: URL("KeepString");
+  margin: 5px 0.2e10em;
+  --Keep-custom-Prop: red;
+  background: Var(--Keep-custom-Prop);
+  important: something !important;
+  font-family: initial;
+  -webkit-user-select: none;
+}
+
+===================== End =====================

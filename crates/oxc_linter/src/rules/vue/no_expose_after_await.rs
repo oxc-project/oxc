@@ -6,7 +6,7 @@ use oxc_ast::{
         Program, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
@@ -106,13 +106,10 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let (params, body) = match &setup_prop.value {
-        Expression::FunctionExpression(func) => (&func.params, func.body.as_ref()),
-        Expression::ArrowFunctionExpression(arrow) => (&arrow.params, Some(&arrow.body)),
+    let params = match &setup_prop.value {
+        Expression::FunctionExpression(func) if func.body.is_some() => &func.params,
+        Expression::ArrowFunctionExpression(arrow) => &arrow.params,
         _ => return,
-    };
-    let Some(body) = body else {
-        return;
     };
 
     let Some(second_param) = params.items.get(1) else {
@@ -127,11 +124,11 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
                 return None;
             }
             let binding_id = prop.value.get_binding_identifier()?;
-            binding_id.symbol_id.get().map(ExposeBinding::Expose)
+            Some(ExposeBinding::Expose(binding_id.symbol_id()))
         }),
         // `setup(_, ctx)` — whole context bound to a name
         BindingPattern::BindingIdentifier(binding_id) => {
-            binding_id.symbol_id.get().map(ExposeBinding::Ctx)
+            Some(ExposeBinding::Ctx(binding_id.symbol_id()))
         }
         _ => None,
     };
@@ -142,7 +139,15 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
 
     let scoping = ctx.scoping();
     let mut visitor = ExposeAfterAwaitVisitor::new(scoping, binding);
-    visitor.visit_function_body(body);
+    match &setup_prop.value {
+        Expression::FunctionExpression(func) => {
+            visitor.visit_function_body(func.body.as_deref().unwrap());
+        }
+        Expression::ArrowFunctionExpression(arrow) => {
+            visitor.visit_arrow_function_body(&arrow.body);
+        }
+        _ => unreachable!(),
+    }
 
     visitor.errors.iter().for_each(|(span, name)| {
         ctx.diagnostic(no_expose_after_await_diagnostic(*span, name));
@@ -187,7 +192,7 @@ struct AwaitDetector {
     found: bool,
 }
 
-impl<'a> Visit<'a> for AwaitDetector {
+impl<'a> VisitJs<'a> for AwaitDetector {
     fn visit_await_expression(&mut self, _: &AwaitExpression) {
         self.found = true;
     }
@@ -246,14 +251,14 @@ impl<'a> ExposeAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for ExposeAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for ExposeAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         self.found = true;
     }
 
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if !self.found {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
@@ -261,7 +266,7 @@ impl<'a> Visit<'a> for ExposeAfterAwaitVisitor<'a> {
             self.errors.push((call_expr.span, "expose".to_string()));
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

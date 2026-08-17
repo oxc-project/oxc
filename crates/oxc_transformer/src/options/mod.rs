@@ -1,8 +1,5 @@
 use std::path::PathBuf;
 
-#[cfg(feature = "react_compiler")]
-use oxc_react_compiler::PluginOptions;
-
 use crate::{
     ReactRefreshOptions,
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
@@ -36,9 +33,8 @@ pub use oxc_syntax::es_target::ESTarget;
 
 /// <https://babel.dev/docs/options>
 ///
-/// Transform options are listed in evaluation order: `react_compiler` runs in its own
-/// pass before the main traversal, which then applies `typescript`, `decorator`, `plugins`,
-/// `jsx`, and `env` (newest edition to oldest, then RegExp) in order.
+/// Transform options are listed in evaluation order: `typescript`, `decorator`, `plugins`,
+/// `jsx`, and `env` (newest edition to oldest, then RegExp).
 #[derive(Debug, Default, Clone)]
 pub struct TransformOptions {
     //
@@ -57,12 +53,6 @@ pub struct TransformOptions {
     //
     // Transforms, in evaluation order.
     //
-    /// Experimental [React Compiler](https://github.com/react/react/tree/main/compiler).
-    ///
-    /// Runs in a separate pass before all other transforms.
-    #[cfg(feature = "react_compiler")]
-    pub react_compiler: Option<PluginOptions>,
-
     /// [preset-typescript](https://babeljs.io/docs/babel-preset-typescript)
     pub typescript: TypeScriptOptions,
 
@@ -103,8 +93,6 @@ impl TransformOptions {
         Self {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
-            #[cfg(feature = "react_compiler")]
-            react_compiler: None,
             typescript: TypeScriptOptions::default(),
             decorator: DecoratorOptions {
                 legacy: true,
@@ -307,8 +295,6 @@ impl TryFrom<&BabelOptions> for TransformOptions {
         Ok(Self {
             cwd: options.cwd.clone().unwrap_or_default(),
             assumptions: options.assumptions,
-            #[cfg(feature = "react_compiler")]
-            react_compiler: None,
             typescript,
             decorator,
             plugins,

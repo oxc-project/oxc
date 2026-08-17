@@ -1,14 +1,13 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::IndentWidth;
+use oxc_formatter_core::{
+    FormatElement, IndentWidth, dispatch_fragment_ir,
+    format_element::{LineMode, TextWidth},
+};
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{
-        FormatElement,
-        format_element::{LineMode, TextWidth},
-        prelude::*,
-    },
+    formatter::prelude::*,
     print::template::{
         FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
     },
@@ -71,50 +70,28 @@ pub(super) fn format_graphql_doc<'a>(
         infos.push(QuasiInfo { text, comments_only, starts_with_blank_line, ends_with_blank_line });
     }
 
-    // Phase 2: Collect non-skip texts for batch formatting.
-    // Only send texts that actually need formatting to JS.
-    let mut texts_to_format: Vec<&str> = Vec::new();
-    let mut format_index_map: Vec<Option<usize>> = Vec::with_capacity(num_quasis);
+    // Phase 2+3: Build `ir_parts`, one dispatch per non-comment quas.
+    // (any failure keeps the whole template verbatim:
+    // the quasis are one interleaved template, so degradation is all-or-nothing.
+    // Discarding docs already consumed via `into_doc` is safe, see its rustdoc)
+    // Comment-only quasis are synthesized locally.
+    // The IR is re-inserted into a JS template literal built from `.cooked` values,
+    // so template-literal characters (`` ` ``, `${`, `\`) are re-escaped here
+    // for both dispatcher returned IRs and manually built comment-only IRs.
+    let allocator = f.allocator();
+    let indent_width = f.options().indent_width;
+    let mut ir_parts: Vec<Option<ArenaVec<'a, FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
     for info in &infos {
-        if info.comments_only {
-            format_index_map.push(None);
+        let ir = if info.comments_only {
+            build_graphql_comment_ir(info.text, allocator, indent_width)
         } else {
-            format_index_map.push(Some(texts_to_format.len()));
-            texts_to_format.push(info.text);
-        }
-    }
-
-    // PERF: Batch send only non-skip texts, get IRs back.
-    let all_irs = if texts_to_format.is_empty() {
-        vec![]
-    } else {
-        let allocator = f.allocator();
-        let group_id_builder = f.group_id_builder();
-        let Some(Ok(crate::external_formatter::EmbeddedDocResult::MultipleDocs(irs))) = f
-            .context()
-            .external_callbacks()
-            .format_embedded_doc(allocator, group_id_builder, "graphql", &texts_to_format)
-        else {
-            return false;
+            let Some(ir) = dispatch_fragment_ir(f, "graphql", info.text, None) else {
+                return false;
+            };
+            Some(ir)
         };
-        irs
-    };
-
-    // Phase 3: Build `ir_parts` by mapping formatted results back to original indices.
-    // Use `into_iter` to take ownership and avoid cloning.
-    let mut irs_iter = all_irs.into_iter();
-    let mut ir_parts: Vec<Option<Vec<FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
-    for (idx, info) in infos.iter().enumerate() {
-        if format_index_map[idx].is_some() {
-            ir_parts.push(irs_iter.next());
-        } else if info.comments_only {
-            // Build IR for comment-only quasis manually
-            let comment_ir =
-                build_graphql_comment_ir(info.text, f.allocator(), f.options().indent_width);
-            ir_parts.push(comment_ir);
-        } else {
-            ir_parts.push(None);
-        }
+        let ir = ir.map(|ir| super::escape_template_chars_in_ir(&ir, f));
+        ir_parts.push(ir);
     }
 
     // Collect expressions via AstNode-aware iterator
@@ -195,10 +172,10 @@ fn build_graphql_comment_ir<'a>(
     text: &str,
     allocator: &'a Allocator,
     indent_width: IndentWidth,
-) -> Option<Vec<FormatElement<'a>>> {
+) -> Option<ArenaVec<'a, FormatElement<'a>>> {
     // This comes from `.cooked`, which has normalized line terminators
     let lines: Vec<&str> = text.split('\n').map(str::trim).collect();
-    let mut parts: Vec<FormatElement<'a>> = vec![];
+    let mut parts: ArenaVec<'a, FormatElement<'a>> = ArenaVec::new_in(&allocator);
     let mut seen_comment = false;
 
     for (i, line) in lines.iter().enumerate() {

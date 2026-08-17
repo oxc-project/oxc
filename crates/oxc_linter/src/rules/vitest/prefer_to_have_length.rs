@@ -83,6 +83,9 @@ fn tests() {
             "expect(files)[\"not\"].toHaveLength(1);",
             None,
         ),
+        // the `(` inside the comment is not the start of the matcher arguments; the
+        // replaced range would swallow the comment, so no fix is offered
+        ("expect(files.length).toBe/* ( */(1);", "expect(files.length).toBe/* ( */(1);", None),
         ("expect(files.length).toBe(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).toEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).toStrictEqual(1);", "expect(files).toHaveLength(1);", None),

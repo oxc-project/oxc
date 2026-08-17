@@ -1,4 +1,4 @@
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_syntax::{constant_value::ConstantValue, scope::ScopeId, symbol::SymbolId};
 
@@ -12,6 +12,12 @@ pub struct EnumData {
     member_values: FxHashMap<SymbolId, ConstantValue>,
     /// Maps enum declaration `SymbolId` → body `ScopeId`s (one per declaration).
     body_scopes: FxHashMap<SymbolId, Vec<ScopeId>>,
+    /// `const enum` declaration symbols.
+    ///
+    /// Stored here rather than read from `SymbolFlags` so consumers can still tell
+    /// const enums apart after the transformer has lowered them to `var`/`let`
+    /// bindings and updated their symbol flags accordingly.
+    const_enums: FxHashSet<SymbolId>,
 }
 
 impl EnumData {
@@ -29,5 +35,13 @@ impl EnumData {
 
     pub(crate) fn add_body_scope(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
         self.body_scopes.entry(symbol_id).or_default().push(scope_id);
+    }
+
+    pub fn is_const_enum(&self, symbol_id: SymbolId) -> bool {
+        self.const_enums.contains(&symbol_id)
+    }
+
+    pub(crate) fn add_const_enum(&mut self, symbol_id: SymbolId) {
+        self.const_enums.insert(symbol_id);
     }
 }

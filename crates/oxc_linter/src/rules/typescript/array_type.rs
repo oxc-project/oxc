@@ -288,7 +288,8 @@ fn type_needs_parentheses(type_param: &TSType) -> bool {
         | TSType::TSIntersectionType(_)
         | TSType::TSTypeOperatorType(_)
         | TSType::TSInferType(_)
-        | TSType::TSConstructorType(_) => true,
+        | TSType::TSConstructorType(_)
+        | TSType::TSConditionalType(_) => true,
         _ => false,
     }
 }
@@ -307,11 +308,11 @@ fn check_and_report_error_generic(
     if matches!(config, ArrayOption::ArraySimple) && is_simple_type(type_param) {
         return;
     }
-    let source_text = ctx.source_text().to_string();
+    let source_text = ctx.source_text();
 
     let readonly_prefix = if is_readonly { "readonly " } else { "" };
     let class_name = if is_readonly { "ReadonlyArray" } else { "Array" };
-    let message_type = get_message_type(type_param, &source_text);
+    let message_type = get_message_type(type_param, source_text);
 
     let diagnostic = match config {
         ArrayOption::Generic => {
@@ -887,7 +888,7 @@ fn test() {
             Some(serde_json::json!([{"default":"generic"}])),
         ),
         (
-            "function bazFunction(baz: Arr<ArrayClass<String>>) { return baz.map(e => e.baz) }",
+            "function bazFunction(baz: Arr<ArrayClass<String>>) { return baz.map(e => e.baz); }",
             Some(serde_json::json!([{"default":"generic"}])),
         ),
         (
@@ -1373,6 +1374,18 @@ let yyyy: Arr<Array<Arr<string>>[]> = [[[['2']]]];",
         (
             "const foo: ReadonlyArray<new (...args: any[]) => void> = [];",
             Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "type Conditional<T> = Array<T extends string ? string : number>;",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "type Conditional<T> = (T extends string ? string : number)[];",
+            Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        (
+            "type Conditional<T> = (T extends string ? string : number)[];",
+            Some(serde_json::json!([{"default":"generic"}])),
         ),
         (
             "let a: Promise<string[]> = Promise.resolve([]);",
@@ -2094,6 +2107,26 @@ let yyyy: Arr<Array<Array<Arr<string>>>> = [[[['2']]]];",
         (
             "const foo: ReadonlyArray<new (...args: any[]) => void> = [];",
             "const foo: readonly (new (...args: any[]) => void)[] = [];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "type Conditional<T> = Array<T extends string ? string : number>;",
+            "type Conditional<T> = (T extends string ? string : number)[];",
+            Some(serde_json::json!([{"default":"array"}])),
+        ),
+        (
+            "type Conditional<T> = (T extends string ? string : number)[];",
+            "type Conditional<T> = Array<T extends string ? string : number>;",
+            Some(serde_json::json!([{"default":"array-simple"}])),
+        ),
+        (
+            "type Conditional<T> = (T extends string ? string : number)[];",
+            "type Conditional<T> = Array<T extends string ? string : number>;",
+            Some(serde_json::json!([{"default":"generic"}])),
+        ),
+        (
+            "let a: ReadonlyArray<A extends B ? C : D> = [];",
+            "let a: readonly (A extends B ? C : D)[] = [];",
             Some(serde_json::json!([{"default":"array"}])),
         ),
         (

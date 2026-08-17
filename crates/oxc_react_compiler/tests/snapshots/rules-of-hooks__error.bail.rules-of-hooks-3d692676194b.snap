@@ -1,0 +1,9 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/rules-of-hooks/error.bail.rules-of-hooks-3d692676194b.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Hooks must be called at the top level of a function component or custom Hook", labels: [LabeledSpan { label: Some("This Hook is called inside a nested function"), span: Span { start: 251, end: 272 }, primary: true }, LabeledSpan { label: Some("This is the nested function"), span: Span { start: 239, end: 246 }, primary: false }], help: Some("Cannot call hook within a function expression"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Hooks") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/rules-of-hooks") } }
+
+No changes.

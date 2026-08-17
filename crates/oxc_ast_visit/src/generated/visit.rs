@@ -12,7 +12,7 @@
 
 use std::cell::Cell;
 
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use oxc_ast::ast::*;
@@ -156,8 +156,13 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        walk_meta_property(self, it);
+    fn visit_import_meta(&mut self, it: &ImportMeta) {
+        walk_import_meta(self, it);
+    }
+
+    #[inline]
+    fn visit_new_target(&mut self, it: &NewTarget) {
+        walk_new_target(self, it);
     }
 
     #[inline]
@@ -497,6 +502,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_arrow_function_body(&mut self, it: &ArrowFunctionBody<'a>) {
+        walk_arrow_function_body(self, it);
+    }
+
+    #[inline]
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         walk_arrow_function_expression(self, it);
     }
@@ -509,6 +519,11 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_class(&mut self, it: &Class<'a>) {
         walk_class(self, it);
+    }
+
+    #[inline]
+    fn visit_class_heritage(&mut self, it: &ClassHeritage<'a>) {
+        walk_class_heritage(self, it);
     }
 
     #[inline]
@@ -597,8 +612,18 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_export_declaration(&mut self, it: &ExportDeclaration<'a>) {
+        walk_export_declaration(self, it);
+    }
+
+    #[inline]
     fn visit_export_named_declaration(&mut self, it: &ExportNamedDeclaration<'a>) {
         walk_export_named_declaration(self, it);
+    }
+
+    #[inline]
+    fn visit_export_from_declaration(&mut self, it: &ExportFromDeclaration<'a>) {
+        walk_export_from_declaration(self, it);
     }
 
     #[inline]
@@ -1050,18 +1075,18 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_module_declaration(&mut self, it: &TSModuleDeclaration<'a>) {
-        walk_ts_module_declaration(self, it);
+    fn visit_ts_external_module_declaration(&mut self, it: &TSExternalModuleDeclaration<'a>) {
+        walk_ts_external_module_declaration(self, it);
     }
 
     #[inline]
-    fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
-        walk_ts_module_declaration_name(self, it);
+    fn visit_ts_namespace_declaration(&mut self, it: &TSNamespaceDeclaration<'a>) {
+        walk_ts_namespace_declaration(self, it);
     }
 
     #[inline]
-    fn visit_ts_module_declaration_body(&mut self, it: &TSModuleDeclarationBody<'a>) {
-        walk_ts_module_declaration_body(self, it);
+    fn visit_ts_namespace_declaration_body(&mut self, it: &TSNamespaceDeclarationBody<'a>) {
+        walk_ts_namespace_declaration_body(self, it);
     }
 
     #[inline]
@@ -1205,145 +1230,143 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_directives(&mut self, it: &Vec<'a, Directive<'a>>) {
+    fn visit_directives(&mut self, it: &ArenaVec<'a, Directive<'a>>) {
         walk_directives(self, it);
     }
 
     #[inline]
-    fn visit_statements(&mut self, it: &Vec<'a, Statement<'a>>) {
+    fn visit_statements(&mut self, it: &ArenaVec<'a, Statement<'a>>) {
         walk_statements(self, it);
     }
 
     #[inline]
-    fn visit_array_expression_elements(&mut self, it: &Vec<'a, ArrayExpressionElement<'a>>) {
+    fn visit_array_expression_elements(&mut self, it: &ArenaVec<'a, ArrayExpressionElement<'a>>) {
         walk_array_expression_elements(self, it);
     }
 
     #[inline]
-    fn visit_object_property_kinds(&mut self, it: &Vec<'a, ObjectPropertyKind<'a>>) {
+    fn visit_object_property_kinds(&mut self, it: &ArenaVec<'a, ObjectPropertyKind<'a>>) {
         walk_object_property_kinds(self, it);
     }
 
     #[inline]
-    fn visit_template_elements(&mut self, it: &Vec<'a, TemplateElement<'a>>) {
+    fn visit_template_elements(&mut self, it: &ArenaVec<'a, TemplateElement<'a>>) {
         walk_template_elements(self, it);
     }
 
     #[inline]
-    fn visit_expressions(&mut self, it: &Vec<'a, Expression<'a>>) {
+    fn visit_expressions(&mut self, it: &ArenaVec<'a, Expression<'a>>) {
         walk_expressions(self, it);
     }
 
     #[inline]
-    fn visit_arguments(&mut self, it: &Vec<'a, Argument<'a>>) {
+    fn visit_arguments(&mut self, it: &ArenaVec<'a, Argument<'a>>) {
         walk_arguments(self, it);
     }
 
     #[inline]
-    fn visit_assignment_target_properties(&mut self, it: &Vec<'a, AssignmentTargetProperty<'a>>) {
+    fn visit_assignment_target_properties(
+        &mut self,
+        it: &ArenaVec<'a, AssignmentTargetProperty<'a>>,
+    ) {
         walk_assignment_target_properties(self, it);
     }
 
     #[inline]
-    fn visit_variable_declarators(&mut self, it: &Vec<'a, VariableDeclarator<'a>>) {
+    fn visit_variable_declarators(&mut self, it: &ArenaVec<'a, VariableDeclarator<'a>>) {
         walk_variable_declarators(self, it);
     }
 
     #[inline]
-    fn visit_switch_cases(&mut self, it: &Vec<'a, SwitchCase<'a>>) {
+    fn visit_switch_cases(&mut self, it: &ArenaVec<'a, SwitchCase<'a>>) {
         walk_switch_cases(self, it);
     }
 
     #[inline]
-    fn visit_binding_properties(&mut self, it: &Vec<'a, BindingProperty<'a>>) {
+    fn visit_binding_properties(&mut self, it: &ArenaVec<'a, BindingProperty<'a>>) {
         walk_binding_properties(self, it);
     }
 
     #[inline]
-    fn visit_formal_parameter_list(&mut self, it: &Vec<'a, FormalParameter<'a>>) {
+    fn visit_formal_parameter_list(&mut self, it: &ArenaVec<'a, FormalParameter<'a>>) {
         walk_formal_parameter_list(self, it);
     }
 
     #[inline]
-    fn visit_decorators(&mut self, it: &Vec<'a, Decorator<'a>>) {
+    fn visit_decorators(&mut self, it: &ArenaVec<'a, Decorator<'a>>) {
         walk_decorators(self, it);
     }
 
     #[inline]
-    fn visit_ts_class_implements_list(&mut self, it: &Vec<'a, TSClassImplements<'a>>) {
+    fn visit_ts_class_implements_list(&mut self, it: &ArenaVec<'a, TSClassImplements<'a>>) {
         walk_ts_class_implements_list(self, it);
     }
 
     #[inline]
-    fn visit_class_elements(&mut self, it: &Vec<'a, ClassElement<'a>>) {
+    fn visit_class_elements(&mut self, it: &ArenaVec<'a, ClassElement<'a>>) {
         walk_class_elements(self, it);
     }
 
     #[inline]
     fn visit_import_declaration_specifiers(
         &mut self,
-        it: &Vec<'a, ImportDeclarationSpecifier<'a>>,
+        it: &ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
     ) {
         walk_import_declaration_specifiers(self, it);
     }
 
     #[inline]
-    fn visit_import_attributes(&mut self, it: &Vec<'a, ImportAttribute<'a>>) {
+    fn visit_import_attributes(&mut self, it: &ArenaVec<'a, ImportAttribute<'a>>) {
         walk_import_attributes(self, it);
     }
 
     #[inline]
-    fn visit_export_specifiers(&mut self, it: &Vec<'a, ExportSpecifier<'a>>) {
+    fn visit_export_specifiers(&mut self, it: &ArenaVec<'a, ExportSpecifier<'a>>) {
         walk_export_specifiers(self, it);
     }
 
     #[inline]
-    fn visit_jsx_children(&mut self, it: &Vec<'a, JSXChild<'a>>) {
+    fn visit_jsx_children(&mut self, it: &ArenaVec<'a, JSXChild<'a>>) {
         walk_jsx_children(self, it);
     }
 
     #[inline]
-    fn visit_jsx_attribute_items(&mut self, it: &Vec<'a, JSXAttributeItem<'a>>) {
+    fn visit_jsx_attribute_items(&mut self, it: &ArenaVec<'a, JSXAttributeItem<'a>>) {
         walk_jsx_attribute_items(self, it);
     }
 
     #[inline]
-    fn visit_ts_enum_members(&mut self, it: &Vec<'a, TSEnumMember<'a>>) {
+    fn visit_ts_enum_members(&mut self, it: &ArenaVec<'a, TSEnumMember<'a>>) {
         walk_ts_enum_members(self, it);
     }
 
     #[inline]
-    fn visit_ts_types(&mut self, it: &Vec<'a, TSType<'a>>) {
+    fn visit_ts_types(&mut self, it: &ArenaVec<'a, TSType<'a>>) {
         walk_ts_types(self, it);
     }
 
     #[inline]
-    fn visit_ts_tuple_elements(&mut self, it: &Vec<'a, TSTupleElement<'a>>) {
+    fn visit_ts_tuple_elements(&mut self, it: &ArenaVec<'a, TSTupleElement<'a>>) {
         walk_ts_tuple_elements(self, it);
     }
 
     #[inline]
-    fn visit_ts_type_parameters(&mut self, it: &Vec<'a, TSTypeParameter<'a>>) {
+    fn visit_ts_type_parameters(&mut self, it: &ArenaVec<'a, TSTypeParameter<'a>>) {
         walk_ts_type_parameters(self, it);
     }
 
     #[inline]
-    fn visit_ts_interface_heritages(&mut self, it: &Vec<'a, TSInterfaceHeritage<'a>>) {
+    fn visit_ts_interface_heritages(&mut self, it: &ArenaVec<'a, TSInterfaceHeritage<'a>>) {
         walk_ts_interface_heritages(self, it);
     }
 
     #[inline]
-    fn visit_ts_signatures(&mut self, it: &Vec<'a, TSSignature<'a>>) {
+    fn visit_ts_signatures(&mut self, it: &ArenaVec<'a, TSSignature<'a>>) {
         walk_ts_signatures(self, it);
     }
 
     #[inline]
-    fn visit_ts_index_signature_names(&mut self, it: &Vec<'a, TSIndexSignatureName<'a>>) {
-        walk_ts_index_signature_names(self, it);
-    }
-
-    #[inline]
-    fn visit_spans(&mut self, it: &Vec<'a, Span>) {
+    fn visit_spans(&mut self, it: &ArenaVec<'a, Span>) {
         walk_spans(self, it);
     }
 }
@@ -1386,7 +1409,6 @@ pub mod walk {
             Expression::StringLiteral(it) => visitor.visit_string_literal(it),
             Expression::TemplateLiteral(it) => visitor.visit_template_literal(it),
             Expression::Identifier(it) => visitor.visit_identifier_reference(it),
-            Expression::MetaProperty(it) => visitor.visit_meta_property(it),
             Expression::Super(it) => visitor.visit_super(it),
             Expression::ArrayExpression(it) => visitor.visit_array_expression(it),
             Expression::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
@@ -1415,6 +1437,8 @@ pub mod walk {
             Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
             Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
             Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
+            Expression::ImportMeta(it) => visitor.visit_import_meta(it),
+            Expression::NewTarget(it) => visitor.visit_new_target(it),
             Expression::JSXElement(it) => visitor.visit_jsx_element(it),
             Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
             Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
@@ -1663,12 +1687,18 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_meta_property<'a, V: Visit<'a>>(visitor: &mut V, it: &MetaProperty<'a>) {
-        let kind = AstKind::MetaProperty(visitor.alloc(it));
+    pub fn walk_import_meta<'a, V: Visit<'a>>(visitor: &mut V, it: &ImportMeta) {
+        let kind = AstKind::ImportMeta(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_identifier_name(&it.meta);
-        visitor.visit_identifier_name(&it.property);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_new_target<'a, V: Visit<'a>>(visitor: &mut V, it: &NewTarget) {
+        let kind = AstKind::NewTarget(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
         visitor.leave_node(kind);
     }
 
@@ -2067,7 +2097,10 @@ pub mod walk {
             Declaration::TSTypeAliasDeclaration(it) => visitor.visit_ts_type_alias_declaration(it),
             Declaration::TSInterfaceDeclaration(it) => visitor.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => visitor.visit_ts_enum_declaration(it),
-            Declaration::TSModuleDeclaration(it) => visitor.visit_ts_module_declaration(it),
+            Declaration::TSExternalModuleDeclaration(it) => {
+                visitor.visit_ts_external_module_declaration(it)
+            }
+            Declaration::TSNamespaceDeclaration(it) => visitor.visit_ts_namespace_declaration(it),
             Declaration::TSGlobalDeclaration(it) => visitor.visit_ts_global_declaration(it),
             Declaration::TSImportEqualsDeclaration(it) => {
                 visitor.visit_ts_import_equals_declaration(it)
@@ -2519,6 +2552,15 @@ pub mod walk {
     }
 
     #[inline]
+    pub fn walk_arrow_function_body<'a, V: Visit<'a>>(visitor: &mut V, it: &ArrowFunctionBody<'a>) {
+        // No `AstKind` for this type
+        match it {
+            ArrowFunctionBody::FunctionBody(it) => visitor.visit_function_body(it),
+            match_expression!(ArrowFunctionBody) => visitor.visit_expression(it.to_expression()),
+        }
+    }
+
+    #[inline]
     pub fn walk_arrow_function_expression<'a, V: Visit<'a>>(
         visitor: &mut V,
         it: &ArrowFunctionExpression<'a>,
@@ -2543,7 +2585,7 @@ pub mod walk {
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
-        visitor.visit_function_body(&it.body);
+        visitor.visit_arrow_function_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
     }
@@ -2571,16 +2613,22 @@ pub mod walk {
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
-        if let Some(super_class) = &it.super_class {
-            visitor.visit_expression(super_class);
-        }
-        if let Some(super_type_arguments) = &it.super_type_arguments {
-            visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
+        if let Some(heritage) = &it.heritage {
+            visitor.visit_class_heritage(heritage);
         }
         visitor.visit_ts_class_implements_list(&it.implements);
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_heritage<'a, V: Visit<'a>>(visitor: &mut V, it: &ClassHeritage<'a>) {
+        // No `AstKind` for this type
+        visitor.visit_expression(&it.expression);
+        if let Some(type_arguments) = &it.type_arguments {
+            visitor.visit_ts_type_parameter_instantiation(type_arguments);
+        }
     }
 
     #[inline]
@@ -2669,8 +2717,12 @@ pub mod walk {
             ModuleDeclaration::ExportDefaultDeclaration(it) => {
                 visitor.visit_export_default_declaration(it)
             }
+            ModuleDeclaration::ExportDeclaration(it) => visitor.visit_export_declaration(it),
             ModuleDeclaration::ExportNamedDeclaration(it) => {
                 visitor.visit_export_named_declaration(it)
+            }
+            ModuleDeclaration::ExportFromDeclaration(it) => {
+                visitor.visit_export_from_declaration(it)
             }
             ModuleDeclaration::TSExportAssignment(it) => visitor.visit_ts_export_assignment(it),
             ModuleDeclaration::TSNamespaceExportDeclaration(it) => {
@@ -2805,6 +2857,15 @@ pub mod walk {
     }
 
     #[inline]
+    pub fn walk_export_declaration<'a, V: Visit<'a>>(visitor: &mut V, it: &ExportDeclaration<'a>) {
+        let kind = AstKind::ExportDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_declaration(&it.declaration);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
     pub fn walk_export_named_declaration<'a, V: Visit<'a>>(
         visitor: &mut V,
         it: &ExportNamedDeclaration<'a>,
@@ -2812,13 +2873,20 @@ pub mod walk {
         let kind = AstKind::ExportNamedDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        if let Some(declaration) = &it.declaration {
-            visitor.visit_declaration(declaration);
-        }
         visitor.visit_export_specifiers(&it.specifiers);
-        if let Some(source) = &it.source {
-            visitor.visit_string_literal(source);
-        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_export_from_declaration<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &ExportFromDeclaration<'a>,
+    ) {
+        let kind = AstKind::ExportFromDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_export_specifiers(&it.specifiers);
+        visitor.visit_string_literal(&it.source);
         if let Some(with_clause) = &it.with_clause {
             visitor.visit_with_clause(with_clause);
         }
@@ -3726,7 +3794,7 @@ pub mod walk {
         let kind = AstKind::TSIndexSignature(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_index_signature_names(&it.parameters);
+        visitor.visit_ts_index_signature_name(&it.parameter);
         visitor.visit_ts_type_annotation(&it.type_annotation);
         visitor.leave_node(kind);
     }
@@ -3814,7 +3882,7 @@ pub mod walk {
         let kind = AstKind::TSInterfaceHeritage(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
+        visitor.visit_ts_type_name(&it.type_name);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
@@ -3846,18 +3914,18 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_ts_module_declaration<'a, V: Visit<'a>>(
+    pub fn walk_ts_external_module_declaration<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &TSModuleDeclaration<'a>,
+        it: &TSExternalModuleDeclaration<'a>,
     ) {
-        let kind = AstKind::TSModuleDeclaration(visitor.alloc(it));
+        let kind = AstKind::TSExternalModuleDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_module_declaration_name(&it.id);
+        visitor.visit_string_literal(&it.id);
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::TsModuleBlock;
-                if it.body.as_ref().is_some_and(TSModuleDeclarationBody::has_use_strict_directive) {
+                if it.body.as_ref().is_some_and(|body| body.has_use_strict_directive()) {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags
@@ -3865,35 +3933,47 @@ pub mod walk {
             &it.scope_id,
         );
         if let Some(body) = &it.body {
-            visitor.visit_ts_module_declaration_body(body);
+            visitor.visit_ts_module_block(body);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_ts_module_declaration_name<'a, V: Visit<'a>>(
+    pub fn walk_ts_namespace_declaration<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &TSModuleDeclarationName<'a>,
+        it: &TSNamespaceDeclaration<'a>,
     ) {
-        // No `AstKind` for this type
-        match it {
-            TSModuleDeclarationName::Identifier(it) => visitor.visit_binding_identifier(it),
-            TSModuleDeclarationName::StringLiteral(it) => visitor.visit_string_literal(it),
-        }
+        let kind = AstKind::TSNamespaceDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_binding_identifier(&it.id);
+        visitor.enter_scope(
+            {
+                let mut flags = ScopeFlags::TsModuleBlock;
+                if it.body.has_use_strict_directive() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &it.scope_id,
+        );
+        visitor.visit_ts_namespace_declaration_body(&it.body);
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_ts_module_declaration_body<'a, V: Visit<'a>>(
+    pub fn walk_ts_namespace_declaration_body<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &TSModuleDeclarationBody<'a>,
+        it: &TSNamespaceDeclarationBody<'a>,
     ) {
         // No `AstKind` for this type
         match it {
-            TSModuleDeclarationBody::TSModuleDeclaration(it) => {
-                visitor.visit_ts_module_declaration(it)
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(it) => {
+                visitor.visit_ts_namespace_declaration(it)
             }
-            TSModuleDeclarationBody::TSModuleBlock(it) => visitor.visit_ts_module_block(it),
+            TSNamespaceDeclarationBody::TSModuleBlock(it) => visitor.visit_ts_module_block(it),
         }
     }
 
@@ -4241,14 +4321,14 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_directives<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Directive<'a>>) {
+    pub fn walk_directives<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, Directive<'a>>) {
         for el in it {
             visitor.visit_directive(el);
         }
     }
 
     #[inline]
-    pub fn walk_statements<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Statement<'a>>) {
+    pub fn walk_statements<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, Statement<'a>>) {
         for el in it {
             visitor.visit_statement(el);
         }
@@ -4257,7 +4337,7 @@ pub mod walk {
     #[inline]
     pub fn walk_array_expression_elements<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, ArrayExpressionElement<'a>>,
+        it: &ArenaVec<'a, ArrayExpressionElement<'a>>,
     ) {
         for el in it {
             visitor.visit_array_expression_element(el);
@@ -4267,7 +4347,7 @@ pub mod walk {
     #[inline]
     pub fn walk_object_property_kinds<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, ObjectPropertyKind<'a>>,
+        it: &ArenaVec<'a, ObjectPropertyKind<'a>>,
     ) {
         for el in it {
             visitor.visit_object_property_kind(el);
@@ -4277,7 +4357,7 @@ pub mod walk {
     #[inline]
     pub fn walk_template_elements<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, TemplateElement<'a>>,
+        it: &ArenaVec<'a, TemplateElement<'a>>,
     ) {
         for el in it {
             visitor.visit_template_element(el);
@@ -4285,14 +4365,14 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_expressions<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Expression<'a>>) {
+    pub fn walk_expressions<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, Expression<'a>>) {
         for el in it {
             visitor.visit_expression(el);
         }
     }
 
     #[inline]
-    pub fn walk_arguments<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Argument<'a>>) {
+    pub fn walk_arguments<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, Argument<'a>>) {
         for el in it {
             match el {
                 oxc_ast::ast::Argument::SpreadElement(spread) => {
@@ -4308,7 +4388,7 @@ pub mod walk {
     #[inline]
     pub fn walk_assignment_target_properties<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, AssignmentTargetProperty<'a>>,
+        it: &ArenaVec<'a, AssignmentTargetProperty<'a>>,
     ) {
         for el in it {
             visitor.visit_assignment_target_property(el);
@@ -4318,7 +4398,7 @@ pub mod walk {
     #[inline]
     pub fn walk_variable_declarators<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, VariableDeclarator<'a>>,
+        it: &ArenaVec<'a, VariableDeclarator<'a>>,
     ) {
         for el in it {
             visitor.visit_variable_declarator(el);
@@ -4326,7 +4406,7 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_switch_cases<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, SwitchCase<'a>>) {
+    pub fn walk_switch_cases<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, SwitchCase<'a>>) {
         for el in it {
             visitor.visit_switch_case(el);
         }
@@ -4335,7 +4415,7 @@ pub mod walk {
     #[inline]
     pub fn walk_binding_properties<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, BindingProperty<'a>>,
+        it: &ArenaVec<'a, BindingProperty<'a>>,
     ) {
         for el in it {
             visitor.visit_binding_property(el);
@@ -4345,7 +4425,7 @@ pub mod walk {
     #[inline]
     pub fn walk_formal_parameter_list<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, FormalParameter<'a>>,
+        it: &ArenaVec<'a, FormalParameter<'a>>,
     ) {
         for el in it {
             visitor.visit_formal_parameter(el);
@@ -4353,7 +4433,7 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_decorators<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Decorator<'a>>) {
+    pub fn walk_decorators<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, Decorator<'a>>) {
         for el in it {
             visitor.visit_decorator(el);
         }
@@ -4362,7 +4442,7 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_class_implements_list<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, TSClassImplements<'a>>,
+        it: &ArenaVec<'a, TSClassImplements<'a>>,
     ) {
         for el in it {
             visitor.visit_ts_class_implements(el);
@@ -4370,7 +4450,10 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_class_elements<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, ClassElement<'a>>) {
+    pub fn walk_class_elements<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &ArenaVec<'a, ClassElement<'a>>,
+    ) {
         for el in it {
             visitor.visit_class_element(el);
         }
@@ -4379,7 +4462,7 @@ pub mod walk {
     #[inline]
     pub fn walk_import_declaration_specifiers<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, ImportDeclarationSpecifier<'a>>,
+        it: &ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
     ) {
         for el in it {
             visitor.visit_import_declaration_specifier(el);
@@ -4389,7 +4472,7 @@ pub mod walk {
     #[inline]
     pub fn walk_import_attributes<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, ImportAttribute<'a>>,
+        it: &ArenaVec<'a, ImportAttribute<'a>>,
     ) {
         for el in it {
             visitor.visit_import_attribute(el);
@@ -4399,7 +4482,7 @@ pub mod walk {
     #[inline]
     pub fn walk_export_specifiers<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, ExportSpecifier<'a>>,
+        it: &ArenaVec<'a, ExportSpecifier<'a>>,
     ) {
         for el in it {
             visitor.visit_export_specifier(el);
@@ -4407,7 +4490,7 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_jsx_children<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, JSXChild<'a>>) {
+    pub fn walk_jsx_children<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, JSXChild<'a>>) {
         for el in it {
             visitor.visit_jsx_child(el);
         }
@@ -4416,7 +4499,7 @@ pub mod walk {
     #[inline]
     pub fn walk_jsx_attribute_items<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, JSXAttributeItem<'a>>,
+        it: &ArenaVec<'a, JSXAttributeItem<'a>>,
     ) {
         for el in it {
             visitor.visit_jsx_attribute_item(el);
@@ -4424,14 +4507,17 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_ts_enum_members<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, TSEnumMember<'a>>) {
+    pub fn walk_ts_enum_members<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &ArenaVec<'a, TSEnumMember<'a>>,
+    ) {
         for el in it {
             visitor.visit_ts_enum_member(el);
         }
     }
 
     #[inline]
-    pub fn walk_ts_types<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, TSType<'a>>) {
+    pub fn walk_ts_types<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, TSType<'a>>) {
         for el in it {
             visitor.visit_ts_type(el);
         }
@@ -4440,7 +4526,7 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_tuple_elements<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, TSTupleElement<'a>>,
+        it: &ArenaVec<'a, TSTupleElement<'a>>,
     ) {
         for el in it {
             visitor.visit_ts_tuple_element(el);
@@ -4450,7 +4536,7 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_type_parameters<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, TSTypeParameter<'a>>,
+        it: &ArenaVec<'a, TSTypeParameter<'a>>,
     ) {
         for el in it {
             visitor.visit_ts_type_parameter(el);
@@ -4460,7 +4546,7 @@ pub mod walk {
     #[inline]
     pub fn walk_ts_interface_heritages<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, TSInterfaceHeritage<'a>>,
+        it: &ArenaVec<'a, TSInterfaceHeritage<'a>>,
     ) {
         for el in it {
             visitor.visit_ts_interface_heritage(el);
@@ -4468,24 +4554,17 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_ts_signatures<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, TSSignature<'a>>) {
+    pub fn walk_ts_signatures<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &ArenaVec<'a, TSSignature<'a>>,
+    ) {
         for el in it {
             visitor.visit_ts_signature(el);
         }
     }
 
     #[inline]
-    pub fn walk_ts_index_signature_names<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &Vec<'a, TSIndexSignatureName<'a>>,
-    ) {
-        for el in it {
-            visitor.visit_ts_index_signature_name(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_spans<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Span>) {
+    pub fn walk_spans<'a, V: Visit<'a>>(visitor: &mut V, it: &ArenaVec<'a, Span>) {
         for el in it {
             visitor.visit_span(el);
         }

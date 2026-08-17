@@ -1548,3 +1548,136 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────
    ╰────
   help: This expression always evaluates to the constant on the left-hand side
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 5 < 10
+   · ──────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 5 <= 10
+   · ───────
+   ╰────
+  help: Both sides of the <= are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 10 > 5
+   · ──────
+   ╰────
+  help: Both sides of the > are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 10 >= 5
+   · ───────
+   ╰────
+  help: Both sides of the >= are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 'a' < 'b'
+   · ─────────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ true >= false
+   · ─────────────
+   ╰────
+  help: Both sides of the >= are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ undefined < 5
+   · ─────────────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 5 > undefined
+   · ─────────────
+   ╰────
+  help: Both sides of the > are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `` < ``
+   · ───────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `` >= 5
+   · ───────
+   ╰────
+  help: Both sides of the >= are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ `foo` < `bar`
+   · ─────────────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 1n < 2n
+   · ───────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ null >= 5
+   · ─────────
+   ╰────
+  help: Both sides of the >= are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ -5 < 10
+   · ───────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ 10 >= +5
+   · ────────
+   ╰────
+  help: Both sides of the >= are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ~5 <= 10
+   · ────────
+   ╰────
+  help: Both sides of the <= are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ ~1 > ~2
+   · ───────
+   ╰────
+  help: Both sides of the > are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /a/ < /b/
+   · ─────────
+   ╰────
+  help: Both sides of the < are literal values
+
+  ⚠ eslint(no-constant-binary-expression): Unexpected constant relational comparison
+   ╭─[no_constant_binary_expression.tsx:1:1]
+ 1 │ /a/ >= /b/
+   · ──────────
+   ╰────
+  help: Both sides of the >= are literal values

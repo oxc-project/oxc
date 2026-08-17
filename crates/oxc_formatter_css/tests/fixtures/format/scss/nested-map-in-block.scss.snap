@@ -1,0 +1,220 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A nested map value prints at the SAME indent in EVERY block context
+// (oxc-project/oxc#24773).
+//
+// ---- Group 1: matches Prettier (its pair-dedent fires -> normal indent) ----
+@function fn() {
+  $in-function: ($k: ($n: $v));
+}
+@mixin mx() {
+  $in-mixin: ($k: ($n: $v));
+}
+.sel {
+  $in-selector: ($k: ($n: $v));
+}
+// Nearest at-rule ancestor wins: @function shields the outer @if
+@if true {
+  @function fn3() {
+    $in-function-under-if: ($k: ($n: $v));
+  }
+}
+
+// ---- Group 2: DELIBERATE DIVERGENCE ----
+// See "SCSS: A nested map value prints at the SAME indent" in AGENTS.md
+// "Known divergences". For every case below Prettier double-indents `$n`
+// and floats the closing `),` between levels:
+//   $in-if: (
+//     $k: (
+//         $n: $v,
+//       ),
+//   );
+// We print the same normal indent as Group 1.
+@if true {
+  $in-if: ($k: ($n: $v));
+}
+@each $i in $list {
+  $in-each: ($k: ($n: $v));
+}
+// Selector blocks do NOT shield the control directive
+@if true {
+  .sel {
+    $in-selector-under-if: ($k: ($n: $v));
+  }
+}
+@function fn2() {
+  @if true {
+    $in-if-under-function: ($k: ($n: $v));
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A nested map value prints at the SAME indent in EVERY block context
+// (oxc-project/oxc#24773).
+//
+// ---- Group 1: matches Prettier (its pair-dedent fires -> normal indent) ----
+@function fn() {
+  $in-function: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+@mixin mx() {
+  $in-mixin: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+.sel {
+  $in-selector: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+// Nearest at-rule ancestor wins: @function shields the outer @if
+@if true {
+  @function fn3() {
+    $in-function-under-if: (
+      $k: (
+        $n: $v,
+      ),
+    );
+  }
+}
+
+// ---- Group 2: DELIBERATE DIVERGENCE ----
+// See "SCSS: A nested map value prints at the SAME indent" in AGENTS.md
+// "Known divergences". For every case below Prettier double-indents `$n`
+// and floats the closing `),` between levels:
+//   $in-if: (
+//     $k: (
+//         $n: $v,
+//       ),
+//   );
+// We print the same normal indent as Group 1.
+@if true {
+  $in-if: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+@each $i in $list {
+  $in-each: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+// Selector blocks do NOT shield the control directive
+@if true {
+  .sel {
+    $in-selector-under-if: (
+      $k: (
+        $n: $v,
+      ),
+    );
+  }
+}
+@function fn2() {
+  @if true {
+    $in-if-under-function: (
+      $k: (
+        $n: $v,
+      ),
+    );
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A nested map value prints at the SAME indent in EVERY block context
+// (oxc-project/oxc#24773).
+//
+// ---- Group 1: matches Prettier (its pair-dedent fires -> normal indent) ----
+@function fn() {
+  $in-function: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+@mixin mx() {
+  $in-mixin: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+.sel {
+  $in-selector: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+// Nearest at-rule ancestor wins: @function shields the outer @if
+@if true {
+  @function fn3() {
+    $in-function-under-if: (
+      $k: (
+        $n: $v,
+      ),
+    );
+  }
+}
+
+// ---- Group 2: DELIBERATE DIVERGENCE ----
+// See "SCSS: A nested map value prints at the SAME indent" in AGENTS.md
+// "Known divergences". For every case below Prettier double-indents `$n`
+// and floats the closing `),` between levels:
+//   $in-if: (
+//     $k: (
+//         $n: $v,
+//       ),
+//   );
+// We print the same normal indent as Group 1.
+@if true {
+  $in-if: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+@each $i in $list {
+  $in-each: (
+    $k: (
+      $n: $v,
+    ),
+  );
+}
+// Selector blocks do NOT shield the control directive
+@if true {
+  .sel {
+    $in-selector-under-if: (
+      $k: (
+        $n: $v,
+      ),
+    );
+  }
+}
+@function fn2() {
+  @if true {
+    $in-if-under-function: (
+      $k: (
+        $n: $v,
+      ),
+    );
+  }
+}
+
+===================== End =====================

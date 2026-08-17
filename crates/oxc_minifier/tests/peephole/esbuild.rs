@@ -1,4 +1,4 @@
-use crate::test;
+use crate::{test, test_same};
 
 /// Esbuild minfication tests
 ///
@@ -233,7 +233,10 @@ fn js_parser_test() {
     // "for (; x; ) { let y = function() { }; var y = y; }",
     // );
     test("while (x) { if (y) continue; let y }", "for (; x; ) { if (y) continue; let y; }");
-    test("while (x) { if (y) continue; var y }", "for (; x; ) if (!y) var y; ");
+    test(
+        "v = function(x, y) { while (x) { if (y) continue; var y } }",
+        "v = function(x, y) { for (; x; ) if (!y) var y }",
+    );
     test("console.log(undefined)", "console.log(void 0);");
     test("console.log(+undefined)", "console.log(NaN);");
     test("console.log(undefined + undefined)", "console.log(NaN);");
@@ -933,8 +936,8 @@ fn constant_evaluation_test() {
     test("x = 3 - 6", "x = -3;");
     test("x = 3 * 6", "x = 18;");
     test("x = 3 / 6", "x = 3 / 6;");
-    test("x = 3 % 6", "x = 3 % 6;");
-    test("x = 3 ** 6", "x = 3 ** 6;");
+    test("x = 3 % 6", "x = 3;");
+    test("x = 3 ** 6", "x = 729;");
     test("x = 0 / 0", "x = NaN;");
     test("x = 123 / 0", "x = Infinity;");
     test("x = 123 / -0", "x = -Infinity;");
@@ -985,20 +988,20 @@ fn constant_evaluation_test() {
 
 #[test]
 fn test_remove_dead_expr_nullish_related() {
-    test("var a; a != null && a.b()", "var a; a?.b();");
-    test("var a; a == null || a.b()", "var a; a?.b();");
-    test("var a; null != a && a.b()", "var a; a?.b();");
-    test("var a; null == a || a.b()", "var a; a?.b();");
-    test("var a; a == null && a.b()", "var a; a ?? a.b();");
-    test("var a; a != null || a.b()", "var a; a ?? a.b();");
-    test("var a; null == a && a.b()", "var a; a ?? a.b();");
-    test("var a; null != a || a.b()", "var a; a ?? a.b();");
+    test("v = function(a) { a != null && a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { a == null || a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { null != a && a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { null == a || a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { a == null && a.b() }", "v = function(a) { a ?? a.b() }");
+    test("v = function(a) { a != null || a.b() }", "v = function(a) { a ?? a.b() }");
+    test("v = function(a) { null == a && a.b() }", "v = function(a) { a ?? a.b() }");
+    test("v = function(a) { null != a || a.b() }", "v = function(a) { a ?? a.b() }");
     test("x = a != null && a.b()", "x = a != null && a.b();");
     test("x = a == null || a.b()", "x = a == null || a.b();");
-    test("var a; if (a != null) a.b()", "var a; a?.b();");
-    test("var a; if (a == null) ; else a.b()", "var a; a?.b();");
-    test("var a; if (a == null) a.b()", "var a; a ?? a.b();");
-    test("var a; if (a != null) ; else a.b()", "var a; a ?? a.b();");
+    test("v = function(a) { if (a != null) a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { if (a == null); else a.b() }", "v = function(a) { a?.b() }");
+    test("v = function(a) { if (a == null) a.b() }", "v = function(a) { a ?? a.b() }");
+    test("v = function(a) { if (a != null); else a.b() }", "v = function(a) { a ?? a.b() }");
     test("x(y ?? 1)", "x(y ?? 1);");
     test("x(y.z ?? 1)", "x(y.z ?? 1);");
     test("x(y[z] ?? 1)", "x(y[z] ?? 1);");
@@ -1386,8 +1389,8 @@ fn test_flatten_values() {
     test("return !a === !b", "return !a == !b;");
     test("return !a !== !b", "return !a != !b;");
     test("return !a !== !b", "return !a != !b;");
-    // test("return (a, -1n) !== -1", "return a, -1n !== -1;");
-    // test("return (a, ~1n) !== -1", "return a, ~1n !== -1;");
+    test("return (a, -1n) !== -1", "return a, !0;");
+    test("return (a, ~1n) !== -1", "return a, !0;");
     test("return (a -= 1n) !== -1", "return (a -= 1n) !== -1;");
     test("return (a *= 1n) !== -1", "return (a *= 1n) !== -1;");
     test("return (a **= 1n) !== -1", "return (a **= 1n) !== -1;");
@@ -1396,16 +1399,16 @@ fn test_flatten_values() {
     test("return (a &= 1n) !== -1", "return (a &= 1n) !== -1;");
     test("return (a |= 1n) !== -1", "return (a |= 1n) !== -1;");
     test("return (a ^= 1n) !== -1", "return (a ^= 1n) !== -1;");
-    // test("return -(a, b)", "return a, -b;");
-    // test("return +(a, b)", "return a, +b;");
-    // test("return ~(a, b)", "return a, ~b;");
+    test("return -(a, b)", "return a, -b;");
+    test("return +(a, b)", "return a, +b;");
+    test("return ~(a, b)", "return a, ~b;");
     test("return !(a, b)", "return a, !b;");
-    // test("return void (a, b)", "return a, void b;");
+    test("return void (a, b)", "a, b; return;");
     test("return typeof (a, b)", "return typeof (a, b);");
     test("return delete (a, b)", "return delete (a, b);");
-    // test("return (a, b) && c", "return a, b && c;");
-    // test("return (a, b) == c", "return a, b == c;");
-    // test("return (a, b) + c", "return a, b + c;");
+    test("return (a, b) && c", "return a, b && c;");
+    test("return (a, b) == c", "return a, b == c;");
+    test("return (a, b) + c", "return a, b + c;");
     test("return a && (b, c)", "return a && (b, c);");
     test("return a == (b, c)", "return a == (b, c);");
     test("return a + (b, c)", "return a + (b, c);");
@@ -1541,12 +1544,12 @@ fn test_remove_dead_expr() {
         "var bound; unbound, {...unbound}, unbound;",
     );
     test(
-        "var bound; ({x: 123, bound, ...bound, [bound]: null, y: 234})",
-        "var bound; ({...bound});",
+        "v = function(bound) { ({x: 123, bound, ...bound, [bound]: null, y: 234}) }",
+        "v = function(bound) { ({...bound}) }",
     );
     test(
-        "var bound; ({x: 123, bound, ...bound, [bound]: foo(), y: 234})",
-        "var bound; ({...bound}), foo();",
+        "v = function(bound) { ({x: 123, bound, ...bound, [bound]: foo(), y: 234}) }",
+        "v = function(bound) { ({...bound}), foo() }",
     );
     test("console.log(1, foo(), bar())", "console.log(1, foo(), bar());");
     test("/* @__PURE__ */ console.log(1, foo(), bar())", "foo(), bar();");
@@ -1604,17 +1607,17 @@ fn test_remove_dead_expr() {
     test("foo ? bar : 2", "foo && bar;");
     test("foo ? bar : baz", "foo ? bar : baz;");
     test("foo && bar", "foo && bar;");
-    test("var foo; foo && bar", "var foo;foo && bar;");
-    test("var bar; foo && bar", "var bar;foo;");
-    test("var foo, bar; foo && bar", "var foo, bar;");
+    test_same("v = function(foo) { foo && bar }");
+    test("v = function(bar) { foo && bar }", "v = function(bar) { foo }");
+    test("v = function(foo, bar) { foo && bar }", "v = function(foo, bar) {}");
     test("foo || bar", "foo || bar;");
-    test("var foo; foo || bar", "var foo;foo || bar;");
-    test("var bar; foo || bar", "var bar;foo;");
-    test("var foo, bar; foo || bar", "var foo, bar;");
+    test_same("v = function(foo) { foo || bar }");
+    test("v = function(bar) { foo || bar }", "v = function(bar) { foo }");
+    test("v = function(foo, bar) { foo || bar }", "v = function(foo, bar) {}");
     test("foo ?? bar", "foo ?? bar;");
-    test("var foo; foo ?? bar", "var foo;foo ?? bar;");
-    test("var bar; foo ?? bar", "var bar;foo;");
-    test("var foo, bar; foo ?? bar", "var foo, bar;");
+    test_same("v = function(foo) { foo ?? bar }");
+    test("v = function(bar) { foo ?? bar }", "v = function(bar) { foo }");
+    test("v = function(foo, bar) { foo ?? bar }", "v = function(foo, bar) {}");
     test("tag`a${b}c${d}e`", "tag`a${b}c${d}e`;");
     test("`a${b}c${d}e`", "`${b}${d}`;");
     test("`stuff ${x} ${1}`", "`${x}`;");
@@ -1635,64 +1638,64 @@ fn test_remove_dead_expr() {
 #[test]
 fn test_inline_single_use_variable() {
     test(
-        "var foo; function wrapper(arg0, arg1) {var x = foo; return x}",
-        "var foo; function wrapper(arg0, arg1) { return foo;}",
+        "function wrapper(foo, arg0, arg1) {var x = foo; return x}",
+        "function wrapper(foo, arg0, arg1) { return foo;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return x}",
-        "var foo; function wrapper(arg0, arg1) { return foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return x}",
+        "function wrapper(foo, arg0, arg1) { return foo;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) {const x = foo; return x}",
-        "var foo; function wrapper(arg0, arg1) { return foo;}",
+        "function wrapper(foo, arg0, arg1) {const x = foo; return x}",
+        "function wrapper(foo, arg0, arg1) { return foo;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; if (false) x++; return x}",
-        "var foo; function wrapper(arg0, arg1) { return foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; if (false) x++; return x}",
+        "function wrapper(foo, arg0, arg1) { return foo;}",
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; if (true) x++; return x}",
         "var foo; function wrapper(arg0, arg1) { let x = foo; return x++, x;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + x}",
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + x;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return x + x}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return x + x;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return +x}",
-        "var foo; function wrapper(arg0, arg1) { return +foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return +x}",
+        "function wrapper(foo, arg0, arg1) { return +foo;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return -x}",
-        "var foo; function wrapper(arg0, arg1) { return -foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return -x}",
+        "function wrapper(foo, arg0, arg1) { return -foo;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return !x}",
-        "var foo; function wrapper(arg0, arg1) { return !foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return !x}",
+        "function wrapper(foo, arg0, arg1) { return !foo;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return ~x}",
-        "var foo; function wrapper(arg0, arg1) { return ~foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return ~x}",
+        "function wrapper(foo, arg0, arg1) { return ~foo;}",
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; return void x}",
         "var foo; function wrapper(arg0, arg1) { let x = foo;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return typeof x}",
-        "var foo; function wrapper(arg0, arg1) { return typeof foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return typeof x}",
+        "function wrapper(foo, arg0, arg1) { return typeof foo;}",
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; return `<${x}>`}",
         "var foo; function wrapper(arg0, arg1) { return `<${foo}>`;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return x + 2}",
-        "var foo; function wrapper(arg0, arg1) { return foo + 2;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return x + 2}",
+        "function wrapper(foo, arg0, arg1) { return foo + 2;}",
     );
     test(
-        "var foo; function wrapper(arg0, arg1) { let x = foo; return 2 + x}",
-        "var foo; function wrapper(arg0, arg1) { return 2 + foo;}",
+        "function wrapper(foo, arg0, arg1) { let x = foo; return 2 + x}",
+        "function wrapper(foo, arg0, arg1) { return 2 + foo;}",
     );
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; return x + arg0}",
@@ -1966,6 +1969,9 @@ fn test_inline_single_use_variable() {
         "var foo; function wrapper(arg0, arg1) { let x = foo; let y = ++x; return y}",
         "var foo; function wrapper(arg0, arg1) { let x = foo; return ++x;}",
     );
+    // Keep implicit-undefined provenance through direct aliases. Expanding both
+    // reads to `void 0` is larger and prevents the single-use `y` alias from
+    // collapsing back into `x`.
     test(
         "var foo; function wrapper(arg0, arg1) { let x = foo; let y = x; return [x, y]}",
         "var foo; function wrapper(arg0, arg1) { let x = foo; return [x, x];}",
@@ -2021,7 +2027,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
-        "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
+        "function wrapper(arg0, arg1) { if (arg0 === 0) return 1; }",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",
@@ -2407,13 +2413,13 @@ fn prune_empty_case_before_default() {
     test("switch (x) { default: case 1: bar() }", "switch (x) { default: case 1: bar();}");
 
     // String literals should also be removed
-    test("switch (x) { case 'a': case 'b': default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 'a': case 'b': default: bar() }", "x, bar();");
 
     // null literal (booleans get transformed to !0/!1 before this optimization runs)
-    test("switch (x) { case null: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case null: default: bar() }", "x, bar();");
 
     // BigInt literals
-    test("switch (x) { case 1n: case 2n: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 1n: case 2n: default: bar() }", "x, bar();");
 
     // Non-empty case should stop the pruning
     test(
@@ -2422,8 +2428,8 @@ fn prune_empty_case_before_default() {
     );
 
     // Only default - nothing to prune
-    test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { default: bar() }", "x, bar();");
 
     // No default - nothing to prune
-    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); case 1:}");
+    test("switch (x) { case 0: foo(); case 1: }", "x === 0 && foo();");
 }

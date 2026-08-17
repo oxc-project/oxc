@@ -1,0 +1,105 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.cell::after {
+  .hairline-bottom(var(--cell-border-color), var(--padding-md), var(--padding-md));
+  .placementArrow(@popover-arrow-width, 4px, @arrow-border-radius, var(--antd-arrow-background-color), @popover-arrow-box-shadow);
+}
+.heading-1() {
+  .typography-title(@heading-1-size, @typography-title-font-weight, 1.23, @heading-color, @typography-title-margin-bottom);
+}
+.a {
+  .sloppy( 10px ,  0.50px );
+  .multiline(ABC,
+    0.50px);
+  .strings('single', "double");
+  .named(@v: 0.50px; @w: XYZ);
+  .plain-call;
+  .important-call() !important;
+  #ns > .namespaced();
+}
+.trailing-semi(@fontSize; @fontWeight; @headingMarginBottom;) {
+  font-size: @fontSize;
+}
+.multiline-params(
+  @prefix-cls: @input-prefix-cls;
+  @text-color: @input-color;
+  @border-color: @input-border-color;
+) {
+  color: @text-color;
+}
+.commented(@a, /* keep me */ @b) {
+  color: @a;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.cell::after {
+  .hairline-bottom(var(--cell-border-color), var(--padding-md), var(--padding-md));
+  .placementArrow(@popover-arrow-width, 4px, @arrow-border-radius, var(--antd-arrow-background-color), @popover-arrow-box-shadow);
+}
+.heading-1() {
+  .typography-title(@heading-1-size, @typography-title-font-weight, 1.23, @heading-color, @typography-title-margin-bottom);
+}
+.a {
+  .sloppy( 10px ,  0.5px );
+  .multiline(ABC,
+    0.5px);
+  .strings("single", "double");
+  .named(@v: 0.5px; @w: XYZ);
+  .plain-call;
+  .important-call() !important;
+  #ns > .namespaced();
+}
+.trailing-semi(@fontSize; @fontWeight; @headingMarginBottom;) {
+  font-size: @fontSize;
+}
+.multiline-params(
+  @prefix-cls: @input-prefix-cls;
+  @text-color: @input-color;
+  @border-color: @input-border-color;
+) {
+  color: @text-color;
+}
+.commented(@a, /* keep me */ @b) {
+  color: @a;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.cell::after {
+  .hairline-bottom(var(--cell-border-color), var(--padding-md), var(--padding-md));
+  .placementArrow(@popover-arrow-width, 4px, @arrow-border-radius, var(--antd-arrow-background-color), @popover-arrow-box-shadow);
+}
+.heading-1() {
+  .typography-title(@heading-1-size, @typography-title-font-weight, 1.23, @heading-color, @typography-title-margin-bottom);
+}
+.a {
+  .sloppy( 10px ,  0.5px );
+  .multiline(ABC,
+    0.5px);
+  .strings("single", "double");
+  .named(@v: 0.5px; @w: XYZ);
+  .plain-call;
+  .important-call() !important;
+  #ns > .namespaced();
+}
+.trailing-semi(@fontSize; @fontWeight; @headingMarginBottom;) {
+  font-size: @fontSize;
+}
+.multiline-params(
+  @prefix-cls: @input-prefix-cls;
+  @text-color: @input-color;
+  @border-color: @input-border-color;
+) {
+  color: @text-color;
+}
+.commented(@a, /* keep me */ @b) {
+  color: @a;
+}
+
+===================== End =====================

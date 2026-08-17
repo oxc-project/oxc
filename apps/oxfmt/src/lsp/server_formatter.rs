@@ -8,12 +8,12 @@ use tower_lsp_server::ls_types::{Pattern, Range, ServerCapabilities, TextEdit, U
 use tracing::{debug, error, warn};
 
 use oxc_language_server::{
-    Capabilities, LanguageId, TextDocument, Tool, ToolBuilder, ToolRestartChanges,
-    offset_to_position,
+    Capabilities, ClientMessage, LanguageId, TextDocument, Tool, ToolBuildResult, ToolBuilder,
+    ToolRestartChanges, offset_to_position, utils::normalize_user_config_path_to_watch_pattern,
 };
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
+    ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
     ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
     resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
@@ -22,12 +22,12 @@ use crate::lsp::options::FormatOptions as LSPFormatOptions;
 
 pub struct ServerFormatterBuilder {
     js_config_loader: JsConfigLoaderCb,
-    external_formatter: ExternalFormatter,
+    external_services: ExternalServices,
 }
 
 impl ServerFormatterBuilder {
-    pub fn new(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) -> Self {
-        Self { js_config_loader, external_formatter }
+    pub fn new(js_config_loader: JsConfigLoaderCb, external_services: ExternalServices) -> Self {
+        Self { js_config_loader, external_services }
     }
 
     /// Create a dummy `ServerFormatterBuilder` for testing.
@@ -37,13 +37,21 @@ impl ServerFormatterBuilder {
             js_config_loader: std::sync::Arc::new(|_| {
                 Err("JS config not supported in tests".to_string())
             }),
-            external_formatter: ExternalFormatter::dummy(),
+            external_services: ExternalServices::dummy(),
         }
     }
 
+    /// Creates a new `ServerFormatter` instance based on the provided root URI and options.
+    /// Returns a tuple containing the `ServerFormatter` instance and an optional message to be sent to the client.
+    /// This message will be used to inform about misconfiguration.
+    ///
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
+    pub fn build(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+    ) -> (ServerFormatter, Option<ClientMessage>) {
         let options = deserialize_lsp_options(options);
 
         let root_path = root_uri.to_file_path().unwrap();
@@ -61,24 +69,29 @@ impl ServerFormatterBuilder {
         };
 
         // If `configPath` is explicitly set, load it eagerly as the single config for all files.
-        let explicit_config_path = options.config_path.filter(|s| !s.is_empty()).map(PathBuf::from);
+        let use_nested_config = options.use_nested_configs();
+        let explicit_config_path = options.explicit_config_path().map(PathBuf::from);
 
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
         if let Err(err) =
-            tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads))
+            tokio::task::block_in_place(|| self.external_services.init(num_of_threads))
         {
-            error!("Failed to setup external formatter.\n{err}\n");
+            error!("Failed to setup external services.\n{err}\n");
         }
         let source_formatter = SourceFormatter::new(num_of_threads)
-            .with_external_formatter(Some(self.external_formatter.clone()));
+            .with_external_services(Some(self.external_services.clone()));
 
-        ServerFormatter::new(
-            root_path.to_path_buf(),
-            source_formatter,
-            JsConfigLoaderCb::clone(&self.js_config_loader),
-            prettierignore_glob,
-            explicit_config_path,
+        (
+            ServerFormatter::new(
+                root_path.to_path_buf(),
+                source_formatter,
+                JsConfigLoaderCb::clone(&self.js_config_loader),
+                prettierignore_glob,
+                explicit_config_path,
+                use_nested_config,
+            ),
+            None,
         )
     }
 }
@@ -93,8 +106,9 @@ impl ToolBuilder for ServerFormatterBuilder {
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
     }
 
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(self.build(root_uri, options))
+    fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
+        let (tool, client_message) = self.build(root_uri, options);
+        ToolBuildResult { tool: Box::new(tool), client_message }
     }
 }
 
@@ -134,9 +148,12 @@ pub struct ServerFormatter {
     js_config_loader: JsConfigLoaderCb,
     /// `.prettierignore` glob (workspace-level, shared across all scopes).
     prettierignore_glob: Option<Gitignore>,
-    /// Explicit `fmt.configPath` from LSP settings. When set, disables nested
-    /// config discovery; all files use this single config.
+    /// Explicit `fmt.configPath` from LSP settings.
+    /// When set, all files use this single config.
     explicit_config_path: Option<PathBuf>,
+    /// Whether nested config discovery is active.
+    /// Disabled by an explicit `fmt.configPath` or `fmt.disableNestedConfig` in LSP settings.
+    use_nested_config: bool,
     /// Current config snapshot. Swapped wholesale on watched-file changes.
     state: RwLock<Arc<FormatterState>>,
 }
@@ -155,29 +172,35 @@ impl Tool for ServerFormatter {
         let new_option = deserialize_lsp_options(new_options_json.clone());
 
         if old_option == new_option {
-            return ToolRestartChanges { tool: None, watch_patterns: None };
+            return ToolRestartChanges { tool: None, watch_patterns: None, client_message: None };
         }
 
         builder.shutdown(root_uri);
-        let new_formatter = builder.build_boxed(root_uri, new_options_json.clone());
-        let watch_patterns = new_formatter.get_watcher_patterns(new_options_json);
-        ToolRestartChanges { tool: Some(new_formatter), watch_patterns: Some(watch_patterns) }
+        let ToolBuildResult { tool, client_message } =
+            builder.build(root_uri, new_options_json.clone());
+        let watch_patterns = tool.get_watcher_patterns(new_options_json);
+        ToolRestartChanges {
+            tool: Some(tool),
+            watch_patterns: Some(watch_patterns),
+            client_message,
+        }
     }
 
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern> {
         let options = deserialize_lsp_options(options);
 
-        let mut patterns: Vec<Pattern> =
-            if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-                vec![config_path.clone()]
-            } else {
-                // Watch for config files in all subdirectories (nested config support)
-                config_discovery()
-                    .config_file_names()
-                    .into_iter()
-                    .map(|name| format!("**/{name}"))
-                    .collect()
-            };
+        let mut patterns: Vec<Pattern> = if let Some(config_path) = options.explicit_config_path() {
+            vec![normalize_user_config_path_to_watch_pattern(config_path)]
+        } else {
+            // Watch subdirectories too for nested config support;
+            // with `disableNestedConfig`, only the workspace-root config is used
+            let prefix = if options.use_nested_configs() { "**/" } else { "" };
+            config_discovery()
+                .config_file_names()
+                .into_iter()
+                .map(|name| format!("{prefix}{name}"))
+                .collect()
+        };
 
         patterns.push(".editorconfig".to_string());
         patterns
@@ -204,7 +227,7 @@ impl Tool for ServerFormatter {
         );
         *self.state.write().expect("state rwlock poisoned") = Arc::new(new_state);
 
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
     }
 
     fn run_format(&self, document: &TextDocument) -> Result<Vec<TextEdit>, String> {
@@ -273,6 +296,7 @@ impl ServerFormatter {
         js_config_loader: JsConfigLoaderCb,
         prettierignore_glob: Option<Gitignore>,
         explicit_config_path: Option<PathBuf>,
+        use_nested_config: bool,
     ) -> Self {
         let state =
             Self::build_state(&root_path, explicit_config_path.as_deref(), &js_config_loader);
@@ -282,6 +306,7 @@ impl ServerFormatter {
             js_config_loader,
             prettierignore_glob,
             explicit_config_path,
+            use_nested_config,
             state: RwLock::new(Arc::new(state)),
         }
     }
@@ -353,9 +378,8 @@ impl ServerFormatter {
         // In-flight reads survive a concurrent rebuild because the old `Arc` keeps the previous snapshot alive.
         let state = Arc::clone(&self.state.read().expect("state rwlock poisoned"));
 
-        // Explicit config path applies uniformly to every file;
-        // passing `None` tells `resolve_file_scope_config` to bypass nested probing.
-        let nested_ctx = self.explicit_config_path.is_none().then_some(&state.nested_ctx);
+        // Passing `None` tells `resolve_file_scope_config` to bypass nested probing
+        let nested_ctx = self.use_nested_config.then_some(&state.nested_ctx);
         let resolver = match resolve_file_scope_config(path, &state.root_resolver, nested_ctx) {
             Ok(r) => r,
             Err(err) => {
@@ -444,7 +468,10 @@ fn compute_minimal_text_edit<'a>(
     source_text: &str,
     formatted_text: &'a str,
 ) -> (u32, u32, &'a str) {
-    debug_assert!(source_text != formatted_text);
+    debug_assert_ne!(
+        source_text, formatted_text,
+        "compute_minimal_text_edit: source_text and formatted_text must be different"
+    );
 
     // Find common prefix (byte offset)
     let mut prefix_byte = 0;
@@ -497,9 +524,7 @@ fn compute_minimal_text_edit<'a>(
 // Almost the same as `cli::walk::load_ignore_paths`, but does not handle custom ignore files.
 //
 // NOTE: `.gitignore` is intentionally NOT included here.
-// In LSP, every file is explicitly opened by the user (like directly specifying a file in CLI),
-// so `.gitignore` should not prevent formatting.
-// Only formatter-specific ignore files apply.
+// An LSP document is explicitly formatted by the user.
 fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
     let path = cwd.join(".prettierignore");
     if path.exists() { vec![path] } else { vec![] }
@@ -531,7 +556,9 @@ mod tests {
     use oxc_language_server::offset_to_position;
 
     #[test]
-    #[should_panic(expected = "assertion failed")]
+    #[should_panic(
+        expected = "compute_minimal_text_edit: source_text and formatted_text must be different"
+    )]
     fn test_no_change() {
         let src = "abc";
         let formatted = "abc";

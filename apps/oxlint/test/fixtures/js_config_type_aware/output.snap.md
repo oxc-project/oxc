@@ -7,7 +7,8 @@
    ,-[files/test.js:3:1]
  2 | 
  3 | floating;
-   : ^^^^^^^^^
+   : ^^^^|^^^^
+   :     `-- This unhandled promise-like value has type `Promise<any>`.
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 

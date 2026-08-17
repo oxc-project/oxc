@@ -62,32 +62,29 @@ declare_oxc_lint!(
 impl Rule for NoMutableExports {
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ExportNamedDeclaration(export_name_decl) => {
+            AstKind::ExportDeclaration(export_decl) => {
                 // e.g. "export let a = 4;"
-                if let Some(declaration) = &export_name_decl.declaration {
-                    let Declaration::VariableDeclaration(decl) = declaration else {
-                        return;
-                    };
-                    if matches!(
-                        decl.kind,
-                        VariableDeclarationKind::Var | VariableDeclarationKind::Let
-                    ) {
-                        ctx.diagnostic(no_mutable_exports_diagnostic(decl.span, decl.kind));
-                    }
-                } else if export_name_decl.source.is_none() {
-                    // e.g. "let a = 3; export { a }"
-                    for specifier in &export_name_decl.specifiers {
-                        if let ModuleExportName::IdentifierReference(ident) = &specifier.local {
-                            let Some(declaration) =
-                                get_reference_declaration(ident.reference_id(), ctx)
-                            else {
-                                continue;
-                            };
-                            ctx.diagnostic(no_mutable_exports_diagnostic(
-                                declaration.span,
-                                declaration.kind,
-                            ));
-                        }
+                let Declaration::VariableDeclaration(decl) = &export_decl.declaration else {
+                    return;
+                };
+                if matches!(decl.kind, VariableDeclarationKind::Var | VariableDeclarationKind::Let)
+                {
+                    ctx.diagnostic(no_mutable_exports_diagnostic(decl.span, decl.kind));
+                }
+            }
+            AstKind::ExportNamedDeclaration(export_name_decl) => {
+                // e.g. "let a = 3; export { a }"
+                for specifier in &export_name_decl.specifiers {
+                    if let ModuleExportName::IdentifierReference(ident) = &specifier.local {
+                        let Some(declaration) =
+                            get_reference_declaration(ident.reference_id(), ctx)
+                        else {
+                            continue;
+                        };
+                        ctx.diagnostic(no_mutable_exports_diagnostic(
+                            declaration.span,
+                            declaration.kind,
+                        ));
                     }
                 }
             }

@@ -35,11 +35,20 @@ pub struct NoArraySort {
     /// array.sort();
     /// ```
     allow_expression_statement: bool,
+
+    /// When set to `true`, allows sorting a fresh array created by a spread, e.g. `[...iterable].sort()`.
+    /// This avoids the double allocation of `toSorted()` when sorting an iterable such as a `Set`.
+    ///
+    /// Example of **correct** code for this rule with `allowAfterSpread` set to `true`:
+    /// ```js
+    /// const sorted = [...mySet].sort();
+    /// ```
+    allow_after_spread: bool,
 }
 
 impl Default for NoArraySort {
     fn default() -> Self {
-        Self { allow_expression_statement: true }
+        Self { allow_expression_statement: true, allow_after_spread: false }
     }
 }
 
@@ -67,7 +76,7 @@ declare_oxc_lint!(
     NoArraySort,
     unicorn,
     suspicious,
-    fix,
+    suggestion,
     config = NoArraySort,
     version = "1.15.0",
     short_description = "Prefer using `Array#toSorted()` over `Array#sort()`.",
@@ -126,6 +135,10 @@ impl Rule for NoArraySort {
             _ => false,
         };
 
+        if self.allow_after_spread && is_spread {
+            return;
+        }
+
         if self.allow_expression_statement && !is_spread {
             let parent = ctx.nodes().parent_node(node.id());
             let parent_is_expression_statement = match parent.kind() {
@@ -141,7 +154,14 @@ impl Rule for NoArraySort {
             }
         }
 
-        ctx.diagnostic_with_fix(no_array_sort_diagnostic(span), |fixer| {
+        // The replacement is a suggestion, not an auto-fix, matching upstream
+        // eslint-plugin-unicorn (`hasSuggestions: true`, not `fixable`): the
+        // receiver is not statically known to be an array — the compareFn
+        // heuristic above catches many query-builder receivers, but not
+        // zero-argument ones — and non-array receivers have no `toSorted()`,
+        // so applying the replacement blindly under `--fix` turns working
+        // code into a runtime `TypeError`.
+        ctx.diagnostic_with_suggestion(no_array_sort_diagnostic(span), |fixer| {
             fixer.replace(span, "toSorted")
         });
     }
@@ -208,6 +228,14 @@ fn test() {
         (r#"Post.find({ published: true }).sort({ updatedAt: "desc" })"#, None),
         ("sorted = collection.sort(({field: 1}))", None),
         (r#"sorted = query.sort(("field"))"#, None),
+        ("sorted = [...mySet].sort()", Some(serde_json::json!([{ "allowAfterSpread": true }]))),
+        ("sorted = [...array].sort()", Some(serde_json::json!([{ "allowAfterSpread": true }]))),
+        ("sorted = [...array]?.sort()", Some(serde_json::json!([{ "allowAfterSpread": true }]))),
+        (
+            "sorted = [...array].sort(compareFn)",
+            Some(serde_json::json!([{ "allowAfterSpread": true }])),
+        ),
+        ("[...array].sort()", Some(serde_json::json!([{ "allowAfterSpread": true }]))),
     ];
 
     let fail = vec![
@@ -223,6 +251,8 @@ fn test() {
         ("array?.sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
         ("[...array].sort()", Some(serde_json::json!([{ "allowExpressionStatement": false }]))),
         ("sorted = [...(0, array)].sort()", None),
+        ("sorted = array.sort()", Some(serde_json::json!([{ "allowAfterSpread": true }]))),
+        ("sorted = [...array].sort()", Some(serde_json::json!([{ "allowAfterSpread": false }]))),
     ];
 
     let fix = vec![

@@ -37,7 +37,9 @@
 //!
 //! **Implementation**:
 //! 1. Calls `get_trailing_comments()` with node context to determine ownership
-//! 2. Uses line suffixes to prevent comments from interfering with code layout
+//! 2. Defers same-line trailing LINE comments via `line_suffix`
+//!    (excluded from the printer's fits measurement, so they never count toward the print width);
+//!    same-line trailing BLOCK comments print inline and DO count
 //! 3. Handles complex spacing rules for different comment types
 //! 4. Advances cursor after processing each comment
 //!
@@ -46,7 +48,7 @@
 //! // In container node formatting:
 //! write!(f, [
 //!     "{",
-//!     format_dangling_comments(container.span).with_block_indent(),
+//!     format_dangling_comments(container.span).with_soft_block_indent(),
 //!     "}"
 //! ]);
 //! ```
@@ -54,9 +56,10 @@
 //! **Implementation**:
 //! 1. Calls `comments_between()` to find internal comments not owned by children
 //! 2. Applies indentation based on container type (block, soft, none)
+//!    — see [`DanglingIndentMode`] for which variant an empty container takes
 //! 3. Preserves comment relationships and spacing
 //! 4. Advances cursor for processed comments
-use oxc_allocator::StringBuilder;
+use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
@@ -153,6 +156,44 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatLeadingComments<'a> {
                 }
                 format_leading_comments_impl(*comments, f);
             }
+        }
+    }
+}
+
+/// Leading comments of the node at `span`, hoisted above a leading operator
+/// (binary-like chains and intersection types under `operatorPosition: start`).
+/// Union `|` chains apply the same rule with trailing-style rendering instead:
+/// Prettier preserves a blank line before the hoisted comment there,
+/// while collapsing it in the chains served here (see the note in `union_type.rs`).
+///
+/// Writes only when an own-line comment is pending,
+/// keeping it own-line instead of trailing the operator (`&& `);
+/// otherwise same-line comments stay with the operand, after the operator.
+#[inline]
+pub const fn format_hoisted_leading_comments(span: Span) -> FormatHoistedLeadingComments {
+    FormatHoistedLeadingComments(span)
+}
+
+/// See [`format_hoisted_leading_comments`].
+#[derive(Debug, Copy, Clone)]
+pub struct FormatHoistedLeadingComments(Span);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatHoistedLeadingComments {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let hoist = {
+            let comments = f.comments();
+            comments.has_leading_own_line_comment(self.0.start)
+                && !comments
+                    .comments_before_iter(self.0.start)
+                    // Type-cast comments are never hoisted, even when it ends its source line
+                    // ```js
+                    // b || /** @type {string} */
+                    // (c)
+                    // ```
+                    .any(|comment| comments.is_type_cast_comment(comment))
+        };
+        if hoist {
+            FormatLeadingComments::Node(self.0).fmt(f);
         }
     }
 }
@@ -287,6 +328,13 @@ pub enum FormatDanglingComments<'a> {
     Comments { comments: &'a [Comment], indent: DanglingIndentMode },
 }
 
+/// How an empty container indents its dangling comments.
+///
+/// Prettier >= 3.9: expression-level containers that may stay flat
+/// (`[]`, `{}`, `()`, tuple types, enum bodies) take [`Soft`](Self::Soft),
+/// so a single one-line block comment stays inline;
+/// statement bodies that always expand (function/class/interface/namespace bodies)
+/// take [`Block`](Self::Block).
 #[derive(Copy, Clone, Debug)]
 pub enum DanglingIndentMode {
     /// Writes every comment on its own line and indents them with a block indent.
@@ -478,7 +526,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for Comment {
                     }
                 } else {
                     // Normalize line endings `\r\n` to `\n`
-                    let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());
+                    let mut string =
+                        ArenaStringBuilder::with_capacity_in(content.len(), f.allocator());
                     // `unwrap` is safe because `content` contains at least one line.
                     string.push_str(lines.next().unwrap().trim_end());
 

@@ -150,7 +150,7 @@ impl NoUnusedVars {
             | AstKind::TSImportEqualsDeclaration(_)
             | AstKind::TSInterfaceDeclaration(_)
             | AstKind::TSMappedType(_)
-            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSNamespaceDeclaration(_)
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSTypeParameter(_) => self.is_ignored_var(declared_binding),
             AstKind::Function(func) => {
@@ -421,7 +421,8 @@ impl NoUnusedVars {
     #[inline]
     pub(super) fn is_ignored_arg(&self, name: &str) -> Ignored {
         Ignored::new(
-            Self::is_none_or_match(self.args_ignore_pattern.as_ref(), name),
+            !(name == "_" && self.args_ignore_pattern.is_default())
+                && Self::is_none_or_match(self.args_ignore_pattern.as_ref(), name),
             IgnoreReason::NamePattern,
         )
     }
@@ -451,7 +452,7 @@ impl NoUnusedVars {
         match re {
             IgnorePattern::None => false,
             IgnorePattern::Some(re) => re.is_match(haystack),
-            IgnorePattern::Default => haystack.starts_with('_'),
+            IgnorePattern::Default | IgnorePattern::PrefixUnderscore => haystack.starts_with('_'),
         }
     }
 }

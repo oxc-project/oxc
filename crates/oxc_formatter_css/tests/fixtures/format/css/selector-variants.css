@@ -1,0 +1,27 @@
+.x .y {}
+.x > .y {}
+.x ~ .y {}
+.x + .y {}
+.x.y {}
+.x     .y {}
+.x
+    .y {}
+/* comment 1 */ .element /* comment 2 */ > /* comment 3 */ .element /* comment 4 */ {}
+.element
+/* comment 5 */
+~
+/* comment 6 */
+.element
+{}
+.parent {
+  ~ .child-one {}
+  + .child-two {}
+  > .child-three {}
+}
+a[id=test] {}
+a[id="test"] {}
+a[id='test'] {}
+a[href^="//"] {}
+a[href="http://example.com"] {}
+input:not([type="radio"], [type="checkbox"]) {}
+section:has(:not([type="radio"], [type="checkbox"])) {}

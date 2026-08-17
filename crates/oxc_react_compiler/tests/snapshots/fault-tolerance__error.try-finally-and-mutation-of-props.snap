@@ -1,0 +1,10 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fault-tolerance/error.try-finally-and-mutation-of-props.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "`try`/`finally` without `catch` is not supported by React Compiler", labels: [LabeledSpan { label: Some("Unsupported `try` starts here"), span: Span { start: 281, end: 284 }, primary: true }, LabeledSpan { label: Some("This `finally` clause requires unsupported control flow"), span: Span { start: 304, end: 313 }, primary: false }], help: Some("React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "This value cannot be modified", labels: [LabeledSpan { label: Some("value cannot be modified"), span: Span { start: 373, end: 378 }, primary: true }], help: Some("Do not mutate component props or hook arguments. If the value should change, update it where it is owned and pass an update callback, or use local state"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
+
+No changes.

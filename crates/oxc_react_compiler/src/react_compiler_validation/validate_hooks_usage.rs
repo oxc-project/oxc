@@ -1,0 +1,529 @@
+// Copyright (c) Meta Platforms, Inc. and affiliates.
+//
+// This source code is licensed under the MIT license found in the
+// LICENSE file in the root directory of this source tree.
+
+//! Validates hooks usage rules.
+//!
+//! Port of ValidateHooksUsage.ts.
+//! Ensures hooks are called unconditionally, not passed as values,
+//! and not called dynamically. Also validates that hooks are not
+//! called inside function expressions.
+
+use std::iter::once;
+
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics;
+use crate::react_compiler_hir::dominator::compute_unconditional_blocks;
+use crate::react_compiler_hir::environment::{Environment, is_hook_name};
+use crate::react_compiler_hir::object_shape::HookKind;
+use crate::react_compiler_hir::visitors::{each_pattern_operand, each_terminal_operand};
+use crate::react_compiler_hir::{
+    FunctionId, HirFunction, Identifier, IdentifierId, InstructionValue, ParamPattern, Place,
+    PlaceOrSpread, PropertyLiteral, Type, TypeId, visitors,
+};
+use crate::react_compiler_utils::FxIndexMap;
+use oxc_index::{IndexSlice, IndexVec};
+use oxc_span::Span;
+
+/// Value classification for hook validation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    Error,
+    KnownHook,
+    PotentialHook,
+    Global,
+    Local,
+}
+
+/// Value classification per identifier, indexed densely by identifier id.
+type ValueKinds = IndexVec<IdentifierId, Option<Kind>>;
+type ValueOrigins = IndexVec<IdentifierId, Option<Span>>;
+
+fn join_kinds(a: Kind, b: Kind) -> Kind {
+    if a == Kind::Error || b == Kind::Error {
+        Kind::Error
+    } else if a == Kind::KnownHook || b == Kind::KnownHook {
+        Kind::KnownHook
+    } else if a == Kind::PotentialHook || b == Kind::PotentialHook {
+        Kind::PotentialHook
+    } else if a == Kind::Global || b == Kind::Global {
+        Kind::Global
+    } else {
+        Kind::Local
+    }
+}
+
+fn get_kind_for_place(
+    place: &Place,
+    value_kinds: &ValueKinds,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> Kind {
+    let known_kind = value_kinds[place.identifier];
+    let ident = &identifiers[place.identifier];
+    if let Some(ref name) = ident.name
+        && is_hook_name(name.value())
+    {
+        return join_kinds(known_kind.unwrap_or(Kind::Local), Kind::PotentialHook);
+    }
+    known_kind.unwrap_or(Kind::Local)
+}
+
+fn ident_is_hook_name(
+    identifier_id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+) -> bool {
+    let ident = &identifiers[identifier_id];
+    if let Some(ref name) = ident.name { is_hook_name(name.value()) } else { false }
+}
+
+fn get_hook_kind_for_id<'a>(
+    identifier_id: IdentifierId,
+    identifiers: &IndexSlice<IdentifierId, [Identifier]>,
+    types: &IndexSlice<TypeId, [Type]>,
+    env: &'a Environment,
+) -> Result<Option<&'a HookKind>, OxcDiagnostic> {
+    let identifier = &identifiers[identifier_id];
+    let ty = &types[identifier.type_];
+    env.get_hook_kind_for_type(ty)
+}
+
+fn visit_place(
+    place: &Place,
+    value_kinds: &ValueKinds,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    let kind = value_kinds[place.identifier];
+    if kind == Some(Kind::KnownHook) {
+        record_invalid_hook_usage_error(place, errors_by_span, env)?;
+    }
+    Ok(())
+}
+
+fn record_conditional_hook_error(
+    place: &Place,
+    value_kinds: &mut ValueKinds,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    value_kinds[place.identifier] = Some(Kind::Error);
+    if let Some(span) = place.span {
+        let diagnostic = diagnostics::conditional_hook(Some(span));
+        let previous = errors_by_span.get(&span);
+        if previous.is_none() || previous.unwrap().message != diagnostic.message {
+            errors_by_span.insert(span, diagnostic);
+        }
+    } else {
+        env.record_error(diagnostics::conditional_hook(None))?;
+    }
+    Ok(())
+}
+
+fn record_invalid_hook_usage_error(
+    place: &Place,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    if let Some(span) = place.span {
+        if !errors_by_span.contains_key(&span) {
+            errors_by_span.insert(span, diagnostics::hook_used_as_value(Some(span)));
+        }
+    } else {
+        env.record_error(diagnostics::hook_used_as_value(None))?;
+    }
+    Ok(())
+}
+
+fn record_dynamic_hook_usage_error(
+    place: &Place,
+    origin_span: Option<Span>,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    if let Some(span) = place.span {
+        if !errors_by_span.contains_key(&span) {
+            errors_by_span.insert(span, diagnostics::dynamic_hook(Some(span), origin_span));
+        }
+    } else {
+        env.record_error(diagnostics::dynamic_hook(None, origin_span))?;
+    }
+    Ok(())
+}
+
+fn validate_hook_call(
+    callee: &Place,
+    is_unconditional: bool,
+    value_kinds: &mut ValueKinds,
+    value_origins: &ValueOrigins,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    let callee_kind = get_kind_for_place(callee, value_kinds, &env.identifiers);
+    let is_hook_callee = callee_kind == Kind::KnownHook || callee_kind == Kind::PotentialHook;
+    if is_hook_callee && !is_unconditional {
+        record_conditional_hook_error(callee, value_kinds, errors_by_span, env)?;
+    } else if callee_kind == Kind::PotentialHook {
+        record_dynamic_hook_usage_error(
+            callee,
+            value_origins[callee.identifier],
+            errors_by_span,
+            env,
+        )?;
+    }
+    Ok(())
+}
+
+/// Validates hooks usage rules for a function.
+pub fn validate_hooks_usage(
+    func: &HirFunction,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    let unconditional_blocks =
+        compute_unconditional_blocks(func, env.next_block_id().index() as u32)?;
+    let mut errors_by_span: FxIndexMap<Span, OxcDiagnostic> = FxIndexMap::default();
+    let mut value_kinds: ValueKinds = IndexVec::from_vec(vec![None; env.identifiers.len()]);
+    let mut value_origins: ValueOrigins = IndexVec::from_vec(vec![None; env.identifiers.len()]);
+
+    // Process params
+    for param in &func.params {
+        let place = match param {
+            ParamPattern::Place(p) => p,
+            ParamPattern::Spread(s) => &s.place,
+        };
+        let kind = get_kind_for_place(place, &value_kinds, &env.identifiers);
+        value_kinds[place.identifier] = Some(kind);
+        value_origins[place.identifier] = place.span.or(env.identifiers[place.identifier].span);
+    }
+
+    // Process blocks
+    for (_block_id, block) in &func.body.blocks {
+        // Process phis
+        for phi in &block.phis {
+            let mut kind = if ident_is_hook_name(phi.place.identifier, &env.identifiers) {
+                Kind::PotentialHook
+            } else {
+                Kind::Local
+            };
+            for (_, operand) in &phi.operands {
+                if let Some(operand_kind) = value_kinds[operand.identifier] {
+                    kind = join_kinds(kind, operand_kind);
+                }
+            }
+            value_kinds[phi.place.identifier] = Some(kind);
+            value_origins[phi.place.identifier] = phi
+                .operands
+                .iter()
+                .find_map(|(_, operand)| value_origins[operand.identifier].or(operand.span))
+                .or(phi.place.span);
+        }
+
+        // Process instructions
+        for &instr_id in &block.instructions {
+            let instr = &func.instructions[instr_id.index()];
+            let lvalue_id = instr.lvalue.identifier;
+
+            match &instr.value {
+                InstructionValue::LoadGlobal { .. } => {
+                    if get_hook_kind_for_id(lvalue_id, &env.identifiers, &env.types, env)?.is_some()
+                    {
+                        value_kinds[lvalue_id] = Some(Kind::KnownHook);
+                    } else {
+                        value_kinds[lvalue_id] = Some(Kind::Global);
+                    }
+                }
+                InstructionValue::LoadContext { place, .. }
+                | InstructionValue::LoadLocal { place, .. } => {
+                    visit_place(place, &value_kinds, &mut errors_by_span, env)?;
+                    let kind = get_kind_for_place(place, &value_kinds, &env.identifiers);
+                    value_kinds[lvalue_id] = Some(kind);
+                    value_origins[lvalue_id] = value_origins[place.identifier]
+                        .or(place.span)
+                        .or(env.identifiers[place.identifier].span);
+                }
+                InstructionValue::StoreLocal { lvalue, value, .. }
+                | InstructionValue::StoreContext { lvalue, value, .. } => {
+                    visit_place(value, &value_kinds, &mut errors_by_span, env)?;
+                    let kind = join_kinds(
+                        get_kind_for_place(value, &value_kinds, &env.identifiers),
+                        get_kind_for_place(&lvalue.place, &value_kinds, &env.identifiers),
+                    );
+                    value_kinds[lvalue.place.identifier] = Some(kind);
+                    value_kinds[lvalue_id] = Some(kind);
+                    let origin_span = env.identifiers[lvalue.place.identifier]
+                        .span
+                        .or(lvalue.place.span)
+                        .or(value_origins[value.identifier]);
+                    value_origins[lvalue.place.identifier] = origin_span;
+                    value_origins[lvalue_id] = origin_span;
+                }
+                InstructionValue::ComputedLoad { object, .. } => {
+                    visit_place(object, &value_kinds, &mut errors_by_span, env)?;
+                    let kind = get_kind_for_place(object, &value_kinds, &env.identifiers);
+                    let lvalue_kind =
+                        get_kind_for_place(&instr.lvalue, &value_kinds, &env.identifiers);
+                    value_kinds[lvalue_id] = Some(join_kinds(lvalue_kind, kind));
+                    value_origins[lvalue_id] = object.span.or(value_origins[object.identifier]);
+                }
+                InstructionValue::PropertyLoad { object, property, .. } => {
+                    let object_kind = get_kind_for_place(object, &value_kinds, &env.identifiers);
+                    let is_hook_property = match property {
+                        PropertyLiteral::String(s) => is_hook_name(s),
+                        PropertyLiteral::Number(_) => false,
+                    };
+                    let kind = match object_kind {
+                        Kind::Error => Kind::Error,
+                        Kind::KnownHook => {
+                            if is_hook_property {
+                                Kind::KnownHook
+                            } else {
+                                Kind::Local
+                            }
+                        }
+                        Kind::PotentialHook => Kind::PotentialHook,
+                        Kind::Global => {
+                            if is_hook_property {
+                                Kind::KnownHook
+                            } else {
+                                Kind::Global
+                            }
+                        }
+                        Kind::Local => {
+                            if is_hook_property {
+                                Kind::PotentialHook
+                            } else {
+                                Kind::Local
+                            }
+                        }
+                    };
+                    value_kinds[lvalue_id] = Some(kind);
+                    value_origins[lvalue_id] =
+                        instr.lvalue.span.or(object.span).or(value_origins[object.identifier]);
+                }
+                InstructionValue::CallExpression { callee, args, .. } => {
+                    validate_hook_call(
+                        callee,
+                        unconditional_blocks.contains(&block.id),
+                        &mut value_kinds,
+                        &value_origins,
+                        &mut errors_by_span,
+                        env,
+                    )?;
+                    // Visit all operands except callee
+                    for arg in args {
+                        let place = match arg {
+                            PlaceOrSpread::Place(p) => p,
+                            PlaceOrSpread::Spread(s) => &s.place,
+                        };
+                        visit_place(place, &value_kinds, &mut errors_by_span, env)?;
+                    }
+                }
+                InstructionValue::MethodCall { receiver, property, args, .. } => {
+                    validate_hook_call(
+                        property,
+                        unconditional_blocks.contains(&block.id),
+                        &mut value_kinds,
+                        &value_origins,
+                        &mut errors_by_span,
+                        env,
+                    )?;
+                    // Visit receiver and args (not property)
+                    visit_place(receiver, &value_kinds, &mut errors_by_span, env)?;
+                    for arg in args {
+                        let place = match arg {
+                            PlaceOrSpread::Place(p) => p,
+                            PlaceOrSpread::Spread(s) => &s.place,
+                        };
+                        visit_place(place, &value_kinds, &mut errors_by_span, env)?;
+                    }
+                }
+                InstructionValue::TaggedTemplateExpression { tag, subexprs, .. } => {
+                    validate_hook_call(
+                        tag,
+                        unconditional_blocks.contains(&block.id),
+                        &mut value_kinds,
+                        &value_origins,
+                        &mut errors_by_span,
+                        env,
+                    )?;
+                    // The tag is the callee and was validated above. Interpolations
+                    // are ordinary operands and may not reference hooks as values.
+                    for subexpr in subexprs {
+                        visit_place(subexpr, &value_kinds, &mut errors_by_span, env)?;
+                    }
+                }
+                InstructionValue::Destructure { lvalue, value, .. } => {
+                    visit_place(value, &value_kinds, &mut errors_by_span, env)?;
+                    let object_kind = get_kind_for_place(value, &value_kinds, &env.identifiers);
+                    // Process instr.lvalue and all pattern operands (matching TS eachInstructionLValue)
+                    let pattern_places = each_pattern_operand(&lvalue.pattern);
+                    let all_lvalues = once(instr.lvalue).chain(pattern_places);
+                    for place in all_lvalues {
+                        let is_hook_property =
+                            ident_is_hook_name(place.identifier, &env.identifiers);
+                        let kind = match object_kind {
+                            Kind::Error => Kind::Error,
+                            Kind::KnownHook => Kind::KnownHook,
+                            Kind::PotentialHook => Kind::PotentialHook,
+                            Kind::Global => {
+                                if is_hook_property {
+                                    Kind::KnownHook
+                                } else {
+                                    Kind::Global
+                                }
+                            }
+                            Kind::Local => {
+                                if is_hook_property {
+                                    Kind::PotentialHook
+                                } else {
+                                    Kind::Local
+                                }
+                            }
+                        };
+                        value_kinds[place.identifier] = Some(kind);
+                        value_origins[place.identifier] =
+                            place.span.or(value_origins[value.identifier]);
+                    }
+                }
+                InstructionValue::ObjectMethod { lowered_func, .. }
+                | InstructionValue::FunctionExpression { lowered_func, .. } => {
+                    visit_function_expression(env, lowered_func.func)?;
+                }
+                _ => {
+                    // For all other instructions: visit operands, set lvalue kinds
+                    // Matches TS which uses eachInstructionOperand + eachInstructionLValue
+                    visit_all_operands(&instr.value, &value_kinds, &mut errors_by_span, env)?;
+                    // Set kind for instr.lvalue
+                    let kind = get_kind_for_place(&instr.lvalue, &value_kinds, &env.identifiers);
+                    value_kinds[lvalue_id] = Some(kind);
+                    value_origins[lvalue_id] = instr.lvalue.span;
+                    // Also set kind for value-level lvalues (e.g. DeclareLocal, PrefixUpdate, PostfixUpdate)
+                    for lv in visitors::each_instruction_value_lvalue(&instr.value) {
+                        let lv_kind = get_kind_for_place(&lv, &value_kinds, &env.identifiers);
+                        value_kinds[lv.identifier] = Some(lv_kind);
+                        value_origins[lv.identifier] = lv.span;
+                    }
+                }
+            }
+        }
+
+        // Visit terminal operands
+        for place in each_terminal_operand(&block.terminal) {
+            visit_place(&place, &value_kinds, &mut errors_by_span, env)?;
+        }
+    }
+
+    // Record all accumulated errors (in insertion order, matching TS Map iteration)
+    for (_, error_detail) in errors_by_span {
+        env.record_error(error_detail)?;
+    }
+    Ok(())
+}
+
+/// Visit a function expression to check for hook calls inside it.
+/// Processes instructions in order, visiting nested functions immediately
+/// (before processing subsequent calls) to match TS error ordering.
+fn visit_function_expression(
+    env: &mut Environment,
+    func_id: FunctionId,
+) -> Result<(), OxcDiagnostic> {
+    // Collect items in instruction order to process them sequentially.
+    // Each item is either a call to check or a nested function to visit.
+    enum Item {
+        Call(IdentifierId, Option<Span>),
+        NestedFunc(FunctionId),
+    }
+
+    let func = &env.functions[func_id];
+    let function_span = func.diagnostic_span();
+    let mut items: Vec<Item> = Vec::new();
+
+    for (_block_id, block) in &func.body.blocks {
+        for &instr_id in &block.instructions {
+            let instr = &func.instructions[instr_id.index()];
+            match &instr.value {
+                InstructionValue::ObjectMethod { lowered_func, .. }
+                | InstructionValue::FunctionExpression { lowered_func, .. } => {
+                    items.push(Item::NestedFunc(lowered_func.func));
+                }
+                InstructionValue::CallExpression { callee, .. } => {
+                    items.push(Item::Call(callee.identifier, callee.span));
+                }
+                InstructionValue::MethodCall { property, .. } => {
+                    items.push(Item::Call(property.identifier, property.span));
+                }
+                InstructionValue::TaggedTemplateExpression { tag, .. } => {
+                    items.push(Item::Call(tag.identifier, tag.span));
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Process items in instruction order (matching TS which visits nested
+    // functions immediately before processing subsequent calls)
+    for item in items {
+        match item {
+            Item::Call(identifier_id, span) => {
+                let identifier = &env.identifiers[identifier_id];
+                let ty = &env.types[identifier.type_];
+                let hook_kind = env.get_hook_kind_for_type(ty).ok().flatten().cloned();
+                if let Some(hook_kind) = hook_kind {
+                    let description = format!(
+                        "Cannot call {} within a function expression",
+                        if hook_kind == HookKind::Custom {
+                            "hook"
+                        } else {
+                            hook_kind_display(&hook_kind)
+                        }
+                    );
+                    env.record_error(diagnostics::hook_in_function_expression(
+                        description,
+                        span,
+                        function_span,
+                    ))?;
+                }
+            }
+            Item::NestedFunc(nested_func_id) => {
+                visit_function_expression(env, nested_func_id)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn hook_kind_display(kind: &HookKind) -> &'static str {
+    match kind {
+        HookKind::UseContext => "useContext",
+        HookKind::UseState => "useState",
+        HookKind::UseActionState => "useActionState",
+        HookKind::UseReducer => "useReducer",
+        HookKind::UseRef => "useRef",
+        HookKind::UseEffect => "useEffect",
+        HookKind::UseLayoutEffect => "useLayoutEffect",
+        HookKind::UseInsertionEffect => "useInsertionEffect",
+        HookKind::UseMemo => "useMemo",
+        HookKind::UseCallback => "useCallback",
+        HookKind::UseTransition => "useTransition",
+        HookKind::UseImperativeHandle => "useImperativeHandle",
+        HookKind::UseEffectEvent => "useEffectEvent",
+        HookKind::UseOptimistic => "useOptimistic",
+        HookKind::Custom => "hook",
+    }
+}
+
+/// Visit all operands of an instruction value (generic fallback).
+/// Uses the canonical `each_instruction_value_operand` from visitors.
+fn visit_all_operands(
+    value: &InstructionValue,
+    value_kinds: &ValueKinds,
+    errors_by_span: &mut FxIndexMap<Span, OxcDiagnostic>,
+    env: &mut Environment,
+) -> Result<(), OxcDiagnostic> {
+    let operands = visitors::each_instruction_value_operand(value, &*env);
+    for place in &operands {
+        visit_place(place, value_kinds, errors_by_span, env)?;
+    }
+    Ok(())
+}

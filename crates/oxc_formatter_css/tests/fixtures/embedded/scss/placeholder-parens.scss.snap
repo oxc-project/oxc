@@ -1,0 +1,27 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+transform: `PLACEHOLDER-0`(30px);
+transform: `PLACEHOLDER-1` (30px);
+transform: `PLACEHOLDER-2`(`PLACEHOLDER-3`px);
+some-extra-long-property-name: `PLACEHOLDER-4`(`PLACEHOLDER-5`px);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+transform: `PLACEHOLDER-0`(30px);
+transform: `PLACEHOLDER-1` (30px);
+transform: `PLACEHOLDER-2`(`PLACEHOLDER-3`px);
+some-extra-long-property-name: `PLACEHOLDER-4`(`PLACEHOLDER-5`px);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+transform: `PLACEHOLDER-0`(30px);
+transform: `PLACEHOLDER-1` (30px);
+transform: `PLACEHOLDER-2`(`PLACEHOLDER-3`px);
+some-extra-long-property-name: `PLACEHOLDER-4`(`PLACEHOLDER-5`px);
+
+===================== End =====================

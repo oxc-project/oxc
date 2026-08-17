@@ -1,0 +1,11 @@
+@font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+@shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+@short: 1px solid red;
+.picker {
+  @padding-top: max(((@input-height - @font-height) / 2), 0);
+  width: calc((100% - 10px) / 2);
+  height: calc((100% - 10px));
+  margin: min(((@a)), @b);
+}
+@input-wrapper-cls: @input-prefix-cls, ~'@{input-prefix-cls}-affix-wrapper';
+@first-escaped: ~'@{x}-y', @a;

@@ -1,11 +1,13 @@
 #![expect(clippy::mutable_key_type)]
 use std::ops::Deref;
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use rustc_hash::FxHashMap;
 
+use crate::{PrintResult, Printed, Printer, PrinterOptions};
+
 use super::{
-    FormatElement, FormatElements, Interned, LineMode,
+    FormatElement, FormatElements, Interned,
     tag::{self, LabelId, Tag, TagKind},
 };
 
@@ -42,26 +44,50 @@ impl<'a> Document<'a> {
         (self.elements, self.sorted_tailwind_classes)
     }
 
-    /// Replaces the document's format elements with new ones.
+    /// Finalizes and prints the document: propagates group expansion once
+    /// (`Self::propagate_expand`) and hands the elements to the `Printer`.
     ///
-    /// If you have modified the elements and want to update the document,
-    /// use this method to set the new elements.
-    pub fn replace_elements(&mut self, elements: ArenaVec<'a, FormatElement<'a>>) {
-        self.elements = elements.into_arena_slice();
+    /// The single home of the finalize-once-then-print sequence:
+    /// [`crate::Formatted::print`] and standalone raw-IR consumers
+    /// (e.g. dispatched embedded IR wrapped into a temporary root) delegate here.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
+    pub fn print(self, source_size_hint: usize, options: PrinterOptions) -> PrintResult<Printed> {
+        self.propagate_expand();
+        let (elements, sorted_tailwind_classes) = self.into_elements_and_tailwind_classes();
+        Printer::with_capacity(source_size_hint, options, &sorted_tailwind_classes).print(elements)
+    }
+
+    /// Like [`Self::print`], but starts at the given indentation level.
+    ///
+    /// # Errors
+    /// Returns `PrintError` if the document contains invalid structure.
+    pub fn print_with_indent(
+        self,
+        source_size_hint: usize,
+        options: PrinterOptions,
+        indent: u16,
+    ) -> PrintResult<Printed> {
+        self.propagate_expand();
+        let (elements, sorted_tailwind_classes) = self.into_elements_and_tailwind_classes();
+        Printer::with_capacity(source_size_hint, options, &sorted_tailwind_classes)
+            .print_with_indent(elements, indent)
     }
 }
 
 impl Document<'_> {
-    /// Sets [`expand`](tag::Group::expand) to [`GroupMode::Propagated`] if the group contains any of:
-    /// * a group with [`expand`](tag::Group::expand) set to [GroupMode::Propagated] or [GroupMode::Expand].
-    /// * a non-soft [line break](FormatElement::Line) with mode [LineMode::Hard], [LineMode::Empty], or [LineMode::Literal].
+    /// Sets a group's [`mode`](crate::tag::Group::mode) to [`crate::GroupMode::Propagated`] if the group contains any of:
+    /// * a group whose [`mode`](crate::tag::Group::mode) is [`crate::GroupMode::Propagated`] or [`crate::GroupMode::Expand`].
+    /// * a non-soft [line break](FormatElement::Line) whose [`LineMode::will_break()`](super::LineMode::will_break) is true.
+    /// * a multiline [FormatElement::Text] whose `TextWidth` is not marked `without_expand_parent`.
     /// * a [FormatElement::ExpandParent]
     ///
     /// [`BestFitting`] elements act as expand boundaries, meaning that the fact that a
     /// [`BestFitting`]'s content expands is not propagated past the [`BestFitting`] element.
     ///
     /// [`BestFitting`]: FormatElement::BestFitting
-    pub fn propagate_expand(&self) {
+    pub(crate) fn propagate_expand(&self) {
         #[derive(Debug)]
         enum Enclosing<'a> {
             Group(&'a tag::Group),
@@ -146,9 +172,9 @@ impl Document<'_> {
                         false
                     }
                     // `FormatElement::Token` cannot contain line breaks
-                    FormatElement::Text { text: _, width } => width.is_multiline(),
-                    FormatElement::ExpandParent
-                    | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
+                    FormatElement::Text { text: _, width } => width.propagates_expand(),
+                    FormatElement::ExpandParent => true,
+                    FormatElement::Line(mode) => mode.propagates_expand(),
                     _ => false,
                 };
 
@@ -182,8 +208,7 @@ impl FormatElements for [FormatElement<'_>] {
 
         for element in self {
             match element {
-                // Line suffix
-                // Ignore if any of its content breaks
+                // Line suffix: Ignore its content, except for direct `Line` elements (see below)
                 FormatElement::Tag(StartLineSuffix) => {
                     ignore_depth += 1;
                 }
@@ -193,6 +218,10 @@ impl FormatElements for [FormatElement<'_>] {
                 FormatElement::Interned(interned) if ignore_depth == 0 && interned.will_break() => {
                     return true;
                 }
+                // No `ignore_depth` guard on purpose: like Prettier's `willBreak`,
+                // any always-breaking line counts — even directly inside a line suffix,
+                // and independently of whether it propagates expansion
+                // (`HardWithoutExpand` answers "will this print a newline" with yes too).
                 FormatElement::Line(line) if line.will_break() => {
                     return true;
                 }

@@ -8,7 +8,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
+    rule::Rule,
+};
 
 const ARRAY_METHODS_RETURNS_ARRAY: [&str; 15] = [
     "concat",
@@ -133,7 +136,7 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        if declarator.kind == VariableDeclarationKind::Var {
+        if variable_declaration_kind(declarator, ctx) == VariableDeclarationKind::Var {
             return;
         }
 
@@ -151,9 +154,7 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        let Some(symbol_id) = ident.symbol_id.get() else {
-            return;
-        };
+        let symbol_id = ident.symbol_id();
 
         let module_record = ctx.module_record();
         if module_record.exported_bindings.contains_key(ident.name.as_str())

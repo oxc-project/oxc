@@ -1,0 +1,18 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/error.todo-invalid-jsx-in-try-with-finally.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "`try`/`finally` without `catch` is not supported by React Compiler", labels: [LabeledSpan { label: Some("Unsupported `try` starts here"), span: Span { start: 92, end: 95 }, primary: true }, LabeledSpan { label: Some("This `finally` clause requires unsupported control flow"), span: Span { start: 119, end: 128 }, primary: false }], help: Some("React Compiler cannot analyze this control flow. Refactor the cleanup to avoid `finally`, or suppress this warning if this function should remain uncompiled"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+// @validateNoJSXInTryStatements @outputMode:"lint"
+function Component(props) {
+	let el;
+	try {
+		el = <div />;
+	} finally {
+		console.log(el);
+	}
+	return el;
+}

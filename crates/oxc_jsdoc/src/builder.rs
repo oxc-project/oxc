@@ -194,8 +194,10 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::Decorator(_)
 
         | AstKind::ExportAllDeclaration(_)
+        | AstKind::ExportDeclaration(_)
         | AstKind::ExportDefaultDeclaration(_)
         | AstKind::ExportNamedDeclaration(_)
+        | AstKind::ExportFromDeclaration(_)
         | AstKind::ImportDeclaration(_)
 
         // Maybe JSX, TS related kinds should be added?

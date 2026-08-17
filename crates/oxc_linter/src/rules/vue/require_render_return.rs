@@ -69,7 +69,7 @@ impl Rule for RequireRenderReturn {
             AstKind::Function(_) => {}
             AstKind::ArrowFunctionExpression(arrow) => {
                 // Expression-body arrow (`render: () => x`) implicitly returns.
-                if arrow.expression {
+                if arrow.is_expression() {
                     return;
                 }
             }

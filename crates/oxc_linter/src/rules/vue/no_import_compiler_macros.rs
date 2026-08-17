@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
@@ -105,29 +105,47 @@ impl Rule for NoImportCompilerMacros {
                 continue;
             }
 
-            #[expect(clippy::cast_possible_truncation)]
+            // named specifiers are always a contiguous suffix: `import def, { a, b }`
+            let has_prev_named = index > 0
+                && matches!(specifiers[index - 1], ImportDeclarationSpecifier::ImportSpecifier(_));
+            let has_next_named = index + 1 < specifiers.len();
+
             let fixer = |fixer: crate::fixer::RuleFixer<'_, 'a>| {
                 if specifiers.len() == 1 {
-                    fixer.delete(import_decl)
-                } else if index == 0 {
-                    let part_source = ctx
-                        .source_range(Span::new(import_specifier.span.end, import_decl.span.end));
-                    let next_comma_index = part_source.find(',').unwrap_or_default();
-                    fixer.delete_range(Span::new(
-                        import_specifier.span.start,
-                        import_specifier.span.end + next_comma_index as u32 + 1,
-                    ))
-                } else {
-                    let part_source = ctx.source_range(Span::new(
-                        import_decl.span.start,
-                        import_specifier.span.start,
-                    ));
-                    let last_comma_index = part_source.rfind(',').unwrap_or_default();
-                    fixer.delete_range(Span::new(
-                        import_decl.span.start + last_comma_index as u32,
-                        import_specifier.span.end,
-                    ))
+                    return fixer.delete(import_decl);
                 }
+
+                if !has_prev_named && has_next_named {
+                    // take the specifier and the comma separating it from the next one
+                    let next_start = specifiers[index + 1].span().start;
+                    let Some(comma) =
+                        ctx.find_next_token_within(import_specifier.span.end, next_start, ",")
+                    else {
+                        return fixer.noop();
+                    };
+                    return fixer.delete_range(Span::new(
+                        import_specifier.span.start,
+                        import_specifier.span.end + comma + 1,
+                    ));
+                }
+
+                // take the comma separating it from the previous specifier, and the braces
+                // too if this empties them: `import def, { defineProps }` -> `import def`
+                let prev_end = specifiers[index - 1].span().end;
+                let Some(comma) =
+                    ctx.find_prev_token_within(prev_end, import_specifier.span.start, ",")
+                else {
+                    return fixer.noop();
+                };
+                let mut end = import_specifier.span.end;
+                if !has_prev_named {
+                    let Some(brace) = ctx.find_next_token_within(end, import_decl.span.end, "}")
+                    else {
+                        return fixer.noop();
+                    };
+                    end += brace + 1;
+                }
+                fixer.delete_range(Span::new(prev_end + comma, end))
             };
 
             if ctx.frameworks_options() == FrameworkOptions::VueSetup {
@@ -244,6 +262,18 @@ fn test() {
     ];
 
     let fix = vec![
+        // a default import before the only named specifier: the braces go too
+        ("import vue, { defineProps } from 'vue'", "import vue from 'vue'", None),
+        ("import vue, { defineProps, ref } from 'vue'", "import vue, {  ref } from 'vue'", None),
+        ("import vue, { ref, defineProps } from 'vue'", "import vue, { ref } from 'vue'", None),
+        // a `,` inside a comment is not the separator between specifiers
+        ("import { defineProps /* , */, ref } from 'vue'", "import {  ref } from 'vue'", None),
+        ("import { ref, /* , */ defineProps } from 'vue'", "import { ref } from 'vue'", None),
+        (
+            "import { ref /* keep */, defineProps } from 'vue'",
+            "import { ref /* keep */ } from 'vue'",
+            None,
+        ),
         ("import { defineProps } from 'vue'", "", None),
         (
             "

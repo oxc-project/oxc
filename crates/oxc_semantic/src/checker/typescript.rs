@@ -87,17 +87,6 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
     if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
     }
-
-    let mut has_optional = false;
-
-    for param in &params.items {
-        // function a(optional?: number, required: number) { }
-        if param.optional {
-            has_optional = true;
-        } else if has_optional && param.initializer.is_none() {
-            ctx.error(diagnostics::required_parameter_after_optional_parameter(param.span));
-        }
-    }
 }
 
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
@@ -109,15 +98,28 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
-pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_external_module_declaration<'a>(
+    decl: &TSExternalModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    check_ambient_module_declaration(decl.span, ctx);
+    if let Some(body) = &decl.body {
+        check_ts_export_assignment_in_statements(&body.body, ctx);
+    }
+}
+
+pub fn check_ts_namespace_declaration<'a>(
+    decl: &TSNamespaceDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     check_ts_module_or_global_declaration(decl.span, ctx);
-    check_ts_export_assignment_in_module_decl(decl, ctx);
+    check_ts_export_assignment_in_namespace_decl(decl, ctx);
 }
 
 pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     check_ts_module_or_global_declaration(decl.span, ctx);
 
-    if !decl.declare && !ctx.in_declare_scope() {
+    if !decl.declare && !ctx.in_ambient_context() {
         ctx.error(diagnostics::global_scope_augmentation_should_have_declare_modifier(
             decl.global_span,
         ));
@@ -130,7 +132,8 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
         match kind {
             AstKind::Program(_)
             | AstKind::TSModuleBlock(_)
-            | AstKind::TSModuleDeclaration(_)
+            | AstKind::TSExternalModuleDeclaration(_)
+            | AstKind::TSNamespaceDeclaration(_)
             | AstKind::TSGlobalDeclaration(_) => {
                 break;
             }
@@ -139,8 +142,42 @@ fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) 
             }
             _ => {
                 ctx.error(diagnostics::not_allowed_namespace_declaration(span));
+                break;
             }
         }
+    }
+}
+
+fn check_ambient_module_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
+    let mut ancestors =
+        ctx.ancestry().ancestor_kinds().filter(|kind| !kind.is_module_declaration());
+
+    match ancestors.next() {
+        Some(AstKind::Program(_)) => {}
+        Some(AstKind::TSModuleBlock(_)) => match ancestors.next() {
+            Some(AstKind::TSExternalModuleDeclaration(_))
+                if ctx.source_type.is_script()
+                    && matches!(ancestors.next(), Some(AstKind::Program(_))) =>
+            {
+                // Module augmentations may be nested directly in a top-level ambient module.
+            }
+            Some(
+                AstKind::TSExternalModuleDeclaration(_)
+                | AstKind::TSNamespaceDeclaration(_)
+                | AstKind::TSGlobalDeclaration(_),
+            ) => {
+                ctx.error(diagnostics::nested_ambient_module_declaration(span));
+            }
+            _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
+        },
+        Some(
+            AstKind::TSExternalModuleDeclaration(_)
+            | AstKind::TSNamespaceDeclaration(_)
+            | AstKind::TSGlobalDeclaration(_),
+        ) => {
+            ctx.error(diagnostics::nested_ambient_module_declaration(span));
+        }
+        _ => ctx.error(diagnostics::not_allowed_ambient_module_declaration(span)),
     }
 }
 
@@ -179,9 +216,10 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
         }
     }
 
-    if !class.r#declare && !ctx.in_declare_scope() {
+    if !ctx.in_ambient_context() {
         let mut is_in_overload_group = false;
-        for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
+        for (a, b) in class.body.body.iter().map(Some).chain(std::iter::once(None)).tuple_windows()
+        {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
@@ -218,19 +256,6 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     let is_abstract = method.r#type.is_abstract();
 
-    if is_abstract {
-        // constructors cannot be abstract, no matter what
-        if method.kind.is_constructor() {
-            ctx.error(diagnostics::illegal_abstract_modifier(method.key.span()));
-        }
-        // abstract cannot be used with private identifiers
-        if method.key.is_private_identifier() {
-            ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(
-                method.key.span(),
-            ));
-        }
-    }
-
     let is_empty_body = method.value.r#type == FunctionType::TSEmptyBodyFunctionExpression;
     // Illegal to have `constructor(public foo);`
     if method.kind.is_constructor() && is_empty_body {
@@ -242,23 +267,8 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 
     // Illegal to have `get foo();` or `set foo(a)`
-    if method.kind.is_accessor() && is_empty_body && !is_abstract {
-        let is_declare = ctx.class_table_builder.current_class_id.map_or(
-            ctx.source_type.is_typescript_definition(),
-            |id| {
-                let node_id = ctx.class_table_builder.classes.declarations[id];
-                let AstKind::Class(class) = ctx.ancestry().find_kind_by_node_id(node_id) else {
-                    #[cfg(debug_assertions)]
-                    panic!("current_class_id is set, but does not point to a Class node.");
-                    #[cfg(not(debug_assertions))]
-                    return ctx.source_type.is_typescript_definition();
-                };
-                class.declare || ctx.source_type.is_typescript_definition()
-            },
-        );
-        if !is_declare {
-            ctx.error(diagnostics::accessor_without_body(method.key.span()));
-        }
+    if method.kind.is_accessor() && is_empty_body && !is_abstract && !ctx.in_ambient_context() {
+        ctx.error(diagnostics::accessor_without_body(method.key.span()));
     }
 }
 
@@ -282,18 +292,15 @@ pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &Se
     check_ts_export_assignment_in_statements(&program.body, ctx);
 }
 
-fn check_ts_export_assignment_in_module_decl<'a>(
-    module_decl: &TSModuleDeclaration<'a>,
+fn check_ts_export_assignment_in_namespace_decl<'a>(
+    namespace_decl: &TSNamespaceDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    let Some(body) = &module_decl.body else {
-        return;
-    };
-    match body {
-        TSModuleDeclarationBody::TSModuleDeclaration(nested) => {
-            check_ts_export_assignment_in_module_decl(nested, ctx);
+    match &namespace_decl.body {
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(nested) => {
+            check_ts_export_assignment_in_namespace_decl(nested, ctx);
         }
-        TSModuleDeclarationBody::TSModuleBlock(block) => {
+        TSNamespaceDeclarationBody::TSModuleBlock(block) => {
             check_ts_export_assignment_in_statements(&block.body, ctx);
         }
     }
@@ -313,12 +320,15 @@ fn check_ts_export_assignment_in_statements<'a>(
             }
             Statement::ExportNamedDeclaration(export_decl) => {
                 // ignore `export {}`
-                if export_decl.declaration.is_none() && export_decl.specifiers.is_empty() {
-                    continue;
-                }
-                has_other_exports = true;
+                has_other_exports |= !export_decl.specifiers.is_empty();
             }
-            Statement::ExportDefaultDeclaration(_) | Statement::ExportAllDeclaration(_) => {
+            Statement::ExportFromDeclaration(export_decl) => {
+                // Preserve the existing treatment of `export {} from "mod"`.
+                has_other_exports |= !export_decl.specifiers.is_empty();
+            }
+            Statement::ExportDeclaration(_)
+            | Statement::ExportDefaultDeclaration(_)
+            | Statement::ExportAllDeclaration(_) => {
                 has_other_exports = true;
             }
             _ => {}

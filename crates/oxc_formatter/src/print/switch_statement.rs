@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -11,7 +11,7 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    utils::statement_body::FormatStatementBody,
+    utils::{is_dropped_statement, statement_body::FormatStatementBody},
     write,
 };
 
@@ -21,8 +21,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let discriminant = self.discriminant();
         let cases = self.cases();
-        let format_cases =
-            format_with(|f| if cases.is_empty() { hard_line_break().fmt(f) } else { cases.fmt(f) });
+        let format_cases = format_with(|f| {
+            if cases.is_empty() {
+                // Comments inside empty braces (`switch (a) { /* comment */ }`)
+                // would otherwise leak behind the closing brace.
+                if f.context().comments().has_comment_before(self.span.end) {
+                    format_dangling_comments(self.span).fmt(f);
+                } else {
+                    hard_line_break().fmt(f);
+                }
+            } else {
+                cases.fmt(f);
+            }
+        });
         write!(
             f,
             [
@@ -40,7 +51,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, SwitchCase<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(self);
     }
@@ -104,7 +115,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
                 && consequent
                     .iter()
                     .skip(1)
-                    .all(|statement| matches!(statement.as_ref(), Statement::EmptyStatement(_)));
+                    .all(|statement| is_dropped_statement(statement.as_ref()));
 
         // Format dangling comments before default case body.
         if is_default {

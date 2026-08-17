@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{
     Comment,
     ast::{Expression, Statement},
@@ -53,7 +53,11 @@ pub fn parse_json<'a>(
     // So the JS lexer rules apply uniformly regardless of `variant`.
     // e.g. line terminators (incl. U+2028 / U+2029), trailing commas, single quotes
     // Downstream newline scans must therefore be LS/PS-aware for all variants, not just JSON5.
-    let options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
+    let options = ParseOptions {
+        preserve_parens: false,
+        enable_ident_hashes: false, // the JSON formatter does not use `Ident` hashes
+        ..ParseOptions::default()
+    };
     let ret =
         Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();
 
@@ -88,9 +92,9 @@ pub fn parse_json<'a>(
     // This is needed so neither the returned expression reference
     // nor the comments slice borrow from the local `program`.
     let comments =
-        std::mem::replace(&mut program.comments, ArenaVec::new_in(allocator)).into_arena_slice();
+        std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
     let body: &'a [Statement<'a>] =
-        std::mem::replace(&mut program.body, ArenaVec::new_in(allocator)).into_arena_slice();
+        std::mem::replace(&mut program.body, ArenaVec::new_in(&allocator)).into_arena_slice();
 
     // The wrap source guarantees exactly one top-level `ExpressionStatement`
     let stmt = body.first().ok_or_else(|| OxcDiagnostic::error("Empty JSON source"))?;
@@ -148,7 +152,7 @@ fn try_parse_comments_only<'a>(
 
     let mut program = ret.program;
     let comments =
-        std::mem::replace(&mut program.comments, ArenaVec::new_in(allocator)).into_arena_slice();
+        std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
 
     Some(ParsedJson { expression: None, comments, wrapped_source: bare_source, source_offset: 0 })
 }

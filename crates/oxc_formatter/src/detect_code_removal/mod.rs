@@ -213,6 +213,8 @@ impl StatsCollector {
                 | AstKind::PropertyDefinition(_)
                 | AstKind::ImportAttribute(_)
                 | AstKind::TSPropertySignature(_)
+                | AstKind::TSMethodSignature(_)
+                | AstKind::TSEnumMember(_)
                 | AstKind::TSLiteralType(_),
         ) && matches!(
             kind,
@@ -338,6 +340,14 @@ mod tests {
             ("for ((let.a) in foo);", "for (let.a in foo);"),
             (r#"const { index, "0": code } = match;"#, r"const { index, 0: code } = match;"),
             (r#"({ "0": code } = match);"#, r"({ 0: code } = match);"),
+            (
+                r#"interface C { "assert"(condition?: boolean): void; }"#,
+                r"interface C { assert(condition?: boolean): void; }",
+            ),
+            (
+                r#"enum E { "_5" = 5, FULL_AUTO = "full_auto" }"#,
+                r#"enum E { _5 = 5, FULL_AUTO = "full_auto" }"#,
+            ),
             ("<div>{' '}</div>", "<div> </div>"),
             ("type T = | A;", "type T = A;"),
             ("type T = & A;", "type T = A;"),

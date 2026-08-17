@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, OnceLock, RwLock, RwLockReadGuard, RwLockWriteGuard, Weak},
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_semantic::Semantic;
 use oxc_span::Span;
@@ -545,6 +545,15 @@ impl ModuleRecord {
         self.exported_bindings_from_star_export.get_or_init(|| {
             let mut exported_bindings_from_star_export: FxHashMap<PathBuf, Vec<CompactStr>> =
                 FxHashMap::default();
+            // Walk the `export *` graph with an explicit visited set instead of recursing through
+            // each remote module's own memoized `exported_bindings_from_star_export()`. The
+            // loaded-module graph can be cyclic (e.g. `a` does `export * from './b'` and `b` does
+            // `export * from './a'`), and recursing through the memoized accessor would re-enter
+            // *this* `OnceLock` while it is still initializing — which `std`'s `OnceLock` forbids
+            // (it panics, or deadlocks). Seed `visited` with our own path so a back edge to this
+            // module is skipped.
+            let mut visited = FxHashSet::default();
+            visited.insert(self.resolved_absolute_path.clone());
             for export_entry in &self.star_export_entries {
                 let Some(module_request) = &export_entry.module_request else {
                     continue;
@@ -553,16 +562,11 @@ impl ModuleRecord {
                 else {
                     continue;
                 };
-                // Append both remote `bindings` and `exported_bindings_from_star_export`
-                let remote_exported_bindings_from_star_export = remote_module_record
-                    .exported_bindings_from_star_export()
-                    .values()
-                    .flat_map(Clone::clone);
-                let remote_bindings = remote_module_record
-                    .exported_bindings
-                    .keys()
-                    .cloned()
-                    .chain(remote_exported_bindings_from_star_export);
+                // Append the remote's own `bindings` plus its transitive star re-exports.
+                let mut remote_bindings: Vec<CompactStr> =
+                    remote_module_record.exported_bindings.keys().cloned().collect();
+                remote_module_record
+                    .collect_star_exported_bindings(&mut visited, &mut remote_bindings);
                 exported_bindings_from_star_export
                     .entry(remote_module_record.resolved_absolute_path.clone())
                     .or_default()
@@ -570,5 +574,29 @@ impl ModuleRecord {
             }
             exported_bindings_from_star_export
         })
+    }
+
+    /// Collect into `out` every binding name reachable through `self`'s `export *` chain, reading
+    /// each module's entries directly (not via the memoized accessor) so the walk stays safe on a
+    /// cyclic module graph. `visited` is keyed by resolved absolute path; a module already in it
+    /// is skipped, breaking cycles.
+    fn collect_star_exported_bindings(
+        &self,
+        visited: &mut FxHashSet<PathBuf>,
+        out: &mut Vec<CompactStr>,
+    ) {
+        for export_entry in &self.star_export_entries {
+            let Some(module_request) = &export_entry.module_request else {
+                continue;
+            };
+            let Some(remote_module_record) = self.get_loaded_module(module_request.name()) else {
+                continue;
+            };
+            if !visited.insert(remote_module_record.resolved_absolute_path.clone()) {
+                continue;
+            }
+            out.extend(remote_module_record.exported_bindings.keys().cloned());
+            remote_module_record.collect_star_exported_bindings(visited, out);
+        }
     }
 }

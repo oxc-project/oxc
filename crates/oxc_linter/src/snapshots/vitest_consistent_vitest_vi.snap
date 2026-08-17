@@ -10,6 +10,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer using `vi` instead of `vitest`.
 
   ⚠ vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
+   ╭─[consistent_vitest_vi.tsx:1:10]
+ 1 │ import { vitest } from "vite-plus/test";
+   ·          ──────
+   ╰────
+  help: Prefer using `vi` instead of `vitest`.
+
+  ⚠ vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
+   ╭─[consistent_vitest_vi.tsx:1:10]
+ 1 │ import { vitest } from "@effect/vitest";
+   ·          ──────
+   ╰────
+  help: Prefer using `vi` instead of `vitest`.
+
+  ⚠ vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:1:22]
  1 │ import { expect, vi, vitest } from "vitest";
    ·                      ──────
@@ -27,6 +41,22 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:2:4]
  1 │ import { vitest } from "vitest";
+ 2 │             vitest.stubEnv("NODE_ENV", "production");
+   ·             ──────
+   ╰────
+  help: Prefer using `vi` instead of `vitest`.
+
+  ⚠ vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
+   ╭─[consistent_vitest_vi.tsx:1:10]
+ 1 │ import { vitest } from "vite-plus/test";
+   ·          ──────
+ 2 │             vitest.stubEnv("NODE_ENV", "production");
+   ╰────
+  help: Prefer using `vi` instead of `vitest`.
+
+  ⚠ vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
+   ╭─[consistent_vitest_vi.tsx:2:4]
+ 1 │ import { vitest } from "vite-plus/test";
  2 │             vitest.stubEnv("NODE_ENV", "production");
    ·             ──────
    ╰────

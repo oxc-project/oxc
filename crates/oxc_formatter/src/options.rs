@@ -1,12 +1,13 @@
 use std::{fmt, str::FromStr};
 
-use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
+use oxc_formatter_core::{
+    Buffer, CoreFormatOptions, Format, IndentStyle, IndentWidth, LineEnding, LineWidth,
+};
 
 use crate::{
     formatter::{
-        Buffer, Format, JsFormatContext, JsFormatter,
+        JsFormatContext, JsFormatter,
         prelude::{if_group_breaks, token},
-        printer::PrinterOptions,
     },
     ir_transform::options::SortImportsOptions,
     write,
@@ -16,53 +17,43 @@ use crate::{
 pub struct JsFormatOptions {
     /// The indent style.
     pub indent_style: IndentStyle,
-
     /// The indent width.
     pub indent_width: IndentWidth,
-
     /// The type of line ending.
     pub line_ending: LineEnding,
-
     /// What's the max width of a line. Defaults to 100.
     pub line_width: LineWidth,
 
     /// The style for quotes. Defaults to double.
     pub quote_style: QuoteStyle,
-
     /// The style for JSX quotes. Defaults to double.
     pub jsx_quote_style: QuoteStyle,
-
     /// When properties in objects are quoted. Defaults to as-needed.
     pub quote_properties: QuoteProperties,
-
     /// Print trailing commas wherever possible in multi-line comma-separated syntactic structures. Defaults to "all".
     pub trailing_commas: TrailingCommas,
-
     /// Whether the formatter prints semicolons for all statements, class members, and type members or only when necessary because of [ASI](https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-automatic-semicolon-insertion).
     pub semicolons: Semicolons,
-
     /// Whether to add non-necessary parentheses to arrow functions. Defaults to "always".
     pub arrow_parentheses: ArrowParentheses,
-
     /// Whether to insert spaces around brackets in object literals. Defaults to true.
     pub bracket_spacing: BracketSpacing,
-
     /// Whether to hug the closing bracket of multiline HTML/JSX tags to the end of the last line, rather than being alone on the following line. Defaults to false.
     pub bracket_same_line: BracketSameLine,
-
     /// Attribute position style. By default auto.
     pub attribute_position: AttributePosition,
-
     /// Whether to expand object and array literals to multiple lines. Defaults to "auto".
     pub expand: Expand,
+    /// Whether HTML whitespace sensitivity is set to "ignore".
+    /// When true, HTML-in-JS templates always use hard line breaks for wrapping.
+    pub html_whitespace_sensitivity_ignore: bool,
 
-    /// Controls the position of operators in binary expressions. [**NOT SUPPORTED YET**]
+    /// Controls the position of operators in binary expressions.
     ///
     /// Accepted values are:
     /// - `"start"`: Places the operator at the beginning of the next line.
     /// - `"end"`: Places the operator at the end of the current line (default).
-    pub experimental_operator_position: OperatorPosition,
-
+    pub operator_position: OperatorPosition,
     /// Try prettier's new ternary formatting before it becomes the default behavior. [**NOT SUPPORTED YET**]
     ///
     /// Valid options:
@@ -70,21 +61,12 @@ pub struct JsFormatOptions {
     /// - `false` - Retain the default behavior of ternaries; keep question marks on the same line as the consequent.
     pub experimental_ternaries: bool,
 
-    /// Whether HTML whitespace sensitivity is set to "ignore".
-    /// When true, HTML-in-JS templates always use hard line breaks for wrapping.
-    pub html_whitespace_sensitivity_ignore: bool,
-
-    /// Enable formatting for embedded languages (e.g., CSS, SQL, GraphQL) within template literals. Defaults to "auto".
-    pub embedded_language_formatting: EmbeddedLanguageFormatting,
-
     /// Sort import statements. By default disabled.
     pub sort_imports: Option<SortImportsOptions>,
-
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
     pub sort_tailwindcss: Option<SortTailwindcssOptions>,
-
     /// Enable JSDoc comment formatting.
     /// When enabled, JSDoc comments will be normalized and reformatted.
     /// Defaults to None (disabled).
@@ -173,77 +155,30 @@ impl Default for JsdocOptions {
     }
 }
 
-/// Options for Tailwind CSS class sorting.
-/// Based on options from `prettier-plugin-tailwindcss`.
+/// Tailwind class sorting options that affect Rust-side collection.
 ///
-/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+/// The actual class ordering is performed by the host (Oxfmt)-supplied JS sorter
+/// (`prettier-plugin-tailwindcss/sorter`), so the JS-only payload is NOT carried here.
+///
+/// This struct only carries fields the Rust formatter needs while
+/// - detecting classes (`functions`, `attributes`)
+/// - or preserving original whitespace (`preserve_whitespace`)
 #[derive(Debug, Default, Clone)]
 pub struct SortTailwindcssOptions {
-    /// Path to your Tailwind CSS configuration file (v3).
-    ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
-    ///
-    /// Default: `"./tailwind.config.js"`
-    pub config: Option<String>,
-
-    /// Path to your Tailwind CSS stylesheet (v4).
-    ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
-    ///
-    /// Example: `"./src/app.css"`
-    pub stylesheet: Option<String>,
-
     /// List of custom function names that contain Tailwind CSS classes.
     ///
     /// Example: `["clsx", "cn", "cva", "tw"]`
-    ///
     /// Default: `[]`
     pub functions: Vec<String>,
-
     /// List of additional attributes to sort (beyond `class` and `className`).
     ///
     /// Example: `["myClassProp", ":class"]`
-    ///
     /// Default: `[]`
     pub attributes: Vec<String>,
-
     /// Preserve whitespace around classes.
     ///
     /// Default: `false`
     pub preserve_whitespace: bool,
-
-    /// Preserve duplicate classes.
-    ///
-    /// Default: `false`
-    pub preserve_duplicates: bool,
-}
-
-impl JsFormatOptions {
-    pub fn new() -> Self {
-        Self {
-            indent_style: IndentStyle::default(),
-            indent_width: IndentWidth::default(),
-            line_ending: LineEnding::default(),
-            line_width: LineWidth::default(),
-            quote_style: QuoteStyle::default(),
-            jsx_quote_style: QuoteStyle::default(),
-            quote_properties: QuoteProperties::default(),
-            trailing_commas: TrailingCommas::default(),
-            semicolons: Semicolons::default(),
-            arrow_parentheses: ArrowParentheses::default(),
-            bracket_spacing: BracketSpacing::default(),
-            bracket_same_line: BracketSameLine::default(),
-            attribute_position: AttributePosition::default(),
-            expand: Expand::default(),
-            experimental_operator_position: OperatorPosition::default(),
-            experimental_ternaries: false,
-            html_whitespace_sensitivity_ignore: false,
-            embedded_language_formatting: EmbeddedLanguageFormatting::default(),
-            sort_imports: None,
-            sort_tailwindcss: None,
-            jsdoc: None,
-        }
-    }
 }
 
 impl oxc_formatter_core::FormatOptions for JsFormatOptions {
@@ -263,12 +198,11 @@ impl oxc_formatter_core::FormatOptions for JsFormatOptions {
         self.line_ending
     }
 
-    fn as_print_options(&self) -> PrinterOptions {
-        PrinterOptions::default()
-            .with_indent_style(self.indent_style)
-            .with_indent_width(self.indent_width)
-            .with_print_width(self.line_width.into())
-            .with_line_ending(self.line_ending)
+    fn apply_core(&mut self, core: CoreFormatOptions) {
+        self.indent_style = core.indent_style;
+        self.indent_width = core.indent_width;
+        self.line_width = core.line_width;
+        self.line_ending = core.line_ending;
     }
 }
 
@@ -288,33 +222,10 @@ impl fmt::Display for JsFormatOptions {
         writeln!(f, "Bracket same line: {}", self.bracket_same_line.value())?;
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
         writeln!(f, "Expand lists: {}", self.expand)?;
-        writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
-        writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
+        writeln!(f, "Operator position: {}", self.operator_position)?;
         writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
         writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
         writeln!(f, "JSDoc: {:?}", self.jsdoc)
-    }
-}
-
-#[derive(Eq, PartialEq, Debug, Copy, Clone, Hash)]
-pub struct TabWidth(u8);
-
-impl TabWidth {
-    /// Returns the numeric value for this [TabWidth]
-    pub fn value(self) -> u8 {
-        self.0
-    }
-}
-
-impl From<u8> for TabWidth {
-    fn from(value: u8) -> Self {
-        TabWidth(value)
-    }
-}
-
-impl From<TabWidth> for u8 {
-    fn from(width: TabWidth) -> Self {
-        width.0
     }
 }
 
@@ -773,47 +684,6 @@ impl fmt::Display for OperatorPosition {
         let s = match self {
             OperatorPosition::Start => "Start",
             OperatorPosition::End => "End",
-        };
-        f.write_str(s)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum EmbeddedLanguageFormatting {
-    /// Enable formatting for embedded languages.
-    #[default]
-    Auto,
-    /// Disable formatting for embedded languages.
-    Off,
-}
-
-impl EmbeddedLanguageFormatting {
-    pub const fn is_auto(self) -> bool {
-        matches!(self, Self::Auto)
-    }
-
-    pub const fn is_off(self) -> bool {
-        matches!(self, Self::Off)
-    }
-}
-
-impl FromStr for EmbeddedLanguageFormatting {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "auto" => Ok(Self::Auto),
-            "off" => Ok(Self::Off),
-            _ => Err("Value not supported for EmbeddedLanguageFormatting"),
-        }
-    }
-}
-
-impl fmt::Display for EmbeddedLanguageFormatting {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            EmbeddedLanguageFormatting::Auto => "Auto",
-            EmbeddedLanguageFormatting::Off => "Off",
         };
         f.write_str(s)
     }

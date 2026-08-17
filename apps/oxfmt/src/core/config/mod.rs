@@ -10,6 +10,7 @@ pub use js_config::{JsConfigLoaderCb, JsLoadJsConfigCb, create_js_config_loader}
 pub use nested::NestedConfigCtx;
 
 use std::{
+    borrow::Cow,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -22,6 +23,8 @@ use tracing::instrument;
 use oxc_config::{ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path};
 #[cfg(feature = "napi")]
 use oxc_formatter::JsFormatOptions;
+#[cfg(feature = "napi")]
+use oxc_formatter_core::CoreFormatOptions;
 
 use self::{
     editorconfig::{apply_editorconfig, has_editorconfig_overrides, load_editorconfig},
@@ -31,7 +34,7 @@ use self::{
 use super::options::to_oxc_formatter;
 use super::{
     FormatStrategy,
-    options::validate,
+    options::{ValidatedOptions, validate},
     oxfmtrc::{FormatConfig, Oxfmtrc},
     support::FileKind,
     utils,
@@ -40,7 +43,7 @@ use super::{
 const OXFMT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
     json: ".oxfmtrc.json",
     jsonc: ".oxfmtrc.jsonc",
-    js: "oxfmt.config.ts",
+    js: &["oxfmt.config.ts", "oxfmt.config.mts"],
     vite: "vite.config.ts",
 };
 
@@ -125,8 +128,9 @@ pub enum ResolveOutcome {
 
 /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].
 ///
-/// This is the simplified path for the NAPI `format()` API,
-/// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
+/// This is the simplified path for the NAPI `format()` API.
+/// It resolves the caller-supplied [`FormatConfig`] directly instead of
+/// discovering or loading project configuration.
 ///
 /// Relative Tailwind paths are resolved against provided `cwd`.
 ///
@@ -140,23 +144,28 @@ pub fn resolve_for_api(
     let mut format_config: FormatConfig =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
     format_config.resolve_tailwind_paths(cwd);
-    // Validate eagerly: `from_format_config` skips validation for `ExternalFormatter*` kinds,
-    // so range-out values (e.g., `printWidth: 1000`) would otherwise silently reach Prettier.
-    validate(&format_config)?;
+    // Validate eagerly, as the single gate for every option (core + js/sortImports):
+    // downstream mapping consumes the derived artifacts and cannot re-fail,
+    // and `Prettier` kinds have no later chance before values reach Prettier.
+    let validated = validate(&format_config)?;
     if let Some(plugin) = kind.requires_plugin(&format_config) {
         return Ok(ResolveOutcome::MissingPlugin(plugin));
     }
-    FormatStrategy::from_format_config(format_config, kind).map(ResolveOutcome::Format)
+    Ok(ResolveOutcome::Format(FormatStrategy::from_format_config(format_config, &validated, kind)))
 }
 
 /// Resolved options ready for the embedded callback to drive `oxc_formatter`.
 #[cfg(feature = "napi")]
 #[derive(Debug)]
 pub struct EmbeddedCallbackResolved {
+    /// Other xxx-in-js options are may be or may not be used, so derived lazily with `config` and `core`.
+    /// `JsFormatOptions` is always needed, so hold it here.
     pub format_options: Box<JsFormatOptions>,
     /// Retained so nested embedded callbacks can derive Prettier options on demand.
-    /// (e.g., CSS-in-JS inside the embedded JS)
-    pub config: Box<FormatConfig>,
+    pub config: Arc<FormatConfig>,
+    /// The validated core bundle, carried from resolution so dispatch-config
+    /// construction never re-derives (or re-fails) it.
+    pub core: CoreFormatOptions,
     pub parent_filepath: PathBuf,
 }
 
@@ -176,8 +185,9 @@ pub fn resolve_for_embedded_js(
     config: FormatConfig,
     parent_filepath: PathBuf,
 ) -> Result<EmbeddedCallbackResolved, String> {
-    let format_options = Box::new(to_oxc_formatter(&config)?);
-    Ok(EmbeddedCallbackResolved { format_options, config: Box::new(config), parent_filepath })
+    let ValidatedOptions { core, sort_imports } = validate(&config)?;
+    let format_options = Box::new(to_oxc_formatter(&config, core, sort_imports));
+    Ok(EmbeddedCallbackResolved { format_options, config: Arc::new(config), core, parent_filepath })
 }
 
 // ---
@@ -199,9 +209,11 @@ pub struct ConfigResolver {
     raw_config: Value,
     /// Directory containing the config file (for relative path resolution in overrides).
     config_dir: Option<PathBuf>,
-    /// Cached typed `FormatConfig` after `.oxfmtrc` base + `.editorconfig` `[*]` section is folded in.
-    /// Used as the fast-path snapshot when no per-file overrides apply.
-    base_config: Option<FormatConfig>,
+    /// Fast-path snapshot for files without per-file overrides:
+    /// the typed `FormatConfig` (`.oxfmtrc` base + `.editorconfig` `[*]` folded in)
+    /// together with its validation-gate artifacts,
+    /// so the pair can never go stale against each other and the fast path re-derives nothing.
+    base: Option<(FormatConfig, ValidatedOptions)>,
     /// Resolved overrides from `.oxfmtrc` for file-specific matching.
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
     /// Ignore glob built from this config's `ignorePatterns`.
@@ -222,7 +234,7 @@ impl ConfigResolver {
         Self {
             raw_config,
             config_dir,
-            base_config: None,
+            base: None,
             oxfmtrc_overrides: None,
             ignore_glob: None,
             editorconfig,
@@ -375,12 +387,12 @@ impl ConfigResolver {
     /// Validate config and build the ignore glob from `ignorePatterns` for file walking.
     ///
     /// Side effects:
-    /// - `self.base_config` is set to the validated `FormatConfig` snapshot
-    ///   (with `.editorconfig` `[*]` already folded in)
+    /// - `self.base` is set to the validated `FormatConfig` snapshot
+    ///   (with `.editorconfig` `[*]` already folded in) paired with its gate artifacts
     /// - `self.oxfmtrc_overrides` is set if `overrides` exists
     /// - `self.ignore_glob` is built from `ignorePatterns`
     ///
-    /// Validation runs eagerly via `validate(&base_config)`,
+    /// Validation runs eagerly via `validate()`,
     /// so invalid values are surfaced at config load time, rather than format time.
     ///
     /// # Errors
@@ -411,9 +423,9 @@ impl ConfigResolver {
         }
 
         // Eagerly validate; see method doc for the rationale.
-        validate(&format_config)?;
-        // Save cached snapshot for fast path: no per-file overrides
-        self.base_config = Some(format_config);
+        // The snapshot and its gate artifacts are cached as one pair for the fast path.
+        let validated = validate(&format_config)?;
+        self.base = Some((format_config, validated));
 
         // Build ignore glob from `ignorePatterns` config field
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
@@ -427,12 +439,16 @@ impl ConfigResolver {
     /// Returns `Err` only when the merged config (after override application) fails validation.
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %kind.path().display()))]
     pub fn resolve(&self, kind: FileKind) -> Result<ResolveOutcome, String> {
-        let format_config = self.resolve_options(kind.path())?;
+        let (format_config, validated) = self.resolve_options(kind.path())?;
         #[cfg(feature = "napi")]
         if let Some(plugin) = kind.requires_plugin(&format_config) {
             return Ok(ResolveOutcome::MissingPlugin(plugin));
         }
-        FormatStrategy::from_format_config(format_config, kind).map(ResolveOutcome::Format)
+        Ok(ResolveOutcome::Format(FormatStrategy::from_format_config(
+            format_config,
+            &validated,
+            kind,
+        )))
     }
 
     /// Resolve `FormatConfig` for a specific file path.
@@ -442,16 +458,19 @@ impl ConfigResolver {
     /// - `.oxfmtrc` base
     /// - `.oxfmtrc` overrides matching the file path
     ///
-    /// Fast path: Skips validation within this method because `base_config` is pre-validated in [`Self::build_and_validate`].
-    /// Slow path: Always validates the merged config here.
-    /// - For `OxcFormatter` / `OxfmtToml` kinds, [`FormatStrategy::from_format_config`] also re-validates via typed conversion (redundant but harmless).
-    /// - For `ExternalFormatter*` kinds, this is the only safety net before values reach Prettier.
+    /// Fast path: reuses the snapshot + gate artifacts cached by [`Self::build_and_validate`].
+    /// Slow path: always validates the merged config here
+    ///   the single gate for every kind (downstream carving is infallible;
+    ///   for `Prettier` kinds this is also the only safety net before values reach Prettier).
     ///
     /// # Errors
     /// Returns `Err` when overrides introduce invalid values, including:
     /// - range-out values (e.g., `printWidth: 1000`)
     /// - broken compound-option combinations (e.g., `sortImports.groups` + `partitionByNewline`)
-    fn resolve_options(&self, path: &Path) -> Result<FormatConfig, String> {
+    fn resolve_options(
+        &self,
+        path: &Path,
+    ) -> Result<(FormatConfig, Cow<'_, ValidatedOptions>), String> {
         let has_editorconfig_overrides =
             self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
         let has_oxfmtrc_overrides =
@@ -460,13 +479,12 @@ impl ConfigResolver {
         // Fast path: no per-file overrides → reuse the cached (already-validated) snapshot.
         // `.editorconfig` `[*]` is already folded in during `build_and_validate()`.
         if !has_editorconfig_overrides && !has_oxfmtrc_overrides {
-            return Ok(self
-                .base_config
-                .clone()
-                .expect("`build_and_validate()` must be called first"));
+            let (config, validated) =
+                self.base.as_ref().expect("`build_and_validate()` must be called first");
+            return Ok((config.clone(), Cow::Borrowed(validated)));
         }
 
-        // Slow path: must rebuild from `raw_config`, NOT from `base_config`.
+        // Slow path: must rebuild from `raw_config`, NOT from the cached snapshot.
         // See `raw_config` field doc for why cloning the typed snapshot is insufficient.
         let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before");
@@ -489,11 +507,11 @@ impl ConfigResolver {
             format_config.resolve_tailwind_paths(config_dir);
         }
 
-        // Validate the merged config; see method doc for what kinds of errors are caught
-        // and why this is the only safety net for `ExternalFormatter*` kinds.
-        validate(&format_config)?;
+        // Validate the merged config;
+        // see method doc for what kinds of errors are caught and why this is the single gate.
+        let validated = validate(&format_config)?;
 
-        Ok(format_config)
+        Ok((format_config, Cow::Owned(validated)))
     }
 }
 
@@ -563,6 +581,8 @@ fn build_ignore_glob(
 
     let mut builder = GitignoreBuilder::new(config_dir);
     for pattern in ignore_patterns {
+        oxc_config::validate_ignore_pattern(pattern)?;
+
         if builder.add_line(None, pattern).is_err() {
             return Err(format!("Failed to add ignore pattern `{pattern}` from `ignorePatterns`"));
         }
@@ -586,13 +606,11 @@ mod tests_slow_path_validation {
     }
 
     /// PR #21919 follow-up: invalid override values must be caught at resolve time
-    /// even for `ExternalFormatter*` kinds (which don't re-validate inside
-    /// `from_format_config`). Without slow-path validation in `resolve_options`,
-    /// `printWidth: 1000` (above LineWidth::MAX = 320) would silently leak into
-    /// the Prettier options.
+    /// (`from_format_config` is infallible, so `resolve_options`'s slow-path validation is the only gate).
+    /// Without it, `printWidth: 1000` (above LineWidth::MAX = 320) would silently leak into the Prettier options.
     #[test]
     #[cfg(feature = "napi")]
-    fn override_only_invalid_value_is_rejected_for_external_formatter() {
+    fn override_only_invalid_value_is_rejected_for_prettier() {
         let resolver = resolver_from_json(serde_json::json!({
             "printWidth": 80,
             "overrides": [
@@ -601,7 +619,7 @@ mod tests_slow_path_validation {
         }));
 
         // Slow path triggers because the override matches.
-        let kind = FileKind::ExternalFormatter {
+        let kind = FileKind::Prettier {
             path: Arc::from(PathBuf::from("data.json").as_path()),
             parser_name: "json",
             supports_tailwind: false,
@@ -629,13 +647,8 @@ mod tests_slow_path_validation {
         assert!(err.contains("tabWidth"), "expected tabWidth validation error, got: {err}");
     }
 
-    /// Smoke test: when no overrides match, `resolve()` returns successfully.
-    ///
-    /// `resolve_options` itself skips re-validation on the fast path
-    /// (just clones the pre-validated `base_config`),
-    /// but `FormatStrategy::from_format_config` still runs the typed conversion
-    /// (`to_oxc_formatter` / `to_oxc_toml`) for `OxcFormatter`/`OxfmtToml`,
-    /// so this test cannot directly assert "no re-validation". Only that the overall call succeeds.
+    /// Smoke test: when no overrides match, `resolve()` returns successfully from the fast path
+    /// (cloned pre-validated snapshot + gate artifacts, no re-validation anywhere downstream).
     #[test]
     fn fast_path_resolve_succeeds() {
         let resolver = resolver_from_json(serde_json::json!({ "printWidth": 80 }));
@@ -643,21 +656,48 @@ mod tests_slow_path_validation {
         assert!(resolver.resolve(kind).is_ok());
     }
 
-    /// `resolve_for_api` must validate even for `ExternalFormatter*` kinds.
+    /// `resolve_for_api` must validate even for `Prettier` kinds.
     /// Without the eager `validate()` call,
     /// `printWidth: 1000` would silently flow through to Prettier via the NAPI `format()` API.
     #[test]
     #[cfg(feature = "napi")]
-    fn resolve_for_api_rejects_invalid_value_for_external_formatter() {
-        let kind = FileKind::ExternalFormatter {
-            path: Arc::from(PathBuf::from("style.css").as_path()),
-            parser_name: "css",
+    fn resolve_for_api_rejects_invalid_value_for_prettier() {
+        let kind = FileKind::Prettier {
+            path: Arc::from(PathBuf::from("page.vue").as_path()),
+            parser_name: "vue",
             supports_tailwind: true,
-            supports_oxfmt: false,
+            supports_oxfmt: true,
             supports_svelte: false,
         };
         let err = resolve_for_api(serde_json::json!({ "printWidth": 1000 }), kind, Path::new("."))
             .unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
+    }
+}
+
+#[cfg(test)]
+mod tests_ignore_patterns_validation {
+    use std::path::Path;
+
+    use super::build_ignore_glob;
+
+    fn build(pattern: &str) -> Result<(), String> {
+        build_ignore_glob(Some(Path::new("/repo/config")), &[pattern.to_string()]).map(|_| ())
+    }
+
+    // Pattern-level cases are covered by `oxc_config::validate_ignore_pattern` tests;
+    // these only check that `build_ignore_glob` rejects a config containing one.
+    #[test]
+    fn rejects_parent_directory_components() {
+        let error = build("../src/skip.js").unwrap_err();
+        assert_eq!(
+            error,
+            "Invalid pattern `../src/skip.js` in `ignorePatterns`: `..` is not supported, patterns are resolved within the config file's directory"
+        );
+    }
+
+    #[test]
+    fn accepts_patterns_without_parent_directory_components() {
+        assert!(build("src/skip.js").is_ok());
     }
 }

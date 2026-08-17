@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+.a {
+  border-radius: min(calc(var(--wa-form-control-toggle-size) * 0.375), var(--wa-border-radius-s)); /* min prevents entirely circular checkbox */
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+.a {
+  border-radius: min(
+    calc(var(--wa-form-control-toggle-size) * 0.375),
+    var(--wa-border-radius-s)
+  ); /* min prevents entirely circular checkbox */
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+.a {
+  border-radius: min(
+    calc(var(--wa-form-control-toggle-size) * 0.375),
+    var(--wa-border-radius-s)
+  ); /* min prevents entirely circular checkbox */
+}
+
+===================== End =====================

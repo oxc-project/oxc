@@ -1,0 +1,141 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment-preceded block value in LAST position always keeps the trailing comma,
+// whether or not the source had one
+// (Prettier does the same; a source-comma-dependent comma would flip on every re-format = not idempotent).
+// Both sources below must converge to the same commaed output;
+// conformance's scss/parens/2.scss covers only the comma-less source with `(` on its own line.
+//
+// DIVERGENCE (see AGENTS.md): the `b:` bodies print at the normal nested-map indent;
+// Prettier double-indents them (`+6` body / `+4` `)`, its dedent-skip doc-shape artifact).
+$with-comment_n_comma: (
+  a: (
+    x: 1,
+  ),
+  /* c */
+  b: (
+    x: 2,
+  ),
+);
+$with-comment_only: (
+  a: (
+    x: 1,
+  ),
+  /* c */
+  b: (
+    x: 2,
+  )
+);
+$with-comma_only: (
+  a: (
+    x: 1,
+  ),
+  b: (
+    x: 2,
+  ),
+);
+$without-both: (
+  a: (
+    x: 1,
+  ),
+  b: (
+    x: 2,
+  )
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment-preceded block value in LAST position always keeps the trailing comma,
+// whether or not the source had one
+// (Prettier does the same; a source-comma-dependent comma would flip on every re-format = not idempotent).
+// Both sources below must converge to the same commaed output;
+// conformance's scss/parens/2.scss covers only the comma-less source with `(` on its own line.
+//
+// DIVERGENCE (see AGENTS.md): the `b:` bodies print at the normal nested-map indent;
+// Prettier double-indents them (`+6` body / `+4` `)`, its dedent-skip doc-shape artifact).
+$with-comment_n_comma: (
+  a: (
+    x: 1,
+  ),
+  /* c */
+  b: (
+    x: 2,
+  ),
+);
+$with-comment_only: (
+  a: (
+    x: 1,
+  ),
+  /* c */
+  b: (
+    x: 2,
+  ),
+);
+$with-comma_only: (
+  a: (
+    x: 1,
+  ),
+  b: (
+    x: 2,
+  ),
+);
+$without-both: (
+  a: (
+    x: 1,
+  ),
+  b: (
+    x: 2,
+  ),
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment-preceded block value in LAST position always keeps the trailing comma,
+// whether or not the source had one
+// (Prettier does the same; a source-comma-dependent comma would flip on every re-format = not idempotent).
+// Both sources below must converge to the same commaed output;
+// conformance's scss/parens/2.scss covers only the comma-less source with `(` on its own line.
+//
+// DIVERGENCE (see AGENTS.md): the `b:` bodies print at the normal nested-map indent;
+// Prettier double-indents them (`+6` body / `+4` `)`, its dedent-skip doc-shape artifact).
+$with-comment_n_comma: (
+  a: (
+    x: 1,
+  ),
+  /* c */
+  b: (
+    x: 2,
+  ),
+);
+$with-comment_only: (
+  a: (
+    x: 1,
+  ),
+  /* c */
+  b: (
+    x: 2,
+  ),
+);
+$with-comma_only: (
+  a: (
+    x: 1,
+  ),
+  b: (
+    x: 2,
+  ),
+);
+$without-both: (
+  a: (
+    x: 1,
+  ),
+  b: (
+    x: 2,
+  ),
+);
+
+===================== End =====================

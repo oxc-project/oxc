@@ -1,8 +1,6 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::class::ClassId;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -29,18 +27,6 @@ pub struct MaxClassesPerFileConfig {
     pub ignore_expressions: bool,
 }
 
-#[cfg(feature = "ruledocs")]
-impl MaxClassesPerFile {
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn config_schema(
-        r#gen: &mut schemars::r#gen::SchemaGenerator,
-    ) -> Option<schemars::schema::Schema> {
-        let mut schema = r#gen.subschema_for::<MaxClassesPerFileConfig>();
-        crate::utils::number_as_object_schema(r#gen, &mut schema, None);
-        Some(schema)
-    }
-}
-
 impl std::ops::Deref for MaxClassesPerFile {
     type Target = MaxClassesPerFileConfig;
 
@@ -53,6 +39,14 @@ impl Default for MaxClassesPerFileConfig {
     fn default() -> Self {
         Self { max: 1, ignore_expressions: false }
     }
+}
+
+#[derive(Debug, JsonSchema, Deserialize)]
+#[serde(untagged)]
+#[expect(unused)]
+enum MaxClassesPerFileConfigEnum {
+    Number(u32),
+    Object(MaxClassesPerFileConfig),
 }
 
 declare_oxc_lint!(
@@ -84,7 +78,7 @@ declare_oxc_lint!(
     MaxClassesPerFile,
     eslint,
     pedantic,
-    config = MaxClassesPerFileConfig,
+    config = MaxClassesPerFileConfigEnum,
     version = "0.3.4",
     short_description = "Enforce a maximum number of classes per file.",
 );
@@ -122,18 +116,24 @@ impl Rule for MaxClassesPerFile {
             return;
         }
 
-        let node_id = ctx.classes().get_node_id(ClassId::new(self.max as usize));
-        let span = if let AstKind::Class(class) = ctx.nodes().kind(node_id) {
-            class.span
-        } else {
-            Span::new(0, 0)
-        };
+        let program = ctx.nodes().program();
+        let start = program.directives.first().map_or_else(
+            || program.body.first().map_or(program.span.start, |statement| statement.span().start),
+            |directive| directive.span.start,
+        );
+        let span = Span::sized(start, 1);
 
         ctx.diagnostic(max_classes_per_file_diagnostic(class_count, self.max, span));
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.semantic().classes().len() > 0
+        let classes = ctx.semantic().classes();
+        let max = usize::try_from(self.max).unwrap_or(usize::MAX);
+        if self.ignore_expressions {
+            return classes.declarations.len() > max;
+        }
+
+        classes.len() > max
     }
 }
 

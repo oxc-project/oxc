@@ -1,0 +1,15 @@
+type CheckRun implements Node & RequirableByPullRequest & UniformResourceLocatable @docsCategory(name: "checks") {
+  id: ID!
+}
+
+type CommitComment implements Comment & Deletable & Minimizable & Node & Reactable & RepositoryNode & Updatable & UpdatableComment @docsCategory(name: "commits") {
+  id: ID!
+}
+
+type LongNoDirective implements Node & RequirableByPullRequest & UniformResourceLocatable & ExtraLongInterface {
+  id: ID!
+}
+
+type Short implements Node & Other @docsCategory(name: "checks") {
+  id: ID!
+}

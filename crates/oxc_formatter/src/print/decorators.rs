@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -12,7 +12,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, Decorator<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.is_empty() {
             return;
@@ -38,7 +38,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Vec<'a, Decorator<'a>>>
             AstNodes::FormalParameter(_) => {
                 write!(f, should_expand_decorators(self, f).then_some(expand_parent()));
             }
-            AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_) => {
+            AstNodes::ExportDeclaration(_) | AstNodes::ExportDefaultDeclaration(_) => {
                 write!(f, [hard_line_break()]);
             }
             _ => {
@@ -98,7 +98,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
 /// Check if decorators should expand (have newlines between them)
 #[inline]
 fn should_expand_decorators<'a>(
-    decorators: &AstNode<'a, Vec<'a, Decorator<'a>>>,
+    decorators: &AstNode<'a, ArenaVec<'a, Decorator<'a>>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     decorators

@@ -1,0 +1,38 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+$primary:red;$bp:48em;
+
+.demo{ color:$primary  ;  padding   :   10px; @media (max-width:$bp){font-size:12px;} }
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+$primary: red;
+$bp: 48em;
+
+.demo {
+  color: $primary;
+  padding: 10px;
+  @media (max-width: $bp) {
+    font-size: 12px;
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+$primary: red;
+$bp: 48em;
+
+.demo {
+  color: $primary;
+  padding: 10px;
+  @media (max-width: $bp) {
+    font-size: 12px;
+  }
+}
+
+===================== End =====================

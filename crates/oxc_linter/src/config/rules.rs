@@ -214,7 +214,10 @@ impl OxlintRules {
                                     .or_insert((options_id, severity));
                             }
                             Err(e) => {
-                                errors.push(OverrideRulesError::ExternalRuleLookup(e));
+                                let error = OverrideRulesError::ExternalRuleLookup(e);
+                                if !errors.contains(&error) {
+                                    errors.push(error);
+                                }
                             }
                         }
                     }
@@ -357,18 +360,28 @@ impl JsonSchema for OxlintRules {
                     schema: &'a Schema,
                     r#gen: &'a SchemaGenerator,
                 ) -> &'a Schema {
-                    let mut current = schema;
-                    while let Some(next) = r#gen.dereference(current) {
-                        current = next;
-                    }
+                    let Some(current) = r#gen.dereference(schema) else {
+                        return schema;
+                    };
 
                     let Schema::Object(obj) = current else {
-                        return current;
+                        return schema;
                     };
 
                     // We only need to dereference array schemas for rule config.
                     // Reuse the schema for other cases.
-                    if obj.array.is_none() {
+                    if obj.array.as_ref().is_none_or(|array| {
+                        // We need to dereference array schemas with at least 2 entries. A single entry array schema is used for configs which accepts an array.
+                        // 2 entries means that it is a tuple config, and `AllowWarnDeny` needs to be appended for each entry in the tuple.
+                        array
+                            .items
+                            .as_ref()
+                            .is_none_or(|items| !matches!(items, SingleOrVec::Vec(_)))
+                            &&
+                            // We need to dereference array schemas with additional items. These should be handled as spread elements inside the config.
+                            // So rule configurations like `[AllowWarnDeny, ...Config]` can be supported.
+                            array.additional_items.is_none()
+                    }) {
                         return schema;
                     }
 
@@ -401,7 +414,7 @@ impl JsonSchema for OxlintRules {
                         config_schema: Schema,
                         r#gen: &mut SchemaGenerator,
                     ) -> Schema {
-                        let Schema::Object(mut obj) = config_schema else {
+                        let Schema::Object(mut obj) = config_schema.clone() else {
                             return SchemaObject {
                                 instance_type: Some(InstanceType::Array.into()),
                                 array: Some(Box::new(ArrayValidation {
@@ -426,40 +439,43 @@ impl JsonSchema for OxlintRules {
                             "Expected rule schema to be either an object, an array, or a reference, but not multiple"
                         );
 
-                        if let Some(reference) = obj.reference {
-                            return SchemaObject {
-                                instance_type: Some(InstanceType::Array.into()),
-                                array: Some(Box::new(ArrayValidation {
-                                    items: Some(SingleOrVec::Vec(vec![
-                                        r#gen.subschema_for::<AllowWarnDeny>(),
-                                        Schema::Object(SchemaObject {
-                                            reference: Some(reference),
-                                            ..Default::default()
-                                        }),
-                                    ])),
-                                    min_items: Some(2),
-                                    max_items: Some(2),
-                                    ..Default::default()
-                                })),
-                                ..Default::default()
+                        if let Some(ref mut array) = obj.array {
+                            debug_assert!(
+                                array.items.is_none() || array.additional_items.is_none(),
+                                "Expected rule to not contain items and additionalItems at the same time"
+                            );
+                            if let Some(ref additional_items) = array.additional_items {
+                                array.items = Some(SingleOrVec::Vec(vec![
+                                    r#gen.subschema_for::<AllowWarnDeny>(),
+                                    *additional_items.clone(),
+                                ]));
+                                array.min_items = Some(2);
+                                array.max_items = None;
+                                return Schema::Object(obj);
                             }
-                            .into();
-                        }
-
-                        if let Some(array) = obj.array {
-                            let items = match array.items {
-                                None => vec![r#gen.subschema_for::<AllowWarnDeny>()],
-                                Some(SingleOrVec::Single(config)) => {
-                                    vec![r#gen.subschema_for::<AllowWarnDeny>(), *config]
+                            // We only need to handle the cases where multiple items exists,
+                            // because single item array schema is used for rules which accepts an array as config,
+                            // and we just need to append `AllowWarnDeny` for that case.
+                            let Some(SingleOrVec::Vec(configs)) = array.items.clone() else {
+                                return SchemaObject {
+                                    instance_type: Some(InstanceType::Array.into()),
+                                    array: Some(Box::new(ArrayValidation {
+                                        items: Some(SingleOrVec::Vec(vec![
+                                            r#gen.subschema_for::<AllowWarnDeny>(),
+                                            config_schema,
+                                        ])),
+                                        min_items: Some(2),
+                                        max_items: Some(2),
+                                        ..Default::default()
+                                    })),
+                                    ..Default::default()
                                 }
-                                Some(SingleOrVec::Vec(configs)) => {
-                                    let mut items =
-                                        Vec::with_capacity(configs.len().saturating_add(1));
-                                    items.push(r#gen.subschema_for::<AllowWarnDeny>());
-                                    items.extend(configs);
-                                    items
-                                }
+                                .into();
                             };
+
+                            let mut items = Vec::with_capacity(configs.len().saturating_add(1));
+                            items.push(r#gen.subschema_for::<AllowWarnDeny>());
+                            items.extend(configs);
 
                             let config_length = items.len() as u32;
 
@@ -496,7 +512,7 @@ impl JsonSchema for OxlintRules {
                             array: Some(Box::new(ArrayValidation {
                                 items: Some(SingleOrVec::Vec(vec![
                                     r#gen.subschema_for::<AllowWarnDeny>(),
-                                    Schema::Object(obj),
+                                    config_schema,
                                 ])),
                                 min_items: Some(2),
                                 max_items: Some(2),
@@ -510,7 +526,6 @@ impl JsonSchema for OxlintRules {
                     let Some(schema) = r.schema(r#gen) else {
                         return r#gen.subschema_for::<RuleNoConfig>();
                     };
-
                     let schema = resolve_references_in_schema(&schema, r#gen).clone();
                     let schema = append_allow_warn_deny_to_schema(schema, r#gen);
                     with_default_rule_schema(schema, r#gen)
@@ -644,28 +659,32 @@ fn parse_rule_key(name: &str) -> (String, String) {
     unalias_plugin_name(plugin_name, rule_name)
 }
 
-pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
-    // First normalize the plugin name by stripping eslint-plugin- prefix/suffix
-    let normalized = super::plugins::normalize_plugin_name(plugin_name);
-    let plugin_name = normalized.as_ref();
+/// Normalize a rule name to the canonical name used by diagnostics.
+///
+/// This removes the plugin prefix from ESLint rules and resolves plugin aliases such as
+/// `@typescript-eslint` to `typescript`.
+pub fn normalize_rule_name(name: &str) -> String {
+    let (plugin_name, rule_name) = parse_rule_key(name);
+    let plugin_name = super::plugins::plugin_display_name(&plugin_name);
+    if plugin_name == "eslint" { rule_name } else { format!("{plugin_name}/{rule_name}") }
+}
 
-    let (oxlint_plugin_name, rule_name) = match plugin_name {
-        "@typescript-eslint" => ("typescript", rule_name),
-        // import-x has the same rules but better performance
-        "import-x" => ("import", rule_name),
-        // jsx-a11y-x has the same rules but better maintained
-        "jsx-a11y" | "jsx-a11y-x" | "jsx_a11y-x" => ("jsx_a11y", rule_name),
-        "react-perf" => ("react_perf", rule_name),
+pub(super) fn unalias_plugin_name(plugin_name: &str, rule_name: &str) -> (String, String) {
+    let normalized = super::plugins::normalize_plugin_name(plugin_name);
+    let plugin_name = match normalized.as_ref() {
         // e.g. "@next/google-font-display", "@next/next/google-font-display"
-        "@next" | "@next/next" => ("nextjs", rule_name),
-        // For backwards compatibility, react hook rules reside in the react plugin.
-        "react-hooks" => ("react", rule_name),
-        // For backwards compatibility, deepscan rules reside in the oxc plugin.
-        "deepscan" => ("oxc", rule_name),
-        _ => (plugin_name, rule_name),
+        "@next" | "@next/next" => "nextjs".to_string(),
+        plugin_name => match LintPlugins::try_from(plugin_name) {
+            Ok(LintPlugins::ESLINT) => "eslint".to_string(),
+            Ok(plugin) => {
+                let plugin_name: &str = plugin.into();
+                plugin_name.cow_replace('-', "_").into_owned()
+            }
+            Err(()) => normalized.into_owned(),
+        },
     };
 
-    (oxlint_plugin_name.to_string(), rule_name.to_string())
+    (plugin_name, rule_name.to_string())
 }
 
 fn parse_rule_value(
@@ -989,6 +1008,25 @@ mod test {
         assert_eq!(r3.rule_name, "no-cycle");
         assert_eq!(r3.plugin_name, "import");
         assert!(r3.severity.is_warn_deny());
+    }
+
+    #[test]
+    fn test_normalize_rule_name() {
+        assert_eq!(super::normalize_rule_name("eslint/curly"), "curly");
+        assert_eq!(
+            super::normalize_rule_name("@typescript-eslint/no-unused-vars"),
+            "typescript/no-unused-vars"
+        );
+        assert_eq!(
+            super::normalize_rule_name("eslint-plugin-react/jsx-uses-vars"),
+            "react/jsx-uses-vars"
+        );
+        assert_eq!(super::normalize_rule_name("jsx-a11y/alt-text"), "jsx-a11y/alt-text");
+        assert_eq!(
+            super::normalize_rule_name("react-perf/jsx-no-new-object-as-prop"),
+            "react-perf/jsx-no-new-object-as-prop"
+        );
+        assert_eq!(super::normalize_rule_name("@next/next/no-img-element"), "next/no-img-element");
     }
 
     #[test]

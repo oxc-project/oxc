@@ -12,19 +12,22 @@ use tower_lsp_server::{
 };
 
 use crate::{
-    DiagnosticMode, TextDocument, Tool, ToolBuilder, ToolRestartChanges, WorkerManager,
-    backend::Backend, tool::DiagnosticResult,
+    DiagnosticMode, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
+    WorkerManager,
+    backend::Backend,
+    tool::{ClientMessage, DiagnosticResult},
 };
 
 #[derive(Default)]
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    pub build_client_message: Option<ClientMessage>,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode, cache_uris: None }
+        Self { diagnostic_mode, cache_uris: None, build_client_message: None }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
@@ -33,8 +36,11 @@ impl FakeToolBuilder {
 }
 
 impl ToolBuilder for FakeToolBuilder {
-    fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(FakeTool { cache_uris: self.cache_uris.clone() })
+    fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
+        ToolBuildResult {
+            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone() }),
+            client_message: self.build_client_message.clone(),
+        }
     }
 
     fn server_capabilities(
@@ -89,18 +95,31 @@ impl Tool for FakeTool {
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
         if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
+            let result = builder.build(root_uri, new_options_json);
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, new_options_json)),
+                tool: Some(result.tool),
                 watch_patterns: None,
+                client_message: result.client_message,
             };
         }
         if new_options_json.as_u64() == Some(2) {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+                client_message: None,
             };
         }
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        if new_options_json.as_u64() == Some(4) {
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_message: Some(ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::WARNING,
+                }),
+            };
+        }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
     }
 
     fn get_watcher_patterns(
@@ -121,28 +140,39 @@ impl Tool for FakeTool {
         options: serde_json::Value,
     ) -> ToolRestartChanges {
         if changed_uri.as_str().ends_with("tool.config") {
+            let result = builder.build(root_uri, options);
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, options)),
+                tool: Some(result.tool),
                 watch_patterns: None,
+                client_message: result.client_message,
             };
         }
         if changed_uri.as_str().ends_with("watcher.config") {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+                client_message: None,
+            };
+        }
+        if changed_uri.as_str().ends_with("misconfiguration.config") {
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_message: Some(ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::WARNING,
+                }),
             };
         }
 
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_message: None }
     }
 
     fn get_code_actions_or_commands(
         &self,
-        uri: &Uri,
-        _range: &Range,
-        _context: &CodeActionContext,
+        params: &crate::CodeActionParams,
     ) -> Vec<CodeActionOrCommand> {
-        if uri.as_str().ends_with("code_action.config") {
+        if params.uri.as_str().ends_with("code_action.config") {
             return vec![CodeActionOrCommand::CodeAction(CodeAction {
                 title: "Code Action title".to_string(),
                 kind: Some(CodeActionKind::QUICKFIX),
@@ -201,6 +231,7 @@ struct TestServer {
     req_stream: DuplexStream,
     res_stream: DuplexStream,
     responses: VecDeque<String>,
+    response_buffer: Vec<u8>,
 }
 
 impl TestServer {
@@ -228,29 +259,58 @@ impl TestServer {
 
         tokio::spawn(Server::new(req_server, res_server, socket).serve(service));
 
-        Self { req_stream: req_client, res_stream: res_client, responses: VecDeque::new() }
+        Self {
+            req_stream: req_client,
+            res_stream: res_client,
+            responses: VecDeque::new(),
+            response_buffer: Vec::new(),
+        }
     }
 
     fn encode(payload: &str) -> String {
         format!("Content-Length: {}\r\n\r\n{}", payload.len(), payload)
     }
 
-    fn decode(text: &str) -> Vec<String> {
+    fn decode(buffer: &mut Vec<u8>) -> Vec<String> {
         let mut ret = Vec::new();
-        let mut temp = text;
 
-        while !temp.is_empty() {
-            let p = temp.find("\r\n\r\n").unwrap();
-            let (header, body) = temp.split_at(p + 4);
+        while !buffer.is_empty() {
+            let Some(p) = buffer.windows(4).position(|window| window == b"\r\n\r\n") else {
+                break;
+            };
+
+            let header = std::str::from_utf8(&buffer[..p + 4]).unwrap();
             let len =
                 header.strip_prefix("Content-Length: ").unwrap().strip_suffix("\r\n\r\n").unwrap();
             let len: usize = len.parse().unwrap();
-            let (body, rest) = body.split_at(len);
-            ret.push(body.to_string());
-            temp = rest;
+            let body_start = p + 4;
+            let body_end = body_start + len;
+            if buffer.len() < body_end {
+                break;
+            }
+
+            let body = String::from_utf8(buffer[body_start..body_end].to_vec()).unwrap();
+            ret.push(body);
+            buffer.drain(..body_end);
         }
 
         ret
+    }
+
+    async fn read_more_messages(&mut self) {
+        let mut buf = vec![0; 1024];
+        let n = self.res_stream.read(&mut buf).await.unwrap();
+        assert_ne!(n, 0);
+        self.response_buffer.extend_from_slice(&buf[..n]);
+        for x in Self::decode(&mut self.response_buffer) {
+            self.responses.push_front(x);
+        }
+    }
+
+    async fn read_until_message(&mut self) {
+        while self.responses.is_empty() {
+            self.read_more_messages().await;
+        }
     }
 
     async fn send_request(&mut self, req: Request) {
@@ -274,48 +334,27 @@ impl TestServer {
 
     async fn recv_response(&mut self) -> Response {
         if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+            self.read_until_message().await;
         }
         let res = self.responses.pop_back().unwrap();
         serde_json::from_str(&res).unwrap()
     }
 
     async fn recv_notification(&mut self) -> Request {
-        if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
-        }
-        let res = self.responses.pop_back().unwrap();
-        // If the next payload is a response (no `method`), keep it queued for recv_response
-        // and attempt to return the next available notification without looping.
-        let val: serde_json::Value = serde_json::from_str(&res).unwrap();
-        if val.get("method").is_some() {
-            serde_json::from_value(val).unwrap()
-        } else {
-            // Put back the response for recv_response to consume
-            self.responses.push_front(res);
-            // If another message is already queued, return it
-            if let Some(next) = self.responses.pop_back() {
-                return serde_json::from_str(&next).unwrap();
-            }
-            // Otherwise perform a single read to fetch the notification
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+        let mut skipped_responses = Vec::new();
+        loop {
+            self.read_until_message().await;
+
             let res = self.responses.pop_back().unwrap();
-            serde_json::from_str(&res).unwrap()
+            let val: serde_json::Value = serde_json::from_str(&res).unwrap();
+            if val.get("method").is_some() {
+                for response in skipped_responses.into_iter().rev() {
+                    self.responses.push_back(response);
+                }
+                return serde_json::from_value(val).unwrap();
+            }
+
+            skipped_responses.push(res);
         }
     }
 
@@ -597,13 +636,13 @@ mod test_suite {
     use tower_lsp_server::{
         jsonrpc::{Error, ErrorCode, Id, Response},
         ls_types::{
-            ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, ServerInfo,
-            WorkspaceEdit, WorkspaceFolder,
+            ApplyWorkspaceEditResponse, InitializeResult, MessageType, PublishDiagnosticsParams,
+            ServerInfo, WorkspaceEdit, WorkspaceFolder,
         },
     };
 
     use crate::{
-        DiagnosticMode,
+        ClientMessage, DiagnosticMode,
         backend::Backend,
         tests::{
             FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
@@ -619,6 +658,34 @@ mod test_suite {
 
     fn server_info() -> ServerInfo {
         ServerInfo { name: "oxc".to_owned(), version: Some("1.0.0".to_owned()) }
+    }
+
+    #[tokio::test]
+    async fn test_client_message_deferred_until_initialized() {
+        let builder = FakeToolBuilder {
+            build_client_message: Some(ClientMessage {
+                message: "Fake misconfiguration message".to_string(),
+                r#type: MessageType::WARNING,
+            }),
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+        });
+
+        // initialize: worker starts here (no workspace_configuration), message must NOT be sent yet
+        server.send_request(initialize_request(InitializeRequestOptions::default())).await;
+        let initialize_result = server.recv_response().await;
+        assert!(initialize_result.is_ok());
+
+        // initialized: message must be sent now
+        server.send_request(initialized_notification()).await;
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "Fake misconfiguration message");
+
+        server.shutdown(2).await;
     }
 
     #[tokio::test]
@@ -893,7 +960,7 @@ mod test_suite {
         let execute_command_response = server.recv_response().await;
         assert!(execute_command_response.is_ok());
         assert!(execute_command_response.result().is_some());
-        assert!(execute_command_response.id() == &Id::Number(3));
+        assert_eq!(execute_command_response.id(), &Id::Number(3));
         assert_eq!(execute_command_response.result().unwrap(), &json!(null));
 
         // shutdown request
@@ -1026,6 +1093,49 @@ mod test_suite {
 
         // No direct response expected for notifications, client does not support workspace configuration or watchers
         server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_workspace_added_shows_client_message() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![WorkspaceFolder {
+                uri: "file:///path/to/new_folder".parse().unwrap(),
+                name: "new_folder".to_string(),
+            }],
+            vec![],
+        );
+
+        let builder = FakeToolBuilder {
+            build_client_message: Some(ClientMessage {
+                message: "Fake misconfiguration message".to_string(),
+                r#type: MessageType::WARNING,
+            }),
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+            },
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        // Initial worker startup message is sent on initialized; consume it first.
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+
+        server.send_request(folders_changed_notification).await;
+
+        // Adding a workspace starts a new worker and should surface its client message.
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "Fake misconfiguration message");
+        assert_eq!(params["type"], json!(MessageType::WARNING));
+
+        server.shutdown(4).await;
     }
 
     #[tokio::test]
@@ -1584,7 +1694,7 @@ mod test_suite {
         server.send_request(code_action(3, &file)).await;
         let response = server.recv_response().await;
         assert!(response.is_ok());
-        assert!(response.id() == &Id::Number(3));
+        assert_eq!(response.id(), &Id::Number(3));
         assert!(response.result().is_some_and(|result| *result == Value::Null));
 
         server.shutdown(4).await;
@@ -1606,7 +1716,7 @@ mod test_suite {
         server.send_request(code_action(3, &file)).await;
         let response = server.recv_response().await;
         assert!(response.is_ok());
-        assert!(response.id() == &Id::Number(3));
+        assert_eq!(response.id(), &Id::Number(3));
         let actions: Vec<serde_json::Value> =
             serde_json::from_value(response.result().unwrap().clone()).unwrap();
         assert_eq!(actions.len(), 1);
@@ -1916,6 +2026,49 @@ mod test_suite {
         }
 
         #[tokio::test]
+        async fn test_dynamic_workers_show_client_message_in_single_file_mode() {
+            let builder = FakeToolBuilder {
+                build_client_message: Some(ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::WARNING,
+                }),
+                ..Default::default()
+            };
+
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_workspace_manager_with_builder(builder),
+                    )
+                },
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // Opening files from different parent folders creates distinct dynamic workers.
+            let file_a = "file:///path/to/dir_a/file.js";
+            let file_b = "file:///path/to/dir_b/file.js";
+
+            server.send_request(did_open(file_a, "a")).await;
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], "Fake misconfiguration message");
+            assert_eq!(params["type"], json!(MessageType::WARNING));
+
+            server.send_request(did_open(file_b, "b")).await;
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], "Fake misconfiguration message");
+            assert_eq!(params["type"], json!(MessageType::WARNING));
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
         async fn test_single_file_mode_creates_worker_on_open() {
             let mut server = TestServer::new_initialized(
                 |client| Backend::new(client, server_info(), create_workspace_manager()),
@@ -2115,6 +2268,7 @@ mod test_suite {
         use crate::tests::create_dynamic_workspace_manager;
 
         use super::*;
+
         #[tokio::test]
         async fn test_dynamic_mode_pull_diagnostics() {
             let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };

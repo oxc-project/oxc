@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, match_member_expression},
+    ast::{CallExpression, Expression, FormalParameters, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -14,10 +14,23 @@ use crate::{
     utils::is_import_symbol,
 };
 
-fn no_array_for_each_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use `Array#forEach`")
-        .with_help("Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.")
-        .with_label(span)
+fn no_array_for_each_diagnostic(
+    span: Span,
+    callback_arguments: CallbackArguments,
+) -> OxcDiagnostic {
+    let help = match callback_arguments {
+        CallbackArguments::ElementOnly => {
+            "Replace it with a `for…of` loop. It is faster, more readable, and allows early exits with `break` or `return`."
+        }
+        CallbackArguments::Index => {
+            "For arrays that need the index, replace it with a `for…of` loop over `.entries()`, such as `for (const [index, element] of array.entries())`. Otherwise, use the appropriate `for…of` loop. Array `.entries()` keeps indexes numeric and loops allow early exits with `break` or `return`."
+        }
+        CallbackArguments::Extra => {
+            "Replace it with a `for…of` loop that preserves the extra callback arguments you use. For arrays, `.entries()` provides the numeric index, and the original array can be referenced directly if needed."
+        }
+    };
+
+    OxcDiagnostic::warn("Do not use `Array#forEach`").with_help(help).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -50,6 +63,8 @@ declare_oxc_lint!(
     /// ```javascript
     /// const foo = [1, 2, 3];
     /// for (const element of foo) { /* ... */ }
+    ///
+    /// for (const [index, element] of foo.entries()) { /* ... */ }
     /// ```
     NoArrayForEach,
     unicorn,
@@ -102,12 +117,46 @@ impl Rule for NoArrayForEach {
                 return;
             };
 
-            ctx.diagnostic(no_array_for_each_diagnostic(span));
+            ctx.diagnostic(no_array_for_each_diagnostic(span, callback_arguments(call_expr)));
         }
     }
 }
 
 pub const IGNORED_OBJECTS: [&str; 3] = ["Children", "r", "pIteration"];
+
+#[derive(Clone, Copy)]
+enum CallbackArguments {
+    ElementOnly,
+    Index,
+    Extra,
+}
+
+fn callback_arguments(call_expr: &CallExpression) -> CallbackArguments {
+    call_expr
+        .arguments
+        .first()
+        .and_then(|argument| argument.as_expression())
+        .map(Expression::get_inner_expression)
+        .map_or(CallbackArguments::ElementOnly, |callback| match callback {
+            Expression::ArrowFunctionExpression(callback) => {
+                formal_parameters_callback_arguments(&callback.params)
+            }
+            Expression::FunctionExpression(callback) => {
+                formal_parameters_callback_arguments(&callback.params)
+            }
+            _ => CallbackArguments::ElementOnly,
+        })
+}
+
+fn formal_parameters_callback_arguments(params: &FormalParameters) -> CallbackArguments {
+    if params.rest.is_some() || params.items.len() >= 3 {
+        CallbackArguments::Extra
+    } else if params.items.len() == 2 {
+        CallbackArguments::Index
+    } else {
+        CallbackArguments::ElementOnly
+    }
+}
 
 #[test]
 fn test() {
@@ -128,7 +177,10 @@ fn test() {
         "1?.forEach((a, b) => call(a, b))",
         "array.forEach((arrayInArray) => arrayInArray.forEach(element => bar(element)));",
         "array.forEach((arrayInArray) => arrayInArray?.forEach(element => bar(element)));",
+        "foo.forEach((value, ...rest) => { bar(rest); });",
         "array.forEach((element, index = element) => {})",
+        "foo.forEach((value, index) => { doThingWithIndex(index); });",
+        "getItems().forEach((value, index, array) => { use(array); });",
         "array.forEach(({foo}, index = foo) => {})",
         "array.forEach((element, {bar = element}) => {})",
         "array.forEach(({foo}, {bar = foo}) => {})",

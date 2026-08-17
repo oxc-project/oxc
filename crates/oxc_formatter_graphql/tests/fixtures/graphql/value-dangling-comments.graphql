@@ -1,0 +1,24 @@
+{
+  a(x: {
+    # only
+  })
+  b(x: [
+    # only
+  ])
+  c(x: {
+    # leading
+    foo: 1
+  })
+  d(x: {
+    foo: 1
+    # trailing
+  })
+  e(x: [
+    # leading
+    1
+  ])
+  f(x: [
+    1
+    # trailing
+  ])
+}

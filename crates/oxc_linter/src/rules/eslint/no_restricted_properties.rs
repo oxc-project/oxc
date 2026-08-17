@@ -1,7 +1,10 @@
 use std::{borrow::Cow, fmt::Write};
 
 use itertools::Itertools;
-use schemars::JsonSchema;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{ArrayValidation, Schema, SchemaObject},
+};
 use serde::{Deserialize, de};
 use serde_json::Value;
 
@@ -87,7 +90,7 @@ struct PropertyAccessSpans {
     access: Span,
 }
 
-#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 struct PropertyDetailsList(Vec<PropertyDetails>);
 
 impl PropertyDetails {
@@ -113,6 +116,23 @@ impl PropertyDetails {
         }
 
         Ok(())
+    }
+}
+
+impl JsonSchema for PropertyDetailsList {
+    fn schema_name() -> String {
+        "PropertyDetailsList".into()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        Schema::Object(SchemaObject {
+            array: Some(Box::new(ArrayValidation {
+                items: None,
+                additional_items: Some(Box::new(r#gen.subschema_for::<PropertyDetails>())),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 

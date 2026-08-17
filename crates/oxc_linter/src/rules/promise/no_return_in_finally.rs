@@ -1,4 +1,3 @@
-use oxc_allocator::Box as OBox;
 use oxc_ast::{
     AstKind,
     ast::{Expression, FunctionBody, Statement},
@@ -68,7 +67,9 @@ impl Rule for NoReturnInFinally {
             };
             match arg_expr {
                 Expression::ArrowFunctionExpression(arrow_expr) => {
-                    find_return_statement(&arrow_expr.body, ctx);
+                    if let Some(body) = arrow_expr.get_function_body() {
+                        find_return_statement(body, ctx);
+                    }
                 }
                 Expression::FunctionExpression(func_expr) => {
                     let Some(func_body) = &func_expr.body else {
@@ -82,7 +83,7 @@ impl Rule for NoReturnInFinally {
     }
 }
 
-fn find_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
+fn find_return_statement<'a>(func_body: &FunctionBody<'a>, ctx: &LintContext<'a>) {
     let Some(return_stmt) =
         func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
     else {

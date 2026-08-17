@@ -4,6 +4,135 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- c49f4ce parser: Preserve terminal license comments (#25400) (camc314)
+- 12937b3 parser: Reject comma expressions in class fields (#25385) (Cameron)
+- 9e93ba6 parser: Reset auto-accessor initializer context (#25384) (camc314)
+- cc2e28d parser: Reject trailing tokens in `Parser::parse_expression` (#25371) (camc314)
+- 4d723ca parser: Report TS1035 for quoted module names (#25305) (camc314)
+
+### ⚡ Performance
+
+- e420816 parser: Optimize trailing comma tracking (#25376) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- a70035d parser: Report export imports in namespaces (#25086) (camc314)
+
+### ⚡ Performance
+
+- 8b80f8b parser: Avoid large types on stack (#25034) (overlookmotel)
+
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- 4d6f623 parser: Emit error for type args in JS files (#24896) (camc314)
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- 9fbbaf8 parser: Clarify return in class static blocks (#24899) (camc314)
+- 5b4ae54 parser: Use specific for-await diagnostic (#24856) (camc314)
+- ffcc33a parser: Report for-await in non-async functions (#24855) (camc314)
+- 582805d parser: Parse unary conditional after satisfies (#24807) (Boshen)
+- 3048594 parser: Use correct diagnostic for `await using` in bare switch case (#24798) (camc314)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 4c71560 parser: More friendly error for spread element in dynamic imports (#24705) (sapphi-red)
+- 129b759 parser: Improve diagnostics for unparenthesized LHS on exponential expr (#24569) (camc314)
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 48b59f4 parser: Span ambient generator diagnostics (#24711) (camc314)
+- 7b4baff parser: Reject new import member access (#23459) (camc314)
+- 8421feb parser: Use first `as` span for imported name (#24537) (leaysgur)
+- c517aa0 parser: Reject invalid accessor assertions (#24504) (camc314)
+
+### ⚡ Performance
+
+- 884d9eb parser: Pre-size cover-grammar assignment target buffers (#24683) (Boshen)
+- bcc9de0 parser: Defer diagnostic creation until parse exit (#24663) (Boshen)
+- 747feec parser: Build AST nodes with the AST builder instead of cloning (#24540) (Boshen)
+
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- b47585c parser: Use `ReplaceWith` instead of `TakeIn` (#24018) (overlookmotel)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 94fbacb ast: [**BREAKING**] Only export `AstBuilder` and `NONE` in `builder` module (#23876) (overlookmotel)
+- 88f4455 str: [**BREAKING**] `Str` and `Ident` methods take `&GetAllocator` (#23781) (overlookmotel)
+- 36009dd allocator: [**BREAKING**] `GetAllocator::allocator` take `&self` (#23676) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7537c58 ast: Fix name of `AstBuilder` method for `Expression::V8IntrinsicExpression` (#23766) (overlookmotel)
+- 585760f parser: String in AST reference arena (#23721) (overlookmotel)
+
+### ⚡ Performance
+
+- a6d8e45 parser: Avoid span lookup for arrow expression body (#23788) (camc314)
+- 1c63c66 parser: Allocate AST nodes in arena directly (#23712) (overlookmotel)
+- 10b96c6 parser: Remove string search from parsing JSX element name (#23713) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### 💥 BREAKING CHANGES
+
+- 7a76cd3 estree: [**BREAKING**] Make whether to include TS fields a runtime option (#23574) (overlookmotel)
+
+### 🚀 Features
+
+- 38c4b06 parser: Add friendly error for adjacent JSX elements (#23378) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 837a395 parser: Treat a line comment after ':' as leading, not trailing (#23515) (Dunqing)
+
+### ⚡ Performance
+
+- 4058a6a parser: Reduce code bloat from verify_modifiers monomorphization (#23576) (Boshen)
+
 ## [0.136.0] - 2026-06-15
 
 ### 🚀 Features

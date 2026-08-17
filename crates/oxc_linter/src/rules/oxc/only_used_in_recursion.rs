@@ -99,35 +99,41 @@ impl Rule for OnlyUsedInRecursion {
             _ => return,
         };
 
-        if is_function_maybe_reassigned(function_id, ctx) {
+        if is_function_reassigned(function_id, ctx) {
             return;
         }
 
-        for (arg_index, formal_parameter) in function_parameters.items.iter().enumerate() {
+        for (parameter_index, formal_parameter) in function_parameters.items.iter().enumerate() {
             match &formal_parameter.pattern {
-                BindingPattern::BindingIdentifier(arg)
-                    if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) =>
+                BindingPattern::BindingIdentifier(parameter)
+                    if is_parameter_only_used_in_recursion(
+                        function_id,
+                        parameter,
+                        parameter_index,
+                        ctx,
+                    ) =>
                 {
-                    create_diagnostic(
+                    report_parameter(
                         ctx,
                         function_id,
                         function_parameters,
-                        arg,
-                        arg_index,
+                        parameter,
+                        parameter_index,
                         function_span,
                     );
                 }
                 BindingPattern::ObjectPattern(pattern) => {
                     for property in &pattern.properties {
-                        let Some(ident) = property.value.get_binding_identifier() else {
-                            continue;
-                        };
-
-                        let Some(name) = property.key.name() else {
-                            continue;
-                        };
-                        if is_property_only_used_in_recursion_jsx(ident, &name, function_id, ctx) {
-                            create_diagnostic_jsx(ctx, function_id, property);
+                        if let Some(ident) = property.value.get_binding_identifier()
+                            && let Some(name) = property.key.name()
+                            && is_jsx_property_only_used_in_recursion(
+                                ident,
+                                &name,
+                                function_id,
+                                ctx,
+                            )
+                        {
+                            report_jsx_property(ctx, function_id, property, ident, &name);
                         }
                     }
                 }
@@ -137,131 +143,107 @@ impl Rule for OnlyUsedInRecursion {
     }
 }
 
-fn create_diagnostic(
+fn report_parameter(
     ctx: &LintContext,
     function_id: &BindingIdentifier,
     function_parameters: &FormalParameters,
-    arg: &BindingIdentifier,
-    arg_index: usize,
+    parameter: &BindingIdentifier,
+    parameter_index: usize,
     function_span: Span,
 ) {
-    let is_last_arg = arg_index == function_parameters.items.len() - 1;
+    let diagnostic = || only_used_in_recursion_diagnostic(parameter.span, parameter.name.as_str());
+    let can_fix =
+        parameter_index + 1 == function_parameters.items.len() && !is_exported(function_id, ctx);
 
-    let is_diagnostic_only = !is_last_arg || is_exported(function_id, ctx);
-
-    if is_diagnostic_only {
-        return ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
+    if !can_fix {
+        ctx.diagnostic(diagnostic());
+        return;
     }
 
-    ctx.diagnostic_with_dangerous_fix(
-        only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()),
-        |fixer| {
-            let mut fix = fixer.new_fix_with_capacity(
-                ctx.semantic().symbol_references(arg.symbol_id()).count() + 1,
-            );
-            // Delete the parameter, including the comma before it
-            fix.push(Fix::delete(Span::new(
-                skip_to_next_char(ctx.source_text(), arg.span().start, &Direction::Backward)
-                    .unwrap_or(arg.span().start),
-                arg.span().end,
-            )));
+    ctx.diagnostic_with_dangerous_fix(diagnostic(), |fixer| {
+        let mut fix = fixer.new_fix_with_capacity(
+            ctx.semantic().symbol_references(parameter.symbol_id()).count() + 1,
+        );
 
-            for reference in ctx.semantic().symbol_references(arg.symbol_id()) {
-                let node = ctx.nodes().get_node(reference.node_id());
-                // Delete the argument reference, including the comma before it
-                fix.push(Fix::delete(Span::new(
-                    skip_to_next_char(ctx.source_text(), node.span().start, &Direction::Backward)
-                        .unwrap_or(node.span().start),
-                    node.span().end,
-                )));
+        // Delete the parameter, including the comma before it
+        fix.push(delete_with_preceding_separator(ctx.source_text(), parameter.span));
+
+        for reference in ctx.semantic().symbol_references(parameter.symbol_id()) {
+            let node = ctx.nodes().get_node(reference.node_id());
+            // Delete the argument reference, including the comma before it
+            fix.push(delete_with_preceding_separator(ctx.source_text(), node.span()));
+        }
+
+        // Search for references to the function and remove the argument.
+        for reference in ctx.semantic().symbol_references(function_id.symbol_id()) {
+            let node = ctx.nodes().get_node(reference.node_id());
+
+            let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) else {
+                continue;
+            };
+            if call_expr.arguments.len() != function_parameters.items.len()
+                || function_span.contains_inclusive(call_expr.span)
+            {
+                continue;
             }
 
-            // search for references to the function and remove the argument
-            for reference in ctx.semantic().symbol_references(function_id.symbol_id()) {
-                let node = ctx.nodes().get_node(reference.node_id());
+            fix.push(delete_with_preceding_separator(
+                ctx.source_text(),
+                call_expr.arguments[parameter_index].span(),
+            ));
+        }
 
-                if let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) {
-                    if call_expr.arguments.len() != function_parameters.items.len()
-                        || function_span.contains_inclusive(call_expr.span)
-                    {
-                        continue;
-                    }
-
-                    let arg_to_delete = call_expr.arguments[arg_index].span();
-                    fix.push(Fix::delete(Span::new(
-                        skip_to_next_char(
-                            ctx.source_text(),
-                            arg_to_delete.start,
-                            &Direction::Backward,
-                        )
-                        .unwrap_or(arg_to_delete.start),
-                        arg_to_delete.end,
-                    )));
-                }
-            }
-
-            fix.with_message("Remove unused argument")
-        },
-    );
+        fix.with_message("Remove unused argument")
+    });
 }
 
-fn create_diagnostic_jsx(
+fn report_jsx_property(
     ctx: &LintContext,
     function_id: &BindingIdentifier,
     property: &BindingProperty,
+    property_ident: &BindingIdentifier,
+    property_name: &str,
 ) {
-    let Some(property_name) = &property.key.static_name() else { return };
+    let diagnostic = || only_used_in_recursion_diagnostic(property.span, property_name);
+
     if is_exported(function_id, ctx) {
-        return ctx.diagnostic(only_used_in_recursion_diagnostic(property.span(), property_name));
-    }
-
-    let Some(property_ident) = property.value.get_binding_identifier() else { return };
-    let property_symbol_id = property_ident.symbol_id();
-    let mut references = ctx.semantic().symbol_references(property_symbol_id);
-
-    let has_spread_attribute = references.any(|x| used_with_spread_attribute(x.node_id(), ctx));
-
-    if has_spread_attribute {
-        // If the JSXElement has a spread attribute, we cannot apply a fix safely,
-        // as the same property name could be exist within the spread attribute.
-        return ctx.diagnostic(only_used_in_recursion_diagnostic(property.span(), property_name));
-    }
-
-    let Some(property_name) = property.key.static_name() else {
+        ctx.diagnostic(diagnostic());
         return;
-    };
+    }
 
-    ctx.diagnostic_with_dangerous_fix(
-        only_used_in_recursion_diagnostic(property.span, &property_name),
-        |fixer| {
-            let mut fix = fixer.new_fix_with_capacity(references.count() + 1);
+    let property_symbol_id = property_ident.symbol_id();
+    if ctx
+        .semantic()
+        .symbol_references(property_symbol_id)
+        .any(|reference| is_used_with_spread_attribute(reference.node_id(), ctx))
+    {
+        // If the JSXElement has a spread attribute, we cannot apply a fix safely,
+        // as the same property name could exist within the spread attribute.
+        ctx.diagnostic(diagnostic());
+        return;
+    }
 
-            let source = ctx.source_text();
-            let span_start = skip_to_next_char(source, property.span.start, &Direction::Backward)
-                .unwrap_or(property.span.start);
-            let span_end =
-                skip_to_next_char(ctx.source_text(), property.span.end, &Direction::Forward)
-                    .unwrap_or(property.span.end);
+    ctx.diagnostic_with_dangerous_fix(diagnostic(), |fixer| {
+        let reference_count = ctx.semantic().symbol_references(property_symbol_id).count();
+        let mut fix = fixer.new_fix_with_capacity(reference_count + 1);
+        fix.push(delete_with_surrounding_separators(ctx.source_text(), property.span));
 
-            fix.push(Fix::delete(Span::new(span_start, span_end)));
-
-            // search for references to the function and remove the property
-            for reference in ctx.semantic().symbol_references(property_symbol_id) {
-                if let Some(attr) = ctx
-                    .nodes()
-                    .ancestors(reference.node_id())
-                    .find_map(|node| node.kind().as_jsx_attribute())
-                {
-                    fix.push(Fix::delete(attr.span()));
-                }
+        // Search for references to the property and remove the JSX attribute.
+        for reference in ctx.semantic().symbol_references(property_symbol_id) {
+            if let Some(attr) = ctx
+                .nodes()
+                .ancestors(reference.node_id())
+                .find_map(|node| node.kind().as_jsx_attribute())
+            {
+                fix.push(Fix::delete(attr.span()));
             }
+        }
 
-            fix.with_message("Remove unused property")
-        },
-    );
+        fix.with_message("Remove unused property")
+    });
 }
 
-fn used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
+fn is_used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
     ctx.nodes().ancestor_kinds(node_id).any(|kind| match kind {
         AstKind::JSXOpeningElement(opening_element) => opening_element
             .attributes
@@ -271,13 +253,13 @@ fn used_with_spread_attribute(node_id: NodeId, ctx: &LintContext) -> bool {
     })
 }
 
-fn is_argument_only_used_in_recursion<'a>(
-    function_id: &'a BindingIdentifier,
-    arg: &'a BindingIdentifier,
-    arg_index: usize,
-    ctx: &'a LintContext<'_>,
+fn is_parameter_only_used_in_recursion(
+    function_id: &BindingIdentifier,
+    parameter: &BindingIdentifier,
+    parameter_index: usize,
+    ctx: &LintContext,
 ) -> bool {
-    let mut references = ctx.semantic().symbol_references(arg.symbol_id()).peekable();
+    let mut references = ctx.semantic().symbol_references(parameter.symbol_id()).peekable();
 
     // Avoid returning true for an empty iterator
     if references.peek().is_none() {
@@ -292,12 +274,12 @@ fn is_argument_only_used_in_recursion<'a>(
             return false;
         };
 
-        let Some(call_arg) = call_expr.arguments.get(arg_index) else {
+        let Some(call_arg) = call_expr.arguments.get(parameter_index) else {
             return false;
         };
 
         if let Argument::Identifier(ident) = call_arg
-            && ident.name != arg.name
+            && ident.name != parameter.name
         {
             return false;
         }
@@ -310,7 +292,7 @@ fn is_argument_only_used_in_recursion<'a>(
     true
 }
 
-fn is_property_only_used_in_recursion_jsx(
+fn is_jsx_property_only_used_in_recursion(
     ident: &BindingIdentifier,
     property_name: &str,
     function_ident: &BindingIdentifier,
@@ -327,8 +309,8 @@ fn is_property_only_used_in_recursion_jsx(
         // 1. The reference is inside a JSXExpressionContainer.
         // 2. The JSXElement calls the recursive function itself.
         // 3. The reference is in a JSXAttribute, and the attribute name has the same name as the function.
-        let may_jsx_expr_container = ctx.nodes().parent_node(reference.node_id());
-        let AstKind::JSXExpressionContainer(_) = may_jsx_expr_container.kind() else {
+        let expression_container = ctx.nodes().parent_node(reference.node_id());
+        let AstKind::JSXExpressionContainer(_) = expression_container.kind() else {
             // In this case, we simply ignore the references inside JSXExpressionContainer that are not single-node expression.
             //   e.g. <Increment count={count+1} />
             //
@@ -338,7 +320,7 @@ fn is_property_only_used_in_recursion_jsx(
 
         let Some(attr) = ctx
             .nodes()
-            .ancestors(may_jsx_expr_container.id())
+            .ancestors(expression_container.id())
             .find_map(|node| node.kind().as_jsx_attribute())
         else {
             return false;
@@ -376,38 +358,29 @@ fn is_recursive_call(
     function_symbol_id: SymbolId,
     ctx: &LintContext,
 ) -> bool {
-    if let Expression::Identifier(identifier) = &call_expr.callee
-        && let Some(symbol_id) = ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
-    {
-        return symbol_id == function_symbol_id;
-    }
-    false
+    let Expression::Identifier(identifier) = &call_expr.callee else { return false };
+    ctx.scoping().get_reference(identifier.reference_id()).symbol_id() == Some(function_symbol_id)
 }
 
-fn is_function_maybe_reassigned<'a>(
-    function_id: &'a BindingIdentifier,
-    ctx: &'a LintContext<'_>,
-) -> bool {
+fn is_function_reassigned(function_id: &BindingIdentifier, ctx: &LintContext) -> bool {
     ctx.semantic().symbol_references(function_id.symbol_id()).any(|reference| {
         let reference_node = ctx.nodes().get_node(reference.node_id());
 
         // Check if this reference is on the left side of an assignment
-        let parent_node = ctx.nodes().parent_node(reference.node_id());
-        if let AstKind::AssignmentExpression(assignment) = parent_node.kind()
-            && let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left
-            && ident.span == reference_node.span()
-        {
-            return true; // Function is being reassigned
-        }
-        false
+        let AstKind::AssignmentExpression(assignment) =
+            ctx.nodes().parent_kind(reference.node_id())
+        else {
+            return false;
+        };
+        let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left else {
+            return false;
+        };
+        ident.span == reference_node.span()
     })
 }
 
-fn get_jsx_element_symbol_id<'a>(
-    node: &'a JSXElementName<'a>,
-    ctx: &'a LintContext<'_>,
-) -> Option<SymbolId> {
-    let node = match node {
+fn get_jsx_element_symbol_id(node: &JSXElementName<'_>, ctx: &LintContext<'_>) -> Option<SymbolId> {
+    let identifier = match node {
         JSXElementName::IdentifierReference(ident) => Some(ident.as_ref()),
         JSXElementName::MemberExpression(expr) => expr.get_identifier(),
         JSXElementName::Identifier(_)
@@ -415,9 +388,10 @@ fn get_jsx_element_symbol_id<'a>(
         | JSXElementName::ThisExpression(_) => None,
     }?;
 
-    ctx.scoping().get_reference(node.reference_id()).symbol_id()
+    ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
 }
 
+#[derive(Clone, Copy)]
 enum Direction {
     Forward,
     Backward,
@@ -426,7 +400,7 @@ enum Direction {
 // Skips whitespace and commas in a given direction and
 // returns the byte offset of the next non-skipped character if found.
 #[expect(clippy::cast_possible_truncation)]
-fn skip_to_next_char(s: &str, start: u32, direction: &Direction) -> Option<u32> {
+fn skip_to_next_char(s: &str, start: u32, direction: Direction) -> Option<u32> {
     let start = start as usize;
     match direction {
         Direction::Forward => {
@@ -451,6 +425,17 @@ fn skip_to_next_char(s: &str, start: u32, direction: &Direction) -> Option<u32> 
             result
         }
     }
+}
+
+fn delete_with_preceding_separator(source: &str, span: Span) -> Fix {
+    let start = skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
+    Fix::delete(Span::new(start, span.end))
+}
+
+fn delete_with_surrounding_separators(source: &str, span: Span) -> Fix {
+    let start = skip_to_next_char(source, span.start, Direction::Backward).unwrap_or(span.start);
+    let end = skip_to_next_char(source, span.end, Direction::Forward).unwrap_or(span.end);
+    Fix::delete(Span::new(start, end))
 }
 
 #[test]

@@ -1,0 +1,38 @@
+/* Regression set from the 2026-06-12 ecosystem-CI run (monkeytype / lila /
+   mastodon shapes): grid values never re-wrap, @import paths fill, calc is a
+   flat operator fill, media feature values never break, interpolated calls
+   get the chunk-isolated fit + double indent, @warn/@error stay raw. */
+#app {
+  grid-template-rows: [top-start] auto [content-start] 1fr [content-end] auto [top-end];
+  grid-template-columns: 0.5fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1rem;
+  grid-template-areas: '.            . e-tools' 'spare-top    . e-tools' 'e-board      . e-tools' 'spare-bottom . e-tools';
+}
+@layer custom-styles {
+  @import "buttons", "404", "ads", "test-activity", "animations", "caret", "commandline", "core", "fonts", "inputs", "keymap", "monkey", "popups", "scroll", "account-settings", "test", "loading", "friends", "media-queries";
+}
+:root {
+  --color-bg-media: #{utils.css-alpha(var(--color-bg-media-base), 65%)}; // legacy
+  --color-shadow-primary: #{utils.css-alpha(var(--color-black), var(--shadow-strength-primary))};
+}
+a {
+  #{$prop}: calc(#{$min-size} + #{strip-unit($max-size - $min-size)} * ((100vw - #{$min-vw}) / #{strip-unit($max-vw - $min-vw)}));
+}
+$col3-uniboard-max-width: calc(100vw - #{$col3-uniboard-side-min} - #{$block-gap} - #{$col3-uniboard-table-min} - 2 * var(---main-margin, 0px) - #{$scrollbar-width});
+@media (min-width: at-least($x-small)) and (max-width: at-most($small)) and (min-height: at-least($tall)) and (max-width: at-most($x-tall)) {
+  .recap__shareable {
+    height: 40px;
+  }
+}
+@if $a {
+  x: 1;
+} @else {
+  @error "fluid-size requires that all values have the same unit";
+  @warn "careful with #{$x} here";
+}
+/* Interpolated single-component values on NORMAL properties share the
+   custom-property behavior: the fill-chunk fit ignores the line tail
+   (trailing comment), and a breaking call gets the +2/+1 indent. */
+a {
+  color: #{fn(var(--xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx), 65%)}; // legacy
+  border: #{fn(var(--xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx), 65%)};
+}

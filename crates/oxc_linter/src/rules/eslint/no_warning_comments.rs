@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use cow_utils::CowUtils;
 use lazy_regex::{Regex, regex};
 use oxc_diagnostics::OxcDiagnostic;
@@ -5,8 +7,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_warning_comments_diagnostic(term: &str, comment: &str, span: Span) -> OxcDiagnostic {
     const CHAR_LIMIT: usize = 40;
@@ -36,39 +42,35 @@ fn no_warning_comments_diagnostic(term: &str, comment: &str, span: Span) -> OxcD
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default, deny_unknown_fields)]
 struct NoWarningCommentsConfig {
+    /// An array of terms to match. The matching is case-insensitive.
     terms: Vec<String>,
+    /// Where to check for the terms.
+    location: Location,
+    /// An array of characters to ignore at the start of comments when `location` is `"start"`.
+    ///
+    /// Useful for ignoring common comment decorations like `*` in JSDoc-style comments.
+    decoration: FxHashSet<String>,
+    /// Compiled matchers built from the user-facing configuration.
+    #[serde(skip)]
+    #[schemars(skip)]
     patterns: Vec<Regex>,
 }
 
-#[derive(Debug, JsonSchema)]
-#[serde(deny_unknown_fields)]
-#[expect(unused)] // only for schema generation
-struct NoWarningCommentsConfigJson {
-    terms: Option<Vec<String>>,
-    location: Option<Location>,
-    decoration: Option<Vec<String>>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 enum Location {
+    #[default]
+    /// Terms must appear at the start of the comment, after any decoration.
     Start,
+    /// Terms can appear anywhere in the comment.
     Anywhere,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoWarningComments(Box<NoWarningCommentsConfig>);
-
-impl Default for NoWarningComments {
-    fn default() -> Self {
-        let terms = vec!["todo".to_string(), "fixme".to_string(), "xxx".to_string()];
-        let location = Location::Start;
-        let decoration = FxHashSet::default();
-        Self::new(&terms, &location, &decoration)
-    }
-}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -104,75 +106,19 @@ declare_oxc_lint!(
     /// // Note: This explains something
     /// const x = 1;
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// This rule has an options object with the following defaults:
-    ///
-    /// ```json
-    /// {
-    ///   "terms": ["todo", "fixme", "xxx"],
-    ///   "location": "start",
-    ///   "decoration": []
-    /// }
-    /// ```
-    ///
-    /// #### `terms`
-    ///
-    /// An array of terms to match. The matching is case-insensitive.
-    ///
-    /// #### `location`
-    ///
-    /// Where to check for the terms:
-    /// - `"start"` (default): Terms must appear at the start of the comment (after any decoration)
-    /// - `"anywhere"`: Terms can appear anywhere in the comment
-    ///
-    /// #### `decoration`
-    ///
-    /// An array of characters to ignore at the start of comments when `location` is `"start"`.
-    /// Useful for ignoring common comment decorations like `*` in JSDoc-style comments.
     NoWarningComments,
     eslint,
     pedantic,
-    config = NoWarningCommentsConfigJson,
+    config = NoWarningCommentsConfig,
     version = "1.24.0",
     short_description = "Disallows warning comments such as TODO, FIXME, XXX in code.",
 );
 
 impl Rule for NoWarningComments {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value.get(0);
-
-        let terms = config.and_then(|v| v.get("terms")).and_then(|v| v.as_array()).map_or_else(
-            || vec!["todo".to_string(), "fixme".to_string(), "xxx".to_string()],
-            |arr| {
-                arr.iter()
-                    .filter_map(|v| v.as_str())
-                    .map(|s| s.cow_to_lowercase().into_owned())
-                    .collect::<Vec<_>>()
-            },
-        );
-
-        let location = config.and_then(|v| v.get("location")).and_then(|v| v.as_str()).map_or(
-            Location::Start,
-            |s| {
-                if s.eq_ignore_ascii_case("anywhere") {
-                    Location::Anywhere
-                } else {
-                    Location::Start
-                }
-            },
-        );
-
-        let decoration = config
-            .and_then(|v| v.get("decoration"))
-            .and_then(|v| v.as_array())
-            .map(|arr| {
-                arr.iter().filter_map(|v| v.as_str()).map(str::to_string).collect::<FxHashSet<_>>()
-            })
-            .unwrap_or_default();
-
-        Ok(Self::new(&terms, &location, &decoration))
+        let mut rule = serde_json::from_value::<DefaultRuleConfig<Self>>(value)?.into_inner();
+        rule.0.prepare();
+        Ok(rule)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -194,10 +140,24 @@ impl Rule for NoWarningComments {
     }
 }
 
-impl NoWarningComments {
-    fn new(terms: &[String], location: &Location, decoration: &FxHashSet<String>) -> Self {
-        let patterns = Self::build_patterns(terms, location, decoration);
-        Self(Box::new(NoWarningCommentsConfig { terms: terms.to_vec(), patterns }))
+impl Default for NoWarningCommentsConfig {
+    fn default() -> Self {
+        let terms = vec!["todo".to_string(), "fixme".to_string(), "xxx".to_string()];
+        let location = Location::Start;
+        let decoration = FxHashSet::default();
+        let patterns = Self::build_patterns(&terms, &location, &decoration);
+        Self { terms, location, decoration, patterns }
+    }
+}
+
+impl NoWarningCommentsConfig {
+    fn prepare(&mut self) {
+        for term in &mut self.terms {
+            if let Cow::Owned(lowercase) = term.cow_to_lowercase() {
+                *term = lowercase;
+            }
+        }
+        self.patterns = Self::build_patterns(&self.terms, &self.location, &self.decoration);
     }
 
     fn build_patterns(
@@ -209,7 +169,7 @@ impl NoWarningComments {
 
         terms
             .iter()
-            .filter_map(|term| {
+            .map(|term| {
                 let ends_with_word =
                     term.chars().last().is_some_and(|c| c.is_alphanumeric() || c == '_');
                 let suffix = if ends_with_word { r"\b" } else { "" };
@@ -228,11 +188,15 @@ impl NoWarningComments {
                     }
                 };
 
-                Regex::new(&pattern).ok()
+                Regex::new(&pattern).expect(
+                    "generated no-warning-comments regex should compile because user input is escaped",
+                )
             })
             .collect()
     }
+}
 
+impl NoWarningComments {
     fn matches_warning_term(&self, comment_text: &str) -> Option<&str> {
         self.0
             .terms

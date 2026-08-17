@@ -30,7 +30,25 @@ impl Codegen<'_> {
     /// Print a [`StringLiteral`].
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.add_source_mapping(s.span);
+        self.print_string_impl(s.value.as_str(), s.lone_surrogates, allow_backtick);
+    }
 
+    /// Print a [`StringLiteral`] as a template literal, whatever its contents.
+    ///
+    /// A template literal is never a directive, which a string literal in the first statement position would be.
+    /// See `print_directives_and_statements`.
+    pub(crate) fn print_string_literal_as_template(&mut self, s: &StringLiteral<'_>) {
+        self.add_source_mapping(s.span);
+        Quote::Backtick.print(self);
+        self.print_string_body(s.value.as_str(), s.lone_surrogates, Some(Quote::Backtick), true);
+    }
+
+    pub(super) fn print_string_impl(
+        &mut self,
+        s: &str,
+        lone_surrogates: bool,
+        allow_backtick: bool,
+    ) {
         // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
         // What is the best quote to use will be determined when first character needing escape is found.
         // This avoids iterating through the string twice if it contains no quotes (common case).
@@ -45,14 +63,28 @@ impl Codegen<'_> {
             Some(quote)
         };
 
+        self.print_string_body(s, lone_surrogates, quote, allow_backtick);
+    }
+
+    /// Print the contents of a string, and its closing quote.
+    ///
+    /// `quote` is `None` where it has yet to be chosen - it is then calculated from the contents,
+    /// and the opening quote printed, when the first character needing an escape is found.
+    fn print_string_body(
+        &mut self,
+        s: &str,
+        lone_surrogates: bool,
+        quote: Option<Quote>,
+        allow_backtick: bool,
+    ) {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
-        let bytes = s.value.as_bytes().iter();
+        let bytes = s.as_bytes().iter();
         let mut state = PrintStringState {
             chunk_start: bytes.ptr(),
             bytes,
             quote,
-            lone_surrogates: s.lone_surrogates,
+            lone_surrogates,
             allow_backtick,
         };
 

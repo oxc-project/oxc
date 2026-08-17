@@ -1,0 +1,558 @@
+// Copyright (c) Meta Platforms, Inc. and affiliates.
+//
+// This source code is licensed under the MIT license found in the
+// LICENSE file in the root directory of this source tree.
+
+//! MergeReactiveScopesThatInvalidateTogether — merges adjacent or nested scopes
+//! that share dependencies (and thus invalidate together) to reduce memoization overhead.
+//!
+//! Corresponds to `src/ReactiveScopes/MergeReactiveScopesThatInvalidateTogether.ts`.
+
+use std::mem::replace;
+
+use oxc_allocator::{CloneIn, Vec as ArenaVec};
+
+use rustc_hash::FxHashSet;
+
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexVec;
+
+use crate::diagnostics;
+use crate::react_compiler_hir::{
+    DeclarationId, DependencyPathEntry, EvaluationOrder, InstructionKind, InstructionValue, Place,
+    ReactiveBlock, ReactiveFunction, ReactiveScopeBlock, ReactiveScopeDependency,
+    ReactiveStatement, ReactiveValue, ScopeId, Type,
+    environment::Environment,
+    object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID},
+};
+
+use crate::react_compiler_reactive_scopes::visitors::{
+    ReactiveFunctionTransform, ReactiveFunctionVisitor, Transformed, transform_reactive_function,
+    visit_reactive_function,
+};
+
+// =============================================================================
+// Public entry point
+// =============================================================================
+
+/// Last usage per declaration, indexed densely by declaration id
+/// (declaration ids share the identifier id space).
+type LastUsageMap = IndexVec<DeclarationId, Option<EvaluationOrder>>;
+
+/// Temporary-to-source declaration mapping, indexed densely by declaration id.
+type TemporariesMap = IndexVec<DeclarationId, Option<DeclarationId>>;
+
+/// Merges adjacent reactive scopes that share dependencies (invalidate together).
+/// TS: `mergeReactiveScopesThatInvalidateTogether`
+pub fn merge_reactive_scopes_that_invalidate_together<'a>(
+    func: &mut ReactiveFunction<'a>,
+    env: &mut Environment<'a>,
+) -> Result<(), OxcDiagnostic> {
+    let num_identifiers = env.identifiers.len();
+
+    // Pass 1: find last usage of each declaration
+    let visitor = FindLastUsageVisitor { env: &*env };
+    let mut last_usage: LastUsageMap = IndexVec::from_vec(vec![None; num_identifiers]);
+    visit_reactive_function(func, &visitor, &mut last_usage);
+
+    // Pass 2+3: merge scopes
+    let mut transform = MergeTransform {
+        env,
+        last_usage,
+        temporaries: IndexVec::from_vec(vec![None; num_identifiers]),
+    };
+    let mut state = None;
+    transform_reactive_function(func, &mut transform, &mut state)
+}
+
+// =============================================================================
+// Pass 1: FindLastUsageVisitor
+// =============================================================================
+
+/// TS: `class FindLastUsageVisitor extends ReactiveFunctionVisitor<void>`
+struct FindLastUsageVisitor<'a, 'e> {
+    env: &'e Environment<'a>,
+}
+
+impl<'a, 'e> ReactiveFunctionVisitor<'a> for FindLastUsageVisitor<'a, 'e> {
+    type State = LastUsageMap;
+
+    fn env(&self) -> &Environment<'a> {
+        self.env
+    }
+
+    fn visit_place(&self, id: EvaluationOrder, place: &Place, state: &mut Self::State) {
+        let decl_id = self.env.identifiers[place.identifier].declaration_id;
+        let slot = &mut state[decl_id];
+        if slot.is_none_or(|last| id > last) {
+            *slot = Some(id);
+        }
+    }
+}
+
+// =============================================================================
+// Pass 2+3: MergeTransform
+// =============================================================================
+
+/// TS: `class Transform extends ReactiveFunctionTransform<ReactiveScopeDependencies | null>`
+struct MergeTransform<'a, 'e> {
+    env: &'e mut Environment<'a>,
+    last_usage: LastUsageMap,
+    temporaries: TemporariesMap,
+}
+
+impl<'a, 'e> ReactiveFunctionTransform<'a> for MergeTransform<'a, 'e> {
+    type State = Option<ArenaVec<'a, ReactiveScopeDependency<'a>>>;
+
+    fn env(&self) -> &Environment<'a> {
+        self.env
+    }
+
+    /// TS: `override transformScope(scopeBlock, state)`
+    fn transform_scope(
+        &mut self,
+        scope: &mut ReactiveScopeBlock<'a>,
+        state: &mut Self::State,
+    ) -> Result<Transformed<ReactiveStatement<'a>>, OxcDiagnostic> {
+        let scope_deps = self.env.scopes[scope.scope].dependencies.clone_in(self.env.allocator);
+        // Save parent state and recurse with this scope's deps as state
+        let parent_state = state.take();
+        *state = Some(scope_deps.clone_in(self.env.allocator));
+        self.visit_scope(scope, state)?;
+        // Restore parent state
+        *state = parent_state;
+
+        // If parent has deps and they match, flatten the inner scope
+        if let Some(parent_deps) = state.as_ref()
+            && are_equal_dependencies(parent_deps, &scope_deps, self.env)
+        {
+            // ReplaceMany keeps a std `Vec`; drain the arena block into one.
+            let instructions = scope.instructions.drain(..).collect::<Vec<_>>();
+            return Ok(Transformed::ReplaceMany(instructions));
+        }
+        Ok(Transformed::Keep)
+    }
+
+    /// TS: `override visitBlock(block, state)`
+    fn visit_block(
+        &mut self,
+        block: &mut ReactiveBlock<'a>,
+        state: &mut Self::State,
+    ) -> Result<(), OxcDiagnostic> {
+        // Pass 1: traverse nested (scope flattening handled by transform_scope)
+        self.traverse_block(block, state)?;
+        // Pass 2+3: merge consecutive scopes in this block
+        self.merge_scopes_in_block(block)?;
+        Ok(())
+    }
+}
+
+impl<'a, 'e> MergeTransform<'a, 'e> {
+    /// Identify and merge consecutive scopes that invalidate together.
+    fn merge_scopes_in_block(
+        &mut self,
+        block: &mut ReactiveBlock<'a>,
+    ) -> Result<(), OxcDiagnostic> {
+        // Pass 2: identify scopes for merging
+        struct MergedScope {
+            scope_id: ScopeId,
+            from: usize,
+            to: usize,
+            lvalues: FxHashSet<DeclarationId>,
+        }
+
+        let mut current: Option<MergedScope> = None;
+        let mut merged: Vec<MergedScope> = Vec::new();
+
+        for (i, statement) in block.iter().enumerate() {
+            match statement {
+                ReactiveStatement::Terminal(_) => {
+                    // Don't merge across terminals
+                    if let Some(c) = current.take()
+                        && c.to > c.from + 1
+                    {
+                        merged.push(c);
+                    }
+                }
+                ReactiveStatement::PrunedScope(_) => {
+                    // Don't merge across pruned scopes
+                    if let Some(c) = current.take()
+                        && c.to > c.from + 1
+                    {
+                        merged.push(c);
+                    }
+                }
+                ReactiveStatement::Instruction(instr) => {
+                    match &instr.value {
+                        ReactiveValue::Instruction(iv) => {
+                            match iv {
+                                InstructionValue::BinaryExpression { .. }
+                                | InstructionValue::ComputedLoad { .. }
+                                | InstructionValue::JSXText { .. }
+                                | InstructionValue::LoadGlobal { .. }
+                                | InstructionValue::LoadLocal { .. }
+                                | InstructionValue::Primitive { .. }
+                                | InstructionValue::PropertyLoad { .. }
+                                | InstructionValue::TemplateLiteral { .. }
+                                | InstructionValue::UnaryExpression { .. } => {
+                                    if let Some(ref mut c) = current
+                                        && let Some(lvalue) = &instr.lvalue
+                                    {
+                                        let decl_id =
+                                            self.env.identifiers[lvalue.identifier].declaration_id;
+                                        c.lvalues.insert(decl_id);
+                                        if let InstructionValue::LoadLocal { place, .. } = iv {
+                                            let src_decl = self.env.identifiers[place.identifier]
+                                                .declaration_id;
+                                            self.temporaries[decl_id] = Some(src_decl);
+                                        }
+                                    }
+                                }
+                                InstructionValue::StoreLocal { lvalue, value, .. } => {
+                                    if let Some(ref mut c) = current {
+                                        if lvalue.kind == InstructionKind::Const {
+                                            // Add the instruction lvalue (if any)
+                                            if let Some(instr_lvalue) = &instr.lvalue {
+                                                let decl_id = self.env.identifiers
+                                                    [instr_lvalue.identifier]
+                                                    .declaration_id;
+                                                c.lvalues.insert(decl_id);
+                                            }
+                                            // Add the StoreLocal's lvalue place
+                                            let store_decl = self.env.identifiers
+                                                [lvalue.place.identifier]
+                                                .declaration_id;
+                                            c.lvalues.insert(store_decl);
+                                            // Track temporary mapping
+                                            let value_decl = self.env.identifiers[value.identifier]
+                                                .declaration_id;
+                                            let mapped =
+                                                self.temporaries[value_decl].unwrap_or(value_decl);
+                                            self.temporaries[store_decl] = Some(mapped);
+                                        } else {
+                                            // Non-const StoreLocal — reset
+                                            let c = current.take().unwrap();
+                                            if c.to > c.from + 1 {
+                                                merged.push(c);
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {
+                                    // Other instructions prevent merging
+                                    if let Some(c) = current.take()
+                                        && c.to > c.from + 1
+                                    {
+                                        merged.push(c);
+                                    }
+                                }
+                            }
+                        }
+                        _ => {
+                            // Non-Instruction reactive values prevent merging
+                            if let Some(c) = current.take()
+                                && c.to > c.from + 1
+                            {
+                                merged.push(c);
+                            }
+                        }
+                    }
+                }
+                ReactiveStatement::Scope(scope_block) => {
+                    let next_scope_id = scope_block.scope;
+                    if let Some(ref mut c) = current {
+                        let current_scope_id = c.scope_id;
+                        if can_merge_scopes(
+                            current_scope_id,
+                            next_scope_id,
+                            self.env,
+                            &self.temporaries,
+                        ) && are_lvalues_last_used_by_scope(
+                            next_scope_id,
+                            &c.lvalues,
+                            &self.last_usage,
+                            self.env,
+                        ) {
+                            // Merge: extend the current scope's range
+                            let next_range_end = self.env.scopes[next_scope_id].range.end;
+                            let current_range_end = self.env.scopes[current_scope_id].range.end;
+                            self.env.scopes[current_scope_id].range.end =
+                                current_range_end.max(next_range_end);
+
+                            // Merge declarations from next into current
+                            let next_decls = self.env.scopes[next_scope_id]
+                                .declarations
+                                .iter()
+                                .copied()
+                                .collect::<Vec<_>>();
+                            for (key, value) in next_decls {
+                                let current_decls =
+                                    &mut self.env.scopes[current_scope_id].declarations;
+                                if let Some(existing) =
+                                    current_decls.iter_mut().find(|(k, _)| *k == key)
+                                {
+                                    existing.1 = value;
+                                } else {
+                                    current_decls.push((key, value));
+                                }
+                            }
+
+                            // Prune declarations that are no longer used after the merged scope
+                            update_scope_declarations(current_scope_id, &self.last_usage, self.env);
+
+                            c.to = i + 1;
+                            c.lvalues.clear();
+
+                            if !scope_is_eligible_for_merging(next_scope_id, self.env) {
+                                let c = current.take().unwrap();
+                                if c.to > c.from + 1 {
+                                    merged.push(c);
+                                }
+                            }
+                        } else {
+                            // Cannot merge — reset
+                            let c = current.take().unwrap();
+                            if c.to > c.from + 1 {
+                                merged.push(c);
+                            }
+                            // Start new candidate if eligible
+                            if scope_is_eligible_for_merging(next_scope_id, self.env) {
+                                current = Some(MergedScope {
+                                    scope_id: next_scope_id,
+                                    from: i,
+                                    to: i + 1,
+                                    lvalues: FxHashSet::default(),
+                                });
+                            }
+                        }
+                    } else {
+                        // No current — start new candidate if eligible
+                        if scope_is_eligible_for_merging(next_scope_id, self.env) {
+                            current = Some(MergedScope {
+                                scope_id: next_scope_id,
+                                from: i,
+                                to: i + 1,
+                                lvalues: FxHashSet::default(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        // Flush remaining
+        if let Some(c) = current.take()
+            && c.to > c.from + 1
+        {
+            merged.push(c);
+        }
+
+        // Pass 3: apply merges
+        if merged.is_empty() {
+            return Ok(());
+        }
+
+        let alloc = self.env.allocator;
+        let all_stmts = replace(block, ArenaVec::new_in(&alloc));
+        let mut next_instructions: ArenaVec<'a, ReactiveStatement<'a>> =
+            ArenaVec::with_capacity_in(all_stmts.len(), &alloc);
+        // `all_stmts` was moved out of `block`, so move (not clone) its
+        // statements into the merged result.
+        let mut stmts = all_stmts.into_iter();
+        let mut index = 0;
+
+        for entry in &merged {
+            // Move everything before the merge range
+            while index < entry.from {
+                next_instructions.push(stmts.next().unwrap());
+                index += 1;
+            }
+            // The first item in the merge range must be a scope
+            let mut merged_scope = match stmts.next().unwrap() {
+                ReactiveStatement::Scope(s) => s,
+                _ => {
+                    return Err(diagnostics::invariant_merge_consecutive_scopes_expected_scope_at_starting_index());
+                }
+            };
+            index += 1;
+            while index < entry.to {
+                let stmt = stmts.next().unwrap();
+                index += 1;
+                match stmt {
+                    ReactiveStatement::Scope(inner_scope) => {
+                        let inner_scope_id = inner_scope.scope;
+                        merged_scope.instructions.extend(inner_scope.instructions);
+                        self.env.scopes[merged_scope.scope].merged.push(inner_scope_id);
+                    }
+                    stmt => {
+                        merged_scope.instructions.push(stmt);
+                    }
+                }
+            }
+            next_instructions.push(ReactiveStatement::Scope(merged_scope));
+        }
+        // Move the remaining statements
+        next_instructions.extend(stmts);
+
+        *block = next_instructions;
+        Ok(())
+    }
+}
+
+// =============================================================================
+// Helper functions
+// =============================================================================
+
+/// Updates scope declarations to remove any that are not used after the scope.
+fn update_scope_declarations<'a>(
+    scope_id: ScopeId,
+    last_usage: &LastUsageMap,
+    env: &mut Environment<'a>,
+) {
+    let range_end = env.scopes[scope_id].range.end;
+    env.scopes[scope_id].declarations.retain(|(_id, decl)| {
+        let decl_declaration_id = env.identifiers[decl.identifier].declaration_id;
+        match last_usage[decl_declaration_id] {
+            Some(last_used_at) => last_used_at >= range_end,
+            // If not tracked, keep the declaration (conservative)
+            None => true,
+        }
+    });
+}
+
+/// Returns whether all lvalues are last used at or before the given scope.
+fn are_lvalues_last_used_by_scope<'a>(
+    scope_id: ScopeId,
+    lvalues: &FxHashSet<DeclarationId>,
+    last_usage: &LastUsageMap,
+    env: &Environment<'a>,
+) -> bool {
+    let range_end = env.scopes[scope_id].range.end;
+    for &lvalue in lvalues {
+        if let Some(last_used_at) = last_usage[lvalue]
+            && last_used_at >= range_end
+        {
+            return false;
+        }
+    }
+    true
+}
+
+/// Check if two scopes can be merged.
+fn can_merge_scopes<'a>(
+    current_id: ScopeId,
+    next_id: ScopeId,
+    env: &Environment<'a>,
+    temporaries: &TemporariesMap,
+) -> bool {
+    let current = &env.scopes[current_id];
+    let next = &env.scopes[next_id];
+
+    // Don't merge scopes with reassignments
+    if !current.reassignments.is_empty() || !next.reassignments.is_empty() {
+        return false;
+    }
+
+    // Merge scopes whose dependencies are identical
+    if are_equal_dependencies(&current.dependencies, &next.dependencies, env) {
+        return true;
+    }
+
+    // Merge scopes where outputs of current are inputs of next
+    // Build synthetic dependencies from current's declarations
+    let current_decl_deps: Vec<ReactiveScopeDependency> = current
+        .declarations
+        .iter()
+        .map(|(_key, decl)| ReactiveScopeDependency {
+            identifier: decl.identifier,
+            reactive: true,
+            path: ArenaVec::new_in(&env.allocator),
+            span: None,
+        })
+        .collect();
+
+    if are_equal_dependencies(&current_decl_deps, &next.dependencies, env) {
+        return true;
+    }
+
+    // Check if all next deps have empty paths, always-invalidating types,
+    // and correspond to current declarations (possibly through temporaries)
+    if !next.dependencies.is_empty()
+        && next.dependencies.iter().all(|dep| {
+            if !dep.path.is_empty() {
+                return false;
+            }
+            let dep_type = &env.types[env.identifiers[dep.identifier].type_];
+            if !is_always_invalidating_type(dep_type) {
+                return false;
+            }
+            let dep_decl = env.identifiers[dep.identifier].declaration_id;
+            current.declarations.iter().any(|(_key, decl)| {
+                let decl_decl_id = env.identifiers[decl.identifier].declaration_id;
+                decl_decl_id == dep_decl || temporaries[dep_decl] == Some(decl_decl_id)
+            })
+        })
+    {
+        return true;
+    }
+
+    false
+}
+
+/// Check if a type is always invalidating (guaranteed to change when inputs change).
+fn is_always_invalidating_type(ty: &Type) -> bool {
+    match ty {
+        Type::Object { shape_id: Some(id) } => matches!(
+            id.as_str(),
+            s if s == BUILT_IN_ARRAY_ID
+                || s == BUILT_IN_OBJECT_ID
+                || s == BUILT_IN_FUNCTION_ID
+                || s == BUILT_IN_JSX_ID
+        ),
+        Type::Object { shape_id: None } => false,
+        Type::Function { .. } => true,
+        _ => false,
+    }
+}
+
+/// Check if two dependency lists are equal.
+fn are_equal_dependencies<'a>(
+    a: &[ReactiveScopeDependency],
+    b: &[ReactiveScopeDependency],
+    env: &Environment<'a>,
+) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    for a_val in a {
+        let a_decl = env.identifiers[a_val.identifier].declaration_id;
+        let found = b.iter().any(|b_val| {
+            let b_decl = env.identifiers[b_val.identifier].declaration_id;
+            a_decl == b_decl && are_equal_paths(&a_val.path, &b_val.path)
+        });
+        if !found {
+            return false;
+        }
+    }
+    true
+}
+
+/// Check if two dependency paths are equal.
+fn are_equal_paths(a: &[DependencyPathEntry], b: &[DependencyPathEntry]) -> bool {
+    a.len() == b.len()
+        && a.iter()
+            .zip(b.iter())
+            .all(|(ai, bi)| ai.property == bi.property && ai.optional == bi.optional)
+}
+
+/// Check if a scope is eligible for merging with subsequent scopes.
+fn scope_is_eligible_for_merging<'a>(scope_id: ScopeId, env: &Environment<'a>) -> bool {
+    let scope = &env.scopes[scope_id];
+    if scope.dependencies.is_empty() {
+        // No dependencies means output never changes — eligible
+        return true;
+    }
+    scope.declarations.iter().any(|(_key, decl)| {
+        let ty = &env.types[env.identifiers[decl.identifier].type_];
+        is_always_invalidating_type(ty)
+    })
+}

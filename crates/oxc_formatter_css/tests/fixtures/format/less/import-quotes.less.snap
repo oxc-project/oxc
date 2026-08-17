@@ -1,0 +1,39 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@import (reference) '../../themes/index';
+@import (reference, optional) './shared';
+@import './@{root-entry-name}.less';
+@import "./util";
+
+.a[class^=~'@{ant-prefix}-'] {
+  color: red;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@import (reference) "../../themes/index";
+@import (reference, optional) "./shared";
+@import "./@{root-entry-name}.less";
+@import "./util";
+
+.a[class^=~"@{ant-prefix}-"] {
+  color: red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@import (reference) "../../themes/index";
+@import (reference, optional) "./shared";
+@import "./@{root-entry-name}.less";
+@import "./util";
+
+.a[class^=~"@{ant-prefix}-"] {
+  color: red;
+}
+
+===================== End =====================

@@ -41,6 +41,15 @@
       ],
       "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
     },
+    "experimentalOperatorPosition": {
+      "description": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OperatorPositionConfig"
+        }
+      ],
+      "markdownDescription": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`"
+    },
     "htmlWhitespaceSensitivity": {
       "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",
       "allOf": [
@@ -51,12 +60,12 @@
       "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`"
     },
     "ignorePatterns": {
-      "description": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`",
+      "description": "Ignore files matching these glob patterns.\nPatterns use gitignore-style matching, rooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.\n\n- Default: `[]`",
       "type": "array",
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`"
+      "markdownDescription": "Ignore files matching these glob patterns.\nPatterns use gitignore-style matching, rooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..` are rejected as a configuration error.\n\n- Default: `[]`"
     },
     "insertFinalNewline": {
       "description": "Whether to insert a final newline at the end of the file.\n\n- Languages: All\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
@@ -207,6 +216,14 @@
         "avoid"
       ]
     },
+    "CommentLineStrategyConfig": {
+      "type": "string",
+      "enum": [
+        "singleLine",
+        "multiline",
+        "keep"
+      ]
+    },
     "CustomGroupItemConfig": {
       "type": "object",
       "properties": {
@@ -226,17 +243,21 @@
           "markdownDescription": "Name of the custom group, used in the `groups` option."
         },
         "modifiers": {
-          "description": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic).\n\nPossible values: `\"side_effect\"`, `\"type\"`, `\"value\"`, `\"default\"`, `\"wildcard\"`, `\"named\"`",
+          "description": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic).",
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/ImportModifierConfig"
           },
-          "markdownDescription": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic).\n\nPossible values: `\"side_effect\"`, `\"type\"`, `\"value\"`, `\"default\"`, `\"wildcard\"`, `\"named\"`"
+          "markdownDescription": "Modifiers to match the import characteristics.\nAll specified modifiers must be present (AND logic)."
         },
         "selector": {
-          "description": "Selector to match the import kind.\n\nPossible values: `\"type\"`, `\"side_effect_style\"`, `\"side_effect\"`, `\"style\"`, `\"index\"`,\n`\"sibling\"`, `\"parent\"`, `\"subpath\"`, `\"internal\"`, `\"builtin\"`, `\"external\"`, `\"import\"`",
-          "type": "string",
-          "markdownDescription": "Selector to match the import kind.\n\nPossible values: `\"type\"`, `\"side_effect_style\"`, `\"side_effect\"`, `\"style\"`, `\"index\"`,\n`\"sibling\"`, `\"parent\"`, `\"subpath\"`, `\"internal\"`, `\"builtin\"`, `\"external\"`, `\"import\"`"
+          "description": "Selector to match the import kind.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ImportSelectorConfig"
+            }
+          ],
+          "markdownDescription": "Selector to match the import kind."
         }
       }
     },
@@ -294,6 +315,15 @@
             }
           ],
           "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
+        },
+        "experimentalOperatorPosition": {
+          "description": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OperatorPositionConfig"
+            }
+          ],
+          "markdownDescription": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`"
         },
         "htmlWhitespaceSensitivity": {
           "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",
@@ -452,6 +482,38 @@
         "ignore"
       ]
     },
+    "ImportModifierConfig": {
+      "description": "Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics).",
+      "type": "string",
+      "enum": [
+        "side_effect",
+        "type",
+        "value",
+        "default",
+        "wildcard",
+        "named"
+      ],
+      "markdownDescription": "Modifier matching the import characteristics in `customGroups` (see `sortImports.groups` for semantics)."
+    },
+    "ImportSelectorConfig": {
+      "description": "Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics).",
+      "type": "string",
+      "enum": [
+        "type",
+        "side_effect_style",
+        "side_effect",
+        "style",
+        "index",
+        "sibling",
+        "parent",
+        "subpath",
+        "internal",
+        "builtin",
+        "external",
+        "import"
+      ],
+      "markdownDescription": "Selector matching the import kind in `customGroups` (see `sortImports.groups` for semantics)."
+    },
     "JsdocConfig": {
       "type": "object",
       "properties": {
@@ -472,7 +534,11 @@
         },
         "commentLineStrategy": {
           "description": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`",
-          "type": "string",
+          "allOf": [
+            {
+              "$ref": "#/definitions/CommentLineStrategyConfig"
+            }
+          ],
           "markdownDescription": "How to format comment blocks.\n\n- `\"singleLine\"` — Convert to single-line `/** content */` when possible.\n- `\"multiline\"` — Always use multi-line format.\n- `\"keep\"` — Preserve original formatting.\n\n- Default: `\"singleLine\"`"
         },
         "descriptionTag": {
@@ -492,7 +558,11 @@
         },
         "lineWrappingStyle": {
           "description": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`",
-          "type": "string",
+          "allOf": [
+            {
+              "$ref": "#/definitions/LineWrappingStyleConfig"
+            }
+          ],
           "markdownDescription": "Strategy for wrapping description lines at print width.\n\n- `\"greedy\"` — Always re-wrap text to fit within print width.\n- `\"balance\"` — Preserve original line breaks if all lines fit within print width.\n\n- Default: `\"greedy\"`"
         },
         "preferCodeFences": {
@@ -522,6 +592,13 @@
         }
       ]
     },
+    "LineWrappingStyleConfig": {
+      "type": "string",
+      "enum": [
+        "greedy",
+        "balance"
+      ]
+    },
     "NewlinesBetweenMarker": {
       "description": "A marker object for overriding `newlinesBetween` at a specific group boundary.",
       "type": "object",
@@ -540,6 +617,13 @@
       "enum": [
         "preserve",
         "collapse"
+      ]
+    },
+    "OperatorPositionConfig": {
+      "type": "string",
+      "enum": [
+        "start",
+        "end"
       ]
     },
     "OxfmtOverrideConfig": {
@@ -567,14 +651,14 @@
           "markdownDescription": "Glob patterns to match files for this override."
         },
         "options": {
-          "description": "Format options to apply for matched files.",
+          "description": "Format options to apply for matched files.\nAccepts the same options as the top-level format options.",
           "default": {},
           "allOf": [
             {
               "$ref": "#/definitions/FormatConfig"
             }
           ],
-          "markdownDescription": "Format options to apply for matched files."
+          "markdownDescription": "Format options to apply for matched files.\nAccepts the same options as the top-level format options."
         }
       }
     },

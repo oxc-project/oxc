@@ -1,32 +1,52 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn, TakeIn, Vec as ArenaVec};
-use oxc_ast::{NONE, ast::*};
+use oxc_allocator::{ArenaBox, ArenaVec, CloneIn, GetAllocator, ReplaceWith};
+use oxc_ast::ast::*;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::Str;
 
 use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub(crate) fn transform_export_named_declaration(
-        &mut self,
-        prev_decl: &ExportNamedDeclaration<'a>,
-    ) -> Option<ExportNamedDeclaration<'a>> {
-        let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
-
-        Some(self.ast.export_named_declaration(
+    pub(crate) fn transform_export_all_declaration(
+        &self,
+        prev_decl: &ExportAllDeclaration<'a>,
+    ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
+        ExportAllDeclaration::boxed(
             prev_decl.span,
-            Some(decl),
-            self.ast.vec(),
+            prev_decl.exported.clone_in(self.allocator()),
+            prev_decl.source.clone_in(self.allocator()),
             None,
-            ImportOrExportKind::Value,
-            NONE,
-        ))
+            prev_decl.export_kind,
+            self,
+        )
+    }
+
+    pub(crate) fn transform_export_from_declaration(
+        &self,
+        prev_decl: &ExportFromDeclaration<'a>,
+    ) -> ArenaBox<'a, ExportFromDeclaration<'a>> {
+        ExportFromDeclaration::boxed(
+            prev_decl.span,
+            prev_decl.specifiers.clone_in(self.allocator()),
+            prev_decl.source.clone_in(self.allocator()),
+            prev_decl.export_kind,
+            None,
+            self,
+        )
+    }
+
+    pub(crate) fn transform_export_declaration(
+        &mut self,
+        prev_decl: &ExportDeclaration<'a>,
+    ) -> Option<ArenaBox<'a, ExportDeclaration<'a>>> {
+        let decl = self.transform_declaration(&prev_decl.declaration, false)?;
+        Some(ExportDeclaration::boxed(prev_decl.span, decl, self))
     }
 
     pub(crate) fn create_unique_name(&self, name: &str) -> Str<'a> {
-        let mut binding = self.ast.str(name);
+        let mut binding = Str::from_str_in(name, self);
         let mut i = 1;
         while self.scope.has_reference(&binding) {
-            binding = self.ast.str(format!("{name}_{i}").as_str());
+            binding = Str::from_str_in(format!("{name}_{i}").as_str(), self);
             i += 1;
         }
         binding
@@ -50,7 +70,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 ),
             )),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                Some((None, decl.declaration.clone_in(self.ast.allocator)))
+                Some((None, decl.declaration.clone_in(self.allocator())))
             }
             declaration @ match_expression!(ExportDefaultDeclarationKind) => self
                 .transform_export_expression(decl.span, declaration.to_expression())
@@ -80,9 +100,8 @@ impl<'a> IsolatedDeclarations<'a> {
             // ```
 
             let span = if var_decl.is_some() { SPAN } else { decl.span };
-            let declaration =
-                self.ast.module_declaration_export_default_declaration(span, declaration);
-            (var_decl, Statement::from(declaration))
+            let declaration = Statement::new_export_default_declaration(span, declaration, self);
+            (var_decl, declaration)
         })
     }
 
@@ -97,31 +116,25 @@ impl<'a> IsolatedDeclarations<'a> {
             // declare const _default: Type
             let kind = VariableDeclarationKind::Const;
             let name = self.create_unique_name("_default");
-            let id = self.ast.binding_pattern_binding_identifier(SPAN, name);
+            let id = BindingPattern::new_binding_identifier(SPAN, name, self);
             let type_annotation = self
                 .infer_type_from_expression(expr)
-                .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
+                .map(|ts_type| TSTypeAnnotation::boxed(SPAN, ts_type, self));
 
             if type_annotation.is_none() {
                 self.error(default_export_inferred(expr.span()));
             }
 
-            let declarations = self.ast.vec1(self.ast.variable_declarator(
-                SPAN,
-                kind,
-                id,
-                type_annotation,
-                None,
-                false,
-            ));
+            let declaration = VariableDeclarator::new(SPAN, id, type_annotation, None, false, self);
 
-            let variable_statement = Statement::from(self.ast.declaration_variable(
+            let variable_statement = Statement::new_variable_declaration(
                 decl_span,
                 kind,
-                declarations,
+                [declaration],
                 self.is_declare(),
-            ));
-            Some((Some(variable_statement), self.ast.expression_identifier(SPAN, name)))
+                self,
+            );
+            Some((Some(variable_statement), Expression::new_identifier(SPAN, name, self)))
         }
     }
 
@@ -130,10 +143,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &TSExportAssignment<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
         self.transform_export_expression(decl.span, &decl.expression).map(|(var_decl, expr)| {
-            (
-                var_decl,
-                Statement::from(self.ast.module_declaration_ts_export_assignment(SPAN, expr)),
-            )
+            (var_decl, Statement::new_ts_export_assignment(SPAN, expr, self))
         })
     }
 
@@ -143,7 +153,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<ArenaBox<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
-        let mut new_specifiers = self.ast.vec_with_capacity(specifiers.len());
+        let mut new_specifiers = ArenaVec::with_capacity_in(specifiers.len(), self);
         specifiers.iter().for_each(|specifier| {
             let is_referenced = match specifier {
                 ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
@@ -157,7 +167,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             };
             if is_referenced {
-                new_specifiers.push(specifier.clone_in(self.ast.allocator));
+                new_specifiers.push(specifier.clone_in(self.allocator()));
             }
         });
 
@@ -165,18 +175,19 @@ impl<'a> IsolatedDeclarations<'a> {
             // We don't need to print this import statement
             None
         } else {
-            Some(self.ast.alloc_import_declaration(
+            Some(ImportDeclaration::boxed(
                 decl.span,
                 Some(new_specifiers),
                 decl.source.clone(),
                 None,
-                decl.with_clause.clone_in(self.ast.allocator),
+                decl.with_clause.clone_in(self.allocator()),
                 decl.import_kind,
+                self,
             ))
         }
     }
 
-    /// Strip export keyword from ExportNamedDeclaration
+    /// Strip export keyword from ExportDeclaration
     ///
     /// ```ts
     /// export const a = 1;
@@ -187,12 +198,13 @@ impl<'a> IsolatedDeclarations<'a> {
     /// const a = 1;
     /// function b() {}
     /// ```
-    pub(crate) fn strip_export_keyword(&self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+    pub(crate) fn strip_export_keyword(stmts: &mut ArenaVec<'a, Statement<'a>>) {
         stmts.iter_mut().for_each(|stmt| {
-            if let Statement::ExportNamedDeclaration(decl) = stmt
-                && let Some(declaration) = &mut decl.declaration
-            {
-                *stmt = Statement::from(declaration.take_in(self.ast));
+            if let Statement::ExportDeclaration(_) = stmt {
+                stmt.replace_with(|stmt| {
+                    let Statement::ExportDeclaration(decl) = stmt else { unreachable!() };
+                    Statement::from(decl.unbox().declaration)
+                });
             }
         });
     }

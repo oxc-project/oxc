@@ -11,14 +11,14 @@ declare const PAGE_PATH: string
 { printWidth: 80 }
 ------------------
 declare const PAGE_PATH: string;
-  //<- THIS spaces
+//<- THIS spaces
 (() => {})();
 
 -------------------
 { printWidth: 100 }
 -------------------
 declare const PAGE_PATH: string;
-  //<- THIS spaces
+//<- THIS spaces
 (() => {})();
 
 ===================== End =====================

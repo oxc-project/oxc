@@ -1,0 +1,157 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// `isSCSSMapItemNode` (Prettier#18530/#19091, released in 3.9) with our
+// semantic-safety extension (see "Known divergences" in AGENTS.md):
+// a paren group breaks one-element-per-line with a trailing comma ONLY when
+// - it is a keyword argument's direct value and the call's FIRST argument is a
+//   key-value pair (Prettier checks `groups[0]` alone), or a map item value, AND
+// - its contents are ALREADY a comma-separated list, the only case where the
+//   added comma is a semantic no-op (`(x,)` is a single-element list in Sass).
+@include container($foo: ($bar, $baz));
+@include first-not-kv(a, $k: (1, 2));
+@include first-kv($k: (1, 2), a);
+.a {
+  color: fn(a, $k: (1, 2));
+  border-color: fn($k: (1, 2), a);
+}
+// Non-comma-list contents NEVER take the break: Prettier 3.9.1 still listifies
+// `($bar + $baz)` / `(a b)` / `(-$a)` and emits non-compiling output for
+// `key: 2 * ($a + $b)` (`Undefined operation "2 * (3px,)"`), so these stay
+// inline as a deliberate divergence.
+@include container($foo: 2 * ($bar + $baz));
+@include container($foo: ($bar + $baz));
+@include container($foo: (value));
+.b {
+  background-color: rgba($color: (#808080), $alpha: 0.9);
+}
+$map: (
+  scalar-fn: (fn(1, 2)),
+  scalar-nested: ((value)),
+  space-list: (a b),
+  math: ($x + $y),
+  math-sibling: 2 * ($x + $y),
+  signed: (-$a),
+  interpolation: (#{$a}),
+  comma-list: (a, b),
+);
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// `isSCSSMapItemNode` (Prettier#18530/#19091, released in 3.9) with our
+// semantic-safety extension (see "Known divergences" in AGENTS.md):
+// a paren group breaks one-element-per-line with a trailing comma ONLY when
+// - it is a keyword argument's direct value and the call's FIRST argument is a
+//   key-value pair (Prettier checks `groups[0]` alone), or a map item value, AND
+// - its contents are ALREADY a comma-separated list, the only case where the
+//   added comma is a semantic no-op (`(x,)` is a single-element list in Sass).
+@include container(
+  $foo: (
+    $bar,
+    $baz,
+  )
+);
+@include first-not-kv(a, $k: (1, 2));
+@include first-kv(
+  $k: (
+    1,
+    2,
+  ),
+  a
+);
+.a {
+  color: fn(a, $k: (1, 2));
+  border-color: fn(
+    $k: (
+      1,
+      2,
+    ),
+    a
+  );
+}
+// Non-comma-list contents NEVER take the break: Prettier 3.9.1 still listifies
+// `($bar + $baz)` / `(a b)` / `(-$a)` and emits non-compiling output for
+// `key: 2 * ($a + $b)` (`Undefined operation "2 * (3px,)"`), so these stay
+// inline as a deliberate divergence.
+@include container($foo: 2 * ($bar + $baz));
+@include container($foo: ($bar + $baz));
+@include container($foo: (value));
+.b {
+  background-color: rgba($color: (#808080), $alpha: 0.9);
+}
+$map: (
+  scalar-fn: (fn(1, 2)),
+  scalar-nested: ((value)),
+  space-list: (a b),
+  math: ($x + $y),
+  math-sibling: 2 * ($x + $y),
+  signed: (-$a),
+  interpolation: (#{$a}),
+  comma-list: (
+    a,
+    b,
+  ),
+);
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// `isSCSSMapItemNode` (Prettier#18530/#19091, released in 3.9) with our
+// semantic-safety extension (see "Known divergences" in AGENTS.md):
+// a paren group breaks one-element-per-line with a trailing comma ONLY when
+// - it is a keyword argument's direct value and the call's FIRST argument is a
+//   key-value pair (Prettier checks `groups[0]` alone), or a map item value, AND
+// - its contents are ALREADY a comma-separated list, the only case where the
+//   added comma is a semantic no-op (`(x,)` is a single-element list in Sass).
+@include container(
+  $foo: (
+    $bar,
+    $baz,
+  )
+);
+@include first-not-kv(a, $k: (1, 2));
+@include first-kv(
+  $k: (
+    1,
+    2,
+  ),
+  a
+);
+.a {
+  color: fn(a, $k: (1, 2));
+  border-color: fn(
+    $k: (
+      1,
+      2,
+    ),
+    a
+  );
+}
+// Non-comma-list contents NEVER take the break: Prettier 3.9.1 still listifies
+// `($bar + $baz)` / `(a b)` / `(-$a)` and emits non-compiling output for
+// `key: 2 * ($a + $b)` (`Undefined operation "2 * (3px,)"`), so these stay
+// inline as a deliberate divergence.
+@include container($foo: 2 * ($bar + $baz));
+@include container($foo: ($bar + $baz));
+@include container($foo: (value));
+.b {
+  background-color: rgba($color: (#808080), $alpha: 0.9);
+}
+$map: (
+  scalar-fn: (fn(1, 2)),
+  scalar-nested: ((value)),
+  space-list: (a b),
+  math: ($x + $y),
+  math-sibling: 2 * ($x + $y),
+  signed: (-$a),
+  interpolation: (#{$a}),
+  comma-list: (
+    a,
+    b,
+  ),
+);
+
+===================== End =====================

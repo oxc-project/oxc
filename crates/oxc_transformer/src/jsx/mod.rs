@@ -1,4 +1,4 @@
-use oxc_ast::{AstBuilder, ast::*};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_traverse::Traverse;
 
 use crate::{context::TraverseCtx, es2018::ObjectRestSpreadOptions, state::TransformState};
@@ -42,16 +42,16 @@ impl<'a> Jsx<'a> {
     pub fn new(
         mut options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
         source_type: oxc_span::SourceType,
     ) -> Self {
         if options.jsx_plugin || options.development {
             options.conform();
         }
+        let refresh = options.refresh.take();
         let JsxOptions {
             jsx_plugin, display_name_plugin, jsx_self_plugin, jsx_source_plugin, ..
         } = options;
-        let refresh = options.refresh.clone();
         Self {
             implementation: JsxImpl::new(options, object_rest_spread_options, ast, source_type),
             display_name: ReactDisplayName::new(),
@@ -60,7 +60,7 @@ impl<'a> Jsx<'a> {
             self_plugin: jsx_self_plugin,
             source_plugin: jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
-            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast),
+            refresh: ReactRefresh::new(refresh.as_ref(), ast),
         }
     }
 }

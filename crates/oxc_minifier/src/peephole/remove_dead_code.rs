@@ -1,14 +1,11 @@
 use crate::generated::ancestor::Ancestor;
-use oxc_allocator::{TakeIn, Vec};
+use oxc_allocator::{ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
-use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue},
-    side_effects::MayHaveSideEffects,
-};
+use oxc_ast_visit::VisitJs;
+use oxc_ecmascript::{constant_evaluation::ConstantEvaluation, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 
-use crate::{TraverseCtx, keep_var::KeepVar};
+use crate::{TraverseCtx, keep_var::KeepVar, symbol_metadata::FunctionSummary};
 
 use super::PeepholeOptimizations;
 
@@ -35,7 +32,7 @@ impl<'a> PeepholeOptimizations {
                     || parent.is_program()
                 {
                     // Remove the block if it is empty and the parent is a block statement.
-                    let new_stmt = ctx.ast.statement_empty(s.span);
+                    let new_stmt = Statement::new_empty_statement(s.span, ctx);
                     ctx.replace_statement(stmt, new_stmt);
                 }
             }
@@ -44,9 +41,13 @@ impl<'a> PeepholeOptimizations {
                 if matches!(first, Statement::VariableDeclaration(decl) if !decl.kind.is_var())
                     || matches!(first, Statement::ClassDeclaration(_))
                     || matches!(first, Statement::FunctionDeclaration(_))
+                    || (matches!(first, Statement::IfStatement(decl) if decl.alternate.is_some())
+                        && matches!(ctx.parent(), Ancestor::IfStatementConsequent(_)))
+                    || (first.is_iteration_statement() && ctx.parent().is_labeled_statement())
                 {
                     return;
                 }
+
                 let new_stmt = s.body.remove(0);
                 ctx.replace_statement(stmt, new_stmt);
             }
@@ -88,15 +89,16 @@ impl<'a> PeepholeOptimizations {
                         if (boolean && n.value == 1.0) || (!boolean && n.value == 0.0)
                 )
             {
-                let new_test = ctx.ast.expression_numeric_literal(
+                let new_test = Expression::new_numeric_literal(
                     if_stmt.test.span(),
                     if boolean { 1.0 } else { 0.0 },
                     None,
                     NumberBase::Decimal,
+                    ctx,
                 );
                 ctx.replace_expression(&mut if_stmt.test, new_test);
             }
-            let mut keep_var = KeepVar::new(ctx.ast);
+            let mut keep_var = KeepVar::new();
             if boolean {
                 if let Some(alternate) = &if_stmt.alternate {
                     keep_var.visit_statement(alternate);
@@ -105,7 +107,7 @@ impl<'a> PeepholeOptimizations {
                 keep_var.visit_statement(&if_stmt.consequent);
             }
             let var_stmt = keep_var
-                .get_variable_declaration_statement()
+                .get_variable_declaration_statement(&ctx.ast)
                 .and_then(|stmt| Self::remove_unused_variable_declaration(stmt, ctx));
             let has_var_stmt = var_stmt.is_some();
             if let Some(var_stmt) = var_stmt {
@@ -142,18 +144,19 @@ impl<'a> PeepholeOptimizations {
                         }
                     } else if !matches!(&if_stmt.consequent, Statement::EmptyStatement(_)) {
                         // Idempotency: skip when consequent is already empty.
-                        let new_consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
+                        let new_consequent =
+                            Statement::new_empty_statement(if_stmt.consequent.span(), ctx);
                         ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
                     }
                 }
                 return;
             }
             let new_stmt = if boolean {
-                if_stmt.consequent.take_in(ctx.ast)
+                if_stmt.consequent.take_in(ctx)
             } else if let Some(alternate) = if_stmt.alternate.take() {
                 alternate
             } else {
-                ctx.ast.statement_empty(if_stmt.span)
+                Statement::new_empty_statement(if_stmt.span, ctx)
             };
             ctx.replace_statement(stmt, new_stmt);
         }
@@ -196,33 +199,31 @@ impl<'a> PeepholeOptimizations {
         match test_boolean {
             Some(false) => match &for_stmt.init {
                 Some(ForStatementInit::VariableDeclaration(_)) => {
-                    let mut keep_var = KeepVar::new(ctx.ast);
+                    let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
-                    let mut var_decl = keep_var.get_variable_declaration();
+                    let mut var_decl = keep_var.get_variable_declaration(&ctx.ast);
                     let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init
                     else {
                         return;
                     };
                     if var_init.kind.is_var() {
                         if let Some(var_decl) = &mut var_decl {
-                            var_decl
-                                .declarations
-                                .splice(0..0, var_init.declarations.take_in(ctx.ast));
+                            var_decl.declarations.splice(0..0, var_init.declarations.take_in(ctx));
                         } else {
-                            var_decl = Some(var_init.take_in_box(ctx.ast));
+                            var_decl = Some(var_init.take_in_box(ctx));
                         }
                     }
                     let new_stmt = var_decl.map_or_else(
-                        || ctx.ast.statement_empty(for_stmt.span),
+                        || Statement::new_empty_statement(for_stmt.span, ctx),
                         Statement::VariableDeclaration,
                     );
                     ctx.replace_statement(stmt, new_stmt);
                 }
                 None => {
-                    let mut keep_var = KeepVar::new(ctx.ast);
+                    let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
-                    let new_stmt = keep_var.get_variable_declaration().map_or_else(
-                        || ctx.ast.statement_empty(for_stmt.span),
+                    let new_stmt = keep_var.get_variable_declaration(&ctx.ast).map_or_else(
+                        || Statement::new_empty_statement(for_stmt.span, ctx),
                         Statement::VariableDeclaration,
                     );
                     ctx.replace_statement(stmt, new_stmt);
@@ -249,7 +250,7 @@ impl<'a> PeepholeOptimizations {
         let id = s.label.name.as_str();
 
         if ctx.options().drop_labels.contains(id) {
-            let new_stmt = ctx.ast.statement_empty(s.span);
+            let new_stmt = Statement::new_empty_statement(s.span, ctx);
             ctx.replace_statement(stmt, new_stmt);
             return;
         }
@@ -261,31 +262,23 @@ impl<'a> PeepholeOptimizations {
                 if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id) => {}
             Statement::BlockStatement(block) if block.body.first().is_some_and(|first| matches!(first, Statement::BreakStatement(break_stmt) if break_stmt.label.as_ref().is_some_and(|l| l.name.as_str() == id))) => {}
             Statement::EmptyStatement(_) => {
-                let new_stmt = ctx.ast.statement_empty(s.span);
+                let new_stmt = Statement::new_empty_statement(s.span, ctx);
                 ctx.replace_statement(stmt, new_stmt);
                 return;
             }
             _ => return
         }
-        let mut var = KeepVar::new(ctx.ast);
+        let mut var = KeepVar::new();
         var.visit_statement(&s.body);
-        let var_decl = var.get_variable_declaration_statement();
-        let new_stmt = var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span));
+        let var_decl = var.get_variable_declaration_statement(&ctx.ast);
+        let new_stmt = var_decl.unwrap_or_else(|| Statement::new_empty_statement(s.span, ctx));
         ctx.replace_statement(stmt, new_stmt);
     }
 
     pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
-        // We need to check if it is in arrow function with `expression: true`.
-        // This is the only scenario where we can't remove it even if `ExpressionStatement`.
-        if let Ancestor::ArrowFunctionExpressionBody(body) = ctx.ancestry.ancestor(1)
-            && *body.expression()
-        {
-            return;
-        }
-
         if Self::remove_unused_expression(&mut expr_stmt.expression, ctx) {
-            let new_stmt = ctx.ast.statement_empty(expr_stmt.span);
+            let new_stmt = Statement::new_empty_statement(expr_stmt.span, ctx);
             ctx.replace_statement(stmt, new_stmt);
         }
     }
@@ -299,14 +292,14 @@ impl<'a> PeepholeOptimizations {
             let is_canonical_body =
                 body.is_empty() || (body.len() == 1 && Self::is_keep_var_canonical(&body[0]));
             if !is_canonical_body {
-                let mut var = KeepVar::new(ctx.ast);
+                let mut var = KeepVar::new();
                 var.visit_block_statement(&handler.body);
                 let Some(handler) = &mut s.handler else { return };
 
-                for dropped in handler.body.body.take_in(ctx.ast) {
+                for dropped in handler.body.body.take_in(ctx) {
                     ctx.drop_statement(&dropped);
                 }
-                if let Some(var_decl) = var.get_variable_declaration_statement() {
+                if let Some(var_decl) = var.get_variable_declaration_statement(&ctx.ast) {
                     handler.body.body.push(var_decl);
                 }
             }
@@ -323,11 +316,11 @@ impl<'a> PeepholeOptimizations {
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
             let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = ctx.ast.block_statement(finalizer.span, ctx.ast.vec());
-                std::mem::swap(&mut **finalizer, &mut block);
-                Statement::BlockStatement(ctx.ast.alloc(block))
+                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
+                std::mem::swap(finalizer, &mut block);
+                Statement::BlockStatement(block)
             } else {
-                ctx.ast.statement_empty(s.span)
+                Statement::new_empty_statement(s.span, ctx)
             };
             ctx.replace_statement(stmt, new_stmt);
         }
@@ -339,27 +332,36 @@ impl<'a> PeepholeOptimizations {
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
         let new_expr = if e.test.may_have_side_effects(ctx) {
             // "(a, true) ? b : c" => "a, b"
-            let exprs = ctx.ast.vec_from_array([
-                {
-                    let mut test = e.test.take_in(ctx.ast);
-                    Self::remove_unused_expression(&mut test, ctx);
-                    test
-                },
-                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) },
-            ]);
-            ctx.ast.expression_sequence(e.span, exprs)
+            Expression::new_sequence_expression(
+                e.span,
+                [
+                    {
+                        let mut test = e.test.take_in(ctx);
+                        Self::remove_unused_expression(&mut test, ctx);
+                        test
+                    },
+                    if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) },
+                ],
+                ctx,
+            )
         } else {
-            let result_expr =
-                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) };
+            let result_expr = if v { e.consequent.take_in(ctx) } else { e.alternate.take_in(ctx) };
             let should_keep_as_sequence_expr = Self::should_keep_indirect_access(&result_expr, ctx);
             // "(1 ? a.b : 0)()" => "(0, a.b)()"
             if should_keep_as_sequence_expr {
-                ctx.ast.expression_sequence(
+                Expression::new_sequence_expression(
                     e.span,
-                    ctx.ast.vec_from_array([
-                        ctx.ast.expression_numeric_literal(e.span, 0.0, None, NumberBase::Decimal),
+                    [
+                        Expression::new_numeric_literal(
+                            e.span,
+                            0.0,
+                            None,
+                            NumberBase::Decimal,
+                            ctx,
+                        ),
                         result_expr,
-                    ]),
+                    ],
+                    ctx,
                 )
             } else {
                 result_expr
@@ -392,11 +394,12 @@ impl<'a> PeepholeOptimizations {
                 // so `remove_unused_expression` would return `true` and produce a
                 // structurally-identical fresh `0`.
                 if !e.is_number_0() && Self::remove_unused_expression(e, ctx) {
-                    let new_expr = ctx.ast.expression_numeric_literal(
+                    let new_expr = Expression::new_numeric_literal(
                         e.span(),
                         0.0,
                         None,
                         NumberBase::Decimal,
+                        ctx,
                     );
                     ctx.replace_expression(e, new_expr);
                 }
@@ -425,9 +428,10 @@ impl<'a> PeepholeOptimizations {
                     Self::try_save_pure_function(
                         f.id.as_ref(),
                         &f.params,
-                        body,
                         f.r#async,
                         f.generator,
+                        body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)),
+                        body.is_empty(),
                         ctx,
                     );
                 }
@@ -440,9 +444,19 @@ impl<'a> PeepholeOptimizations {
                                 Self::try_save_pure_function(
                                     Some(id),
                                     &a.params,
-                                    &a.body,
                                     a.r#async,
                                     false,
+                                    a.get_expression().map_or_else(
+                                        || {
+                                            a.get_function_body().is_none_or(|body| {
+                                                body.statements
+                                                    .iter()
+                                                    .any(|stmt| stmt.may_have_side_effects(ctx))
+                                            })
+                                        },
+                                        |expression| expression.may_have_side_effects(ctx),
+                                    ),
+                                    a.body.is_empty(),
                                     ctx,
                                 );
                             }
@@ -451,9 +465,12 @@ impl<'a> PeepholeOptimizations {
                                     Self::try_save_pure_function(
                                         Some(id),
                                         &f.params,
-                                        body,
                                         f.r#async,
                                         f.generator,
+                                        body.statements
+                                            .iter()
+                                            .any(|stmt| stmt.may_have_side_effects(ctx)),
+                                        body.is_empty(),
                                         ctx,
                                     );
                                 }
@@ -470,26 +487,56 @@ impl<'a> PeepholeOptimizations {
     fn try_save_pure_function(
         id: Option<&BindingIdentifier<'a>>,
         params: &FormalParameters<'a>,
-        body: &FunctionBody<'a>,
         r#async: bool,
         generator: bool,
+        body_has_side_effects: bool,
+        returns_undefined: bool,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if r#async || generator {
             return;
         }
-        // `function foo({}) {} foo(null)` is runtime type error.
-        if !params.items.iter().all(|pat| pat.pattern.is_binding_identifier()) {
+        // Destructuring can throw. Default initializers run for missing or `undefined`
+        // arguments, and function summaries are call-independent, so reject an initializer
+        // that may have side effects. TDZ-only throws follow the minifier's documented
+        // `No TDZ Violation` assumption.
+        if !params.items.iter().all(|param| {
+            param.pattern.is_binding_identifier()
+                && param.initializer.as_ref().is_none_or(|init| !init.may_have_side_effects(ctx))
+        }) {
             return;
         }
-        if body.statements.iter().any(|stmt| stmt.may_have_side_effects(ctx)) {
+        if body_has_side_effects {
             return;
         }
         let Some(symbol_id) = id.and_then(|id| id.symbol_id.get()) else { return };
+        let binding_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+        let binding_scope_flags = ctx.scoping().scope_flags(binding_scope_id);
+        // Redeclarations are span-only in semantic and create no references,
+        // so the read-only-reference check below cannot see them. A different
+        // declaration of the same symbol may be impure and win at runtime.
+        if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
+            ctx.state.symbols.clear_function_summary(symbol_id);
+            return;
+        }
+        // Direct eval and Script global properties can replace the binding
+        // without producing a resolved write reference. Discard any summary
+        // from an earlier pass; removing the last eval may make the binding
+        // safe later, while Script roots are rejected again on every pass.
+        if binding_scope_flags.contains_direct_eval()
+            || (ctx.source_type().is_script() && binding_scope_id == ctx.scoping().root_scope_id())
+        {
+            ctx.state.symbols.clear_function_summary(symbol_id);
+            return;
+        }
         if ctx.scoping().get_resolved_references(symbol_id).all(|r| r.flags().is_read_only()) {
-            ctx.state.pure_functions.insert(
+            ctx.state.symbols.set_function_summary(
                 symbol_id,
-                if body.is_empty() { Some(ConstantValue::Undefined) } else { None },
+                if returns_undefined {
+                    FunctionSummary::SideEffectFreeReturnsUndefined
+                } else {
+                    FunctionSummary::SideEffectFree
+                },
             );
         }
     }
@@ -499,19 +546,16 @@ impl<'a> PeepholeOptimizations {
         if let Expression::Identifier(ident) = &e.callee {
             let reference_id = ident.reference_id();
             if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
-                && matches!(
-                    ctx.state.pure_functions.get(&symbol_id),
-                    Some(Some(ConstantValue::Undefined))
-                )
+                && ctx.state.symbols.function_summary(symbol_id).returns_undefined()
             {
                 let mut exprs = Self::fold_arguments_into_needed_expressions(&mut e.arguments, ctx);
                 if exprs.is_empty() {
-                    let new_expr = ctx.ast.void_0(e.span);
+                    let new_expr = Expression::new_void_0(e.span, ctx);
                     ctx.replace_expression(expr, new_expr);
                     return;
                 }
-                exprs.push(ctx.ast.void_0(e.span));
-                let new_expr = ctx.ast.expression_sequence(e.span, exprs);
+                exprs.push(Expression::new_void_0(e.span, ctx));
+                let new_expr = Expression::new_sequence_expression(e.span, exprs, ctx);
                 ctx.replace_expression(expr, new_expr);
             }
         }
@@ -577,12 +621,10 @@ impl<'a> PeepholeOptimizations {
         expr: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_sequence(
+        Expression::new_sequence_expression(
             span,
-            ctx.ast.vec_from_array([
-                ctx.ast.expression_numeric_literal(span, 0.0, None, NumberBase::Decimal),
-                expr,
-            ]),
+            [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
+            ctx,
         )
     }
 
@@ -590,7 +632,7 @@ impl<'a> PeepholeOptimizations {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
 
-    pub fn remove_empty_spread_arguments(args: &mut Vec<'a, Argument<'a>>) {
+    pub fn remove_empty_spread_arguments(args: &mut ArenaVec<'a, Argument<'a>>) {
         if args.len() != 1 {
             return;
         }

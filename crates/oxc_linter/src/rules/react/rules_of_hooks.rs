@@ -1,15 +1,16 @@
 use std::borrow::Cow;
 
+use lazy_regex::Regex;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Function},
+    ast::{ArrowFunctionExpression, CallExpression, Function},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodes, NodeId};
+use oxc_semantic::{AstNodes, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 
@@ -161,6 +162,32 @@ mod diagnostics {
         .with_label(span.label("This Hook call is inside a nested callback."))
         .with_error_code_scope(SCOPE)
     }
+
+    pub(super) fn use_effect_event_reference(
+        span: Span,
+        name: &str,
+        called: bool,
+    ) -> OxcDiagnostic {
+        let mut message = format!(
+            r#"`{name}` is a function created with React Hook "useEffectEvent", and can only be called from Effects and Effect Events in the same component."#
+        );
+
+        if !called {
+            message.push_str(" It cannot be assigned to a variable or passed down.");
+        }
+
+        OxcDiagnostic::warn(message)
+            .with_label(span.label("Effect Event escapes its component or custom Hook."))
+            .with_error_code_scope(SCOPE)
+    }
+
+    pub(super) fn use_effect_event_inline_escape(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn(
+            r#"React Hook "useEffectEvent" can only be called at the top level of your component. It cannot be passed down."#,
+        )
+        .with_label(span.label("Effect Event is passed directly instead of being assigned locally."))
+        .with_error_code_scope(SCOPE)
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -259,6 +286,10 @@ impl Rule for RulesOfHooks {
         let Some(parent_func) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
+
+        if is_react_function_call(call, "useEffectEvent") {
+            check_use_effect_event_usage(node, call, ctx);
+        }
 
         // Check if our parent function is part of a class.
         if matches!(
@@ -381,18 +412,23 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
-            if !is_inside_try_catch(nodes, node.id(), parent_func.id()) {
-                return;
-            }
-
-            if has_conditional_path_accept_throw(ctx.nodes(), cfg, parent_func, node) {
-                return ctx.diagnostic(diagnostics::conditional_hook(
+        if is_inside_try_catch(nodes, node.id(), parent_func.id()) {
+            if cfg.is_cyclic(node_cfg_id) {
+                return ctx.diagnostic(diagnostics::loop_hook(
                     span,
+                    loop_keyword_span(ctx, ctx.nodes(), node.id(), parent_func.id()),
                     hook_name,
-                    conditional_context(ctx, node.id(), span, parent_func.id()),
                 ));
             }
+
+            return ctx.diagnostic(diagnostics::conditional_hook(
+                span,
+                hook_name,
+                conditional_context(ctx, node.id(), span, parent_func.id()),
+            ));
+        }
+
+        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
             return;
         }
 
@@ -687,7 +723,7 @@ impl<'a> MayThrowBeforeHook {
     }
 }
 
-impl<'a> Visit<'a> for MayThrowBeforeHook {
+impl<'a> VisitJs<'a> for MayThrowBeforeHook {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         if self.found {
             return;
@@ -719,14 +755,14 @@ impl<'a> Visit<'a> for MayThrowBeforeHook {
     fn visit_call_expression(&mut self, expr: &oxc_ast::ast::CallExpression<'a>) {
         self.enter_node(AstKind::CallExpression(expr));
         if !self.found {
-            walk::walk_call_expression(self, expr);
+            walk_js::walk_call_expression(self, expr);
         }
     }
 
     fn visit_new_expression(&mut self, expr: &oxc_ast::ast::NewExpression<'a>) {
         self.enter_node(AstKind::NewExpression(expr));
         if !self.found {
-            walk::walk_new_expression(self, expr);
+            walk_js::walk_new_expression(self, expr);
         }
     }
 }
@@ -746,7 +782,95 @@ fn is_inside_try_catch(
         .any(|node| matches!(node.kind(), AstKind::TryStatement(_) | AstKind::CatchClause(_)))
 }
 
-/// Checks if the `node_id` is a callback argument (including JSX render props),
+fn check_use_effect_event_usage(
+    node: &AstNode<'_>,
+    call: &CallExpression<'_>,
+    ctx: &LintContext<'_>,
+) {
+    match ctx.nodes().parent_kind(node.id()) {
+        AstKind::VariableDeclarator(decl) => {
+            if !is_somewhere_inside_component_or_hook(ctx.nodes(), node.id()) {
+                return;
+            }
+            if let Some(ident) = decl.id.get_binding_identifier() {
+                let additional_effect_hooks = additional_effect_hooks(ctx);
+                report_invalid_use_effect_event_references(
+                    ident.symbol_id(),
+                    additional_effect_hooks.as_ref(),
+                    ctx,
+                );
+            }
+        }
+        // As with other Hooks, a top-level expression statement is permitted.
+        AstKind::ExpressionStatement(_) => {}
+        _ => ctx.diagnostic(diagnostics::use_effect_event_inline_escape(call.span)),
+    }
+}
+
+fn additional_effect_hooks(ctx: &LintContext<'_>) -> Option<Regex> {
+    let pattern =
+        ctx.settings().json.as_ref()?.get("react-hooks")?.get("additionalEffectHooks")?.as_str()?;
+    Regex::new(pattern).ok()
+}
+
+fn report_invalid_use_effect_event_references(
+    symbol_id: SymbolId,
+    additional_effect_hooks: Option<&Regex>,
+    ctx: &LintContext<'_>,
+) {
+    for reference in ctx.semantic().symbol_references(symbol_id) {
+        if is_inside_effect_or_effect_event_call(
+            ctx.nodes(),
+            reference.node_id(),
+            additional_effect_hooks,
+        ) {
+            continue;
+        }
+
+        let span = ctx.semantic().reference_span(reference);
+        ctx.diagnostic(diagnostics::use_effect_event_reference(
+            span,
+            ctx.semantic().reference_name(reference),
+            is_reference_call_callee(ctx.nodes(), reference.node_id(), span),
+        ));
+    }
+}
+
+fn is_inside_effect_or_effect_event_call(
+    nodes: &AstNodes<'_>,
+    node_id: NodeId,
+    additional_effect_hooks: Option<&Regex>,
+) -> bool {
+    nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
+        AstKind::CallExpression(call) => {
+            is_effect_or_effect_event_call(call, additional_effect_hooks)
+        }
+        _ => false,
+    })
+}
+
+fn is_effect_or_effect_event_call(
+    call: &CallExpression<'_>,
+    additional_effect_hooks: Option<&Regex>,
+) -> bool {
+    is_react_function_call(call, "useEffect")
+        || is_react_function_call(call, "useLayoutEffect")
+        || is_react_function_call(call, "useInsertionEffect")
+        || is_react_function_call(call, "useEffectEvent")
+        || additional_effect_hooks.is_some_and(|regex| {
+            call.callee_name()
+                .is_some_and(|name| is_react_function_call(call, name) && regex.is_match(name))
+        })
+}
+
+fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -> bool {
+    nodes.ancestors(node_id).any(|ancestor| match ancestor.kind() {
+        AstKind::CallExpression(call) => call.callee.span() == span,
+        _ => false,
+    })
+}
+
+/// Checks if the `node_id` is a callback argument (including constructor and JSX render props),
 /// And that function isn't a `React.memo` or `React.forwardRef`.
 /// Returns `true` if this node is a function argument/render prop and that isn't a React special function.
 /// Otherwise it would return `false`.
@@ -758,8 +882,8 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
         AstKind::CallExpression(call) => {
             !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
         }
-        // Callback passed as JSX expression: <Foo>{() => { ... }}</Foo> or <Foo render={() => { ... }} />
-        AstKind::JSXExpressionContainer(_) => true,
+        // Callback passed as an argument to a constructor or JSX render prop.
+        AstKind::NewExpression(_) | AstKind::JSXExpressionContainer(_) => true,
         _ => false,
     }
 }
@@ -1459,29 +1583,158 @@ fn test() {
     "
         function Foo() {
           try {
-            useCustomHook();
-          } catch (error) {
-            console.error(error);
-          }
-        }
-    ",
-    "
-        function Foo() {
-          try {
             f();
           } catch {}
           useState();
         }
     ",
-    "
-        function Foo() {
-          try {
-            const value = 1;
-            useState(value);
-          } catch {}
-        }
-    "
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useEffect(() => {
+                onClick();
+              });
+              React.useEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              const onClick2 = useEffectEvent(() => {
+                debounce(onClick);
+                debounce(() => onClick());
+                debounce(() => { onClick() });
+                deboucne(() => debounce(onClick));
+              });
+              useEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              React.useEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              return null;
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              useEffect(() => {
+                onClick();
+              });
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onEvent = useEffectEvent((text) => {
+                console.log(text);
+              });
+              useEffect(() => {
+                onEvent('Hello world');
+              });
+              React.useEffect(() => {
+                onEvent('Hello world');
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useLayoutEffect(() => {
+                onClick();
+              });
+              React.useLayoutEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useInsertionEffect(() => {
+                onClick();
+              });
+              React.useInsertionEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              const onClick2 = useEffectEvent(() => {
+                debounce(onClick);
+                debounce(() => onClick());
+                debounce(() => { onClick() });
+                deboucne(() => debounce(onClick));
+              });
+              useLayoutEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              React.useLayoutEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              useInsertionEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              React.useInsertionEffect(() => {
+                let id = setInterval(() => onClick(), 100);
+                return () => clearInterval(onClick);
+              }, []);
+              return null;
+            }
+        ",
+        // This matches eslint-plugin-react-hooks: callbacks in non-components are not reported.
+        r"
+            function notAComponent() {
+                return new Promise.then(() => {
+                    useState();
+                });
+            }
+        ",
     ];
+
+    let pass_additional_effect_hooks = vec![(
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useMyEffect(() => {
+                onClick();
+              });
+              useServerEffect(() => {
+                onClick();
+              });
+            }
+        ",
+        None,
+        Some(serde_json::json!({
+            "settings": {
+                "react-hooks": {
+                    "additionalEffectHooks": "(useMyEffect|useServerEffect)"
+                }
+            }
+        })),
+    )];
 
     let fail = vec![
         // Invalid because it's dangerous and might not warn otherwise.
@@ -1935,6 +2188,35 @@ fn test() {
                     } catch {}
                 }
         ",
+        // https://github.com/oxc-project/oxc/issues/25631
+        "
+                function TestChild() {
+                    let captured = null;
+                    try {
+                        captured = useTooltipContext();
+                        return null;
+                    } catch (error) {
+                        return null;
+                    }
+                }
+        ",
+        "
+                function ComponentWithHookInsideLoop() {
+                    try {
+                        while (cond) {
+                            useState();
+                        }
+                    } catch {}
+                }
+        ",
+        "
+                function Foo() {
+                    try {
+                        const value = 1;
+                        useState(value);
+                    } catch {}
+                }
+        ",
         "
                 function useHook() {
                     try {
@@ -2202,16 +2484,14 @@ fn test() {
                 }
             }
         ",
-        // TODO: This should error but doesn't.
-        // Original rule also fails to raise this error.
-        // errors: [genericError('useState')],
-        // "
-        //     function notAComponent() {
-        //         return new Promise.then(() => {
-        //             useState();
-        //         });
-        //     }
-        // " ,
+        // Invalid because hooks cannot be called inside constructor callbacks.
+        r"
+            function Component() {
+                return new Promise.then(() => {
+                    useState();
+                });
+            }
+        ",
         // https://github.com/oxc-project/oxc/issues/6651
         r"const MyComponent3 = makeComponent(function foo () { useHook(); });",
         // https://github.com/oxc-project/oxc/issues/17961
@@ -2238,7 +2518,144 @@ fn test() {
             }
         ",
         r"const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useCustomHook(() => {
+                onClick();
+              });
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme);
+                });
+                return <Child onClick={onClick}></Child>;
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+                return <Child onClick={useEffectEvent(() => {
+                    showNotification(theme);
+                })} />;
+            }
+        ",
+        r"
+            function MyComponent({theme}) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme)
+                });
+                return <Child onClick={onClick} />
+            }
+
+            function MyOtherComponent({theme}) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme)
+                });
+                return <Child onClick={() => onClick()} />
+            }
+
+            function MyLastComponent({theme}) {
+                const onClick = useEffectEvent(() => {
+                    showNotification(theme)
+                });
+                useEffect(() => {
+                    onClick();
+                    onClick;
+                })
+                return <Child />
+            }
+        ",
+        r"
+            const MyComponent = ({ theme }) => {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              return <Child onClick={onClick}></Child>;
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              let foo = onClick;
+              return <Bar onClick={foo} />
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useEffect(() => {
+                setTimeout(onClick, 100);
+              });
+              return <Child onClick={onClick} />
+            }
+        ",
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              const onClick2 = () => { onClick() };
+              const onClick3 = useCallback(() => onClick(), []);
+              const onClick4 = onClick;
+              return <>
+                <Child onClick={onClick}></Child>
+                <Child onClick={onClick2}></Child>
+                <Child onClick={onClick3}></Child>
+              </>;
+            }
+        ",
+        r"
+            function useCustomHook() {
+                const onEvent = useEffectEvent(() => {});
+                return { onEvent };
+            }
+        ",
+        r"function notAComponent() {
+  const onEvent = useEffectEvent(() => {});
+  return onEvent;
+}",
     ];
 
-    Tester::new(RulesOfHooks::NAME, RulesOfHooks::PLUGIN, pass, fail).test_and_snapshot();
+    let fail_additional_effect_hooks = vec![(
+        r"
+            function MyComponent({ theme }) {
+              const onClick = useEffectEvent(() => {
+                showNotification(theme);
+              });
+              useWrongHook(() => {
+                onClick();
+              });
+            }
+        ",
+        None,
+        Some(serde_json::json!({
+            "settings": {
+                "react-hooks": {
+                    "additionalEffectHooks": "useMyEffect"
+                }
+            }
+        })),
+    )];
+
+    Tester::new(
+        RulesOfHooks::NAME,
+        RulesOfHooks::PLUGIN,
+        pass.iter()
+            .map(|&code| (code, None, None))
+            .chain(pass_additional_effect_hooks)
+            .collect::<Vec<_>>(),
+        fail.iter()
+            .map(|&code| (code, None, None))
+            .chain(fail_additional_effect_hooks)
+            .collect::<Vec<_>>(),
+    )
+    .test_and_snapshot();
 }

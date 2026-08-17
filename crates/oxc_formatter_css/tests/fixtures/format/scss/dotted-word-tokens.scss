@@ -1,0 +1,15 @@
+// xstyled / tailwind-theme dotted tokens: postcss-scss lexes them as ONE
+// word (dart-sass would reject them at compile time, see oxc-css-parser's
+// dotted-word leniency); real namespaced forms keep their typed shapes.
+@use "sass:math";
+a {
+  b: math.div(10, 2);
+  c: math.$pi;
+  d: foo.bar;
+  e: colors.modes.dark;
+  f: sandstone.10;
+  g: theme(colors.blue.500);
+  h: theme(fontSize.sm[1].lineHeight);
+  i: $var[0];
+  j: #fff[0];
+}

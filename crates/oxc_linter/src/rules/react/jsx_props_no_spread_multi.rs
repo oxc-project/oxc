@@ -119,8 +119,8 @@ impl Rule for JsxPropsNoSpreadMulti {
                 );
             }
 
-            member_expressions.iter().tuple_combinations().for_each(
-                |((left, left_span), (right, right_span))| {
+            member_expressions.iter().array_combinations().for_each(
+                |[(left, left_span), (right, right_span)]| {
                     if is_same_member_expression(left, right, ctx) {
                         // 'foo.bar'
                         let member_prop_name = ctx.source_range(left.span());

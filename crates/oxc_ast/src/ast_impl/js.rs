@@ -3,6 +3,7 @@ use std::{
     fmt::{self, Display},
 };
 
+use oxc_allocator::Box as ArenaBox;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags, symbol::SymbolId};
@@ -792,13 +793,18 @@ impl CallExpression<'_> {
         }
     }
 
-    /// Returns `true` if this looks like a call to `require` in CommonJS (has a single string argument):
+    /// Returns the required module's [`StringLiteral`] if this looks like a call to `require` in
+    /// CommonJS (a single string literal argument), or [`None`] otherwise.
+    ///
     /// ```js
-    /// require('string') // => true
-    /// require('string', 'string') // => false
-    /// require() // => false
-    /// require(123) // => false
+    /// require('string') // => Some("string")
+    /// require('string', 'string') // => None
+    /// require() // => None
+    /// require(123) // => None
     /// ```
+    ///
+    /// The callee is matched with [`Expression::is_specific_id`], which looks through parentheses
+    /// and TypeScript wrappers such as `as`, `satisfies`, and `!`.
     pub fn common_js_require(&self) -> Option<&StringLiteral<'_>> {
         if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
             return None;
@@ -1123,14 +1129,10 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
-            Declaration::TSModuleDeclaration(decl) => {
-                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
-                    Some(ident)
-                } else {
-                    None
-                }
-            }
-            Declaration::TSGlobalDeclaration(_) | Declaration::VariableDeclaration(_) => None,
+            Declaration::TSNamespaceDeclaration(decl) => Some(&decl.id),
+            Declaration::TSExternalModuleDeclaration(_)
+            | Declaration::TSGlobalDeclaration(_)
+            | Declaration::VariableDeclaration(_) => None,
         }
     }
 
@@ -1142,7 +1144,8 @@ impl<'a> Declaration<'a> {
             Declaration::ClassDeclaration(decl) => decl.declare,
             Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
-            Declaration::TSModuleDeclaration(decl) => decl.declare,
+            Declaration::TSExternalModuleDeclaration(decl) => decl.declare,
+            Declaration::TSNamespaceDeclaration(decl) => decl.declare,
             Declaration::TSGlobalDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
             Declaration::TSImportEqualsDeclaration(_) => false,
@@ -1279,10 +1282,7 @@ impl<'a> BindingPattern<'a> {
         }
     }
 
-    fn append_binding_identifiers<'b>(
-        &'b self,
-        idents: &mut std::vec::Vec<&'b BindingIdentifier<'a>>,
-    ) {
+    fn append_binding_identifiers<'b>(&'b self, idents: &mut Vec<&'b BindingIdentifier<'a>>) {
         match self {
             Self::BindingIdentifier(ident) => idents.push(ident),
             Self::AssignmentPattern(assign) => assign.left.append_binding_identifiers(idents),
@@ -1314,13 +1314,13 @@ impl<'a> BindingPattern<'a> {
     /// - `let {} = obj` would return `[]`
     /// - `let {a, b} = obj` would return `[a, b]`
     /// - `let {a = 1, b: c} = obj` would return `[a, c]`
-    pub fn get_binding_identifiers(&self) -> std::vec::Vec<&BindingIdentifier<'a>> {
+    pub fn get_binding_identifiers(&self) -> Vec<&BindingIdentifier<'a>> {
         let mut idents = vec![];
         self.append_binding_identifiers(&mut idents);
         idents
     }
 
-    fn append_symbol_ids(&self, symbol_ids: &mut std::vec::Vec<SymbolId>) {
+    fn append_symbol_ids(&self, symbol_ids: &mut Vec<SymbolId>) {
         match self {
             Self::BindingIdentifier(ident) => {
                 symbol_ids.push(ident.symbol_id());
@@ -1346,7 +1346,7 @@ impl<'a> BindingPattern<'a> {
     }
 
     /// Returns the [`SymbolId`]s of the bound identifiers in this binding pattern.
-    pub fn get_symbol_ids(&self) -> std::vec::Vec<SymbolId> {
+    pub fn get_symbol_ids(&self) -> Vec<SymbolId> {
         let mut symbol_ids = vec![];
         self.append_symbol_ids(&mut symbol_ids);
         symbol_ids
@@ -1577,25 +1577,71 @@ impl FunctionBody<'_> {
     }
 }
 
+impl<'a> ArrowFunctionBody<'a> {
+    /// Returns `true` if this arrow function has a block body.
+    pub fn is_function_body(&self) -> bool {
+        matches!(self, Self::FunctionBody(_))
+    }
+
+    /// Returns the block body, if this arrow function has one.
+    pub fn as_function_body(&self) -> Option<&FunctionBody<'a>> {
+        match self {
+            Self::FunctionBody(body) => Some(body),
+            _ => None,
+        }
+    }
+
+    /// Returns the mutable block body, if this arrow function has one.
+    pub fn as_function_body_mut(&mut self) -> Option<&mut FunctionBody<'a>> {
+        match self {
+            Self::FunctionBody(body) => Some(body),
+            _ => None,
+        }
+    }
+
+    /// Converts this arrow function body into a block body, if it has one.
+    pub fn into_function_body(self) -> Option<ArenaBox<'a, FunctionBody<'a>>> {
+        match self {
+            Self::FunctionBody(body) => Some(body),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if this is an empty block body.
+    pub fn is_empty(&self) -> bool {
+        self.as_function_body().is_some_and(FunctionBody::is_empty)
+    }
+
+    /// Returns `true` if this block body has a `"use strict"` directive.
+    pub fn has_use_strict_directive(&self) -> bool {
+        self.as_function_body().is_some_and(FunctionBody::has_use_strict_directive)
+    }
+}
+
 impl<'a> ArrowFunctionExpression<'a> {
+    /// Returns `true` if this arrow function has a concise expression body.
+    pub fn is_expression(&self) -> bool {
+        self.body.is_expression()
+    }
+
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        if self.expression
-            && let Statement::ExpressionStatement(expr_stmt) = &self.body.statements[0]
-        {
-            return Some(&expr_stmt.expression);
-        }
-        None
+        self.body.as_expression()
     }
 
     /// Get expression part of `ArrowFunctionExpression`: `() => expression_part`.
     pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
-        if self.expression
-            && let Statement::ExpressionStatement(expr_stmt) = &mut self.body.statements[0]
-        {
-            return Some(&mut expr_stmt.expression);
-        }
-        None
+        self.body.as_expression_mut()
+    }
+
+    /// Get block body of `ArrowFunctionExpression`: `() => { statements }`.
+    pub fn get_function_body(&self) -> Option<&FunctionBody<'a>> {
+        self.body.as_function_body()
+    }
+
+    /// Get mutable block body of `ArrowFunctionExpression`: `() => { statements }`.
+    pub fn get_function_body_mut(&mut self) -> Option<&mut FunctionBody<'a>> {
+        self.body.as_function_body_mut()
     }
 
     /// Returns `true` if this arrow function's body has a `"use strict"` directive.
@@ -1605,6 +1651,28 @@ impl<'a> ArrowFunctionExpression<'a> {
 }
 
 impl<'a> Class<'a> {
+    /// Returns the expression in this class's heritage clause, when present.
+    ///
+    /// ```ts
+    /// class Foo extends Bar<Baz> {}
+    /// //                ^^^
+    /// ```
+    #[inline]
+    pub fn heritage_expression(&self) -> Option<&Expression<'a>> {
+        self.heritage.as_ref().map(|heritage| &heritage.expression)
+    }
+
+    /// Returns the type arguments in this class's heritage clause, when present.
+    ///
+    /// ```ts
+    /// class Foo extends Bar<Baz> {}
+    /// //                   ^^^^^
+    /// ```
+    #[inline]
+    pub fn heritage_type_arguments(&self) -> Option<&TSTypeParameterInstantiation<'a>> {
+        self.heritage.as_ref()?.type_arguments.as_deref()
+    }
+
     /// Returns this [`Class`]'s name, if it has one.
     #[inline]
     pub fn name(&self) -> Option<Ident<'a>> {
@@ -1636,6 +1704,16 @@ impl<'a> Class<'a> {
     /// Returns `true` if this class uses `declare class` or `abstract class` syntax.
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare || self.r#abstract
+    }
+}
+
+impl GetSpan for ClassHeritage<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        let expression_span = self.expression.span();
+        self.type_arguments
+            .as_ref()
+            .map_or(expression_span, |type_arguments| expression_span.merge(type_arguments.span))
     }
 }
 
@@ -1853,7 +1931,9 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             ModuleDeclaration::ImportDeclaration(_) => false,
             ModuleDeclaration::ExportDefaultDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportNamedDeclaration(decl) => decl.is_typescript_syntax(),
+            ModuleDeclaration::ExportFromDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::ExportAllDeclaration(decl) => decl.is_typescript_syntax(),
             ModuleDeclaration::TSNamespaceExportDeclaration(_)
             | ModuleDeclaration::TSExportAssignment(_) => true,
@@ -1871,7 +1951,9 @@ impl<'a> ModuleDeclaration<'a> {
             self,
             Self::ExportAllDeclaration(_)
                 | Self::ExportDefaultDeclaration(_)
+                | Self::ExportDeclaration(_)
                 | Self::ExportNamedDeclaration(_)
+                | Self::ExportFromDeclaration(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExportDeclaration(_)
         )
@@ -1893,8 +1975,10 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             Self::ImportDeclaration(decl) => Some(&decl.source),
             Self::ExportAllDeclaration(decl) => Some(&decl.source),
-            Self::ExportNamedDeclaration(decl) => decl.source.as_ref(),
+            Self::ExportFromDeclaration(decl) => Some(&decl.source),
             Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
         }
@@ -1911,8 +1995,10 @@ impl<'a> ModuleDeclaration<'a> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportAllDeclaration(decl) => decl.with_clause.as_deref(),
-            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportFromDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportDefaultDeclaration(_)
+            | Self::ExportDeclaration(_)
+            | Self::ExportNamedDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
         }
@@ -1945,8 +2031,8 @@ impl<'a> ImportDeclarationSpecifier<'a> {
     /// - `import { foo } from "lib"` => `"foo"`
     /// - `import * as foo from "lib"` => `"foo"`
     /// - `import foo from "lib"` => `"foo"`
-    pub fn name(&self) -> Cow<'a, str> {
-        Cow::Borrowed(self.local().name.as_str())
+    pub fn name(&self) -> Ident<'a> {
+        self.local().name
     }
 }
 
@@ -1960,11 +2046,34 @@ impl<'a> ImportAttributeKey<'a> {
     }
 }
 
-impl ExportNamedDeclaration<'_> {
-    /// Returns `true` if this export declaration uses any TypeScript syntax (such as `type` or `declare`).
+impl ExportDeclaration<'_> {
+    /// Returns the export kind derived from the wrapped declaration.
+    #[inline]
+    pub fn export_kind(&self) -> ImportOrExportKind {
+        if self.declaration.declare() || self.declaration.is_type() {
+            ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
+        }
+    }
+
+    /// Returns `true` if this export declaration uses any TypeScript syntax.
     pub fn is_typescript_syntax(&self) -> bool {
-        self.export_kind == ImportOrExportKind::Type
-            || self.declaration.as_ref().is_some_and(Declaration::is_typescript_syntax)
+        self.declaration.is_typescript_syntax()
+    }
+}
+
+impl ExportNamedDeclaration<'_> {
+    /// Returns `true` if this is a TypeScript type-only export.
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.export_kind.is_type()
+    }
+}
+
+impl ExportFromDeclaration<'_> {
+    /// Returns `true` if this is a TypeScript type-only re-export.
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.export_kind.is_type()
     }
 }
 

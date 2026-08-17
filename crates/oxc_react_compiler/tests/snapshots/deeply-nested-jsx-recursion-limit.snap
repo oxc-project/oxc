@@ -1,0 +1,19 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/deeply-nested-jsx-recursion-limit.js
+---
+import { c as _c } from "react/compiler-runtime";
+// Deeply nested JSX that exercises the JSON recursion limit.
+// At the NAPI bridge, serde_json has a default limit of 128 which
+// is exceeded by the nested structure of the serialized AST.
+function DeeplyNestedComponent() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = <div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><div><span>leaf</span></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div></div>;
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	return t0;
+}

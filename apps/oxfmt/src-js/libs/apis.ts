@@ -92,7 +92,37 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   // This plugin overrides `babel(-ts)` and `typescript` parsers to use `oxc_formatter` instead of built-in parsers
   if ("_oxfmtPluginOptionsJson" in options) await setupOxfmtPlugin(options);
 
+  // This is needed to detect tsx-in-vue properly, see `prettier-plugin-oxfmt` for details.
+  // All `<script>` blocks in one SFC must share the same `lang` (Vue compiler restriction),
+  // so a single per-file flag is enough.
+  if (options.parser === "vue" && hasTsxScriptBlock(code)) {
+    options._oxfmtVueScriptLang = "tsx";
+  }
+
   return prettier.format(code, options);
+}
+
+// `<script` + a tag boundary (so `<scripts` does not match) + attributes + the tag-closing `>`.
+// Quoted attribute values may contain `>` (e.g. `generic="T extends Record<string, string>"`),
+// so they are consumed as whole quoted chunks before `>` can terminate the tag.
+const SCRIPT_OPEN_TAG_RE = /<script(?=[\s>])((?:"[^"]*"|'[^']*'|[^"'>])*)>/gv;
+// Standalone `lang` attribute (not e.g. `data-lang`) whose whole value is "tsx", quoted or unquoted
+const LANG_TSX_ATTR_RE = /(?:^|\s)lang\s*=\s*(?:"tsx"|'tsx'|tsx(?=[\s\/]|$))/v;
+
+/**
+ * Whether any `<script ...>` open tag in `sourceText` carries `lang="tsx"`.
+ *
+ * A plain-text scan may have a false positive.
+ * (e.g. the literal tag inside a template string or comment),
+ * the block parses as `tsx`, worst case the lone generic comma is kept or,
+ * if the block uses ts-only syntax, it is left unformatted.
+ * Never destructive, so leniency is acceptable trade-off here.
+ */
+function hasTsxScriptBlock(sourceText: string): boolean {
+  for (const [, attrs] of sourceText.matchAll(SCRIPT_OPEN_TAG_RE)) {
+    if (LANG_TSX_ATTR_RE.test(attrs)) return true;
+  }
+  return false;
 }
 
 // ---
@@ -104,8 +134,7 @@ export type FormatEmbeddedCodeParam = {
 
 /**
  * Format non-js code snippets into formatted string.
- * Mainly used for formatting code fences within JSDoc,
- * and is also used as a temporary fallback for html-in-js.
+ * Used for formatting code fences within JSDoc.
  *
  * @returns Formatted code snippet
  */
@@ -128,71 +157,62 @@ export async function formatEmbeddedCode({
 // ---
 
 export type FormatEmbeddedDocParam = {
-  texts: string[];
+  code: string;
   options: Options;
 };
 
 /**
- * Format non-js code snippets into Prettier `Doc` JSON strings.
- *
+ * Format a non-js code snippet into a Prettier `Doc` JSON string.
  * This makes our printer correctly handle `printWidth` even for embedded code.
- * - For gql-in-js, `texts` contains multiple parts split by `${}` in a template literal
- * - For others, `texts` always contains a single string with `${}` parts replaced by placeholders
- * However, this function does not need to be aware of that,
- * as it simply formats each text part independently and returns an array of formatted parts.
  *
- * @returns Doc JSON strings
+ * @returns `Doc` JSON string
  */
 export async function formatEmbeddedDoc({
-  texts,
+  code,
   options,
-}: FormatEmbeddedDocParam): Promise<string[]> {
+}: FormatEmbeddedDocParam): Promise<string> {
   const prettier = CACHES.prettier ?? (await loadPrettier());
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
 
+  const metadata: Record<string, unknown> = {};
+
+  // html(angular)-in-js specific options: see the comment in `loadPrettier()` for rationale
+  if (options.parser === "html" || options.parser === "angular") {
+    // Any truthy value works
+    options.parentParser = "OXFMT";
+    // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
+    options.__onHtmlRoot = (root: { children?: unknown[] }) =>
+      (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
+  }
+
+  // md-in-js specific options: see the comment in `loadPrettier()` for rationale
+  if (options.parser === "markdown") {
+    // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L21
+    options.__inJsTemplate = true;
+  }
+
   // NOTE: This will throw if:
   // - Specified parser is not available
   // - Or, code has syntax errors
   // In such cases, Rust side will fallback to original code
-  return Promise.all(
-    texts.map(async (text) => {
-      const metadata: Record<string, unknown> = {};
+  // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
+  const doc = await prettier.__debug.printToDoc(code, options);
 
-      // html(angular)-in-js specific options: see the comment in `loadPrettier()` for rationale
-      if (options.parser === "html" || options.parser === "angular") {
-        // Any truthy value works
-        options.parentParser = "OXFMT";
-        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
-        options.__onHtmlRoot = (root: { children?: unknown[] }) =>
-          (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
-      }
-
-      // md-in-js specific options: see the comment in `loadPrettier()` for rationale
-      if (options.parser === "markdown") {
-        // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L21
-        options.__inJsTemplate = true;
-      }
-
-      // @ts-expect-error: Use internal API, but it's necessary and only way to get `Doc`
-      const doc = await prettier.__debug.printToDoc(text, options);
-
-      // Serialize as [doc, metadata], handling special values:
-      // - Symbol group IDs → numeric counters
-      // - -Infinity (dedentToRoot) → marker string
-      const symbolToNumber = new Map<symbol, number>();
-      let nextId = 1;
-      return JSON.stringify([doc, metadata], (_key, value) => {
-        if (typeof value === "symbol") {
-          if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
-          return symbolToNumber.get(value);
-        }
-        if (value === -Infinity) return "__NEGATIVE_INFINITY__";
-        return value;
-      });
-    }),
-  );
+  // Serialize as [doc, metadata], handling special values:
+  // - Symbol group IDs → numeric counters
+  // - -Infinity (dedentToRoot) → marker string
+  const symbolToNumber = new Map<symbol, number>();
+  let nextId = 1;
+  return JSON.stringify([doc, metadata], (_key, value) => {
+    if (typeof value === "symbol") {
+      if (!symbolToNumber.has(value)) symbolToNumber.set(value, nextId++);
+      return symbolToNumber.get(value);
+    }
+    if (value === -Infinity) return "__NEGATIVE_INFINITY__";
+    return value;
+  });
 }
 
 // ---

@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{Declaration, ExportDefaultDeclarationKind, Expression, Function, ModuleExportName},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -68,8 +68,8 @@ declare_oxc_lint!(
 impl Rule for NoThisInExportedFunction {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if let Some(Declaration::FunctionDeclaration(func)) = &export_decl.declaration {
+            AstKind::ExportDeclaration(export_decl) => {
+                if let Declaration::FunctionDeclaration(func) = &export_decl.declaration {
                     check_function_for_this(func, ctx);
                 }
             }
@@ -112,6 +112,11 @@ impl Rule for NoThisInExportedFunction {
 
 fn check_function_for_this(func: &Function, ctx: &LintContext) {
     let Some(body) = &func.body else { return };
+
+    // Fast path for the case when there is undoubtedly no `this` inside the body.
+    if !ctx.source_range(body.span).contains("this") {
+        return;
+    }
 
     let mut finder =
         ThisExpressionFinder::new().skip_static_blocks().skip_property_definition_values();

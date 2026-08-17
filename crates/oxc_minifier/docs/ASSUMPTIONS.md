@@ -81,6 +81,21 @@ try {
 
 This also lets an unused `new Int8Array(n)` (or any TypedArray) with a numeric-literal `n` be dropped: a valid length allocates a zeroed buffer with no observable effect, and a too-large literal only throws a maximum-length `RangeError`. A non-literal, negative (`new Int8Array(-1)`), `BigInt` (`new Int8Array(0n)`), or object argument is kept.
 
+### Coercion to a primitive does not throw for non-Symbol arguments
+
+Pure global functions and methods that coerce their arguments (`parseInt`, `isNaN`, `Math.*`, `Date.UTC`, `String.fromCharCode`, …) are treated as side-effect-free, so an unused call is dropped. A Symbol argument would make `ToString` / `ToNumber` throw a `TypeError`, but the minifier assumes a non-Symbol argument when it cannot prove the type — so `Math.abs(x)` / `parseInt(x)` stay droppable.
+
+```javascript
+// The minifier assumes this never happens:
+Math.abs(Symbol.iterator); // TypeError: Cannot convert a Symbol value to a number
+```
+
+A call is still kept when an argument _provably_ throws:
+
+- `ToNumber` on a `BigInt` (`Math.abs(10n)`, `isNaN(10n)`, `Date.UTC(10n)`).
+- `String.fromCodePoint(cp)` with a code point outside `[0, 0x10FFFF]` (`String.fromCodePoint(-1)`) — an "invalid code point" `RangeError`, distinct from the droppable maximum-length errors above.
+- A missing or invalid required argument (`String.raw()`, `Symbol.keyFor()`, `URL.canParse()`).
+
 ### No side effects from extending a class
 
 Extending a class does not have a side effect.
@@ -118,6 +133,45 @@ Accessing a global variable named `arguments` does not have a side effect. We in
 ```javascript
 // The minifier assumes this never happens:
 console.log(arguments); // ReferenceError: arguments is not defined
+```
+
+### Property writes to provably-unused local bindings are effect-free
+
+In full-minify mode, a plain `=` write to a property of a local binding is
+dropped when the binding is provably unused: it holds a fresh value (object /
+array / function / class literal with no getters, setters, or `__proto__`), is
+not exported, and every reference to it is itself a property-write target
+(terser parity — `function A() {} A.from = () => {};` is removed entirely).
+
+This assumes `Object.prototype` / `Function.prototype` / `Array.prototype`
+properties are not setters with side effects that such writes would trigger (the
+same class of assumption as the `property_write_side_effects: false` tree-shaking
+option, but applied only to this narrow provably-unused case). This is the only
+unsoundness in this optimization.
+
+Writes that would themselves throw a strict-mode `TypeError` or have an
+observable value-domain effect are kept via a kind-aware key denylist: the
+non-writable own `name` / `length` and the `caller` / `arguments` poison of a
+function or class, a class's non-writable `prototype`, an instance-private
+brand-check write (`o.#x = 1`), and an `Array` `length` write (which can throw a
+`RangeError` or run a `valueOf` coercion). A plain function's `prototype` is
+writable, so `f.prototype = {...}` still drops.
+
+Writes are NOT dropped when any other operation on the binding could observe
+them: compound / logical assignments and updates (`o.x += 1` reads the
+property), chained writes (`a.b.c = 1` reads `a.b`), `delete` of a nested
+member, or writes through `__proto__` / non-literal computed keys (which may
+install setters).
+
+```javascript
+// The minifier assumes this never happens:
+Object.defineProperty(Object.prototype, "x", {
+  set() {
+    console.log("side effect!");
+  },
+});
+var o = {};
+o.x = 1; // dropped — would have logged
 ```
 
 ### `Function.prototype.toString` is not relied on

@@ -17,12 +17,13 @@ pub trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let is_declare = matches!(
-            builder.ancestry().parent_kind(),
-            AstKind::VariableDeclaration(decl) if decl.declare
-        );
+        let AstKind::VariableDeclaration(declaration) = builder.ancestry().parent_kind() else {
+            unreachable!();
+        };
+        let kind = declaration.kind;
+        let is_declare = declaration.declare;
 
-        let (mut includes, excludes) = match self.kind {
+        let (mut includes, excludes) = match kind {
             VariableDeclarationKind::Const
             | VariableDeclarationKind::Using
             | VariableDeclarationKind::AwaitUsing => (
@@ -41,7 +42,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             includes |= SymbolFlags::Ambient;
         }
 
-        if self.kind.is_lexical() {
+        if kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
                 let symbol_id = builder.declare_symbol(ident.span, ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
@@ -100,7 +101,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
                 for &scope_id in &var_scope_ids {
-                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+                    builder.hoisting_variables.insert((scope_id, name), symbol_id);
                 }
             });
         }
@@ -195,11 +196,7 @@ impl<'a> Binder<'a> for Function<'a> {
                         var_scope_id,
                         symbol_id,
                     );
-                    builder
-                        .hoisting_variables
-                        .entry(block_scope_id)
-                        .or_default()
-                        .insert(ident.name, symbol_id);
+                    builder.hoisting_variables.insert((block_scope_id, ident.name), symbol_id);
                 }
             }
 
@@ -451,9 +448,9 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
     }
 }
 
-impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
+impl<'a> Binder<'a> for TSNamespaceDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let TSModuleDeclarationName::Identifier(id) = &self.id else { return };
+        let id = &self.id;
         let instantiated =
             get_module_instance_state(builder, self, builder.node_store.current_node_id)
                 .is_instantiated();
@@ -490,7 +487,7 @@ impl ModuleInstanceState {
 /// Based on `https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/binder.ts#L342-L474`
 fn get_module_instance_state<'a>(
     builder: &mut SemanticBuilder<'a>,
-    decl: &TSModuleDeclaration<'a>,
+    decl: &TSNamespaceDeclaration<'a>,
     current_node_id: NodeId,
 ) -> ModuleInstanceState {
     get_module_instance_state_impl(builder, decl, current_node_id, &mut Vec::new())
@@ -498,7 +495,7 @@ fn get_module_instance_state<'a>(
 
 fn get_module_instance_state_impl<'a, 'b>(
     builder: &mut SemanticBuilder<'a>,
-    decl: &'b TSModuleDeclaration<'a>,
+    decl: &'b TSNamespaceDeclaration<'a>,
     current_node_id: NodeId,
     module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
 ) -> ModuleInstanceState {
@@ -509,14 +506,9 @@ fn get_module_instance_state_impl<'a, 'b>(
         return *state;
     }
 
-    let Some(body) = &decl.body else {
-        // For modules without a block, we consider them instantiated
-        return ModuleInstanceState::Instantiated;
-    };
-
     // A module is uninstantiated if it contains only specific declarations
-    let state = match body {
-        TSModuleDeclarationBody::TSModuleBlock(block) => {
+    let state = match &decl.body {
+        TSNamespaceDeclarationBody::TSModuleBlock(block) => {
             module_declaration_stmts.extend(block.body.iter());
 
             let mut child_state = ModuleInstanceState::NonInstantiated;
@@ -533,10 +525,44 @@ fn get_module_instance_state_impl<'a, 'b>(
             }
             child_state
         }
-        TSModuleDeclarationBody::TSModuleDeclaration(module) => {
-            get_module_instance_state(builder, module, current_node_id)
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(namespace) => {
+            get_module_instance_state(builder, namespace, current_node_id)
         }
     };
+
+    builder.module_instance_state_cache.insert(address, state);
+    state
+}
+
+fn get_external_module_instance_state_impl<'a, 'b>(
+    builder: &mut SemanticBuilder<'a>,
+    decl: &'b TSExternalModuleDeclaration<'a>,
+    current_node_id: NodeId,
+    module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
+) -> ModuleInstanceState {
+    let address = decl.unstable_address();
+
+    if let Some(state) = builder.module_instance_state_cache.get(&address) {
+        return *state;
+    }
+
+    let Some(block) = &decl.body else {
+        return ModuleInstanceState::Instantiated;
+    };
+
+    module_declaration_stmts.extend(block.body.iter());
+    let mut state = ModuleInstanceState::NonInstantiated;
+    for stmt in &block.body {
+        state = get_module_instance_state_for_statement(
+            builder,
+            stmt,
+            current_node_id,
+            module_declaration_stmts,
+        );
+        if state.is_instantiated() {
+            break;
+        }
+    }
 
     builder.module_instance_state_cache.insert(address, state);
     state
@@ -576,10 +602,13 @@ fn get_module_instance_state_for_statement<'a, 'b>(
                     ModuleInstanceState::Instantiated
                 }
             }
-            Statement::ExportNamedDeclaration(export_decl) if export_decl.declaration.is_some() => {
-                match export_decl.declaration.as_ref().unwrap() {
-                    Declaration::TSModuleDeclaration(module_decl) => {
-                        get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
+            Statement::ExportDeclaration(export_decl) => {
+                match &export_decl.declaration {
+                    Declaration::TSExternalModuleDeclaration(module_decl) => {
+                        get_external_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
+                    }
+                    Declaration::TSNamespaceDeclaration(namespace_decl) => {
+                        get_module_instance_state_impl(builder, namespace_decl, current_node_id, module_declaration_stmts)
                     }
                     decl => if decl.is_type() {
                         ModuleInstanceState::NonInstantiated
@@ -590,22 +619,21 @@ fn get_module_instance_state_for_statement<'a, 'b>(
             }
             // 4. Export alias declarations pointing at uninstantiated modules
             Statement::ExportNamedDeclaration(export_decl) => {
-                if export_decl.source.is_none() {
-                    let mut export_state = ModuleInstanceState::NonInstantiated;
-                    for specifier in &export_decl.specifiers {
-                        export_state = get_module_instance_state_for_alias_target(builder, specifier, current_node_id, module_declaration_stmts.as_slice());
-                        if export_state.is_instantiated() {
-                            break;
-                        }
+                let mut export_state = ModuleInstanceState::NonInstantiated;
+                for specifier in &export_decl.specifiers {
+                    export_state = get_module_instance_state_for_alias_target(builder, specifier, current_node_id, module_declaration_stmts.as_slice());
+                    if export_state.is_instantiated() {
+                        break;
                     }
-                    export_state
-                } else {
-                    ModuleInstanceState::Instantiated
                 }
+                export_state
             }
             // 5. other module declarations
-            Statement::TSModuleDeclaration(module_decl) => {
-                get_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
+            Statement::TSNamespaceDeclaration(namespace_decl) => {
+                get_module_instance_state_impl(builder, namespace_decl, current_node_id, module_declaration_stmts)
+            }
+            Statement::TSExternalModuleDeclaration(module_decl) => {
+                get_external_module_instance_state_impl(builder, module_decl, current_node_id, module_declaration_stmts)
             }
             // Any other type of statement means the module is instantiated
             _ => ModuleInstanceState::Instantiated,
@@ -648,21 +676,18 @@ fn get_module_instance_state_for_alias_target<'a>(
                         found = true;
                     }
                 }
-                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
-                    Some(Declaration::VariableDeclaration(decl)) => {
+                Statement::ExportDeclaration(decl) => match &decl.declaration {
+                    Declaration::VariableDeclaration(decl) => {
                         decl.bound_names(&mut |id| {
                             if id.name == name {
                                 found = true;
                             }
                         });
                     }
-                    Some(decl) => {
+                    decl => {
                         if decl.id().is_some_and(|id| id.name == name) {
                             found = true;
                         }
-                    }
-                    None => {
-                        continue;
                     }
                 },
                 Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {

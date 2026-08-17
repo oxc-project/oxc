@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+$primary: red !important;
+$padding: 10px !important;
+
+.demo {
+  color: $primary;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+$primary: red !important;
+$padding: 10px !important;
+
+.demo {
+  color: $primary;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+$primary: red !important;
+$padding: 10px !important;
+
+.demo {
+  color: $primary;
+}
+
+===================== End =====================

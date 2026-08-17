@@ -1,8 +1,10 @@
 # Coding agent guides for `crates/oxc_formatter`
 
+Follow @../oxc_formatter_core/FORMATTER_POLICY.md , this file holds only the JS/TS-specific rules and translations.
+
 ## Overview
 
-Prettier compatible JS/TS formatter (`oxfmt`'s Tier 1 backend), ported from [Biome](https://github.com/biomejs/biome).
+Prettier compatible JS/TS formatter (`oxfmt`'s Tier 1 backend), ported from [Biome](https://github.com/biomejs/biome)'s `biome_js_formatter`.
 It turns a parsed AST into an IR ("Document") of `FormatElement`s, then prints that IR via the shared `oxc_formatter_core` Printer.
 
 - Built on `oxc_formatter_core` for the language-agnostic IR + Printer + builders + macros
@@ -21,7 +23,8 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - Drives context-dependent decisions like forced parentheses / quote style
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
-- `ExternalCallbacks` (in `external_formatter.rs`): Callbacks for embedded-doc / Tailwind formatting delegated back to the host
+- `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
+  - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
 
 ### Generated code
 
@@ -38,70 +41,154 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 ### Format JSDoc (`formatter/jsdoc/`)
 
 - Derived from `prettier-plugin-jsdoc`, but not fully compatible
-- See `prettier_conformance/jsdoc` for the covered behavior
+- See `tests/jsdoc/fixtures` for the covered behavior
+  - See also `tests/jsdoc/upstream-jsdoc-bugs.md`
 
 ### Sort Tailwind CSS
 
-- Derived from `prettier-plugin-tailwindcss`
+- Backed by `prettier-plugin-tailwindcss`
 - Classes are collected during IR construction and sorted in one batch when the IR is stringified
-- Requires `ExternalCallbacks` (the sort itself is delegated to the host via `TailwindCallback`)
+- Requires the session's `TailwindSorter` service (the sort itself is delegated to the host)
 
 ### Embedded language formatting
 
-- Two directions: xxx-in-js (e.g. css/graphql/html in template literals) and js-in-xxx (e.g. vue/svelte)
-- Both work by Oxfmt injecting Prettier calls through `ExternalCallbacks`
-  - This crate stays unaware of Prettier and only invokes the supplied callbacks
+Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx (vue/svelte).
+
+- xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles Rust based formatter, Prettier Doc→IR fallback otherwise
+- As the JS host, this crate also owns the parent-side concerns in `print/template/embed/`:
+  - template-literal escape on returned IR,
+  - placeholder marker insertion / survival validation / `${expr}` substitution,
+  - and `.raw` vs `.cooked` selection
+  - Language formatter crates stay free of these rules
+    - See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring
+- js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`
 
 ## Fixing IR construction
 
 - Always keep the big picture in mind so a fix is not a one-off patch
   - Comments and parentheses are especially prone to side effects, handle them with care
-- We aim for Prettier compatibility, but the implementation strategy differs:
-  - Prettier pre-classifies comments per context, whereas oxc_formatter decides on the spot
-  - Biome works on a CST rather than an AST, so its code and strategy differ in detail too
+- Biome works on a CST rather than an AST, so its code and strategy differ in detail from ours (and both differ from Prettier's)
 
-Above all, prioritize consistency, and always consider whether the divergence is a Prettier bug.
+### Comment placement invariants
+
+The shared two-layer split (invariants vs compat tables) and the base invariants live in FORMATTER_POLICY.md "Comment placement invariants";
+this section records their JS/TS translation and the measured compat tables.
+
+Repositioning a comment is allowed only relative to formatter-owned punctuation
+(e.g. printing `;` before a same-line trailing comment, see `FormatContentWithSemicolon`).
+
+The `;` rule applies to statement terminators only, never to member separators:
+
+- Terminator: the `;` cannot be replaced by `,` — statements, class members
+  (property/accessor via `FormatClassElementWithSemicolon`, bodyless methods in `MethodDefinition`).
+  A same-line trailing comment moves behind it
+- Separator: interface / type literal members and index signatures (`;` is interchangeable with `,`),
+  enum members' `,` — the comment stays before it, same as any list separator.
+  This matches Prettier and is the principled line, not an emulated quirk
+- Known gap, intentionally not covered: TS-only statements
+  (`import A = B;` / `export = x;` / `export as namespace X;` / `declare function f(): void;` / `declare module "m";`).
+  They are terminators by the rule above, but Prettier does not move their comments (yet);
+  we follow Prettier for now. If Prettier extends the rule to them, follow;
+  each is a small mechanical `FormatContentWithSemicolon` adoption
+
+When the content's source parentheses survive in the output (return/throw arguments, sequence/assignment in the prettier#19263 positions), comments inside them belong to the content and stay there;
+only comments after the closing paren may move behind the terminator (see `Comments::end_including_source_parens`).
+
+The "which positions keep their parens" table is intentionally encoded twice:
+
+- `keeps_trailing_comment_inside_parens` (statement side, walks down the rightmost expression)
+- and `write_trailing_comments_inside_parens` (expression side, matches on the parent) in `print/semicolon.rs`
+
+The statement side promises not to hide/move the comment; the expression side actually prints it.
+Change them together: if they drift, the comment silently lands elsewhere (no assert catches it), so pin every position change in a fixture.
+
+The move-behind-the-terminator policy has four deliberate variants.
+When extending to a new node, pick by measuring Prettier, not by analogy:
+
+| Site                                                        | Source `;` required?      | Own-line comment before `;`                                                           |
+| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| Statements (`FormatContentWithSemicolon`)                   | yes (ASI: no move)        | deferred to the next node's leading pass                                              |
+| return/throw (`ReturnAndThrowStatement`)                    | no (moves even under ASI) | deferred to the next node's leading pass (only the same-line prefix moves behind `;`) |
+| Class property/accessor (`FormatClassElementWithSemicolon`) | yes                       | cancels the move (stays own-line)                                                     |
+| Bodyless methods (`MethodDefinition`)                       | yes                       | cancels the move                                                                      |
+
+JS-side mechanics of the shared "never cross" invariants:
+
+- Line boundary: line comments are printed via `line_suffix`, and own-line comments stay own-line (they become the next node's leading comments)
+  - Both are structural guarantees, keep them
+- User content: e.g. Prettier relocates a comment after a trailing array hole backward across commas to the last real element — an attachment artifact, we keep the comment in place and diverge intentionally
+- Suppression: when hiding comments from a node (`limit_comments_up_to`), check `has_trailing_suppression_comment` first, or the node loses its suppression
+
+Prettier's comment _attachment_ is position-heuristic and sometimes asymmetric
+(e.g. it moves `export type T = string /* c */;`'s comment behind the semicolon but not the non-exported form).
+When that happens, prefer one uniform rule over emulating the asymmetry, and pin the intentional divergence in a fixture with a note.
+
+### Statement terminators and suppression
+
+The formatter owns statement terminators (and the trivia up to them); the user owns content.
+Prettier encodes "the trailing `;` is outside the statement" once, in `locEnd`;
+deciding on the spot, we encode the same policy per site, so keep them in step:
+
+- print side: `FormatContentWithSemicolon` and the move-behind table above
+- return/throw: the same-line-prefix dangling split in `ReturnAndThrowStatement`
+- capture side: `Comments::get_trailing_comments` lets deferred own-line comments escape when the statement shares its distant `;` with the enclosing statement
+  (a single-statement body, `if (1) foo\n// c\n;`); a block's last statement keeps them inside instead
+- suppressed side: `suppressed_statement_content_end` (`print/mod.rs`) ends the ignored range at the content,
+  so even a `prettier-ignore`d statement gets the formatter's terminator (per `semi`) instead of its source one
+
+Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
+
+- Whether a suppressed statement re-adds `;` is a compat table, not a principle:
+  keyword statements (`debugger`/`break`/`continue`) always re-add,
+  content-terminated ones only when a source `;` was stripped — the asymmetry is observable only for a suppressed keyword statement relying on ASI
+- The `semi: false` ASI guard is decided from the guarded statement alone,
+  never from the previous statement's output;
+  sound because no statement leaves its own trailing `;`,
+  except a verbatim empty-statement body (`with (1) ;`, that `;` IS the body, i.e. content), where guard plus verbatim `;` re-parse as one extra inert `EmptyStatement`
+
+## Known divergences
+
+Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
+The entries documented so far are not yet an exhaustive audit against the conformance snapshots:
+
+- A comment after a trailing array hole stays in place; Prettier relocates it backward across commas to the last real element
+- Asymmetric attachment like `export type T = string /* c */;` (comment moved behind `;` only in the exported form): one uniform rule instead of emulating the asymmetry
+- A trailing comment before a closing paren never breaks the operand chain: `!(a &&\n b // c)` collapses to `a && b // c`, as both formatters already do in every other paren-surviving position (return/throw argument, call argument, assignment, arrow body)
+  - Prettier preserves the source break only in the unary position and only when the last operand was alone on its source line (attachment binds the comment to that operand)
+  - Internal inconsistency plus source-layout sensitivity, overridden by the uniform rule
+  - Conditions are a separate shared rule (logical operands always break)
+- `experimentalOperatorPosition: "start"`, binary-like chains: a single space before the previous operand's flushed trailing line comment (`prev // c`); Prettier emits two (`prev  // c`)
+  - Artifact of its comment-extraction doc surgery: an unconditional separator space that its end-of-line trimming can only remove when no line-suffix comment flushes behind it
+- `experimentalOperatorPosition: "start"`, intersection types: a leading own-line comment stays own-line, above the leading `&`; Prettier prints it behind `& `, losing its own-line-ness and idempotency (the second pass inlines the type with the comment behind `;`)
+  - Binary-like chains hoist the comment in both formatters; one uniform rule (and the own-line invariant) over Prettier's internal inconsistency
+- Inline comments around a union's formatter-added `(` keep their source side (`keyof /* c */ (A | B)` stays as-is)
+  - Prettier moves the comment inside for `keyof`/type-operator operands while keeping it outside in array/indexed-access positions
+- An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break)
+  - Prettier treats the same shape three ways:
+    - JS keeps it only when the right-hand side breaks and flushes it past a fitting one (prettier#14617-family attachment artifact)
+    - TS type aliases and union-valued property signatures get it own-lined (the 3.9 union rewrite)
+    - simple-typed property signatures get it flushed past the member and its `;` separator
+  - Not yet covered: default parameters, destructuring defaults, enum members (different formatting paths still flush, Prettier-compatible)
+- A union's leading comments normalize to behind the leading `|` (`| /* c */ A`) whenever no comment ends its source line, regardless of the source shape
+  - Prettier does the same except for nested single-member paren sources (`| (/* c */ | A ...`) and multiline block comments starting their line, where it keeps `/* c */ | A`
+    - An output it then reformats into `| /* c */ A` itself for the first shape, not idempotent
 
 ## Verification
+
+Feature configs to check:
 
 ```sh
 cargo c -p oxc_formatter
 cargo c -p oxc_formatter --features detect_code_removal
 ```
 
-Run `clippy` for the same configurations and resolve all warnings.
+### Fixture tests
 
-### Fixtures tests
-
-Snapshot tests driven by fixture files under `tests/fixtures/{js,ts}/`.
-`build.rs` auto-discovers every `.{js,jsx,ts,tsx}` file and generates a test function per file; options are resolved from the nearest `options.json` up the directory tree. See `tests/README.md` for the full workflow.
+See `tests/README.md` for the full workflow.
 
 ```sh
 # Run all fixtures tests
 cargo test -p oxc_formatter --test mod
 # Run a subset by module path (directory structure = module hierarchy)
 cargo test -p oxc_formatter fixtures::js::comments
-# Review / accept snapshots after intentional changes
-cargo insta test --accept -p oxc_formatter --test mod
-```
-
-Add a case by dropping a new file into `tests/fixtures/`, no manual registration needed.
-
-### Prettier conformance
-
-Compares output against Prettier's snapshots and tracks failures (not passes); results live in `tasks/prettier_conformance/snapshots/`.
-
-```sh
-cargo run -p oxc_prettier_conformance
-```
-
-### Embedded conformance (`apps/oxfmt`)
-
-The embedded-language features (xxx-in-js / js-in-xxx) are validated end-to-end through the Oxfmt.
-
-Requires a dev build first.
-
-```sh
-pnpm --dir apps/oxfmt build-dev
-pnpm --dir apps/oxfmt conformance
 ```

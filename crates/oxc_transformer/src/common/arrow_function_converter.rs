@@ -91,20 +91,25 @@ use compact_str::CompactString;
 use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
-use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
-use oxc_ast::{NONE, ast::*};
-use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
+use oxc_allocator::{ArenaBox, ArenaVec, ReplaceWith, TakeIn};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitJsMut, walk_js_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::{GetSpan, SPAN};
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
+use crate::{
+    EnvOptions,
+    utils::ast_builder::{
+        arrow_function_body_as_function_body_mut, wrap_expression_in_arrow_function_iife,
+    },
+};
 use crate::{context::TraverseCtx, state::TransformState};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
@@ -208,7 +213,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         debug_assert!(self.super_methods_stack.is_exhausted());
         debug_assert!(self.super_methods_stack.first().is_empty());
         debug_assert!(self.super_needs_transform_stack.is_exhausted());
-        debug_assert!(self.super_needs_transform_stack.first() == &false);
+        debug_assert_eq!(self.super_needs_transform_stack.first(), &false);
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -291,9 +296,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
             if Self::in_class_property_definition_value(ctx) {
                 let this_var = self.this_var_stack.pop();
                 let super_methods = self.super_methods_stack.pop();
+                let scope_id = arrow.scope_id();
+                let body = arrow_function_body_as_function_body_mut(&mut arrow.body, ctx);
                 self.insert_variable_statement_at_the_top_of_statements(
-                    arrow.scope_id(),
-                    &mut arrow.body.statements,
+                    scope_id,
+                    &mut body.statements,
                     this_var,
                     None,
                     Some(super_methods),
@@ -316,8 +323,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         }
     }
 
-    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, _ctx: &mut TraverseCtx<'a>) {
-        // This covers exiting either a `Function` or an `ArrowFunctionExpression`
+    fn exit_function_body(&mut self, _body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.is_async_only() && matches!(ctx.parent(), Ancestor::FunctionBody(_)) {
+            self.arguments_needs_transform_stack.pop();
+        }
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        _body: &mut ArrowFunctionBody<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.is_async_only() {
             self.arguments_needs_transform_stack.pop();
         }
@@ -422,7 +438,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                     //   prop = (() => { return async () => {} })();
                     // }
                     // ```
-                    Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx))
+                    Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx), ctx))
                 }
             _ => return,
         };
@@ -432,6 +448,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
         }
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.is_disabled() {
             return;
@@ -444,12 +461,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr.take_in(ctx.ast)
-            else {
-                unreachable!()
-            };
-
-            *expr = Self::transform_arrow_function_expression(arrow_function_expr, ctx);
+            Self::transform_arrow_function_expression_on_exit(expr, ctx);
         }
     }
 
@@ -485,6 +497,19 @@ impl<'a> Traverse<'a, TransformState<'a>> for ArrowFunctionConverter<'a> {
 }
 
 impl<'a> ArrowFunctionConverter<'a> {
+    #[inline(never)]
+    fn transform_arrow_function_expression_on_exit(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        expr.replace_with(|expr| {
+            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr else {
+                unreachable!()
+            };
+            Self::transform_arrow_function_expression(arrow_function_expr, ctx)
+        });
+    }
+
     /// Check if arrow function conversion is disabled
     fn is_disabled(&self) -> bool {
         self.mode == ArrowFunctionConverterMode::Disabled
@@ -526,7 +551,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         // TODO: Add `BoundIdentifier::create_spanned_read_reference_boxed` method (and friends)
         // for this use case, so we can avoid `alloc()` call here.
         // I (@overlookmotel) doubt it'd make a perf difference, but it'd be cleaner code.
-        Some(ctx.ast.alloc(this_var.create_spanned_read_reference(span, ctx)))
+        Some(ArenaBox::new_in(this_var.create_spanned_read_reference(span, ctx), ctx))
     }
 
     /// Traverses upward through ancestor nodes to find the `ScopeId` of the block
@@ -636,18 +661,17 @@ impl<'a> ArrowFunctionConverter<'a> {
         let flags = ctx.scoping_mut().scope_flags_mut(scope_id);
         *flags &= !ScopeFlags::Arrow;
 
-        let mut body = arrow_function_expr.body;
+        let body = match arrow_function_expr.body {
+            ArrowFunctionBody::FunctionBody(body) => body,
+            body => {
+                let expression = body.into_expression();
+                let span = expression.span();
+                let return_statement = Statement::new_return_statement(span, Some(expression), ctx);
+                FunctionBody::boxed(span, [], [return_statement], ctx)
+            }
+        };
 
-        if arrow_function_expr.expression {
-            assert!(body.statements.len() == 1);
-            let stmt = body.statements.pop().unwrap();
-            let Statement::ExpressionStatement(stmt) = stmt else { unreachable!() };
-            let stmt = stmt.unbox();
-            let return_statement = ctx.ast.statement_return(stmt.span, Some(stmt.expression));
-            body.statements.push(return_statement);
-        }
-
-        ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
+        Expression::new_function_expression_with_scope_id_and_pure_and_pife(
             arrow_function_expr.span,
             FunctionType::FunctionExpression,
             None,
@@ -655,13 +679,14 @@ impl<'a> ArrowFunctionConverter<'a> {
             arrow_function_expr.r#async,
             false,
             arrow_function_expr.type_parameters,
-            NONE,
+            None,
             arrow_function_expr.params,
             arrow_function_expr.return_type,
             Some(body),
             scope_id,
             false,
             false,
+            ctx,
         )
     }
 
@@ -745,8 +770,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // The property will as a parameter to pass to the new arrow function.
                 // `super[property]` to `_superprop_get(property)`
-                argument = Some(computed_member.expression.take_in(ctx.ast));
-                computed_member.object.take_in(ctx.ast)
+                argument = Some(computed_member.expression.take_in(ctx));
+                computed_member.object.take_in(ctx)
             }
             MemberExpression::StaticMemberExpression(static_member) => {
                 if !static_member.object.is_super() {
@@ -755,7 +780,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // Used to generate the name of the arrow function.
                 property = static_member.property.name.as_str();
-                expr.take_in(ctx.ast)
+                expr.take_in(ctx)
             }
             MemberExpression::PrivateFieldExpression(_) => {
                 // Private fields can't be accessed by `super`.
@@ -773,8 +798,9 @@ impl<'a> ArrowFunctionConverter<'a> {
         });
 
         let callee = super_info.binding.create_read_expression(ctx);
-        let mut arguments = ctx.ast.vec_with_capacity(
+        let mut arguments = ArenaVec::with_capacity_in(
             usize::from(assign_value.is_some()) + usize::from(argument.is_some()),
+            ctx,
         );
         // _prop
         if let Some(argument) = argument {
@@ -782,9 +808,10 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
         // _value
         if let Some(assign_value) = assign_value {
-            arguments.push(Argument::from(assign_value.take_in(ctx.ast)));
+            arguments.push(Argument::from(assign_value.take_in(ctx)));
         }
-        let call = ctx.ast.expression_call(expr.span(), callee, NONE, arguments, false);
+        let call =
+            Expression::new_call_expression(expr.span(), callee, None, arguments, false, ctx);
         Some(call)
     }
 
@@ -817,14 +844,15 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         let object = self.transform_member_expression_for_super(&mut call.callee, None, ctx)?;
         // Add `this` as the first argument and original arguments as the rest.
-        let mut arguments = ctx.ast.vec_with_capacity(call.arguments.len() + 1);
-        arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
-        arguments.extend(call.arguments.take_in(ctx.ast));
+        let mut arguments = ArenaVec::with_capacity_in(call.arguments.len() + 1, ctx);
+        arguments.push(Argument::new_this_expression(SPAN, ctx));
+        arguments.extend(call.arguments.take_in(ctx));
 
-        let property = ctx.ast.identifier_name(SPAN, "call");
-        let callee = ctx.ast.member_expression_static(SPAN, object, property, false);
+        let property = IdentifierName::new(SPAN, "call", ctx);
+        let callee =
+            MemberExpression::new_static_member_expression(SPAN, object, property, false, ctx);
         let callee = Expression::from(callee);
-        Some(ctx.ast.expression_call(call.span, callee, NONE, arguments, false))
+        Some(Expression::new_call_expression(call.span, callee, None, arguments, false, ctx))
     }
 
     /// Transform an `AssignmentExpression` whose assignment target is a `super` member expression.
@@ -856,7 +884,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             return None;
         }
 
-        let assignment_target = assignment.left.take_in(ctx.ast);
+        let assignment_target = assignment.left.take_in(ctx);
         let mut assignment_expr = Expression::from(assignment_target.into_member_expression());
         self.transform_member_expression_for_super(
             &mut assignment_expr,
@@ -898,7 +926,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             ctx.create_child_scope(target_scope_id, ScopeFlags::Arrow | ScopeFlags::Function);
 
         let mut items =
-            ctx.ast.vec_with_capacity(usize::from(is_computed) + usize::from(is_assignment));
+            ArenaVec::with_capacity_in(usize::from(is_computed) + usize::from(is_assignment), ctx);
 
         // Create a parameter for the prop if it's a computed member expression.
         if is_computed {
@@ -906,26 +934,28 @@ impl<'a> ArrowFunctionConverter<'a> {
             // in `prop => super[prop]` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("prop", scope_id, SymbolFlags::FunctionScopedVariable);
-            let param = ctx.ast.formal_parameter(
+            let param = FormalParameter::new(
                 SPAN,
-                ctx.ast.vec(),
+                [],
                 param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
+                None,
+                None,
                 false,
                 None,
                 false,
                 false,
+                ctx,
             );
             items.push(param);
 
             // `super` -> `super[prop]`
-            init = Expression::from(ctx.ast.member_expression_computed(
+            init = Expression::new_computed_member_expression(
                 SPAN,
                 init,
                 param_binding.create_read_expression(ctx),
                 false,
-            ));
+                ctx,
+            );
         }
 
         // Create a parameter for the value if it's an assignment.
@@ -934,16 +964,17 @@ impl<'a> ArrowFunctionConverter<'a> {
             // in `value => super.prop = value` or `(prop, value) => super[prop] = value` which can clash.
             let param_binding =
                 ctx.generate_uid("value", scope_id, SymbolFlags::FunctionScopedVariable);
-            let param = ctx.ast.formal_parameter(
+            let param = FormalParameter::new(
                 SPAN,
-                ctx.ast.vec(),
+                [],
                 param_binding.create_binding_pattern(ctx),
-                NONE,
-                NONE,
+                None,
+                None,
                 false,
                 None,
                 false,
                 false,
+                ctx,
             );
             items.push(param);
 
@@ -951,27 +982,41 @@ impl<'a> ArrowFunctionConverter<'a> {
             let left = SimpleAssignmentTarget::from(init.into_member_expression());
             let left = AssignmentTarget::from(left);
             let right = param_binding.create_read_expression(ctx);
-            init = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
+            init = Expression::new_assignment_expression(
+                SPAN,
+                AssignmentOperator::Assign,
+                left,
+                right,
+                ctx,
+            );
         }
 
-        let params = ctx.ast.formal_parameters(
+        let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             items,
-            NONE,
+            None,
+            ctx,
         );
-        let statements = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, init));
-        let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
-        let init = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
-            SPAN, true, false, NONE, params, NONE, body, scope_id, false, false,
-        );
-        ctx.ast.variable_declarator(
+        let init = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
-            VariableDeclarationKind::Var,
+            false,
+            None,
+            params,
+            None,
+            ArrowFunctionBody::from(init),
+            scope_id,
+            false,
+            false,
+            ctx,
+        );
+        VariableDeclarator::new(
+            SPAN,
             binding.create_binding_pattern(ctx),
-            NONE,
+            None,
             Some(init),
             false,
+            ctx,
         )
     }
 
@@ -1112,34 +1157,42 @@ impl<'a> ArrowFunctionConverter<'a> {
         Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
 
         let mut init =
-            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("arguments"), ReferenceFlags::Read);
+            ctx.create_unbound_ident_expr(SPAN, static_ident!("arguments"), ReferenceFlags::Read);
 
         // Top level may not have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
         if ctx.scoping().root_scope_id() == target_scope_id {
             let argument = ctx.create_unbound_ident_expr(
                 SPAN,
-                ctx.ast.ident("arguments"),
+                static_ident!("arguments"),
                 ReferenceFlags::Read,
             );
-            let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);
-            let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined", None);
-            let test = ctx.ast.expression_binary(
+            let typeof_arguments =
+                Expression::new_unary_expression(SPAN, UnaryOperator::Typeof, argument, ctx);
+            let undefined_literal = Expression::new_string_literal(SPAN, "undefined", None, ctx);
+            let test = Expression::new_binary_expression(
                 SPAN,
                 typeof_arguments,
                 BinaryOperator::StrictEquality,
                 undefined_literal,
+                ctx,
             );
-            init = ctx.ast.expression_conditional(SPAN, test, ctx.ast.void_0(SPAN), init);
+            init = Expression::new_conditional_expression(
+                SPAN,
+                test,
+                Expression::new_void_0(SPAN, ctx),
+                init,
+                ctx,
+            );
         }
 
-        Some(ctx.ast.variable_declarator(
+        Some(VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Var,
             arguments_var.create_binding_pattern(ctx),
-            NONE,
+            None,
             Some(init),
             false,
+            ctx,
         ))
     }
 
@@ -1165,7 +1218,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             return;
         }
 
-        let mut declarations = ctx.ast.vec_with_capacity(declarations_count);
+        let mut declarations = ArenaVec::with_capacity_in(declarations_count, ctx);
 
         if let Some(arguments) = arguments {
             declarations.push(arguments);
@@ -1190,27 +1243,28 @@ impl<'a> ArrowFunctionConverter<'a> {
                     .visit_statements(statements);
                 None
             } else {
-                Some(ctx.ast.expression_this(SPAN))
+                Some(Expression::new_this_expression(SPAN, ctx))
             };
             Self::adjust_binding_scope(target_scope_id, &this_var, ctx);
-            let variable_declarator = ctx.ast.variable_declarator(
+            let variable_declarator = VariableDeclarator::new(
                 SPAN,
-                VariableDeclarationKind::Var,
                 this_var.create_binding_pattern(ctx),
-                NONE,
+                None,
                 init,
                 false,
+                ctx,
             );
             declarations.push(variable_declarator);
         }
 
         debug_assert_eq!(declarations_count, declarations.len());
 
-        let stmt = ctx.ast.alloc_variable_declaration(
+        let stmt = VariableDeclaration::boxed(
             SPAN,
             VariableDeclarationKind::Var,
             declarations,
             false,
+            ctx,
         );
 
         let stmt = Statement::VariableDeclaration(stmt);
@@ -1231,7 +1285,7 @@ impl<'a, 'v> ConstructorBodyThisAfterSuperInserter<'a, 'v> {
     }
 }
 
-impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
+impl<'a> VisitJsMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn visit_class(&mut self, class: &mut Class<'a>) {
         // Only need to transform `super()` in:
         //
@@ -1249,8 +1303,8 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 
         // `class Inner extends super() {}`
         //                      ^^^^^^^
-        if let Some(super_class) = &mut class.super_class {
-            self.visit_expression(super_class);
+        if let Some(heritage) = &mut class.heritage {
+            self.visit_expression(&mut heritage.expression);
         }
 
         for element in &mut class.body.body {
@@ -1296,7 +1350,7 @@ impl<'a> VisitMut<'a> for ConstructorBodyThisAfterSuperInserter<'a, '_> {
 
                 // Insert `_this = this;` after `super();`
                 let assignment = self.create_assignment_to_this_temp_var();
-                let assignment = self.ctx.ast.statement_expression(SPAN, assignment);
+                let assignment = Statement::new_expression_statement(SPAN, assignment, self.ctx);
                 statements.insert(index + 1, assignment);
 
                 // `super();` found as top-level statement in this block of statements.
@@ -1329,17 +1383,19 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
-        let exprs = self.ctx.ast.vec_from_array([expr.take_in(self.ctx.ast), assignment]);
-        *expr = self.ctx.ast.expression_sequence(span, exprs);
+        expr.replace_with(|expr| {
+            Expression::new_sequence_expression(span, [expr, assignment], self.ctx)
+        });
     }
 
     /// `_this = this`
     fn create_assignment_to_this_temp_var(&mut self) -> Expression<'a> {
-        self.ctx.ast.expression_assignment(
+        Expression::new_assignment_expression(
             SPAN,
             AssignmentOperator::Assign,
             self.this_var_binding.create_write_target(self.ctx),
-            self.ctx.ast.expression_this(SPAN),
+            Expression::new_this_expression(SPAN, self.ctx),
+            self.ctx,
         )
     }
 }

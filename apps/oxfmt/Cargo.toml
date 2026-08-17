@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.55.0"
+version = "0.63.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -32,7 +32,10 @@ oxc_config = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
+oxc_formatter_css = { workspace = true }
+oxc_formatter_graphql = { workspace = true }
 oxc_formatter_json = { workspace = true }
+oxc_formatter_yaml = { workspace = true }
 oxc_language_server = { workspace = true }
 oxc_napi = { workspace = true }
 oxc_span = { workspace = true }
@@ -43,7 +46,6 @@ editorconfig-parser = { workspace = true }
 fast-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
-miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

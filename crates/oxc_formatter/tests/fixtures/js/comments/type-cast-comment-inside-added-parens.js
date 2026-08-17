@@ -1,0 +1,42 @@
+// When the formatter adds parentheses around an expression whose
+// leading JSDoc type cast comment binds to an inner expression,
+// the comment must be printed inside the added parentheses;
+// printing it outside would rebind the cast to the added parentheses
+// and change the type semantics (issue #20182).
+//
+// NOTE: Prettier 3.9.5 prints the comment outside (and breaks the cast);
+
+// Cast binds to `(root)`; the `??` gets formatter-added parens in ternary branches.
+var target = /** @type {ShadowRoot} */ (root).host
+  ? /** @type {ShadowRoot} */ (root)
+  : /** @type {Document} */ (root).head ??
+    /** @type {Document} */ (root.ownerDocument).head;
+
+// The corrected form is a fixed point.
+var stable = x ? y : (/** @type {D} */ (b).head ?? c);
+
+// Object expression as cast target.
+var o = x ? y : /** @type {D} */ ({ a: 1 }).a ?? c;
+
+// Sequence expression keeps the cast on its first element.
+var p = (/** @type {D} */ (a), b);
+
+// Return argument.
+function w() {
+  return x ? y : /** @type {P} */ (a).b ?? c;
+}
+
+// A cast applying to the whole parenthesized expression still prints before its parens.
+var whole = x ? y : /** @type {D} */ (b.head ?? c);
+
+// Hand-written paren sites follow the same rule:
+// arrow body sequence with a leading cast comment,
+const arrow = () => (/** @type {D} */ (a).b, x);
+
+// and return argument sequence; only the cast comment moves inside the added parens.
+function ret() {
+  return (
+    // c
+    /** @type {D} */ (a).b, x
+  );
+}

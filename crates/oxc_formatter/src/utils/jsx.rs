@@ -4,7 +4,7 @@ use std::{
     str::Chars,
 };
 
-use oxc_allocator::Vec as ArenaVec;
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 
 use crate::QuoteStyle;

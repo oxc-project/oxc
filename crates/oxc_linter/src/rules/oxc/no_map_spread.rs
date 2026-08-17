@@ -3,6 +3,7 @@ use std::ops::Deref;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -10,11 +11,12 @@ use oxc_ast::{
         ObjectPropertyKind, ReturnStatement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::node::NodeId;
 
 use crate::{
     AstNode,
@@ -341,7 +343,7 @@ impl Rule for NoMapSpread {
         // Look for return statements that contain an object or array spread.
         let visitor = SpreadInReturnVisitor::<'a, '_>::iter_spreads(ctx, mapper, |spread| {
             // SAFETY: references to arena-allocated objects are valid for the
-            // lifetime of the arena. Unfortunately, `AsRef` on `Box<'a, T>`
+            // lifetime of the arena. Unfortunately, `AsRef` on `ArenaBox<'a, T>`
             // returns a reference with a lifetime of 'self instead of 'a.
             spreads.push(unsafe { std::mem::transmute::<Spread<'a, '_>, Spread<'a, 'a>>(spread) });
         });
@@ -466,7 +468,7 @@ fn fix_spread_to_object_assign<'a>(
     obj: &ObjectExpression<'a>,
 ) -> RuleFix {
     use oxc_allocator::{Allocator, CloneIn};
-    use oxc_ast::AstBuilder;
+    use oxc_ast::builder::AstBuilder;
     use oxc_span::SPAN;
 
     if obj.properties.len() <= 1 {
@@ -479,7 +481,7 @@ fn fix_spread_to_object_assign<'a>(
     // almost always overshoots, but will not re-alloc, so it's more performant
     // than creating an empty vec.
     // let mut args = ast.vec_with_capacity::<Argument>(obj.properties.len());
-    let mut curr_obj_properties = ast.vec::<ObjectPropertyKind>();
+    let mut curr_obj_properties = ArenaVec::new_in(&ast);
     let mut codegen = fixer.codegen();
     let mut is_first = true;
     codegen.print_str("Object.assign(");
@@ -491,8 +493,9 @@ fn fix_spread_to_object_assign<'a>(
             }
             ObjectPropertyKind::SpreadProperty(spread) => {
                 if !curr_obj_properties.is_empty() {
-                    let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
-                    let obj_arg = ast.expression_object(SPAN, properties);
+                    let properties =
+                        std::mem::replace(&mut curr_obj_properties, ArenaVec::new_in(&ast));
+                    let obj_arg = Expression::new_object_expression(SPAN, properties, &ast);
                     if is_first {
                         is_first = false;
                     } else {
@@ -514,8 +517,8 @@ fn fix_spread_to_object_assign<'a>(
         if !is_first {
             codegen.print_str(", ");
         }
-        let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
-        let obj_arg = ast.expression_object(SPAN, properties);
+        let properties = std::mem::replace(&mut curr_obj_properties, ArenaVec::new_in(&ast));
+        let obj_arg = Expression::new_object_expression(SPAN, properties, &ast);
         codegen.print_expression(&obj_arg);
     }
     codegen.print_ascii_byte(b')');
@@ -576,6 +579,9 @@ struct SpreadInReturnVisitor<'a, 'ctx, F> {
     cb: F,
     cb_scope_id: ScopeId,
     is_in_return: bool,
+    /// Declarations currently being visited while following identifiers
+    /// returned from the map callback.
+    visiting_declarations: Vec<NodeId>,
     /// Span covering returned expression. [`None`] when not in a return
     /// statement or no value is being returned (e.g. `return;`, but not `return
     /// undefined;`).
@@ -587,31 +593,32 @@ where
     F: FnMut(Spread<'a, '_>),
 {
     fn iter_spreads(ctx: &'ctx LintContext<'a>, map_cb: &Expression<'a>, cb: F) -> Option<Self> {
-        let (mut visitor, body) = match map_cb {
+        let mut visitor = match map_cb {
             Expression::ArrowFunctionExpression(f) => {
-                let v = Self {
+                let mut visitor = Self {
                     ctx,
                     cb,
                     cb_scope_id: f.scope_id(),
-                    is_in_return: f.expression,
-                    return_span: f.expression.then(|| f.body.span()),
+                    is_in_return: f.is_expression(),
+                    visiting_declarations: Vec::new(),
+                    return_span: f.is_expression().then(|| f.body.span()),
                 };
-                (v, f.body.as_ref())
+                visitor.visit_arrow_function_body(&f.body);
+                return Some(visitor);
             }
-            Expression::FunctionExpression(f) => {
-                let v = Self {
-                    ctx,
-                    cb,
-                    cb_scope_id: f.scope_id(),
-                    is_in_return: false,
-                    return_span: None,
-                };
-                let body = f.body.as_ref().map(AsRef::as_ref)?;
-                (v, body)
-            }
+            Expression::FunctionExpression(f) => Self {
+                ctx,
+                cb,
+                cb_scope_id: f.scope_id(),
+                is_in_return: false,
+                visiting_declarations: Vec::new(),
+                return_span: None,
+            },
             _ => unreachable!(),
         };
 
+        let Expression::FunctionExpression(function) = map_cb else { unreachable!() };
+        let body = function.body.as_deref()?;
         visitor.visit_function_body(body);
         Some(visitor)
     }
@@ -625,7 +632,7 @@ where
     }
 }
 
-impl<'a, F> Visit<'a> for SpreadInReturnVisitor<'a, '_, F>
+impl<'a, F> VisitJs<'a> for SpreadInReturnVisitor<'a, '_, F>
 where
     F: FnMut(Spread<'a, '_>),
 {
@@ -633,7 +640,7 @@ where
         self.is_in_return = true;
         self.return_span = stmt.argument.as_ref().map(GetSpan::span);
 
-        walk::walk_return_statement(self, stmt);
+        walk_js::walk_return_statement(self, stmt);
 
         self.is_in_return = false;
         // NOTE: do not clear `return_span` here. We want to keep the last
@@ -680,10 +687,20 @@ where
                     return;
                 }
 
+                // Multiple bindings in the same declaration can reference
+                // one another in default values. Avoid recursively revisiting
+                // their declaration (and self-referential declarations).
+                let declaration_id = self.ctx.scoping().symbol_declaration(symbol_id);
+                if self.visiting_declarations.contains(&declaration_id) {
+                    return;
+                }
+                self.visiting_declarations.push(declaration_id);
+
                 // walk the declaration
-                let declaration_node =
-                    self.ctx.nodes().get_node(self.ctx.scoping().symbol_declaration(symbol_id));
+                let declaration_node = self.ctx.nodes().get_node(declaration_id);
                 self.visit_kind(declaration_node.kind());
+                let popped = self.visiting_declarations.pop();
+                debug_assert_eq!(popped, Some(declaration_id));
             }
             _ => {}
         }
@@ -750,6 +767,13 @@ fn test() {
         // ignoreArgs
         ("function foo(a) { return a.map(x => ({ ...(x ?? y) })) }", None),
         ("const foo = a => a.map(x => ({ ...(x ?? y) }))", None),
+        (
+            "const ids = result.map(obj => {
+                const { item: { id, alias = id } = {} } = obj;
+                return alias;
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -810,6 +834,13 @@ fn test() {
             Some(json!([{ "ignoreArgs": false }])),
         ),
         ("const foo = a => a.map(x => ({ ...(x ?? y) }))", Some(json!([{ "ignoreArgs": false }]))),
+        (
+            "const ids = result.map(obj => {
+                const { a = { ...obj }, b = a } = obj;
+                return b;
+            });",
+            None,
+        ),
     ];
 
     let fix: Vec<ExpectFixTestCase> = vec![

@@ -5,7 +5,7 @@ use oxc_ast::{
         ExportDefaultDeclarationKind, Function, ObjectExpression, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -212,6 +212,11 @@ impl Rule for NewlineAfterImport {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        enum ImportLikeNode<'a> {
+            Import(Span),
+            Require(&'a CallExpression<'a>),
+        }
+
         let import_like_node = match node.kind() {
             AstKind::ImportDeclaration(import_decl) => ImportLikeNode::Import(import_decl.span),
             AstKind::TSImportEqualsDeclaration(import_decl) => {
@@ -258,11 +263,6 @@ impl Rule for NewlineAfterImport {
 enum ImportLikeKind {
     Import,
     Require,
-}
-
-enum ImportLikeNode<'a> {
-    Import(Span),
-    Require(&'a CallExpression<'a>),
 }
 
 impl ImportLikeKind {
@@ -408,7 +408,7 @@ impl<'a, 'ctx> RequireCallScanner<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for RequireCallScanner<'a, '_> {
+impl<'a> VisitJs<'a> for RequireCallScanner<'a, '_> {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if self.found {
             return;
@@ -421,7 +421,7 @@ impl<'a> Visit<'a> for RequireCallScanner<'a, '_> {
             return;
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
@@ -485,14 +485,12 @@ fn first_decorator_start(stmt: &Statement<'_>) -> Option<u32> {
             }
             _ => None,
         },
-        Statement::ExportNamedDeclaration(export_named) => {
-            match export_named.declaration.as_ref() {
-                Some(Declaration::ClassDeclaration(class)) => {
-                    class.decorators.first().map(|decorator| decorator.span.start)
-                }
-                _ => None,
+        Statement::ExportDeclaration(export_decl) => match &export_decl.declaration {
+            Declaration::ClassDeclaration(class) => {
+                class.decorators.first().map(|decorator| decorator.span.start)
             }
-        }
+            _ => None,
+        },
         _ => None,
     }
 }

@@ -1,0 +1,8 @@
+{
+  field(
+    bmp: "A and é"
+    controls: "tab\there bs\bhere ff\fhere cr\rhere nl\nhere"
+    quotes: "say \"hi\" back\\slash slash\/"
+    raw: "plain unicode é 😀 stays"
+  )
+}

@@ -1,0 +1,482 @@
+use std::mem::replace;
+
+use rustc_hash::{FxHashMap, FxHashSet};
+
+use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_diagnostics::OxcDiagnostic;
+
+use crate::diagnostics;
+use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::visitors;
+use crate::react_compiler_hir::*;
+use crate::react_compiler_utils::OrderedMap;
+use crate::react_compiler_utils::ordered_map::ArenaOrderedMap;
+
+// =============================================================================
+// SSABuilder
+// =============================================================================
+
+struct IncompletePhi {
+    old_place: Place,
+    new_place: Place,
+}
+
+struct State {
+    defs: FxHashMap<IdentifierId, IdentifierId>,
+    incomplete_phis: Vec<IncompletePhi>,
+}
+
+struct SSABuilder<'a> {
+    states: FxHashMap<BlockId, State>,
+    current: Option<BlockId>,
+    unsealed_preds: FxHashMap<BlockId, u32>,
+    block_preds: FxHashMap<BlockId, Vec<BlockId>>,
+    unknown: FxHashSet<IdentifierId>,
+    context: FxHashSet<IdentifierId>,
+    pending_phis: FxHashMap<BlockId, Vec<Phi<'a>>>,
+    processed_functions: Vec<FunctionId>,
+}
+
+impl<'a> SSABuilder<'a> {
+    fn new(blocks: &OrderedMap<BlockId, BasicBlock<'a>>) -> Self {
+        let mut block_preds = FxHashMap::default();
+        for (id, block) in blocks {
+            block_preds.insert(*id, block.preds.iter().copied().collect());
+        }
+        SSABuilder {
+            states: FxHashMap::default(),
+            current: None,
+            unsealed_preds: FxHashMap::default(),
+            block_preds,
+            unknown: FxHashSet::default(),
+            context: FxHashSet::default(),
+            pending_phis: FxHashMap::default(),
+            processed_functions: Vec::new(),
+        }
+    }
+
+    fn define_function(&mut self, func: &HirFunction<'a>) {
+        for (id, block) in &func.body.blocks {
+            self.block_preds.insert(*id, block.preds.iter().copied().collect());
+        }
+    }
+
+    fn state_mut(&mut self) -> &mut State {
+        let current = self.current.expect("we need to be in a block to access state!");
+        self.states.get_mut(&current).expect("state not found for current block")
+    }
+
+    fn make_id(&mut self, old_id: IdentifierId, env: &mut Environment<'a>) -> IdentifierId {
+        let new_id = env.next_identifier_id();
+        let old = &env.identifiers[old_id];
+        let declaration_id = old.declaration_id;
+        let name = old.name;
+        let span = old.span;
+        let new_ident = &mut env.identifiers[new_id];
+        new_ident.declaration_id = declaration_id;
+        new_ident.name = name;
+        new_ident.span = span;
+        new_id
+    }
+
+    fn define_place(
+        &mut self,
+        old_place: &Place,
+        env: &mut Environment<'a>,
+    ) -> Result<Place, OxcDiagnostic> {
+        let old_id = old_place.identifier;
+
+        if self.unknown.contains(&old_id) {
+            let ident = &env.identifiers[old_id];
+            let name = match &ident.name {
+                Some(name) => format!("{}${}", name.value(), old_id.index()),
+                None => format!("${}", old_id.index()),
+            };
+            return Err(diagnostics::undefined_ssa_identifier(&name, old_place.span));
+        }
+
+        // Do not redefine context references.
+        if self.context.contains(&old_id) {
+            return Ok(self.get_place(old_place, env));
+        }
+
+        let new_id = self.make_id(old_id, env);
+        self.state_mut().defs.insert(old_id, new_id);
+        Ok(Place {
+            identifier: new_id,
+            effect: old_place.effect,
+            reactive: old_place.reactive,
+            span: old_place.span,
+        })
+    }
+
+    /// A function's context places capture a *binding*, not a value: the
+    /// variable is only read when the function is later called, so a context
+    /// place may reference a binding that is declared after the function
+    /// expression itself (eg `const colgroup = useMemo(() => <colgroup>...)`,
+    /// where the JSX tag name resolves to the variable being assigned). Unmark
+    /// such identifiers so the later declaration doesn't error; if the function
+    /// body actually *reads* the variable before it is defined, visiting the
+    /// body re-marks it and the hoisting bailout in define_place still applies.
+    fn unmark_unknown(&mut self, id: IdentifierId) {
+        self.unknown.remove(&id);
+    }
+
+    fn get_place(&mut self, old_place: &Place, env: &mut Environment<'a>) -> Place {
+        let current_id = self.current.expect("must be in a block");
+        let new_id = self.get_id_at(old_place, current_id, env);
+        Place {
+            identifier: new_id,
+            effect: old_place.effect,
+            reactive: old_place.reactive,
+            span: old_place.span,
+        }
+    }
+
+    fn get_id_at(
+        &mut self,
+        old_place: &Place,
+        block_id: BlockId,
+        env: &mut Environment<'a>,
+    ) -> IdentifierId {
+        if let Some(state) = self.states.get(&block_id)
+            && let Some(&new_id) = state.defs.get(&old_place.identifier)
+        {
+            return new_id;
+        }
+
+        let preds = self.block_preds.get(&block_id).cloned().unwrap_or_default();
+
+        if preds.is_empty() {
+            self.unknown.insert(old_place.identifier);
+            return old_place.identifier;
+        }
+
+        let unsealed = self.unsealed_preds.get(&block_id).copied().unwrap_or(0);
+        if unsealed > 0 {
+            let new_id = self.make_id(old_place.identifier, env);
+            let new_place = Place {
+                identifier: new_id,
+                effect: old_place.effect,
+                reactive: old_place.reactive,
+                span: old_place.span,
+            };
+            let state = self.states.get_mut(&block_id).unwrap();
+            state.incomplete_phis.push(IncompletePhi { old_place: *old_place, new_place });
+            state.defs.insert(old_place.identifier, new_id);
+            return new_id;
+        }
+
+        if preds.len() == 1 {
+            let pred = preds[0];
+            let new_id = self.get_id_at(old_place, pred, env);
+            self.states.get_mut(&block_id).unwrap().defs.insert(old_place.identifier, new_id);
+            return new_id;
+        }
+
+        let new_id = self.make_id(old_place.identifier, env);
+        self.states.get_mut(&block_id).unwrap().defs.insert(old_place.identifier, new_id);
+        let new_place = Place {
+            identifier: new_id,
+            effect: old_place.effect,
+            reactive: old_place.reactive,
+            span: old_place.span,
+        };
+        self.add_phi(block_id, old_place, &new_place, env);
+        new_id
+    }
+
+    fn add_phi(
+        &mut self,
+        block_id: BlockId,
+        old_place: &Place,
+        new_place: &Place,
+        env: &mut Environment<'a>,
+    ) {
+        let preds = self.block_preds.get(&block_id).cloned().unwrap_or_default();
+
+        let mut pred_defs: ArenaOrderedMap<'a, BlockId, Place> =
+            ArenaOrderedMap::new_in(env.allocator);
+        for pred_block_id in &preds {
+            let pred_id = self.get_id_at(old_place, *pred_block_id, env);
+            pred_defs.insert(
+                *pred_block_id,
+                Place {
+                    identifier: pred_id,
+                    effect: old_place.effect,
+                    reactive: old_place.reactive,
+                    span: old_place.span,
+                },
+            );
+        }
+
+        let phi = Phi { place: *new_place, operands: pred_defs };
+
+        self.pending_phis.entry(block_id).or_default().push(phi);
+    }
+
+    fn fix_incomplete_phis(&mut self, block_id: BlockId, env: &mut Environment<'a>) {
+        let incomplete_phis: Vec<IncompletePhi> =
+            self.states.get_mut(&block_id).unwrap().incomplete_phis.drain(..).collect();
+        for phi in &incomplete_phis {
+            self.add_phi(block_id, &phi.old_place, &phi.new_place, env);
+        }
+    }
+
+    fn start_block(&mut self, block_id: BlockId) {
+        self.current = Some(block_id);
+        self.states
+            .insert(block_id, State { defs: FxHashMap::default(), incomplete_phis: Vec::new() });
+    }
+}
+
+// =============================================================================
+// Public entry point
+// =============================================================================
+
+pub fn enter_ssa<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+) -> Result<(), OxcDiagnostic> {
+    let mut builder = SSABuilder::new(&func.body.blocks);
+    let root_entry = func.body.entry;
+    enter_ssa_impl(func, &mut builder, env, root_entry)?;
+
+    // Apply all pending phis to the actual blocks
+    apply_pending_phis(func, env, &mut builder);
+
+    Ok(())
+}
+
+fn apply_pending_phis<'a>(
+    func: &mut HirFunction<'a>,
+    env: &mut Environment<'a>,
+    builder: &mut SSABuilder<'a>,
+) {
+    for (block_id, block) in func.body.blocks.iter_mut() {
+        if let Some(phis) = builder.pending_phis.remove(block_id) {
+            block.phis.extend(phis);
+        }
+    }
+    for &fid in &builder.processed_functions.clone() {
+        let inner_func = &mut env.functions[fid];
+        for (block_id, block) in inner_func.body.blocks.iter_mut() {
+            if let Some(phis) = builder.pending_phis.remove(block_id) {
+                block.phis.extend(phis);
+            }
+        }
+    }
+}
+
+fn enter_ssa_impl<'a>(
+    func: &mut HirFunction<'a>,
+    builder: &mut SSABuilder<'a>,
+    env: &mut Environment<'a>,
+    root_entry: BlockId,
+) -> Result<(), OxcDiagnostic> {
+    let mut visited_blocks: FxHashSet<BlockId> = FxHashSet::default();
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+
+    for block_id in &block_ids {
+        let block_id = *block_id;
+
+        if visited_blocks.contains(&block_id) {
+            return Err(diagnostics::enter_ssa_cycle(block_id.index()));
+        }
+
+        visited_blocks.insert(block_id);
+        builder.start_block(block_id);
+
+        // Handle params at the root entry
+        if block_id == root_entry {
+            if !func.context.is_empty() {
+                return Err(diagnostics::invariant_expected_function_context_empty_outer_function_declarations());
+            }
+            let alloc = env.allocator;
+            if let Some(self_binding) = func.self_binding {
+                func.self_binding = Some(builder.define_place(&self_binding, env)?);
+            }
+            let params = replace(&mut func.params, ArenaVec::new_in(&alloc));
+            let mut new_params = ArenaVec::with_capacity_in(params.len(), &alloc);
+            for param in params {
+                new_params.push(match param {
+                    ParamPattern::Place(p) => ParamPattern::Place(builder.define_place(&p, env)?),
+                    ParamPattern::Spread(s) => ParamPattern::Spread(SpreadPattern {
+                        place: builder.define_place(&s.place, env)?,
+                        span: s.span,
+                    }),
+                });
+            }
+            func.params = new_params;
+        }
+
+        // Process instructions
+        let instruction_ids: Vec<InstructionId> =
+            func.body.blocks.get(&block_id).unwrap().instructions.iter().copied().collect();
+
+        for instr_id in &instruction_ids {
+            let instr_idx = instr_id.index();
+            let instr = &mut func.instructions[instr_idx];
+
+            // For FunctionExpression/ObjectMethod, we need to handle context
+            // mapping specially because env.functions is borrowed by the closure.
+            // First, check if this is a FunctionExpression/ObjectMethod and handle
+            // context mapping separately.
+            let func_expr_id = match &instr.value {
+                InstructionValue::FunctionExpression { lowered_func, .. }
+                | InstructionValue::ObjectMethod { lowered_func, .. } => Some(lowered_func.func),
+                _ => None,
+            };
+
+            // Map context places for function expressions before other operands
+            if let Some(fid) = func_expr_id {
+                let alloc = env.allocator;
+                let context = replace(&mut env.functions[fid].context, ArenaVec::new_in(&alloc));
+                let new_context = ArenaVec::from_iter_in(
+                    context.into_iter().map(|place| builder.get_place(&place, env)),
+                    &alloc,
+                );
+                env.functions[fid].context = new_context;
+            }
+
+            // Map non-context operands
+            visitors::for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| {
+                *place = builder.get_place(place, env);
+            });
+
+            // Map lvalues (skip DeclareContext/StoreContext — context variables
+            // don't participate in SSA renaming)
+            let instr = &mut func.instructions[instr_idx];
+            let mut lvalue_err: Option<OxcDiagnostic> = None;
+            visitors::for_each_instruction_lvalue_mut(instr, &mut |place| {
+                if lvalue_err.is_none() {
+                    match builder.define_place(place, env) {
+                        Ok(new_place) => *place = new_place,
+                        Err(e) => lvalue_err = Some(e),
+                    }
+                }
+            });
+            if let Some(e) = lvalue_err {
+                return Err(e);
+            }
+
+            // Handle inner function SSA
+            if let Some(fid) = func_expr_id {
+                let context_ids: Vec<IdentifierId> =
+                    env.functions[fid].context.iter().map(|place| place.identifier).collect();
+                for id in context_ids {
+                    builder.unmark_unknown(id);
+                }
+                builder.processed_functions.push(fid);
+                let inner_func = &mut env.functions[fid];
+                let inner_entry = inner_func.body.entry;
+                let entry_block = inner_func.body.blocks.get_mut(&inner_entry).unwrap();
+
+                if !entry_block.preds.is_empty() {
+                    return Err(diagnostics::invariant_expected_function_expression_entry_block_have_zero_predecessors());
+                }
+                entry_block.preds.insert(block_id);
+
+                builder.define_function(inner_func);
+
+                let saved_current = builder.current;
+
+                // A named function expression's private name is initialized at
+                // function entry, alongside its parameters.
+                if let Some(self_binding) = env.functions[fid].self_binding {
+                    env.functions[fid].self_binding =
+                        Some(builder.define_place(&self_binding, env)?);
+                }
+
+                // Map inner function params
+                let alloc = env.allocator;
+                let inner_params =
+                    replace(&mut env.functions[fid].params, ArenaVec::new_in(&alloc));
+                let mut new_inner_params = ArenaVec::with_capacity_in(inner_params.len(), &alloc);
+                for param in inner_params {
+                    new_inner_params.push(match param {
+                        ParamPattern::Place(p) => {
+                            ParamPattern::Place(builder.define_place(&p, env)?)
+                        }
+                        ParamPattern::Spread(s) => ParamPattern::Spread(SpreadPattern {
+                            place: builder.define_place(&s.place, env)?,
+                            span: s.span,
+                        }),
+                    });
+                }
+                env.functions[fid].params = new_inner_params;
+
+                // Take the inner function out of the arena to process it
+                let mut inner_func =
+                    replace(&mut env.functions[fid], placeholder_function(env.allocator));
+
+                enter_ssa_impl(&mut inner_func, builder, env, root_entry)?;
+
+                // Put it back
+                env.functions[fid] = inner_func;
+
+                builder.current = saved_current;
+
+                // Clear entry preds
+                env.functions[fid].body.blocks.get_mut(&inner_entry).unwrap().preds.clear();
+                builder.block_preds.insert(inner_entry, Vec::new());
+            }
+        }
+
+        // Map terminal operands
+        let terminal = &mut func.body.blocks.get_mut(&block_id).unwrap().terminal;
+        visitors::for_each_terminal_operand_mut(terminal, &mut |place| {
+            *place = builder.get_place(place, env);
+        });
+
+        // Handle successors
+        let terminal_ref = &func.body.blocks.get(&block_id).unwrap().terminal;
+        let successors = visitors::each_terminal_successor(terminal_ref);
+        for output_id in successors {
+            let output_preds_len =
+                builder.block_preds.get(&output_id).map(|p| p.len() as u32).unwrap_or(0);
+
+            let count = if builder.unsealed_preds.contains_key(&output_id) {
+                builder.unsealed_preds[&output_id] - 1
+            } else {
+                output_preds_len - 1
+            };
+            builder.unsealed_preds.insert(output_id, count);
+
+            if count == 0 && visited_blocks.contains(&output_id) {
+                builder.fix_incomplete_phis(output_id, env);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Create a placeholder HirFunction for temporarily swapping an inner function
+/// out of `env.functions` via `std::mem::replace`. The placeholder is never
+/// read — the real function is swapped back immediately after processing.
+pub fn placeholder_function<'a>(alloc: &'a Allocator) -> HirFunction<'a> {
+    HirFunction {
+        span: None,
+        body_span: None,
+        id: None,
+        id_span: None,
+        self_binding: None,
+        name_hint: None,
+        fn_type: ReactFunctionType::Other,
+        params: ArenaVec::new_in(&alloc),
+        returns: Place {
+            identifier: IdentifierId::from_usize(0),
+            effect: Effect::Unknown,
+            reactive: false,
+            span: None,
+        },
+        context: ArenaVec::new_in(&alloc),
+        body: HIR { entry: BlockId::ENTRY, blocks: OrderedMap::default() },
+        instructions: ArenaVec::new_in(&alloc),
+        generator: false,
+        is_async: false,
+        directives: ArenaVec::new_in(&alloc),
+        aliasing_effects: None,
+    }
+}

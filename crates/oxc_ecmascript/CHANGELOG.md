@@ -4,6 +4,89 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 5acdae2 ecmascript: Skip transparent TS expressions (#25072) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8a47ff3 ecmascript: Do not treat lone-surrogate strings as constants (#25084) (Dunqing)
+- fbe8d31 minifier: Respect targets when folding RegExp source (#24790) (Dunqing)
+
+## [0.142.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 07e9acc ecmascript: Keep side effects in parent of `toString` calls (#24846) (sapphi-red)
+- 16a40ad ecmascript: Detect side effects in unused arguments to `charCodeAt` (#24845) (sapphi-red)
+- 133bb35 ecmascript: Detect side effects of `foo().#bar` correctly when PropertyReadSideEffects::None (#24769) (sapphi-red)
+
+### ⚡ Performance
+
+- a086d91 ecmascript: Avoid number literal allocations (#24889) (Dunqing)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🐛 Bug Fixes
+
+- e750a82 ecmascript: Fix false negative for may_have_side_effects on dynamic property access (#24709) (sapphi-red)
+
+## [0.139.0] - 2026-07-06
+
+### 🚀 Features
+
+- 60e7160 minifier: Drop side-effect-free IIFEs whose result is unused (#23967) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- e274415 minifier: Don't drop global calls that throw despite pure arguments (#23917) (Dunqing)
+
+### ⚡ Performance
+
+- bd49aff ecmascript: Avoid heap-allocating Math.min/max/imul operands (#23941) (Lawrence Lin)
+
+## [0.138.0] - 2026-06-29
+
+### 💥 BREAKING CHANGES
+
+- 8de5122 ecmascript: [**BREAKING**] Switch to new `AstBuilder` (#23834) (overlookmotel)
+
+### 🚀 Features
+
+- f2091b3 ast: Unify old and new `AstBuilder`s (#23875) (overlookmotel)
+
+### 📚 Documentation
+
+- 3d61dea all: Correct capitalization in comments (#23887) (overlookmotel)
+
+## [0.137.0] - 2026-06-18
+
+### 🚀 Features
+
+- 53509a8 minifier: Treeshake pure typed arrays and Set/Map array literals (#23469) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 31bfd9b minifier: Keep Object introspection calls on a possible Proxy (#23483) (Dunqing)
+
 ## [0.132.0] - 2026-05-18
 
 ### 🐛 Bug Fixes

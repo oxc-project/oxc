@@ -1,0 +1,43 @@
+// https://github.com/oxc-project/oxc/issues/23501
+// `export default (<Function|Class> as ...)` needs outer parens to keep the cast
+// attached. Without them the leading `function`/`class` token makes `export
+// default` parse the right-hand side as a declaration, leaving the cast detached.
+
+// Original report — chained `as`.
+export default (function foo() {} as unknown as Foo);
+
+// Direct (single `as`).
+export default (function foo() {} as A);
+
+// Class expressions.
+export default (class Bar {} as new () => unknown);
+export default (class {} as unknown as new () => unknown);
+
+// `satisfies` mixed with `as`.
+export default (function () {} as A satisfies B);
+export default (function () {} satisfies A as B);
+
+// Member access on a function/class — still ambiguous with declaration.
+export default (function () {}.bar as A);
+export default (class {}.bar as A);
+
+// Call / new / tagged template — the inner function/class already wraps itself,
+// so the outer cast should NOT add a second pair of parens.
+export default (function () {}() as A);
+export default (new (function () {})() as A);
+export default (function () {}`tpl` as A);
+
+// Deep chains.
+export default (function () {}().bar as A);
+export default (function () {}.bar() as A);
+export default (function () {}()() as A);
+
+// Non-`export default` contexts must not gain parens.
+const a = (function () {} as A as B);
+const b = [function () {} as A];
+
+// Other expressions don't trigger parens.
+export default (foo as A);
+export default (foo.bar as A);
+export default (foo() as A);
+export default ({} as A);

@@ -1,5 +1,6 @@
 //! Cover Grammar for Destructuring Assignment
 
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -96,10 +97,10 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
     // would otherwise carry this body's large stack frame + callee-saved spills on every call.
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut elements = p.ast.vec();
+        let len = expr.elements.len();
+        let mut elements = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
 
-        let len = expr.elements.len();
         for (i, elem) in expr.elements.into_iter().enumerate() {
             match elem {
                 match_expression!(ArrayExpressionElement) => {
@@ -123,9 +124,9 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(p.ast.alloc_assignment_target_rest(span, target));
-                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        rest = Some(AssignmentTargetRest::boxed(span, target, p));
+                        if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(span));
                         }
                     } else {
                         let error = diagnostics::spread_last_element(elem.span);
@@ -136,7 +137,7 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
             }
         }
 
-        p.ast.array_assignment_target(expr.span, elements, rest)
+        ArrayAssignmentTarget::new(expr.span, elements, rest, p)
     }
 }
 
@@ -164,7 +165,7 @@ impl<'a, C: Config> CoverGrammar<'a, AssignmentExpression<'a>, C>
     for AssignmentTargetWithDefault<'a>
 {
     fn cover(expr: AssignmentExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        p.ast.assignment_target_with_default(expr.span, expr.left, expr.right)
+        AssignmentTargetWithDefault::new(expr.span, expr.left, expr.right, p)
     }
 }
 
@@ -173,10 +174,10 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
     // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
-        let mut properties = p.ast.vec();
+        let len = expr.properties.len();
+        let mut properties = ArenaVec::with_capacity_in(len, p);
         let mut rest = None;
 
-        let len = expr.properties.len();
         for (i, elem) in expr.properties.into_iter().enumerate() {
             match elem {
                 ObjectPropertyKind::ObjectProperty(property) => {
@@ -196,11 +197,11 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
                         ) {
                             p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
                         }
-                        if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
-                            p.error(diagnostics::rest_element_trailing_comma(*span));
+                        if let Some(span) = p.state.trailing_commas.remove(&expr.span.start) {
+                            p.error(diagnostics::rest_element_trailing_comma(span));
                         }
                         let target = AssignmentTarget::cover(argument, p);
-                        rest = Some(p.ast.alloc_assignment_target_rest(span, target));
+                        rest = Some(AssignmentTargetRest::boxed(span, target, p));
                     } else {
                         return p.fatal_error(diagnostics::spread_last_element(spread.span));
                     }
@@ -208,7 +209,7 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
             }
         }
 
-        p.ast.object_assignment_target(expr.span, properties, rest)
+        ObjectAssignmentTarget::new(expr.span, properties, rest, p)
     }
 }
 
@@ -218,24 +219,26 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectProperty<'a>, C> for AssignmentTarget
             let binding = match property.key {
                 PropertyKey::StaticIdentifier(ident) => {
                     let ident = ident.unbox();
-                    p.ast.identifier_reference(ident.span, ident.name)
+                    IdentifierReference::new(ident.span, ident.name, p)
                 }
                 _ => return p.unexpected(),
             };
             // convert `CoverInitializedName`
             let init = p.state.cover_initialized_name.remove(&property.span.start).map(|e| e.right);
-            p.ast.assignment_target_property_assignment_target_property_identifier(
+            AssignmentTargetProperty::new_assignment_target_property_identifier(
                 property.span,
                 binding,
                 init,
+                p,
             )
         } else {
             let binding = AssignmentTargetMaybeDefault::cover(property.value, p);
-            p.ast.assignment_target_property_assignment_target_property_property(
+            AssignmentTargetProperty::new_assignment_target_property_property(
                 property.span,
                 property.key,
                 binding,
                 property.computed,
+                p,
             )
         }
     }

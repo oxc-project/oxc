@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
-use cow_utils::CowUtils;
-use lazy_regex::Regex;
+use itertools::Itertools;
+use lazy_regex::{Regex, regex};
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
@@ -120,8 +120,9 @@ pub struct ValidTitleConfig {
     ignore_type_of_describe_name: bool,
     /// Whether to allow arguments as titles.
     allow_arguments: bool,
-    /// A list of disallowed words, which will not be allowed in titles.
-    disallowed_words: Vec<CompactStr>,
+    /// Matcher for disallowed words, which will not be allowed in titles.
+    /// `None` when no disallowed words are configured.
+    disallowed_words_reg: Option<Regex>,
     /// Whether to ignore leading and trailing spaces in titles.
     ignore_spaces: bool,
     /// Patterns for titles that must not match.
@@ -147,11 +148,17 @@ impl ValidTitleConfig {
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
         let allow_arguments = get_as_bool("allowArguments");
         let ignore_spaces = get_as_bool("ignoreSpaces");
-        let disallowed_words = config
+        let disallowed_words: Vec<&str> = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect())
+            .map(|v| v.iter().filter_map(|v| v.as_str()).collect())
             .unwrap_or_default();
+        let disallowed_words_reg = (!disallowed_words.is_empty()).then(|| {
+            let disallowed_words_pattern =
+                disallowed_words.iter().map(|word| regex::escape(word)).join("|");
+            Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
+                .expect("escaped disallowed words should form a valid regex")
+        });
         let must_not_match_patterns = config
             .and_then(|v| v.get("mustNotMatch"))
             .and_then(compile_matcher_patterns)
@@ -165,7 +172,7 @@ impl ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
             allow_arguments,
-            disallowed_words,
+            disallowed_words_reg,
             ignore_spaces,
             must_not_match_patterns,
             must_match_patterns,
@@ -407,14 +414,7 @@ fn validate_title(
         return;
     }
 
-    if !config.disallowed_words.is_empty() {
-        let Ok(disallowed_words_reg) = Regex::new(&format!(
-            r"(?iu)\b(?:{})\b",
-            config.disallowed_words.join("|").cow_replace('.', r"\.")
-        )) else {
-            return;
-        };
-
+    if let Some(disallowed_words_reg) = &config.disallowed_words_reg {
         if let Some(matched) = disallowed_words_reg.find(title) {
             ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
         }
