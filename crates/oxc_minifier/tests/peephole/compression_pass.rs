@@ -38,6 +38,23 @@ fn dirty_declaration_worklist_handles_redeclarations() {
     );
 }
 
+/// Every dirtied symbol maps back to the same statement, whose declarators all
+/// survive because their initializers have side effects. The worklist must
+/// revisit that statement once, not once per dirty symbol.
+#[test]
+fn dirty_declaration_worklist_shares_one_statement() {
+    let options = CompressOptions::dce();
+    test_options_with_iterations(
+        "var a0 = (foo(), 0), a1 = (foo(), 0), a2 = (foo(), 0);
+         var b0 = a0, b1 = a1, b2 = a2;",
+        "foo(); foo(); foo();",
+        // Pass 1 drops the `b` declaration and reduces the dirtied `a`
+        // initializers; pass 2 lowers the leftover declarators to statements.
+        2,
+        &options,
+    );
+}
+
 #[test]
 fn normalize_flushes_before_initial_liveness() {
     let options = CompressOptions { drop_console: true, ..CompressOptions::smallest() };

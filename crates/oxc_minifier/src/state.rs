@@ -175,6 +175,12 @@ pub struct MinifierState<'a> {
     /// Scratch buffer reused by `try_fold_concat` to build template literal
     /// quasis without allocating a fresh `String` per call.
     pub concat_scratch: String,
+
+    /// Scratch buffer reused by `drain_dirty_declarators` to hold the statement
+    /// indices queued for one round. Taken out and put back by the caller, so
+    /// its capacity survives across statement lists instead of costing one
+    /// arena allocation per list.
+    pub(crate) dirty_statement_scratch: ArenaVec<'a, usize>,
 }
 
 impl<'a> MinifierState<'a> {
@@ -201,6 +207,7 @@ impl<'a> MinifierState<'a> {
                 allocator,
             ),
             concat_scratch: String::new(),
+            dirty_statement_scratch: ArenaVec::new_in(&allocator),
         }
     }
 

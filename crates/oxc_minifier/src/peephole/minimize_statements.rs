@@ -328,7 +328,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Consume symbols whose last live reference was removed during this pass
     /// and retry declarations owned by this statement list. Statement indices
-    /// remain stable while the queue drains: empty declarations are retained as
+    /// remain stable while the rounds run: empty declarations are retained as
     /// placeholders and removed only after all queued work is complete.
     ///
     /// The dirty-symbol journal is append-only. Removing one declarator may
@@ -373,17 +373,42 @@ impl<'a> PeepholeOptimizations {
         });
         declarations_by_symbol.dedup();
 
+        // Work is queued per statement, not per dirty symbol: one `retain_mut`
+        // already retries every declarator of a statement, so visiting a
+        // statement once per dirty symbol rescans the same declarator list N
+        // times for N dirty symbols declared by it - quadratic whenever
+        // side-effectful initializers keep those declarators alive. Sorting and
+        // deduplicating each round collapses those repeats, and a statement is
+        // revisited only once a later removal dirties one of its symbols again,
+        // so rescans are bounded by removals rather than by journal length.
+        //
+        // The round buffer is borrowed from the state so repeated statement
+        // lists reuse one allocation; a re-entrant call starts from an empty
+        // buffer and is equally correct.
+        let empty = ArenaVec::new_in(ctx);
+        let mut round = std::mem::replace(&mut ctx.state.dirty_statement_scratch, empty);
         let mut cursor = 0;
-        while cursor < ctx.state.pass_changes.dirty_symbols.len() {
-            let symbol_id = ctx.state.pass_changes.dirty_symbols[cursor];
-            cursor += 1;
-            let symbol_index = symbol_id.index();
-            let start = declarations_by_symbol
-                .partition_point(|(candidate, _)| candidate.index() < symbol_index);
-            let end = declarations_by_symbol
-                .partition_point(|(candidate, _)| candidate.index() <= symbol_index);
 
-            for &(_, statement_index) in &declarations_by_symbol[start..end] {
+        loop {
+            // Absorb journal entries appended since the previous round,
+            // including symbols dirtied by the statements it processed.
+            while cursor < ctx.state.pass_changes.dirty_symbols.len() {
+                let symbol_id = ctx.state.pass_changes.dirty_symbols[cursor];
+                cursor += 1;
+                let symbol_index = symbol_id.index();
+                let start = declarations_by_symbol
+                    .partition_point(|(candidate, _)| candidate.index() < symbol_index);
+                let end = declarations_by_symbol
+                    .partition_point(|(candidate, _)| candidate.index() <= symbol_index);
+                round.extend(declarations_by_symbol[start..end].iter().map(|&(_, index)| index));
+            }
+            if round.is_empty() {
+                break;
+            }
+            round.sort_unstable();
+            round.dedup();
+
+            for &statement_index in &round {
                 let Statement::VariableDeclaration(var_decl) = &mut stmts[statement_index] else {
                     continue;
                 };
@@ -408,7 +433,9 @@ impl<'a> PeepholeOptimizations {
                     false
                 });
             }
+            round.clear();
         }
+        ctx.state.dirty_statement_scratch = round;
 
         // All semantic references in emptied declarations were already routed
         // through the typed drop helpers above.
