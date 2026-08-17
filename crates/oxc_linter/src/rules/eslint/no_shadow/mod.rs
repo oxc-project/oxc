@@ -107,7 +107,7 @@ declare_oxc_lint!(
 
 impl Rule for NoShadow {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<NoShadowConfig>>(value)
+        DefaultRuleConfig::<NoShadowConfig>::from_value(value)
             .map(|c| Self(Box::new(c.into_inner())))
     }
 

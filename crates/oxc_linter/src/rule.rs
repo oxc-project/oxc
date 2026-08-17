@@ -88,6 +88,38 @@ fn compact_json_for_error(value: &serde_json::Value) -> Option<String> {
         .map(|value_str| value_str.split_whitespace().collect::<Vec<_>>().join(" "))
 }
 
+/// Extract the first item from an ESLint-style rule configuration.
+///
+/// `None` represents a missing configuration (`null` or an empty array). Keeping this helper
+/// non-generic avoids duplicating the array and error handling for every rule configuration type.
+#[inline(never)]
+fn normalize_default_rule_config(
+    value: serde_json::Value,
+) -> Result<Option<serde_json::Value>, serde_json::Error> {
+    match value {
+        serde_json::Value::Array(arr) => Ok(arr.into_iter().next()),
+        serde_json::Value::Null => Ok(None),
+        _ => Err(<serde_json::Error as serde::de::Error>::custom(
+            "Expected array for rule configuration",
+        )),
+    }
+}
+
+/// Add the received configuration to a deserialization error.
+#[cold]
+#[inline(never)]
+fn default_rule_config_error(
+    error: serde_json::Error,
+    value: &serde_json::Value,
+) -> serde_json::Error {
+    match compact_json_for_error(value) {
+        Some(compact) => <serde_json::Error as serde::de::Error>::custom(format!(
+            "{error}\n  received config: `{compact}`"
+        )),
+        None => error,
+    }
+}
+
 /// A wrapper type for deserializing ESLint-style rule configurations.
 ///
 /// ESLint configurations are typically arrays where the first element contains
@@ -103,7 +135,7 @@ fn compact_json_for_error(value: &serde_json::Value) -> Option<String> {
 /// ```ignore
 /// impl Rule for MyRule {
 ///     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-///         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+///         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
 ///     }
 /// }
 /// ```
@@ -117,6 +149,21 @@ impl<T> DefaultRuleConfig<T> {
     /// Unwraps the inner configuration value.
     pub fn into_inner(self) -> T {
         self.0
+    }
+
+    /// Deserialize an ESLint-style rule configuration from a JSON value.
+    pub(crate) fn from_value(value: serde_json::Value) -> Result<Self, serde_json::Error>
+    where
+        T: serde::de::DeserializeOwned + Default,
+    {
+        let config = match normalize_default_rule_config(value)? {
+            Some(value) => {
+                T::deserialize(&value).map_err(|error| default_rule_config_error(error, &value))?
+            }
+            None => T::default(),
+        };
+
+        Ok(Self(config))
     }
 }
 
@@ -134,28 +181,8 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-        use serde::de::Error;
-
         let value = serde_json::Value::deserialize(deserializer)?;
-
-        if let serde_json::Value::Array(arr) = value {
-            let config = match arr.into_iter().next() {
-                Some(v) => T::deserialize(&v).map_err(|e| match compact_json_for_error(&v) {
-                    Some(compact) => {
-                        D::Error::custom(format!("{e}\n  received config: `{compact}`"))
-                    }
-                    None => D::Error::custom(e),
-                })?,
-                None => T::default(),
-            };
-
-            Ok(DefaultRuleConfig(config))
-        } else if value == serde_json::Value::Null {
-            // Missing configuration (null) is treated as default (no rule options provided)
-            Ok(DefaultRuleConfig(T::default()))
-        } else {
-            Err(D::Error::custom("Expected array for rule configuration"))
-        }
+        Self::from_value(value).map_err(serde::de::Error::custom)
     }
 }
 
