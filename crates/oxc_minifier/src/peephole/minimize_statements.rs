@@ -431,6 +431,8 @@ impl<'a> PeepholeOptimizations {
             ctx,
         );
 
+        Self::try_minimize_variable_declarator(&mut var_decl.declarations, ctx);
+
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
             && var_decl

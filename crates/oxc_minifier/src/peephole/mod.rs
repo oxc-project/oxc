@@ -9,6 +9,7 @@ mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
 mod minimize_statements;
+mod minimize_variable_declaration;
 mod normalize;
 mod remove_dead_code;
 mod remove_unused_declaration;
@@ -436,6 +437,9 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     {
                         ctx.replace_statement(stmt, folded_stmt);
                     }
+                }
+                Statement::VariableDeclaration(s) => {
+                    Self::try_minimize_variable_declarator(&mut s.declarations, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
