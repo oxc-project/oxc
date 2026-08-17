@@ -5496,6 +5496,13 @@ fn lower_object_property_key<'a>(
                 span: Some(lit.span),
             }))
         }
+        // BigInt property keys are coerced to their canonical decimal string at
+        // runtime. Preserve that value rather than the source spelling so keys
+        // such as `0x10n` and `16n` remain equivalent.
+        oxc::PropertyKey::BigIntLiteral(lit) if !computed => Ok(Some(ObjectPropertyKey::String {
+            name: Ident::from(lit.value.as_str()),
+            span: Some(lit.span),
+        })),
         _ if computed => {
             let place = lower_expression_to_temporary(builder, key.to_expression())?;
             Ok(Some(ObjectPropertyKey::Computed { name: place, span: Some(key.span()) }))
