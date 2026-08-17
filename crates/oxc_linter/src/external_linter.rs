@@ -359,13 +359,10 @@ impl ExternalLinter {
     ///
     /// # Errors
     ///
-    /// Returns the first worker error, if any.
+    /// Returns every worker error, joined. Every slot is still called so a failure
+    /// on one isolate cannot leave the others unconfigured.
     pub fn setup_rule_configs(&self, options_json: String) -> Result<(), String> {
-        let last = self.k - 1;
-        for cb in &self.setup_rule_configs_on_workers[..last] {
-            cb(options_json.clone())?;
-        }
-        (self.setup_rule_configs_on_workers[last])(options_json)
+        call_every_worker(&self.setup_rule_configs_on_workers, options_json)
     }
 
     /// Route `lint_file` to the worker that owns `allocator`'s buffer (`buffer_id % K`).
@@ -436,26 +433,41 @@ impl ExternalLinter {
     ///
     /// # Errors
     ///
-    /// Returns the first worker error, if any.
+    /// Returns every worker error, joined. Every slot is still called.
     pub fn create_workspace(&self, workspace_uri: String) -> Result<(), String> {
-        let last = self.k - 1;
-        for cb in &self.create_workspace_on_workers[..last] {
-            cb(workspace_uri.clone())?;
-        }
-        (self.create_workspace_on_workers[last])(workspace_uri)
+        call_every_worker(&self.create_workspace_on_workers, workspace_uri)
     }
 
     /// Destroy a JS workspace on every worker.
     ///
     /// # Errors
     ///
-    /// Returns the first worker error, if any.
+    /// Returns every worker error, joined. Every slot is still called.
     pub fn destroy_workspace(&self, workspace_uri: String) -> Result<(), String> {
-        let last = self.k - 1;
-        for cb in &self.destroy_workspace_on_workers[..last] {
-            cb(workspace_uri.clone())?;
+        call_every_worker(&self.destroy_workspace_on_workers, workspace_uri)
+    }
+}
+
+/// Call every callback with `arg`. Collect errors instead of returning on the first failure,
+/// so a broken isolate cannot skip configuration of the rest.
+fn call_every_worker(
+    callbacks: &[Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>],
+    arg: String,
+) -> Result<(), String> {
+    let last = callbacks.len() - 1;
+    let mut errors = Vec::new();
+    for cb in &callbacks[..last] {
+        if let Err(err) = cb(arg.clone()) {
+            errors.push(err);
         }
-        (self.destroy_workspace_on_workers[last])(workspace_uri)
+    }
+    if let Err(err) = callbacks[last](arg) {
+        errors.push(err);
+    }
+    match errors.len() {
+        0 => Ok(()),
+        1 => Err(errors.pop().unwrap()),
+        _ => Err(errors.join("; ")),
     }
 }
 
@@ -695,6 +707,28 @@ mod tests {
             vec![
                 setup_stub(Arc::clone(&calls0), None),
                 setup_stub(Arc::clone(&calls1), Some("bad options".into())),
+            ],
+            vec![unused_lint(), unused_lint()],
+            vec![unused_forget(), unused_forget()],
+            vec![unused_create(), unused_create()],
+            vec![unused_destroy(), unused_destroy()],
+        );
+
+        let err = linter.setup_rule_configs("{}".into()).unwrap_err();
+        assert_eq!(err, "bad options");
+        assert_eq!(calls0.load(Ordering::SeqCst), 1);
+        assert_eq!(calls1.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn setup_rule_configs_still_calls_later_workers_when_one_fails() {
+        let calls0 = Arc::new(AtomicUsize::new(0));
+        let calls1 = Arc::new(AtomicUsize::new(0));
+        let linter = linter_from_slots(
+            vec![unused_load(), unused_load()],
+            vec![
+                setup_stub(Arc::clone(&calls0), Some("bad options".into())),
+                setup_stub(Arc::clone(&calls1), None),
             ],
             vec![unused_lint(), unused_lint()],
             vec![unused_forget(), unused_forget()],
