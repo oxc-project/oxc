@@ -70,6 +70,40 @@ fn count_referenced_symbols(expr: &Expression<'_>, scoping: &oxc_semantic::Scopi
     counter.count
 }
 
+/// Estimate cascading deletion potential: symbols referenced by this symbol's
+/// initializer that would become unused if this symbol is deleted.
+/// Higher score = more symbols become unused → process first.
+fn estimate_cascade_score(
+    symbol_id: SymbolId,
+    expr: &Expression<'_>,
+    scoping: &oxc_semantic::Scoping,
+) -> usize {
+    struct RefSymbolCollector<'a> {
+        scoping: &'a oxc_semantic::Scoping,
+        refs: Vec<SymbolId>,
+    }
+    impl<'a> VisitJs<'a> for RefSymbolCollector<'a> {
+        fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+            if let Some(reference_id) = it.reference_id.get() {
+                if let Some(ref_symbol_id) = self.scoping.get_reference(reference_id).symbol_id() {
+                    self.refs.push(ref_symbol_id);
+                }
+            }
+        }
+    }
+
+    let mut collector = RefSymbolCollector { scoping, refs: Vec::new() };
+    collector.visit_expression(expr);
+
+    // Score = sum of (ref_count of each referenced symbol)
+    // Idea: if symbol A references B and C, deleting A frees B's and C's refs.
+    collector
+        .refs
+        .iter()
+        .map(|&ref_sym| scoping.get_resolved_reference_ids(ref_sym).len())
+        .sum::<usize>()
+}
+
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
     ///
@@ -411,20 +445,21 @@ impl<'a> PeepholeOptimizations {
         });
         declarations_by_symbol.dedup();
 
-        // Sort dirty_symbols by reference count (primary), then by initializer
-        // complexity and referenced symbol count for ties. This ensures that
-        // symbols with identical reference counts are processed in order of
-        // impact (complex initializers first).
+        // Sort dirty_symbols by:
+        // 1. Reference count (primary: higher = process first)
+        // 2. Cascading deletion potential (how many symbols this unlocks)
+        // 3. Initializer complexity (complex initializers first)
+        // This targets high-impact deletions that unlock the most downstream symbols.
         {
             let scoping = ctx.scoping();
-            let priorities: Vec<(SymbolId, usize, usize, usize)> = ctx
+            let priorities: Vec<(SymbolId, usize, usize, usize, usize)> = ctx
                 .state
                 .pass_changes
                 .dirty_symbols
                 .iter()
                 .map(|&symbol_id| {
                     let ref_count = scoping.get_resolved_reference_ids(symbol_id).len();
-                    let (init_complexity, ref_symbols) = declarations_by_symbol
+                    let (init_complexity, cascade_score) = declarations_by_symbol
                         .binary_search_by_key(&symbol_id.index(), |(sid, _)| sid.index())
                         .ok()
                         .and_then(|idx| {
@@ -433,8 +468,8 @@ impl<'a> PeepholeOptimizations {
                                 var_decl.declarations.first().and_then(|decl| {
                                     decl.init.as_ref().map(|init| {
                                         let complexity = count_init_complexity(init);
-                                        let refs = count_referenced_symbols(init, scoping);
-                                        (complexity, refs)
+                                        let cascade = estimate_cascade_score(symbol_id, init, scoping);
+                                        (complexity, cascade)
                                     })
                                 })
                             } else {
@@ -442,24 +477,18 @@ impl<'a> PeepholeOptimizations {
                             }
                         })
                         .unwrap_or((0, 0));
-                    (symbol_id, ref_count, init_complexity, ref_symbols)
+                    (symbol_id, ref_count, cascade_score, init_complexity, 0)
                 })
                 .collect();
 
             let mut sorted = priorities;
-            sorted.sort_unstable_by(|a, b| {
-                // Primary: reference count (descending)
-                match b.1.cmp(&a.1) {
-                    std::cmp::Ordering::Equal => {
-                        // Subsort for same ref_count: complexity desc, then refs desc
-                        (b.2, b.3).cmp(&(a.2, a.3))
-                    }
-                    other => other,
-                }
+            sorted.sort_unstable_by_key(|(_sym, ref_count, cascade, complexity, _)| {
+                // Primary: ref_count desc, Secondary: cascade desc, Tertiary: complexity desc
+                (std::cmp::Reverse(*ref_count), std::cmp::Reverse(*cascade), std::cmp::Reverse(*complexity))
             });
 
             ctx.state.pass_changes.dirty_symbols.clear();
-            for (symbol_id, _, _, _) in sorted {
+            for (symbol_id, _, _, _, _) in sorted {
                 ctx.state.pass_changes.dirty_symbols.push(symbol_id);
             }
         }
