@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "compare": "node compare.mjs"
+    "compare": "node compare.mjs",
+    "report": "node report.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
