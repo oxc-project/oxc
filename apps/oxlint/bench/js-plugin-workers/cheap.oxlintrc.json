@@ -1,0 +1,9 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": ["./plugin-cheap.js"],
+  "rules": {
+    "bench/no-debugger": "error"
+  }
+}
