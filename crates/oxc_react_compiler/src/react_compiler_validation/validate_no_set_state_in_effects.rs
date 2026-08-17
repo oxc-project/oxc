@@ -441,10 +441,13 @@ fn get_set_state_call(
                         set_state_functions.insert(instr.lvalue.identifier, info);
                     }
                 }
-                InstructionValue::CallExpression { callee, args, .. }
-                    if (is_set_state_type_by_id(callee.identifier, identifiers, types)
-                        || set_state_functions.contains_key(&callee.identifier)) =>
-                {
+                InstructionValue::CallExpression { callee, args, .. } => {
+                    let is_direct_set_state =
+                        is_set_state_type_by_id(callee.identifier, identifiers, types);
+                    if !is_direct_set_state && !set_state_functions.contains_key(&callee.identifier)
+                    {
+                        continue;
+                    }
                     if enable_allow_set_state_from_refs {
                         // Check if the first argument is ref-derived
                         if let Some(PlaceOrSpread::Place(arg_place)) = args.first()
@@ -463,7 +466,12 @@ fn get_set_state_call(
                             continue;
                         }
                     }
-                    return Ok(Some(SetStateInfo { span: callee.span }));
+                    let info = if is_direct_set_state {
+                        SetStateInfo { span: callee.span }
+                    } else {
+                        set_state_functions[&callee.identifier].clone()
+                    };
+                    return Ok(Some(info));
                 }
                 _ => {}
             }
