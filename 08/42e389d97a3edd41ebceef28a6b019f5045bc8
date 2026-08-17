@@ -1,0 +1,19 @@
+crates/oxc_linter/src/rules/typescript/no_unnecessary_type_conversion.rs
+  s_01b0963c7995ba::t_2e19c33d405b30 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0842e389d97a3edd41ebceef28a6b019f5045bc8",
+  "prompts": {},
+  "sessions": {
+    "s_01b0963c7995ba": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a00f47-33d2-79c2-ba3f-0c7a8fdc46bf",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
