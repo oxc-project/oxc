@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-derived-computation
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] EffectDerivationsOfState: Values derived from props and state should be calculated during render, not in an effect. (https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(349), length: 11 }, primary: false }]), help: None, note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Values derived from props and state should be calculated during render, not in an effect", labels: [LabeledSpan { label: None, span: Span { start: 349, end: 360 }, primary: true }], help: Some("Calculate the derived value while rendering instead of storing it in state from an effect"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("EffectDerivationsOfState") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect") } }
 
 No changes.

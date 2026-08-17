@@ -261,6 +261,7 @@ fn test() {
         // globals are not supported in tests.
         // ("/* globals Promise:off */ new Promise(function (resolve, reject) { return 1; });", None)
         // ("new Promise((resolve, reject) => { return 1; });", None), // { "globals": { "Promise": "off" } }
+        ("Promise.resolve(); function f(Promise) { new Promise((resolve, reject) => 1); }", None),
         ("let Promise; new Promise(function (resolve, reject) { return 1; });", None),
         ("function f() { new Promise((resolve, reject) => { return 1; }); var Promise; }", None),
         ("function f(Promise) { new Promise((resolve, reject) => 1); }", None),

@@ -20,6 +20,7 @@ use crate::react_compiler::entrypoint::imports::{
 };
 use crate::react_compiler::entrypoint::program::compile_program;
 
+pub use crate::diagnostics::{ErrorCategory, LintDiagnostic};
 pub use crate::react_compiler::entrypoint::compile_result::CompileResult;
 pub use crate::react_compiler::entrypoint::program::CompileOutput;
 
@@ -44,8 +45,9 @@ use oxc_diagnostics::Diagnostics;
 use oxc_semantic::Semantic;
 
 pub struct LintResult {
-    /// Errors and warnings produced by the compile.
-    pub diagnostics: Diagnostics,
+    /// Errors and warnings produced by the compile, paired with their
+    /// [`ErrorCategory`] for routing to category-specific lint rules.
+    pub diagnostics: Vec<LintDiagnostic>,
     /// Whether compilation was aborted according to `panic_threshold`.
     pub fatal: bool,
 }
@@ -115,8 +117,10 @@ pub fn lint<'a>(
     let mut options = options;
     options.no_emit = true;
 
-    match compile(program, semantic, allocator, options) {
-        CompileResult::Success { diagnostics, .. } => LintResult { diagnostics, fatal: false },
-        CompileResult::Fatal { diagnostics } => LintResult { diagnostics, fatal: true },
-    }
+    let (diagnostics, fatal) = match compile(program, semantic, allocator, options) {
+        CompileResult::Success { diagnostics, .. } => (diagnostics, false),
+        CompileResult::Fatal { diagnostics } => (diagnostics, true),
+    };
+    let diagnostics = diagnostics.into_vec().into_iter().map(diagnostics::categorize).collect();
+    LintResult { diagnostics, fatal }
 }

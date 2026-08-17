@@ -163,3 +163,19 @@ fn test_minimize_conditional_boolean_value_context() {
     test("use(flag ? false : (value = touch()))", "use(flag ? !1 : value = touch())");
     test("use(a === b || c === d ? value : false)", "use(a === b || c === d ? value : !1)");
 }
+
+/// `a ? 1 : 0` becomes `+!!a`, whose value is `ToBoolean(a)` coerced to a
+/// number. Deriving it from `ToNumber(a)` instead flips the result for every
+/// value where `ToNumber(a) === 0` and `ToBoolean(a)` disagree.
+#[test]
+fn test_conditional_to_unary_plus_uses_to_boolean() {
+    // `ToNumber(NaN)` is not `0`, but `NaN` is falsy.
+    test("x = (NaN ? 1 : 0) || 2", "x = 2");
+    test("x = (NaN ? 1 : 0) && 2", "x = 0");
+    // `ToNumber("0")` is `0`, but a non-empty string is truthy.
+    test("x = ('0' ? 1 : 0) || 2", "x = 1");
+    test("x = (' ' ? 1 : 0) || 2", "x = 1");
+    test("x = ('0.0' ? 1 : 0) || 2", "x = 1");
+    // `ToNumber([])` is `0`, but every object is truthy.
+    test("x = ([] ? 1 : 0) || 2", "x = 1");
+}

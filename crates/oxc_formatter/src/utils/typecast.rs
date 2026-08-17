@@ -182,6 +182,63 @@ pub fn format_leading_comments_and_open_paren(
     }
 }
 
+/// Variant of [`format_leading_comments_and_open_paren`] for nodes
+/// that print their own leading comments in `write` (the generator's `AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST`):
+/// prints the leading comments that belong OUTSIDE the formatter-added `(`,
+/// and leaves the rest pending for the node's own leading-comments pass.
+///
+/// Outside are:
+/// - inline comments that preceded the node's source `(`
+///   inline comments keep their source side (`X & /* outside */ (/* inside */ A | B)`)
+/// - own-line comments, even from inside the source parentheses
+///   they stay own-line ABOVE the paren, or the paren line would end in a line comment and force a layout the source never had
+///   ```ts
+///   type T = X & (
+///     // c
+///     A | B
+///   );
+///   // ->
+///   type T = X &
+///     // c
+///     (A | B);
+///   ```
+///
+/// The source `(` is precedence-required wherever such a node needs formatter parentheses,
+/// so the split at the last `(`-bearing gap between pending comments reproduces each inline comment's source side.
+/// When no gap contains a `(`, the paren precedes every pending comment.
+/// Comment bodies are never scanned (a `(` inside a comment cannot false-positive: gaps run between comment bounds).
+///
+/// NOTE: Prettier normalizes `keyof /* c */ (A | B)` to `keyof (/* c */ A | B)`
+/// while keeping the same comment outside in array/indexed-access positions;
+/// one source-side rule instead of emulating that inconsistency (Known divergence, layout-only).
+///
+/// NOTE: The own-line hoist can detach a next-line directive (`@ts-expect-error`, ...) written inside the parens:
+/// when the node expands, the added `(` takes the directive's former target line.
+/// Matches Prettier; keeping such comments inside would need a `(`-then-break block rendering that does not exist today.
+///
+/// No type-cast handling ([`TypeCast::BindsInner`]): casts target expressions, and this path currently serves only `TSUnionType`.
+pub fn format_outer_leading_comments_and_open_paren(
+    span: Span,
+    needs_parentheses: bool,
+    f: &mut JsFormatter<'_, '_>,
+) {
+    if !needs_parentheses {
+        return;
+    }
+    let leading = f.context().comments().comments_before(span.start);
+    let mut outside_len = 0;
+    for (index, comment) in leading.iter().enumerate() {
+        let gap_end = leading.get(index + 1).map_or(span.start, |next| next.span.start);
+        if f.source_text().bytes_contain(comment.span.end, gap_end, b'(') {
+            outside_len = index + 1;
+        }
+    }
+    while leading.get(outside_len).is_some_and(|comment| comment.preceded_by_newline()) {
+        outside_len += 1;
+    }
+    write!(f, [FormatLeadingComments::Comments(&leading[..outside_len]), "("]);
+}
+
 /// What the source between a cast comment and the node start contains.
 ///
 /// Where the cast parenthesis closes is derived from this gap plus the span,

@@ -47,6 +47,40 @@ class Foo {
 	}
 }
 
+class Outer { get #x() {} set #x(value) {} #longName; nested() { return class { #nestedName; }; } }
+class Outer {
+	get #e() {}
+	set #e(e) {}
+	#t;
+	nested() {
+		return class {
+			#n;
+		};
+	}
+}
+
+class Outer { get #x() {} #longName; nested() { return class { #nestedName; }; } }
+class Outer {
+	get #e() {}
+	#t;
+	nested() {
+		return class {
+			#n;
+		};
+	}
+}
+
+class Outer { set #x(value) {} #longName; nested() { return class { #nestedName; }; } }
+class Outer {
+	set #e(e) {}
+	#t;
+	nested() {
+		return class {
+			#n;
+		};
+	}
+}
+
 class Outer { #outerField = 1; inner() { return class Inner { #innerField = 2; get() { return this.#innerField; } }; } }
 class Outer {
 	#e = 1;
@@ -84,6 +118,26 @@ class Outer {
 			}
 		};
 	}
+}
+
+class HasOuterBrand {} class MissingOuterBrand {} class Outer { #x; create(o) { return class Inner extends (#x in o ? HasOuterBrand : MissingOuterBrand) { #x; }; } }
+class HasOuterBrand {}
+class MissingOuterBrand {}
+class Outer {
+	#e;
+	create(e) {
+		return class t extends (#e in e ? HasOuterBrand : MissingOuterBrand) {
+			#t;
+		};
+	}
+}
+
+class Outer extends (class Inner { #a; #e; }) { #a; }
+class Outer extends class e {
+	#e;
+	#t;
+} {
+	#e;
 }
 
 class Foo { publicField = 1; #privateField = 2; getSum() { return this.publicField + this.#privateField; } }

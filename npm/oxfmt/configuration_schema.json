@@ -41,6 +41,15 @@
       ],
       "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
     },
+    "experimentalOperatorPosition": {
+      "description": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OperatorPositionConfig"
+        }
+      ],
+      "markdownDescription": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`"
+    },
     "htmlWhitespaceSensitivity": {
       "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",
       "allOf": [
@@ -306,6 +315,15 @@
             }
           ],
           "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Languages: All\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
+        },
+        "experimentalOperatorPosition": {
+          "description": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/OperatorPositionConfig"
+            }
+          ],
+          "markdownDescription": "When expressions wrap lines, print operators at the start of new lines (`\"start\"`)\nor at the end of previous lines (`\"end\"`).\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"end\"`"
         },
         "htmlWhitespaceSensitivity": {
           "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Languages: HTML, Angular, Vue, Handlebars, Svelte\n- Default: `\"css\"`",
@@ -601,6 +619,13 @@
         "collapse"
       ]
     },
+    "OperatorPositionConfig": {
+      "type": "string",
+      "enum": [
+        "start",
+        "end"
+      ]
+    },
     "OxfmtOverrideConfig": {
       "type": "object",
       "required": [
@@ -626,14 +651,14 @@
           "markdownDescription": "Glob patterns to match files for this override."
         },
         "options": {
-          "description": "Format options to apply for matched files.",
+          "description": "Format options to apply for matched files.\nAccepts the same options as the top-level format options.",
           "default": {},
           "allOf": [
             {
               "$ref": "#/definitions/FormatConfig"
             }
           ],
-          "markdownDescription": "Format options to apply for matched files."
+          "markdownDescription": "Format options to apply for matched files.\nAccepts the same options as the top-level format options."
         }
       }
     },

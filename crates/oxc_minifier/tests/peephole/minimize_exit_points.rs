@@ -12,8 +12,8 @@ fn test_break_optimization() {
     test("f:while(a())break f;", "f:for(;a();)break f;");
     test_same("f:for(x in a())break f");
 
-    test("f:{while(a())break;}", "f:for(;a();)break;");
-    test("f:{for(x in a())break}", "f:for(x in a())break;");
+    test("f:{while(a())break;}", "f:{for(;a();)break;}");
+    test("f:{for(x in a())break}", "f:{for(x in a())break;}");
 
     test("f:try{break f;}catch(e){break f;}", "f:try{break f}catch{break f}"); // ;
     test(
@@ -27,6 +27,30 @@ fn test_break_optimization() {
     test("function f() { a: { break a; } }", "function f() {}");
     test_same("function f() { a: { b(); break a; } c(); }");
     test_same("function f() { a: { b(); return; } c(); }");
+}
+
+#[test]
+fn test_labeled_continue_optimization() {
+    test("a:while(true)continue a;", "a:for(;;)continue a;"); // a:for(;;);
+    test(
+        "x:while(x)y:while(y){if(a)continue x;if(b)continue x;}",
+        "x:for(;x;)y:for(;y;)if(a||b)continue x;",
+    );
+    test(
+        "x:while(x)y:while(y){if(a)continue y;if(b)continue y;}",
+        "x:for(;x;)y:for(;y;)if(a||b)continue y;",
+    ); // x:for(;x;)y:for(;y;)a||b;
+    test(
+        "x:while(x)y:while(y){if(a)continue x;if(b)continue y}",
+        "x:for(;x;)y:for(;y;){if(a)continue x;if(b)continue y}",
+    ); // x:for(;x;)y:for(;y;){if(a)continue x;b}
+    // SyntaxError: Illegal continue statement: 'a' does not denote an iteration statement
+    test_same("a:if(a()){b();continue a}");
+    // SyntaxError: Illegal continue statement: no surrounding iteration statement
+    test_same("a:{for(let i=0;i<10;i++)continue a}");
+    test("f:{if(true){a();continue f;}else;b();}", "f:{a();continue f}");
+    // SyntaxError: Undefined label 'a'
+    test_same("for(let i=0;i<10;i++)continue a;");
 }
 
 #[test]
@@ -317,6 +341,32 @@ fn test_code_motion_doesnt_break_function_hoisting() {
 #[test]
 fn test_dont_remove_break_in_try_finally() {
     test_same("function f() {b:try{throw 9} finally {break b} return 1;}");
+}
+
+#[test]
+fn test_try_catch_termination() {
+    test_same("function f(){if(a)try{b}catch{c}else throw i()}");
+    test_same("function f(){if(a)try{return g()}catch{c}else throw i()}");
+    test_same("function f(){if(a)try{b}catch{return g()}else throw i()}");
+    test(
+        "function f(){if(a)try{return g()}catch{return g()}else throw i()}",
+        "function f(){if(a)try{return g()}catch{return g()}throw i()}",
+    );
+
+    test_same("function f(){if(a)try{b}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{return g()}finally{d}else throw i()}");
+    test(
+        "function f(){if(a)try{b}finally{return g()}else throw i()}",
+        "function f(){if(a)try{b}finally{return g()}throw i()}",
+    );
+
+    test_same("function f(){if(a)try{b}catch{c}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{return g()}catch{d}finally{d}else throw i()}");
+    test_same("function f(){if(a)try{b}catch{return g()}finally{d}else throw i()}");
+    test(
+        "function f(){if(a)try{b}catch{c}finally{return g(d)}else throw i()}",
+        "function f(){if(a)try{b}catch{c}finally{return g(d)}throw i()}",
+    );
 }
 
 /**

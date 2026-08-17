@@ -2,12 +2,11 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_str::CompactStr;
 
-use miette::JSONReportHandler;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_diagnostics::{
-    Error,
+    Error, JSONReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::{RuleCategory, rules::RULES};
@@ -191,7 +190,7 @@ mod test {
             .unwrap();
         assert_eq!(
             &output,
-            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"causes\": [],\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}],\"related\": []}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
+            "{ \"diagnostics\": [{\"message\": \"error message\",\"severity\": \"warning\",\"filename\": \"file://test.ts\",\"labels\": [{\"span\": {\"offset\": 0,\"length\": 8,\"line\": 1,\"column\": 1}}]}],\n              \"number_of_files\": 0,\n              \"number_of_rules\": 0,\n              \"threads_count\": 1,\n              \"start_time\": 0\n            }\n            "
         );
     }
 }

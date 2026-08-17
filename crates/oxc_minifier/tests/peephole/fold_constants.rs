@@ -1313,6 +1313,29 @@ fn test_associative_fold_constants_with_variables() {
     fold("alert(12 & x & 20)", "alert(x & 4)");
 }
 
+// https://github.com/rolldown/rolldown/issues/10656
+#[test]
+fn test_does_not_duplicate_large_tracked_strings_when_folding_addition() {
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'y' + p;",
+    );
+    test_same(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const a = atob(p); export const b = 'x' + ('y' + p);",
+    );
+
+    // A large string with one read is still inlineable and foldable.
+    test(
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const b = 'y' + p;",
+        "const p = 'PAYLOADpayload0123456789PAYLOADpayload0123456789'; export const b = 'yPAYLOADpayload0123456789PAYLOADpayload0123456789';",
+    );
+
+    // Small tracked strings remain cheap enough to inline and fold.
+    test(
+        "const p = 'abc'; export const a = atob(p); export const b = 'y' + p;",
+        "const p = 'abc'; export const a = atob('abc'); export const b = 'yabc';",
+    );
+}
+
 #[test]
 fn test_to_number() {
     fold("x = +''", "x = 0");
@@ -1611,4 +1634,20 @@ mod bigint {
         fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
         fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
     }
+}
+
+/// Rotating `(k1 op x) op right` into `x op (k1 op right)` drops `k1` and
+/// `right`, so it is only sound when neither has side effects. `[expr].length`
+/// evaluates to a constant while still running `expr`.
+#[test]
+fn test_fold_left_child_op_keeps_side_effects() {
+    fold_same("(3 ^ x) ^ [(y = 9), 1].length");
+    fold_same("(x ^ 3) ^ [(y = 9), 1].length");
+    fold_same("(3 | x) | [(y = 9), 1].length");
+    fold_same("(3 & x) & [(y = 9), 1].length");
+    fold_same("(3 ^ [(y = 9), 1].length) ^ x");
+    fold_same("([(y = 9), 1].length ^ x) ^ 3");
+    fold_same("(x ^ [(y = 9), 1].length) ^ 3");
+    // Still folds when nothing has side effects.
+    fold("(3 ^ x) ^ [1, 1].length", "x ^ 1");
 }

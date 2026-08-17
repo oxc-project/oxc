@@ -1,5 +1,8 @@
 # externals/webawesome/input/input.ts
 
+> Union broken out of its `:`/`as` position: Prettier retries the whole union flat on the indented next line, we expand to leading-`|` members right away. Core oxc_formatter (plain `.ts` too), not embed-specific
+> We match Prettier main (prettier/prettier#19725); 3.9.6 still preserves source indent non-idempotently
+
 ## Option 1
 
 `````json

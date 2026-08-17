@@ -1334,16 +1334,25 @@ export interface DummyRuleMap {
   "react-perf/jsx-no-new-function-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react-perf/jsx-no-new-object-as-prop"?: RuleNoConfig | [AllowWarnDeny, ReactPerfConfig];
   "react/button-has-type"?: RuleNoConfig | [AllowWarnDeny, ButtonHasType];
+  "react/capitalized-calls"?: RuleNoConfig;
   "react/checked-requires-onchange-or-readonly"?: RuleNoConfig | [AllowWarnDeny, CheckedRequiresOnchangeOrReadonly];
   "react/display-name"?: RuleNoConfig | [AllowWarnDeny, DisplayNameConfig];
+  "react/error-boundaries"?: RuleNoConfig;
   "react/exhaustive-deps"?: RuleNoConfig | [AllowWarnDeny, ExhaustiveDepsConfig];
+  "react/exhaustive-effect-dependencies"?: RuleNoConfig;
   "react/forbid-component-props"?: RuleNoConfig | [AllowWarnDeny, ForbidComponentPropsConfig];
   "react/forbid-dom-props"?: RuleNoConfig | [AllowWarnDeny, ForbidDomPropsConfig];
   "react/forbid-elements"?: RuleNoConfig | [AllowWarnDeny, ForbidElementsConfig];
   "react/forward-ref-uses-ref"?: RuleNoConfig;
   "react/function-component-definition"?: RuleNoConfig | [AllowWarnDeny, FunctionComponentDefinitionConfig];
+  "react/gating"?: RuleNoConfig;
+  "react/globals"?: RuleNoConfig;
   "react/hook-use-state"?: RuleNoConfig | [AllowWarnDeny, HookUseStateConfig];
+  "react/hooks"?: RuleNoConfig;
   "react/iframe-missing-sandbox"?: RuleNoConfig;
+  "react/immutability"?: RuleNoConfig;
+  "react/incompatible-library"?: RuleNoConfig;
+  "react/invariant"?: RuleNoConfig;
   "react/jsx-boolean-value"?:
     | RuleNoConfig
     | [AllowWarnDeny, EnforceBooleanAttribute]
@@ -1371,11 +1380,13 @@ export interface DummyRuleMap {
   "react/jsx-pascal-case"?: RuleNoConfig | [AllowWarnDeny, JsxPascalCaseConfig];
   "react/jsx-props-no-spread-multi"?: RuleNoConfig;
   "react/jsx-props-no-spreading"?: RuleNoConfig | [AllowWarnDeny, JsxPropsNoSpreadingConfig];
+  "react/memo-dependencies"?: RuleNoConfig;
   "react/no-array-index-key"?: RuleNoConfig;
   "react/no-children-prop"?: RuleNoConfig;
   "react/no-clone-element"?: RuleNoConfig;
   "react/no-danger"?: RuleNoConfig;
   "react/no-danger-with-children"?: RuleNoConfig;
+  "react/no-deriving-state-in-effects"?: RuleNoConfig;
   "react/no-did-mount-set-state"?: RuleNoConfig | [AllowWarnDeny, AllowedOrDisallowInFunc];
   "react/no-did-update-set-state"?: RuleNoConfig | [AllowWarnDeny, AllowedOrDisallowInFunc];
   "react/no-direct-mutation-state"?: RuleNoConfig;
@@ -1398,14 +1409,25 @@ export interface DummyRuleMap {
   "react/only-export-components"?: RuleNoConfig | [AllowWarnDeny, OnlyExportComponentsConfig];
   "react/prefer-es6-class"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
   "react/prefer-function-component"?: RuleNoConfig | [AllowWarnDeny, PreferFunctionComponent];
-  "react/react-compiler"?: RuleNoConfig | [AllowWarnDeny, ReactCompilerConfig];
+  "react/preserve-manual-memoization"?: RuleNoConfig;
+  "react/purity"?: RuleNoConfig;
   "react/react-in-jsx-scope"?: RuleNoConfig;
+  "react/refs"?: RuleNoConfig;
   "react/require-render-return"?: RuleNoConfig;
+  "react/rule-suppression"?: RuleNoConfig;
   "react/rules-of-hooks"?: RuleNoConfig;
   "react/self-closing-comp"?: RuleNoConfig | [AllowWarnDeny, SelfClosingComp];
+  "react/set-state-in-effect"?: RuleNoConfig;
+  "react/set-state-in-render"?: RuleNoConfig;
   "react/state-in-constructor"?: RuleNoConfig | [AllowWarnDeny, AlwaysNever];
+  "react/static-components"?: RuleNoConfig;
   "react/style-prop-object"?: RuleNoConfig | [AllowWarnDeny, StylePropObjectConfig];
+  "react/syntax"?: RuleNoConfig;
+  "react/todo"?: RuleNoConfig;
+  "react/unsupported-syntax"?: RuleNoConfig;
+  "react/use-memo"?: RuleNoConfig;
   "react/void-dom-elements-no-children"?: RuleNoConfig;
+  "react/void-use-memo"?: RuleNoConfig;
   "require-await"?: RuleNoConfig;
   "require-unicode-regexp"?: RuleNoConfig | [AllowWarnDeny, RequireUnicodeRegexpConfig];
   "require-yield"?: RuleNoConfig;
@@ -2384,7 +2406,8 @@ export interface NoHooksConfig {
 export interface NoLargeSnapshotsConfig {
   /**
    * A map of snapshot file paths to arrays of snapshot names that are allowed to exceed the size limit.
-   * Snapshot names can be specified as regular expressions.
+   * Each snapshot name is interpreted as a Rust regular expression. If it is not a valid regular
+   * expression, it is matched as an exact literal string instead.
    */
   allowedSnapshots?: {
     [k: string]: string[] | undefined;
@@ -3860,10 +3883,10 @@ export interface NoUnusedVarsOptions {
    * Specifies exceptions to this rule for unused arguments. Arguments whose
    * names match this pattern will be ignored.
    *
-   * By default, this pattern is `^_` unless options are configured with an
-   * object. In this case it will default to [`None`]. Note that this
-   * behavior deviates from both ESLint and TypeScript-ESLint, which never
-   * provide a default pattern.
+   * By default, names starting with `_` are ignored, except for the bare `_`
+   * parameter. If options are configured with an object, this will default
+   * to [`None`]. Note that this behavior deviates from both ESLint and
+   * TypeScript-ESLint, which never provide a default pattern.
    *
    * #### Example
    *
@@ -5114,15 +5137,6 @@ export interface PreferFunctionComponent {
    * `PureComponent` are allowed.
    */
   allowJsxUtilityClass?: boolean;
-}
-export interface ReactCompilerConfig {
-  /**
-   * Also report compiler bail-outs — places where React Compiler skipped a
-   * component or hook (for example because of unsupported syntax) without
-   * finding a rule violation. These do not indicate incorrect code, only
-   * code that the compiler declined to optimize.
-   */
-  reportAllBailouts?: boolean;
 }
 export interface SelfClosingComp {
   /**

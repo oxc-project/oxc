@@ -134,8 +134,7 @@ export type FormatEmbeddedCodeParam = {
 
 /**
  * Format non-js code snippets into formatted string.
- * Mainly used for formatting code fences within JSDoc,
- * and is also used as a temporary fallback for html-in-js.
+ * Used for formatting code fences within JSDoc.
  *
  * @returns Formatted code snippet
  */

@@ -57,7 +57,7 @@ declare_oxc_lint!(
     style,
     conditional_fix,
     config = NoBlankBlocks,
-    version = "next",
+    version = "1.78.0",
     short_description = "Reports and optionally removes blocks with whitespace only.",
 );
 

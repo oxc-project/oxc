@@ -12,7 +12,6 @@ use oxc_ast::{
         Argument, ArrayExpressionElement, ArrowFunctionBody, ArrowFunctionExpression,
         BindingPattern, CallExpression, ChainElement, Expression, FormalParameters, Function,
         FunctionBody, IdentifierReference, StaticMemberExpression, VariableDeclarationKind,
-        VariableDeclarator,
     },
     match_expression,
 };
@@ -711,7 +710,15 @@ impl Rule for ExhaustiveDeps {
             });
 
             for dep in declared_dependencies.difference(&found_dependencies) {
-                if found_dependencies.iter().any(|found_dep| found_dep.contains(dep)) {
+                if found_dependencies.iter().any(|found_dep| found_dep.contains(dep))
+                    || undeclared_deps
+                        .iter()
+                        .copied()
+                        .any(|undeclared_dep| dep.contains(undeclared_dep))
+                    || declared_dependencies
+                        .iter()
+                        .any(|declared_dep| declared_dep != dep && dep.contains(declared_dep))
+                {
                     continue;
                 }
 
@@ -781,12 +788,17 @@ fn is_expression_referentially_unique(expr: &Expression) -> bool {
             is_expression_referentially_unique(&logical.left)
                 || is_expression_referentially_unique(&logical.right)
         }
-        Expression::BinaryExpression(bin_expr) => {
-            is_expression_referentially_unique(&bin_expr.right)
-        }
         Expression::AssignmentExpression(assignment) => {
             is_expression_referentially_unique(&assignment.right)
         }
+        // A BinaryExpression is deliberately absent: the arms above recurse
+        // because those expressions evaluate *to* one of their operands, which
+        // a binary expression never does. Every binary operator -- arithmetic,
+        // comparison, bitwise, `in`, `instanceof` -- yields a primitive, so the
+        // result is stable however unstable the operands are. Recursing into
+        // the right operand made `new Date(a) > new Date()` inherit
+        // "referentially unique" from the NewExpression and reported a boolean
+        // as changing every render.
         _ => false,
     }
 }
@@ -1262,12 +1274,6 @@ fn func_call_without_react_namespace<'a>(call_expr: &'a CallExpression<'a>) -> O
 struct ExhaustiveDepsVisitor<'a, 'b> {
     semantic: &'b Semantic<'a>,
     stack: Vec<AstType>,
-    /// Variable declarations above the current node. Only populated in initializers.
-    ///
-    /// NOTE: I don't expect this stack to ever have more than 1 element, since
-    /// variable declarators cannot be nested. However, having this as a stack
-    /// is definitely safer.
-    decl_stack: Vec<&'a VariableDeclarator<'a>>,
     skip_reporting_dependency: bool,
     set_state_call: bool,
     is_callee_of_call_expr: bool,
@@ -1280,75 +1286,12 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
         Self {
             semantic,
             stack: vec![],
-            decl_stack: vec![],
             skip_reporting_dependency: false,
             set_state_call: false,
             is_callee_of_call_expr: false,
             found_dependencies: FxHashSet::default(),
             refs_inside_cleanups: vec![],
         }
-    }
-
-    fn iter_destructure_bindings<F>(&self, mut cb: F) -> Option<bool>
-    where
-        F: FnMut(std::borrow::Cow<'a, str>),
-    {
-        // check for object destructuring
-        // `const { foo } = props;`
-        // allow `props.foo` to be a dependency
-        let Some(VariableDeclarator { id: BindingPattern::ObjectPattern(obj), .. }) =
-            self.decl_stack.last()
-        else {
-            return None;
-        };
-
-        // Only apply destructuring logic when the identifier is directly the RHS of
-        // the destructuring assignment, not when it's nested inside another expression
-        // like a function call.
-        // For example:
-        // - `const { headers } = props` -> props.headers is the dependency
-        // - `const { headers } = fn(booleanValue)` -> booleanValue is the dependency, not booleanValue.headers
-        if self.stack.contains(&AstType::CallExpression) {
-            return None;
-        }
-
-        if obj.rest.is_some() {
-            return Some(true);
-        }
-
-        let mut needs_full_identifier = false;
-        for prop in &obj.properties {
-            if prop.computed {
-                needs_full_identifier = true;
-                continue;
-            }
-            match &prop.value {
-                BindingPattern::BindingIdentifier(id) => {
-                    cb(id.name.into());
-                }
-                BindingPattern::AssignmentPattern(pat) => {
-                    if let Some(id) = pat.left.get_binding_identifier() {
-                        cb(id.name.into());
-                    } else {
-                        // `const { idk: { thing } = { } } = props;`
-                        // not sure what to do
-                        needs_full_identifier = true;
-                    }
-                }
-                BindingPattern::ArrayPattern(_) | BindingPattern::ObjectPattern(_) => {
-                    // `const { foo: [bar] } = props;`
-                    // `const { foo: { bar } } = props;`
-                    // foo.bar is sufficient as a dependency
-                    if let Some(key) = prop.key.name() {
-                        cb(key);
-                    } else {
-                        needs_full_identifier = true;
-                    }
-                }
-            }
-        }
-
-        Some(needs_full_identifier)
     }
 }
 
@@ -1358,29 +1301,6 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
     }
 
     fn leave_node(&mut self, _kind: AstKind<'a>) {
-        self.stack.pop();
-    }
-
-    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
-        self.stack.push(AstType::VariableDeclarator);
-        // NOTE: decl_stack is only appended when visiting initializer
-        // expression.
-        self.visit_binding_pattern(&decl.id);
-        if let Some(init) = &decl.init {
-            // SAFETY:
-            // 1. All nodes live inside the arena, which has a lifetime of 'a.
-            //    The arena lives longer than any Rule pass, so this visitor
-            //    will drop before the node does.
-            // 2. This visitor is read-only, and it drops all references after
-            //    visiting the node.  Therefore, no mutable references will be
-            //    created before this stack is dropped.
-            let decl = unsafe {
-                std::mem::transmute::<&VariableDeclarator<'_>, &'a VariableDeclarator<'a>>(decl)
-            };
-            self.decl_stack.push(decl);
-            self.visit_expression(init);
-            self.decl_stack.pop();
-        }
         self.stack.pop();
     }
 
@@ -1446,56 +1366,26 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
                     self.found_dependencies.insert(source);
                 } else {
                     let new_chain = Vec::from([Str::from(it.property.name)]);
-
-                    let mut destructured_props: Vec<Str<'a>> = vec![];
-                    let mut did_see_ref = false;
-                    let needs_full_chain = self
-                        .iter_destructure_bindings(|id| {
-                            if let Cow::Borrowed(id) = id {
-                                if id == "current" {
-                                    did_see_ref = true;
-                                } else {
-                                    destructured_props.push(id.into());
-                                }
-                            } else {
-                                // todo
-                            }
-                        })
-                        .unwrap_or(true);
-
                     let symbol_id =
                         self.semantic.scoping().get_reference(source.reference_id).symbol_id();
-                    if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
-                        if it.property.name == "current" {
-                            // Track base object (`ref`) alongside `.current` reads so missing dep
-                            // diagnostics can prefer the reactive identity over the mutable field.
-                            self.found_dependencies.insert(Dependency {
-                                name: source.name,
-                                reference_id: source.reference_id,
-                                span: source.span,
-                                chain: source.chain.clone(),
-                                symbol_id,
-                            });
-                        }
+                    if it.property.name == "current" {
+                        // Track base object (`ref`) alongside `.current` reads so missing dep
+                        // diagnostics can prefer the reactive identity over the mutable field.
                         self.found_dependencies.insert(Dependency {
                             name: source.name,
                             reference_id: source.reference_id,
                             span: source.span,
-                            chain: [source.chain.clone(), new_chain].concat(),
+                            chain: source.chain.clone(),
                             symbol_id,
                         });
-                    } else {
-                        for prop in destructured_props {
-                            self.found_dependencies.insert(Dependency {
-                                name: source.name,
-                                reference_id: source.reference_id,
-                                span: source.span,
-                                chain: [source.chain.clone(), new_chain.clone(), vec![prop]]
-                                    .concat(),
-                                symbol_id,
-                            });
-                        }
                     }
+                    self.found_dependencies.insert(Dependency {
+                        name: source.name,
+                        reference_id: source.reference_id,
+                        span: source.span,
+                        chain: [source.chain.clone(), new_chain].concat(),
+                        symbol_id,
+                    });
                 }
             }
 
@@ -1519,41 +1409,13 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
         }
         let reference_id = ident.reference_id();
         let symbol_id = self.semantic.scoping().get_reference(reference_id).symbol_id();
-
-        let mut destructured_props: Vec<Str<'a>> = vec![];
-        let mut did_see_ref = false;
-        let needs_full_identifier = self
-            .iter_destructure_bindings(|id| {
-                if let Cow::Borrowed(id) = id {
-                    if id == "current" {
-                        did_see_ref = true;
-                    } else {
-                        destructured_props.push(id.into());
-                    }
-                } else {
-                    // todo: arena allocate
-                }
-            })
-            .unwrap_or(true);
-        if needs_full_identifier || (destructured_props.is_empty() && !did_see_ref) {
-            self.found_dependencies.insert(Dependency {
-                name: ident.name.into(),
-                reference_id,
-                span: ident.span,
-                chain: vec![],
-                symbol_id,
-            });
-        } else {
-            for prop in destructured_props {
-                self.found_dependencies.insert(Dependency {
-                    name: ident.name.into(),
-                    reference_id,
-                    span: ident.span,
-                    chain: vec![prop],
-                    symbol_id,
-                });
-            }
-        }
+        self.found_dependencies.insert(Dependency {
+            name: ident.name.into(),
+            reference_id,
+            span: ident.span,
+            chain: vec![],
+            symbol_id,
+        });
 
         if let Some(decl) = get_declaration_of_variable(ident, self.semantic) {
             let is_set_state_call = match decl.kind() {
@@ -1840,26 +1702,13 @@ fn test() {
             const { foo, bar } = props;
             console.log(foo);
             console.log(bar);
-          }, [props.foo, props.bar]);
-        }",
-        r"function MyComponent(props) {
-          useEffect(() => {
-            const { bar } = props.foo;
-            console.log(bar);
-          }, [props.foo.bar]);
-        }",
-        r"function MyComponent(props) {
-          useEffect(() => {
-            const { foo, bar } = props;
-            console.log(foo);
-            console.log(bar);
           }, [props]);
         }",
-        r"function MyComponent(props) {
-          useEffect(() => {
-            const { foo: { bar } } = props;
-            console.log(bar);
-          }, [props.foo]);
+        r"function useThing(context) {
+          return useCallback(() => {
+            const { paramsLoader } = context;
+            paramsLoader();
+          }, [context]);
         }",
         r"function MyComponent(props) {
           useEffect(() => {
@@ -2894,9 +2743,43 @@ const Component = ({ filter }) => {
 
           return <div>test</div>;
         };",
+        // A binary expression always evaluates to a primitive, however
+        // unstable its operands are, so the result is a stable dependency.
+        // https://github.com/oxc-project/oxc/issues/25029
+        r"function MyComponent() {
+          const condition = new Date('2026-01-01') > new Date();
+          useCallback(() => {
+            return condition;
+          }, [condition]);
+        }",
+        r"function MyComponent() {
+          const label = 'total: ' + [1, 2, 3].length;
+          useCallback(() => {
+            return label;
+          }, [label]);
+        }",
+        r"function MyComponent(props) {
+          const isError = props.value instanceof Error;
+          useMemo(() => isError, [isError]);
+        }",
     ];
 
     let fail = vec![
+        // The conditional and logical arms must keep recursing: unlike a
+        // binary expression, those evaluate *to* one of their operands, so an
+        // object literal on either side really is a new reference each render.
+        r"function MyComponent(props) {
+          const value = props.flag ? {} : {};
+          useCallback(() => {
+            return value;
+          }, [value]);
+        }",
+        r"function MyComponent(props) {
+          const value = props.cached || {};
+          useCallback(() => {
+            return value;
+          }, [value]);
+        }",
         r"function MyComponent(props) {
           useCallback(() => {
             console.log(props.foo?.toString());
@@ -4383,6 +4266,38 @@ const Component = ({ filter }) => {
               return flag ? obj.a : obj.b;
             })();
           }, []);
+        }",
+        // https://github.com/oxc-project/oxc/issues/25621
+        r"import React from 'react';
+        export function useThing(context: { paramsLoader: () => void }) {
+          return React.useCallback(() => {
+            const { paramsLoader } = context;
+            paramsLoader();
+          }, [context.paramsLoader]);
+        }",
+        // Destructuring reads its entire initializer, not only the bound properties.
+        r"function MyComponent(props) {
+          useEffect(() => {
+            const { foo, bar } = props;
+            console.log(foo);
+            console.log(bar);
+          }, [props.foo, props.bar]);
+        }",
+        r"function MyComponent(props) {
+          useEffect(() => {
+            const { bar } = props.foo;
+            console.log(bar);
+          }, [props.foo.bar]);
+        }",
+        r"function MyComponent(props) {
+          useEffect(() => {
+            const { foo: { bar } } = props;
+            console.log(bar);
+          }, [props.foo]);
+        }",
+        r"function MyComponent() {
+          const [, setState] = useState(0);
+          useCallback(() => setState(1), [setState.foo]);
         }",
     ];
 

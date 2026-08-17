@@ -12,7 +12,7 @@
 //! - [`jsdoc_fence`] (every build): the JSDoc native-fence string adapter over the registry
 //! - [`prettier_doc`] (napi only): Prettier Doc→IR path for the `Route::Prettier` set
 //! - [`prettier_string`] (napi only): the Prettier string paths of the string-out channel
-//!   (md/html/angular JSDoc fences + the html-in-js string recovery; results re-embed line-by-line)
+//!   (md/html/angular JSDoc fences; results re-embed line-by-line)
 
 #[cfg(feature = "napi")]
 use std::sync::Arc;

@@ -275,26 +275,11 @@ impl<'a> PeepholeOptimizations {
         let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
             return;
         };
-        // Skip if there are write references.
-        if symbol_value.references.has_writes() {
+        if !symbol_value.can_inline_initialized_constant() {
             return;
         }
-        let Some(cv) = &symbol_value.initialized_constant else { return };
-        // Textually inlining the implicit `undefined` of `let x;` can only grow
-        // the output; see `SymbolValue::implicit_undefined` (rolldown#10174).
-        if symbol_value.implicit_undefined {
-            return;
-        }
-        if symbol_value.references.has_single_read()
-            || match cv {
-                ConstantValue::Number(n) => n.fract() == 0.0 && *n >= -99.0 && *n <= 999.0,
-                ConstantValue::BigInt(_) => false,
-                ConstantValue::String(s) => s.len() <= 3,
-                ConstantValue::Boolean(_) | ConstantValue::Undefined | ConstantValue::Null => true,
-            }
-        {
-            let new_expr = ctx.value_to_expr(expr.span(), cv.clone());
-            ctx.replace_expression(expr, new_expr);
-        }
+        let constant = symbol_value.initialized_constant.as_ref().unwrap();
+        let new_expr = ctx.value_to_expr(expr.span(), constant.clone());
+        ctx.replace_expression(expr, new_expr);
     }
 }

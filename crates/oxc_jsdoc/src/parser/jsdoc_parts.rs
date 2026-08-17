@@ -46,7 +46,7 @@ impl<'a> JSDocCommentPart<'a> {
     //
     // Since these are trimmed by `parsed()` output, this raw `Span` may not be suitable for linter diagnostics.
     //
-    // And if the passed `Span` for miette diagnostics is multiline,
+    // And if the passed `Span` for diagnostics is multiline,
     // it will just render arrow markers which is not intuitive.
     // (It renders a nice underline for single line span, but not for multiline)
     // ```

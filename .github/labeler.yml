@@ -26,8 +26,7 @@ A-editor:
 
 A-formatter:
   - changed-files:
-      - any-glob-to-any-file:
-          ["crates/oxc_formatter*/**", "tasks/prettier_conformance/**", "apps/oxfmt/**"]
+      - any-glob-to-any-file: ["crates/oxc_formatter*/**", "apps/oxfmt/**"]
 
 A-transformer:
   - changed-files:
@@ -38,6 +37,7 @@ A-transformer:
             "tasks/transform_conformance/**",
             "napi/transform/**",
             "napi/transform-react/**",
+            "napi/transform-relay/**",
           ]
 
 A-linter:
