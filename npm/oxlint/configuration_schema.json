@@ -11587,11 +11587,18 @@
       ]
     },
     "GlobalValue": {
-      "type": "string",
-      "enum": [
-        "readonly",
-        "writable",
-        "off"
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "readonly",
+            "writable",
+            "off"
+          ]
+        },
+        {
+          "type": "boolean"
+        }
       ]
     },
     "GroupedAccessorPairs": {
