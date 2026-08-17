@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-17
+
+### 🐛 Bug Fixes
+
+- dec0a86 react-compiler: Standardize diagnostics (#25702) (Boshen)
+- c5f188a react-compiler: Use Babel v1 validation defaults (#25676) (Boshen)
+- db44651 napi: Disable reuseWorker in browser bindings (#25640) (leaysgur)
+- ce35d47 react_compiler: Preserve JSX import source pragmas (#25592) (Boshen)
+- 8d7f9cf react_compiler: Honor eslint suppressions (#25394) (Boshen)
+
 ## [0.144.0] - 2026-08-10
 
 ### 🚀 Features

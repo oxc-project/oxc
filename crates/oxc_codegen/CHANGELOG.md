@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.145.0] - 2026-08-17
+
+### 🐛 Bug Fixes
+
+- c1369a7 codegen: Resolve private names in class heritage (#25588) (camc314)
+- c002f29 codegen: Escape sources for empty import specifiers (#25586) (camc314)
+- b4e6a9e codegen: Output newline after `export default interface` (#25487) (overlookmotel)
+- 1645d93 react_compiler: Preserve source spans (#25462) (Boshen)
+
 ## [0.144.0] - 2026-08-10
 
 ### 💥 BREAKING CHANGES
