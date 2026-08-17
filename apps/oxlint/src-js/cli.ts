@@ -1,4 +1,5 @@
-import { lint } from "./bindings.js";
+import { Worker } from "node:worker_threads";
+import { lint, notifyWorkerDied } from "./bindings.js";
 import { debugAssertIsNonNull, debugAssertIsNotUndefined } from "./utils/asserts.ts";
 
 // Lazy-loaded JS plugin-related functions.
@@ -170,6 +171,206 @@ function loadJsConfigsWrapper(paths: string[]): Promise<string> {
   return resolvedConfigLoader(paths);
 }
 
+const WORKER_URL = new URL("./worker.js", import.meta.url);
+
+// How long to wait for all workers to report `ready` before giving up.
+const WORKER_BOOT_TIMEOUT_MS = 5000;
+
+// Workers started by `startJsWorkersWrapper`. Terminated once `lint` returns.
+let workers: Worker[] = [];
+
+// `true` once `terminateJsWorkers` has run, so the `exit`/`error` that follows an intentional
+// `terminate()` is not reported to Rust as a worker death.
+let shuttingDownJsWorkers = false;
+
+// Test-only SharedArrayBuffer so fixture plugins can `Atomics.add` in `createOnce`.
+// Created when `OXLINT_TEST_CREATE_ONCE_COUNTER` is set; read after `lint` returns.
+let testCreateOnceCounter: SharedArrayBuffer | null = null;
+
+// Debounce timer for `occupied_buffers=` stderr lines (test-only).
+let occupiedReportTimer: ReturnType<typeof setTimeout> | undefined;
+
+type WorkerMessage = { type: string; count?: number };
+
+/**
+ * Ask every live worker for `occupiedBufferCount()` and sum the replies.
+ *
+ * Used by the `OXLINT_TEST_OCCUPIED_BUFFERS` hook. Returns `null` if any isolate does not
+ * answer in time — a timeout must not be reported as `0` (that would pass `occupied ≤ K`).
+ */
+async function queryOccupiedBufferCount(): Promise<number | null> {
+  if (workers.length === 0) return 0;
+  // Do not use `Promise.all` here: the CLI bundle extracts it to a free function and
+  // `Promise.all` then throws (`this` is not `Promise`).
+  const pending = workers.map((worker) => queryOneOccupiedCount(worker));
+  let sum = 0;
+  for (const reply of pending) {
+    // oxlint-disable-next-line no-await-in-loop -- `Promise.all` is extracted by the CLI bundle and throws
+    const count = await reply;
+    if (count === null) return null;
+    sum += count;
+  }
+  return sum;
+}
+
+function queryOneOccupiedCount(worker: Worker): Promise<number | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      worker.off("message", onMessage);
+      resolve(null);
+    }, 2000);
+    const onMessage = (message: WorkerMessage) => {
+      if (message.type !== "occupiedBufferCount") return;
+      clearTimeout(timer);
+      worker.off("message", onMessage);
+      resolve(message.count ?? 0);
+    };
+    worker.on("message", onMessage);
+    worker.postMessage({ type: "occupiedBufferCount" });
+  });
+}
+
+/**
+ * After a burst of `forgetBuffer` calls, print the sum of occupied JS buffers across workers.
+ */
+function scheduleOccupiedBufferReport(): void {
+  if (!process.env.OXLINT_TEST_OCCUPIED_BUFFERS) return;
+  clearTimeout(occupiedReportTimer);
+  occupiedReportTimer = setTimeout(() => {
+    void queryOccupiedBufferCount().then((count) => {
+      if (count === null) {
+        process.stderr.write("occupied_query_failed=timeout\n");
+        return;
+      }
+      process.stderr.write(`occupied_buffers=${count}\n`);
+    });
+  }, 100);
+}
+
+/**
+ * Report that a worker died after it had become ready.
+ *
+ * Rust threads block waiting for `lintFile` results from a specific worker, so a worker that dies
+ * with calls in flight would hang every file whose buffer routes to it. Telling Rust lets those
+ * waits fail instead.
+ *
+ * @param id - ID of the worker that died
+ * @param reason - Why the worker died, for the message written to stderr
+ */
+function reportJsWorkerDeath(id: number, reason: string): void {
+  if (shuttingDownJsWorkers) return;
+  process.stderr.write(`oxlint: JS plugin worker ${id} died (${reason})\n`);
+  notifyWorkerDied(id);
+}
+
+/**
+ * Start `k` JS plugin worker isolates, and wait until all of them have registered their callbacks.
+ *
+ * Each worker calls `registerWorker` on the Rust side and then posts `ready`, so once every worker
+ * is ready, Rust can route lint requests to any of them. Rust decides `k` and calls this at most
+ * once per process, and never with `k <= 1` (a single isolate runs plugins on this thread instead).
+ *
+ * @param k - Number of workers to start
+ * @returns Promise which resolves when all workers are ready
+ * @throws If any worker fails to start, exits early, or does not become ready in time
+ */
+function startJsWorkersWrapper(k: number): Promise<undefined> {
+  return new Promise((resolve, reject) => {
+    let readyCount = 0;
+    let settled = false;
+
+    const settle = (err?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (err) {
+        terminateJsWorkers();
+        reject(err);
+      } else {
+        resolve(undefined);
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      settle(
+        new Error(
+          `Timed out after ${WORKER_BOOT_TIMEOUT_MS}ms waiting for ${k} workers ` +
+            `to start (${readyCount} ready)`,
+        ),
+      );
+    }, WORKER_BOOT_TIMEOUT_MS);
+    // Don't hold the event loop open just for the timeout
+    timeout.unref?.();
+
+    if (process.env.OXLINT_TEST_CREATE_ONCE_COUNTER) {
+      testCreateOnceCounter = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
+    }
+    if (process.env.OXLINT_TEST_CREATE_ONCE_COUNTER || process.env.OXLINT_TEST_OCCUPIED_BUFFERS) {
+      process.stderr.write(`js_workers=${k}\n`);
+    }
+
+    for (let id = 0; id < k; id++) {
+      // `resourceLimits` caps each worker's JS heap. It does not cap the 2 GiB raw-transfer views,
+      // which are external memory.
+      const worker = new Worker(WORKER_URL, {
+        workerData: testCreateOnceCounter
+          ? { id, createOnceCounter: testCreateOnceCounter }
+          : { id },
+        resourceLimits: { maxOldGenerationSizeMb: 256 },
+        stdout: true,
+        stderr: false,
+        stdin: false,
+      });
+      workers.push(worker);
+
+      // Anything a plugin writes to stdout would corrupt the LSP protocol, and in CLI mode it would
+      // interleave with diagnostics, so redirect it to stderr.
+      worker.stdout.on("data", (buf) => process.stderr.write(buf));
+
+      worker.on("message", (message: WorkerMessage) => {
+        if (message.type === "ready" && ++readyCount === k) settle();
+        if (message.type === "forgot") scheduleOccupiedBufferReport();
+      });
+      // Before all workers are ready, either event fails startup. Afterwards, startup is already
+      // resolved, so the only thing left to do is release the Rust threads waiting on this worker.
+      worker.on("error", (err) => {
+        if (settled) reportJsWorkerDeath(id, err.message || String(err));
+        else settle(err);
+      });
+      worker.on("exit", (code) => {
+        if (!settled) {
+          settle(
+            new Error(`JS plugin worker ${id} exited with code ${code} before becoming ready`),
+          );
+        } else if (code !== 0) {
+          reportJsWorkerDeath(id, `exit code ${code}`);
+        }
+        // A zero exit code after `ready` is the worker's event loop draining once Rust has released
+        // its callbacks, which is how every run ends. Not a death, and nothing is waiting on it.
+      });
+    }
+  });
+}
+
+/**
+ * Terminate all JS plugin worker isolates.
+ *
+ * Workers hold raw-transfer buffers alive, and their `exit` listeners would otherwise keep the
+ * process from exiting cleanly, so drop both here. The `exit` this triggers is intentional, so it
+ * must not be reported to Rust as a worker death.
+ */
+function terminateJsWorkers(): void {
+  shuttingDownJsWorkers = true;
+  clearTimeout(occupiedReportTimer);
+  const running = workers;
+  workers = [];
+  for (const worker of running) {
+    worker.removeAllListeners("exit");
+    worker.removeAllListeners("error");
+    void worker.terminate();
+  }
+}
+
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
@@ -196,16 +397,26 @@ if (!process.stdout.isTTY) {
 if (args.includes("--lsp")) process.stdout.write = process.stderr.write.bind(process.stderr);
 
 // Call Rust, passing callbacks and CLI arguments
-const success = await lint(
-  args,
-  loadPluginWrapper,
-  setupRuleConfigsWrapper,
-  lintFileWrapper,
-  forgetBufferWrapper,
-  createWorkspaceWrapper,
-  destroyWorkspaceWrapper,
-  loadJsConfigsWrapper,
-);
+let success: boolean;
+try {
+  success = await lint(
+    args,
+    loadPluginWrapper,
+    setupRuleConfigsWrapper,
+    lintFileWrapper,
+    forgetBufferWrapper,
+    createWorkspaceWrapper,
+    destroyWorkspaceWrapper,
+    loadJsConfigsWrapper,
+    startJsWorkersWrapper,
+  );
+} finally {
+  if (testCreateOnceCounter) {
+    const count = Atomics.load(new Int32Array(testCreateOnceCounter), 0);
+    process.stderr.write(`create_once_count=${count}\n`);
+  }
+  terminateJsWorkers();
+}
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

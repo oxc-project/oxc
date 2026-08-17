@@ -265,8 +265,8 @@ impl Runtime {
 
     /// Create a [`Runtime`] which uses `pools` instead of creating its own.
     ///
-    /// Used by callers which must create the pools themselves so they can record the
-    /// buffer ids minted for those arenas.
+    /// Used by callers which must create the pools themselves, because JS plugin workers were
+    /// already started and the pools' buffer ids decide which worker owns each arena.
     pub(super) fn new_with_allocator_pools(
         linter: Linter,
         options: LintServiceOptions,

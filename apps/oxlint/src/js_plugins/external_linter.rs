@@ -1,5 +1,10 @@
 use std::{
-    sync::{Arc, atomic::Ordering, mpsc::channel},
+    future::Future,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+        mpsc::{Receiver, RecvTimeoutError, channel},
+    },
     time::Duration,
 };
 
@@ -21,7 +26,7 @@ use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
     run::{
         JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsForgetBufferCb, JsLintFileCb, JsLoadPluginCb,
-        JsSetupRuleConfigsCb,
+        JsSetupRuleConfigsCb, REGISTERED_WORKERS, worker_liveness,
     },
 };
 
@@ -36,21 +41,61 @@ pub fn create_external_linter(
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
 ) -> ExternalLinter {
-    let rust_load_plugin = wrap_load_plugin(load_plugin);
-    let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
-    let rust_lint_file = wrap_lint_file(lint_file);
-    let rust_forget_buffer = wrap_forget_buffer(forget_buffer);
-    let rust_create_workspace = wrap_create_workspace(create_workspace);
-    let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
-
     ExternalLinter::new(
-        Box::new([rust_load_plugin]),
-        Box::new([rust_setup_rule_configs]),
-        Box::new([rust_lint_file]),
-        Box::new([rust_forget_buffer]),
-        Box::new([rust_create_workspace]),
-        Box::new([rust_destroy_workspace]),
+        Box::new([wrap_load_plugin(load_plugin, None)]),
+        Box::new([wrap_setup_rule_configs(setup_rule_configs, None)]),
+        // No worker to die: JS plugins run on the main JS thread here.
+        Box::new([wrap_lint_file(lint_file, None)]),
+        Box::new([wrap_forget_buffer(forget_buffer)]),
+        Box::new([wrap_create_workspace(create_workspace, None)]),
+        Box::new([wrap_destroy_workspace(destroy_workspace)]),
     )
+}
+
+/// Create an [`ExternalLinter`] backed by `k` JS plugin worker isolates.
+///
+/// Workers register their callbacks in [`REGISTERED_WORKERS`] as they boot. This takes those
+/// callbacks out of the map and wraps them, one slot per worker id, so `ExternalLinter` can route
+/// `lint_file` / `forget_buffer` to the worker that owns a given buffer id.
+///
+/// # Errors
+///
+/// Returns an error if any worker id in `0..k` did not register.
+pub fn create_external_linter_from_workers(k: usize) -> Result<ExternalLinter, String> {
+    let mut workers = REGISTERED_WORKERS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+
+    let mut load_plugin = Vec::with_capacity(k);
+    let mut setup_rule_configs = Vec::with_capacity(k);
+    let mut lint_file = Vec::with_capacity(k);
+    let mut forget_buffer = Vec::with_capacity(k);
+    let mut create_workspace = Vec::with_capacity(k);
+    let mut destroy_workspace = Vec::with_capacity(k);
+
+    for id in 0..k {
+        // `id` fits in `u32` because `k` is derived from a thread count.
+        #[expect(clippy::cast_possible_truncation)]
+        let id = id as u32;
+        let worker =
+            workers.remove(&id).ok_or_else(|| format!("JS plugin worker {id} did not register"))?;
+
+        load_plugin.push(wrap_load_plugin(worker.load_plugin, Some(worker_liveness(id))));
+        setup_rule_configs
+            .push(wrap_setup_rule_configs(worker.setup_rule_configs, Some(worker_liveness(id))));
+        lint_file.push(wrap_lint_file(worker.lint_file, Some(worker_liveness(id))));
+        forget_buffer.push(wrap_forget_buffer(worker.forget_buffer));
+        create_workspace
+            .push(wrap_create_workspace(worker.create_workspace, Some(worker_liveness(id))));
+        destroy_workspace.push(wrap_destroy_workspace(worker.destroy_workspace));
+    }
+
+    Ok(ExternalLinter::new(
+        load_plugin.into_boxed_slice(),
+        setup_rule_configs.into_boxed_slice(),
+        lint_file.into_boxed_slice(),
+        forget_buffer.into_boxed_slice(),
+        create_workspace.into_boxed_slice(),
+        destroy_workspace.into_boxed_slice(),
+    ))
 }
 
 /// Result returned by `loadPlugin` JS callback.
@@ -66,26 +111,43 @@ pub enum LoadPluginReturnValue {
 /// until the `Promise` returned by the JS function resolves.
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
-fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
+///
+/// `liveness` is the flag for the worker isolate this callback runs on, or `None` when JS plugins run
+/// on the main JS thread and so cannot die independently of the process.
+fn wrap_load_plugin(
+    cb: JsLoadPluginCb,
+    liveness: Option<Arc<AtomicBool>>,
+) -> ExternalLinterLoadPluginCb {
     Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
+        // Fail fast if this worker already died, rather than dispatching a call that nothing
+        // will ever run and then waiting for the poll below to notice.
+        if let Some(liveness) = &liveness
+            && !liveness.load(Ordering::SeqCst)
+        {
+            return Err(WORKER_DIED_ERROR.to_string());
+        }
+
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((
-                    plugin_url,
-                    plugin_name,
-                    plugin_name_is_alias,
-                    workspace_uri,
-                )))
-                .await?
-                .into_future()
-                .await
+            tokio::runtime::Handle::current().block_on(async {
+                let fut = async {
+                    cb.call_async(FnArgs::from((
+                        plugin_url,
+                        plugin_name,
+                        plugin_name_is_alias,
+                        workspace_uri,
+                    )))
+                    .await?
+                    .into_future()
+                    .await
+                };
+                wait_for_async_result(fut, liveness.as_deref()).await
             })
         });
 
         match res {
             // `loadPlugin` returns JSON string if plugin loaded successfully, or an error occurred
-            Ok(json) => match serde_json::from_str(&json) {
+            Ok(Ok(json)) => match serde_json::from_str(&json) {
                 // Plugin loaded successfully
                 Ok(LoadPluginReturnValue::Success(result)) => Ok(result),
                 // Error occurred on JS side
@@ -96,7 +158,8 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
                 }
             },
             // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
-            Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
+            Ok(Err(err)) => Err(format!("`loadPlugin` threw an error: {err}")),
+            Err(err) => Err(err),
         }
     }))
 }
@@ -106,8 +169,22 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 /// The JS-side `setupRuleConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
 /// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
 /// and block current thread until `setupRuleConfigs` completes execution.
-fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleConfigsCb {
+///
+/// `liveness` is the flag for the worker isolate this callback runs on, or `None` when JS plugins run
+/// on the main JS thread and so cannot die independently of the process.
+fn wrap_setup_rule_configs(
+    cb: JsSetupRuleConfigsCb,
+    liveness: Option<Arc<AtomicBool>>,
+) -> ExternalLinterSetupRuleConfigsCb {
     Arc::new(Box::new(move |options_json: String| {
+        // Fail fast if this worker already died, rather than dispatching a call that nothing
+        // will ever run and then waiting for the poll below to notice.
+        if let Some(liveness) = &liveness
+            && !liveness.load(Ordering::SeqCst)
+        {
+            return Err(WORKER_DIED_ERROR.to_string());
+        }
+
         let (tx, rx) = channel();
 
         // Send data to JS
@@ -115,9 +192,10 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
             options_json,
             ThreadsafeFunctionCallMode::NonBlocking,
             move |result, _env| {
-                // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
-                // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
-                // Therefore, `rx` cannot be dropped before this call.
+                // This call cannot fail, because `wait_for_result` below blocks until it receives a
+                // message or the worker dies. This closure is a `FnOnce`, so it can't be called more
+                // than once, so only 1 message can be sent. Therefore, `rx` cannot be dropped before
+                // this call unless the worker isolate is torn down.
                 let res = tx.send(result);
                 debug_assert!(res.is_ok(), "Failed to send result of `setupRuleConfigs`");
                 Ok(())
@@ -125,17 +203,14 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
         );
 
         if status == Status::Ok {
-            match rx.recv() {
+            match wait_for_result(&rx, liveness.as_deref()) {
                 // Setup succeeded
                 Ok(Ok(None)) => Ok(()),
                 // Setup failed
                 Ok(Ok(Some(err))) => Err(err),
                 // `setupRuleConfigs` threw an error - should be impossible because it should be infallible
                 Ok(Err(err)) => Err(format!("`setupRuleConfigs` threw an error: {err}")),
-                // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
-                // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
-                // `tx.send()` always happens before `tx` is dropped.
-                Err(err) => Err(format!("`setupRuleConfigs` did not respond: {err}")),
+                Err(err) => Err(err),
             }
         } else {
             Err(format!("Failed to schedule `setupRuleConfigs` callback: {status:?}"))
@@ -159,7 +234,10 @@ pub enum LintFileReturnValue {
 /// on main JS thread, and therefore it may have to wait for a previous `lintFile` call to complete.
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
-fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
+///
+/// `liveness` is the flag for the worker isolate this callback runs on, or `None` when JS plugins run
+/// on the main JS thread and so cannot die independently of the process.
+fn wrap_lint_file(cb: JsLintFileCb, liveness: Option<Arc<AtomicBool>>) -> ExternalLinterLintFileCb {
     Arc::new(Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
@@ -168,6 +246,14 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
               globals_json: String,
               workspace_uri: Option<String>,
               allocator: &Allocator| {
+            // Fail fast if this worker already died, rather than dispatching a call that nothing
+            // will ever run and then waiting for the poll below to notice.
+            if let Some(liveness) = &liveness
+                && !liveness.load(Ordering::SeqCst)
+            {
+                return Err(WORKER_DIED_ERROR.to_string());
+            }
+
             let (tx, rx) = channel();
 
             // SAFETY: This function is only called when an `ExternalLinter` exists.
@@ -202,7 +288,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             );
 
             if status == Status::Ok {
-                match rx.recv() {
+                match wait_for_result(&rx, liveness.as_deref()) {
                     // `lintFile` returns `null` if no diagnostics reported, and no error occurred
                     Ok(Ok(None)) => Ok(Vec::new()),
                     // `lintFile` returns JSON string if diagnostics reported, or an error occurred
@@ -221,16 +307,82 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     }
                     // `lintFile` threw an error - should be impossible because `lintFile` is wrapped in try-catch
                     Ok(Err(err)) => Err(format!("`lintFile` threw an error: {err}")),
-                    // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
-                    // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
-                    // `tx.send()` always happens before `tx` is dropped.
-                    Err(err) => Err(format!("`lintFile` did not respond: {err}")),
+                    Err(err) => Err(err),
                 }
             } else {
                 Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
             }
         },
     ))
+}
+
+/// Error reported when a JS plugin callback cannot complete because its worker isolate died.
+const WORKER_DIED_ERROR: &str = "JS plugin worker died before the callback returned";
+
+/// How often to re-check whether a worker died while waiting for a JS plugin callback.
+///
+/// Only reached when the result hasn't arrived yet, so this costs one wakeup per interval per
+/// in-flight call, and bounds how long a worker's death can stall the threads waiting on it.
+const WORKER_DEATH_POLL_INTERVAL: Duration = Duration::from_millis(250);
+
+/// Wait for the value that a JS plugin callback sends back from JS.
+///
+/// With `liveness`, the wait is interrupted if that worker isolate dies. A dead worker will never run
+/// the callback that completes this channel, and every call routed to it would otherwise
+/// block forever. Polling rather than a flat timeout, because a slow rule on a large file is normal
+/// and must not be cut short.
+///
+/// Without `liveness` (JS plugins on the main JS thread), block until the callback runs, exactly as
+/// before: there is no worker that can die on its own.
+fn wait_for_result<T>(rx: &Receiver<T>, liveness: Option<&AtomicBool>) -> Result<T, String> {
+    let Some(liveness) = liveness else {
+        // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
+        // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
+        // `tx.send()` always happens before `tx` is dropped.
+        return rx.recv().map_err(|err| format!("JS plugin callback did not respond: {err}"));
+    };
+
+    loop {
+        match rx.recv_timeout(WORKER_DEATH_POLL_INTERVAL) {
+            Ok(value) => return Ok(value),
+            Err(RecvTimeoutError::Timeout) => {
+                if !liveness.load(Ordering::SeqCst) {
+                    return Err(WORKER_DIED_ERROR.to_string());
+                }
+            }
+            // NAPI-RS dropped the callback without calling it, which is what happens if the worker's
+            // environment is torn down with the call still queued.
+            Err(err @ RecvTimeoutError::Disconnected) => {
+                return Err(format!("JS plugin callback did not respond: {err}"));
+            }
+        }
+    }
+}
+
+/// Wait for an async JS callback, polling `liveness` so a dead worker cannot stall forever.
+///
+/// Does not impose a deadline on a live worker: the sleep is only a poll interval. Without
+/// `liveness` (JS plugins on the main JS thread), wait until the future completes.
+async fn wait_for_async_result<T>(
+    fut: impl Future<Output = T>,
+    liveness: Option<&AtomicBool>,
+) -> Result<T, String> {
+    let Some(liveness) = liveness else {
+        return Ok(fut.await);
+    };
+
+    tokio::pin!(fut);
+    loop {
+        tokio::select! {
+            biased;
+            result = &mut fut => return Ok(result),
+            () = tokio::time::sleep(WORKER_DEATH_POLL_INTERVAL) => {
+                if !liveness.load(Ordering::SeqCst) {
+                    return Err(WORKER_DIED_ERROR.to_string());
+                }
+            }
+        }
+    }
 }
 
 /// Wrap `forgetBuffer` JS callback as a normal Rust function.
@@ -332,19 +484,36 @@ unsafe fn get_buffer(
 /// until the `Promise` returned by the JS function resolves.
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
-fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspaceCb {
+///
+/// `liveness` is the flag for the worker isolate this callback runs on, or `None` when JS plugins run
+/// on the main JS thread and so cannot die independently of the process.
+fn wrap_create_workspace(
+    cb: JsCreateWorkspaceCb,
+    liveness: Option<Arc<AtomicBool>>,
+) -> ExternalLinterCreateWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri| {
+        // Fail fast if this worker already died, rather than dispatching a call that nothing
+        // will ever run and then waiting for the poll below to notice.
+        if let Some(liveness) = &liveness
+            && !liveness.load(Ordering::SeqCst)
+        {
+            return Err(WORKER_DIED_ERROR.to_string());
+        }
+
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current()
-                .block_on(async move { cb.call_async(workspace_uri).await?.into_future().await })
+            tokio::runtime::Handle::current().block_on(async {
+                let fut = async { cb.call_async(workspace_uri).await?.into_future().await };
+                wait_for_async_result(fut, liveness.as_deref()).await
+            })
         });
 
         match res {
             // `createWorkspace` completed successfully
-            Ok(()) => Ok(()),
+            Ok(Ok(())) => Ok(()),
             // `createWorkspace` threw an error
-            Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
+            Ok(Err(err)) => Err(format!("`createWorkspace` threw an error: {err}")),
+            Err(err) => Err(err),
         }
     }))
 }
@@ -386,4 +555,154 @@ fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWork
             Err(format!("Failed to schedule `destroyWorkspace` callback: {status:?}"))
         }
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{sync::mpsc::channel, thread, time::Instant};
+
+    use super::*;
+
+    fn block_on_async<T>(fut: impl Future<Output = T>) -> T {
+        tokio::runtime::Builder::new_current_thread().enable_time().build().unwrap().block_on(fut)
+    }
+
+    /// A worker that dies with a JS plugin callback queued never runs the callback that completes the
+    /// channel, so the wait has to end by itself. Before this was fixed, every file routed to that
+    /// worker blocked forever.
+    #[test]
+    fn wait_ends_when_the_worker_dies_without_responding() {
+        let (tx, rx) = channel::<()>();
+        let alive = AtomicBool::new(true);
+
+        thread::scope(|scope| {
+            scope.spawn(|| {
+                thread::sleep(Duration::from_millis(50));
+                alive.store(false, Ordering::SeqCst);
+            });
+
+            let start = Instant::now();
+            let err = wait_for_result(&rx, Some(&alive)).unwrap_err();
+            assert_eq!(err, WORKER_DIED_ERROR);
+            // Bounded by one poll interval after the death, not by the 5s-scale timeouts elsewhere
+            assert!(start.elapsed() < Duration::from_secs(2), "took {:?}", start.elapsed());
+        });
+
+        // `tx` outlives the wait, so the wait ended because of the death, not a disconnect
+        drop(tx);
+    }
+
+    /// A slow rule on a large file legitimately takes longer than the poll interval. Polling must not
+    /// turn into a deadline.
+    #[test]
+    fn wait_keeps_waiting_while_the_worker_is_alive() {
+        let (tx, rx) = channel();
+        let alive = AtomicBool::new(true);
+
+        thread::scope(|scope| {
+            scope.spawn(move || {
+                thread::sleep(WORKER_DEATH_POLL_INTERVAL * 3);
+                tx.send("diagnostics").unwrap();
+            });
+
+            assert_eq!(wait_for_result(&rx, Some(&alive)).unwrap(), "diagnostics");
+        });
+    }
+
+    /// The result still gets through if it arrives at about the same time as the death.
+    #[test]
+    fn wait_returns_a_result_that_arrived_before_the_death_was_seen() {
+        let (tx, rx) = channel();
+        let alive = AtomicBool::new(true);
+
+        tx.send("diagnostics").unwrap();
+        alive.store(false, Ordering::SeqCst);
+
+        assert_eq!(wait_for_result(&rx, Some(&alive)).unwrap(), "diagnostics");
+    }
+
+    /// NAPI-RS dropping the callback without calling it is reported, not treated as a worker death.
+    #[test]
+    fn wait_reports_a_dropped_callback() {
+        let (tx, rx) = channel::<()>();
+        let alive = AtomicBool::new(true);
+
+        drop(tx);
+
+        let err = wait_for_result(&rx, Some(&alive)).unwrap_err();
+        assert!(err.starts_with("JS plugin callback did not respond"), "{err}");
+    }
+
+    /// With JS plugins on the main JS thread there is no worker that can die independently, so the
+    /// wait stays unbounded, exactly as it was before workers existed.
+    #[test]
+    fn wait_without_a_worker_blocks_until_the_callback_runs() {
+        let (tx, rx) = channel();
+
+        thread::scope(|scope| {
+            scope.spawn(move || {
+                thread::sleep(WORKER_DEATH_POLL_INTERVAL * 2);
+                tx.send("diagnostics").unwrap();
+            });
+
+            assert_eq!(wait_for_result(&rx, None).unwrap(), "diagnostics");
+        });
+    }
+
+    /// Same contract as `wait_for_result`, for the async TSFN path used by `loadPlugin` and
+    /// `createWorkspace`. A pending future plus a death must not wait forever.
+    #[test]
+    fn async_wait_ends_when_the_worker_dies_without_completing() {
+        let alive = AtomicBool::new(true);
+
+        thread::scope(|scope| {
+            scope.spawn(|| {
+                thread::sleep(Duration::from_millis(50));
+                alive.store(false, Ordering::SeqCst);
+            });
+
+            let start = Instant::now();
+            let err =
+                block_on_async(wait_for_async_result(std::future::pending::<()>(), Some(&alive)))
+                    .unwrap_err();
+            assert_eq!(err, WORKER_DIED_ERROR);
+            assert!(start.elapsed() < Duration::from_secs(2), "took {:?}", start.elapsed());
+        });
+    }
+
+    /// A slow async callback that outlasts the poll interval must not be treated as a deadline.
+    #[test]
+    fn async_wait_keeps_waiting_while_the_worker_is_alive() {
+        let alive = AtomicBool::new(true);
+        let fut = async {
+            tokio::time::sleep(WORKER_DEATH_POLL_INTERVAL * 3).await;
+            "diagnostics"
+        };
+        assert_eq!(
+            block_on_async(wait_for_async_result(fut, Some(&alive))).unwrap(),
+            "diagnostics"
+        );
+    }
+
+    /// The result still gets through if it is ready at about the same time as the death.
+    #[test]
+    fn async_wait_returns_a_result_that_arrived_before_the_death_was_seen() {
+        let alive = AtomicBool::new(true);
+        alive.store(false, Ordering::SeqCst);
+        assert_eq!(
+            block_on_async(wait_for_async_result(async { "diagnostics" }, Some(&alive))).unwrap(),
+            "diagnostics"
+        );
+    }
+
+    /// With JS plugins on the main JS thread there is no worker that can die independently, so the
+    /// wait stays unbounded.
+    #[test]
+    fn async_wait_without_a_worker_blocks_until_the_future_completes() {
+        let fut = async {
+            tokio::time::sleep(WORKER_DEATH_POLL_INTERVAL * 2).await;
+            "diagnostics"
+        };
+        assert_eq!(block_on_async(wait_for_async_result(fut, None)).unwrap(), "diagnostics");
+    }
 }

@@ -515,6 +515,11 @@ impl CliRunner {
 
         let cwd = options.cwd().to_path_buf();
 
+        // Create the allocator pools here rather than letting `Runtime` do it, so that the JS
+        // plugin workers (already started at this point) own the arenas' buffer ids.
+        let allocator_pools =
+            crate::utils::create_allocator_pools(linter.has_external_linter(), use_cross_module);
+
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
@@ -524,6 +529,7 @@ impl CliRunner {
             .with_fix_kind(fix_options.fix_kind())
             .with_type_check_only(type_check_only)
             .with_timings(debug_timings)
+            .with_allocator_pools(allocator_pools)
             .build()
         {
             Ok(runner) => runner,

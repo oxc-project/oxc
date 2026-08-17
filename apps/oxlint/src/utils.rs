@@ -14,8 +14,8 @@ use oxc_linter::AllocatorPools;
 ///   copy into a fixed-size arena only when handing a file to JS.
 /// * No JS plugins: standard arenas throughout.
 ///
-/// Each fixed-size arena carries a buffer id that `ExternalLinter` uses to route a file
-/// to the isolate that owns that arena.
+/// Create the pools *after* JS plugin workers have started: each fixed-size arena carries a buffer
+/// id, and `ExternalLinter` routes a file to whichever worker owns that arena's id.
 pub fn create_allocator_pools(has_js_plugins: bool, cross_module: bool) -> AllocatorPools {
     let thread_count = rayon::current_num_threads();
 

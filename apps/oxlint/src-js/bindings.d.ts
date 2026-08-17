@@ -80,6 +80,14 @@ export type JsSetupRuleConfigsCb =
   ((arg: string) => string | null)
 
 /**
+ * JS callback to start JS plugin worker isolates.
+ *
+ * Called once, with `K`. Resolves when every worker has registered its callbacks.
+ */
+export type JsStartWorkersCb =
+  ((arg: number) => Promise<undefined>)
+
+/**
  * NAPI entry point.
  *
  * JS side passes in:
@@ -91,10 +99,22 @@ export type JsSetupRuleConfigsCb =
  * 6. `create_workspace`: Create a workspace.
  * 7. `destroy_workspace`: Destroy a workspace.
  * 8. `load_js_configs`: Load JavaScript config files.
+ * 9. `start_js_workers`: Start `K` JS plugin worker isolates.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb, startJsWorkers: JsStartWorkersCb): Promise<boolean>
+
+/**
+ * Record that a JS plugin worker isolate has died.
+ *
+ * Called from `cli.ts` when a worker emits `error` or `exit` after it became ready. Any queued
+ * `lintFile` call on that worker will never run, so waiting threads have to be released with an
+ * error rather than blocking forever.
+ *
+ * Not called for an intentional `terminate()` during shutdown.
+ */
+export declare function notifyWorkerDied(id: number): void
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
@@ -137,3 +157,24 @@ export interface ParserOptions {
 
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
+
+/**
+ * Register JS plugin callbacks for a worker isolate.
+ *
+ * Called from `worker.ts` after the worker starts. Callbacks are stored
+ * process-wide, keyed by `id`.
+ *
+ * # Errors
+ *
+ * Returns an error if any required field is missing from `options`,
+ * if `id` is already registered, or if `K` is set and `id >= K`.
+ */
+export declare function registerWorker(options: { id: number, loadPlugin: JsLoadPluginCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, setupRuleConfigs: JsSetupRuleConfigsCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb }): void
+
+/**
+ * Set the number of JS plugin worker isolates (`K`).
+ *
+ * Call before workers register. `register_worker` then rejects `id >= k`.
+ * Pass `0` to clear the bound.
+ */
+export declare function setJsPluginWorkerCount(k: number): void

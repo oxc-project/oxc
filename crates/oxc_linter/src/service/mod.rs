@@ -63,7 +63,8 @@ impl LintServiceOptions {
 
 /// Allocator pools for a lint run.
 ///
-/// Callers that need to track buffer ids (the language server) build these themselves.
+/// Callers that own JS plugin worker startup (the CLI and the language server) build these
+/// themselves, because the pools' buffer ids have to be routable to already-running workers.
 /// Rust-only callers let [`Runtime`] pick pools for them.
 pub struct AllocatorPools {
     /// Pool used for parsing and linting.

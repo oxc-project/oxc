@@ -221,8 +221,9 @@ impl ServerLinterBuilder {
             }
         }
 
-        // This folder gets its own pool of arenas. Building a pool here mints buffer ids
-        // that `ExternalLinter` routes by `buffer_id % K` (K is 1 on the main-thread path).
+        // This folder gets its own pool of arenas. Workers were already started once, before
+        // `run_lsp`, so building a pool here never spawns more of them — it only mints buffer ids
+        // that `ExternalLinter` routes to the existing workers.
         let mut buffer_ids = Vec::new();
         let mut new_allocator_pools = || {
             // `external_linter` was already cleared above if no JS plugins were loaded.
@@ -442,7 +443,7 @@ pub struct ServerLinter {
 
 /// Releases the JS-side references to a folder's fixed-size arenas when it is dropped.
 ///
-/// Each fixed-size arena is exposed to JS as a `Uint8Array` that `lint.ts` caches, so the
+/// Each fixed-size arena is exposed to JS as a `Uint8Array` that the worker caches forever, so the
 /// arena's finalizer never runs while that cache entry lives. Since the language server builds a
 /// fresh pool per folder and rebuilds on every config change, the buffers would otherwise pile up
 /// at 2 GiB of address space each. `forgetBuffer` clears the cache entry so the arena can be freed.

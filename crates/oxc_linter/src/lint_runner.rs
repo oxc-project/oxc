@@ -217,8 +217,8 @@ impl LintRunnerBuilder {
 
     /// Use prebuilt allocator pools instead of letting the runtime create its own.
     ///
-    /// Required when the caller already minted buffer ids (for example the language server,
-    /// which must forget those ids when a folder is dropped).
+    /// Required when JS plugin workers are already running, because a worker only serves the
+    /// buffer ids it owns, so the pools have to be created by whoever started the workers.
     #[must_use]
     pub fn with_allocator_pools(mut self, pools: AllocatorPools) -> Self {
         self.allocator_pools = Some(pools);
