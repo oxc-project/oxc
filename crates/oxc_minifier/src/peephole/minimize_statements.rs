@@ -10,6 +10,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
@@ -538,9 +539,18 @@ impl<'a> PeepholeOptimizations {
             if kind.name == id.name {
                 if decl.init.is_none()
                     && (declaration_kind == VariableDeclarationKind::Var
-                        || assign_expr.right.is_literal_value(true, ctx))
+                        || assign_expr.right.is_literal_value(true, ctx)
+                        || kind.symbol_id.get().is_some_and(|symbol_id| {
+                            Self::lexical_init_merge_is_safe(
+                                symbol_id,
+                                &id.name,
+                                &assign_expr.right,
+                                ctx,
+                            )
+                        }))
                 {
                     // "var a; a = b();" => "var a = b();"
+                    // "let a; a = b();" => "let a = b();"
                     decl.init = Some(assign_expr.right.take_in(ctx));
                     return true;
                 }
@@ -564,6 +574,54 @@ impl<'a> PeepholeOptimizations {
             }
         }
         false
+    }
+
+    /// Whether `let a; a = <init>` => `let a = <init>` is safe for a lexical binding.
+    ///
+    /// The merge moves `<init>` from after the binding is initialized to during its
+    /// initialization, so it must be impossible for anything `<init>` evaluates to
+    /// observe `a` in its Temporal Dead Zone. Two conditions, per the analysis in
+    /// <https://github.com/oxc-project/oxc/issues/14310>:
+    ///
+    /// 1. `<init>` must not read `a` itself (`let a; a = foo(a)`).
+    /// 2. No read of `a` may be deferred to a later point that `<init>` can trigger,
+    ///    as in `function f() { console.log(a) } let a; a = f()`.
+    ///
+    /// Condition (2) is enforced by requiring every reference to sit in the binding's
+    /// own scope. Classifying the intermediate scopes instead would be less
+    /// conservative, but a class scope carries no distinguishing [`ScopeFlags`] and a
+    /// field initializer gets no scope of its own, so a deferred read in
+    /// `class D { x = a }` is indistinguishable from an inline one in a plain block.
+    /// Every deferred construct — function, arrow, accessor, static block, class body
+    /// — introduces at least one scope, so same-scope is sound; the cost is that a
+    /// read inside a nested block (`if (x) { foo(a) }`) also blocks the merge.
+    ///
+    /// A direct `eval` in the binding's scope defeats (2) without producing a
+    /// resolved reference, so it bails as well.
+    fn lexical_init_merge_is_safe(
+        symbol_id: SymbolId,
+        name: &str,
+        init: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let scoping = ctx.scoping();
+        let binding_scope = scoping.symbol_scope_id(symbol_id);
+        // A program-scope lexical can be read by code this file cannot see, so the
+        // reference scan below proves nothing about it. An exported binding is
+        // reachable from a cyclic import, and a Script root's `let` joins the global
+        // lexical environment shared with every other script — in both cases the
+        // initializer can call out to code that reads the binding in its TDZ.
+        if binding_scope == scoping.root_scope_id() {
+            return false;
+        }
+        if scoping.scope_flags(binding_scope).contains_direct_eval() {
+            return false;
+        }
+        if scoping.get_resolved_references(symbol_id).any(|r| r.scope_id() != binding_scope) {
+            return false;
+        }
+        // Walks the whole initializer, so it runs last.
+        !FindIdentifierReference::is_referenced_in_expression(name, init)
     }
 
     /// Check if a switch case can be inlined by verifying:
@@ -1919,6 +1977,52 @@ impl<'a> PeepholeOptimizations {
                 ctx.parent().is_function_body()
             }
             _ => false,
+        }
+    }
+}
+
+/// Finds whether `name` occurs as an identifier reference within an expression.
+///
+/// Used to keep `let a; a = <expr>` => `let a = <expr>` from introducing a TDZ
+/// error: moving `<expr>` into the declarator makes it run while `a` is still
+/// uninitialized, so any read of `a` inside it would throw.
+///
+/// Descends into function bodies too, and that is load-bearing rather than mere
+/// conservatism: in `let a; a = f(() => a)` the callee may invoke the closure
+/// immediately, reading `a` in its TDZ. Matching is by name, so a shadowed binding
+/// (`let a; a = (function (a) { return a })()`) blocks the merge unnecessarily —
+/// that direction is only a missed optimization.
+struct FindIdentifierReference<'n> {
+    name: &'n str,
+    found: bool,
+}
+
+impl<'n> FindIdentifierReference<'n> {
+    fn is_referenced_in_expression(name: &'n str, expr: &Expression<'_>) -> bool {
+        let mut visitor = Self { name, found: false };
+        visitor.visit_expression(expr);
+        visitor.found
+    }
+}
+
+impl<'a> VisitJs<'a> for FindIdentifierReference<'_> {
+    fn visit_expression(&mut self, it: &Expression<'a>) {
+        if self.found {
+            return;
+        }
+        walk_js::walk_expression(self, it);
+    }
+
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.found {
+            return;
+        }
+        walk_js::walk_statement(self, it);
+    }
+
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        if it.name == self.name {
+            self.found = true;
         }
     }
 }
