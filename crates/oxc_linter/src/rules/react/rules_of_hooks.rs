@@ -412,18 +412,23 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
-            if !is_inside_try_catch(nodes, node.id(), parent_func.id()) {
-                return;
-            }
-
-            if has_conditional_path_accept_throw(ctx.nodes(), cfg, parent_func, node) {
-                return ctx.diagnostic(diagnostics::conditional_hook(
+        if is_inside_try_catch(nodes, node.id(), parent_func.id()) {
+            if cfg.is_cyclic(node_cfg_id) {
+                return ctx.diagnostic(diagnostics::loop_hook(
                     span,
+                    loop_keyword_span(ctx, ctx.nodes(), node.id(), parent_func.id()),
                     hook_name,
-                    conditional_context(ctx, node.id(), span, parent_func.id()),
                 ));
             }
+
+            return ctx.diagnostic(diagnostics::conditional_hook(
+                span,
+                hook_name,
+                conditional_context(ctx, node.id(), span, parent_func.id()),
+            ));
+        }
+
+        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
             return;
         }
 
@@ -1578,26 +1583,9 @@ fn test() {
     "
         function Foo() {
           try {
-            useCustomHook();
-          } catch (error) {
-            console.error(error);
-          }
-        }
-    ",
-    "
-        function Foo() {
-          try {
             f();
           } catch {}
           useState();
-        }
-    ",
-    "
-        function Foo() {
-          try {
-            const value = 1;
-            useState(value);
-          } catch {}
         }
     ",
         r"
@@ -2197,6 +2185,35 @@ fn test() {
                     try {
                         f();
                         useState();
+                    } catch {}
+                }
+        ",
+        // https://github.com/oxc-project/oxc/issues/25631
+        "
+                function TestChild() {
+                    let captured = null;
+                    try {
+                        captured = useTooltipContext();
+                        return null;
+                    } catch (error) {
+                        return null;
+                    }
+                }
+        ",
+        "
+                function ComponentWithHookInsideLoop() {
+                    try {
+                        while (cond) {
+                            useState();
+                        }
+                    } catch {}
+                }
+        ",
+        "
+                function Foo() {
+                    try {
+                        const value = 1;
+                        useState(value);
                     } catch {}
                 }
         ",

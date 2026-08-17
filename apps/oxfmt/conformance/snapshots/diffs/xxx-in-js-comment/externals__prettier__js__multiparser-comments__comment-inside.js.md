@@ -1,5 +1,7 @@
 # externals/prettier/js/multiparser-comments/comment-inside.js
 
+> Broken `${}` holding comments: Prettier prints the expression at root indent (drops the embed indent), we indent to the placeholder
+
 ## Option 1
 
 `````json

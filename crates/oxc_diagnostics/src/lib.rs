@@ -1,8 +1,8 @@
 //! Error data types and utilities for handling/reporting them.
 //!
 //! The main type in this module is [`OxcDiagnostic`], which is used by all other oxc tools to
-//! report problems. It implements [miette]'s [`Diagnostic`] trait, making it compatible with other
-//! tooling you may be using.
+//! report problems. It implements this crate's [`Diagnostic`] trait and can be rendered by the
+//! included graphical and JSON report handlers.
 //!
 //! ```rust,ignore
 //! use oxc_diagnostics::{OxcDiagnostic, Result};
@@ -12,15 +12,13 @@
 //! }
 //! ```
 //!
-//! See the [miette] documentation for more information on how to interact with diagnostics.
-//!
 //! ## Reporting
 //! If you are writing your own tools that may produce their own errors, you can use
 //! [`DiagnosticService`] to format and render them to a string or a stream. It can receive
 //! [`Error`]s over a multi-producer, single consumer
 //!
 //! ```rust,ignore
-//! use std::{path::PathBuf, sync::Arc, thread};
+//! use std::{sync::Arc, thread};
 //! use oxc_diagnostics::{DiagnosticService, Error, OxcDiagnostic, GraphicalReportHandler, NamedSource};
 //!
 //! fn my_tool() -> Result<()> {
@@ -31,8 +29,7 @@
 //! let (mut service, sender) = DiagnosticService::new(Box::new(GraphicalReportHandler::new()));
 //!
 //! thread::spawn(move || {
-//!     let file_path_being_processed = PathBuf::from("file.txt");
-//!     let file_being_processed = Arc::new(NamedSource::new(file_path_being_processed.clone()));
+//!     let file_being_processed = Arc::new(NamedSource::new("file.txt", "source text"));
 //!
 //!     for _ in 0..10 {
 //!         if let Err(diagnostic) = my_tool() {
@@ -46,7 +43,11 @@
 //! service.run();
 //! ```
 
+mod handlers;
+mod named_source;
+mod protocol;
 mod service;
+mod source_impls;
 
 use std::{
     borrow::Cow,
@@ -57,14 +58,16 @@ use std::{
 pub mod reporter;
 
 pub use crate::service::{DiagnosticSender, DiagnosticService};
+pub use crate::{
+    handlers::{GraphicalReportHandler, GraphicalTheme, JSONReportHandler},
+    named_source::NamedSource,
+    protocol::{Diagnostic, Severity, SourceCode},
+};
+pub use oxc_span::LabeledSpan;
 
 pub type Error = Box<dyn Diagnostic + Send + Sync>;
-pub type Severity = miette::Severity;
 
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
-
-use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
 
 fn render(diagnostic: &dyn Diagnostic) -> String {
     let mut output = String::new();
@@ -88,7 +91,7 @@ pub type Labels = smallvec::SmallVec<[LabeledSpan; 2]>;
 pub struct Diagnostics(Vec<OxcDiagnostic>);
 
 impl Diagnostics {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self(Vec::new())
     }
 
@@ -211,6 +214,7 @@ pub struct OxcCode {
 }
 
 impl OxcCode {
+    #[must_use]
     pub fn is_some(&self) -> bool {
         self.scope.is_some() || self.number.is_some()
     }
@@ -239,7 +243,7 @@ pub struct OxcDiagnosticInner {
 }
 
 impl Display for OxcDiagnostic {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.message.fmt(f)
     }
 }
@@ -287,11 +291,15 @@ impl Diagnostic for OxcDiagnostic {
 
 impl OxcDiagnostic {
     /// Create new an error-level [`OxcDiagnostic`].
+    #[cold]
+    #[inline(never)]
     pub fn error<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self::new(Severity::Error, message.into())
     }
 
     /// Create new a warning-level [`OxcDiagnostic`].
+    #[cold]
+    #[inline(never)]
     pub fn warn<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self::new(Severity::Warning, message.into())
     }
@@ -303,6 +311,7 @@ impl OxcDiagnostic {
 
     // Outlined so the `Box` allocation + field initialization exists once in the binary
     // instead of being inlined into every diagnostic construction site.
+    #[cold]
     #[inline(never)]
     fn new(severity: Severity, message: Cow<'static, str>) -> Self {
         Self {
@@ -335,10 +344,7 @@ impl OxcDiagnostic {
     /// Use [`OxcDiagnostic::with_error_code`] to set both the scope and number at once.
     #[inline]
     pub fn with_error_code_scope<T: Into<Cow<'static, str>>>(mut self, code_scope: T) -> Self {
-        self.inner.code.scope = match self.inner.code.scope {
-            Some(scope) => Some(scope),
-            None => Some(code_scope.into()),
-        };
+        self.inner.code.scope.get_or_insert_with(|| code_scope.into());
         debug_assert!(
             self.inner.code.scope.as_ref().is_some_and(|s| !s.is_empty()),
             "Error code scopes cannot be empty"
@@ -352,10 +358,7 @@ impl OxcDiagnostic {
     /// Use [`OxcDiagnostic::with_error_code`] to set both the scope and number at once.
     #[inline]
     pub fn with_error_code_num<T: Into<Cow<'static, str>>>(mut self, code_num: T) -> Self {
-        self.inner.code.number = match self.inner.code.number {
-            Some(num) => Some(num),
-            None => Some(code_num.into()),
-        };
+        self.inner.code.number.get_or_insert_with(|| code_num.into());
         debug_assert!(
             self.inner.code.number.as_ref().is_some_and(|n| !n.is_empty()),
             "Error code numbers cannot be empty"
@@ -386,6 +389,8 @@ impl OxcDiagnostic {
     ///         .with_help("Run my_tool --init to set up a new config file"));
     /// }
     /// ```
+    #[cold]
+    #[inline(never)]
     pub fn with_help<T: Into<Cow<'static, str>>>(mut self, help: T) -> Self {
         self.inner.help = Some(help.into());
         self
@@ -405,6 +410,8 @@ impl OxcDiagnostic {
     ///         .with_note("Some useful information or suggestion"));
     /// }
     /// ```
+    #[cold]
+    #[inline(never)]
     pub fn with_note<T: Into<Cow<'static, str>>>(mut self, note: T) -> Self {
         self.inner.note = Some(note.into());
         self
@@ -472,14 +479,13 @@ impl OxcDiagnostic {
     /// Add source code to this diagnostic and convert it into an [`Error`].
     ///
     /// You should use a [`NamedSource`] if you have a file name as well as the source code.
-    pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
-        Box::new(DiagnosticWithSource { diagnostic: self, source_code: Box::new(code) })
+    pub fn with_source_code<T: SourceCode + 'static>(self, source_code: T) -> Error {
+        Box::new(DiagnosticWithSource { diagnostic: self, source_code })
     }
 
     /// Attach source code and render using Oxc's deterministic non-interactive style.
-    pub fn render_with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> String {
-        let diagnostic = self.with_source_code(code);
-        render(diagnostic.as_ref())
+    pub fn render_with_source_code<T: SourceCode>(self, source_code: T) -> String {
+        render(&DiagnosticWithSource { diagnostic: self, source_code })
     }
 
     /// Consumes the diagnostic and returns the inner owned data.
@@ -494,26 +500,26 @@ impl From<OxcDiagnostic> for Error {
     }
 }
 
-struct DiagnosticWithSource {
+struct DiagnosticWithSource<S> {
     diagnostic: OxcDiagnostic,
-    source_code: Box<dyn SourceCode>,
+    source_code: S,
 }
 
-impl fmt::Debug for DiagnosticWithSource {
+impl<S> fmt::Debug for DiagnosticWithSource<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(&self.diagnostic, f)
     }
 }
 
-impl Display for DiagnosticWithSource {
+impl<S> Display for DiagnosticWithSource<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.diagnostic, f)
     }
 }
 
-impl std::error::Error for DiagnosticWithSource {}
+impl<S> std::error::Error for DiagnosticWithSource<S> {}
 
-impl Diagnostic for DiagnosticWithSource {
+impl<S: SourceCode> Diagnostic for DiagnosticWithSource<S> {
     fn code(&self) -> Option<Cow<'_, str>> {
         self.diagnostic.code()
     }
@@ -539,6 +545,6 @@ impl Diagnostic for DiagnosticWithSource {
     }
 
     fn source_code(&self) -> Option<&dyn SourceCode> {
-        Some(self.source_code.as_ref())
+        Some(&self.source_code)
     }
 }

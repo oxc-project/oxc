@@ -425,16 +425,25 @@ pub use crate::rules::promise::prefer_catch::PreferCatch as PromisePreferCatch;
 pub use crate::rules::promise::spec_only::SpecOnly as PromiseSpecOnly;
 pub use crate::rules::promise::valid_params::ValidParams as PromiseValidParams;
 pub use crate::rules::react::button_has_type::ButtonHasType as ReactButtonHasType;
+pub use crate::rules::react::capitalized_calls::CapitalizedCalls as ReactCapitalizedCalls;
 pub use crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly as ReactCheckedRequiresOnchangeOrReadonly;
 pub use crate::rules::react::display_name::DisplayName as ReactDisplayName;
+pub use crate::rules::react::error_boundaries::ErrorBoundaries as ReactErrorBoundaries;
 pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveDeps;
+pub use crate::rules::react::exhaustive_effect_dependencies::ExhaustiveEffectDependencies as ReactExhaustiveEffectDependencies;
 pub use crate::rules::react::forbid_component_props::ForbidComponentProps as ReactForbidComponentProps;
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
 pub use crate::rules::react::function_component_definition::FunctionComponentDefinition as ReactFunctionComponentDefinition;
+pub use crate::rules::react::gating::Gating as ReactGating;
+pub use crate::rules::react::globals::Globals as ReactGlobals;
 pub use crate::rules::react::hook_use_state::HookUseState as ReactHookUseState;
+pub use crate::rules::react::hooks::Hooks as ReactHooks;
 pub use crate::rules::react::iframe_missing_sandbox::IframeMissingSandbox as ReactIframeMissingSandbox;
+pub use crate::rules::react::immutability::Immutability as ReactImmutability;
+pub use crate::rules::react::incompatible_library::IncompatibleLibrary as ReactIncompatibleLibrary;
+pub use crate::rules::react::invariant::Invariant as ReactInvariant;
 pub use crate::rules::react::jsx_boolean_value::JsxBooleanValue as ReactJsxBooleanValue;
 pub use crate::rules::react::jsx_curly_brace_presence::JsxCurlyBracePresence as ReactJsxCurlyBracePresence;
 pub use crate::rules::react::jsx_filename_extension::JsxFilenameExtension as ReactJsxFilenameExtension;
@@ -453,11 +462,13 @@ pub use crate::rules::react::jsx_no_useless_fragment::JsxNoUselessFragment as Re
 pub use crate::rules::react::jsx_pascal_case::JsxPascalCase as ReactJsxPascalCase;
 pub use crate::rules::react::jsx_props_no_spread_multi::JsxPropsNoSpreadMulti as ReactJsxPropsNoSpreadMulti;
 pub use crate::rules::react::jsx_props_no_spreading::JsxPropsNoSpreading as ReactJsxPropsNoSpreading;
+pub use crate::rules::react::memo_dependencies::MemoDependencies as ReactMemoDependencies;
 pub use crate::rules::react::no_array_index_key::NoArrayIndexKey as ReactNoArrayIndexKey;
 pub use crate::rules::react::no_children_prop::NoChildrenProp as ReactNoChildrenProp;
 pub use crate::rules::react::no_clone_element::NoCloneElement as ReactNoCloneElement;
 pub use crate::rules::react::no_danger::NoDanger as ReactNoDanger;
 pub use crate::rules::react::no_danger_with_children::NoDangerWithChildren as ReactNoDangerWithChildren;
+pub use crate::rules::react::no_deriving_state_in_effects::NoDerivingStateInEffects as ReactNoDerivingStateInEffects;
 pub use crate::rules::react::no_did_mount_set_state::NoDidMountSetState as ReactNoDidMountSetState;
 pub use crate::rules::react::no_did_update_set_state::NoDidUpdateSetState as ReactNoDidUpdateSetState;
 pub use crate::rules::react::no_direct_mutation_state::NoDirectMutationState as ReactNoDirectMutationState;
@@ -481,14 +492,25 @@ pub use crate::rules::react::no_will_update_set_state::NoWillUpdateSetState as R
 pub use crate::rules::react::only_export_components::OnlyExportComponents as ReactOnlyExportComponents;
 pub use crate::rules::react::prefer_es6_class::PreferEs6Class as ReactPreferEs6Class;
 pub use crate::rules::react::prefer_function_component::PreferFunctionComponent as ReactPreferFunctionComponent;
-pub use crate::rules::react::react_compiler::ReactCompiler as ReactReactCompiler;
+pub use crate::rules::react::preserve_manual_memoization::PreserveManualMemoization as ReactPreserveManualMemoization;
+pub use crate::rules::react::purity::Purity as ReactPurity;
 pub use crate::rules::react::react_in_jsx_scope::ReactInJsxScope as ReactReactInJsxScope;
+pub use crate::rules::react::refs::Refs as ReactRefs;
 pub use crate::rules::react::require_render_return::RequireRenderReturn as ReactRequireRenderReturn;
+pub use crate::rules::react::rule_suppression::RuleSuppression as ReactRuleSuppression;
 pub use crate::rules::react::rules_of_hooks::RulesOfHooks as ReactRulesOfHooks;
 pub use crate::rules::react::self_closing_comp::SelfClosingComp as ReactSelfClosingComp;
+pub use crate::rules::react::set_state_in_effect::SetStateInEffect as ReactSetStateInEffect;
+pub use crate::rules::react::set_state_in_render::SetStateInRender as ReactSetStateInRender;
 pub use crate::rules::react::state_in_constructor::StateInConstructor as ReactStateInConstructor;
+pub use crate::rules::react::static_components::StaticComponents as ReactStaticComponents;
 pub use crate::rules::react::style_prop_object::StylePropObject as ReactStylePropObject;
+pub use crate::rules::react::syntax::Syntax as ReactSyntax;
+pub use crate::rules::react::todo::Todo as ReactTodo;
+pub use crate::rules::react::unsupported_syntax::UnsupportedSyntax as ReactUnsupportedSyntax;
+pub use crate::rules::react::use_memo::UseMemo as ReactUseMemo;
 pub use crate::rules::react::void_dom_elements_no_children::VoidDomElementsNoChildren as ReactVoidDomElementsNoChildren;
+pub use crate::rules::react::void_use_memo::VoidUseMemo as ReactVoidUseMemo;
 pub use crate::rules::react_perf::jsx_no_jsx_as_prop::JsxNoJsxAsProp as ReactPerfJsxNoJsxAsProp;
 pub use crate::rules::react_perf::jsx_no_new_array_as_prop::JsxNoNewArrayAsProp as ReactPerfJsxNoNewArrayAsProp;
 pub use crate::rules::react_perf::jsx_no_new_function_as_prop::JsxNoNewFunctionAsProp as ReactPerfJsxNoNewFunctionAsProp;
@@ -1263,16 +1285,25 @@ pub enum RuleEnum {
     JestValidExpectInPromise(JestValidExpectInPromise),
     JestValidTitle(JestValidTitle),
     ReactButtonHasType(ReactButtonHasType),
+    ReactCapitalizedCalls(ReactCapitalizedCalls),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
     ReactDisplayName(ReactDisplayName),
+    ReactErrorBoundaries(ReactErrorBoundaries),
     ReactExhaustiveDeps(ReactExhaustiveDeps),
+    ReactExhaustiveEffectDependencies(ReactExhaustiveEffectDependencies),
     ReactForbidComponentProps(ReactForbidComponentProps),
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
     ReactFunctionComponentDefinition(ReactFunctionComponentDefinition),
+    ReactGating(ReactGating),
+    ReactGlobals(ReactGlobals),
     ReactHookUseState(ReactHookUseState),
+    ReactHooks(ReactHooks),
     ReactIframeMissingSandbox(ReactIframeMissingSandbox),
+    ReactImmutability(ReactImmutability),
+    ReactIncompatibleLibrary(ReactIncompatibleLibrary),
+    ReactInvariant(ReactInvariant),
     ReactJsxBooleanValue(ReactJsxBooleanValue),
     ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence),
     ReactJsxFilenameExtension(ReactJsxFilenameExtension),
@@ -1291,11 +1322,13 @@ pub enum RuleEnum {
     ReactJsxPascalCase(ReactJsxPascalCase),
     ReactJsxPropsNoSpreadMulti(ReactJsxPropsNoSpreadMulti),
     ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading),
+    ReactMemoDependencies(ReactMemoDependencies),
     ReactNoArrayIndexKey(ReactNoArrayIndexKey),
     ReactNoChildrenProp(ReactNoChildrenProp),
     ReactNoCloneElement(ReactNoCloneElement),
     ReactNoDanger(ReactNoDanger),
     ReactNoDangerWithChildren(ReactNoDangerWithChildren),
+    ReactNoDerivingStateInEffects(ReactNoDerivingStateInEffects),
     ReactNoDidMountSetState(ReactNoDidMountSetState),
     ReactNoDidUpdateSetState(ReactNoDidUpdateSetState),
     ReactNoDirectMutationState(ReactNoDirectMutationState),
@@ -1319,14 +1352,25 @@ pub enum RuleEnum {
     ReactOnlyExportComponents(ReactOnlyExportComponents),
     ReactPreferEs6Class(ReactPreferEs6Class),
     ReactPreferFunctionComponent(ReactPreferFunctionComponent),
-    ReactReactCompiler(ReactReactCompiler),
+    ReactPreserveManualMemoization(ReactPreserveManualMemoization),
+    ReactPurity(ReactPurity),
     ReactReactInJsxScope(ReactReactInJsxScope),
+    ReactRefs(ReactRefs),
     ReactRequireRenderReturn(ReactRequireRenderReturn),
+    ReactRuleSuppression(ReactRuleSuppression),
     ReactRulesOfHooks(ReactRulesOfHooks),
     ReactSelfClosingComp(ReactSelfClosingComp),
+    ReactSetStateInEffect(ReactSetStateInEffect),
+    ReactSetStateInRender(ReactSetStateInRender),
     ReactStateInConstructor(ReactStateInConstructor),
+    ReactStaticComponents(ReactStaticComponents),
     ReactStylePropObject(ReactStylePropObject),
+    ReactSyntax(ReactSyntax),
+    ReactTodo(ReactTodo),
+    ReactUnsupportedSyntax(ReactUnsupportedSyntax),
+    ReactUseMemo(ReactUseMemo),
     ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren),
+    ReactVoidUseMemo(ReactVoidUseMemo),
     ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp),
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
@@ -2168,17 +2212,26 @@ const JEST_VALID_EXPECT_ID: usize = JEST_VALID_DESCRIBE_CALLBACK_ID + 1usize;
 const JEST_VALID_EXPECT_IN_PROMISE_ID: usize = JEST_VALID_EXPECT_ID + 1usize;
 const JEST_VALID_TITLE_ID: usize = JEST_VALID_EXPECT_IN_PROMISE_ID + 1usize;
 const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
-const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
+const REACT_CAPITALIZED_CALLS_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
+const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_CAPITALIZED_CALLS_ID + 1usize;
 const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
-const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
-const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_ERROR_BOUNDARIES_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
+const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_ERROR_BOUNDARIES_ID + 1usize;
+const REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID + 1usize;
 const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usize;
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
 const REACT_FUNCTION_COMPONENT_DEFINITION_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
-const REACT_HOOK_USE_STATE_ID: usize = REACT_FUNCTION_COMPONENT_DEFINITION_ID + 1usize;
-const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_HOOK_USE_STATE_ID + 1usize;
-const REACT_JSX_BOOLEAN_VALUE_ID: usize = REACT_IFRAME_MISSING_SANDBOX_ID + 1usize;
+const REACT_GATING_ID: usize = REACT_FUNCTION_COMPONENT_DEFINITION_ID + 1usize;
+const REACT_GLOBALS_ID: usize = REACT_GATING_ID + 1usize;
+const REACT_HOOK_USE_STATE_ID: usize = REACT_GLOBALS_ID + 1usize;
+const REACT_HOOKS_ID: usize = REACT_HOOK_USE_STATE_ID + 1usize;
+const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_HOOKS_ID + 1usize;
+const REACT_IMMUTABILITY_ID: usize = REACT_IFRAME_MISSING_SANDBOX_ID + 1usize;
+const REACT_INCOMPATIBLE_LIBRARY_ID: usize = REACT_IMMUTABILITY_ID + 1usize;
+const REACT_INVARIANT_ID: usize = REACT_INCOMPATIBLE_LIBRARY_ID + 1usize;
+const REACT_JSX_BOOLEAN_VALUE_ID: usize = REACT_INVARIANT_ID + 1usize;
 const REACT_JSX_CURLY_BRACE_PRESENCE_ID: usize = REACT_JSX_BOOLEAN_VALUE_ID + 1usize;
 const REACT_JSX_FILENAME_EXTENSION_ID: usize = REACT_JSX_CURLY_BRACE_PRESENCE_ID + 1usize;
 const REACT_JSX_FRAGMENTS_ID: usize = REACT_JSX_FILENAME_EXTENSION_ID + 1usize;
@@ -2197,12 +2250,14 @@ const REACT_JSX_NO_USELESS_FRAGMENT_ID: usize = REACT_JSX_NO_UNDEF_ID + 1usize;
 const REACT_JSX_PASCAL_CASE_ID: usize = REACT_JSX_NO_USELESS_FRAGMENT_ID + 1usize;
 const REACT_JSX_PROPS_NO_SPREAD_MULTI_ID: usize = REACT_JSX_PASCAL_CASE_ID + 1usize;
 const REACT_JSX_PROPS_NO_SPREADING_ID: usize = REACT_JSX_PROPS_NO_SPREAD_MULTI_ID + 1usize;
-const REACT_NO_ARRAY_INDEX_KEY_ID: usize = REACT_JSX_PROPS_NO_SPREADING_ID + 1usize;
+const REACT_MEMO_DEPENDENCIES_ID: usize = REACT_JSX_PROPS_NO_SPREADING_ID + 1usize;
+const REACT_NO_ARRAY_INDEX_KEY_ID: usize = REACT_MEMO_DEPENDENCIES_ID + 1usize;
 const REACT_NO_CHILDREN_PROP_ID: usize = REACT_NO_ARRAY_INDEX_KEY_ID + 1usize;
 const REACT_NO_CLONE_ELEMENT_ID: usize = REACT_NO_CHILDREN_PROP_ID + 1usize;
 const REACT_NO_DANGER_ID: usize = REACT_NO_CLONE_ELEMENT_ID + 1usize;
 const REACT_NO_DANGER_WITH_CHILDREN_ID: usize = REACT_NO_DANGER_ID + 1usize;
-const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
+const REACT_NO_DERIVING_STATE_IN_EFFECTS_ID: usize = REACT_NO_DANGER_WITH_CHILDREN_ID + 1usize;
+const REACT_NO_DID_MOUNT_SET_STATE_ID: usize = REACT_NO_DERIVING_STATE_IN_EFFECTS_ID + 1usize;
 const REACT_NO_DID_UPDATE_SET_STATE_ID: usize = REACT_NO_DID_MOUNT_SET_STATE_ID + 1usize;
 const REACT_NO_DIRECT_MUTATION_STATE_ID: usize = REACT_NO_DID_UPDATE_SET_STATE_ID + 1usize;
 const REACT_NO_FIND_DOM_NODE_ID: usize = REACT_NO_DIRECT_MUTATION_STATE_ID + 1usize;
@@ -2226,15 +2281,26 @@ const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSTABLE_NESTED_COMPON
 const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = REACT_NO_WILL_UPDATE_SET_STATE_ID + 1usize;
 const REACT_PREFER_ES_6_CLASS_ID: usize = REACT_ONLY_EXPORT_COMPONENTS_ID + 1usize;
 const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
-const REACT_REACT_COMPILER_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
-const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_REACT_COMPILER_ID + 1usize;
-const REACT_REQUIRE_RENDER_RETURN_ID: usize = REACT_REACT_IN_JSX_SCOPE_ID + 1usize;
-const REACT_RULES_OF_HOOKS_ID: usize = REACT_REQUIRE_RENDER_RETURN_ID + 1usize;
+const REACT_PRESERVE_MANUAL_MEMOIZATION_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
+const REACT_PURITY_ID: usize = REACT_PRESERVE_MANUAL_MEMOIZATION_ID + 1usize;
+const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_PURITY_ID + 1usize;
+const REACT_REFS_ID: usize = REACT_REACT_IN_JSX_SCOPE_ID + 1usize;
+const REACT_REQUIRE_RENDER_RETURN_ID: usize = REACT_REFS_ID + 1usize;
+const REACT_RULE_SUPPRESSION_ID: usize = REACT_REQUIRE_RENDER_RETURN_ID + 1usize;
+const REACT_RULES_OF_HOOKS_ID: usize = REACT_RULE_SUPPRESSION_ID + 1usize;
 const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
-const REACT_STATE_IN_CONSTRUCTOR_ID: usize = REACT_SELF_CLOSING_COMP_ID + 1usize;
-const REACT_STYLE_PROP_OBJECT_ID: usize = REACT_STATE_IN_CONSTRUCTOR_ID + 1usize;
-const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
-const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
+const REACT_SET_STATE_IN_EFFECT_ID: usize = REACT_SELF_CLOSING_COMP_ID + 1usize;
+const REACT_SET_STATE_IN_RENDER_ID: usize = REACT_SET_STATE_IN_EFFECT_ID + 1usize;
+const REACT_STATE_IN_CONSTRUCTOR_ID: usize = REACT_SET_STATE_IN_RENDER_ID + 1usize;
+const REACT_STATIC_COMPONENTS_ID: usize = REACT_STATE_IN_CONSTRUCTOR_ID + 1usize;
+const REACT_STYLE_PROP_OBJECT_ID: usize = REACT_STATIC_COMPONENTS_ID + 1usize;
+const REACT_SYNTAX_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
+const REACT_TODO_ID: usize = REACT_SYNTAX_ID + 1usize;
+const REACT_UNSUPPORTED_SYNTAX_ID: usize = REACT_TODO_ID + 1usize;
+const REACT_USE_MEMO_ID: usize = REACT_UNSUPPORTED_SYNTAX_ID + 1usize;
+const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_USE_MEMO_ID + 1usize;
+const REACT_VOID_USE_MEMO_ID: usize = REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
+const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_VOID_USE_MEMO_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = REACT_PERF_JSX_NO_JSX_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
@@ -2688,7 +2754,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 850usize] = [
+static RULE_NAMES: [&str; 872usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3080,16 +3146,25 @@ static RULE_NAMES: [&str; 850usize] = [
     JestValidExpectInPromise::NAME,
     JestValidTitle::NAME,
     ReactButtonHasType::NAME,
+    ReactCapitalizedCalls::NAME,
     ReactCheckedRequiresOnchangeOrReadonly::NAME,
     ReactDisplayName::NAME,
+    ReactErrorBoundaries::NAME,
     ReactExhaustiveDeps::NAME,
+    ReactExhaustiveEffectDependencies::NAME,
     ReactForbidComponentProps::NAME,
     ReactForbidDomProps::NAME,
     ReactForbidElements::NAME,
     ReactForwardRefUsesRef::NAME,
     ReactFunctionComponentDefinition::NAME,
+    ReactGating::NAME,
+    ReactGlobals::NAME,
     ReactHookUseState::NAME,
+    ReactHooks::NAME,
     ReactIframeMissingSandbox::NAME,
+    ReactImmutability::NAME,
+    ReactIncompatibleLibrary::NAME,
+    ReactInvariant::NAME,
     ReactJsxBooleanValue::NAME,
     ReactJsxCurlyBracePresence::NAME,
     ReactJsxFilenameExtension::NAME,
@@ -3108,11 +3183,13 @@ static RULE_NAMES: [&str; 850usize] = [
     ReactJsxPascalCase::NAME,
     ReactJsxPropsNoSpreadMulti::NAME,
     ReactJsxPropsNoSpreading::NAME,
+    ReactMemoDependencies::NAME,
     ReactNoArrayIndexKey::NAME,
     ReactNoChildrenProp::NAME,
     ReactNoCloneElement::NAME,
     ReactNoDanger::NAME,
     ReactNoDangerWithChildren::NAME,
+    ReactNoDerivingStateInEffects::NAME,
     ReactNoDidMountSetState::NAME,
     ReactNoDidUpdateSetState::NAME,
     ReactNoDirectMutationState::NAME,
@@ -3136,14 +3213,25 @@ static RULE_NAMES: [&str; 850usize] = [
     ReactOnlyExportComponents::NAME,
     ReactPreferEs6Class::NAME,
     ReactPreferFunctionComponent::NAME,
-    ReactReactCompiler::NAME,
+    ReactPreserveManualMemoization::NAME,
+    ReactPurity::NAME,
     ReactReactInJsxScope::NAME,
+    ReactRefs::NAME,
     ReactRequireRenderReturn::NAME,
+    ReactRuleSuppression::NAME,
     ReactRulesOfHooks::NAME,
     ReactSelfClosingComp::NAME,
+    ReactSetStateInEffect::NAME,
+    ReactSetStateInRender::NAME,
     ReactStateInConstructor::NAME,
+    ReactStaticComponents::NAME,
     ReactStylePropObject::NAME,
+    ReactSyntax::NAME,
+    ReactTodo::NAME,
+    ReactUnsupportedSyntax::NAME,
+    ReactUseMemo::NAME,
     ReactVoidDomElementsNoChildren::NAME,
+    ReactVoidUseMemo::NAME,
     ReactPerfJsxNoJsxAsProp::NAME,
     ReactPerfJsxNoNewArrayAsProp::NAME,
     ReactPerfJsxNoNewFunctionAsProp::NAME,
@@ -4004,18 +4092,27 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JEST_VALID_EXPECT_IN_PROMISE_ID,
             Self::JestValidTitle(_) => JEST_VALID_TITLE_ID,
             Self::ReactButtonHasType(_) => REACT_BUTTON_HAS_TYPE_ID,
+            Self::ReactCapitalizedCalls(_) => REACT_CAPITALIZED_CALLS_ID,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID
             }
             Self::ReactDisplayName(_) => REACT_DISPLAY_NAME_ID,
+            Self::ReactErrorBoundaries(_) => REACT_ERROR_BOUNDARIES_ID,
             Self::ReactExhaustiveDeps(_) => REACT_EXHAUSTIVE_DEPS_ID,
+            Self::ReactExhaustiveEffectDependencies(_) => REACT_EXHAUSTIVE_EFFECT_DEPENDENCIES_ID,
             Self::ReactForbidComponentProps(_) => REACT_FORBID_COMPONENT_PROPS_ID,
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
             Self::ReactFunctionComponentDefinition(_) => REACT_FUNCTION_COMPONENT_DEFINITION_ID,
+            Self::ReactGating(_) => REACT_GATING_ID,
+            Self::ReactGlobals(_) => REACT_GLOBALS_ID,
             Self::ReactHookUseState(_) => REACT_HOOK_USE_STATE_ID,
+            Self::ReactHooks(_) => REACT_HOOKS_ID,
             Self::ReactIframeMissingSandbox(_) => REACT_IFRAME_MISSING_SANDBOX_ID,
+            Self::ReactImmutability(_) => REACT_IMMUTABILITY_ID,
+            Self::ReactIncompatibleLibrary(_) => REACT_INCOMPATIBLE_LIBRARY_ID,
+            Self::ReactInvariant(_) => REACT_INVARIANT_ID,
             Self::ReactJsxBooleanValue(_) => REACT_JSX_BOOLEAN_VALUE_ID,
             Self::ReactJsxCurlyBracePresence(_) => REACT_JSX_CURLY_BRACE_PRESENCE_ID,
             Self::ReactJsxFilenameExtension(_) => REACT_JSX_FILENAME_EXTENSION_ID,
@@ -4036,11 +4133,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => REACT_JSX_PASCAL_CASE_ID,
             Self::ReactJsxPropsNoSpreadMulti(_) => REACT_JSX_PROPS_NO_SPREAD_MULTI_ID,
             Self::ReactJsxPropsNoSpreading(_) => REACT_JSX_PROPS_NO_SPREADING_ID,
+            Self::ReactMemoDependencies(_) => REACT_MEMO_DEPENDENCIES_ID,
             Self::ReactNoArrayIndexKey(_) => REACT_NO_ARRAY_INDEX_KEY_ID,
             Self::ReactNoChildrenProp(_) => REACT_NO_CHILDREN_PROP_ID,
             Self::ReactNoCloneElement(_) => REACT_NO_CLONE_ELEMENT_ID,
             Self::ReactNoDanger(_) => REACT_NO_DANGER_ID,
             Self::ReactNoDangerWithChildren(_) => REACT_NO_DANGER_WITH_CHILDREN_ID,
+            Self::ReactNoDerivingStateInEffects(_) => REACT_NO_DERIVING_STATE_IN_EFFECTS_ID,
             Self::ReactNoDidMountSetState(_) => REACT_NO_DID_MOUNT_SET_STATE_ID,
             Self::ReactNoDidUpdateSetState(_) => REACT_NO_DID_UPDATE_SET_STATE_ID,
             Self::ReactNoDirectMutationState(_) => REACT_NO_DIRECT_MUTATION_STATE_ID,
@@ -4066,14 +4165,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => REACT_ONLY_EXPORT_COMPONENTS_ID,
             Self::ReactPreferEs6Class(_) => REACT_PREFER_ES_6_CLASS_ID,
             Self::ReactPreferFunctionComponent(_) => REACT_PREFER_FUNCTION_COMPONENT_ID,
-            Self::ReactReactCompiler(_) => REACT_REACT_COMPILER_ID,
+            Self::ReactPreserveManualMemoization(_) => REACT_PRESERVE_MANUAL_MEMOIZATION_ID,
+            Self::ReactPurity(_) => REACT_PURITY_ID,
             Self::ReactReactInJsxScope(_) => REACT_REACT_IN_JSX_SCOPE_ID,
+            Self::ReactRefs(_) => REACT_REFS_ID,
             Self::ReactRequireRenderReturn(_) => REACT_REQUIRE_RENDER_RETURN_ID,
+            Self::ReactRuleSuppression(_) => REACT_RULE_SUPPRESSION_ID,
             Self::ReactRulesOfHooks(_) => REACT_RULES_OF_HOOKS_ID,
             Self::ReactSelfClosingComp(_) => REACT_SELF_CLOSING_COMP_ID,
+            Self::ReactSetStateInEffect(_) => REACT_SET_STATE_IN_EFFECT_ID,
+            Self::ReactSetStateInRender(_) => REACT_SET_STATE_IN_RENDER_ID,
             Self::ReactStateInConstructor(_) => REACT_STATE_IN_CONSTRUCTOR_ID,
+            Self::ReactStaticComponents(_) => REACT_STATIC_COMPONENTS_ID,
             Self::ReactStylePropObject(_) => REACT_STYLE_PROP_OBJECT_ID,
+            Self::ReactSyntax(_) => REACT_SYNTAX_ID,
+            Self::ReactTodo(_) => REACT_TODO_ID,
+            Self::ReactUnsupportedSyntax(_) => REACT_UNSUPPORTED_SYNTAX_ID,
+            Self::ReactUseMemo(_) => REACT_USE_MEMO_ID,
             Self::ReactVoidDomElementsNoChildren(_) => REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID,
+            Self::ReactVoidUseMemo(_) => REACT_VOID_USE_MEMO_ID,
             Self::ReactPerfJsxNoJsxAsProp(_) => REACT_PERF_JSX_NO_JSX_AS_PROP_ID,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
@@ -5011,18 +5121,29 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::CATEGORY,
             Self::JestValidTitle(_) => JestValidTitle::CATEGORY,
             Self::ReactButtonHasType(_) => ReactButtonHasType::CATEGORY,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::CATEGORY,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::CATEGORY
             }
             Self::ReactDisplayName(_) => ReactDisplayName::CATEGORY,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::CATEGORY,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::CATEGORY,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::CATEGORY
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::CATEGORY,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::CATEGORY,
+            Self::ReactGating(_) => ReactGating::CATEGORY,
+            Self::ReactGlobals(_) => ReactGlobals::CATEGORY,
             Self::ReactHookUseState(_) => ReactHookUseState::CATEGORY,
+            Self::ReactHooks(_) => ReactHooks::CATEGORY,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::CATEGORY,
+            Self::ReactImmutability(_) => ReactImmutability::CATEGORY,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::CATEGORY,
+            Self::ReactInvariant(_) => ReactInvariant::CATEGORY,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::CATEGORY,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::CATEGORY,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::CATEGORY,
@@ -5043,11 +5164,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::CATEGORY,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::CATEGORY,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::CATEGORY,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::CATEGORY,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::CATEGORY,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::CATEGORY,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::CATEGORY,
             Self::ReactNoDanger(_) => ReactNoDanger::CATEGORY,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::CATEGORY,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::CATEGORY,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::CATEGORY,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::CATEGORY,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
@@ -5073,14 +5196,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::CATEGORY,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::CATEGORY,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::CATEGORY,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::CATEGORY,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::CATEGORY,
+            Self::ReactPurity(_) => ReactPurity::CATEGORY,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::CATEGORY,
+            Self::ReactRefs(_) => ReactRefs::CATEGORY,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::CATEGORY,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::CATEGORY,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::CATEGORY,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::CATEGORY,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::CATEGORY,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::CATEGORY,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::CATEGORY,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::CATEGORY,
             Self::ReactStylePropObject(_) => ReactStylePropObject::CATEGORY,
+            Self::ReactSyntax(_) => ReactSyntax::CATEGORY,
+            Self::ReactTodo(_) => ReactTodo::CATEGORY,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::CATEGORY,
+            Self::ReactUseMemo(_) => ReactUseMemo::CATEGORY,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::CATEGORY,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::CATEGORY,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
@@ -6014,18 +6148,27 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::FIX,
             Self::JestValidTitle(_) => JestValidTitle::FIX,
             Self::ReactButtonHasType(_) => ReactButtonHasType::FIX,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::FIX,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::FIX
             }
             Self::ReactDisplayName(_) => ReactDisplayName::FIX,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::FIX,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FIX,
+            Self::ReactExhaustiveEffectDependencies(_) => ReactExhaustiveEffectDependencies::FIX,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::FIX,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::FIX,
+            Self::ReactGating(_) => ReactGating::FIX,
+            Self::ReactGlobals(_) => ReactGlobals::FIX,
             Self::ReactHookUseState(_) => ReactHookUseState::FIX,
+            Self::ReactHooks(_) => ReactHooks::FIX,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::FIX,
+            Self::ReactImmutability(_) => ReactImmutability::FIX,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::FIX,
+            Self::ReactInvariant(_) => ReactInvariant::FIX,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::FIX,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::FIX,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::FIX,
@@ -6044,11 +6187,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::FIX,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::FIX,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::FIX,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::FIX,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::FIX,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::FIX,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::FIX,
             Self::ReactNoDanger(_) => ReactNoDanger::FIX,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::FIX,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::FIX,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FIX,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::FIX,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
@@ -6074,14 +6219,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FIX,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FIX,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::FIX,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::FIX,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::FIX,
+            Self::ReactPurity(_) => ReactPurity::FIX,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::FIX,
+            Self::ReactRefs(_) => ReactRefs::FIX,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::FIX,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::FIX,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::FIX,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::FIX,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::FIX,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::FIX,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::FIX,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::FIX,
             Self::ReactStylePropObject(_) => ReactStylePropObject::FIX,
+            Self::ReactSyntax(_) => ReactSyntax::FIX,
+            Self::ReactTodo(_) => ReactTodo::FIX,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::FIX,
+            Self::ReactUseMemo(_) => ReactUseMemo::FIX,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::FIX,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::FIX,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::FIX,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
@@ -7089,11 +7245,16 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::documentation(),
             Self::JestValidTitle(_) => JestValidTitle::documentation(),
             Self::ReactButtonHasType(_) => ReactButtonHasType::documentation(),
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::documentation(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::documentation()
             }
             Self::ReactDisplayName(_) => ReactDisplayName::documentation(),
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::documentation(),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::documentation(),
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::documentation()
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::documentation(),
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
@@ -7101,8 +7262,14 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::documentation()
             }
+            Self::ReactGating(_) => ReactGating::documentation(),
+            Self::ReactGlobals(_) => ReactGlobals::documentation(),
             Self::ReactHookUseState(_) => ReactHookUseState::documentation(),
+            Self::ReactHooks(_) => ReactHooks::documentation(),
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::documentation(),
+            Self::ReactImmutability(_) => ReactImmutability::documentation(),
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::documentation(),
+            Self::ReactInvariant(_) => ReactInvariant::documentation(),
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::documentation(),
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::documentation(),
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::documentation(),
@@ -7123,11 +7290,15 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::documentation(),
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::documentation(),
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::documentation(),
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::documentation(),
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::documentation(),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::documentation(),
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::documentation(),
             Self::ReactNoDanger(_) => ReactNoDanger::documentation(),
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::documentation(),
+            Self::ReactNoDerivingStateInEffects(_) => {
+                ReactNoDerivingStateInEffects::documentation()
+            }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::documentation(),
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::documentation(),
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
@@ -7157,16 +7328,29 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::documentation(),
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::documentation(),
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::documentation(),
-            Self::ReactReactCompiler(_) => ReactReactCompiler::documentation(),
+            Self::ReactPreserveManualMemoization(_) => {
+                ReactPreserveManualMemoization::documentation()
+            }
+            Self::ReactPurity(_) => ReactPurity::documentation(),
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::documentation(),
+            Self::ReactRefs(_) => ReactRefs::documentation(),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::documentation(),
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::documentation(),
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::documentation(),
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::documentation(),
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::documentation(),
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::documentation(),
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::documentation(),
+            Self::ReactStaticComponents(_) => ReactStaticComponents::documentation(),
             Self::ReactStylePropObject(_) => ReactStylePropObject::documentation(),
+            Self::ReactSyntax(_) => ReactSyntax::documentation(),
+            Self::ReactTodo(_) => ReactTodo::documentation(),
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::documentation(),
+            Self::ReactUseMemo(_) => ReactUseMemo::documentation(),
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::documentation()
             }
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::documentation(),
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::documentation(),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::documentation(),
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
@@ -8878,14 +9062,22 @@ impl RuleEnum {
                 .or_else(|| JestValidTitle::schema(generator)),
             Self::ReactButtonHasType(_) => ReactButtonHasType::config_schema(generator)
                 .or_else(|| ReactButtonHasType::schema(generator)),
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::config_schema(generator)
+                .or_else(|| ReactCapitalizedCalls::schema(generator)),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::config_schema(generator)
                     .or_else(|| ReactCheckedRequiresOnchangeOrReadonly::schema(generator))
             }
             Self::ReactDisplayName(_) => ReactDisplayName::config_schema(generator)
                 .or_else(|| ReactDisplayName::schema(generator)),
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::config_schema(generator)
+                .or_else(|| ReactErrorBoundaries::schema(generator)),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::config_schema(generator)
                 .or_else(|| ReactExhaustiveDeps::schema(generator)),
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::config_schema(generator)
+                    .or_else(|| ReactExhaustiveEffectDependencies::schema(generator))
+            }
             Self::ReactForbidComponentProps(_) => {
                 ReactForbidComponentProps::config_schema(generator)
                     .or_else(|| ReactForbidComponentProps::schema(generator))
@@ -8900,12 +9092,27 @@ impl RuleEnum {
                 ReactFunctionComponentDefinition::config_schema(generator)
                     .or_else(|| ReactFunctionComponentDefinition::schema(generator))
             }
+            Self::ReactGating(_) => {
+                ReactGating::config_schema(generator).or_else(|| ReactGating::schema(generator))
+            }
+            Self::ReactGlobals(_) => {
+                ReactGlobals::config_schema(generator).or_else(|| ReactGlobals::schema(generator))
+            }
             Self::ReactHookUseState(_) => ReactHookUseState::config_schema(generator)
                 .or_else(|| ReactHookUseState::schema(generator)),
+            Self::ReactHooks(_) => {
+                ReactHooks::config_schema(generator).or_else(|| ReactHooks::schema(generator))
+            }
             Self::ReactIframeMissingSandbox(_) => {
                 ReactIframeMissingSandbox::config_schema(generator)
                     .or_else(|| ReactIframeMissingSandbox::schema(generator))
             }
+            Self::ReactImmutability(_) => ReactImmutability::config_schema(generator)
+                .or_else(|| ReactImmutability::schema(generator)),
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::config_schema(generator)
+                .or_else(|| ReactIncompatibleLibrary::schema(generator)),
+            Self::ReactInvariant(_) => ReactInvariant::config_schema(generator)
+                .or_else(|| ReactInvariant::schema(generator)),
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::config_schema(generator)
                 .or_else(|| ReactJsxBooleanValue::schema(generator)),
             Self::ReactJsxCurlyBracePresence(_) => {
@@ -8955,6 +9162,8 @@ impl RuleEnum {
             }
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::config_schema(generator)
                 .or_else(|| ReactJsxPropsNoSpreading::schema(generator)),
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::config_schema(generator)
+                .or_else(|| ReactMemoDependencies::schema(generator)),
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::config_schema(generator)
                 .or_else(|| ReactNoArrayIndexKey::schema(generator)),
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::config_schema(generator)
@@ -8967,6 +9176,10 @@ impl RuleEnum {
             Self::ReactNoDangerWithChildren(_) => {
                 ReactNoDangerWithChildren::config_schema(generator)
                     .or_else(|| ReactNoDangerWithChildren::schema(generator))
+            }
+            Self::ReactNoDerivingStateInEffects(_) => {
+                ReactNoDerivingStateInEffects::config_schema(generator)
+                    .or_else(|| ReactNoDerivingStateInEffects::schema(generator))
             }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::config_schema(generator)
                 .or_else(|| ReactNoDidMountSetState::schema(generator)),
@@ -9031,24 +9244,53 @@ impl RuleEnum {
                 ReactPreferFunctionComponent::config_schema(generator)
                     .or_else(|| ReactPreferFunctionComponent::schema(generator))
             }
-            Self::ReactReactCompiler(_) => ReactReactCompiler::config_schema(generator)
-                .or_else(|| ReactReactCompiler::schema(generator)),
+            Self::ReactPreserveManualMemoization(_) => {
+                ReactPreserveManualMemoization::config_schema(generator)
+                    .or_else(|| ReactPreserveManualMemoization::schema(generator))
+            }
+            Self::ReactPurity(_) => {
+                ReactPurity::config_schema(generator).or_else(|| ReactPurity::schema(generator))
+            }
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::config_schema(generator)
                 .or_else(|| ReactReactInJsxScope::schema(generator)),
+            Self::ReactRefs(_) => {
+                ReactRefs::config_schema(generator).or_else(|| ReactRefs::schema(generator))
+            }
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::config_schema(generator)
                 .or_else(|| ReactRequireRenderReturn::schema(generator)),
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::config_schema(generator)
+                .or_else(|| ReactRuleSuppression::schema(generator)),
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::config_schema(generator)
                 .or_else(|| ReactRulesOfHooks::schema(generator)),
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::config_schema(generator)
                 .or_else(|| ReactSelfClosingComp::schema(generator)),
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::config_schema(generator)
+                .or_else(|| ReactSetStateInEffect::schema(generator)),
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::config_schema(generator)
+                .or_else(|| ReactSetStateInRender::schema(generator)),
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::config_schema(generator)
                 .or_else(|| ReactStateInConstructor::schema(generator)),
+            Self::ReactStaticComponents(_) => ReactStaticComponents::config_schema(generator)
+                .or_else(|| ReactStaticComponents::schema(generator)),
             Self::ReactStylePropObject(_) => ReactStylePropObject::config_schema(generator)
                 .or_else(|| ReactStylePropObject::schema(generator)),
+            Self::ReactSyntax(_) => {
+                ReactSyntax::config_schema(generator).or_else(|| ReactSyntax::schema(generator))
+            }
+            Self::ReactTodo(_) => {
+                ReactTodo::config_schema(generator).or_else(|| ReactTodo::schema(generator))
+            }
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::config_schema(generator)
+                .or_else(|| ReactUnsupportedSyntax::schema(generator)),
+            Self::ReactUseMemo(_) => {
+                ReactUseMemo::config_schema(generator).or_else(|| ReactUseMemo::schema(generator))
+            }
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::config_schema(generator)
                     .or_else(|| ReactVoidDomElementsNoChildren::schema(generator))
             }
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::config_schema(generator)
+                .or_else(|| ReactVoidUseMemo::schema(generator)),
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::config_schema(generator)
                 .or_else(|| ReactPerfJsxNoJsxAsProp::schema(generator)),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => {
@@ -10601,16 +10843,25 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => "jest",
             Self::JestValidTitle(_) => "jest",
             Self::ReactButtonHasType(_) => "react",
+            Self::ReactCapitalizedCalls(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
             Self::ReactDisplayName(_) => "react",
+            Self::ReactErrorBoundaries(_) => "react",
             Self::ReactExhaustiveDeps(_) => "react",
+            Self::ReactExhaustiveEffectDependencies(_) => "react",
             Self::ReactForbidComponentProps(_) => "react",
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
             Self::ReactFunctionComponentDefinition(_) => "react",
+            Self::ReactGating(_) => "react",
+            Self::ReactGlobals(_) => "react",
             Self::ReactHookUseState(_) => "react",
+            Self::ReactHooks(_) => "react",
             Self::ReactIframeMissingSandbox(_) => "react",
+            Self::ReactImmutability(_) => "react",
+            Self::ReactIncompatibleLibrary(_) => "react",
+            Self::ReactInvariant(_) => "react",
             Self::ReactJsxBooleanValue(_) => "react",
             Self::ReactJsxCurlyBracePresence(_) => "react",
             Self::ReactJsxFilenameExtension(_) => "react",
@@ -10629,11 +10880,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => "react",
             Self::ReactJsxPropsNoSpreadMulti(_) => "react",
             Self::ReactJsxPropsNoSpreading(_) => "react",
+            Self::ReactMemoDependencies(_) => "react",
             Self::ReactNoArrayIndexKey(_) => "react",
             Self::ReactNoChildrenProp(_) => "react",
             Self::ReactNoCloneElement(_) => "react",
             Self::ReactNoDanger(_) => "react",
             Self::ReactNoDangerWithChildren(_) => "react",
+            Self::ReactNoDerivingStateInEffects(_) => "react",
             Self::ReactNoDidMountSetState(_) => "react",
             Self::ReactNoDidUpdateSetState(_) => "react",
             Self::ReactNoDirectMutationState(_) => "react",
@@ -10657,14 +10910,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => "react",
             Self::ReactPreferEs6Class(_) => "react",
             Self::ReactPreferFunctionComponent(_) => "react",
-            Self::ReactReactCompiler(_) => "react",
+            Self::ReactPreserveManualMemoization(_) => "react",
+            Self::ReactPurity(_) => "react",
             Self::ReactReactInJsxScope(_) => "react",
+            Self::ReactRefs(_) => "react",
             Self::ReactRequireRenderReturn(_) => "react",
+            Self::ReactRuleSuppression(_) => "react",
             Self::ReactRulesOfHooks(_) => "react",
             Self::ReactSelfClosingComp(_) => "react",
+            Self::ReactSetStateInEffect(_) => "react",
+            Self::ReactSetStateInRender(_) => "react",
             Self::ReactStateInConstructor(_) => "react",
+            Self::ReactStaticComponents(_) => "react",
             Self::ReactStylePropObject(_) => "react",
+            Self::ReactSyntax(_) => "react",
+            Self::ReactTodo(_) => "react",
+            Self::ReactUnsupportedSyntax(_) => "react",
+            Self::ReactUseMemo(_) => "react",
             Self::ReactVoidDomElementsNoChildren(_) => "react",
+            Self::ReactVoidUseMemo(_) => "react",
             Self::ReactPerfJsxNoJsxAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
@@ -11781,9 +12045,6 @@ impl RuleEnum {
             Self::ReactPreferFunctionComponent(_) => Ok(Self::ReactPreferFunctionComponent(
                 ReactPreferFunctionComponent::from_configuration(value)?,
             )),
-            Self::ReactReactCompiler(_) => {
-                Ok(Self::ReactReactCompiler(ReactReactCompiler::from_configuration(value)?))
-            }
             Self::ReactSelfClosingComp(_) => {
                 Ok(Self::ReactSelfClosingComp(ReactSelfClosingComp::from_configuration(value)?))
             }
@@ -12555,16 +12816,25 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.to_configuration(),
             Self::JestValidTitle(rule) => rule.to_configuration(),
             Self::ReactButtonHasType(rule) => rule.to_configuration(),
+            Self::ReactCapitalizedCalls(rule) => rule.to_configuration(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
+            Self::ReactErrorBoundaries(rule) => rule.to_configuration(),
             Self::ReactExhaustiveDeps(rule) => rule.to_configuration(),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.to_configuration(),
             Self::ReactForbidComponentProps(rule) => rule.to_configuration(),
             Self::ReactForbidDomProps(rule) => rule.to_configuration(),
             Self::ReactForbidElements(rule) => rule.to_configuration(),
             Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
             Self::ReactFunctionComponentDefinition(rule) => rule.to_configuration(),
+            Self::ReactGating(rule) => rule.to_configuration(),
+            Self::ReactGlobals(rule) => rule.to_configuration(),
             Self::ReactHookUseState(rule) => rule.to_configuration(),
+            Self::ReactHooks(rule) => rule.to_configuration(),
             Self::ReactIframeMissingSandbox(rule) => rule.to_configuration(),
+            Self::ReactImmutability(rule) => rule.to_configuration(),
+            Self::ReactIncompatibleLibrary(rule) => rule.to_configuration(),
+            Self::ReactInvariant(rule) => rule.to_configuration(),
             Self::ReactJsxBooleanValue(rule) => rule.to_configuration(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.to_configuration(),
             Self::ReactJsxFilenameExtension(rule) => rule.to_configuration(),
@@ -12583,11 +12853,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.to_configuration(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.to_configuration(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.to_configuration(),
+            Self::ReactMemoDependencies(rule) => rule.to_configuration(),
             Self::ReactNoArrayIndexKey(rule) => rule.to_configuration(),
             Self::ReactNoChildrenProp(rule) => rule.to_configuration(),
             Self::ReactNoCloneElement(rule) => rule.to_configuration(),
             Self::ReactNoDanger(rule) => rule.to_configuration(),
             Self::ReactNoDangerWithChildren(rule) => rule.to_configuration(),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.to_configuration(),
             Self::ReactNoDidMountSetState(rule) => rule.to_configuration(),
             Self::ReactNoDidUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
@@ -12611,14 +12883,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.to_configuration(),
             Self::ReactPreferEs6Class(rule) => rule.to_configuration(),
             Self::ReactPreferFunctionComponent(rule) => rule.to_configuration(),
-            Self::ReactReactCompiler(rule) => rule.to_configuration(),
+            Self::ReactPreserveManualMemoization(rule) => rule.to_configuration(),
+            Self::ReactPurity(rule) => rule.to_configuration(),
             Self::ReactReactInJsxScope(rule) => rule.to_configuration(),
+            Self::ReactRefs(rule) => rule.to_configuration(),
             Self::ReactRequireRenderReturn(rule) => rule.to_configuration(),
+            Self::ReactRuleSuppression(rule) => rule.to_configuration(),
             Self::ReactRulesOfHooks(rule) => rule.to_configuration(),
             Self::ReactSelfClosingComp(rule) => rule.to_configuration(),
+            Self::ReactSetStateInEffect(rule) => rule.to_configuration(),
+            Self::ReactSetStateInRender(rule) => rule.to_configuration(),
             Self::ReactStateInConstructor(rule) => rule.to_configuration(),
+            Self::ReactStaticComponents(rule) => rule.to_configuration(),
             Self::ReactStylePropObject(rule) => rule.to_configuration(),
+            Self::ReactSyntax(rule) => rule.to_configuration(),
+            Self::ReactTodo(rule) => rule.to_configuration(),
+            Self::ReactUnsupportedSyntax(rule) => rule.to_configuration(),
+            Self::ReactUseMemo(rule) => rule.to_configuration(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.to_configuration(),
+            Self::ReactVoidUseMemo(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.to_configuration(),
@@ -13412,16 +13695,25 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run(node, ctx),
             Self::JestValidTitle(rule) => rule.run(node, ctx),
             Self::ReactButtonHasType(rule) => rule.run(node, ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.run(node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
+            Self::ReactErrorBoundaries(rule) => rule.run(node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run(node, ctx),
             Self::ReactForbidComponentProps(rule) => rule.run(node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run(node, ctx),
+            Self::ReactGating(rule) => rule.run(node, ctx),
+            Self::ReactGlobals(rule) => rule.run(node, ctx),
             Self::ReactHookUseState(rule) => rule.run(node, ctx),
+            Self::ReactHooks(rule) => rule.run(node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run(node, ctx),
+            Self::ReactImmutability(rule) => rule.run(node, ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.run(node, ctx),
+            Self::ReactInvariant(rule) => rule.run(node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run(node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run(node, ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.run(node, ctx),
@@ -13440,11 +13732,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run(node, ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run(node, ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run(node, ctx),
+            Self::ReactMemoDependencies(rule) => rule.run(node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run(node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run(node, ctx),
             Self::ReactNoCloneElement(rule) => rule.run(node, ctx),
             Self::ReactNoDanger(rule) => rule.run(node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run(node, ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run(node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run(node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
@@ -13468,14 +13762,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
             Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.run(node, ctx),
-            Self::ReactReactCompiler(rule) => rule.run(node, ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.run(node, ctx),
+            Self::ReactPurity(rule) => rule.run(node, ctx),
             Self::ReactReactInJsxScope(rule) => rule.run(node, ctx),
+            Self::ReactRefs(rule) => rule.run(node, ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run(node, ctx),
+            Self::ReactRuleSuppression(rule) => rule.run(node, ctx),
             Self::ReactRulesOfHooks(rule) => rule.run(node, ctx),
             Self::ReactSelfClosingComp(rule) => rule.run(node, ctx),
+            Self::ReactSetStateInEffect(rule) => rule.run(node, ctx),
+            Self::ReactSetStateInRender(rule) => rule.run(node, ctx),
             Self::ReactStateInConstructor(rule) => rule.run(node, ctx),
+            Self::ReactStaticComponents(rule) => rule.run(node, ctx),
             Self::ReactStylePropObject(rule) => rule.run(node, ctx),
+            Self::ReactSyntax(rule) => rule.run(node, ctx),
+            Self::ReactTodo(rule) => rule.run(node, ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.run(node, ctx),
+            Self::ReactUseMemo(rule) => rule.run(node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
+            Self::ReactVoidUseMemo(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
@@ -14279,16 +14584,25 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run_once(ctx),
             Self::JestValidTitle(rule) => rule.run_once(ctx),
             Self::ReactButtonHasType(rule) => rule.run_once(ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.run_once(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
+            Self::ReactErrorBoundaries(rule) => rule.run_once(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run_once(ctx),
             Self::ReactForbidComponentProps(rule) => rule.run_once(ctx),
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_once(ctx),
+            Self::ReactGating(rule) => rule.run_once(ctx),
+            Self::ReactGlobals(rule) => rule.run_once(ctx),
             Self::ReactHookUseState(rule) => rule.run_once(ctx),
+            Self::ReactHooks(rule) => rule.run_once(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_once(ctx),
+            Self::ReactImmutability(rule) => rule.run_once(ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.run_once(ctx),
+            Self::ReactInvariant(rule) => rule.run_once(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_once(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_once(ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.run_once(ctx),
@@ -14307,11 +14621,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_once(ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_once(ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_once(ctx),
+            Self::ReactMemoDependencies(rule) => rule.run_once(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_once(ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_once(ctx),
             Self::ReactNoCloneElement(rule) => rule.run_once(ctx),
             Self::ReactNoDanger(rule) => rule.run_once(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_once(ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run_once(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_once(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
@@ -14335,14 +14651,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
             Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.run_once(ctx),
-            Self::ReactReactCompiler(rule) => rule.run_once(ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.run_once(ctx),
+            Self::ReactPurity(rule) => rule.run_once(ctx),
             Self::ReactReactInJsxScope(rule) => rule.run_once(ctx),
+            Self::ReactRefs(rule) => rule.run_once(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run_once(ctx),
+            Self::ReactRuleSuppression(rule) => rule.run_once(ctx),
             Self::ReactRulesOfHooks(rule) => rule.run_once(ctx),
             Self::ReactSelfClosingComp(rule) => rule.run_once(ctx),
+            Self::ReactSetStateInEffect(rule) => rule.run_once(ctx),
+            Self::ReactSetStateInRender(rule) => rule.run_once(ctx),
             Self::ReactStateInConstructor(rule) => rule.run_once(ctx),
+            Self::ReactStaticComponents(rule) => rule.run_once(ctx),
             Self::ReactStylePropObject(rule) => rule.run_once(ctx),
+            Self::ReactSyntax(rule) => rule.run_once(ctx),
+            Self::ReactTodo(rule) => rule.run_once(ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.run_once(ctx),
+            Self::ReactUseMemo(rule) => rule.run_once(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
+            Self::ReactVoidUseMemo(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
@@ -15215,18 +15542,27 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactErrorBoundaries(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactGating(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactHookUseState(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactImmutability(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactInvariant(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxBooleanValue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15245,11 +15581,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactMemoDependencies(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoChildrenProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoCloneElement(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDanger(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidMountSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15275,14 +15613,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactReactCompiler(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactPurity(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactRefs(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactRuleSuppression(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactSelfClosingComp(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactSetStateInEffect(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactSetStateInRender(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactStaticComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactVoidUseMemo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16131,16 +16480,25 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.should_run(ctx),
             Self::JestValidTitle(rule) => rule.should_run(ctx),
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
+            Self::ReactCapitalizedCalls(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
+            Self::ReactErrorBoundaries(rule) => rule.should_run(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.should_run(ctx),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.should_run(ctx),
             Self::ReactForbidComponentProps(rule) => rule.should_run(ctx),
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
             Self::ReactFunctionComponentDefinition(rule) => rule.should_run(ctx),
+            Self::ReactGating(rule) => rule.should_run(ctx),
+            Self::ReactGlobals(rule) => rule.should_run(ctx),
             Self::ReactHookUseState(rule) => rule.should_run(ctx),
+            Self::ReactHooks(rule) => rule.should_run(ctx),
             Self::ReactIframeMissingSandbox(rule) => rule.should_run(ctx),
+            Self::ReactImmutability(rule) => rule.should_run(ctx),
+            Self::ReactIncompatibleLibrary(rule) => rule.should_run(ctx),
+            Self::ReactInvariant(rule) => rule.should_run(ctx),
             Self::ReactJsxBooleanValue(rule) => rule.should_run(ctx),
             Self::ReactJsxCurlyBracePresence(rule) => rule.should_run(ctx),
             Self::ReactJsxFilenameExtension(rule) => rule.should_run(ctx),
@@ -16159,11 +16517,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.should_run(ctx),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.should_run(ctx),
             Self::ReactJsxPropsNoSpreading(rule) => rule.should_run(ctx),
+            Self::ReactMemoDependencies(rule) => rule.should_run(ctx),
             Self::ReactNoArrayIndexKey(rule) => rule.should_run(ctx),
             Self::ReactNoChildrenProp(rule) => rule.should_run(ctx),
             Self::ReactNoCloneElement(rule) => rule.should_run(ctx),
             Self::ReactNoDanger(rule) => rule.should_run(ctx),
             Self::ReactNoDangerWithChildren(rule) => rule.should_run(ctx),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.should_run(ctx),
             Self::ReactNoDidMountSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDidUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
@@ -16187,14 +16547,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.should_run(ctx),
             Self::ReactPreferEs6Class(rule) => rule.should_run(ctx),
             Self::ReactPreferFunctionComponent(rule) => rule.should_run(ctx),
-            Self::ReactReactCompiler(rule) => rule.should_run(ctx),
+            Self::ReactPreserveManualMemoization(rule) => rule.should_run(ctx),
+            Self::ReactPurity(rule) => rule.should_run(ctx),
             Self::ReactReactInJsxScope(rule) => rule.should_run(ctx),
+            Self::ReactRefs(rule) => rule.should_run(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.should_run(ctx),
+            Self::ReactRuleSuppression(rule) => rule.should_run(ctx),
             Self::ReactRulesOfHooks(rule) => rule.should_run(ctx),
             Self::ReactSelfClosingComp(rule) => rule.should_run(ctx),
+            Self::ReactSetStateInEffect(rule) => rule.should_run(ctx),
+            Self::ReactSetStateInRender(rule) => rule.should_run(ctx),
             Self::ReactStateInConstructor(rule) => rule.should_run(ctx),
+            Self::ReactStaticComponents(rule) => rule.should_run(ctx),
             Self::ReactStylePropObject(rule) => rule.should_run(ctx),
+            Self::ReactSyntax(rule) => rule.should_run(ctx),
+            Self::ReactTodo(rule) => rule.should_run(ctx),
+            Self::ReactUnsupportedSyntax(rule) => rule.should_run(ctx),
+            Self::ReactUseMemo(rule) => rule.should_run(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.should_run(ctx),
+            Self::ReactVoidUseMemo(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
@@ -17157,11 +17528,16 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::IS_TSGOLINT_RULE,
             Self::JestValidTitle(_) => JestValidTitle::IS_TSGOLINT_RULE,
             Self::ReactButtonHasType(_) => ReactButtonHasType::IS_TSGOLINT_RULE,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::IS_TSGOLINT_RULE,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::IS_TSGOLINT_RULE
             }
             Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::IS_TSGOLINT_RULE,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::IS_TSGOLINT_RULE
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::IS_TSGOLINT_RULE,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
@@ -17169,8 +17545,14 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::IS_TSGOLINT_RULE
             }
+            Self::ReactGating(_) => ReactGating::IS_TSGOLINT_RULE,
+            Self::ReactGlobals(_) => ReactGlobals::IS_TSGOLINT_RULE,
             Self::ReactHookUseState(_) => ReactHookUseState::IS_TSGOLINT_RULE,
+            Self::ReactHooks(_) => ReactHooks::IS_TSGOLINT_RULE,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::IS_TSGOLINT_RULE,
+            Self::ReactImmutability(_) => ReactImmutability::IS_TSGOLINT_RULE,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::IS_TSGOLINT_RULE,
+            Self::ReactInvariant(_) => ReactInvariant::IS_TSGOLINT_RULE,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::IS_TSGOLINT_RULE,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::IS_TSGOLINT_RULE,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::IS_TSGOLINT_RULE,
@@ -17191,11 +17573,15 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::IS_TSGOLINT_RULE,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::IS_TSGOLINT_RULE,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::IS_TSGOLINT_RULE,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::IS_TSGOLINT_RULE,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::IS_TSGOLINT_RULE,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::IS_TSGOLINT_RULE,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::IS_TSGOLINT_RULE,
             Self::ReactNoDanger(_) => ReactNoDanger::IS_TSGOLINT_RULE,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::IS_TSGOLINT_RULE,
+            Self::ReactNoDerivingStateInEffects(_) => {
+                ReactNoDerivingStateInEffects::IS_TSGOLINT_RULE
+            }
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
@@ -17225,16 +17611,29 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::IS_TSGOLINT_RULE,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::IS_TSGOLINT_RULE,
+            Self::ReactPreserveManualMemoization(_) => {
+                ReactPreserveManualMemoization::IS_TSGOLINT_RULE
+            }
+            Self::ReactPurity(_) => ReactPurity::IS_TSGOLINT_RULE,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::IS_TSGOLINT_RULE,
+            Self::ReactRefs(_) => ReactRefs::IS_TSGOLINT_RULE,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::IS_TSGOLINT_RULE,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::IS_TSGOLINT_RULE,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::IS_TSGOLINT_RULE,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::IS_TSGOLINT_RULE,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::IS_TSGOLINT_RULE,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::IS_TSGOLINT_RULE,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::IS_TSGOLINT_RULE,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::IS_TSGOLINT_RULE,
             Self::ReactStylePropObject(_) => ReactStylePropObject::IS_TSGOLINT_RULE,
+            Self::ReactSyntax(_) => ReactSyntax::IS_TSGOLINT_RULE,
+            Self::ReactTodo(_) => ReactTodo::IS_TSGOLINT_RULE,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::IS_TSGOLINT_RULE,
+            Self::ReactUseMemo(_) => ReactUseMemo::IS_TSGOLINT_RULE,
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::IS_TSGOLINT_RULE
             }
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
@@ -18313,18 +18712,29 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::VERSION,
             Self::JestValidTitle(_) => JestValidTitle::VERSION,
             Self::ReactButtonHasType(_) => ReactButtonHasType::VERSION,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::VERSION,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::VERSION
             }
             Self::ReactDisplayName(_) => ReactDisplayName::VERSION,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::VERSION,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::VERSION,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::VERSION
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::VERSION,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::VERSION,
             Self::ReactForbidElements(_) => ReactForbidElements::VERSION,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::VERSION,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::VERSION,
+            Self::ReactGating(_) => ReactGating::VERSION,
+            Self::ReactGlobals(_) => ReactGlobals::VERSION,
             Self::ReactHookUseState(_) => ReactHookUseState::VERSION,
+            Self::ReactHooks(_) => ReactHooks::VERSION,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::VERSION,
+            Self::ReactImmutability(_) => ReactImmutability::VERSION,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::VERSION,
+            Self::ReactInvariant(_) => ReactInvariant::VERSION,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::VERSION,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::VERSION,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::VERSION,
@@ -18345,11 +18755,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::VERSION,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::VERSION,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::VERSION,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::VERSION,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::VERSION,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::VERSION,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::VERSION,
             Self::ReactNoDanger(_) => ReactNoDanger::VERSION,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::VERSION,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::VERSION,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::VERSION,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::VERSION,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::VERSION,
@@ -18375,14 +18787,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::VERSION,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::VERSION,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::VERSION,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::VERSION,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::VERSION,
+            Self::ReactPurity(_) => ReactPurity::VERSION,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::VERSION,
+            Self::ReactRefs(_) => ReactRefs::VERSION,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::VERSION,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::VERSION,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::VERSION,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::VERSION,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::VERSION,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::VERSION,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::VERSION,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::VERSION,
             Self::ReactStylePropObject(_) => ReactStylePropObject::VERSION,
+            Self::ReactSyntax(_) => ReactSyntax::VERSION,
+            Self::ReactTodo(_) => ReactTodo::VERSION,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::VERSION,
+            Self::ReactUseMemo(_) => ReactUseMemo::VERSION,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::VERSION,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::VERSION,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::VERSION,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
@@ -19356,11 +19779,16 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::HAS_CONFIG,
             Self::JestValidTitle(_) => JestValidTitle::HAS_CONFIG,
             Self::ReactButtonHasType(_) => ReactButtonHasType::HAS_CONFIG,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::HAS_CONFIG,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::HAS_CONFIG
             }
             Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::HAS_CONFIG,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
+            Self::ReactExhaustiveEffectDependencies(_) => {
+                ReactExhaustiveEffectDependencies::HAS_CONFIG
+            }
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::HAS_CONFIG,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
@@ -19368,8 +19796,14 @@ impl RuleEnum {
             Self::ReactFunctionComponentDefinition(_) => {
                 ReactFunctionComponentDefinition::HAS_CONFIG
             }
+            Self::ReactGating(_) => ReactGating::HAS_CONFIG,
+            Self::ReactGlobals(_) => ReactGlobals::HAS_CONFIG,
             Self::ReactHookUseState(_) => ReactHookUseState::HAS_CONFIG,
+            Self::ReactHooks(_) => ReactHooks::HAS_CONFIG,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::HAS_CONFIG,
+            Self::ReactImmutability(_) => ReactImmutability::HAS_CONFIG,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::HAS_CONFIG,
+            Self::ReactInvariant(_) => ReactInvariant::HAS_CONFIG,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::HAS_CONFIG,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::HAS_CONFIG,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::HAS_CONFIG,
@@ -19390,11 +19824,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::HAS_CONFIG,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::HAS_CONFIG,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::HAS_CONFIG,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::HAS_CONFIG,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::HAS_CONFIG,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::HAS_CONFIG,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::HAS_CONFIG,
             Self::ReactNoDanger(_) => ReactNoDanger::HAS_CONFIG,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::HAS_CONFIG,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::HAS_CONFIG,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::HAS_CONFIG,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
@@ -19420,14 +19856,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::HAS_CONFIG,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::HAS_CONFIG,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::HAS_CONFIG,
+            Self::ReactPurity(_) => ReactPurity::HAS_CONFIG,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::HAS_CONFIG,
+            Self::ReactRefs(_) => ReactRefs::HAS_CONFIG,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::HAS_CONFIG,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::HAS_CONFIG,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::HAS_CONFIG,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::HAS_CONFIG,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::HAS_CONFIG,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::HAS_CONFIG,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::HAS_CONFIG,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::HAS_CONFIG,
             Self::ReactStylePropObject(_) => ReactStylePropObject::HAS_CONFIG,
+            Self::ReactSyntax(_) => ReactSyntax::HAS_CONFIG,
+            Self::ReactTodo(_) => ReactTodo::HAS_CONFIG,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::HAS_CONFIG,
+            Self::ReactUseMemo(_) => ReactUseMemo::HAS_CONFIG,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::HAS_CONFIG,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::HAS_CONFIG,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
@@ -20384,18 +20831,27 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::INFO,
             Self::JestValidTitle(_) => JestValidTitle::INFO,
             Self::ReactButtonHasType(_) => ReactButtonHasType::INFO,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::INFO,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::INFO
             }
             Self::ReactDisplayName(_) => ReactDisplayName::INFO,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::INFO,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::INFO,
+            Self::ReactExhaustiveEffectDependencies(_) => ReactExhaustiveEffectDependencies::INFO,
             Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::INFO,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::INFO,
             Self::ReactForbidElements(_) => ReactForbidElements::INFO,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::INFO,
             Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::INFO,
+            Self::ReactGating(_) => ReactGating::INFO,
+            Self::ReactGlobals(_) => ReactGlobals::INFO,
             Self::ReactHookUseState(_) => ReactHookUseState::INFO,
+            Self::ReactHooks(_) => ReactHooks::INFO,
             Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::INFO,
+            Self::ReactImmutability(_) => ReactImmutability::INFO,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::INFO,
+            Self::ReactInvariant(_) => ReactInvariant::INFO,
             Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::INFO,
             Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::INFO,
             Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::INFO,
@@ -20414,11 +20870,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::INFO,
             Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::INFO,
             Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::INFO,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::INFO,
             Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::INFO,
             Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::INFO,
             Self::ReactNoCloneElement(_) => ReactNoCloneElement::INFO,
             Self::ReactNoDanger(_) => ReactNoDanger::INFO,
             Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::INFO,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::INFO,
             Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::INFO,
             Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::INFO,
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::INFO,
@@ -20444,14 +20902,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::INFO,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::INFO,
             Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::INFO,
-            Self::ReactReactCompiler(_) => ReactReactCompiler::INFO,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::INFO,
+            Self::ReactPurity(_) => ReactPurity::INFO,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::INFO,
+            Self::ReactRefs(_) => ReactRefs::INFO,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::INFO,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::INFO,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::INFO,
             Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::INFO,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::INFO,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::INFO,
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::INFO,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::INFO,
             Self::ReactStylePropObject(_) => ReactStylePropObject::INFO,
+            Self::ReactSyntax(_) => ReactSyntax::INFO,
+            Self::ReactTodo(_) => ReactTodo::INFO,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::INFO,
+            Self::ReactUseMemo(_) => ReactUseMemo::INFO,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::INFO,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::INFO,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::INFO,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::INFO,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::INFO,
@@ -21291,16 +21760,25 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.types_info(),
             Self::JestValidTitle(rule) => rule.types_info(),
             Self::ReactButtonHasType(rule) => rule.types_info(),
+            Self::ReactCapitalizedCalls(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
+            Self::ReactErrorBoundaries(rule) => rule.types_info(),
             Self::ReactExhaustiveDeps(rule) => rule.types_info(),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.types_info(),
             Self::ReactForbidComponentProps(rule) => rule.types_info(),
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
             Self::ReactFunctionComponentDefinition(rule) => rule.types_info(),
+            Self::ReactGating(rule) => rule.types_info(),
+            Self::ReactGlobals(rule) => rule.types_info(),
             Self::ReactHookUseState(rule) => rule.types_info(),
+            Self::ReactHooks(rule) => rule.types_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.types_info(),
+            Self::ReactImmutability(rule) => rule.types_info(),
+            Self::ReactIncompatibleLibrary(rule) => rule.types_info(),
+            Self::ReactInvariant(rule) => rule.types_info(),
             Self::ReactJsxBooleanValue(rule) => rule.types_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.types_info(),
             Self::ReactJsxFilenameExtension(rule) => rule.types_info(),
@@ -21319,11 +21797,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.types_info(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.types_info(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.types_info(),
+            Self::ReactMemoDependencies(rule) => rule.types_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.types_info(),
             Self::ReactNoChildrenProp(rule) => rule.types_info(),
             Self::ReactNoCloneElement(rule) => rule.types_info(),
             Self::ReactNoDanger(rule) => rule.types_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.types_info(),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.types_info(),
             Self::ReactNoDidMountSetState(rule) => rule.types_info(),
             Self::ReactNoDidUpdateSetState(rule) => rule.types_info(),
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
@@ -21347,14 +21827,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.types_info(),
             Self::ReactPreferEs6Class(rule) => rule.types_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.types_info(),
-            Self::ReactReactCompiler(rule) => rule.types_info(),
+            Self::ReactPreserveManualMemoization(rule) => rule.types_info(),
+            Self::ReactPurity(rule) => rule.types_info(),
             Self::ReactReactInJsxScope(rule) => rule.types_info(),
+            Self::ReactRefs(rule) => rule.types_info(),
             Self::ReactRequireRenderReturn(rule) => rule.types_info(),
+            Self::ReactRuleSuppression(rule) => rule.types_info(),
             Self::ReactRulesOfHooks(rule) => rule.types_info(),
             Self::ReactSelfClosingComp(rule) => rule.types_info(),
+            Self::ReactSetStateInEffect(rule) => rule.types_info(),
+            Self::ReactSetStateInRender(rule) => rule.types_info(),
             Self::ReactStateInConstructor(rule) => rule.types_info(),
+            Self::ReactStaticComponents(rule) => rule.types_info(),
             Self::ReactStylePropObject(rule) => rule.types_info(),
+            Self::ReactSyntax(rule) => rule.types_info(),
+            Self::ReactTodo(rule) => rule.types_info(),
+            Self::ReactUnsupportedSyntax(rule) => rule.types_info(),
+            Self::ReactUseMemo(rule) => rule.types_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.types_info(),
+            Self::ReactVoidUseMemo(rule) => rule.types_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
@@ -22145,16 +22636,25 @@ impl RuleEnum {
             Self::JestValidExpectInPromise(rule) => rule.run_info(),
             Self::JestValidTitle(rule) => rule.run_info(),
             Self::ReactButtonHasType(rule) => rule.run_info(),
+            Self::ReactCapitalizedCalls(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
+            Self::ReactErrorBoundaries(rule) => rule.run_info(),
             Self::ReactExhaustiveDeps(rule) => rule.run_info(),
+            Self::ReactExhaustiveEffectDependencies(rule) => rule.run_info(),
             Self::ReactForbidComponentProps(rule) => rule.run_info(),
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
             Self::ReactFunctionComponentDefinition(rule) => rule.run_info(),
+            Self::ReactGating(rule) => rule.run_info(),
+            Self::ReactGlobals(rule) => rule.run_info(),
             Self::ReactHookUseState(rule) => rule.run_info(),
+            Self::ReactHooks(rule) => rule.run_info(),
             Self::ReactIframeMissingSandbox(rule) => rule.run_info(),
+            Self::ReactImmutability(rule) => rule.run_info(),
+            Self::ReactIncompatibleLibrary(rule) => rule.run_info(),
+            Self::ReactInvariant(rule) => rule.run_info(),
             Self::ReactJsxBooleanValue(rule) => rule.run_info(),
             Self::ReactJsxCurlyBracePresence(rule) => rule.run_info(),
             Self::ReactJsxFilenameExtension(rule) => rule.run_info(),
@@ -22173,11 +22673,13 @@ impl RuleEnum {
             Self::ReactJsxPascalCase(rule) => rule.run_info(),
             Self::ReactJsxPropsNoSpreadMulti(rule) => rule.run_info(),
             Self::ReactJsxPropsNoSpreading(rule) => rule.run_info(),
+            Self::ReactMemoDependencies(rule) => rule.run_info(),
             Self::ReactNoArrayIndexKey(rule) => rule.run_info(),
             Self::ReactNoChildrenProp(rule) => rule.run_info(),
             Self::ReactNoCloneElement(rule) => rule.run_info(),
             Self::ReactNoDanger(rule) => rule.run_info(),
             Self::ReactNoDangerWithChildren(rule) => rule.run_info(),
+            Self::ReactNoDerivingStateInEffects(rule) => rule.run_info(),
             Self::ReactNoDidMountSetState(rule) => rule.run_info(),
             Self::ReactNoDidUpdateSetState(rule) => rule.run_info(),
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
@@ -22201,14 +22703,25 @@ impl RuleEnum {
             Self::ReactOnlyExportComponents(rule) => rule.run_info(),
             Self::ReactPreferEs6Class(rule) => rule.run_info(),
             Self::ReactPreferFunctionComponent(rule) => rule.run_info(),
-            Self::ReactReactCompiler(rule) => rule.run_info(),
+            Self::ReactPreserveManualMemoization(rule) => rule.run_info(),
+            Self::ReactPurity(rule) => rule.run_info(),
             Self::ReactReactInJsxScope(rule) => rule.run_info(),
+            Self::ReactRefs(rule) => rule.run_info(),
             Self::ReactRequireRenderReturn(rule) => rule.run_info(),
+            Self::ReactRuleSuppression(rule) => rule.run_info(),
             Self::ReactRulesOfHooks(rule) => rule.run_info(),
             Self::ReactSelfClosingComp(rule) => rule.run_info(),
+            Self::ReactSetStateInEffect(rule) => rule.run_info(),
+            Self::ReactSetStateInRender(rule) => rule.run_info(),
             Self::ReactStateInConstructor(rule) => rule.run_info(),
+            Self::ReactStaticComponents(rule) => rule.run_info(),
             Self::ReactStylePropObject(rule) => rule.run_info(),
+            Self::ReactSyntax(rule) => rule.run_info(),
+            Self::ReactTodo(rule) => rule.run_info(),
+            Self::ReactUnsupportedSyntax(rule) => rule.run_info(),
+            Self::ReactUseMemo(rule) => rule.run_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_info(),
+            Self::ReactVoidUseMemo(rule) => rule.run_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
@@ -23087,18 +23600,27 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestValidExpectInPromise(JestValidExpectInPromise::default()),
         RuleEnum::JestValidTitle(JestValidTitle::default()),
         RuleEnum::ReactButtonHasType(ReactButtonHasType::default()),
+        RuleEnum::ReactCapitalizedCalls(ReactCapitalizedCalls::default()),
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
             ReactCheckedRequiresOnchangeOrReadonly::default(),
         ),
         RuleEnum::ReactDisplayName(ReactDisplayName::default()),
+        RuleEnum::ReactErrorBoundaries(ReactErrorBoundaries::default()),
         RuleEnum::ReactExhaustiveDeps(ReactExhaustiveDeps::default()),
+        RuleEnum::ReactExhaustiveEffectDependencies(ReactExhaustiveEffectDependencies::default()),
         RuleEnum::ReactForbidComponentProps(ReactForbidComponentProps::default()),
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
         RuleEnum::ReactFunctionComponentDefinition(ReactFunctionComponentDefinition::default()),
+        RuleEnum::ReactGating(ReactGating::default()),
+        RuleEnum::ReactGlobals(ReactGlobals::default()),
         RuleEnum::ReactHookUseState(ReactHookUseState::default()),
+        RuleEnum::ReactHooks(ReactHooks::default()),
         RuleEnum::ReactIframeMissingSandbox(ReactIframeMissingSandbox::default()),
+        RuleEnum::ReactImmutability(ReactImmutability::default()),
+        RuleEnum::ReactIncompatibleLibrary(ReactIncompatibleLibrary::default()),
+        RuleEnum::ReactInvariant(ReactInvariant::default()),
         RuleEnum::ReactJsxBooleanValue(ReactJsxBooleanValue::default()),
         RuleEnum::ReactJsxCurlyBracePresence(ReactJsxCurlyBracePresence::default()),
         RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
@@ -23117,11 +23639,13 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactJsxPascalCase(ReactJsxPascalCase::default()),
         RuleEnum::ReactJsxPropsNoSpreadMulti(ReactJsxPropsNoSpreadMulti::default()),
         RuleEnum::ReactJsxPropsNoSpreading(ReactJsxPropsNoSpreading::default()),
+        RuleEnum::ReactMemoDependencies(ReactMemoDependencies::default()),
         RuleEnum::ReactNoArrayIndexKey(ReactNoArrayIndexKey::default()),
         RuleEnum::ReactNoChildrenProp(ReactNoChildrenProp::default()),
         RuleEnum::ReactNoCloneElement(ReactNoCloneElement::default()),
         RuleEnum::ReactNoDanger(ReactNoDanger::default()),
         RuleEnum::ReactNoDangerWithChildren(ReactNoDangerWithChildren::default()),
+        RuleEnum::ReactNoDerivingStateInEffects(ReactNoDerivingStateInEffects::default()),
         RuleEnum::ReactNoDidMountSetState(ReactNoDidMountSetState::default()),
         RuleEnum::ReactNoDidUpdateSetState(ReactNoDidUpdateSetState::default()),
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
@@ -23147,14 +23671,25 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactOnlyExportComponents(ReactOnlyExportComponents::default()),
         RuleEnum::ReactPreferEs6Class(ReactPreferEs6Class::default()),
         RuleEnum::ReactPreferFunctionComponent(ReactPreferFunctionComponent::default()),
-        RuleEnum::ReactReactCompiler(ReactReactCompiler::default()),
+        RuleEnum::ReactPreserveManualMemoization(ReactPreserveManualMemoization::default()),
+        RuleEnum::ReactPurity(ReactPurity::default()),
         RuleEnum::ReactReactInJsxScope(ReactReactInJsxScope::default()),
+        RuleEnum::ReactRefs(ReactRefs::default()),
         RuleEnum::ReactRequireRenderReturn(ReactRequireRenderReturn::default()),
+        RuleEnum::ReactRuleSuppression(ReactRuleSuppression::default()),
         RuleEnum::ReactRulesOfHooks(ReactRulesOfHooks::default()),
         RuleEnum::ReactSelfClosingComp(ReactSelfClosingComp::default()),
+        RuleEnum::ReactSetStateInEffect(ReactSetStateInEffect::default()),
+        RuleEnum::ReactSetStateInRender(ReactSetStateInRender::default()),
         RuleEnum::ReactStateInConstructor(ReactStateInConstructor::default()),
+        RuleEnum::ReactStaticComponents(ReactStaticComponents::default()),
         RuleEnum::ReactStylePropObject(ReactStylePropObject::default()),
+        RuleEnum::ReactSyntax(ReactSyntax::default()),
+        RuleEnum::ReactTodo(ReactTodo::default()),
+        RuleEnum::ReactUnsupportedSyntax(ReactUnsupportedSyntax::default()),
+        RuleEnum::ReactUseMemo(ReactUseMemo::default()),
         RuleEnum::ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren::default()),
+        RuleEnum::ReactVoidUseMemo(ReactVoidUseMemo::default()),
         RuleEnum::ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),

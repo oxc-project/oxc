@@ -12,7 +12,9 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
 use oxc_config::GitignoreChecker;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
+};
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
@@ -112,7 +114,7 @@ impl CliRunner {
         };
 
         let handler = if cfg!(any(test, feature = "testing")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+            GraphicalReportHandler::new_themed(GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
         };
@@ -192,7 +194,7 @@ impl CliRunner {
         // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
         // not git's. (Aligns with during walk filtering behavior)
         let mut gitignore_checker = GitignoreChecker::new();
-        paths.retain(|p| !gitignore_checker.is_gitignored(p, &self.cwd));
+        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
 
         // If explicit paths were provided but all have been filtered,
         // or the default cwd target is gitignored, return early.
@@ -858,13 +860,16 @@ mod test {
         let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&[]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
 
-        // Explicitly passed gitignored targets are skipped too;
-        // `--no-ignore` only disables Oxlint's own ignore sources, not git's.
-        let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&["index.ts"]);
+        // Explicitly passed gitignored directories are skipped too.
+        let (_, result) = Tester::new().with_cwd(repo_path).test_output(&["sub/generated/pkg"]);
         assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
-        let (_, result) =
-            Tester::new().with_cwd(pkg_path).test_output(&["--no-ignore", "index.ts"]);
-        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // But an explicitly named file is linted even when gitignored;
+        // `.gitignore` only scopes discovery.
+        let (stdout, result) =
+            Tester::new().with_cwd(pkg_path).test_output(&["-D", "no-debugger", "index.ts"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
     }
 
     #[cfg(unix)]
@@ -2383,7 +2388,7 @@ mod suppression {
     #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
     fn test_prunning_errors_update_the_file_when_errors_are_decreased() {
         SuppressionTester::new()
-            .with_cwd("with_arg_and_decreased_errors")
+            .with_cwd("with_arg_and_decreased_errors_prune")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)

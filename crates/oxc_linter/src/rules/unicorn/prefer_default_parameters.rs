@@ -61,7 +61,7 @@ declare_oxc_lint!(
     PreferDefaultParameters,
     unicorn,
     style,
-    fix,
+    suggestion,
     version = "1.33.0",
     short_description = "Prefer default parameters over reassignment.",
 );
@@ -236,13 +236,16 @@ fn check_expression<'a>(
 
     let delete_span = expand_statement_delete_span(ctx.source_text(), statement_span);
 
-    ctx.diagnostic_with_fix(prefer_default_parameters_diagnostic(stmt_span, param_name), |fixer| {
-        let fixer = fixer.for_multifix();
-        let mut fix = fixer.new_fix_with_capacity(2);
-        fix.push(fixer.replace(replace_span, new_param_text));
-        fix.push(fixer.delete_range(delete_span));
-        fix.with_message("Prefer default parameters over reassignment.")
-    });
+    ctx.diagnostic_with_suggestion(
+        prefer_default_parameters_diagnostic(stmt_span, param_name),
+        |fixer| {
+            let fixer = fixer.for_multifix();
+            let mut fix = fixer.new_fix_with_capacity(2);
+            fix.push(fixer.replace(replace_span, new_param_text));
+            fix.push(fixer.delete_range(delete_span));
+            fix.with_message("Prefer default parameters over reassignment.")
+        },
+    );
 }
 
 #[expect(clippy::cast_possible_truncation)]

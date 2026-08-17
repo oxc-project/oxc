@@ -19,25 +19,34 @@
 //! reasoning is slightly different for each, the result is that we can't memoize scopes that call
 //! hooks or use since this would make them called conditionally in the output.
 //!
-//! The pass finds and removes any scopes that transitively contain a hook or use call. By running all
-//! the reactive scope inference first, agnostic of hooks, we know that the reactive scopes accurately
+//! Opaque tagged templates also have to execute unconditionally. A tag is an arbitrary function
+//! call that may have side effects or return a fresh value or stable alias. Inferred result types
+//! cannot prove otherwise because consumers such as coercive binary operators may constrain an
+//! opaque result to `Primitive`. A configured read-only, pure signature with a known safe return is
+//! sufficient evidence to retain memoization.
+//!
+//! The pass finds and removes any scopes that transitively contain one of these instructions. By
+//! running all the reactive scope inference first, we know that the reactive scopes accurately
 //! describe the set of values which "construct together", and remove _all_ that memoization in order
-//! to ensure the hook call does not inadvertently become conditional.
+//! to ensure the instruction does not inadvertently become conditional.
 //!
 //! Analogous to TS `ReactiveScopes/FlattenScopesWithHooksOrUseHIR.ts`.
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     BlockId, HirFunction, InstructionValue, Terminal, Type, is_use_operator_type,
 };
+use crate::react_compiler_inference::is_known_pure_tagged_template;
 
-/// Flattens reactive scopes that contain hook calls or `use()` calls.
+/// Flattens reactive scopes that contain hook calls, `use()` calls, or tagged templates.
 ///
-/// Hooks and `use` must be called unconditionally, so any reactive scope containing
-/// such a call must be flattened to avoid making the call conditional.
+/// Hooks and `use` must be called unconditionally. Tagged templates without a known pure signature
+/// must also be recomputed because their inferred result type cannot establish that the call is pure
+/// or that its result is stable. Any reactive scope containing such an instruction must therefore
+/// be flattened to avoid making its evaluation conditional.
 pub fn flatten_scopes_with_hooks_or_use_hir(
     func: &mut HirFunction,
     env: &Environment,
@@ -54,7 +63,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
 
         let block = &func.body.blocks[block_id];
 
-        // Check instructions for hook or use calls
+        // Check instructions that must execute unconditionally.
         for instr_id in &block.instructions {
             let instr = &func.instructions[instr_id.index()];
             match &instr.value {
@@ -62,6 +71,12 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
                     let callee_ty = &env.types[env.identifiers[callee.identifier].type_];
                     if is_hook_or_use(env, callee_ty)? {
                         // All active scopes must be pruned
+                        prune.extend(active_scopes.iter().map(|s| s.block));
+                        active_scopes.clear();
+                    }
+                }
+                InstructionValue::TaggedTemplateExpression { tag, subexprs, .. } => {
+                    if !is_known_pure_tagged_template(env, tag, subexprs.len()) {
                         prune.extend(active_scopes.iter().map(|s| s.block));
                         active_scopes.clear();
                     }
@@ -93,10 +108,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
                 (*block, *fallthrough, *id, *span, *scope)
             }
             _ => {
-                return Err(ErrorCategory::Invariant.diagnostic(format!(
-                    "Expected block bb{} to end in a scope terminal",
-                    id.index()
-                )));
+                return Err(diagnostics::expected_scope_terminal(id.index()));
             }
         };
 
@@ -108,7 +120,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(
         {
             // This was a scope just for a hook call, which doesn't need memoization.
             // Flatten it away. We rely on PruneUnusedLabels to do the actual flattening.
-            Terminal::Label { block: scope_block, fallthrough, id: eval_id, span }
+            Terminal::Label { block: scope_block, block_span: None, fallthrough, id: eval_id, span }
         } else {
             Terminal::PrunedScope { block: scope_block, fallthrough, scope, id: eval_id, span }
         };

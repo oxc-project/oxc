@@ -11,7 +11,7 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    utils::statement_body::FormatStatementBody,
+    utils::{is_dropped_statement, statement_body::FormatStatementBody},
     write,
 };
 
@@ -115,7 +115,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
                 && consequent
                     .iter()
                     .skip(1)
-                    .all(|statement| matches!(statement.as_ref(), Statement::EmptyStatement(_)));
+                    .all(|statement| is_dropped_statement(statement.as_ref()));
 
         // Format dangling comments before default case body.
         if is_default {

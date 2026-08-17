@@ -27,11 +27,11 @@ oxc-css-parser = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
-oxc_formatter_core = { workspace = true, features = ["test_harness"] }
+oxc_formatter_tests = { workspace = true, features = ["conformance"] }
 pico-args = { workspace = true }
 
 [build-dependencies]
-oxc_formatter_core = { workspace = true, features = ["test_harness"] }
+oxc_formatter_tests = { workspace = true }
 
 [lib]
 doctest = false

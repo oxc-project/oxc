@@ -923,9 +923,7 @@ impl Gen for ImportDeclaration<'_> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                p.print_ascii_byte(b'"');
-                p.print_str(self.source.value.as_str());
-                p.print_ascii_byte(b'"');
+                p.print_string_literal(&self.source, false);
                 if let Some(with_clause) = &self.with_clause {
                     p.print_hard_space();
                     with_clause.print(p, ctx);
@@ -1275,7 +1273,10 @@ impl Gen for ExportDefaultDeclarationKind<'_> {
                 class.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSInterfaceDeclaration(interface) => interface.print(p, ctx),
+            Self::TSInterfaceDeclaration(interface) => {
+                interface.print(p, ctx);
+                p.print_soft_newline();
+            }
             _ => {
                 p.start_of_default_export = p.code_len();
                 self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
@@ -2269,6 +2270,7 @@ impl Gen for AssignmentTargetPropertyProperty<'_> {
 
 impl Gen for AssignmentTargetRest<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ellipsis();
         self.target.print(p, ctx);
     }
@@ -2340,6 +2342,9 @@ impl GenExpr for ImportExpression<'_> {
 
 impl Gen for TemplateLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        if self.is_no_substitution_template() {
+            p.print_property_key_annotation(self.span.start);
+        }
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'`');
         debug_assert_eq!(self.quasis.len(), self.expressions.len() + 1);
@@ -2538,7 +2543,6 @@ impl Gen for Class<'_> {
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         let ctx = ctx.and_forbid_call(false);
         p.wrap(wrap, |p| {
-            p.enter_class();
             p.print_decorators(&self.decorators, ctx);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -2572,6 +2576,7 @@ impl Gen for Class<'_> {
                 p.print_list(&self.implements, ctx);
             }
             p.print_soft_space();
+            p.enter_class();
             self.body.print(p, ctx);
             p.needs_semicolon = false;
             p.exit_class();
@@ -2733,12 +2738,14 @@ impl Gen for JSXAttributeValue<'_> {
 
 impl Gen for JSXSpreadAttribute<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'{');
         if p.print_comments_in_range(self.span.start, self.argument.span().start) {
             p.print_indent();
         }
         p.print_str("...");
         self.argument.print_expr(p, Precedence::Comma, Context::empty());
+        p.add_source_mapping_end(self.span);
         p.print_ascii_byte(b'}');
     }
 }

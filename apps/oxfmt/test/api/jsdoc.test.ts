@@ -150,7 +150,7 @@ describe("JSDoc", () => {
     // the same width JS/TS snippets in the same position already use.
     // The 94-char field line must break; the 92-char one must not.
     // (Upstream `prettier-plugin-jsdoc` uses a flat printWidth - 4, which overflows `printWidth` for indented comments;
-    // see tasks/prettier_conformance/jsdoc/upstream-jsdoc-bugs.md)
+    // see crates/oxc_formatter/tests/jsdoc/upstream-jsdoc-bugs.md)
     const source = `
 /**
  * \`\`\`graphql

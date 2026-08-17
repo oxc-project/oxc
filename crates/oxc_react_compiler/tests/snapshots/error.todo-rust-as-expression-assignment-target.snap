@@ -1,9 +1,0 @@
----
-source: crates/oxc_react_compiler/tests/snapshot.rs
-input_file: crates/oxc_react_compiler/fixtures/error.todo-rust-as-expression-assignment-target.tsx
----
-Diagnostics:
-
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: [FindContextIdentifiers] Cannot handle Object destructuring assignment target TSAsExpression", labels: [LabeledSpan { label: None, span: SourceSpan { offset: 52, length: 32 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
-
-No changes.

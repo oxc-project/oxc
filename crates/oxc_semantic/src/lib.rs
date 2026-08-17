@@ -239,7 +239,7 @@ impl<'a> Semantic<'a> {
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;
         };
-        self.scoping.root_unresolved_references().contains_key(&id.name)
+        id.is_global_reference(&self.scoping)
     }
 
     /// Find which scope a symbol is declared in
@@ -262,7 +262,7 @@ impl<'a> Semantic<'a> {
 
     /// Returns `true` if `ident` resolves to a global (unbound) reference.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.scoping.root_unresolved_references().contains_key(&ident.name)
+        ident.is_global_reference(&self.scoping)
     }
 
     /// Get the textual name for a semantic reference.
@@ -380,6 +380,33 @@ mod tests {
                 assert!(!semantic.is_reference_to_global_variable(id));
             }
         }
+    }
+
+    #[test]
+    fn unresolved_reference_is_tracked_per_identifier() {
+        let source = "Promise.resolve(); function f(Promise) { Promise.resolve(); }";
+        let allocator = Allocator::default();
+        let semantic = get_semantic(&allocator, source, SourceType::default());
+
+        let nodes = semantic
+            .scoping()
+            .references
+            .iter()
+            .map(|reference| semantic.nodes.get_node(reference.node_id()))
+            .collect::<Vec<_>>();
+        let [global_promise, local_promise] = nodes.as_slice() else { unreachable!() };
+
+        // `Promise.resolve()`
+        assert!(semantic.is_unresolved_reference(global_promise.id()));
+        assert!(semantic.is_reference_to_global_variable(
+            global_promise.kind().as_identifier_reference().unwrap()
+        ));
+
+        // `function f(Promise) { Promise.resolve(); }`
+        assert!(!semantic.is_unresolved_reference(local_promise.id()));
+        assert!(!semantic.is_reference_to_global_variable(
+            local_promise.kind().as_identifier_reference().unwrap()
+        ));
     }
 
     #[test]
