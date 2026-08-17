@@ -26,13 +26,11 @@ impl<'a> PeepholeOptimizations {
             if let Statement::ExpressionStatement(expr_stmt) = &mut new_consequent {
                 // `if (!a) b();` => `a || b();`
                 // `if (a)  b();` => `a && b();`
-                return Some(Self::fold_if_to_logical_expr(
-                    if_stmt.span,
-                    LogicalOperator::Or,
-                    &mut if_stmt.test,
-                    &mut expr_stmt.expression,
-                    ctx,
-                ));
+                let (op, a) =
+                    Self::unwrap_for_logical_expr(LogicalOperator::Or, &mut if_stmt.test, ctx);
+                let b = expr_stmt.expression.take_in(ctx);
+                let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+                return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
             }
             // `if (!a) {} else x;` => `if (a) x;`
             // `if (a)  {} else x;` => `if (!a) x;`
@@ -75,13 +73,11 @@ impl<'a> PeepholeOptimizations {
         } else if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
             // `if (!a) b();` => `a || b();`
             // `if (a)  b();` => `a && b();`
-            return Some(Self::fold_if_to_logical_expr(
-                if_stmt.span,
-                LogicalOperator::And,
-                &mut if_stmt.test,
-                &mut expr_stmt.expression,
-                ctx,
-            ));
+            let (op, a) =
+                Self::unwrap_for_logical_expr(LogicalOperator::And, &mut if_stmt.test, ctx);
+            let b = expr_stmt.expression.take_in(ctx);
+            let expr = Self::join_with_left_associative_op(if_stmt.span, op, a, b, ctx);
+            return Some(Statement::new_expression_statement(if_stmt.span, expr, ctx));
         } else if let Statement::IfStatement(if2_stmt) = &mut if_stmt.consequent
             && if2_stmt.alternate.is_none()
         {
@@ -104,15 +100,13 @@ impl<'a> PeepholeOptimizations {
         None
     }
 
-    fn fold_if_to_logical_expr(
-        span: Span,
+    /// Unwraps a logical expression, transforming expressions and
+    /// returning the operator and unwrapped expression.
+    fn unwrap_for_logical_expr(
         op: LogicalOperator,
         test: &mut Expression<'a>,
-        expression: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Statement<'a> {
-        // `if (!a) b();` => `a || b();`
-        // `if (a)  b();` => `a && b();`
+    ) -> (LogicalOperator, Expression<'a>) {
         let (op, e) = match test {
             Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => (
                 if op.is_and() { LogicalOperator::Or } else { LogicalOperator::And },
@@ -120,10 +114,7 @@ impl<'a> PeepholeOptimizations {
             ),
             e => (op, e),
         };
-        let a = e.take_in(ctx);
-        let b = expression.take_in(ctx);
-        let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
-        Statement::new_expression_statement(span, expr, ctx)
+        (op, e.take_in(ctx))
     }
 
     /// Wrap to avoid ambiguous else.
