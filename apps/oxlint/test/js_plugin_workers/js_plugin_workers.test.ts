@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join as pathJoin } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -144,40 +145,46 @@ describe("JS plugin worker fixtures", () => {
     expect(count, `no create_once_count= line in stderr:\n${stderr}`).toBe(k);
   });
 
-  it("drops occupied JS buffers after each LSP folder rebuild", async () => {
-    let stderr = "";
-    await using client = createLspConnection(
-      { OXLINT_TEST_OCCUPIED_BUFFERS: "1" },
-      {
-        extraArgs: ["--threads=2"],
-        onStderr: (chunk) => {
-          stderr += chunk;
-        },
-      },
-    );
-
-    const workspaceUri = pathToFileURL(THREADS_FIXTURE_PATH).href;
-    await client.initialize([{ uri: workspaceUri, name: "js-plugins-threads" }], {
-      textDocument: { diagnostic: {} },
-      workspace: { diagnostics: { refreshSupport: true } },
-    });
-
-    // Workers start during initialize. Give the boot line a moment to land on stderr.
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    if (!/^worker_boot_ms=([1-9]\d*) /m.test(stderr)) return;
-
-    const k = matchLine(stderr, "js_workers=");
-    expect(k, `no js_workers= line in stderr:\n${stderr}`).not.toBeNull();
-
-    const filePath = pathJoin(THREADS_FIXTURE_PATH, "files/a.js");
-    const fileUri = pathToFileURL(filePath).href;
-    const content = await fs.readFile(filePath, "utf8");
-    await client.didOpen(fileUri, "javascript", content);
-    await client.diagnostic(fileUri);
-
-    const configPath = pathJoin(THREADS_FIXTURE_PATH, ".oxlintrc.json");
-    const original = await fs.readFile(configPath, "utf8");
+  it("drops occupied JS buffers after each LSP folder rebuild", async (ctx) => {
+    // Copy so config toggles cannot race the concurrent e2e snapshot of the committed fixture.
+    const fixtureDir = await fs.mkdtemp(pathJoin(tmpdir(), "oxlint-js-plugins-threads-"));
     try {
+      await fs.cp(THREADS_FIXTURE_PATH, fixtureDir, { recursive: true });
+
+      let stderr = "";
+      await using client = createLspConnection(
+        { OXLINT_TEST_OCCUPIED_BUFFERS: "1" },
+        {
+          extraArgs: ["--threads=2"],
+          onStderr: (chunk) => {
+            stderr += chunk;
+          },
+        },
+      );
+
+      const workspaceUri = pathToFileURL(fixtureDir).href;
+      await client.initialize([{ uri: workspaceUri, name: "js-plugins-threads" }], {
+        textDocument: { diagnostic: {} },
+        workspace: { diagnostics: { refreshSupport: true } },
+      });
+
+      // LSP never prints `worker_boot_ms=` (`CliRunner` does). `js_workers=` is the hook that
+      // exists on this path. `startJsWorkers` only runs when `K > 1`, so a missing line is `K == 1`.
+      const k = await waitForLine(() => stderr, "js_workers=", 2000);
+      if (k === null) {
+        ctx.skip();
+        return;
+      }
+
+      const filePath = pathJoin(fixtureDir, "files/a.js");
+      const fileUri = pathToFileURL(filePath).href;
+      const content = await fs.readFile(filePath, "utf8");
+      await client.didOpen(fileUri, "javascript", content);
+      await client.diagnostic(fileUri);
+
+      const configPath = pathJoin(fixtureDir, ".oxlintrc.json");
+      const original = await fs.readFile(configPath, "utf8");
+      let drops = 0;
       // Each rebuild must finish (and its occupied count be read) before the next starts.
       // oxlint-disable no-await-in-loop
       for (let i = 0; i < 8; i++) {
@@ -196,14 +203,39 @@ describe("JS plugin worker fixtures", () => {
         await client.diagnostic(fileUri);
 
         const count = await waitForOccupiedLine(() => stderr, seen);
-        expect(count, `occupied_buffers after drop ${i + 1}`).toBeLessThanOrEqual(k!);
+        expect(count, `occupied_buffers after drop ${i + 1}`).toBeLessThanOrEqual(k);
+        drops++;
       }
       // oxlint-enable no-await-in-loop
+      expect(drops).toBe(8);
     } finally {
-      await fs.writeFile(configPath, original);
+      await fs.rm(fixtureDir, { recursive: true, force: true });
     }
   }, 30_000);
 });
+
+function waitForLine(
+  getStderr: () => string,
+  prefix: string,
+  timeoutMs: number,
+): Promise<number | null> {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const poll = () => {
+      const value = matchLine(getStderr(), prefix);
+      if (value !== null) {
+        resolve(value);
+        return;
+      }
+      if (Date.now() - start > timeoutMs) {
+        resolve(null);
+        return;
+      }
+      setTimeout(poll, 25);
+    };
+    poll();
+  });
+}
 
 function waitForOccupiedLine(
   getStderr: () => string,
@@ -213,13 +245,18 @@ function waitForOccupiedLine(
   return new Promise((resolve, reject) => {
     const start = Date.now();
     const poll = () => {
-      const matches = [...getStderr().matchAll(/^occupied_buffers=(\d+)$/gm)];
+      const text = getStderr();
+      if (/^occupied_query_failed=/m.test(text)) {
+        reject(new Error(`occupied query failed (stderr:\n${text})`));
+        return;
+      }
+      const matches = [...text.matchAll(/^occupied_buffers=(\d+)$/gm)];
       if (matches.length > seen) {
         resolve(Number(matches[matches.length - 1][1]));
         return;
       }
       if (Date.now() - start > timeoutMs) {
-        reject(new Error(`timed out waiting for occupied_buffers (stderr:\n${getStderr()})`));
+        reject(new Error(`timed out waiting for occupied_buffers (stderr:\n${text})`));
         return;
       }
       setTimeout(poll, 25);

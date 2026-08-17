@@ -195,30 +195,39 @@ type WorkerMessage = { type: string; count?: number };
 /**
  * Ask every live worker for `occupiedBufferCount()` and sum the replies.
  *
- * Used by the `OXLINT_TEST_OCCUPIED_BUFFERS` hook. Times out per worker so a dead isolate
- * cannot hang the report.
+ * Used by the `OXLINT_TEST_OCCUPIED_BUFFERS` hook. Returns `null` if any isolate does not
+ * answer in time — a timeout must not be reported as `0` (that would pass `occupied ≤ K`).
  */
-function queryOccupiedBufferCount(): Promise<number> {
-  if (workers.length === 0) return Promise.resolve(0);
-  return Promise.all(
-    workers.map(
-      (worker) =>
-        new Promise<number>((resolve) => {
-          const timer = setTimeout(() => {
-            worker.off("message", onMessage);
-            resolve(0);
-          }, 2000);
-          const onMessage = (message: WorkerMessage) => {
-            if (message.type !== "occupiedBufferCount") return;
-            clearTimeout(timer);
-            worker.off("message", onMessage);
-            resolve(message.count ?? 0);
-          };
-          worker.on("message", onMessage);
-          worker.postMessage({ type: "occupiedBufferCount" });
-        }),
-    ),
-  ).then((counts) => counts.reduce((sum, count) => sum + count, 0));
+async function queryOccupiedBufferCount(): Promise<number | null> {
+  if (workers.length === 0) return 0;
+  // Do not use `Promise.all` here: the CLI bundle extracts it to a free function and
+  // `Promise.all` then throws (`this` is not `Promise`).
+  const pending = workers.map((worker) => queryOneOccupiedCount(worker));
+  let sum = 0;
+  for (const reply of pending) {
+    // oxlint-disable-next-line no-await-in-loop -- `Promise.all` is extracted by the CLI bundle and throws
+    const count = await reply;
+    if (count === null) return null;
+    sum += count;
+  }
+  return sum;
+}
+
+function queryOneOccupiedCount(worker: Worker): Promise<number | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      worker.off("message", onMessage);
+      resolve(null);
+    }, 2000);
+    const onMessage = (message: WorkerMessage) => {
+      if (message.type !== "occupiedBufferCount") return;
+      clearTimeout(timer);
+      worker.off("message", onMessage);
+      resolve(message.count ?? 0);
+    };
+    worker.on("message", onMessage);
+    worker.postMessage({ type: "occupiedBufferCount" });
+  });
 }
 
 /**
@@ -229,6 +238,10 @@ function scheduleOccupiedBufferReport(): void {
   clearTimeout(occupiedReportTimer);
   occupiedReportTimer = setTimeout(() => {
     void queryOccupiedBufferCount().then((count) => {
+      if (count === null) {
+        process.stderr.write("occupied_query_failed=timeout\n");
+        return;
+      }
       process.stderr.write(`occupied_buffers=${count}\n`);
     });
   }, 100);
