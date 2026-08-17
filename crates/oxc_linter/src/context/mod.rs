@@ -302,7 +302,8 @@ impl<'a> LintContext<'a> {
     /// [`LintContext::diagnostic_with_dangerous_fix`].
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn diagnostic_with_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
         C: Into<RuleFix>,
@@ -323,7 +324,8 @@ impl<'a> LintContext<'a> {
     /// [`LintContext::diagnostic_with_dangerous_fix`].
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn diagnostic_with_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
         C: Into<RuleFix>,
@@ -344,7 +346,8 @@ impl<'a> LintContext<'a> {
     /// [`LintContext::diagnostic_with_dangerous_fix`].
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn diagnostic_with_dangerous_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
         C: Into<RuleFix>,
@@ -372,7 +375,8 @@ impl<'a> LintContext<'a> {
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
     ///
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn diagnostic_with_dangerous_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
         C: Into<RuleFix>,
@@ -387,6 +391,8 @@ impl<'a> LintContext<'a> {
     /// returns something that can turn into a [`RuleFix`].
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub fn diagnostic_with_fix_of_kind<C, F>(
         &self,
         diagnostic: OxcDiagnostic,
@@ -396,14 +402,19 @@ impl<'a> LintContext<'a> {
         C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
-        let (diagnostic, fix) = self.create_fix(fix_kind, fix, diagnostic);
-        self.emit_single_fix(diagnostic, fix);
+        let rule_fix = self.create_fix(fix_kind, fix);
+        self.emit_fix(rule_fix, diagnostic);
     }
 
-    /// Non-generic emit tail shared by the `diagnostic_with_fix*` family, kept
-    /// out of the generic methods so it is compiled once rather than
-    /// monomorphized at every rule call site.
-    fn emit_single_fix(&self, diagnostic: OxcDiagnostic, fix: Option<Fix>) {
+    /// Non-generic tail shared by the `diagnostic_with_fix*` family: finalize
+    /// the fix and emit the diagnostic. Kept out of the generic methods so it is
+    /// compiled once rather than monomorphized at every rule call site, and
+    /// entered through a single call so each call site only carries the
+    /// closure body plus one call.
+    #[cold]
+    #[inline(never)]
+    fn emit_fix(&self, rule_fix: RuleFix, diagnostic: OxcDiagnostic) {
+        let (diagnostic, fix) = self.finish_create_fix(rule_fix, diagnostic);
         if let Some(fix) = fix {
             self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Single(fix)));
         } else {
@@ -424,8 +435,8 @@ impl<'a> LintContext<'a> {
         F2: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
         let fixes_result: Vec<Fix> = vec![
-            self.create_fix(fix_one.0, fix_one.1, diagnostic.clone()).1,
-            self.create_fix(fix_two.0, fix_two.1, diagnostic.clone()).1,
+            self.finish_create_fix(self.create_fix(fix_one.0, fix_one.1), diagnostic.clone()).1,
+            self.finish_create_fix(self.create_fix(fix_two.0, fix_two.1), diagnostic.clone()).1,
         ]
         .into_iter()
         .flatten()
@@ -476,12 +487,18 @@ impl<'a> LintContext<'a> {
         }
     }
 
-    fn create_fix<C, F>(
-        &self,
-        fix_kind: FixKind,
-        fix: F,
-        diagnostic: OxcDiagnostic,
-    ) -> (OxcDiagnostic, Option<Fix>)
+    /// Generic head of the fix-reporting chain: run the fixer closure and
+    /// convert its result into a [`RuleFix`].
+    ///
+    /// This is the only part of the chain that depends on the closure type, so
+    /// it is the only part that is monomorphized per rule call site (hundreds of
+    /// them). It is always inlined so the closure body lands directly in the
+    /// caller and no per-closure shim function (prologue, epilogue, argument
+    /// shuffling) is emitted; everything else goes through the non-generic
+    /// [`LintContext::emit_fix`] / [`LintContext::finish_create_fix`].
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn create_fix<C, F>(&self, fix_kind: FixKind, fix: F) -> RuleFix
     where
         C: Into<RuleFix>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
@@ -496,16 +513,13 @@ impl<'a> LintContext<'a> {
             FixKind::from(self.current_rule_fix_capabilities),
             rule_fix.kind()
         );
-        self.finish_create_fix(rule_fix, diagnostic)
+        rule_fix
     }
 
-    /// Non-generic tail of [`LintContext::create_fix`].
-    ///
-    /// `create_fix` is generic over the fixer closure and its return type, so it
-    /// is monomorphized at every rule call site (hundreds of them). Keeping only
-    /// the closure evaluation in the generic shim and routing the rest of the
-    /// body through this non-generic function lets the bulk of the logic be
-    /// compiled once instead of duplicated per instantiation.
+    /// Non-generic tail of the fix-reporting chain: merge the fix message into
+    /// the diagnostic's help text and, if the fix kind is enabled, turn the
+    /// [`RuleFix`] into a concrete [`Fix`]. Compiled once and shared by every
+    /// rule call site.
     fn finish_create_fix(
         &self,
         rule_fix: RuleFix,
