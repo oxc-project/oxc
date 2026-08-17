@@ -1,8 +1,8 @@
-import { defineConfig } from "../src-js/package/config.ts";
+import { defineConfig } from "#oxlint";
 
 const restrictedGlobals = ["addEventListener", "blur", "screen"];
 
-defineConfig({
+export default defineConfig({
   rules: {
     "no-restricted-globals": [
       "warn",
