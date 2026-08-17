@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, rules::ContextHost};
 
 fn no_useless_empty_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty exports do nothing in module files")
@@ -76,6 +76,10 @@ impl Rule for NoUselessEmptyExport {
             fixer.delete(&decl.span)
         });
     }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        !ctx.source_type().is_typescript_definition()
+    }
 }
 
 #[test]
@@ -147,4 +151,35 @@ fn test() {
     Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_declaration() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "
+            export type A = 1;
+            export {};
+        ",
+        "
+            export declare const a = 2;
+            export {};
+        ",
+        "
+            import type { A } from '_';
+            export {};
+        ",
+        "
+            import { A } from '_';
+            export {};
+        ",
+    ];
+
+    let fail = vec![];
+
+    Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::PLUGIN, pass, fail)
+        .change_rule_path_extension("d.ts")
+        .intentionally_allow_no_fix_tests()
+        .test();
 }
