@@ -106,6 +106,17 @@ export type JsStartWorkersCb =
 export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, forgetBuffer: JsForgetBufferCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb, startJsWorkers: JsStartWorkersCb): Promise<boolean>
 
 /**
+ * Record that a JS plugin worker isolate has died.
+ *
+ * Called from `cli.ts` when a worker emits `error` or `exit` after it became ready. Any queued
+ * `lintFile` call on that worker will never run, so waiting threads have to be released with an
+ * error rather than blocking forever.
+ *
+ * Not called for an intentional `terminate()` during shutdown.
+ */
+export declare function notifyWorkerDied(id: number): void
+
+/**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
  *
  * Source text must be written into somewhere towards end of the buffer.

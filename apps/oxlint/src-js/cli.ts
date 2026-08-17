@@ -1,5 +1,5 @@
 import { Worker } from "node:worker_threads";
-import { lint } from "./bindings.js";
+import { lint, notifyWorkerDied } from "./bindings.js";
 import { debugAssertIsNonNull, debugAssertIsNotUndefined } from "./utils/asserts.ts";
 
 // Lazy-loaded JS plugin-related functions.
@@ -179,6 +179,26 @@ const WORKER_BOOT_TIMEOUT_MS = 5000;
 // Workers started by `startJsWorkersWrapper`. Terminated once `lint` returns.
 let workers: Worker[] = [];
 
+// `true` once `terminateJsWorkers` has run, so the `exit`/`error` that follows an intentional
+// `terminate()` is not reported to Rust as a worker death.
+let shuttingDownJsWorkers = false;
+
+/**
+ * Report that a worker died after it had become ready.
+ *
+ * Rust threads block waiting for `lintFile` results from a specific worker, so a worker that dies
+ * with calls in flight would hang every file whose buffer routes to it. Telling Rust lets those
+ * waits fail instead.
+ *
+ * @param id - ID of the worker that died
+ * @param reason - Why the worker died, for the message written to stderr
+ */
+function reportJsWorkerDeath(id: number, reason: string): void {
+  if (shuttingDownJsWorkers) return;
+  process.stderr.write(`oxlint: JS plugin worker ${id} died (${reason})\n`);
+  notifyWorkerDied(id);
+}
+
 /**
  * Start `k` JS plugin worker isolates, and wait until all of them have registered their callbacks.
  *
@@ -237,9 +257,22 @@ function startJsWorkersWrapper(k: number): Promise<undefined> {
       worker.on("message", (message: { type: string }) => {
         if (message.type === "ready" && ++readyCount === k) settle();
       });
-      worker.on("error", (err) => settle(err));
+      // Before all workers are ready, either event fails startup. Afterwards, startup is already
+      // resolved, so the only thing left to do is release the Rust threads waiting on this worker.
+      worker.on("error", (err) => {
+        if (settled) reportJsWorkerDeath(id, err.message || String(err));
+        else settle(err);
+      });
       worker.on("exit", (code) => {
-        settle(new Error(`JS plugin worker ${id} exited with code ${code} before becoming ready`));
+        if (!settled) {
+          settle(
+            new Error(`JS plugin worker ${id} exited with code ${code} before becoming ready`),
+          );
+        } else if (code !== 0) {
+          reportJsWorkerDeath(id, `exit code ${code}`);
+        }
+        // A zero exit code after `ready` is the worker's event loop draining once Rust has released
+        // its callbacks, which is how every run ends. Not a death, and nothing is waiting on it.
       });
     }
   });
@@ -249,13 +282,16 @@ function startJsWorkersWrapper(k: number): Promise<undefined> {
  * Terminate all JS plugin worker isolates.
  *
  * Workers hold raw-transfer buffers alive, and their `exit` listeners would otherwise keep the
- * process from exiting cleanly, so drop both here.
+ * process from exiting cleanly, so drop both here. The `exit` this triggers is intentional, so it
+ * must not be reported to Rust as a worker death.
  */
 function terminateJsWorkers(): void {
+  shuttingDownJsWorkers = true;
   const running = workers;
   workers = [];
   for (const worker of running) {
     worker.removeAllListeners("exit");
+    worker.removeAllListeners("error");
     void worker.terminate();
   }
 }

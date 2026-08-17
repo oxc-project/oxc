@@ -242,13 +242,13 @@ mod buffer_id_tests {
     #[test]
     fn buffer_ids_match_the_arenas_the_pool_hands_out() {
         let pool = AllocatorPool::new_fixed_size(3);
-        let expected = FxHashSet::from_iter(pool.buffer_ids().iter().copied());
+        let expected = pool.buffer_ids().iter().copied().collect::<FxHashSet<_>>();
         assert_eq!(expected.len(), pool.len());
 
         let guards = [pool.get(), pool.get(), pool.get()];
         // SAFETY: these allocators came from a `new_fixed_size` pool.
         let actual = unsafe {
-            FxHashSet::from_iter(guards.iter().map(|guard| guard.fixed_size_buffer_id()))
+            guards.iter().map(|guard| guard.fixed_size_buffer_id()).collect::<FxHashSet<_>>()
         };
         assert_eq!(actual, expected);
     }

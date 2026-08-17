@@ -2,8 +2,8 @@ use std::{
     io::BufWriter,
     process::{ExitCode, Termination},
     sync::{
-        LazyLock, Mutex,
-        atomic::{AtomicU32, Ordering},
+        Arc, LazyLock, Mutex,
+        atomic::{AtomicBool, AtomicU32, Ordering},
     },
     time::Duration,
 };
@@ -175,6 +175,34 @@ pub struct RegisteredWorker {
 /// Process-wide JS worker callbacks, keyed by worker `id`.
 pub static REGISTERED_WORKERS: LazyLock<Mutex<FxHashMap<u32, RegisteredWorker>>> =
     LazyLock::new(|| Mutex::new(FxHashMap::default()));
+
+/// Liveness flag per JS plugin worker isolate, keyed by worker `id`.
+///
+/// A flag is cleared by [`notify_worker_died`] and read by the `lintFile` wrapper, which must not
+/// block forever waiting on a worker that will never run its queued callback.
+static WORKER_IS_ALIVE: LazyLock<Mutex<FxHashMap<u32, Arc<AtomicBool>>>> =
+    LazyLock::new(|| Mutex::new(FxHashMap::default()));
+
+/// Liveness flag for worker `id`, creating it (alive) if this is the first mention of that worker.
+///
+/// Both this and [`notify_worker_died`] go through the same map, so it doesn't matter whether the
+/// worker dies before or after the `ExternalLinter` picked up its flag.
+pub fn worker_liveness(id: u32) -> Arc<AtomicBool> {
+    let mut flags = WORKER_IS_ALIVE.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    Arc::clone(flags.entry(id).or_insert_with(|| Arc::new(AtomicBool::new(true))))
+}
+
+/// Record that a JS plugin worker isolate has died.
+///
+/// Called from `cli.ts` when a worker emits `error` or `exit` after it became ready. Any queued
+/// `lintFile` call on that worker will never run, so waiting threads have to be released with an
+/// error rather than blocking forever.
+///
+/// Not called for an intentional `terminate()` during shutdown.
+#[napi]
+pub fn notify_worker_died(id: u32) {
+    worker_liveness(id).store(false, Ordering::SeqCst);
+}
 
 /// Process-wide JS plugin worker count `K`. `0` means unset (no `id >= K` check).
 static JS_PLUGIN_WORKER_COUNT: AtomicU32 = AtomicU32::new(0);
