@@ -925,7 +925,7 @@ export interface DummyRuleMap {
   "grouped-accessor-pairs"?:
     RuleNoConfig | [AllowWarnDeny, PairOrder] | [AllowWarnDeny, PairOrder, GroupedAccessorPairsConfig];
   "guard-for-in"?: RuleNoConfig;
-  "id-denylist"?: RuleNoConfig | [AllowWarnDeny, string, ...string[]];
+  "id-denylist"?: RuleNoConfig | [AllowWarnDeny, ...string[]];
   "id-length"?: RuleNoConfig | [AllowWarnDeny, IdLengthConfig];
   "id-match"?: RuleNoConfig | [AllowWarnDeny, string] | [AllowWarnDeny, string, IdMatchOptions];
   "import/consistent-type-specifier-style"?: RuleNoConfig | [AllowWarnDeny, Mode];
@@ -1203,11 +1203,9 @@ export interface DummyRuleMap {
   "no-redeclare"?: RuleNoConfig | [AllowWarnDeny, NoRedeclare];
   "no-regex-spaces"?: RuleNoConfig;
   "no-restricted-exports"?: RuleNoConfig | [AllowWarnDeny, NoRestrictedExportsConfig];
-  "no-restricted-globals"?:
-    RuleNoConfig | [AllowWarnDeny, NoRestrictedGlobalsConfigEnum, ...NoRestrictedGlobalsConfigEnum[]];
-  "no-restricted-imports"?:
-    RuleNoConfig | [AllowWarnDeny, NoRestrictedImportsConfigEnum, ...NoRestrictedImportsConfigEnum[]];
-  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, PropertyDetails, ...PropertyDetails[]];
+  "no-restricted-globals"?: RuleNoConfig | [AllowWarnDeny, ...NoRestrictedGlobalsConfigEnum[]];
+  "no-restricted-imports"?: RuleNoConfig | [AllowWarnDeny, ...NoRestrictedImportsConfigEnum[]];
+  "no-restricted-properties"?: RuleNoConfig | [AllowWarnDeny, ...PropertyDetails[]];
   "no-return-assign"?: RuleNoConfig | [AllowWarnDeny, NoReturnAssignMode];
   "no-script-url"?: RuleNoConfig;
   "no-self-assign"?: RuleNoConfig | [AllowWarnDeny, NoSelfAssign];
