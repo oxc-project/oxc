@@ -37,7 +37,7 @@ jobs:
       - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
 
       - run: rustup component add llvm-tools-preview
-      - uses: taiki-e/install-action@91ddec75689c4c78665b598d188dc821c5a43e5c # v2.85.9
+      - uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2.85.13
         with:
           tool: cargo-llvm-cov
 

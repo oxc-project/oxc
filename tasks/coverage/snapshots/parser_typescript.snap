@@ -1,9 +1,9 @@
 commit: b465fdbf
 
 parser_typescript Summary:
-AST Parsed     : 9779/9779 (100.00%)
-Positive Passed: 9779/9779 (100.00%)
-Negative Passed: 1647/2640 (62.39%)
+AST Parsed     : 9783/9783 (100.00%)
+Positive Passed: 9783/9783 (100.00%)
+Negative Passed: 1647/2636 (62.48%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -822,8 +822,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setterWithRe
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthandPropertyUndefined.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationLabeled.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spyComparisonChecking.ts
@@ -1077,12 +1075,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/accessor/decoratorOnClassAccessor7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod11.ts
 

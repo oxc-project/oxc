@@ -11,7 +11,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
     EvaluationOrder, Place, ReactiveFunction, ReactiveScopeBlock, ScopeId,
@@ -98,18 +98,7 @@ impl<'a, 'e> ReactiveFunctionVisitor<'a> for CheckInstructionsAgainstScopesVisit
                 && state.existing_scopes.contains(&scope_id)
                 && !state.active_scopes.contains(&scope_id)
             {
-                state.error = Some(
-                    ErrorCategory::Invariant
-                        .diagnostic(
-                            "Encountered an instruction that should be part of a scope, \
-                             but where that scope has already completed",
-                        )
-                        .with_help(format!(
-                            "Instruction [{:?}] is part of scope @{:?}, \
-                             but that scope has already completed",
-                            id, scope_id
-                        )),
-                );
+                state.error = Some(diagnostics::instruction_in_completed_scope(id, scope_id));
             }
         }
     }

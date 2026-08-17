@@ -42,7 +42,7 @@ impl Default for NoIrregularWhitespaceConfig {
     fn default() -> Self {
         Self {
             skip_strings: true,
-            skip_comments: true,
+            skip_comments: false,
             skip_reg_exps: true,
             skip_templates: true,
             skip_jsx_text: true,
@@ -123,7 +123,7 @@ fn report_irregular_whitespace_in_span(ctx: &LintContext, source_text: &str, spa
 
 impl Rule for NoIrregularWhitespace {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -139,6 +139,9 @@ impl Rule for NoIrregularWhitespace {
         // Report irregular whitespace inside comments when not skipping them.
         if !self.skip_comments {
             let source_text = ctx.semantic().source_text();
+            if let Some(hashbang) = &ctx.nodes().program().hashbang {
+                report_irregular_whitespace_in_span(ctx, source_text, hashbang.span);
+            }
             for comment in ctx.semantic().comments() {
                 report_irregular_whitespace_in_span(ctx, source_text, comment.span);
             }
@@ -221,50 +224,51 @@ fn test() {
         ("' ';", None),
         ("' ';", None),
         ("'　';", None),
-        ("// ", None),
-        ("// ", None),
-        ("// ", None),
-        ("//  ", None),
-        ("// ᠎", None),
-        ("// ﻿", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("// ​", None),
-        ("//  ", None),
-        ("//  ", None),
-        ("// 　", None),
-        ("/*  */", None),
-        ("/*  */", None),
-        ("/*  */", None),
-        ("/*   */", None),
-        ("/* ᠎ */", None),
-        ("/* ﻿ */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/* ​ */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/*   */", None),
-        ("/* 　 */", None),
+        ("// ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("// ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("// ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("// ᠎", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("// ﻿", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("// ​", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("//  ", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("// 　", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*  */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*  */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*  */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/* ᠎ */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/* ﻿ */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/* ​ */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/*   */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("/* 　 */", Some(serde_json::json!([{ "skipComments": true }]))),
+        ("#!/usr/bin/env​node", Some(serde_json::json!([{ "skipComments": true }]))),
         ("//", None),
         ("//", None),
         ("//", None),
@@ -462,8 +466,8 @@ fn test() {
             None,
         ),
         ("foo ", None),
-        ("// 　", Some(serde_json::json!([{ "skipComments": false }]))),
-        ("/* 　 */", Some(serde_json::json!([{ "skipComments": false }]))),
+        ("// 　", None),
+        ("/* 　 */", None),
         ("var any = /　/, other = /​/;", Some(serde_json::json!([{ "skipRegExps": false }]))),
         ("var any = `　`, other = `​`;", Some(serde_json::json!([{ "skipTemplates": false }]))),
         ("<div>　</div>;", Some(serde_json::json!([{ "skipJSXText": false }]))),
@@ -471,4 +475,15 @@ fn test() {
 
     Tester::new(NoIrregularWhitespace::NAME, NoIrregularWhitespace::PLUGIN, pass, fail)
         .test_and_snapshot();
+
+    Tester::new(
+        NoIrregularWhitespace::NAME,
+        NoIrregularWhitespace::PLUGIN,
+        vec![],
+        vec![
+            ("export const ZERO_SPACE = String.fromCharCode(0x200b) // '​'", None),
+            ("#!/usr/bin/env​node", None),
+        ],
+    )
+    .test();
 }

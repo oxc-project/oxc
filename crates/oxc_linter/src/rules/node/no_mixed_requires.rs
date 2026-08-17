@@ -83,7 +83,7 @@ declare_oxc_lint!(
 
 impl Rule for NoMixedRequires {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = serde_json::from_value::<DefaultRuleConfig<NoMixedRequiresConfig>>(value)?;
+        let config = DefaultRuleConfig::<NoMixedRequiresConfig>::from_value(value)?;
         Ok(Self(config.into_inner().into()))
     }
 

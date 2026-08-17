@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.invalid-computed-store-to-f
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Immutability: This value cannot be modified", labels: [LabeledSpan { label: Some("value cannot be modified"), span: SourceSpan { offset: 86, length: 1 }, primary: false }], help: Some("Modifying a value used previously in JSX is not allowed. Consider moving the modification before the JSX"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "This value cannot be modified", labels: [LabeledSpan { label: Some("value cannot be modified"), span: Span { start: 86, end: 87 }, primary: true }], help: Some("Modifying a value used previously in JSX is not allowed. Consider moving the modification before the JSX"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("Immutability") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/immutability") } }
 
 No changes.

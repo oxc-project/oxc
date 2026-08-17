@@ -23,8 +23,13 @@ jobs:
         with:
           cache-key: warm
           tools: cargo-release-oxc
+      - uses: oxc-project/setup-node@d59b270414aa7d0eed947eed4eb5b0b8a675f01d # v1.4.0
       - run: cargo ck
       - run: cargo release-oxc publish --release crates --dry-run # zizmor: ignore[use-trusted-publishing]
+      - name: Check Codegen package
+        run: |
+          pnpm --filter oxc-codegen build
+          pnpm publish packages/codegen --dry-run --provenance --access public --no-git-checks
 
   prepare:
     if: github.repository == 'oxc-project/oxc'
@@ -59,6 +64,7 @@ jobs:
           pnpm --filter oxc-parser run build-dev
           pnpm --filter oxc-transform run build-dev
           pnpm --filter oxc-transform-react run build-dev
+          pnpm --filter oxc-transform-relay run build-dev
 
       - name: Update Cargo.lock
         run: cargo check

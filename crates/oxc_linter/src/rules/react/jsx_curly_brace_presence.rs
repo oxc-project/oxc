@@ -340,7 +340,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxCurlyBracePresence {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<JsxCurlyBracePresenceConfig>>(value)
+        DefaultRuleConfig::<JsxCurlyBracePresenceConfig>::from_value(value)
             .map(|config| config.into_inner().into_rule())
     }
 

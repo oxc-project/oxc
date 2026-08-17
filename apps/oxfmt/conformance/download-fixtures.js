@@ -1,7 +1,7 @@
 // oxlint-disable no-console, no-await-in-loop
 
 import { exec } from "node:child_process";
-import { rmSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import pkg from "../package.json" with { type: "json" };
@@ -89,10 +89,20 @@ await Promise.all(
   [...sourcesByRepo.values()].map(async (group) => {
     for (const { name, repo, version } of group) {
       const dest = join(externalsDir, name);
+
+      // Stamp-based skip (same scheme as `oxc_formatter_tests`' suite provisioning):
+      // the stamp is written last, so a half-downloaded tree is always re-done.
+      const stamp = join(dest, ".version");
+      const pin = `${repo}#${version}`;
+      if (existsSync(stamp) && readFileSync(stamp, "utf8").trim() === pin) {
+        console.log(`Up-to-date: ${name}@${version}`);
+        continue;
+      }
       rmSync(dest, { recursive: true, force: true });
 
       console.log(`Downloading ${name}@${version} fixtures...`);
       await execAsync(`pnpm exec degit ${repo}#${version} "${dest}"`, { cwd });
+      writeFileSync(stamp, pin);
       console.log(`Done: ${name}@${version}`);
     }
   }),

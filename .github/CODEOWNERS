@@ -33,12 +33,12 @@ pnpm-lock.yaml
 /crates/oxc_formatter_graphql @leaysgur
 /crates/oxc_formatter_css @leaysgur
 /crates/oxc_formatter_yaml @leaysgur
+/crates/oxc_formatter_tests @leaysgur
 /crates/oxc_jsdoc @leaysgur
 /crates/oxc_regular_expression @leaysgur
 /oxfmtrc.jsonc @leaysgur
 /apps/oxfmt @leaysgur
 /npm/oxfmt @leaysgur
-/tasks/prettier_conformance @leaysgur
 /tasks/website_formatter @leaysgur
 
 # Shared application tooling (@camc314 @leaysgur)
@@ -76,6 +76,12 @@ pnpm-lock.yaml
 /napi/transform-react @Boshen
 /tasks/benchmark/benches/react_compiler.rs @Boshen
 /.github/workflows/release_napi_transform_react.yml @Boshen
+
+# Relay transform (@Boshen)
+
+/crates/oxc_relay @Boshen
+/napi/transform-relay @Boshen
+/.github/workflows/release_napi_transform_relay.yml @Boshen
 
 # Core infrastructure crates (@overlookmotel)
 

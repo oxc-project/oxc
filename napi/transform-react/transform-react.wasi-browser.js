@@ -565,7 +565,7 @@ try {
   } = await __emnapiInstantiateNapiModule(__wasmFile, {
     context: __emnapiContext,
     asyncWorkPoolSize: __asyncWorkPoolSize,
-    reuseWorker: { size: __asyncWorkPoolSize + __workerPoolSize },
+    reuseWorker: false,
     plugins: [__emnapiAsyncWorkPlugin, __emnapiTSFNPlugin],
     wasi: __wasi,
     onCreateWorker() {

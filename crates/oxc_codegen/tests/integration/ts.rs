@@ -56,6 +56,11 @@ fn cases() {
 }
 
 #[test]
+fn export_default_interface() {
+    test_same("export default interface X {}\nconst y = 1;\n");
+}
+
+#[test]
 fn decorators() {
     test_same("@a abstract class C {}\n");
     test_tsx("@a @b export default abstract class {}", "export default @a @b abstract class {}\n");

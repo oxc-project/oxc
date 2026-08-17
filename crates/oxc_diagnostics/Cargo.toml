@@ -17,11 +17,18 @@ description.workspace = true
 workspace = true
 
 [dependencies]
+oxc_span = { workspace = true }
+
+bytecount = { workspace = true }
 cow-utils = { workspace = true }
+itoa = { workspace = true }
 memchr = { workspace = true }
-miette = { workspace = true }
+owo-colors = { workspace = true }
 percent-encoding = { workspace = true }
 smallvec = { workspace = true }
+textwrap = { workspace = true }
+unicode-segmentation = { workspace = true }
+unicode-width = { workspace = true }
 
 [lib]
 doctest = false

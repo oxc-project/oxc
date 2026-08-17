@@ -15,14 +15,24 @@ export declare function fnDeclBad2<T>(p: T, r2: T): void;
 export declare function fnDeclBad3<T>(p: T, r2: T, rParam?: T): void;
 export declare function fooBad(): number;
 export declare const fooBad2: () => number;
-export declare function withAny(a: any, b: string): void;
-export declare function withUnknown(a: unknown, b: string): void;
+export declare function withAny(a: any | undefined, b: string): void;
+export declare function withAnyUnion(a: any | string | undefined, b: string): void;
+export declare function withAnyArrayUnion(a: any | number[] | undefined, b: string): void;
+export declare function withAnyUndefinedUnion(a: any | undefined, b: string): void;
+type Foo = {};
+export declare function withAnyTypeReferenceUnion(a: any | Foo, b: string): void;
+export declare function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined, b: string): void;
+export declare function withAnyTypeOperatorUnion(a: any | keyof {}, b: string): void;
+export declare function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}), b: string): void;
+export declare function withUnknown(a: unknown | undefined, b: string): void;
+export declare function withUnknownUnion(a: unknown | string | undefined, b: string): void;
 export declare function withTypeAssertion(a?: any): void;
 export declare function restWithDefault(...[value, options]: [string, object]): void;
 export declare function restWithNestedDefault(...[a, { b, c }]: [number, {
 	b: number;
 	c: number;
 }]): void;
+export {};
 
 
 ==================== Errors ====================
@@ -79,6 +89,33 @@ export declare function restWithNestedDefault(...[a, { b, c }]: [number, {
  26 | export const fooBad2 = ({a, b} = { a: 1, b: 2 }): number => {
     :                         ^^^^^^^^^^^^^^^^^^^^^^^
  27 |   return 2;
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[36:43]
+ 35 | type Foo = {};
+ 36 | export function withAnyTypeReferenceUnion(a: any | Foo = {}, b: string): void { }
+    :                                           ^^^^^^^^^^^^^^^^^
+ 37 | export function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined = {}, b: string): void { }
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[38:42]
+ 37 | export function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined = {}, b: string): void { }
+ 38 | export function withAnyTypeOperatorUnion(a: any | keyof {} = 1, b: string): void { }
+    :                                          ^^^^^^^^^^^^^^^^^^^^^
+ 39 | export function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}) = {}, b: string): void { }
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[39:55]
+ 38 | export function withAnyTypeOperatorUnion(a: any | keyof {} = 1, b: string): void { }
+ 39 | export function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}) = {}, b: string): void { }
+    :                                                       ^^^^^^^^^^^^^^^^^^^^^^^^
+ 40 | export function withUnknown(a: unknown = 1, b: string): void { }
     `----
 
 

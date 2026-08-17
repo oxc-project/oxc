@@ -1,0 +1,29 @@
+{
+  "name": "oxc-codegen-conformance",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Node API binding around `oxc_parser` + `oxc_codegen`, used as the reference output for the `oxc-codegen` package's conformance tests",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
+    "directory": "tasks/codegen_conformance"
+  },
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build-dev": "napi build --esm --platform",
+    "build-test": "pnpm run build-dev --profile codegen-conformance",
+    "build": "pnpm run build-test"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "catalog:"
+  },
+  "napi": {
+    "binaryName": "codegen_conformance"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

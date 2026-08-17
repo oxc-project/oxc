@@ -143,6 +143,7 @@ pub fn write_block_scalar<'a>(
             // Raw text keeps them exempt from EVERY layout normalization,
             // including the state effects a line element would have on the following separator.
             // NOT `exact_line_breaks`: the tail may hold space-only lines, which are part of the value too.
+            // `ends_with_keep_chomped_block` mirrors this guard for the root's final newline.
             if blanks > 0 || (is_last_descendant && wrote_any) {
                 write!(f, dedent_to_root(&text(arena_newlines(blanks + 1, f))));
             }
@@ -211,7 +212,7 @@ fn block_value_line_contents<'s>(
         fold_lines(&stripped, prose_wrap)
     };
 
-    let mut lines = remove_unnecessary_trailing_newlines(block, content, is_last_descendant, lines);
+    let mut lines = remove_unnecessary_trailing_newlines(block, is_last_descendant, lines);
     // Trailing spaces on the LAST content line are dropped (Prettier does the same);
     // intermediate lines keep theirs, they are part of the value under every chomping mode.
     // The core printer never trims, so drop them here.
@@ -299,12 +300,14 @@ fn fold_lines<'s>(stripped: &[&'s str], prose_wrap: ProseWrap) -> Vec<Vec<Cow<'s
 /// Mirrors Prettier's `removeUnnecessaryTrailingNewlines`.
 fn remove_unnecessary_trailing_newlines<'s>(
     block: &BlockScalar,
-    content: &str,
     is_last_descendant: bool,
     mut lines: Vec<Vec<Cow<'s, str>>>,
 ) -> Vec<Vec<Cow<'s, str>>> {
     if block.chomping == Chomping::Keep {
-        if content.ends_with('\n') && lines.last().is_some_and(Vec::is_empty) {
+        // NOTE: The fragment after the last break holds no line break, so it is not a kept line:
+        // either the empty artifact `split('\n')` yields after a final break,
+        // or a break-less space-only EOF line (a known divergence: Prettier counts it).
+        if lines.last().is_some_and(|words| is_blank_line(words)) {
             lines.pop();
         }
         return lines;
@@ -326,16 +329,29 @@ fn remove_unnecessary_trailing_newlines<'s>(
     lines
 }
 
-/// Returns `true` when the stream's last descendant is a keep-chomped (`+`) block scalar.
-/// Its verbatim content already ends with the kept newlines,
+/// Returns `true` when the stream's last descendant is a keep-chomped (`+`) block scalar
+/// whose verbatim content ends with the kept newlines,
 /// so the caller must not append the usual final `hard_line_break()`
 /// (mirrors Prettier's `shouldPrintHardline` gate).
-pub fn ends_with_keep_chomped_block(root: &Root<'_>) -> bool {
+///
+/// Returns `false` when the scalar emits no tail of its own,
+/// no content characters and no kept line break (empty, or one break-less space-only EOF line);
+/// the caller's final newline stands.
+pub fn ends_with_keep_chomped_block(root: &Root<'_>, f: &YamlFormatter<'_, '_>) -> bool {
     root.children
         .last()
         .and_then(|document| document.body.content.as_deref())
         .and_then(last_descendant_block_scalar)
-        .is_some_and(|block| block.chomping == Chomping::Keep)
+        .is_some_and(|block| {
+            // Content characters guarantee a tail;
+            // an empty content region emits one exactly when its trailing run holds a line break.
+            block.chomping == Chomping::Keep
+                && (block.content_end > block.content_start
+                    || f.context()
+                        .source_text()
+                        .bytes_range(block.content_end, block.span.end)
+                        .contains(&b'\n'))
+        })
 }
 
 /// The block scalar the node's last descendant resolves to, if any.

@@ -36,11 +36,16 @@ use crate::core::{
 /// - Phase 2: Resolve & format file targets directly (no walk).
 /// - Phase 3: Walk directory targets in parallel with on-demand nested config discovery.
 ///
-/// # Ignore model
-/// Three layers, applied in `filter_entry()` and `visit()`:
-/// 1. Hardcoded VCS / `node_modules` skips
-/// 2. Global ignores (`.prettierignore`, `--ignore-path`, CLI `!path`)
-/// 3. Scope-local `ignorePatterns` from each resolved config
+/// # Ignore handling
+/// `filter_entry()` and `visit()` apply:
+/// - Hardcoded VCS / `node_modules` skips
+/// - Global CLI ignores (`.prettierignore`, `--ignore-path`, CLI `!path`)
+/// - Scope-local `ignorePatterns` from each resolved config
+///
+/// Git-derived ignores separately scope discovery through the underlying walker.
+/// Because the walker does not filter its roots,
+/// directory roots are checked with [`GitignoreChecker::is_gitignored_walk_root`].
+/// Explicit file targets are handled directly in Phase 2 and therefore are not excluded by Git-derived ignores.
 pub struct ScopedWalker {
     cwd: PathBuf,
     paths: Vec<PathBuf>,
@@ -152,7 +157,7 @@ impl ScopedWalker {
                 }
                 // Also, the walker never filters gitignored walk roots.
                 // (including roots inside a gitignored directory)
-                if gitignore_checker.is_gitignored(path, &self.cwd) {
+                if gitignore_checker.is_gitignored_walk_root(path, &self.cwd) {
                     continue;
                 }
 
