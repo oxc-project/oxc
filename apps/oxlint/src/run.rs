@@ -212,6 +212,12 @@ static JS_PLUGIN_WORKER_COUNT: AtomicU32 = AtomicU32::new(0);
 /// Pass `0` to clear the bound.
 #[napi]
 pub fn set_js_plugin_worker_count(k: u32) {
+    // `lint()` can be invoked more than once in the same Node process. Drop the previous
+    // generation's registrations and liveness flags so a dead worker from run 1 cannot mark
+    // run 2's worker with the same id dead-on-arrival, and so leftover TSFNs do not point at
+    // terminated isolates.
+    REGISTERED_WORKERS.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clear();
+    WORKER_IS_ALIVE.lock().unwrap_or_else(std::sync::PoisonError::into_inner).clear();
     JS_PLUGIN_WORKER_COUNT.store(k, Ordering::SeqCst);
 }
 
@@ -375,18 +381,37 @@ async fn lint_impl(
             );
             (Some(external_linter), js_config_loader)
         } else {
-            if let Err(err) = start_workers(&start_js_workers, k).await {
-                print_startup_error(&err);
-                return CliRunResult::JsPluginWorkerStartupFailed;
-            }
-
-            match crate::js_plugins::create_external_linter_from_workers(k) {
-                Ok(external_linter) => (Some(external_linter), js_config_loader),
+            // Workers start before config is read, including runs with no JS plugins. A boot
+            // failure must not take down `oxlint` / `--lsp` for those users: fall back to the
+            // main-thread path that already works.
+            let external_linter = match start_workers(&start_js_workers, k).await {
+                Ok(()) => match crate::js_plugins::create_external_linter_from_workers(k) {
+                    Ok(external_linter) => external_linter,
+                    Err(err) => {
+                        print_startup_fallback(&err);
+                        crate::js_plugins::create_external_linter(
+                            load_plugin,
+                            setup_rule_configs,
+                            lint_file,
+                            forget_buffer,
+                            create_workspace,
+                            destroy_workspace,
+                        )
+                    }
+                },
                 Err(err) => {
-                    print_startup_error(&err);
-                    return CliRunResult::JsPluginWorkerStartupFailed;
+                    print_startup_fallback(&err);
+                    crate::js_plugins::create_external_linter(
+                        load_plugin,
+                        setup_rule_configs,
+                        lint_file,
+                        forget_buffer,
+                        create_workspace,
+                        destroy_workspace,
+                    )
                 }
-            }
+            };
+            (Some(external_linter), js_config_loader)
         }
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -431,13 +456,15 @@ async fn start_workers(cb: &JsStartWorkersCb, k: usize) -> Result<(), String> {
     promise.into_future().await.map_err(|err| format!("`startJsWorkers` failed: {err}"))
 }
 
-/// Report a JS plugin worker startup failure.
+/// Report that workers failed to start and the run is continuing on the main JS thread.
 ///
 /// Goes to stderr rather than stdout: at this point in startup the CLI's buffered stdout writer
 /// doesn't exist yet, and the language server owns stdout for its protocol.
 #[expect(clippy::print_stderr)]
-fn print_startup_error(err: &str) {
-    eprintln!("Failed to start JS plugin workers:\n{err}");
+fn print_startup_fallback(err: &str) {
+    eprintln!(
+        "Failed to start JS plugin workers; running JS plugins on the main thread instead:\n{err}"
+    );
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

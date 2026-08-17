@@ -3,7 +3,6 @@ use std::process::{ExitCode, Termination};
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
-    JsPluginWorkerStartupFailed,
     JsPluginWorkspaceSetupFailed,
     InvalidOptionConfig,
     InvalidOptionTsConfig,
@@ -33,7 +32,6 @@ impl Termination for CliRunResult {
             | Self::ConfigFileInitSucceeded
             | Self::LintSucceeded => ExitCode::SUCCESS,
             Self::ConfigFileInitFailed
-            | Self::JsPluginWorkerStartupFailed
             | Self::JsPluginWorkspaceSetupFailed
             | Self::LintFoundErrors
             | Self::LintNoFilesFound

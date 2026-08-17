@@ -46,9 +46,9 @@ pub fn create_external_linter(
         Box::new([wrap_setup_rule_configs(setup_rule_configs, None)]),
         // No worker to die: JS plugins run on the main JS thread here.
         Box::new([wrap_lint_file(lint_file, None)]),
-        Box::new([wrap_forget_buffer(forget_buffer)]),
+        Box::new([wrap_forget_buffer(forget_buffer, None)]),
         Box::new([wrap_create_workspace(create_workspace, None)]),
-        Box::new([wrap_destroy_workspace(destroy_workspace)]),
+        Box::new([wrap_destroy_workspace(destroy_workspace, None)]),
     )
 }
 
@@ -82,10 +82,11 @@ pub fn create_external_linter_from_workers(k: usize) -> Result<ExternalLinter, S
         setup_rule_configs
             .push(wrap_setup_rule_configs(worker.setup_rule_configs, Some(worker_liveness(id))));
         lint_file.push(wrap_lint_file(worker.lint_file, Some(worker_liveness(id))));
-        forget_buffer.push(wrap_forget_buffer(worker.forget_buffer));
+        forget_buffer.push(wrap_forget_buffer(worker.forget_buffer, Some(worker_liveness(id))));
         create_workspace
             .push(wrap_create_workspace(worker.create_workspace, Some(worker_liveness(id))));
-        destroy_workspace.push(wrap_destroy_workspace(worker.destroy_workspace));
+        destroy_workspace
+            .push(wrap_destroy_workspace(worker.destroy_workspace, Some(worker_liveness(id))));
     }
 
     Ok(ExternalLinter::new(
@@ -278,11 +279,9 @@ fn wrap_lint_file(cb: JsLintFileCb, liveness: Option<Arc<AtomicBool>>) -> Extern
                 )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {
-                    // This call cannot fail, because `rx.recv()` below blocks until it receives a message.
-                    // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
-                    // Therefore, `rx` cannot be dropped before this call.
-                    let res = tx.send(result);
-                    debug_assert!(res.is_ok(), "Failed to send result of `lintFile`");
+                    // `wait_for_result` can return early if the worker dies, which drops `rx`.
+                    // A late send is then a no-op, not a logic error.
+                    let _ = tx.send(result);
                     Ok(())
                 },
             );
@@ -390,8 +389,16 @@ async fn wait_for_async_result<T>(
 /// The JS side just nulls a slot in its buffer cache, so there's no return value to wait for.
 /// Dispatch it non-blocking and don't block the calling thread: the buffer's memory is freed by the
 /// `Uint8Array` finalizer once JS garbage collects the view, which cannot happen synchronously.
-fn wrap_forget_buffer(cb: JsForgetBufferCb) -> ExternalLinterForgetBufferCb {
+fn wrap_forget_buffer(
+    cb: JsForgetBufferCb,
+    liveness: Option<Arc<AtomicBool>>,
+) -> ExternalLinterForgetBufferCb {
     Arc::new(Box::new(move |buffer_id: u32| {
+        if let Some(liveness) = &liveness
+            && !liveness.load(Ordering::SeqCst)
+        {
+            return Err(WORKER_DIED_ERROR.to_string());
+        }
         let status = cb.call(buffer_id, ThreadsafeFunctionCallMode::NonBlocking);
         if status == Status::Ok {
             Ok(())
@@ -525,8 +532,18 @@ fn wrap_create_workspace(
 ///
 /// Uses a timeout to prevent indefinite blocking during shutdown, which can cause issues
 /// in multi-root workspace scenarios where multiple workspaces are being destroyed concurrently.
-fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
+fn wrap_destroy_workspace(
+    cb: JsDestroyWorkspaceCb,
+    liveness: Option<Arc<AtomicBool>>,
+) -> ExternalLinterDestroyWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri| {
+        // A dead isolate is already gone; do not sit on the 5s shutdown timeout for it.
+        if let Some(liveness) = &liveness
+            && !liveness.load(Ordering::SeqCst)
+        {
+            return Ok(());
+        }
+
         let (tx, rx) = channel();
 
         // Send data to JS

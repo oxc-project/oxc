@@ -275,6 +275,7 @@ function reportJsWorkerDeath(id: number, reason: string): void {
  * @throws If any worker fails to start, exits early, or does not become ready in time
  */
 function startJsWorkersWrapper(k: number): Promise<undefined> {
+  shuttingDownJsWorkers = false;
   return new Promise((resolve, reject) => {
     let readyCount = 0;
     let settled = false;
@@ -310,13 +311,10 @@ function startJsWorkersWrapper(k: number): Promise<undefined> {
     }
 
     for (let id = 0; id < k; id++) {
-      // `resourceLimits` caps each worker's JS heap. It does not cap the 2 GiB raw-transfer views,
-      // which are external memory.
       const worker = new Worker(WORKER_URL, {
         workerData: testCreateOnceCounter
           ? { id, createOnceCounter: testCreateOnceCounter }
           : { id },
-        resourceLimits: { maxOldGenerationSizeMb: 256 },
         stdout: true,
         stderr: false,
         stdin: false,

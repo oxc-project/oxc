@@ -10,6 +10,9 @@ const createOnceCounter = (workerData as { createOnceCounter?: SharedArrayBuffer
 const plugin: Plugin = {
   meta: { name: "threads-fixture" },
   rules: {
+    // `createOnce` runs once per isolate, not once per process. This visitor is stateless,
+    // so `--threads=1` and `--threads=4` still report the same diagnostics. A rule that
+    // accumulated cross-file state here would see only the files that routed to its isolate.
     "no-debugger": {
       createOnce(context) {
         if (createOnceCounter) {
