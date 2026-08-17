@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -64,11 +64,21 @@ impl Rule for NoUselessEmptyExport {
             return;
         }
         let module_record = ctx.module_record();
-        if module_record.exported_bindings.is_empty()
+        let nodes = ctx.nodes();
+        if module_record.requested_modules.is_empty()
+            && module_record.exported_bindings.is_empty()
             && module_record.local_export_entries.is_empty()
             && module_record.indirect_export_entries.is_empty()
             && module_record.star_export_entries.is_empty()
             && module_record.export_default.is_none()
+            && !(nodes.contains(AstType::TSImportEqualsDeclaration)
+                && nodes.program().body.iter().any(|statement| {
+                    matches!(
+                        statement,
+                        Statement::TSImportEqualsDeclaration(decl)
+                            if decl.module_reference.is_external()
+                    )
+                }))
         {
             return;
         }
@@ -102,6 +112,8 @@ fn test() {
             export = {};
         ",
         "export {};",
+        "import x = ns.value; export {};",
+        "namespace Foo { import Bar = Baz; } export {};",
     ];
 
     let fail = vec![
@@ -132,10 +144,21 @@ fn test() {
             export { _ };
             export {};
         ",
-        // "
-        // import _ = require('_');
-        // export {};
-        // ",
+        "
+            import {} from '_';
+            export {};",
+        "
+            import _ from '_';
+            export {};",
+        "
+            import '_';
+            export {};",
+        "
+            import * as all from '_';
+            export {};",
+        "
+            import _ = require('_')
+            export {};",
     ];
 
     let fix = vec![
@@ -145,7 +168,11 @@ fn test() {
         ("const _ = {};export default _;export {};", "const _ = {};export default _;"),
         ("export {};const _ = {};export default _;", "const _ = {};export default _;"),
         ("const _ = {};export { _ };export {};", "const _ = {};export { _ };"),
-        // ("import _ = require('_');export {};", "import _ = require('_');"),
+        ("import {} from '_';\n\nexport {};", "import {} from '_';\n\n"),
+        ("import _ from '_';export {};", "import _ from '_';"),
+        ("import '_';export {};", "import '_';"),
+        ("import * as all from '_';export {};", "import * as all from '_';"),
+        ("import _ = require('_')\n\nexport {};", "import _ = require('_')\n\n"),
     ];
 
     Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::PLUGIN, pass, fail)
