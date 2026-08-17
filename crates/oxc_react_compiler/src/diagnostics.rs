@@ -276,12 +276,12 @@ pub fn invariant_unexpected_error() -> OxcDiagnostic {
 #[cold]
 pub fn terminal_successor_references_unknown_block(
     successor: impl Display,
-    terminal: impl Debug,
+    terminal: impl Display,
     span: Option<Span>,
 ) -> OxcDiagnostic {
     const REASON: &str = "Terminal successor references unknown block";
     diagnostic(ErrorCategory::Invariant, REASON)
-        .with_help(format!("Block bb{successor} does not exist for terminal '{terminal:?}'"))
+        .with_help(format!("Block bb{successor} does not exist for terminal '{terminal}'"))
         .with_labels(span.map(|span| span.primary_label(REASON)))
 }
 

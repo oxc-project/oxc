@@ -12,6 +12,8 @@ pub mod reactive;
 pub mod type_config;
 pub mod visitors;
 
+use std::fmt;
+
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
 pub use assert_consistent_identifiers::assert_consistent_identifiers;
@@ -304,7 +306,6 @@ pub struct Phi<'a> {
 // Terminal enum
 // =============================================================================
 
-#[derive(Debug)]
 pub enum Terminal<'a> {
     Unreachable {
         id: EvaluationOrder,
@@ -462,6 +463,40 @@ pub enum Terminal<'a> {
         id: EvaluationOrder,
         span: Option<Span>,
     },
+}
+
+impl fmt::Display for Terminal<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::Unreachable { .. } => "Unreachable",
+            Self::Throw { .. } => "Throw",
+            Self::Return { .. } => "Return",
+            Self::Goto { .. } => "Goto",
+            Self::If { .. } => "If",
+            Self::Branch { .. } => "Branch",
+            Self::Switch { .. } => "Switch",
+            Self::DoWhile { .. } => "DoWhile",
+            Self::While { .. } => "While",
+            Self::For { .. } => "For",
+            Self::ForOf { .. } => "ForOf",
+            Self::ForIn { .. } => "ForIn",
+            Self::Logical { .. } => "Logical",
+            Self::Ternary { .. } => "Ternary",
+            Self::Optional { .. } => "Optional",
+            Self::Label { .. } => "Label",
+            Self::Sequence { .. } => "Sequence",
+            Self::MaybeThrow { .. } => "MaybeThrow",
+            Self::Try { .. } => "Try",
+            Self::Scope { .. } => "Scope",
+            Self::PrunedScope { .. } => "PrunedScope",
+        })
+    }
+}
+
+impl fmt::Debug for Terminal<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
 }
 
 impl<'a> Terminal<'a> {
