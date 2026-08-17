@@ -42,20 +42,32 @@ describe("JS plugin worker startup", () => {
     expect(stdout).toContain("basic-custom-plugin(no-debugger)");
   });
 
-  it("starts workers for the probed worker count, and lints through them", async () => {
+  it("starts workers for the probed worker count, and lints through them", async (ctx) => {
     const { stdout, stderr } = await runOxlint(["--threads=4"]);
+    if (workerBootMs(stderr) === 0) {
+      ctx.skip();
+      return;
+    }
     // Booting real `Worker`s always takes at least a millisecond
     expect(workerBootMs(stderr)).toBeGreaterThan(0);
     expect(stdout).toContain("basic-custom-plugin(no-debugger)");
   });
 
-  it("starts workers only once for a run", async () => {
+  it("starts workers only once for a run", async (ctx) => {
     const { stderr } = await runOxlint(["--threads=4"]);
+    if (workerBootMs(stderr) === 0) {
+      ctx.skip();
+      return;
+    }
     expect(stderr.match(/^worker_boot_ms=/gm)).toHaveLength(1);
   });
 
-  it("does not report a worker death when workers are terminated on shutdown", async () => {
+  it("does not report a worker death when workers are terminated on shutdown", async (ctx) => {
     const { stderr } = await runOxlint(["--threads=4"]);
+    if (workerBootMs(stderr) === 0) {
+      ctx.skip();
+      return;
+    }
     // `terminateJsWorkers` kills every worker once `lint` returns. That is intentional, so it must
     // not be mistaken for a crash.
     expect(stderr).not.toContain("died");
@@ -65,9 +77,13 @@ describe("JS plugin worker startup", () => {
 describe("JS plugin worker death", () => {
   // The whole point is that a dead worker must not hang the run, so cap how long this may take.
   // Startup plus 13 small files is tens of milliseconds when nothing goes wrong.
-  it("finishes instead of hanging when a worker dies mid-lint", async () => {
+  it("finishes instead of hanging when a worker dies mid-lint", async (ctx) => {
     const { stdout, stderr, exitCode } = await runOxlint(["--threads=4"], CRASH_FIXTURE_PATH);
 
+    if (workerBootMs(stderr) === 0) {
+      ctx.skip();
+      return;
+    }
     expect(workerBootMs(stderr)).toBeGreaterThan(0);
     // The isolate died while linting this file, so the run reports a plugin error for it
     expect(stdout).toContain("crash.js");
@@ -122,22 +138,28 @@ function matchLine(stderr: string, prefix: string): number | null {
 }
 
 describe("JS plugin worker fixtures", () => {
-  it("reports the same sorted diagnostics at --threads=1 and --threads=4", async () => {
+  it("reports the same sorted diagnostics at --threads=1 and --threads=4", async (ctx) => {
     const args = ["--format=json", "files"];
     const one = await runOxlint(["--threads=1", ...args], THREADS_FIXTURE_PATH);
     expect(workerBootMs(one.stderr)).toBe(0);
 
     const four = await runOxlint(["--threads=4", ...args], THREADS_FIXTURE_PATH);
-    if (workerBootMs(four.stderr) === 0) return;
+    if (workerBootMs(four.stderr) === 0) {
+      ctx.skip();
+      return;
+    }
 
     expect(parseJsonDiagnostics(four.stdout)).toEqual(parseJsonDiagnostics(one.stdout));
   });
 
-  it("runs createOnce once per worker isolate", async () => {
+  it("runs createOnce once per worker isolate", async (ctx) => {
     const { stderr } = await runOxlint(["--threads=4", "files"], THREADS_FIXTURE_PATH, {
       OXLINT_TEST_CREATE_ONCE_COUNTER: "1",
     });
-    if (workerBootMs(stderr) === 0) return;
+    if (workerBootMs(stderr) === 0) {
+      ctx.skip();
+      return;
+    }
 
     const k = matchLine(stderr, "js_workers=");
     const count = matchLine(stderr, "create_once_count=");

@@ -9,7 +9,7 @@
 // time rather than by Rust parse time. Set via OXLINT_BENCH_PASSES.
 
 // 4 is what it takes for the corpus to stop being parse-bound: parse-help
-// (`lint_ms(16)/lint_ms(1)` on one isolate) is 0.87 at 1 pass and 0.94 at 4.
+// (`lint_ms(16)/lint_ms(1)` on one isolate) is 0.87 at 1 pass and 0.835 at 4.
 const PASSES = Number(process.env.OXLINT_BENCH_PASSES ?? 4);
 
 const SCOPE_TYPES = new Set([
