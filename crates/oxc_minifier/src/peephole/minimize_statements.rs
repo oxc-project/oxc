@@ -32,6 +32,44 @@ fn dead_drop_mutates_ast(stmt: &Statement<'_>) -> bool {
             && decl.declarations.iter().all(|d| d.init.is_none() && d.type_annotation.is_none()))
 }
 
+/// Count initializer complexity: function calls and member accesses.
+fn count_init_complexity(expr: &Expression<'_>) -> usize {
+    struct ComplexityCounter(usize);
+    impl<'a> VisitJs<'a> for ComplexityCounter {
+        fn visit_call_expression(&mut self, node: &CallExpression<'a>) {
+            self.0 += 2; // Calls are expensive
+            walk_js::walk_call_expression(self, node);
+        }
+        fn visit_member_expression(&mut self, node: &MemberExpression<'a>) {
+            self.0 += 1; // Member access has cost
+            walk_js::walk_member_expression(self, node);
+        }
+    }
+    let mut counter = ComplexityCounter(0);
+    counter.visit_expression(expr);
+    counter.0
+}
+
+/// Count references to other symbols in an initializer (heuristic for dependency).
+fn count_referenced_symbols(expr: &Expression<'_>, scoping: &oxc_semantic::Scoping) -> usize {
+    struct SymbolCounter<'a> {
+        scoping: &'a oxc_semantic::Scoping,
+        count: usize,
+    }
+    impl<'a> VisitJs<'a> for SymbolCounter<'a> {
+        fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+            if let Some(reference_id) = it.reference_id.get() {
+                if self.scoping.get_reference(reference_id).symbol_id().is_some() {
+                    self.count += 1;
+                }
+            }
+        }
+    }
+    let mut counter = SymbolCounter { scoping, count: 0 };
+    counter.visit_expression(expr);
+    counter.count
+}
+
 impl<'a> PeepholeOptimizations {
     /// `mangleStmts`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L8788>
     ///
@@ -372,6 +410,59 @@ impl<'a> PeepholeOptimizations {
             (symbol_id.index(), *statement_index)
         });
         declarations_by_symbol.dedup();
+
+        // Sort dirty_symbols by reference count (primary), then by initializer
+        // complexity and referenced symbol count for ties. This ensures that
+        // symbols with identical reference counts are processed in order of
+        // impact (complex initializers first).
+        {
+            let scoping = ctx.scoping();
+            let priorities: Vec<(SymbolId, usize, usize, usize)> = ctx
+                .state
+                .pass_changes
+                .dirty_symbols
+                .iter()
+                .map(|&symbol_id| {
+                    let ref_count = scoping.get_resolved_reference_ids(symbol_id).len();
+                    let (init_complexity, ref_symbols) = declarations_by_symbol
+                        .binary_search_by_key(&symbol_id.index(), |(sid, _)| sid.index())
+                        .ok()
+                        .and_then(|idx| {
+                            let stmt_idx = declarations_by_symbol[idx].1;
+                            if let Statement::VariableDeclaration(var_decl) = &stmts[stmt_idx] {
+                                var_decl.declarations.first().and_then(|decl| {
+                                    decl.init.as_ref().map(|init| {
+                                        let complexity = count_init_complexity(init);
+                                        let refs = count_referenced_symbols(init, scoping);
+                                        (complexity, refs)
+                                    })
+                                })
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or((0, 0));
+                    (symbol_id, ref_count, init_complexity, ref_symbols)
+                })
+                .collect();
+
+            let mut sorted = priorities;
+            sorted.sort_unstable_by(|a, b| {
+                // Primary: reference count (descending)
+                match b.1.cmp(&a.1) {
+                    std::cmp::Ordering::Equal => {
+                        // Subsort for same ref_count: complexity desc, then refs desc
+                        (b.2, b.3).cmp(&(a.2, a.3))
+                    }
+                    other => other,
+                }
+            });
+
+            ctx.state.pass_changes.dirty_symbols.clear();
+            for (symbol_id, _, _, _) in sorted {
+                ctx.state.pass_changes.dirty_symbols.push(symbol_id);
+            }
+        }
 
         let mut cursor = 0;
         while cursor < ctx.state.pass_changes.dirty_symbols.len() {
