@@ -99,6 +99,7 @@ fn test() {
     use std::path::PathBuf;
 
     use crate::tester::Tester;
+    // ref: https://github.com/vuejs/eslint-plugin-vue/blob/master/tests/lib/rules/no-deprecated-dollar-listeners-api.test.ts
 
     let pass = vec![
         (

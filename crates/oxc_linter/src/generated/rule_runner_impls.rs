@@ -5240,13 +5240,6 @@ impl RuleRunner for crate::rules::node::no_top_level_await::NoTopLevelAwait {
 }
 
 impl RuleRunner
-    for crate::rules::vue::no_deprecated_dollar_listeners_api::NoDeprecatedDollarListenersApi
-{
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
-}
-
-impl RuleRunner
     for crate::rules::vue::component_definition_name_casing::ComponentDefinitionNameCasing
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
@@ -5334,6 +5327,14 @@ impl RuleRunner
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ExportDefaultDeclaration]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner
+    for crate::rules::vue::no_deprecated_dollar_listeners_api::NoDeprecatedDollarListenersApi
+{
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::StaticMemberExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
