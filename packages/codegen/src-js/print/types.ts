@@ -68,20 +68,6 @@ export type TSModuleDeclarationNode = Omit<
 };
 
 /**
- * Oxc's `TSImportType` names the module in `source`, where TS-ESLint < 8 used `argument`.
- */
-export type TSImportTypeNode = Omit<ESTree.TSImportType, "source"> & {
-  source?: ESTree.StringLiteral | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSImportTypeNode` falls back to reading.
- */
-export interface TSImportTypeLegacyArgument {
-  argument: ESTree.StringLiteral | ESTree.TSLiteralType | ESTree.TSType;
-}
-
-/**
  * Oxc wraps enum members in a `TSEnumBody`, where TS-ESLint < 8 put them on the declaration itself.
  */
 export type TSEnumDeclarationNode = Omit<ESTree.TSEnumDeclaration, "body"> & {

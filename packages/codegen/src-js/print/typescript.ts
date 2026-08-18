@@ -36,8 +36,6 @@ import type {
   LiteralExtras,
   TSEnumDeclarationLegacyMembers,
   TSEnumDeclarationNode,
-  TSImportTypeLegacyArgument,
-  TSImportTypeNode,
   TSModuleDeclarationNode,
   UnknownNode,
 } from "./types.ts";
@@ -854,20 +852,10 @@ function printTSTypeQueryExprName(node: ESTree.TSTypeQueryExprName, state: State
  * The options argument prints at `PREC_LOWEST` through the expression printer,
  * and both the qualifier and the type arguments are optional.
  */
-function printTSImportType(node: TSImportTypeNode, state: State): void {
+function printTSImportType(node: ESTree.TSImportType, state: State): void {
   write(state, "import(", CAT_OTHER);
 
-  // TS-ESLint v8: `source` is the string literal, older versions used `argument` (a `TSLiteralType`)
-  typeAssertIs<TSImportTypeLegacyArgument>(node);
-  const argument = node.source != null ? node.source : node.argument;
-  if (argument.type === "Literal") {
-    printString(state, argument.value, argument);
-  } else if (argument.type === "TSLiteralType") {
-    typeAssertIs<ESTree.StringLiteral>(argument.literal);
-    printString(state, argument.literal.value, argument.literal);
-  } else {
-    printTSType(argument, state);
-  }
+  printString(state, node.source.value, node.source);
 
   if (node.options != null) {
     write(state, ", ", CAT_OTHER);

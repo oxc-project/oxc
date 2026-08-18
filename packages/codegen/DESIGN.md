@@ -576,7 +576,7 @@ See `Normalize` in `tasks/codegen_conformance/src/lib.rs`.
 - **Oxc offsets only.** `start` / `end` offsets are converted to UTF-16 line/column once at the end.
   Source maps require `sourceText`; `loc` and `range` are not supported inputs.
 - **TS-ESLint ASTs are accepted**, and differ from Oxc's in a handful of places
-  (`TSImportType`, `TSEnumDeclaration`, `TSModuleDeclaration`).
+  (`TSEnumDeclaration`, `TSModuleDeclaration`).
   [`print/types.ts`] holds the widened node types and documents each difference.
 
 ## How it is tested
