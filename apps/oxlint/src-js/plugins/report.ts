@@ -11,19 +11,19 @@ import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 import type { RequireAtLeastOne } from "type-fest";
 import type { FixFn, FixReport } from "./fix.ts";
 import type { RuleDetails } from "./load.ts";
-import type { LineColumn, Ranged } from "./location.ts";
+import type { LineColumn, Range, Ranged } from "./location.ts";
 
 /**
  * Diagnostic object.
  * Passed to `Context#report()`.
  *
  * - Either `message` or `messageId` property must be provided.
- * - Either `node` or `loc` property must be provided.
+ * - Either `node`, `loc`, or `actualRange` property must be provided.
  */
 // This is the type of the value passed to `Context#report()` by user.
 // `DiagnosticReport` (see below) is the type of diagnostics used internally on JS side, and sent to Rust.
 export type Diagnostic = RequireAtLeastOne<
-  RequireAtLeastOne<DiagnosticBase, "node" | "loc">,
+  RequireAtLeastOne<DiagnosticBase, "node" | "loc" | "actualRange">,
   "message" | "messageId"
 >;
 
@@ -32,6 +32,7 @@ interface DiagnosticBase {
   messageId?: string | null | undefined;
   node?: Ranged;
   loc?: LocationWithOptionalEnd | LineColumn;
+  actualRange?: Range;
   data?: DiagnosticData | null | undefined;
   fix?: FixFn;
   suggest?: Suggestion[] | null | undefined;
@@ -72,6 +73,8 @@ export interface SuggestionReport {
   fixes: FixReport[];
 }
 
+type DiagnosticRangeKind = "section" | "actual";
+
 /**
  * Diagnostic in form sent to Rust.
  */
@@ -79,6 +82,7 @@ export interface DiagnosticReport {
   message: string;
   start: number;
   end: number;
+  rangeKind: DiagnosticRangeKind;
   ruleIndex: number;
   fixes: FixReport[] | null;
   suggestions: SuggestionReport[] | null;
@@ -120,10 +124,32 @@ export function report(
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
+  // `node` and `loc` are relative to the currently linted script section.
+  let rangeKind: DiagnosticRangeKind = "section";
   // We need the original location in conformance tests
   let conformedLoc: LocationWithOptionalEnd | null = null;
 
-  if (Object.hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
+  if (Object.hasOwn(diagnostic, "actualRange") && diagnostic.actualRange != null) {
+    const { actualRange } = diagnostic;
+    if (!Array.isArray(actualRange) || actualRange.length !== 2) {
+      throw new TypeError("`actualRange` must be an array of length 2");
+    }
+
+    [start, end] = actualRange;
+
+    if (
+      typeof start !== "number" ||
+      typeof end !== "number" ||
+      start < 0 ||
+      end < 0 ||
+      (start | 0) !== start ||
+      (end | 0) !== end
+    ) {
+      throw new TypeError("`actualRange[0]` and `actualRange[1]` must be non-negative integers");
+    }
+
+    rangeKind = "actual";
+  } else if (Object.hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
     // `loc`
     // Can be any of:
     // * `{ start: { line, column }, end: { line, column } }`
@@ -161,7 +187,7 @@ export function report(
   } else {
     // `node`
     const { node } = diagnostic;
-    if (node == null) throw new TypeError("Either `node` or `loc` is required");
+    if (node == null) throw new TypeError("Either `node`, `loc`, or `actualRange` is required");
     if (typeof node !== "object") throw new TypeError("`node` must be an object");
 
     // ESLint uses `loc` here instead of `range`.
@@ -194,6 +220,7 @@ export function report(
     messageId,
     start,
     end,
+    rangeKind,
     ruleIndex: ruleDetails.ruleIndex,
     fixes: getFixes(diagnostic, ruleDetails),
     suggestions: getSuggestions(diagnostic, ruleDetails),
