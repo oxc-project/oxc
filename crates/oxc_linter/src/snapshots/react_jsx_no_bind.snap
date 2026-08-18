@@ -1,0 +1,389 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={this._handleClick.bind(this)}></div>
+   ·      ──────────────────────────────────────
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={someGlobalFunction.bind(this)}></div>
+   ·      ───────────────────────────────────────
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={window.lol.bind(this)}></div>
+   ·      ───────────────────────────────
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div ref={this._refCallback.bind(this)}></div>
+   ·      ──────────────────────────────────
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = this.someMethod.bind(this);
+ 5 │                         return <div onClick={click}>Hello {this.state.name}</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = this.someMethod.bind(this);
+ 5 │                         return <div onClick={click}>Hello {this.state.name}</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = this.doSomething.bind(this, "no")
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = this.doSomething.bind(this, "no")
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = this.doSomething.bind(this, "no")
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:4:30]
+ 3 │                       render: ({onClick}) => (
+ 4 │                         <div onClick={onClick.bind(this)}>Hello</div>
+   ·                              ────────────────────────────
+ 5 │                       )
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:4:35]
+ 3 │                       render: function() {
+ 4 │                       return <div onClick={this.doSomething.bind(this, "hey")} />
+   ·                                   ────────────────────────────────────────────
+ 5 │                       }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const doThing = this.doSomething.bind(this, "hey")
+ 5 │                         return <div onClick={doThing} />
+   ·                                     ─────────────────
+ 6 │                       }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:7:39]
+ 6 │                           const click = this.doSomething.bind(this, "hey")
+ 7 │                           return <div onClick={click} />
+   ·                                       ───────────────
+ 8 │                         }
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+    ╭─[jsx_no_bind.tsx:9:37]
+  8 │                         }
+  9 │                         return <div onClick={click}>Hello</div>;
+    ·                                     ───────────────
+ 10 │                       }
+    ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:4:30]
+ 3 │                       render: ({onClick}) => (
+ 4 │                         <div onClick={(returningBoolean()) ? onClick.bind(this) : onClick.bind(this)}>Hello</div>
+   ·                              ────────────────────────────────────────────────────────────────────────
+ 5 │                       )
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:4:30]
+ 3 │                       render: ({onClick}) => (
+ 4 │                         <div onClick={(returningBoolean()) ? onClick.bind(this) : handleClick()}>Hello</div>
+   ·                              ───────────────────────────────────────────────────────────────────
+ 5 │                       )
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:4:30]
+ 3 │                       render: ({onClick}) => (
+ 4 │                         <div onClick={(returningBoolean()) ? handleClick() : this.onClick.bind(this)}>Hello</div>
+   ·                              ────────────────────────────────────────────────────────────────────────
+ 5 │                       )
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:4:30]
+ 3 │                       render: ({onClick}) => (
+ 4 │                         <div onClick={returningBoolean.bind(this) ? handleClick() : onClick()}>Hello</div>
+   ·                              ─────────────────────────────────────────────────────────────────
+ 5 │                       )
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={() => alert("1337")}></div>
+   ·      ─────────────────────────────
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={async () => alert("1337")}></div>
+   ·      ───────────────────────────────────
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={() => 42}></div>
+   ·      ──────────────────
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={param => { first(); second(); }}></div>
+   ·      ─────────────────────────────────────────
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div ref={c => this._input = c}></div>
+   ·      ──────────────────────────
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = () => true
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = () => true
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = async () => true
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:4:35]
+ 3 │                       render: function() {
+ 4 │                       return <div onClick={() => true} />
+   ·                                   ────────────────────
+ 5 │                       }
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:4:35]
+ 3 │                       render: function() {
+ 4 │                       return <div onClick={async () => true} />
+   ·                                   ──────────────────────────
+ 5 │                       }
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const doThing = () => true
+ 5 │                         return <div onClick={doThing} />
+   ·                                     ─────────────────
+ 6 │                       }
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use arrow functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const doThing = async () => true
+ 5 │                         return <div onClick={doThing} />
+   ·                                     ─────────────────
+ 6 │                       }
+   ╰────
+  help: Extract the arrow function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={function () { alert("1337") }}></div>
+   ·      ───────────────────────────────────────
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={function * () { alert("1337") }}></div>
+   ·      ─────────────────────────────────────────
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div onClick={async function () { alert("1337") }}></div>
+   ·      ─────────────────────────────────────────────
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <div ref={function (c) { this._input = c }}></div>
+   ·      ──────────────────────────────────────
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = function () { return true }
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = function * () { return true }
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = function () { return true }
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const click = async function () { return true }
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:4:35]
+ 3 │                       render: function() {
+ 4 │                       return <div onClick={function () { return true }} />
+   ·                                   ─────────────────────────────────────
+ 5 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:4:35]
+ 3 │                       render: function() {
+ 4 │                       return <div onClick={function * () { return true }} />
+   ·                                   ───────────────────────────────────────
+ 5 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:4:35]
+ 3 │                       render: function() {
+ 4 │                       return <div onClick={async function () { return true }} />
+   ·                                   ───────────────────────────────────────────
+ 5 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const doThing = function () { return true }
+ 5 │                         return <div onClick={doThing} />
+   ·                                     ─────────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const doThing = async function () { return true }
+ 5 │                         return <div onClick={doThing} />
+   ·                                     ─────────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         const doThing = function * () { return true }
+ 5 │                         return <div onClick={doThing} />
+   ·                                     ─────────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use functions
+   ╭─[jsx_no_bind.tsx:5:37]
+ 4 │                         function click() { return true; }
+ 5 │                         return <div onClick={click}>Hello</div>;
+   ·                                     ───────────────
+ 6 │                       }
+   ╰────
+  help: Extract the function into a stable reference, e.g. a class method or a `useCallback` hook.
+
+  ⚠ react(jsx-no-bind): JSX props should not use `.bind()`
+   ╭─[jsx_no_bind.tsx:1:6]
+ 1 │ <Foo onClick={this._handleClick.bind(this)} />
+   ·      ──────────────────────────────────────
+   ╰────
+  help: Bind the handler outside of render, e.g. in the constructor or with a class property.

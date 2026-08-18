@@ -6886,6 +6886,26 @@
             }
           ]
         },
+        "react/jsx-no-bind": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/JsxNoBind"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "react/jsx-no-comment-textnodes": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -12445,6 +12465,35 @@
           "format": "uint32",
           "minimum": 0.0,
           "markdownDescription": "The maximum allowed depth of nested JSX elements and fragments."
+        }
+      },
+      "additionalProperties": false
+    },
+    "JsxNoBind": {
+      "$ref": "#/definitions/JsxNoBindConfig"
+    },
+    "JsxNoBindConfig": {
+      "type": "object",
+      "properties": {
+        "allowArrowFunctions": {
+          "default": false,
+          "type": "boolean"
+        },
+        "allowBind": {
+          "default": false,
+          "type": "boolean"
+        },
+        "allowFunctions": {
+          "default": false,
+          "type": "boolean"
+        },
+        "ignoreDOMComponents": {
+          "default": false,
+          "type": "boolean"
+        },
+        "ignoreRefs": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "additionalProperties": false
