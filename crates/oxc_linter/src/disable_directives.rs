@@ -2,10 +2,11 @@ use std::cell::RefCell;
 
 use itertools::Itertools;
 use memchr::memchr2;
-use oxc_ast::Comment;
-use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
+
+use oxc_ast::Comment;
+use oxc_span::Span;
 
 use crate::{FixKind, fixer::Fix};
 
