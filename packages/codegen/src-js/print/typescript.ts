@@ -32,13 +32,7 @@ import { printDirectivesAndStatements } from "./statement.ts";
 import { printString } from "./string.ts";
 
 import type { State } from "../state.ts";
-import type {
-  LiteralExtras,
-  TSEnumDeclarationLegacyMembers,
-  TSEnumDeclarationNode,
-  TSModuleDeclarationNode,
-  UnknownNode,
-} from "./types.ts";
+import type { LiteralExtras, TSModuleDeclarationNode, UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -1102,10 +1096,8 @@ function isLeftmostIntrinsicReference(ty: ESTree.TSType): boolean {
  * Members print one per indented line with a comma after all but the last, and an enum with no members
  * collapses to `{}`.
  *
- * Oxc wraps the members in a `TSEnumBody` while older producers put them on the declaration itself,
- * so both shapes are read.
  */
-export function printTSEnumDeclaration(node: TSEnumDeclarationNode, state: State): void {
+export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: State): void {
   printSpaceBeforeIdentifier(state);
 
   if (node.declare) write(state, "declare ", CAT_OTHER);
@@ -1117,9 +1109,8 @@ export function printTSEnumDeclaration(node: TSEnumDeclarationNode, state: State
 
   write(state, " ", CAT_OTHER);
 
-  typeAssertIs<TSEnumDeclarationLegacyMembers>(node);
-  const body = node.body != null ? node.body : node;
-  const members = node.body != null ? node.body.members : node.members;
+  const { body } = node;
+  const { members } = body;
   const { length } = members;
   if (length === 0) {
     writeWithMapNoLast(state, "{", body);

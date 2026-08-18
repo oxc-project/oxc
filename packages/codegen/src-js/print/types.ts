@@ -68,20 +68,6 @@ export type TSModuleDeclarationNode = Omit<
 };
 
 /**
- * Oxc wraps enum members in a `TSEnumBody`, where TS-ESLint < 8 put them on the declaration itself.
- */
-export type TSEnumDeclarationNode = Omit<ESTree.TSEnumDeclaration, "body"> & {
-  body?: ESTree.TSEnumBody | null;
-};
-
-/**
- * The pre-TS-ESLint-8 shape `TSEnumDeclarationNode` falls back to reading.
- */
-export interface TSEnumDeclarationLegacyMembers {
-  members: ESTree.TSEnumMember[];
-}
-
-/**
  * A node carrying the offsets needed for source mappings.
  */
 export interface MappableNode {
