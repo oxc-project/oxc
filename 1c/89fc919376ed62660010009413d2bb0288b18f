@@ -1,0 +1,23 @@
+oxlintrc.json
+  s_9236dc162e3660::t_5307e0b2007567 36-41
+packages/codegen/test/print.test.ts
+  s_9236dc162e3660::t_7b684e748b7683 114,120
+packages/codegen/test/source-maps.test.ts
+  s_9236dc162e3660::t_7541c26d9620f5 215,228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1c89fc919376ed62660010009413d2bb0288b18f",
+  "prompts": {},
+  "sessions": {
+    "s_9236dc162e3660": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a015a6-e7cf-7a62-86d7-95799a96faa3",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
