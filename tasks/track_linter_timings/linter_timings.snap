@@ -456,6 +456,7 @@ react/no-did-mount-set-state                               |   6567
 react/no-did-update-set-state                              |  62606
 react/no-direct-mutation-state                             |   1398
 react/no-find-dom-node                                     |  62606
+react/no-invalid-html-attribute                            |   7019
 react/no-is-mounted                                        |   6567
 react/no-multi-comp                                        |      3
 react/no-namespace                                         |  63058

@@ -1,0 +1,703 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(no-invalid-html-attribute): `alternatex` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="alternatex"></a>
+   ·         ──────────
+   ╰────
+  help: Remove `alternatex`.
+
+  ⚠ react(no-invalid-html-attribute): `alternatex` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:34]
+ 1 │ React.createElement("a", { rel: "alternatex" })
+   ·                                  ──────────
+   ╰────
+  help: Remove `alternatex`.
+
+  ⚠ react(no-invalid-html-attribute): `alternatex` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:35]
+ 1 │ React.createElement("a", { rel: ["alternatex"] })
+   ·                                   ──────────
+   ╰────
+  help: Remove `alternatex`.
+
+  ⚠ react(no-invalid-html-attribute): `alternatex` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="alternatex alternate"></a>
+   ·         ──────────
+   ╰────
+  help: Remove `alternatex`.
+
+  ⚠ react(no-invalid-html-attribute): `alternatex alternate` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:34]
+ 1 │ React.createElement("a", { rel: "alternatex alternate" })
+   ·                                  ────────────────────
+   ╰────
+  help: Remove `alternatex alternate`.
+
+  ⚠ react(no-invalid-html-attribute): `alternatex alternate` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:35]
+ 1 │ React.createElement("a", { rel: ["alternatex alternate"] })
+   ·                                   ────────────────────
+   ╰────
+  help: Remove `alternatex alternate`.
+
+  ⚠ react(no-invalid-html-attribute): `alternatex` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:19]
+ 1 │ <a rel="alternate alternatex"></a>
+   ·                   ──────────
+   ╰────
+  help: Remove `alternatex`.
+
+  ⚠ react(no-invalid-html-attribute): `alternate alternatex` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:34]
+ 1 │ React.createElement("a", { rel: "alternate alternatex" })
+   ·                                  ────────────────────
+   ╰────
+  help: Remove `alternate alternatex`.
+
+  ⚠ react(no-invalid-html-attribute): `alternate alternatex` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:35]
+ 1 │ React.createElement("a", { rel: ["alternate alternatex"] })
+   ·                                   ────────────────────
+   ╰────
+  help: Remove `alternate alternatex`.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute has no meaning on this element.
+   ╭─[no_invalid_html_attribute.tsx:1:7]
+ 1 │ <html rel></html>
+   ·       ───
+   ╰────
+  help: Remove the `rel` attribute.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute has no meaning on this element.
+   ╭─[no_invalid_html_attribute.tsx:1:31]
+ 1 │ React.createElement("html", { rel: 1 })
+   ·                               ───
+   ╰────
+  help: Remove the `rel` attribute.
+
+  ⚠ react(no-invalid-html-attribute): An empty `rel` attribute is meaningless.
+   ╭─[no_invalid_html_attribute.tsx:1:4]
+ 1 │ <a rel></a>
+   ·    ───
+   ╰────
+  help: Give the `rel` attribute a value, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): `1` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:33]
+ 1 │ React.createElement("a", { rel: 1 })
+   ·                                 ─
+   ╰────
+  help: Remove `1`.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute cannot be a method.
+   ╭─[no_invalid_html_attribute.tsx:1:28]
+ 1 │ React.createElement("a", { rel() { return 1; } })
+   ·                            ───────────────────
+   ╰────
+  help: Pass a space delimited string to `rel`, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute has no meaning on this element.
+   ╭─[no_invalid_html_attribute.tsx:1:7]
+ 1 │ <span rel></span>
+   ·       ───
+   ╰────
+  help: Remove the `rel` attribute.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute only supports strings.
+   ╭─[no_invalid_html_attribute.tsx:1:8]
+ 1 │ <a rel={null}></a>
+   ·        ──────
+   ╰────
+  help: Pass a space delimited string to `rel`, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute only supports strings.
+   ╭─[no_invalid_html_attribute.tsx:1:8]
+ 1 │ <a rel={5}></a>
+   ·        ───
+   ╰────
+  help: Pass a space delimited string to `rel`, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute only supports strings.
+   ╭─[no_invalid_html_attribute.tsx:1:8]
+ 1 │ <a rel={true}></a>
+   ·        ──────
+   ╰────
+  help: Pass a space delimited string to `rel`, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute only supports strings.
+   ╭─[no_invalid_html_attribute.tsx:1:8]
+ 1 │ <a rel={{}}></a>
+   ·        ────
+   ╰────
+  help: Pass a space delimited string to `rel`, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): The `rel` attribute only supports strings.
+   ╭─[no_invalid_html_attribute.tsx:1:8]
+ 1 │ <a rel={undefined}></a>
+   ·        ───────────
+   ╰────
+  help: Pass a space delimited string to `rel`, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:29]
+ 1 │ <a rel="noreferrer noopener foobar"></a>
+   ·                             ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:28]
+ 1 │ <a rel="noreferrer noopener   "></a>
+   ·                            ───
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:19]
+ 1 │ <a rel="noreferrer        noopener"></a>
+   ·                   ────────
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:19]
+ 1 │ <a rel="noreferrer  noopener"></a>
+   ·                   ──
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:30]
+ 1 │ <a rel={"noreferrer noopener foobar"}></a>
+   ·                              ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:61]
+ 1 │ React.createElement("a", { rel: ["noreferrer", "noopener", "foobar" ] })
+   ·                                                             ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:10]
+ 1 │ <a rel={"foobar noreferrer noopener"}></a>
+   ·          ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:10]
+ 1 │ <a rel={"        noopener"}></a>
+   ·          ────────
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:18]
+ 1 │ <a rel={"noopener        "}></a>
+   ·                  ────────
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `batgo` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:10]
+ 1 │ <a rel={"batgo noopener"}></a>
+   ·          ─────
+   ╰────
+  help: Remove `batgo`.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:10]
+ 1 │ <a rel={" noopener"}></a>
+   ·          ─
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `canonical` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="canonical"></a>
+   ·         ─────────
+   ╰────
+  help: Remove `canonical`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `dns-prefetch` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="dns-prefetch"></a>
+   ·         ────────────
+   ╰────
+  help: Remove `dns-prefetch`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `icon` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="icon"></a>
+   ·         ────
+   ╰────
+  help: Remove `icon`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `shortcut` must be directly followed by `icon`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="shortcut"></link>
+   ·            ────────
+   ╰────
+  help: Add `icon` after `shortcut`, or remove `shortcut`.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:20]
+ 1 │ <link rel="shortcut  icon"></link>
+   ·                    ──
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `manifest` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="manifest"></a>
+   ·         ────────
+   ╰────
+  help: Remove `manifest`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `modulepreload` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="modulepreload"></a>
+   ·         ─────────────
+   ╰────
+  help: Remove `modulepreload`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `pingback` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="pingback"></a>
+   ·         ────────
+   ╰────
+  help: Remove `pingback`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `preconnect` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="preconnect"></a>
+   ·         ──────────
+   ╰────
+  help: Remove `preconnect`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `prefetch` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="prefetch"></a>
+   ·         ────────
+   ╰────
+  help: Remove `prefetch`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `preload` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="preload"></a>
+   ·         ───────
+   ╰────
+  help: Remove `preload`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `prerender` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="prerender"></a>
+   ·         ─────────
+   ╰────
+  help: Remove `prerender`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `stylesheet` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="stylesheet"></a>
+   ·         ──────────
+   ╰────
+  help: Remove `stylesheet`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `canonical` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="canonical"></area>
+   ·            ─────────
+   ╰────
+  help: Remove `canonical`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `dns-prefetch` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="dns-prefetch"></area>
+   ·            ────────────
+   ╰────
+  help: Remove `dns-prefetch`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `icon` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="icon"></area>
+   ·            ────
+   ╰────
+  help: Remove `icon`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `manifest` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="manifest"></area>
+   ·            ────────
+   ╰────
+  help: Remove `manifest`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `modulepreload` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="modulepreload"></area>
+   ·            ─────────────
+   ╰────
+  help: Remove `modulepreload`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `pingback` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="pingback"></area>
+   ·            ────────
+   ╰────
+  help: Remove `pingback`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `preconnect` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="preconnect"></area>
+   ·            ──────────
+   ╰────
+  help: Remove `preconnect`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `prefetch` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="prefetch"></area>
+   ·            ────────
+   ╰────
+  help: Remove `prefetch`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `preload` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="preload"></area>
+   ·            ───────
+   ╰────
+  help: Remove `preload`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `prerender` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="prerender"></area>
+   ·            ─────────
+   ╰────
+  help: Remove `prerender`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `stylesheet` is not a valid value for the `rel` attribute on `<area>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <area rel="stylesheet"></area>
+   ·            ──────────
+   ╰────
+  help: Remove `stylesheet`, or replace it with a value allowed on `<area>`.
+
+  ⚠ react(no-invalid-html-attribute): `bookmark` is not a valid value for the `rel` attribute on `<link>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="bookmark"></link>
+   ·            ────────
+   ╰────
+  help: Remove `bookmark`, or replace it with a value allowed on `<link>`.
+
+  ⚠ react(no-invalid-html-attribute): `external` is not a valid value for the `rel` attribute on `<link>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="external"></link>
+   ·            ────────
+   ╰────
+  help: Remove `external`, or replace it with a value allowed on `<link>`.
+
+  ⚠ react(no-invalid-html-attribute): `nofollow` is not a valid value for the `rel` attribute on `<link>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="nofollow"></link>
+   ·            ────────
+   ╰────
+  help: Remove `nofollow`, or replace it with a value allowed on `<link>`.
+
+  ⚠ react(no-invalid-html-attribute): `noopener` is not a valid value for the `rel` attribute on `<link>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="noopener"></link>
+   ·            ────────
+   ╰────
+  help: Remove `noopener`, or replace it with a value allowed on `<link>`.
+
+  ⚠ react(no-invalid-html-attribute): `noreferrer` is not a valid value for the `rel` attribute on `<link>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="noreferrer"></link>
+   ·            ──────────
+   ╰────
+  help: Remove `noreferrer`, or replace it with a value allowed on `<link>`.
+
+  ⚠ react(no-invalid-html-attribute): `opener` is not a valid value for the `rel` attribute on `<link>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="opener"></link>
+   ·            ──────
+   ╰────
+  help: Remove `opener`, or replace it with a value allowed on `<link>`.
+
+  ⚠ react(no-invalid-html-attribute): `tag` is not a valid value for the `rel` attribute on `<link>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="tag"></link>
+   ·            ───
+   ╰────
+  help: Remove `tag`, or replace it with a value allowed on `<link>`.
+
+  ⚠ react(no-invalid-html-attribute): `alternate` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="alternate"></form>
+   ·            ─────────
+   ╰────
+  help: Remove `alternate`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `author` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="author"></form>
+   ·            ──────
+   ╰────
+  help: Remove `author`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `bookmark` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="bookmark"></form>
+   ·            ────────
+   ╰────
+  help: Remove `bookmark`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `canonical` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="canonical"></form>
+   ·            ─────────
+   ╰────
+  help: Remove `canonical`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `dns-prefetch` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="dns-prefetch"></form>
+   ·            ────────────
+   ╰────
+  help: Remove `dns-prefetch`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `icon` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="icon"></form>
+   ·            ────
+   ╰────
+  help: Remove `icon`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `manifest` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="manifest"></form>
+   ·            ────────
+   ╰────
+  help: Remove `manifest`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `modulepreload` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="modulepreload"></form>
+   ·            ─────────────
+   ╰────
+  help: Remove `modulepreload`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `pingback` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="pingback"></form>
+   ·            ────────
+   ╰────
+  help: Remove `pingback`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `preconnect` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="preconnect"></form>
+   ·            ──────────
+   ╰────
+  help: Remove `preconnect`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `prefetch` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="prefetch"></form>
+   ·            ────────
+   ╰────
+  help: Remove `prefetch`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `preload` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="preload"></form>
+   ·            ───────
+   ╰────
+  help: Remove `preload`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `prerender` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="prerender"></form>
+   ·            ─────────
+   ╰────
+  help: Remove `prerender`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `stylesheet` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="stylesheet"></form>
+   ·            ──────────
+   ╰────
+  help: Remove `stylesheet`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): `tag` is not a valid value for the `rel` attribute on `<form>`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <form rel="tag"></form>
+   ·            ───
+   ╰────
+  help: Remove `tag`, or replace it with a value allowed on `<form>`.
+
+  ⚠ react(no-invalid-html-attribute): An empty `rel` attribute is meaningless.
+   ╭─[no_invalid_html_attribute.tsx:1:11]
+ 1 │ <form rel=""></form>
+   ·           ──
+   ╰────
+  help: Give the `rel` attribute a value, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:11]
+ 1 │ <a rel={("foobar")}></a>
+   ·           ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel={"\x66oobar"}></a>
+   ·         ───────────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `日本語` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="日本語 noopener"></a>
+   ·         ──────
+   ╰────
+  help: Remove `日本語`.
+
+  ⚠ react(no-invalid-html-attribute): `日本語` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:18]
+ 1 │ <a rel="noopener 日本語"></a>
+   ·                  ──────
+   ╰────
+  help: Remove `日本語`.
+
+  ⚠ react(no-invalid-html-attribute): `noopener noreferrer` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="noopener noreferrer"></a>
+   ·         ───────────────────
+   ╰────
+  help: Remove `noopener noreferrer`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:36]
+ 1 │ React.createElement("a", { "rel": "foobar" })
+   ·                                    ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:38]
+ 1 │ React.createElement("a", { ["rel"]: "foobar" })
+   ·                                      ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:28]
+ 1 │ createElement("a", { rel: "foobar" })
+   ·                            ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:35]
+ 1 │ Preact.createElement("a", { rel: "foobar" })
+   ·                                   ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:35]
+ 1 │ Foo["createElement"]("a", { rel: "foobar" })
+   ·                                   ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): An empty `rel` attribute is meaningless.
+   ╭─[no_invalid_html_attribute.tsx:1:34]
+ 1 │ React.createElement("a", { rel: "" })
+   ·                                  ▲
+   ╰────
+  help: Give the `rel` attribute a value, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): An empty `rel` attribute is meaningless.
+   ╭─[no_invalid_html_attribute.tsx:1:34]
+ 1 │ React.createElement("a", { rel: "   " })
+   ·                                  ───
+   ╰────
+  help: Give the `rel` attribute a value, or remove it.
+
+  ⚠ react(no-invalid-html-attribute): `shortcut` must be directly followed by `icon`.
+   ╭─[no_invalid_html_attribute.tsx:1:37]
+ 1 │ React.createElement("link", { rel: "shortcut" })
+   ·                                     ────────
+   ╰────
+  help: Add `icon` after `shortcut`, or remove `shortcut`.
+
+  ⚠ react(no-invalid-html-attribute): `shortcut` must be directly followed by `icon`.
+   ╭─[no_invalid_html_attribute.tsx:1:38]
+ 1 │ React.createElement("link", { rel: ["shortcut"] })
+   ·                                      ────────
+   ╰────
+  help: Add `icon` after `shortcut`, or remove `shortcut`.
+
+  ⚠ react(no-invalid-html-attribute): `shortcut` is not a valid value for the `rel` attribute on `<a>`.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="shortcut"></a>
+   ·         ────────
+   ╰────
+  help: Remove `shortcut`, or replace it with a value allowed on `<a>`.
+
+  ⚠ react(no-invalid-html-attribute): `shortcut` must be directly followed by `icon`.
+   ╭─[no_invalid_html_attribute.tsx:1:12]
+ 1 │ <link rel="shortcut foobar"></link>
+   ·            ────────
+   ╰────
+  help: Add `icon` after `shortcut`, or remove `shortcut`.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:20]
+ 1 │ <link rel="shortcut foobar"></link>
+   ·                    ─
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:21]
+ 1 │ <link rel="shortcut foobar"></link>
+   ·                     ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `rel` attribute values should be space delimited.
+   ╭─[no_invalid_html_attribute.tsx:1:9]
+ 1 │ <a rel="  foobar"></a>
+   ·         ──
+   ╰────
+  help: Replace this whitespace with a single space.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:11]
+ 1 │ <a rel="  foobar"></a>
+   ·           ──────
+   ╰────
+  help: Remove `foobar`.
+
+  ⚠ react(no-invalid-html-attribute): `shortcut` must be directly followed by `icon`.
+   ╭─[no_invalid_html_attribute.tsx:1:23]
+ 1 │ <link rel="stylesheet shortcut foobar"></link>
+   ·                       ────────
+   ╰────
+  help: Add `icon` after `shortcut`, or remove `shortcut`.
+
+  ⚠ react(no-invalid-html-attribute): `foobar` is never a valid `rel` attribute value.
+   ╭─[no_invalid_html_attribute.tsx:1:32]
+ 1 │ <link rel="stylesheet shortcut foobar"></link>
+   ·                                ──────
+   ╰────
+  help: Remove `foobar`.

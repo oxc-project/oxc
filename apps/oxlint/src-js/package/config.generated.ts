@@ -242,6 +242,12 @@ export type FragmentMode = "syntax" | "element";
 export type EnforceDynamicLinksEnum = "always" | "never";
 export type IgnoreEnforceOption = "ignore" | "enforce";
 export type AllowedOrDisallowInFunc = "allowed" | "disallow-in-func";
+/**
+ * Attributes this rule knows how to validate. Upstream restricts the option to
+ * `rel`, which is also the default when no configuration is provided.
+ */
+export type CheckedAttribute = "rel";
+export type NoInvalidHtmlAttribute = CheckedAttribute[];
 export type RequireFlag = "u" | "v";
 export type ImportKind = "none" | "all" | "multiple" | "single";
 /**
@@ -1389,6 +1395,7 @@ export interface DummyRuleMap {
   "react/no-did-update-set-state"?: RuleNoConfig | [AllowWarnDeny, AllowedOrDisallowInFunc];
   "react/no-direct-mutation-state"?: RuleNoConfig;
   "react/no-find-dom-node"?: RuleNoConfig;
+  "react/no-invalid-html-attribute"?: RuleNoConfig | [AllowWarnDeny, NoInvalidHtmlAttribute];
   "react/no-is-mounted"?: RuleNoConfig;
   "react/no-multi-comp"?: RuleNoConfig | [AllowWarnDeny, NoMultiCompConfig];
   "react/no-namespace"?: RuleNoConfig;
