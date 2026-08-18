@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ vue(no-deprecated-dollar-scopedslots-api): `$scopedSlots` is deprecated.
+   ╭─[no_deprecated_dollar_scopedslots_api.tsx:8:37]
+ 7 │                       render() {
+ 8 │                         return this.$scopedSlots.foo('bar')
+   ·                                     ────────────
+ 9 │                       }
+   ╰────
+  help: Use `$slots` instead; in Vue 3, all slots are exposed as functions on `$slots`.
+
+  ⚠ vue(no-deprecated-dollar-scopedslots-api): `$scopedSlots` is deprecated.
+    ╭─[no_deprecated_dollar_scopedslots_api.tsx:10:35]
+  9 │                         foo () {
+ 10 │                           fn(this.$scopedSlots)
+    ·                                   ────────────
+ 11 │                         }
+    ╰────
+  help: Use `$slots` instead; in Vue 3, all slots are exposed as functions on `$slots`.
+
+  ⚠ vue(no-deprecated-dollar-scopedslots-api): `$scopedSlots` is deprecated.
+   ╭─[no_deprecated_dollar_scopedslots_api.tsx:6:35]
+ 5 │                         const vm = this
+ 6 │                         return vm.$scopedSlots.foo('bar')
+   ·                                   ────────────
+ 7 │                       }
+   ╰────
+  help: Use `$slots` instead; in Vue 3, all slots are exposed as functions on `$slots`.
+
+  ⚠ vue(no-deprecated-dollar-scopedslots-api): `$scopedSlots` is deprecated.
+   ╭─[no_deprecated_dollar_scopedslots_api.tsx:7:37]
+ 6 │                         function fn() {
+ 7 │                           return vm.$scopedSlots
+   ·                                     ────────────
+ 8 │                         }
+   ╰────
+  help: Use `$slots` instead; in Vue 3, all slots are exposed as functions on `$slots`.
+
+  ⚠ vue(no-deprecated-dollar-scopedslots-api): `$scopedSlots` is deprecated.
+   ╭─[no_deprecated_dollar_scopedslots_api.tsx:6:39]
+ 5 │                         const vm = this
+ 6 │                         const a = vm?.$scopedSlots
+   ·                                       ────────────
+ 7 │                         const b = this?.$scopedSlots
+   ╰────
+  help: Use `$slots` instead; in Vue 3, all slots are exposed as functions on `$slots`.
+
+  ⚠ vue(no-deprecated-dollar-scopedslots-api): `$scopedSlots` is deprecated.
+   ╭─[no_deprecated_dollar_scopedslots_api.tsx:7:41]
+ 6 │                         const a = vm?.$scopedSlots
+ 7 │                         const b = this?.$scopedSlots
+   ·                                         ────────────
+ 8 │                         return a.foo('bar')
+   ╰────
+  help: Use `$slots` instead; in Vue 3, all slots are exposed as functions on `$slots`.
