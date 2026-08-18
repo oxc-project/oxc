@@ -1,6 +1,6 @@
 // Benchmarks. Run with `pnpm run bench`.
 //
-// Source maps are not measured. `printSync` is given no `sourceMap`, so it selects the builds
+// Source maps are not measured. `printSync` is given no `sourcemap`, so it selects the builds
 // compiled without source map support, which is what most callers use.
 //
 // Imports from `dist`, which must hold a RELEASE build. `pnpm run build-dev` replaces `dist` with a debug build,

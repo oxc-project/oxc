@@ -23,7 +23,7 @@ declare_react_compiler_lint!(
     /// instead of optimizing it.
     Syntax,
     react,
-    correctness,
+    restriction,
     version = "next",
     short_description = "Reports invalid JavaScript syntax encountered by the React Compiler.",
 );

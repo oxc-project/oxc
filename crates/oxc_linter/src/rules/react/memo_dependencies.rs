@@ -23,7 +23,7 @@ declare_react_compiler_lint!(
     /// cause unnecessary recomputation.
     MemoDependencies,
     react,
-    correctness,
+    suspicious,
     version = "next",
     short_description = "Validates that `useMemo()` and `useCallback()` dependencies are comprehensive, without extraneous values.",
 );

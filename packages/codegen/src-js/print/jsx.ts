@@ -1,7 +1,14 @@
 // JSX.
 // Port of `gen.rs` JSX section.
 
-import { CAT_OTHER, write, writeNoLast, writeWithMap, writeWithMapNoLast } from "./write.ts";
+import {
+  CAT_OTHER,
+  write,
+  writeNoLast,
+  writeWithMap,
+  writeWithMapEnd,
+  writeWithMapNoLast,
+} from "./write.ts";
 import { printExpression } from "./expression.ts";
 import { CTX_NONE } from "./operators.ts";
 import { PREC_COMMA, PREC_LOWEST } from "./precedence.ts";
@@ -31,9 +38,10 @@ export function printJSXElement(node: ESTree.JSXElement, state: State): void {
     writeNoLast(state, " ");
     const attribute = attributes[i];
     if (attribute.type === "JSXSpreadAttribute") {
-      write(state, "{...", CAT_OTHER);
+      writeWithMapNoLast(state, "{", attribute);
+      write(state, "...", CAT_OTHER);
       printExpression(attribute.argument, state, PREC_COMMA, CTX_NONE);
-      writeNoLast(state, "}");
+      writeWithMapEnd(state, "}", CAT_OTHER, attribute);
     } else {
       printJSXAttribute(attribute, state);
     }
@@ -75,9 +83,9 @@ function printJSXElementName(
       printJSXElementName(node.property, state);
       break;
     case "JSXNamespacedName":
-      writeWithMapNoLast(state, node.namespace.name, node);
+      writeWithMapNoLast(state, node.namespace.name, node.namespace);
       writeNoLast(state, ":");
-      writeNoLast(state, node.name.name);
+      writeWithMapNoLast(state, node.name.name, node.name);
       break;
     case "ThisExpression":
       writeWithMapNoLast(state, "this", node);
@@ -97,9 +105,9 @@ function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
   // and the next real write reads `last`.
   const { name } = node;
   if (name.type === "JSXNamespacedName") {
-    writeWithMapNoLast(state, name.namespace.name, name);
+    writeWithMapNoLast(state, name.namespace.name, name.namespace);
     writeNoLast(state, ":");
-    writeNoLast(state, name.name.name);
+    writeWithMapNoLast(state, name.name.name, name.name);
   } else {
     writeWithMapNoLast(state, name.name, name);
   }
@@ -132,7 +140,7 @@ function printJSXAttributeValue(node: ESTree.JSXAttributeValue | UnknownNode, st
       const text = raw != null ? raw.slice(1, -1) : String(node.value);
 
       const quote = text.includes('"') ? "'" : '"';
-      writeWithMapNoLast(state, quote, node);
+      writeNoLast(state, quote);
       writeNoLast(state, text);
       writeNoLast(state, quote);
       break;

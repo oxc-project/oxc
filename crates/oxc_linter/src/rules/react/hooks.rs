@@ -49,7 +49,7 @@ declare_react_compiler_lint!(
     /// ```
     Hooks,
     react,
-    correctness,
+    suspicious,
     version = "next",
     short_description = "Validates the Rules of Hooks with the React Compiler's analysis.",
 );

@@ -87,3 +87,19 @@ function Component() {
 
     Tester::new(Purity::NAME, Purity::PLUGIN, pass, fail).test_and_snapshot();
 }
+
+#[test]
+fn skips_node_modules() {
+    use std::path::PathBuf;
+
+    use crate::tester::Tester;
+
+    let pass = vec![(
+        "function Component() { return <div>{Date.now()}</div>; }",
+        None,
+        None,
+        Some(PathBuf::from("node_modules/package/Component.tsx")),
+    )];
+
+    Tester::new(Purity::NAME, Purity::PLUGIN, pass, vec![]).test();
+}

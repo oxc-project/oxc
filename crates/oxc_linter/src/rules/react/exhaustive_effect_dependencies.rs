@@ -23,7 +23,7 @@ declare_react_compiler_lint!(
     /// render; extraneous dependencies re-fire the effect needlessly.
     ExhaustiveEffectDependencies,
     react,
-    correctness,
+    suspicious,
     version = "next",
     short_description = "Validates that effect dependencies are exhaustive, without extraneous values.",
 );

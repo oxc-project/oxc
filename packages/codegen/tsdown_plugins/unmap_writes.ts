@@ -13,7 +13,7 @@ import type { Plugin } from "rolldown";
  * write(state, "declare ", CAT_OTHER);
  * ```
  *
- * `writeWithMap` and `writeWithMapNoLast` exist to record a source mapping for the node they are given.
+ * The mapped writes and `markWithMap*` exist to record a source mapping for the node they are given.
  * A build without source map support has nothing to record, so the call becomes the plain write
  * it would otherwise be, and the node argument goes with it - it would still be evaluated,
  * and held live across the call, for a function which ignores it.
@@ -31,6 +31,12 @@ const REWRITES = {
   // `write` takes the `last` category between the code and the node, `writeNoLast` does not
   writeWithMap: { arity: 4, plain: "write" },
   writeWithMapNoLast: { arity: 3, plain: "writeNoLast" },
+  writeWithMapEnd: { arity: 4, plain: "write" },
+  // A standalone mark has no non-sourcemap equivalent. `void 0` is removed by the minifier.
+  markWithMap: { arity: 2, plain: null },
+  markWithMapNoName: { arity: 2, plain: null },
+  markWithMapAfter: { arity: 2, plain: null },
+  markWithMapAtStartOffset: { arity: 3, plain: null },
 } as const;
 
 const WRITE_MODULE = "./write.ts";
@@ -52,6 +58,7 @@ const plugin: Plugin = {
 
       // Plain names this file will need in scope once its calls are rewritten
       const needed = new Set<string>();
+      let rewrote = false;
 
       new Visitor({
         CallExpression(node) {
@@ -67,14 +74,19 @@ const plugin: Plugin = {
             );
           }
 
-          magicString.overwrite(callee.start, callee.end, plain);
-          // Remove `, node`, from the end of the argument before it to the end of it
-          magicString.remove(args[arity - 2].end, args[arity - 1].end);
-          needed.add(plain);
+          rewrote = true;
+          if (plain === null) {
+            magicString.overwrite(node.start, node.end, "void 0");
+          } else {
+            magicString.overwrite(callee.start, callee.end, plain);
+            // Remove `, node`, from the end of the argument before it to the end of it
+            magicString.remove(args[arity - 2].end, args[arity - 1].end);
+            needed.add(plain);
+          }
         },
       }).visit(program);
 
-      if (needed.size !== 0) {
+      if (rewrote) {
         // Rewrite the import to drop the mapped names and carry whatever the rewrites now need.
         // `write.ts` declares them itself and imports nothing, so it never reaches this.
         // A file may import from `write.ts` more than once - the types separately from the values.
