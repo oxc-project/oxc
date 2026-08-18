@@ -68,20 +68,6 @@ export type TSModuleDeclarationNode = Omit<
 };
 
 /**
- * Oxc puts a mapped type's parameter in `key` and `constraint`, where TS-ESLint < 6 used `typeParameter`.
- */
-export type TSMappedTypeNode = Omit<ESTree.TSMappedType, "key"> & {
-  key?: ESTree.BindingIdentifier | null;
-};
-
-/**
- * The pre-TS-ESLint-6 shape `TSMappedTypeNode` falls back to reading.
- */
-export interface TSMappedTypeLegacyParameter {
-  typeParameter: Omit<ESTree.TSTypeParameter, "constraint"> & { constraint: ESTree.TSType };
-}
-
-/**
  * Oxc's `TSImportType` names the module in `source`, where TS-ESLint < 8 used `argument`.
  */
 export type TSImportTypeNode = Omit<ESTree.TSImportType, "source"> & {

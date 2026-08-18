@@ -38,8 +38,6 @@ import type {
   TSEnumDeclarationNode,
   TSImportTypeLegacyArgument,
   TSImportTypeNode,
-  TSMappedTypeLegacyParameter,
-  TSMappedTypeNode,
   TSModuleDeclarationNode,
   UnknownNode,
 } from "./types.ts";
@@ -748,7 +746,7 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
  *
  * The braces are padded with spaces and the whole type stays on one line, however large it is.
  */
-function printTSMappedType(node: TSMappedTypeNode, state: State): void {
+function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
   writeNoLast(state, "{ ");
 
   const { readonly } = node;
@@ -762,17 +760,9 @@ function printTSMappedType(node: TSMappedTypeNode, state: State): void {
 
   writeNoLast(state, "[");
 
-  // TS-ESLint >= 6: `key` + `constraint`; older: `typeParameter`
-  if (node.key != null) {
-    writeWithMapNoLast(state, node.key.name, node.key);
-    write(state, " in ", CAT_OTHER);
-    printTSType(node.constraint, state);
-  } else {
-    typeAssertIs<TSMappedTypeLegacyParameter>(node);
-    writeNoLast(state, node.typeParameter.name.name);
-    write(state, " in ", CAT_OTHER);
-    printTSType(node.typeParameter.constraint, state);
-  }
+  writeWithMapNoLast(state, node.key.name, node.key);
+  write(state, " in ", CAT_OTHER);
+  printTSType(node.constraint, state);
 
   if (node.nameType != null) {
     write(state, " as ", CAT_OTHER);
