@@ -48,7 +48,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
       version: 3,
       mappings: "",
       names: [],
-      sources: [options.sourceFileName ?? ""],
+      sources: [options.sourceFilename ?? ""],
     };
     if (sourceText !== undefined) map.sourcesContent = [sourceText];
     return map;
@@ -268,7 +268,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     version: 3,
     mappings: mappingBuffer.toString("ascii", 0, mappingLength),
     names,
-    sources: [options.sourceFileName ?? ""],
+    sources: [options.sourceFilename ?? ""],
   };
   if (sourceText !== undefined) map.sourcesContent = [sourceText];
   return map;

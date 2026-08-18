@@ -56,5 +56,5 @@ export interface Options {
   /**
    * Original source filename recorded in the returned source map.
    */
-  sourceFileName?: string;
+  sourceFilename?: string;
 }

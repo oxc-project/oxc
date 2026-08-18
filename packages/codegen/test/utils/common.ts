@@ -133,7 +133,7 @@ export function checkFixture(
       ts,
       jsx,
       sourcemap: true,
-      sourceFileName: filename,
+      sourceFilename: filename,
       sourceText,
     });
     expect(actualWithSourceMap, `preserveParens: ${preserveParens}, sourceMap: code`).toBe(

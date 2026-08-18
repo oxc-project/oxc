@@ -93,7 +93,7 @@ const sourceText = "const answer=6*7";
 const { program } = parseSync("input.js", sourceText);
 const { code, map } = printSync(program, {
   sourcemap: true,
-  sourceFileName: "input.js",
+  sourceFilename: "input.js",
   sourceText,
 });
 ```
@@ -111,7 +111,7 @@ an empty `mappings` string.
 | `jsx`                 | `boolean` | `false` | Enable TSX-safe printing for ambiguous TypeScript syntax         |
 | `ts`                  | `boolean` | `false` | Select the printer that supports TypeScript nodes                |
 | `sourcemap`           | `boolean` | `false` | Return a Source Map v3 object in `map`                           |
-| `sourceFileName`      | `string`  | `""`    | Original source filename recorded in the source map              |
+| `sourceFilename`      | `string`  | `""`    | Original source filename recorded in the source map              |
 | `sourceText`          | `string`  | -       | Original text required for source-map mappings and content       |
 
 ## Why pure JavaScript?

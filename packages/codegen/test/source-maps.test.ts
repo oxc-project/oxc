@@ -123,7 +123,7 @@ describe("Rust conformance", () => {
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "invalid-offset.js",
+      sourceFilename: "invalid-offset.js",
       sourceText: code,
     });
     expect(decodeSourceMap(map!)).toContainEqual(expect.objectContaining({ name: "name" }));
@@ -143,7 +143,7 @@ describe("Rust conformance", () => {
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "stale-offset.js",
+      sourceFilename: "stale-offset.js",
       sourceText: code,
     });
     const mappings = decodeSourceMap(map!);
@@ -162,7 +162,7 @@ describe("Rust conformance", () => {
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "renamed.js",
+      sourceFilename: "renamed.js",
       sourceText: code,
     });
     expect(map?.names).toEqual(["ab"]);
@@ -175,7 +175,7 @@ describe("Rust conformance", () => {
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "reordered.js",
+      sourceFilename: "reordered.js",
       sourceText: code,
     });
     const mappings = decodeSourceMap(map!);
@@ -190,7 +190,7 @@ describe("Rust conformance", () => {
 
     const { map } = printSync(program, {
       sourcemap: true,
-      sourceFileName: "return-map.js",
+      sourceFilename: "return-map.js",
       sourceText: code,
     });
     expect(map).toMatchObject({
@@ -355,7 +355,7 @@ for (const fixture of FIXTURES) {
         jsx,
         ts,
         sourcemap: true,
-        sourceFileName: fixture.name,
+        sourceFilename: fixture.name,
         sourceText: code,
       });
       const { code: withoutMaps } = printSync(program, { jsx, ts });
@@ -461,7 +461,7 @@ describe("indent option", () => {
     const { code: out, map } = printSync(program, {
       indent: indent as string | undefined,
       sourcemap: true,
-      sourceFileName: "indent.js",
+      sourceFilename: "indent.js",
       sourceText: INLINE_JS,
     });
 
