@@ -67,8 +67,7 @@ impl<'a> PeepholeOptimizations {
                     && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
                     && unary_expr.operator.is_not()
                 {
-                    let new_test = unary_expr.argument.take_in(ctx);
-                    ctx.replace_expression(&mut if_stmt.test, new_test);
+                    ctx.replace_expression_with(&mut if_stmt.test, Self::unwrap_unary);
                     std::mem::swap(&mut if_stmt.consequent, alternate);
                 }
             }

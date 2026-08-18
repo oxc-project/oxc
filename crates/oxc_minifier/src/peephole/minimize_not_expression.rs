@@ -83,8 +83,7 @@ impl<'a> PeepholeOptimizations {
         Self::minimize_expression_in_boolean_context(&mut e.argument, ctx);
 
         if Self::try_negate_expression(&mut e.argument, ctx, false) {
-            let new_expr = e.argument.take_in(ctx);
-            ctx.replace_expression(expr, new_expr);
+            ctx.replace_expression_with(expr, Self::unwrap_unary);
         }
     }
 
