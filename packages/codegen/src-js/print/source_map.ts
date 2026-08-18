@@ -264,14 +264,13 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     previousOriginalColumn = originalColumn;
   }
 
-  const map: SourceMap = {
+  return {
     version: 3,
     mappings: mappingBuffer.toString("ascii", 0, mappingLength),
     names,
     sources: [options.sourceFilename ?? ""],
+    sourcesContent: [sourceText],
   };
-  if (sourceText !== undefined) map.sourcesContent = [sourceText];
-  return map;
 }
 
 /**
