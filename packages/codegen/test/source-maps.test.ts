@@ -212,7 +212,7 @@ describe("source map options", () => {
   ])("rejects %s sourceText", (_name, sourceText) => {
     expect(() =>
       printSync(program, { sourcemap: true, sourceText: sourceText as unknown as string }),
-    ).toThrowError(new TypeError("`sourceText` must be a string when `sourcemap` is true"));
+    ).toThrow(new TypeError("`sourceText` must be a string when `sourcemap` is true"));
   });
 
   test.each([
@@ -225,7 +225,7 @@ describe("source map options", () => {
         sourceText: code,
         sourceFilename: sourceFilename as unknown as string,
       }),
-    ).toThrowError(new TypeError("`sourceFilename` must be a string when supplied"));
+    ).toThrow(new TypeError("`sourceFilename` must be a string when supplied"));
   });
 
   test("accepts valid source map options", () => {
