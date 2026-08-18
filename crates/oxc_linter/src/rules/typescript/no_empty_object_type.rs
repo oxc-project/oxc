@@ -232,12 +232,16 @@ fn check_interface_declaration(
             return;
         }
 
-        let merged_with_class_declaration = interface.id.symbol_id.get().is_some_and(|symbol_id| {
-            ctx.scoping()
-                .symbol_declarations(symbol_id)
-                .any(|declaration| matches!(ctx.nodes().kind(declaration), AstKind::Class(_)))
+        let has_declaration_merge = interface.id.symbol_id.get().is_some_and(|symbol_id| {
+            ctx.scoping().symbol_declarations(symbol_id).any(|declaration| {
+                match ctx.nodes().kind(declaration) {
+                    AstKind::Class(_) => true,
+                    AstKind::TSInterfaceDeclaration(_) => declaration != node_id,
+                    _ => false,
+                }
+            })
         });
-        if merged_with_class_declaration {
+        if has_declaration_merge {
             ctx.diagnostic(diagnostic);
             return;
         }
@@ -631,7 +635,13 @@ fn test() {
             Some(serde_json::json!([{ "allowWithName": ".*Props$" }])),
         )
             .into(),
+        // Suggestion is not applied because it would produce invalid typescript syntax
         ("export default interface Foo {}", "export default interface Foo {}").into(),
+        (
+            "interface Foo {} interface Foo { value: string }",
+            "interface Foo {} interface Foo { value: string }",
+        )
+            .into(),
     ];
 
     Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail)
