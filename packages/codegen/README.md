@@ -79,10 +79,28 @@ const { code } = printSync(program, {
 ### `printSync(node, options?)`
 
 ```ts
-function printSync(node: Node, options?: Options): { code: string };
+function printSync(node: Node, options?: Options): { code: string; map?: SourceMap };
 ```
 
-Prints a complete `Program` or a single statement and returns the generated source code.
+Prints a complete `Program` or a single statement and returns the generated source code and,
+when requested, a standard Source Map v3 object.
+
+```js
+import { printSync } from "oxc-codegen";
+import { parseSync } from "oxc-parser";
+
+const sourceText = "const answer=6*7";
+const { program } = parseSync("input.js", sourceText);
+const { code, map } = printSync(program, {
+  sourcemap: true,
+  sourceFileName: "input.js",
+  sourceText,
+});
+```
+
+Source-map mappings require `sourceText` and nodes with valid Oxc `start` / `end` offsets. A
+manually constructed AST without offsets can still be printed, but its source map has an empty
+`mappings` string.
 
 ### Options
 
@@ -92,6 +110,9 @@ Prints a complete `Program` or a single statement and returns the generated sour
 | `startingIndentLevel` | `number`  | `0`     | Starting indent level, from `0` to `1000`                        |
 | `jsx`                 | `boolean` | `false` | Enable TSX-safe printing for ambiguous TypeScript syntax         |
 | `ts`                  | `boolean` | `false` | Select the printer that supports TypeScript nodes                |
+| `sourcemap`           | `boolean` | `false` | Return a Source Map v3 object in `map`                           |
+| `sourceFileName`      | `string`  | `""`    | Original source filename recorded in the source map              |
+| `sourceText`          | `string`  | -       | Original text required for source-map mappings and content       |
 
 ## Why pure JavaScript?
 

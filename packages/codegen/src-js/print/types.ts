@@ -11,7 +11,6 @@
 //    in a handful of places. The `*Node` aliases widen the properties where they do, and the branches
 //    which read a property Oxc's AST doesn't have at all assert its type at the point of use.
 
-import type { Position } from "./options.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /** A node whose type the printer doesn't handle. */
@@ -111,11 +110,11 @@ export interface TSEnumDeclarationLegacyMembers {
 }
 
 /**
- * A node, as passed to `writeWithMap` / `writeWithMapNoLast`, which record where the node started for source maps.
- *
- * `loc` is not part of Oxc's AST - that records byte spans - but producers such as Acorn add it.
+ * A node carrying the offsets needed for source mappings.
  */
 export interface MappableNode {
   type: string;
-  loc?: { start: Position } | null;
+  name?: unknown;
+  start?: number;
+  end?: number;
 }

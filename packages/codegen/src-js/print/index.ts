@@ -10,10 +10,10 @@
 // Reference: `oxc/crates/oxc_codegen/src/{gen.rs,lib.rs,str.rs,binary_expr_visitor.rs}`
 
 import { debugAssert, typeAssertIs } from "../asserts.ts";
-import { emitMappings } from "./source_map.ts";
+import { generateSourceMap } from "./source_map.ts";
 import { printProgram, printStatement } from "./statement.ts";
 
-import type { Options } from "./options.ts";
+import type { CodegenResult, Options } from "./options.ts";
 import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
@@ -29,7 +29,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * @param options - The same options `state` was created from, for the parts only this build acts on
  * @returns Object holding the generated code
  */
-export function printSync(node: ESTree.Node, state: State, options: Options): { code: string } {
+export function printSync(node: ESTree.Node, state: State, options: Options): CodegenResult {
   if (node.type === "Program") {
     printProgram(node, state);
   } else {
@@ -39,15 +39,11 @@ export function printSync(node: ESTree.Node, state: State, options: Options): { 
 
   // This is removed by minifier in non-sourcemap builds
   if (SOURCEMAPS) {
-    debugAssert(
-      options.sourceMap != null,
-      "`options.sourceMap` should be defined when `SOURCEMAPS` is `true`",
-    );
-
-    emitMappings(state, options.sourceMap);
+    debugAssert(options.sourcemap === true, "`options.sourcemap` should be true in a maps build");
+    return { code: state.output, map: generateSourceMap(state, options) };
   }
 
   return { code: state.output };
 }
 
-export type { Mapping, Options, Position, SourceMapGenerator } from "./options.ts";
+export type { CodegenResult, Options, SourceMap } from "./options.ts";

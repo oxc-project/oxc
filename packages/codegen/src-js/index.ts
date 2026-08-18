@@ -14,7 +14,7 @@
 // pass through the same functions, every function becomes polymorphic, which is a large slow-down.
 // Having specialized code paths for JS and TS-shape ASTs avoids this problem - most functions remain monomorphic.
 //
-// Each combination is its own build, lazy-loaded depending on the `sourceMap` and `ts` options.
+// Each combination is its own build, lazy-loaded depending on the `sourcemap` and `ts` options.
 //
 // `require` rather than `import()` because the printer is synchronous.
 // All builds are ESM, which `require` can load on the Node versions in this package's `engines` field.
@@ -22,10 +22,10 @@
 import { createRequire } from "node:module";
 import { State } from "./state.ts";
 
-import type { Options } from "./print/options.ts";
+import type { CodegenResult, Options } from "./print/options.ts";
 import type * as ESTree from "../../../npm/oxc-types/types.d.ts";
 
-export type { Mapping, Options, Position, SourceMapGenerator } from "./print/options.ts";
+export type { CodegenResult, Options, SourceMap } from "./print/options.ts";
 
 /**
  * All printer builds are compiled from `print/index.ts`, so they share its exports.
@@ -40,7 +40,7 @@ const require = createRequire(import.meta.url);
 const EMPTY_OPTIONS: Options = {};
 
 /**
- * Printer builds, indexed by `(ts ? 1 : 0) + (sourceMap ? 2 : 0)`. Lazily loaded as needed.
+ * Printer builds, indexed by `(ts ? 1 : 0) + (sourcemap ? 2 : 0)`. Lazily loaded as needed.
  */
 const PRINTER_PATHS = [
   "./print_js.js",
@@ -61,7 +61,7 @@ const printers: (PrintModule["printSync"] | null)[] = [null, null, null, null];
  * @param options - Printing options (optional)
  * @returns Object holding the generated code
  */
-export function printSync(node: ESTree.Node, options?: Options): { code: string } {
+export function printSync(node: ESTree.Node, options?: Options): CodegenResult {
   // The printer is built 4 times, over whether the AST may contain TypeScript and whether
   // source mappings are wanted. This picks the build the options call for and loads it on first use,
   // so a caller printing only JavaScript never pays for the TypeScript printers.
@@ -70,7 +70,7 @@ export function printSync(node: ESTree.Node, options?: Options): { code: string 
     options = EMPTY_OPTIONS;
   } else {
     if (options.ts === true) index = 1;
-    if (options.sourceMap != null) index |= 2;
+    if (options.sourcemap === true) index |= 2;
   }
 
   let print = printers[index];

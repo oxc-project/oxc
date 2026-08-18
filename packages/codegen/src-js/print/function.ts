@@ -7,9 +7,12 @@ import {
   CAT_OTHER,
   CAT_START_OF_STMT,
   debugAssertLastFresh,
+  markWithMapNoName,
   write,
   writeNoLast,
   writeWithMap,
+  writeWithMapEnd,
+  writeWithMapNoLast,
 } from "./write.ts";
 import { printDecorators } from "./class.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
@@ -98,7 +101,16 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
 
     const param = params[i];
 
+    // Oxc stores TypeScript's special `this` parameter separately from formal parameters and
+    // prints it without a source mapping.
+    if (TS && param.type === "Identifier" && param.name === "this") {
+      write(state, "this", CAT_IDENT);
+      if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
+      continue;
+    }
+
     const { decorators } = param;
+    markWithMapNoName(state, decorators != null && decorators.length > 0 ? decorators[0] : param);
     if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
 
     if (TS && param.type === "TSParameterProperty") {
@@ -136,7 +148,8 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
   // `body` is a BlockStatement holding directives + statements.
   const statements = body.body;
   if (statements.length === 0) {
-    writeWithMap(state, "{}", CAT_OTHER, body);
+    writeWithMapNoLast(state, "{", body);
+    writeWithMapEnd(state, "}", CAT_OTHER, body);
     return;
   }
 
@@ -146,7 +159,7 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
   state.indentLevel--;
   printIndent(state);
 
-  write(state, "}", CAT_OTHER);
+  writeWithMapEnd(state, "}", CAT_OTHER, body);
 }
 
 /**

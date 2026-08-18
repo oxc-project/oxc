@@ -3,7 +3,7 @@
 // These live together because the categories exist only to be stored by `write` -
 // `state.last` records what was written last by category, not the last character itself.
 
-import { debugAssert, typeAssertIs } from "../asserts.ts";
+import { debugAssert } from "../asserts.ts";
 
 import type { MappableNode } from "./types.ts";
 import type { State } from "../state.ts";
@@ -221,6 +221,7 @@ export function write(state: State, code: string, last: Category): void {
   debugAssertCategoryMatches(state, code, last);
 
   state.last = last;
+  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -232,8 +233,8 @@ export function write(state: State, code: string, last: Category): void {
 /**
  * Append `code` to the output, record what it ends with, and record a source mapping for `node`.
  *
- * The mapping is only recorded where the caller asked for source maps and `node` carries a `loc` -
- * Oxc's own AST records byte spans instead, so the check is on the node, not the build.
+ * The mapping is only recorded where the caller asked for source maps, supplied `sourceText`, and
+ * `node` carries Oxc `start` / `end` offsets.
  *
  * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
  * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
@@ -246,19 +247,10 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  if (SOURCEMAPS && node.loc != null) {
-    debugAssert(
-      state.mapOffsets !== null && state.mapPositions !== null && state.mapNames !== null,
-      "Source map arrays should exist when source maps are enabled",
-    );
-
-    typeAssertIs<{ name?: string }>(node);
-    state.mapOffsets.push(state.output.length);
-    state.mapPositions.push(node.loc.start);
-    state.mapNames.push(node.name);
-  }
+  recordSourceMapping(state, node, false);
 
   state.last = last;
+  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -280,6 +272,7 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
  * @param code - Text to append, which unlike `write` may be empty
  */
 export function writeNoLast(state: State, code: string): void {
+  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
@@ -300,23 +293,255 @@ export function writeNoLast(state: State, code: string): void {
  * @param node - Node this text came from
  */
 export function writeWithMapNoLast(state: State, code: string, node: MappableNode): void {
-  if (SOURCEMAPS && node.loc != null) {
-    debugAssert(
-      state.mapOffsets !== null && state.mapPositions !== null && state.mapNames !== null,
-      "Source map arrays should exist when source maps are enabled",
-    );
+  recordSourceMapping(state, node, false);
 
-    typeAssertIs<{ name?: string }>(node);
-    state.mapOffsets.push(state.output.length);
-    state.mapPositions.push(node.loc.start);
-    state.mapNames.push(node.name);
-  }
-
+  updatePostfixClose(state, code);
   state.output += code;
 
   if (DEBUG) {
     state.lastIsStale = true;
     if (code.length > 0) state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append `code`, recording a mapping for the last source character in `node` immediately before it.
+ *
+ * Rust uses this for emitted closing delimiters, including synthesized ones. The node end offset is
+ * exclusive, so move back by one source code point to match Rust's byte-span lookup.
+ */
+export function writeWithMapEnd(
+  state: State,
+  code: string,
+  last: Category,
+  node: MappableNode,
+): void {
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertCategoryMatches(state, code, last);
+
+  recordSourceMapping(state, node, 1);
+  state.last = last;
+  updatePostfixClose(state, code);
+  state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/** Record a start mapping at the current output position without writing anything. */
+export function markWithMap(state: State, node: MappableNode): void {
+  recordSourceMapping(state, node, false);
+}
+
+/** Record a start mapping without attaching an identifier name. */
+export function markWithMapNoName(state: State, node: MappableNode): void {
+  recordSourceMapping(state, node, 3);
+}
+
+/** Record a mapping for `node`'s end offset at the current output position. */
+export function markWithMapAfter(state: State, node: MappableNode): void {
+  recordSourceMapping(state, node, 2);
+}
+
+/** Record a mapping a fixed number of columns after `node`'s start offset. */
+export function markWithMapAtStartOffset(
+  state: State,
+  node: MappableNode,
+  columnOffset: number,
+): void {
+  if (!SOURCEMAPS) return;
+  const { sourceText } = state;
+  if (sourceText === undefined) return;
+
+  const { start, end } = node;
+  if (
+    typeof start !== "number" ||
+    typeof end !== "number" ||
+    !Number.isSafeInteger(start) ||
+    !Number.isSafeInteger(end) ||
+    start < 0 ||
+    end < start ||
+    start === end
+  ) {
+    return;
+  }
+
+  debugAssert(
+    state.mapPositions !== null,
+    "Source map positions should exist when source maps are enabled",
+  );
+  const sourceOffset = start + columnOffset;
+  if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
+  if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
+
+  state.mapPositions.push(state.output.length, sourceOffset);
+}
+
+/** Record one mapping, if source maps and a non-empty location are available. */
+function recordSourceMapping(state: State, node: MappableNode, location: false | 1 | 2 | 3): void {
+  if (!SOURCEMAPS) return;
+  const { sourceText } = state;
+  if (sourceText === undefined) return;
+
+  const { start, end } = node;
+  if (
+    typeof start !== "number" ||
+    typeof end !== "number" ||
+    !Number.isSafeInteger(start) ||
+    !Number.isSafeInteger(end) ||
+    start < 0 ||
+    end < start ||
+    start === end
+  ) {
+    return;
+  }
+
+  debugAssert(
+    state.mapPositions !== null,
+    "Source map positions should exist when source maps are enabled",
+  );
+
+  let sourceOffset: number;
+  if (location === 1) {
+    sourceOffset = end - 1;
+  } else if (location === 2) {
+    sourceOffset = end;
+  } else {
+    sourceOffset = start;
+  }
+  if (!(sourceOffset >= 0 && sourceOffset <= sourceText.length)) return;
+
+  // `oxc_codegen` suppresses consecutive source positions as it records them. Do this before
+  // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
+  if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
+
+  let name: string | undefined;
+  if (location === false) {
+    const printedName = typeof node.name === "string" ? node.name : undefined;
+    if (printedName !== undefined) {
+      // Almost every identifier is printed exactly as it appeared in the source. Avoid scanning it
+      // with Unicode property regexps or allocating a source substring in that common case.
+      const nameEnd = start + printedName.length;
+      const originalName =
+        printedName.length > 0 &&
+        end <= sourceText.length &&
+        nameEnd <= end &&
+        sourceText.startsWith(printedName, start) &&
+        (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)))
+          ? printedName
+          : originalNameFromSource(sourceText, node, start, end);
+      // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`. Preserve
+      // the existing fallback in that case instead of recording an arbitrary source substring.
+      name =
+        originalName === undefined
+          ? printedName
+          : originalName === printedName
+            ? undefined
+            : originalName;
+    } else {
+      name = printedName;
+    }
+  }
+
+  const mappingIndex = state.mapPositions.length >> 1;
+  state.mapPositions.push(state.output.length, sourceOffset);
+  if (name !== undefined) {
+    (state.mapNames ??= []).push(mappingIndex, name);
+  }
+}
+
+/** Recover the original identifier spelling from validated source offsets. */
+function originalNameFromSource(
+  sourceText: string,
+  node: MappableNode,
+  start: number,
+  end: number,
+): string | undefined {
+  if (end > sourceText.length) return undefined;
+
+  // JSX identifiers admit `-`, which is not an ECMAScript identifier character. Their spans do
+  // not absorb TypeScript annotations, so the ESTree end offset is already exact.
+  if (node.type === "JSXIdentifier") {
+    const originalName = sourceText.slice(start, end);
+    return JSX_IDENTIFIER_REGEX.test(originalName) ? originalName : undefined;
+  }
+
+  let index = start;
+  if (index < end && sourceText.charCodeAt(index) === 35) index++; // `#` in a private identifier
+  const identifierStart = index;
+
+  while (index < end) {
+    const matcher = index === identifierStart ? IDENT_START_REGEX : IDENT_CONTINUE_REGEX;
+    if (sourceText.charCodeAt(index) === 92) {
+      const length = unicodeEscapeLength(sourceText, index, end);
+      if (length === 0) break;
+      const codePoint = unicodeEscapeCodePoint(sourceText, index, length);
+      if (codePoint > 0x10ffff || !matcher.test(String.fromCodePoint(codePoint))) break;
+      index += length;
+      continue;
+    }
+
+    const codePoint = sourceText.codePointAt(index) as number;
+    const char = String.fromCodePoint(codePoint);
+    if (!matcher.test(char)) break;
+    index += char.length;
+  }
+
+  return index === identifierStart ? undefined : sourceText.slice(start, index);
+}
+
+/** Return the UTF-16 length of a `\\u` identifier escape within `end`, or `0` if invalid. */
+function unicodeEscapeLength(sourceText: string, index: number, end: number): number {
+  if (sourceText.charCodeAt(index + 1) !== 117) return 0; // `u`
+
+  const firstHex = index + 2;
+  if (sourceText.charCodeAt(firstHex) === 123) {
+    let cursor = firstHex + 1;
+    const firstDigit = cursor;
+    while (cursor < end && isHexDigit(sourceText.charCodeAt(cursor))) cursor++;
+    return cursor > firstDigit && sourceText.charCodeAt(cursor) === 125 ? cursor - index + 1 : 0;
+  }
+
+  const escapeEnd = firstHex + 4;
+  if (escapeEnd > end) return 0;
+  for (let cursor = firstHex; cursor < escapeEnd; cursor++) {
+    if (!isHexDigit(sourceText.charCodeAt(cursor))) return 0;
+  }
+  return escapeEnd - index;
+}
+
+/** Decode the code point in a syntactically valid identifier escape. */
+function unicodeEscapeCodePoint(sourceText: string, index: number, length: number): number {
+  const braced = sourceText.charCodeAt(index + 2) === 123;
+  const digitsStart = index + (braced ? 3 : 2);
+  const digitsEnd = index + length - (braced ? 1 : 0);
+  return Number.parseInt(sourceText.slice(digitsStart, digitsEnd), 16);
+}
+
+/** Whether `code` is an ASCII hexadecimal digit. */
+function isHexDigit(code: number): boolean {
+  return (code >= 48 && code <= 57) || (code >= 65 && code <= 70) || (code >= 97 && code <= 102);
+}
+
+/** Whether an ASCII character definitely cannot continue any supported identifier spelling. */
+function isDefinitelyIdentifierBoundary(code: number): boolean {
+  return (
+    code <= 0x7f &&
+    !((code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122)) &&
+    code !== 36 && // `$`
+    code !== 45 && // `-` in JSX identifiers
+    code !== 92 && // `\` starting a Unicode escape
+    code !== 95 // `_`
+  );
+}
+
+/** Track the final byte category Rust's postfix source-map hook checks, without reading `output`. */
+function updatePostfixClose(state: State, code: string): void {
+  if (SOURCEMAPS && code.length > 0) {
+    const last = code.charCodeAt(code.length - 1);
+    state.lastWasPostfixClose = last === 41 || last === 93; // `)` or `]`
   }
 }
 
@@ -334,6 +559,8 @@ export function debugAssertLastFresh(state: State): void {
 
 /** Matches a character which can continue an identifier. */
 const IDENT_CONTINUE_REGEX = /[\p{ID_Continue}$\u200C\u200D]/u;
+const IDENT_START_REGEX = /[\p{ID_Start}$_]/u;
+const JSX_IDENTIFIER_REGEX = /^[\p{ID_Start}$_](?:[\p{ID_Continue}$-]|\u200C|\u200D)*$/u;
 
 /**
  * Assert that `last` truthfully describes the end of `code`.

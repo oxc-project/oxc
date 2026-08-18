@@ -1,11 +1,11 @@
 // Source map tests.
 //
-// Source maps are the one part of the printer whose output is not the printed code, so the
-// conformance suites say nothing about them. These check the mappings a print emits are
-// self-consistent and point where they claim to, and that turning source maps on does not change
-// the code that comes out.
+// The conformance checker compares the complete Source Map v3 object against Rust `oxc_codegen`.
+// The remaining tests here check invariants which give a more local failure than a full mapping
+// diff: positions stay in bounds and ordered, indentation is respected, identifier text agrees,
+// and turning source maps on does not change the generated code.
 //
-// `oxc-parser` emits no `loc`, so it is synthesized here from `start` / `end` offsets.
+// Mappings use Oxc `start` / `end` offsets.
 
 import { existsSync, readFileSync } from "node:fs";
 import { join as pathJoin } from "node:path";
@@ -13,9 +13,10 @@ import { parseSync } from "oxc-parser";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import { printSync } from "../dist/index.js";
+import { checkFixture, getEcmaScriptLineTable } from "./utils/common.ts";
 
 import type { Program } from "oxc-parser";
-import type { Mapping, Position, SourceMapGenerator } from "../dist/index.js";
+import type { SourceMap } from "../dist/index.js";
 
 // Same directory the benchmarks download their fixtures to. Whichever are already cached are used;
 // the inline fixtures below always run.
@@ -73,6 +74,133 @@ namespace NS {
 export default NS;
 `;
 
+const INLINE_UNICODE = 'const smile = "😀";\r\nconst café = `first\u2028second`;\nsmile + café;';
+
+describe("Rust conformance", () => {
+  test.each([
+    { name: "inline.js", code: INLINE_JS, lang: "js" as const },
+    { name: "inline.ts", code: INLINE_TS, lang: "ts" as const },
+    {
+      name: "unicode.js",
+      code: INLINE_UNICODE,
+      lang: "js" as const,
+    },
+    {
+      name: "escaped-name.js",
+      code: "const \\u0061 = 1; \\u0061;",
+      lang: "js" as const,
+    },
+    { name: "astral-new.js", code: "new 𐐀;", lang: "js" as const },
+    {
+      name: "large-line-gap.js",
+      code: `\`${"\n".repeat(200)}\`;\nvalue;`,
+      lang: "js" as const,
+    },
+    {
+      name: "sparse-uncommon-line.js",
+      code: `value;${" ".repeat(20000)}\u2028`,
+      lang: "js" as const,
+    },
+    {
+      name: "many-crlf.js",
+      code: Array.from({ length: 100 }, (_, index) => `x${index};`).join("\r\n"),
+      lang: "js" as const,
+    },
+  ])("$name mappings match oxc_codegen", ({ name, code, lang }) => {
+    expect(checkFixture(name, code, lang, "module")).toBe(true);
+  });
+
+  test("invalid source offsets fall back to the printed name", () => {
+    const code = "const name = 0;";
+    const program = parseProgram("invalid-offset.js", code);
+    const statement = program.body[0];
+    if (statement.type !== "VariableDeclaration") throw new Error("Expected variable declaration");
+    const identifier = statement.declarations[0].id;
+    if (identifier.type !== "Identifier") throw new Error("Expected identifier");
+
+    // Simulate a transformed AST whose old offsets are no longer valid for the source text.
+    identifier.end = code.length + 1;
+
+    const { map } = printSync(program, {
+      sourcemap: true,
+      sourceFileName: "invalid-offset.js",
+      sourceText: code,
+    });
+    expect(decodeSourceMap(map!)).toContainEqual(expect.objectContaining({ name: "name" }));
+  });
+
+  test("in-bounds non-identifier offsets fall back to the printed name", () => {
+    const code = "const name = 0;";
+    const program = parseProgram("stale-offset.js", code);
+    const statement = program.body[0];
+    if (statement.type !== "VariableDeclaration") throw new Error("Expected variable declaration");
+    const identifier = statement.declarations[0].id;
+    if (identifier.type !== "Identifier") throw new Error("Expected identifier");
+
+    // Simulate a transformed AST whose stale offsets are in bounds but start on whitespace.
+    identifier.start = code.indexOf(" ");
+    identifier.end = identifier.start + 1;
+
+    const { map } = printSync(program, {
+      sourcemap: true,
+      sourceFileName: "stale-offset.js",
+      sourceText: code,
+    });
+    const mappings = decodeSourceMap(map!);
+    expect(mappings).toContainEqual(expect.objectContaining({ name: "name" }));
+    expect(mappings).not.toContainEqual(expect.objectContaining({ name: "" }));
+  });
+
+  test("stale identifier offsets preserve the original longer spelling", () => {
+    const code = "const ab = 0;";
+    const program = parseProgram("renamed.js", code);
+    const statement = program.body[0];
+    if (statement.type !== "VariableDeclaration") throw new Error("Expected variable declaration");
+    const identifier = statement.declarations[0].id;
+    if (identifier.type !== "Identifier") throw new Error("Expected identifier");
+    identifier.name = "a";
+
+    const { map } = printSync(program, {
+      sourcemap: true,
+      sourceFileName: "renamed.js",
+      sourceText: code,
+    });
+    expect(map?.names).toEqual(["ab"]);
+  });
+
+  test("handles transformed ASTs whose source locations move backwards", () => {
+    const code = `const first = 1;\n${"\n".repeat(5000)}const second = 2;`;
+    const program = parseProgram("reordered.js", code);
+    program.body.reverse();
+
+    const { map } = printSync(program, {
+      sourcemap: true,
+      sourceFileName: "reordered.js",
+      sourceText: code,
+    });
+    const mappings = decodeSourceMap(map!);
+    expect(mappings.find((mapping) => mapping.generatedLine === 1)?.originalLine).toBe(5002);
+    expect(mappings.find((mapping) => mapping.generatedLine === 2)?.originalLine).toBe(1);
+  });
+
+  test("returns a source map only when requested", () => {
+    const code = "const value = 1;";
+    const program = parseProgram("return-map.js", code);
+    expect(printSync(program).map).toBeUndefined();
+
+    const { map } = printSync(program, {
+      sourcemap: true,
+      sourceFileName: "return-map.js",
+      sourceText: code,
+    });
+    expect(map).toMatchObject({
+      version: 3,
+      sources: ["return-map.js"],
+      sourcesContent: [code],
+    });
+  });
+});
+
 interface Fixture {
   name: string;
   /** Source text, or `null` if the fixture is a cached file which has not been downloaded */
@@ -95,6 +223,7 @@ function cached(name: string): string | null {
 const FIXTURES: Fixture[] = [
   { name: "inline.js", code: INLINE_JS, ts: false, jsx: false },
   { name: "inline.ts", code: INLINE_TS, ts: true, jsx: false },
+  { name: "unicode.js", code: INLINE_UNICODE, ts: false, jsx: false },
   { name: "react.development.js", code: cached("react.development.js"), ts: false, jsx: false },
   {
     name: "RadixUIAdoptionSection.jsx",
@@ -108,60 +237,7 @@ const FIXTURES: Fixture[] = [
 
 // --- Helpers --------------------------------------------------------------------------------
 
-/**
- * Build a function converting a source offset to a line and column.
- *
- * @param source - Source text
- * @returns Function taking an offset and returning a 1-based line and 0-based column
- */
-function lineColTable(source: string): (offset: number) => Position {
-  const lineStarts = [0];
-  for (let i = 0; i < source.length; i++) {
-    if (source.charCodeAt(i) === 10) lineStarts.push(i + 1);
-  }
-  return (offset) => {
-    let lo = 0,
-      hi = lineStarts.length - 1;
-    while (lo < hi) {
-      const mid = (lo + hi + 1) >> 1;
-      if (lineStarts[mid] <= offset) lo = mid;
-      else hi = mid - 1;
-    }
-    return { line: lo + 1, column: offset - lineStarts[lo] };
-  };
-}
-
-/**
- * Add a `loc` to every node in the AST, computed from its `start` / `end` offsets.
- *
- * @param root - AST to walk
- * @param posOf - Function converting an offset to a line and column
- */
-function addLocs(root: object, posOf: (offset: number) => Position): void {
-  const seen = new Set<object>();
-  const stack: unknown[] = [root];
-  while (stack.length > 0) {
-    const node = stack.pop();
-    if (node === null || typeof node !== "object") continue;
-    if (seen.has(node)) continue;
-    seen.add(node);
-    if (Array.isArray(node)) {
-      for (const child of node) stack.push(child);
-      continue;
-    }
-    const record = node as Record<string, unknown>;
-    if (typeof record.type === "string" && typeof record.start === "number") {
-      record.loc = { start: posOf(record.start), end: posOf(record.end as number) };
-    }
-    for (const key in record) {
-      if (key === "loc" || key === "parent") continue;
-      const child = record[key];
-      if (child !== null && typeof child === "object") stack.push(child);
-    }
-  }
-}
-
-/** A mapping, copied out of the `Mapping` object the printer reuses across calls. */
+/** One decoded mapping used by the local invariant checks. */
 interface Recorded {
   generatedLine: number;
   generatedColumn: number;
@@ -171,39 +247,76 @@ interface Recorded {
   source: string;
 }
 
-/** Collects the mappings a print emits. This is the `sourceMap` option's whole interface. */
-class Collector implements SourceMapGenerator {
-  file: string;
-  mappings: Recorded[] = [];
+/** Decode a Source Map v3 mapping string for the local invariant checks below. */
+function decodeSourceMap(map: SourceMap): Recorded[] {
+  const mappings: Recorded[] = [];
+  let sourceId = 0;
+  let originalLine = 0;
+  let originalColumn = 0;
+  let nameId = 0;
 
-  constructor(file: string) {
-    this.file = file;
-  }
+  const lines = map.mappings.split(";");
+  for (let generatedLine = 0; generatedLine < lines.length; generatedLine++) {
+    const line = lines[generatedLine];
+    if (line === "") continue;
 
-  addMapping(mapping: Mapping): void {
-    // `Mapping` objects are reused across calls - must copy
-    this.mappings.push({
-      generatedLine: mapping.generated.line,
-      generatedColumn: mapping.generated.column,
-      originalLine: mapping.original.line,
-      originalColumn: mapping.original.column,
-      name: mapping.name,
-      source: mapping.source,
-    });
+    let generatedColumn = 0;
+    for (const segment of line.split(",")) {
+      const values = decodeVlqSegment(segment);
+      generatedColumn += values[0];
+      sourceId += values[1];
+      originalLine += values[2];
+      originalColumn += values[3];
+      if (values.length === 5) nameId += values[4];
+
+      const source = map.sources[sourceId];
+      if (source === undefined) throw new Error(`Invalid source ID ${sourceId}`);
+      mappings.push({
+        generatedLine: generatedLine + 1,
+        generatedColumn,
+        originalLine: originalLine + 1,
+        originalColumn,
+        name: values.length === 5 ? map.names[nameId] : undefined,
+        source,
+      });
+    }
   }
+  return mappings;
 }
 
+/** Decode one comma-delimited source-map segment. */
+function decodeVlqSegment(segment: string): number[] {
+  const values: number[] = [];
+  let value = 0;
+  let factor = 1;
+  for (const char of segment) {
+    const digit = BASE64_CHARS.indexOf(char);
+    if (digit === -1) throw new Error(`Invalid base64 VLQ digit ${JSON.stringify(char)}`);
+    value += (digit % 32) * factor;
+    if (digit < 32) {
+      values.push(value % 2 === 1 ? -Math.floor(value / 2) : Math.floor(value / 2));
+      value = 0;
+      factor = 1;
+    } else {
+      factor *= 32;
+    }
+  }
+  if (factor !== 1) throw new Error("Unterminated base64 VLQ value");
+  return values;
+}
+
+const BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 /**
- * Parse a fixture and add a `loc` to every node.
+ * Parse a fixture.
  *
  * @param name - Fixture filename
  * @param code - Source text
  * @returns The AST
  */
-function parseWithLocs(name: string, code: string): Program {
+function parseProgram(name: string, code: string): Program {
   const { program, errors } = parseSync(name, code, PARSE_OPTIONS);
   if (errors.length > 0) throw new Error(`parse ${name}: ${errors[0].message}`);
-  addLocs(program, lineColTable(code));
   return program;
 }
 
@@ -229,21 +342,26 @@ for (const fixture of FIXTURES) {
 
     beforeAll(() => {
       const code = fixture.code as string;
-      const program = parseWithLocs(fixture.name, code);
-      const collector = new Collector(fixture.name);
+      const program = parseProgram(fixture.name, code);
       const { jsx, ts } = fixture;
 
-      // Both builds through the public API - `printSync` picks the maps build when given a
-      // `sourceMap`, and the no-maps build when not
-      const withMaps = printSync(program, { jsx, ts, sourceMap: collector }).code;
-      const withoutMaps = printSync(program, { jsx, ts }).code;
+      // Both builds through the public API - `printSync` picks the maps build when `sourcemap`
+      // is true, and the no-maps build when it is not.
+      const { code: withMaps, map } = printSync(program, {
+        jsx,
+        ts,
+        sourcemap: true,
+        sourceFileName: fixture.name,
+        sourceText: code,
+      });
+      const { code: withoutMaps } = printSync(program, { jsx, ts });
 
       printed = {
         withMaps,
         withoutMaps,
-        mappings: collector.mappings,
-        outLines: withMaps.split("\n"),
-        srcLines: code.split("\n"),
+        mappings: decodeSourceMap(map!),
+        outLines: getEcmaScriptLineTable(withMaps).lines,
+        srcLines: getEcmaScriptLineTable(code).lines,
       };
     });
 
@@ -296,9 +414,7 @@ for (const fixture of FIXTURES) {
     });
 
     test("every mapping names the source file", () => {
-      const wrong = printed.mappings.find(
-        (mapping) => mapping.source !== fixture.name && mapping.source !== undefined,
-      );
+      const wrong = printed.mappings.find((mapping) => mapping.source !== fixture.name);
       expect(wrong).toBeUndefined();
     });
 
@@ -337,15 +453,16 @@ describe("indent option", () => {
   test.each(
     INDENT_CASES.map((indent) => ({ label: JSON.stringify(indent) ?? "undefined", indent })),
   )("indent=$label", ({ indent }) => {
-    const program = parseWithLocs("indent.js", INLINE_JS);
-    const collector = new Collector("indent.js");
-    const out = printSync(program, {
-      indent,
-      sourceMap: collector,
-    }).code;
+    const program = parseProgram("indent.js", INLINE_JS);
+    const { code: out, map } = printSync(program, {
+      indent: indent as string | undefined,
+      sourcemap: true,
+      sourceFileName: "indent.js",
+      sourceText: INLINE_JS,
+    });
 
-    const expectedIndent = indent ?? "\t";
-    const lines = out.split("\n");
+    const expectedIndent = typeof indent === "string" && /^[ \t]+$/.test(indent) ? indent : "\t";
+    const { lines } = getEcmaScriptLineTable(out);
     const indented = lines.filter((line) => line.startsWith("\t") || line.startsWith(" "));
     expect(indented.length).toBeGreaterThan(0);
 
@@ -357,8 +474,10 @@ describe("indent option", () => {
     }
 
     // No mapping points into an indent run
+    const mappings = decodeSourceMap(map!);
+    expect(mappings.length).toBeGreaterThan(0);
     let insideIndent = null;
-    for (const mapping of collector.mappings) {
+    for (const mapping of mappings) {
       const lead = /^[\t ]*/.exec(lines[mapping.generatedLine - 1])![0].length;
       if (mapping.generatedColumn !== 0 && mapping.generatedColumn < lead) {
         insideIndent = `${mapping.generatedLine}:${mapping.generatedColumn}`;

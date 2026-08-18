@@ -1920,6 +1920,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_napi",
  "oxc_parser",
+ "oxc_sourcemap",
  "oxc_syntax",
 ]
 
