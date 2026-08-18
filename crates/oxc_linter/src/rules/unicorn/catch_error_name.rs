@@ -39,6 +39,7 @@ pub struct CatchErrorNameConfig {
     /// A list of patterns to ignore when checking `catch` variable names. The pattern
     /// can be a string or regular expression.
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
+    #[schemars(with = "Vec<String>")]
     ignore: Vec<Regex>,
     /// The name to use for error variables in `catch` blocks. You can customize it
     /// to something other than `'error'` (e.g., `'exception'`).

@@ -25,7 +25,9 @@ pub struct ConsistentTestFilename(Box<ConsistentTestFilenameConfig>);
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct CompiledAllTestPattern(
-    #[serde(deserialize_with = "deserialize_matcher_pattern")] lazy_regex::Regex,
+    #[serde(deserialize_with = "deserialize_matcher_pattern")]
+    #[schemars(with = "String")]
+    lazy_regex::Regex,
 );
 
 impl Default for CompiledAllTestPattern {
@@ -47,7 +49,9 @@ impl std::ops::Deref for CompiledAllTestPattern {
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct CompiledTestPatternName(
-    #[serde(deserialize_with = "deserialize_matcher_pattern")] lazy_regex::Regex,
+    #[serde(deserialize_with = "deserialize_matcher_pattern")]
+    #[schemars(with = "String")]
+    lazy_regex::Regex,
 );
 
 impl Default for CompiledTestPatternName {
@@ -132,7 +136,7 @@ where
         return Regex::new(pattern).map_err(D::Error::custom);
     }
 
-    RegexBuilder::new(&regex_str).unicode(true).build().map_err(D::Error::custom)
+    RegexBuilder::new(&regex_str).build().map_err(D::Error::custom)
 }
 
 impl Rule for ConsistentTestFilename {

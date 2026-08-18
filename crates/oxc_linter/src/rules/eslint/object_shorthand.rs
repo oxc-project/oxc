@@ -66,6 +66,7 @@ pub struct ObjectShorthandOptions {
     ignore_constructors: bool,
     avoid_explicit_return_arrows: bool,
     #[serde(default, deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     methods_ignore_pattern: Option<Regex>,
 }
 

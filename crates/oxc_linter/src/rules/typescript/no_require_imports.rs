@@ -43,6 +43,7 @@ pub struct NoRequireImportsConfig {
     /// console.log(require('../package.json').version);
     /// ```
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
+    #[schemars(with = "Vec<String>")]
     allow: Vec<Regex>,
     /// When set to `true`, `import ... = require(...)` declarations won't be reported.
     /// This is useful if you use certain module options that require strict CommonJS interop semantics.

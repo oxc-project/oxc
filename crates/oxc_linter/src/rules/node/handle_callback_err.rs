@@ -24,7 +24,7 @@ fn handle_callback_err_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, JsonSchema)]
 enum ErrorPattern {
     Plain(String),
-    Regex(Regex),
+    Regex(#[schemars(with = "String")] Regex),
 }
 
 impl Default for ErrorPattern {

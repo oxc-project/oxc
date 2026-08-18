@@ -230,6 +230,7 @@ pub struct ExhaustiveDeps(Box<ExhaustiveDepsConfig>);
 struct ExhaustiveDepsConfig {
     /// Optionally provide a regex of additional hooks to check.
     #[serde(default, deserialize_with = "deserialize_additional_hooks")]
+    #[schemars(with = "Option<String>")]
     additional_hooks: Option<Regex>,
 }
 

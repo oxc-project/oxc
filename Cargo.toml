@@ -230,7 +230,9 @@ insta = "1.48.0" # Snapshot testing
 itertools = "0.15.0" # Iterator utilities
 itoa = "1.0.18" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
-lazy-regex = "3.6.0" # Lazy regex compilation
+lazy-regex = { version = "3.6.0", default-features = false, features = [
+  "lite",
+] } # Lazy regex compilation
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.8.2" # Fast byte searching
 mimalloc-safe = "0.1.64" # Fast allocator

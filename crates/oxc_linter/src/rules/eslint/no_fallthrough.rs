@@ -55,6 +55,7 @@ fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
 struct NoFallthroughConfig {
     /// Custom regex pattern to match fallthrough comments.
     #[serde(default, deserialize_with = "deserialize_comment_pattern")]
+    #[schemars(with = "Option<String>")]
     comment_pattern: Option<Regex>,
     /// Whether to allow empty case clauses to fall through.
     allow_empty_case: bool,

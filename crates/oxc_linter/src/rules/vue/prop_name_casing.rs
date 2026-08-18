@@ -54,6 +54,7 @@ pub struct PropNameCasing(Box<Config>);
 pub struct Options {
     /// Prop names to ignore, as regular expression patterns.
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
+    #[schemars(with = "Vec<String>")]
     ignore_props: Vec<Regex>,
 }
 

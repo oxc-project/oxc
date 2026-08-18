@@ -55,6 +55,7 @@ pub struct NoEmptyObjectTypeConfig {
     /// type TypeProps = {};
     /// ```
     #[serde(default, deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     allow_with_name: Option<Regex>,
 }
 

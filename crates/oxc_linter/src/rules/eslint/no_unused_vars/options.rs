@@ -30,6 +30,7 @@ pub struct NoUnusedVarsOptions {
     /// var b = 10;
     /// console.log(b);
     /// ```
+    #[schemars(with = "Option<String>")]
     pub vars_ignore_pattern: IgnorePattern<Regex>,
     /// Controls how unused arguments are checked.
     pub args: ArgsOption,
@@ -51,6 +52,7 @@ pub struct NoUnusedVarsOptions {
     /// }
     /// foo(1, 2);
     /// ```
+    #[schemars(with = "Option<String>")]
     pub args_ignore_pattern: IgnorePattern<Regex>,
     /// Using a Rest property it is possible to "omit" properties from an
     /// object, but by default the sibling properties are marked as "unused".
@@ -85,6 +87,7 @@ pub struct NoUnusedVarsOptions {
     ///   console.error("Error caught in catch block");
     /// }
     /// ```
+    #[schemars(with = "Option<String>")]
     pub caught_errors_ignore_pattern: IgnorePattern<Regex>,
     /// This option specifies exceptions within destructuring patterns that will
     /// not be checked for usage. Variables declared within array destructuring
@@ -108,6 +111,7 @@ pub struct NoUnusedVarsOptions {
     ///     console.log(n);
     /// });
     /// ```
+    #[schemars(with = "Option<String>")]
     pub destructured_array_ignore_pattern: IgnorePattern<Regex>,
     /// The `ignoreClassWithStaticInitBlock` option is a boolean. Static
     /// initialization blocks allow you to initialize static variables and

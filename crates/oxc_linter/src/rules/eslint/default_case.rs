@@ -48,6 +48,7 @@ pub struct DefaultCaseConfig {
     /// }
     /// ```
     #[serde(default, deserialize_with = "deserialize_comment_pattern")]
+    #[schemars(with = "Option<String>")]
     comment_pattern: Option<Regex>,
 }
 

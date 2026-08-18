@@ -102,6 +102,7 @@ pub struct NoRestrictedExportsConfig {
     /// export const foo = 1;
     /// ```
     #[serde(deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     restricted_named_exports_pattern: Option<Regex>,
     /// An object with boolean properties to restrict certain default export
     /// declarations. This option works only if the `restrictedNamedExports`

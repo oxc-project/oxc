@@ -51,7 +51,9 @@ impl Deref for IdMatch {
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct IdMatchConfig(
-    #[serde(default, deserialize_with = "deserialize_required_regex_option")] Option<Regex>,
+    #[serde(default, deserialize_with = "deserialize_required_regex_option")]
+    #[schemars(with = "Option<String>")]
+    Option<Regex>,
     IdMatchOptions,
 );
 

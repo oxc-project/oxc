@@ -54,11 +54,13 @@ pub struct NewCapConfig {
     new_is_cap_exceptions: Vec<CompactStr>,
     /// A regex pattern to match exceptions for constructor names starting with an uppercase letter.
     #[serde(default, deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     new_is_cap_exception_pattern: Option<Regex>,
     /// Exceptions to ignore for functions with names starting with an uppercase letter.
     cap_is_new_exceptions: Vec<CompactStr>,
     /// A regex pattern to match exceptions for functions with names starting with an uppercase letter.
     #[serde(default, deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     cap_is_new_exception_pattern: Option<Regex>,
     /// `true` to require capitalization for object properties (e.g., `new obj.Method()`).
     properties: bool,

@@ -250,12 +250,15 @@ struct RestrictedPath {
 struct RestrictedPattern {
     group: Option<Vec<CompactStr>>,
     #[serde(default, deserialize_with = "deserialize_required_regex_option")]
+    #[schemars(with = "Option<String>")]
     regex: Option<Regex>,
     import_names: Option<Vec<CompactStr>>,
     #[serde(default, deserialize_with = "deserialize_required_regex_option")]
+    #[schemars(with = "Option<String>")]
     import_name_pattern: Option<Regex>,
     allow_import_names: Option<Vec<CompactStr>>,
     #[serde(default, deserialize_with = "deserialize_required_regex_option")]
+    #[schemars(with = "Option<String>")]
     allow_import_name_pattern: Option<Regex>,
     allow_type_imports: Option<bool>,
     case_sensitive: Option<bool>,

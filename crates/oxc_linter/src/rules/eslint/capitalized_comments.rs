@@ -73,6 +73,7 @@ impl std::ops::Deref for CapitalizedComments {
 struct CommentConfigJson {
     /// A regex pattern. Comments that match the pattern will not cause violations.
     #[serde(default, deserialize_with = "deserialize_ignore_pattern")]
+    #[schemars(with = "Option<String>")]
     ignore_pattern: Option<Regex>,
     /// If true, inline comments (comments in the middle of code) will be ignored.
     ignore_inline_comments: Option<bool>,

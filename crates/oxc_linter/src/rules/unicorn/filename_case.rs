@@ -106,6 +106,7 @@ pub struct FilenameCaseConfigJson {
     /// }
     /// ```
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
+    #[schemars(with = "Vec<String>")]
     ignore: Vec<Regex>,
     /// Whether to treat additional, `.`-separated parts of a filename as
     /// parts of the extension rather than parts of the filename.

@@ -38,6 +38,7 @@ pub struct NoInlineCommentsConfig {
     /// }
     /// ```
     #[serde(default, deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     ignore_pattern: Option<Regex>,
 }
 

@@ -33,10 +33,12 @@ pub struct ParamNamesConfig {
     /// Regex pattern used to validate the `resolve` parameter name. If provided, this pattern
     /// is used instead of the default `^_?resolve$` check.
     #[serde(default, deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     resolve_pattern: Option<Regex>,
     /// Regex pattern used to validate the `reject` parameter name. If provided, this pattern
     /// is used instead of the default `^_?reject$` check.
     #[serde(default, deserialize_with = "deserialize_regex_option")]
+    #[schemars(with = "Option<String>")]
     reject_pattern: Option<Regex>,
 }
 

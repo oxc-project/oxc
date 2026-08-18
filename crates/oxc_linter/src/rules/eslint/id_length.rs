@@ -49,6 +49,7 @@ pub struct IdLengthConfig {
     /// An array of regex patterns for identifiers to exclude from the rule.
     /// For example, `["^x.*"]` would exclude all identifiers starting with "x".
     #[serde(deserialize_with = "deserialize_regex_vec")]
+    #[schemars(with = "Vec<String>")]
     exception_patterns: Vec<Regex>,
     /// An array of identifier names that are excluded from the rule.
     /// For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
