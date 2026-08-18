@@ -32,7 +32,7 @@ import { printDirectivesAndStatements } from "./statement.ts";
 import { printString } from "./string.ts";
 
 import type { State } from "../state.ts";
-import type { LiteralExtras, TSModuleDeclarationNode, UnknownNode } from "./types.ts";
+import type { LiteralExtras, UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -917,12 +917,14 @@ export function printTSTypeAssertion(
  * `global` is the one kind with no name of its own, so nothing is printed where the id would go.
  *
  * A missing body is the declaration form and ends in `;` instead of a block.
- * Producers which have no `kind` field are read off the `global` flag instead.
  */
-export function printTSModuleDeclaration(node: TSModuleDeclarationNode, state: State): void {
+export function printTSModuleDeclaration(
+  node: ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration,
+  state: State,
+): void {
   if (node.declare) write(state, "declare ", CAT_OTHER);
 
-  const kind = node.kind != null ? node.kind : node.global ? "global" : "module";
+  const { kind } = node;
   write(state, kind, CAT_IDENT);
 
   if (kind !== "global") {

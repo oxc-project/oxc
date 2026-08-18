@@ -57,17 +57,6 @@ export type ExportNamedDeclarationNode = Omit<ESTree.ExportNamedDeclaration, "de
 };
 
 /**
- * Oxc keeps a module's kind in `kind`, using `global: true` for `declare global`.
- * Older producers have no `kind`, and only the `global` flag distinguishes the two.
- */
-export type TSModuleDeclarationNode = Omit<
-  ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration,
-  "kind"
-> & {
-  kind?: ESTree.TSModuleDeclarationKind | "global" | null;
-};
-
-/**
  * A node carrying the offsets needed for source mappings.
  */
 export interface MappableNode {
