@@ -4612,14 +4612,7 @@ fn lower_jsx_element_expr<'a>(
             oxc::JSXAttributeItem::Attribute(attr) => {
                 // Get the attribute name
                 let prop_name = match &attr.name {
-                    oxc::JSXAttributeName::Identifier(id) => {
-                        let name = id.name.as_str();
-                        if name.contains(':') {
-                            builder
-                                .record_error(diagnostics::jsx_attribute_colon(name, id.span))?;
-                        }
-                        Ident::from(name)
-                    }
+                    oxc::JSXAttributeName::Identifier(id) => Ident::from(id.name.as_str()),
                     oxc::JSXAttributeName::NamespacedName(ns) => format_ident!(
                         builder.environment().allocator,
                         "{}:{}",

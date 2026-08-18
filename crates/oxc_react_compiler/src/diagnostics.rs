@@ -2030,15 +2030,6 @@ pub fn missing_function_declaration_binding(name: &str, span: Span) -> OxcDiagno
 }
 
 #[cold]
-pub fn jsx_attribute_colon(name: &str, span: Span) -> OxcDiagnostic {
-    diagnostic(
-        ErrorCategory::Todo,
-        format!("(BuildHIR::lowerExpression) Unexpected colon in attribute name `{name}`"),
-    )
-    .with_label(span.primary_label(format!("`{name}` contains an unsupported colon")))
-}
-
-#[cold]
 pub fn local_fbt_tag(tag_name: &str, span: Option<Span>) -> OxcDiagnostic {
     let reason = format!("<{tag_name}> tags should be module-level imports");
     diagnostic(ErrorCategory::Invariant, &reason)
