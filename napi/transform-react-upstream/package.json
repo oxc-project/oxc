@@ -1,0 +1,24 @@
+{
+  "name": "oxc-transform-react-upstream",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Benchmark-only Oxc adapter for upstream React Compiler Rust crates",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build-dev": "napi build --esm --platform",
+    "build": "pnpm run build-dev --features allocator --release",
+    "test": "node --test test/index.test.mjs"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "catalog:"
+  },
+  "napi": {
+    "binaryName": "transform-react-upstream"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

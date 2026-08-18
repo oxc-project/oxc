@@ -1,0 +1,46 @@
+[package]
+name = "oxc_react_compiler_upstream"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Benchmark-only Oxc adapter for the upstream React Compiler Rust crates"
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_ast_visit = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+oxc_str = { workspace = true }
+oxc_syntax = { workspace = true, features = ["to_js_string"] }
+
+indexmap = { workspace = true, features = ["serde"] }
+rustc-hash = { workspace = true }
+serde_json = { workspace = true, features = ["raw_value", "unbounded_depth"] }
+
+react_compiler_upstream = { workspace = true }
+react_compiler_ast_upstream = { workspace = true }
+react_compiler_hir_upstream = { workspace = true }
+
+[dev-dependencies]
+oxc_codegen = { workspace = true }
+
+# The AST adapters are derived from the former Oxc integration that tracked
+# React's Babel-shaped Rust AST. Keep upstream-style code out of workspace
+# restriction lints while retaining compiler correctness checks.
+[lints.clippy]
+result_large_err = "allow"
+
+[lints.rustdoc]
+broken_intra_doc_links = "allow"
+invalid_html_tags = "allow"
+bare_urls = "allow"
