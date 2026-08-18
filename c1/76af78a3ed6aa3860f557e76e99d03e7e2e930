@@ -1,0 +1,31 @@
+packages/codegen/src-js/print/source_map.ts
+  s_6b5aa3ca33a1b5::t_1883823a2c0d0d 14,18,20-24,38,50,88-123
+packages/codegen/test/utils/common.ts
+  s_6b5aa3ca33a1b5::t_fc0673ff41ae46 130-131
+packages/codegen/src-js/index.ts
+  s_6b5aa3ca33a1b5::t_1993b8cf8be347 28
+packages/codegen/src-js/print/index.ts
+  s_6b5aa3ca33a1b5::t_c599896cc24826 49
+packages/codegen/src-js/print/options.ts
+  s_6b5aa3ca33a1b5::t_1138b287088956 47-48
+packages/codegen/src-js/print/types.ts
+  s_6b5aa3ca33a1b5::t_1a62410d5c738b 113
+packages/codegen/src-js/state.ts
+  s_6b5aa3ca33a1b5::t_849e2f53ff9fdd 14,84,87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c176af78a3ed6aa3860f557e76e99d03e7e2e930",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

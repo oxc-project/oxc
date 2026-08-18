@@ -1,0 +1,21 @@
+packages/codegen/test/source-maps.test.ts
+  s_6b5aa3ca33a1b5::t_37aa5f76d05a39 16,77-78,85,137,237-238,338
+packages/codegen/test/utils/common.ts
+  s_6b5aa3ca33a1b5::t_475b81e1258c71 89-113,121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "528d0bbfdd6759da518f97bf084d756c6939c4b6",
+  "prompts": {},
+  "sessions": {
+    "s_6b5aa3ca33a1b5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ff6a6-3a1d-7362-b56f-38418919cb33",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
