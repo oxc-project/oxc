@@ -181,6 +181,11 @@ impl<'a, State> TraverseCtx<'a, State> {
         self.ancestry.ancestors_depth()
     }
 
+    #[inline]
+    pub fn is_last_in_statement_list(&self, level: usize) -> bool {
+        self.ancestry.is_last_in_statement_list(level)
+    }
+
     /// Get current scope ID.
     ///
     /// Shortcut for `ctx.scoping.current_scope_id`.
