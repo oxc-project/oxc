@@ -1,0 +1,25 @@
+packages/codegen/test/jsx.test.ts
+  s_e02f004037488b::t_2ebc8b2e8c4919 18-22
+packages/codegen/test/leftmost.test.ts
+  s_e02f004037488b::t_0e4d5c14b0b434 382-392,394
+packages/codegen/test/source-maps.test.ts
+  s_e02f004037488b::t_5fc6da9824163a 380-381,383-388,390-397,399-412,414-426,428-432,434-440,442-444,446-452,454-456,458-461,463-477,479-482,486-497
+packages/codegen/test/test262.test.ts
+  s_e02f004037488b::t_d5b92399f5a2ec 17-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "595f71a85b84029e8f22c71dbce6750c4e3035a7",
+  "prompts": {},
+  "sessions": {
+    "s_e02f004037488b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01571-3e46-73f2-b999-2a0ee5f27a7f",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
