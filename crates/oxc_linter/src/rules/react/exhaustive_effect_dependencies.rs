@@ -17,14 +17,6 @@ declare_react_compiler_lint!(
     ///
     upstream = "exhaustive-effect-dependencies",
     ///
-    /// ::: warning
-    /// This rule is currently inactive: the underlying validation
-    /// (`validateExhaustiveEffectDependencies`) is disabled in the fixed
-    /// options oxlint compiles with, matching the upstream ESLint plugin's
-    /// defaults. It will activate once React Compiler options become
-    /// configurable in oxlint.
-    /// :::
-    ///
     /// ### Why is this bad?
     ///
     /// Missing effect dependencies capture stale values from a previous
@@ -56,9 +48,36 @@ function Component(props) {
   return <div>{props.text}</div>;
 }
 ",
+        "
+import {useEffect} from 'react';
+function Component({value}) {
+  useEffect(() => {
+    log(value);
+  }, [value]);
+}
+",
     ];
 
-    let fail = vec![];
+    let fail = vec![
+        // Missing dependency.
+        "
+import {useEffect} from 'react';
+function Component({value}) {
+  useEffect(() => {
+    log(value);
+  }, []);
+}
+",
+        // Extraneous dependency.
+        "
+import {useEffect} from 'react';
+function Component({value, extra}) {
+  useEffect(() => {
+    log(value);
+  }, [value, extra]);
+}
+",
+    ];
 
     Tester::new(
         ExhaustiveEffectDependencies::NAME,
