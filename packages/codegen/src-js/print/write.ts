@@ -211,6 +211,20 @@ if (DEBUG) {
 }
 
 /**
+ * Location of mapping to record.
+ */
+type Location =
+  | typeof LOCATION_NAMED
+  | typeof LOCATION_END_MINUS_ONE
+  | typeof LOCATION_END
+  | typeof LOCATION_START;
+
+const LOCATION_NAMED = 0;
+const LOCATION_END_MINUS_ONE = 1;
+const LOCATION_END = 2;
+const LOCATION_START = 3;
+
+/**
  * Append `code` to the output, and record what it ends with.
  *
  * @param code - Text to append, never empty
@@ -247,7 +261,7 @@ export function writeWithMap(state: State, code: string, last: Category, node: M
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  recordSourceMapping(state, node, false);
+  recordSourceMapping(state, node, LOCATION_NAMED);
 
   state.last = last;
   updatePostfixClose(state, code);
@@ -293,7 +307,7 @@ export function writeNoLast(state: State, code: string): void {
  * @param node - Node this text came from
  */
 export function writeWithMapNoLast(state: State, code: string, node: MappableNode): void {
-  recordSourceMapping(state, node, false);
+  recordSourceMapping(state, node, LOCATION_NAMED);
 
   updatePostfixClose(state, code);
   state.output += code;
@@ -319,7 +333,7 @@ export function writeWithMapEnd(
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
 
-  recordSourceMapping(state, node, 1);
+  recordSourceMapping(state, node, LOCATION_END_MINUS_ONE);
   state.last = last;
   updatePostfixClose(state, code);
   state.output += code;
@@ -334,21 +348,21 @@ export function writeWithMapEnd(
  * Record a start mapping at the current output position without writing anything.
  */
 export function markWithMap(state: State, node: MappableNode): void {
-  recordSourceMapping(state, node, false);
+  recordSourceMapping(state, node, LOCATION_NAMED);
 }
 
 /**
  * Record a start mapping without attaching an identifier name.
  */
 export function markWithMapNoName(state: State, node: MappableNode): void {
-  recordSourceMapping(state, node, 3);
+  recordSourceMapping(state, node, LOCATION_START);
 }
 
 /**
  * Record a mapping for `node`'s end offset at the current output position.
  */
 export function markWithMapAfter(state: State, node: MappableNode): void {
-  recordSourceMapping(state, node, 2);
+  recordSourceMapping(state, node, LOCATION_END);
 }
 
 /**
@@ -392,7 +406,7 @@ export function markWithMapAtStartOffset(
 /**
  * Record one mapping, if source maps and a non-empty location are available.
  */
-function recordSourceMapping(state: State, node: MappableNode, location: false | 1 | 2 | 3): void {
+function recordSourceMapping(state: State, node: MappableNode, location: Location): void {
   if (!SOURCEMAPS) return;
 
   const { sourceText } = state;
@@ -417,11 +431,12 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
   );
 
   let sourceOffset: number;
-  if (location === 1) {
+  if (location === LOCATION_END_MINUS_ONE) {
     sourceOffset = end - 1;
-  } else if (location === 2) {
+  } else if (location === LOCATION_END) {
     sourceOffset = end;
   } else {
+    debugAssert(location === LOCATION_START || location === LOCATION_NAMED);
     sourceOffset = start;
   }
 
@@ -431,7 +446,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
-  if (location === false) {
+  if (location === LOCATION_NAMED) {
     let name: string | undefined;
     const printedName = typeof node.name === "string" ? node.name : undefined;
     if (printedName !== undefined) {
