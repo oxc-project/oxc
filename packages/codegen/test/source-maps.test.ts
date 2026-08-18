@@ -377,115 +377,123 @@ interface Printed {
   srcLines: string[];
 }
 
-for (const fixture of FIXTURES) {
-  // A cached fixture which has not been downloaded is reported as skipped rather than passing quietly.
-  // `pnpm run bench` downloads them.
-  const describeFixture = fixture.code === null ? describe.skip : describe;
+function addFixtureTests(fixture: Fixture) {
+  let printed!: Printed;
 
-  describeFixture(fixture.name, () => {
-    let printed!: Printed;
+  beforeAll(() => {
+    const { code } = fixture;
+    if (code === null) return;
 
-    beforeAll(() => {
-      const code = fixture.code as string;
-      const program = parseProgram(fixture.name, code);
-      const { jsx, ts } = fixture;
+    const program = parseProgram(fixture.name, code);
+    const { jsx, ts } = fixture;
 
-      // Both builds through the public API.
-      // `printSync` picks the maps build when `sourcemap` is true, and the no-maps build when it is not.
-      const { code: withMaps, map } = printSync(program, {
-        jsx,
-        ts,
-        sourcemap: true,
-        sourceFilename: fixture.name,
-        sourceText: code,
-      });
-      const { code: withoutMaps } = printSync(program, { jsx, ts });
-
-      printed = {
-        withMaps,
-        withoutMaps,
-        mappings: decodeSourceMap(map!),
-        outLines: getEcmaScriptLineTable(withMaps).lines,
-        srcLines: getEcmaScriptLineTable(code).lines,
-      };
+    // Both builds through the public API.
+    // `printSync` picks the maps build when `sourcemap` is true, and the no-maps build when it is not.
+    const { code: withMaps, map } = printSync(program, {
+      jsx,
+      ts,
+      sourcemap: true,
+      sourceFilename: fixture.name,
+      sourceText: code,
     });
+    const { code: withoutMaps } = printSync(program, { jsx, ts });
 
-    test("source maps do not change the printed code", () => {
-      expect(printed.withMaps).toBe(printed.withoutMaps);
-    });
+    printed = {
+      withMaps,
+      withoutMaps,
+      mappings: decodeSourceMap(map!),
+      outLines: getEcmaScriptLineTable(withMaps).lines,
+      srcLines: getEcmaScriptLineTable(code).lines,
+    };
+  });
 
-    test("emits mappings", () => {
-      expect(printed.mappings.length).toBeGreaterThan(0);
-    });
+  test("source maps do not change the printed code", () => {
+    expect(printed.withMaps).toBe(printed.withoutMaps);
+  });
 
-    test("generated positions never go backwards", () => {
-      let prevLine = 0,
-        prevCol = 0;
-      let outOfOrder = null;
-      for (const mapping of printed.mappings) {
-        const { generatedLine: line, generatedColumn: col } = mapping;
-        if (line < prevLine || (line === prevLine && col < prevCol)) {
-          outOfOrder = `${line}:${col} follows ${prevLine}:${prevCol}`;
-          break;
-        }
-        prevLine = line;
-        prevCol = col;
+  test("emits mappings", () => {
+    expect(printed.mappings.length).toBeGreaterThan(0);
+  });
+
+  test("generated positions never go backwards", () => {
+    let prevLine = 0,
+      prevCol = 0;
+    let outOfOrder = null;
+    for (const mapping of printed.mappings) {
+      const { generatedLine: line, generatedColumn: col } = mapping;
+      if (line < prevLine || (line === prevLine && col < prevCol)) {
+        outOfOrder = `${line}:${col} follows ${prevLine}:${prevCol}`;
+        break;
       }
-      expect(outOfOrder).toBeNull();
-    });
+      prevLine = line;
+      prevCol = col;
+    }
+    expect(outOfOrder).toBeNull();
+  });
 
-    test("generated positions are within the printed output", () => {
-      let outOfRange = null;
-      for (const { generatedLine, generatedColumn } of printed.mappings) {
-        const line = printed.outLines[generatedLine - 1];
-        if (line === undefined || generatedColumn > line.length) {
-          outOfRange = `${generatedLine}:${generatedColumn}`;
-          break;
-        }
+  test("generated positions are within the printed output", () => {
+    let outOfRange = null;
+    for (const { generatedLine, generatedColumn } of printed.mappings) {
+      const line = printed.outLines[generatedLine - 1];
+      if (line === undefined || generatedColumn > line.length) {
+        outOfRange = `${generatedLine}:${generatedColumn}`;
+        break;
       }
-      expect(outOfRange).toBeNull();
-    });
+    }
+    expect(outOfRange).toBeNull();
+  });
 
-    test("original positions are within the source", () => {
-      let outOfRange = null;
-      for (const { originalLine, originalColumn } of printed.mappings) {
-        const line = printed.srcLines[originalLine - 1];
-        if (line === undefined || originalColumn > line.length) {
-          outOfRange = `${originalLine}:${originalColumn}`;
-          break;
-        }
+  test("original positions are within the source", () => {
+    let outOfRange = null;
+    for (const { originalLine, originalColumn } of printed.mappings) {
+      const line = printed.srcLines[originalLine - 1];
+      if (line === undefined || originalColumn > line.length) {
+        outOfRange = `${originalLine}:${originalColumn}`;
+        break;
       }
-      expect(outOfRange).toBeNull();
-    });
+    }
+    expect(outOfRange).toBeNull();
+  });
 
-    test("every mapping names the source file", () => {
-      const wrong = printed.mappings.find((mapping) => mapping.source !== fixture.name);
-      expect(wrong).toBeUndefined();
-    });
+  test("every mapping names the source file", () => {
+    const wrong = printed.mappings.find((mapping) => mapping.source !== fixture.name);
+    expect(wrong).toBeUndefined();
+  });
 
-    // Where a mapping lands on an identifier in the output, the source position it points at
-    // should hold the same identifier. A handful disagree legitimately - a printed name can come
-    // from a node whose span starts at a keyword - so this is a ratio rather than an absolute.
-    test("identifier text agrees at mapped positions", () => {
-      let checked = 0,
-        mismatched = 0;
-      for (const mapping of printed.mappings) {
-        const outLine = printed.outLines[mapping.generatedLine - 1];
-        const srcLine = printed.srcLines[mapping.originalLine - 1];
-        if (outLine === undefined || srcLine === undefined) continue;
-        const generatedIdent = IDENT_RE.exec(outLine.slice(mapping.generatedColumn));
-        const originalIdent = IDENT_RE.exec(srcLine.slice(mapping.originalColumn));
-        if (generatedIdent !== null && originalIdent !== null) {
-          checked++;
-          if (generatedIdent[0] !== originalIdent[0]) mismatched++;
-        }
+  // Where a mapping lands on an identifier in the output, the source position it points at
+  // should hold the same identifier. A handful disagree legitimately - a printed name can come
+  // from a node whose span starts at a keyword - so this is a ratio rather than an absolute.
+  test("identifier text agrees at mapped positions", () => {
+    let checked = 0,
+      mismatched = 0;
+    for (const mapping of printed.mappings) {
+      const outLine = printed.outLines[mapping.generatedLine - 1];
+      const srcLine = printed.srcLines[mapping.originalLine - 1];
+      if (outLine === undefined || srcLine === undefined) continue;
+      const generatedIdent = IDENT_RE.exec(outLine.slice(mapping.generatedColumn));
+      const originalIdent = IDENT_RE.exec(srcLine.slice(mapping.originalColumn));
+      if (generatedIdent !== null && originalIdent !== null) {
+        checked++;
+        if (generatedIdent[0] !== originalIdent[0]) mismatched++;
       }
-      // Guard against the ratio passing because nothing was compared
-      expect(checked).toBeGreaterThan(0);
-      expect(1 - mismatched / checked).toBeGreaterThan(0.97);
-    });
+    }
+    // Guard against the ratio passing because nothing was compared
+    expect(checked).toBeGreaterThan(0);
+    expect(1 - mismatched / checked).toBeGreaterThan(0.97);
   });
 }
+
+// A cached fixture which has not been downloaded is reported as skipped rather than passing quietly.
+// `pnpm run bench` downloads them.
+const CACHED_FIXTURES = FIXTURES.filter((fixture) => fixture.code !== null);
+const MISSING_FIXTURES = FIXTURES.filter((fixture) => fixture.code === null);
+
+describe.for(CACHED_FIXTURES)("$name", (fixture) => {
+  addFixtureTests(fixture);
+});
+describe.for(MISSING_FIXTURES)("$name", { skip: true }, (fixture) => {
+  addFixtureTests(fixture);
+});
 
 // --- Indentation ----------------------------------------------------------------------------
 
