@@ -18,7 +18,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, is_vue_component_options_object},
+    utils::{find_property, is_this_object, is_vue_component_options_object},
 };
 
 fn no_mutating_props_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
@@ -321,20 +321,14 @@ impl NoMutatingProps {
         ctx: &LintContext<'a>,
     ) {
         for node in ctx.nodes() {
+            // Like upstream `isThis`, the object may be `this` itself or a
+            // `const` alias of it (`const vm = this`).
             let name = match node.kind() {
-                AstKind::StaticMemberExpression(member)
-                    if matches!(
-                        member.object.get_inner_expression(),
-                        Expression::ThisExpression(_)
-                    ) =>
-                {
+                AstKind::StaticMemberExpression(member) if is_this_object(&member.object, ctx) => {
                     member.property.name.as_str()
                 }
                 AstKind::ComputedMemberExpression(member)
-                    if matches!(
-                        member.object.get_inner_expression(),
-                        Expression::ThisExpression(_)
-                    ) =>
+                    if is_this_object(&member.object, ctx) =>
                 {
                     match member.expression.get_inner_expression() {
                         Expression::StringLiteral(lit) => lit.value.as_str(),
@@ -779,11 +773,29 @@ fn test() {
                         }
                       }
                     </script>
-                  ", None, None, Some(PathBuf::from("test.vue")))
+                  ", None, None, Some(PathBuf::from("test.vue"))),
+        // additional case (not in upstream tests): a non-const alias is not a
+        // safe `this` alias, matching upstream `isThis`
+        (
+            "
+                    <script>
+                      export default {
+                        props: ['count'],
+                        methods: {
+                          bump() {
+                            let vm = this
+                            vm.count++
+                          }
+                        }
+                      }
+                    </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
-    // Upstream fail cases that mutate props from within the <template> block are
-    // not ported: oxlint lints only the <script> part of SFCs.
     // Upstream fail cases that mutate props only from within the <template>
     // block are not ported: oxlint lints the <script> part of SFCs.
     let fail = vec![
@@ -1004,6 +1016,26 @@ fn test() {
                         methods: {
                           update() {
                             return Object.assign(this.data, { extra: 'value' })
+                          }
+                        }
+                      }
+                    </script>
+                  ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // additional case (not in upstream tests): mutation through a const
+        // `this` alias, matching upstream `isThis`
+        (
+            "
+                    <script>
+                      export default {
+                        props: ['count'],
+                        methods: {
+                          bump() {
+                            const vm = this
+                            vm.count++
                           }
                         }
                       }

@@ -326,3 +326,12 @@ assertion_line: 505
  8 │                           }
    ╰────
   help: Props are read-only. Emit an event and let the parent component perform the mutation.
+
+  ⚠ vue(no-mutating-props): Unexpected mutation of "count" prop.
+   ╭─[no_mutating_props.tsx:8:29]
+ 7 │                             const vm = this
+ 8 │                             vm.count++
+   ·                             ──────────
+ 9 │                           }
+   ╰────
+  help: Props are read-only. Emit an event and let the parent component perform the mutation.
