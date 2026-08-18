@@ -13,7 +13,9 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if !Self::try_negate_expression_in_boolean_context(expr, ctx) {
+        if Self::try_negate_expression(expr, ctx, true) {
+            Self::minimize_expression_in_boolean_context(expr, ctx);
+        } else {
             let new_expr = Expression::new_unary_expression(
                 expr.span(),
                 UnaryOperator::LogicalNot,
@@ -21,48 +23,6 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             );
             ctx.replace_expression(expr, new_expr);
-        }
-    }
-
-    fn try_negate_expression_in_boolean_context(
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
-        match expr {
-            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                let mut e = unary_expr.argument.take_in(ctx);
-                Self::minimize_expression_in_boolean_context(&mut e, ctx);
-                ctx.replace_expression(expr, e);
-                true
-            }
-            // `!(a == b)` => `a != b`
-            // `!(a != b)` => `a == b`
-            // `!(a === b)` => `a !== b`
-            // `!(a !== b)` => `a === b`
-            Expression::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
-                binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
-                Self::minimize_expression_in_boolean_context(expr, ctx);
-                true
-            }
-            // De Morgan's law for logical expressions
-            // `!(a == b || c == d)` => `a != b && c != d`
-            // `!(a == b && c == d)` => `a != b || c != d`
-            Expression::LogicalExpression(logical_expr)
-                if Self::de_morgan_paren_delta(logical_expr).is_some_and(|delta| delta <= 0) =>
-            {
-                Self::de_morgan_invert_logical(logical_expr);
-                Self::minimize_expression_in_boolean_context(expr, ctx);
-                true
-            }
-            // "!(a, b)" => "a, !b"
-            Expression::SequenceExpression(sequence_expr) => {
-                if let Some(last_expr) = sequence_expr.expressions.last_mut() {
-                    Self::negate_expression_in_boolean_context(last_expr, ctx);
-                    return true;
-                }
-                false
-            }
-            _ => false,
         }
     }
 
@@ -82,8 +42,9 @@ impl<'a> PeepholeOptimizations {
                     let mut e = u2.argument.take_in(ctx);
                     Self::minimize_expression_in_boolean_context(&mut e, ctx);
                     ctx.replace_expression(expr, e);
-                } else if Self::try_negate_expression_in_boolean_context(&mut u1.argument, ctx) {
-                    let e = u1.argument.take_in(ctx);
+                } else if Self::try_negate_expression(&mut u1.argument, ctx, true) {
+                    let mut e = u1.argument.take_in(ctx);
+                    Self::minimize_expression_in_boolean_context(&mut e, ctx);
                     ctx.replace_expression(expr, e);
                 } else {
                     Self::minimize_expression_in_boolean_context(&mut u1.argument, ctx);

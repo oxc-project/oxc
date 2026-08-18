@@ -9,36 +9,30 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     pub fn minimize_not(
         span: Span,
-        expr: Expression<'a>,
+        mut expr: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
+        boolean_context: bool,
     ) -> Expression<'a> {
-        let mut unary =
-            Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx);
-        Self::minimize_unary(&mut unary, ctx);
-        unary
+        if !Self::try_negate_expression(&mut expr, ctx, boolean_context) {
+            return Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx);
+        }
+        expr
     }
 
-    /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
-    pub fn minimize_unary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::UnaryExpression(e) = expr else { return };
-        if !e.operator.is_not() {
-            return;
-        }
-        Self::minimize_expression_in_boolean_context(&mut e.argument, ctx);
-        match &mut e.argument {
+    pub fn try_negate_expression(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+        boolean_context: bool,
+    ) -> bool {
+        match expr {
             // `!!true` -> `true`
             // `!!false` -> `false`
             Expression::UnaryExpression(e)
-                if e.operator.is_not() && e.argument.value_type(ctx).is_boolean() =>
+                if e.operator.is_not()
+                    && (boolean_context || e.argument.value_type(ctx).is_boolean()) =>
             {
-                // Both discarded `!` wrappers contain no references.
-                ctx.replace_expression_with(expr, |old, _| {
-                    let Expression::UnaryExpression(outer) = old else { unreachable!() };
-                    let Expression::UnaryExpression(inner) = outer.unbox().argument else {
-                        unreachable!()
-                    };
-                    inner.unbox().argument
-                });
+                ctx.replace_expression_with(expr, Self::unwrap_unary);
+                true
             }
             // `!(a == b)` => `a != b`
             // `!(a != b)` => `a == b`
@@ -46,7 +40,7 @@ impl<'a> PeepholeOptimizations {
             // `!(a !== b)` => `a === b`
             Expression::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
                 binary_expr.operator = binary_expr.operator.equality_inverse_operator().unwrap();
-                ctx.replace_expression_with(expr, Self::unwrap_unary);
+                true
             }
             // `!(a == b || c == d)` => `a != b && c != d`
             // `!(a == b && c == d)` => `a != b || c != d`
@@ -60,18 +54,33 @@ impl<'a> PeepholeOptimizations {
                 if Self::de_morgan_paren_delta(logical_expr).is_some_and(|delta| delta <= 0) =>
             {
                 Self::de_morgan_invert_logical(logical_expr);
-                ctx.replace_expression_with(expr, Self::unwrap_unary);
+                true
             }
             // "!(a, b)" => "a, !b"
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
                     ctx.replace_expression_with(last_expr, |old, ctx| {
-                        Self::minimize_not(old.span(), old, ctx)
+                        Self::minimize_not(old.span(), old, ctx, false)
                     });
-                    ctx.replace_expression_with(expr, Self::unwrap_unary);
+                    return true;
                 }
+                false
             }
-            _ => {}
+            _ => false,
+        }
+    }
+
+    /// `MaybeSimplifyNot`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L73>
+    pub fn minimize_unary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::UnaryExpression(e) = expr else { return };
+        if !e.operator.is_not() {
+            return;
+        }
+        Self::minimize_expression_in_boolean_context(&mut e.argument, ctx);
+
+        if Self::try_negate_expression(&mut e.argument, ctx, false) {
+            let new_expr = e.argument.take_in(ctx);
+            ctx.replace_expression(expr, new_expr);
         }
     }
 
@@ -85,7 +94,7 @@ impl<'a> PeepholeOptimizations {
     /// Character delta from parentheses added or removed by De Morgan's law
     /// (flipping `&&` <-> `||` changes which nested operands need parens), or
     /// `None` if some operand cannot invert its operator in place.
-    pub fn de_morgan_paren_delta(e: &LogicalExpression<'a>) -> Option<i32> {
+    fn de_morgan_paren_delta(e: &LogicalExpression<'a>) -> Option<i32> {
         if !matches!(e.operator, LogicalOperator::And | LogicalOperator::Or) {
             return None;
         }
@@ -111,7 +120,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Apply De Morgan's law in place. Only called on chains approved by
     /// [`Self::de_morgan_paren_delta`].
-    pub fn de_morgan_invert_logical(e: &mut LogicalExpression<'a>) {
+    fn de_morgan_invert_logical(e: &mut LogicalExpression<'a>) {
         e.operator = if e.operator == LogicalOperator::And {
             LogicalOperator::Or
         } else {
