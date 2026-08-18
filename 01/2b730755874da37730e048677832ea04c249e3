@@ -1,0 +1,19 @@
+packages/codegen/tsdown_plugins/strip_ts.ts
+  s_22d0a4f8830497::t_ea861914f10099 46-48,50-54,58,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "012b730755874da37730e048677832ea04c249e3",
+  "prompts": {},
+  "sessions": {
+    "s_22d0a4f8830497": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01514-38c7-7d10-bbb3-9c9ea9be5e3f",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
