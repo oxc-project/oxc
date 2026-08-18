@@ -105,7 +105,7 @@ impl<'a> PeepholeOptimizations {
 
         // Drop a trailing unconditional jump statement if applicable
         if let Some(last_stmt) = stmts.last()
-            && Self::can_remove_termination_statement(last_stmt, ctx)
+            && Self::can_remove_termination_statement(last_stmt, true, ctx)
         {
             let dropped = stmts.pop().unwrap();
             ctx.drop_statement(&dropped);
@@ -825,7 +825,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.drop_statement(&previous.consequent);
                 }
 
-                if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
+                if Self::can_remove_termination_statement(&if_stmt.consequent, true, ctx) {
                     // Don't do this transformation if the branch condition could
                     // potentially access symbols declared later on on this scope below.
                     // If so, inverting the branch condition and nesting statements after
@@ -881,32 +881,25 @@ impl<'a> PeepholeOptimizations {
                 }
             }
 
+            // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
             if !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
                 && if_stmt.consequent.is_terminated()
+                && let Some(alternate) = if_stmt.alternate.take()
             {
-                // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
                 result.push(Statement::IfStatement(if_stmt));
-                loop {
-                    if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                        && !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
-                        && if_stmt.consequent.is_terminated()
-                        && let Some(stmt) = if_stmt.alternate.take()
-                    {
-                        if let Statement::BlockStatement(block_stmt) = stmt {
-                            Self::handle_block(result, block_stmt, ctx);
-                        } else {
-                            result.push(stmt);
-                            ctx.notice_change();
-                        }
-                        continue;
-                    }
-                    break;
+
+                if let Statement::BlockStatement(block_stmt) = alternate {
+                    Self::handle_block(result, block_stmt, ctx);
+                } else {
+                    result.push(alternate);
+                    ctx.notice_change();
                 }
                 return ControlFlow::Continue(());
             }
         }
 
         result.push(Statement::IfStatement(if_stmt));
+
         ControlFlow::Continue(())
     }
 
@@ -2016,29 +2009,56 @@ impl<'a> PeepholeOptimizations {
     /// safely removed:
     /// - Unlabeled `continue` statements that terminate a loop body
     /// - Bare `return` statements that terminate a function body
-    fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    /// - Unlabeled `break` statements that terminate a `do...while` body whose test is statically `false`
+    ///
+    /// skip_first_transparent_body: is used to ignore the first block Statement if we checked it before
+    ///
+    /// Limitations:
+    /// A single wrapping block is also transparent (caller guarantees it is the last statement),
+    /// but deeper nested block (statements) are not — we cannot verify they are last in their parent.
+    pub fn can_remove_termination_statement(
+        stmt: &Statement<'a>,
+        skip_first_transparent_body: bool,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         match stmt {
             // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
             Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
-                matches!(
-                    ctx.ancestors().nth(1),
-                    Some(
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
                         Ancestor::ForStatementBody(_)
-                            | Ancestor::ForInStatementBody(_)
-                            | Ancestor::ForOfStatementBody(_)
-                            | Ancestor::WhileStatementBody(_)
-                            | Ancestor::DoWhileStatementBody(_)
-                    )
-                )
+                        | Ancestor::ForInStatementBody(_)
+                        | Ancestor::ForOfStatementBody(_)
+                        | Ancestor::WhileStatementBody(_)
+                        | Ancestor::DoWhileStatementBody(_) => {
+                            return true;
+                        }
+                        Ancestor::BlockStatementBody(_)
+                            if skip_first_transparent_body && index == 0 => {}
+                        Ancestor::IfStatementConsequent(_)
+                        | Ancestor::IfStatementAlternate(_)
+                        | Ancestor::LabeledStatementBody(_) => {}
+                        _ => return false,
+                    }
+                }
+                false
             }
             // unlabeled `break;` that terminates a `do...while` body if test is false.
             Statement::BreakStatement(stmt) if stmt.label.is_none() => {
-                match ctx.ancestors().nth(1) {
-                    Some(Ancestor::DoWhileStatementBody(do_while)) => {
-                        do_while.test().get_side_free_boolean_value(ctx) == Some(false)
+                for (index, ancestor) in ctx.ancestors().enumerate() {
+                    match ancestor {
+                        Ancestor::DoWhileStatementBody(do_while) => {
+                            return do_while.test().get_side_free_boolean_value(ctx) == Some(false);
+                        }
+                        Ancestor::BlockStatementBody(_)
+                            if skip_first_transparent_body && index == 0 => {}
+                        Ancestor::IfStatementConsequent(_)
+                        | Ancestor::IfStatementAlternate(_)
+                        | Ancestor::LabeledStatementBody(_) => {}
+                        _ => return false,
                     }
-                    _ => false,
                 }
+                false
             }
             // bare `return;` in function-body scope.
             Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {

@@ -40,9 +40,10 @@ fn test_minimize_if() {
           }
         }",
         "function bar() {
-          if (!x) return null;
-          if (y) return foo;
-          if (z) return bar;
+          if (x) {
+            if (y) return foo;
+            if (z) return bar;
+          } else return null;
         }",
     );
 
