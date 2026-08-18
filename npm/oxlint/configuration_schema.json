@@ -9133,6 +9133,26 @@
         "unicorn/no-magic-array-flat-depth": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-negated-comparison": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoNegatedComparison"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/no-negated-condition": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -15013,6 +15033,18 @@
             "type": "string"
           },
           "markdownDescription": "An array of glob strings for modules that should be ignored by the rule.\nFor example, `[\"*.json\"]` will ignore all JSON imports."
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoNegatedComparison": {
+      "type": "object",
+      "properties": {
+        "checkLogicalExpressions": {
+          "description": "Also check logical (`&&`/`||`) expressions that only contain equality comparisons.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Also check logical (`&&`/`||`) expressions that only contain equality comparisons."
         }
       },
       "additionalProperties": false

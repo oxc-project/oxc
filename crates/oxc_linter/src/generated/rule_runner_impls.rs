@@ -3373,6 +3373,12 @@ impl RuleRunner for crate::rules::unicorn::no_magic_array_flat_depth::NoMagicArr
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_negated_comparison::NoNegatedComparison {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::UnaryExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::no_negated_condition::NoNegatedCondition {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ConditionalExpression, AstType::IfStatement]));
