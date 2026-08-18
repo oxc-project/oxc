@@ -40,13 +40,12 @@ impl<'a> PeepholeOptimizations {
 
             // `if (!a) {} else x;` => `if (a) x;`
             // `if (a)  {} else x;` => `if (!a) x;`
-            let new_test = match &mut if_stmt.test {
+            ctx.replace_expression_with(&mut if_stmt.test, |expr, ctx| match expr {
                 Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                    unary_expr.argument.take_in(ctx)
+                    unary_expr.unbox().argument
                 }
-                _ => Self::minimize_not(if_stmt.test.span(), if_stmt.test.take_in(ctx), ctx),
-            };
-            ctx.replace_expression(&mut if_stmt.test, new_test);
+                _ => Self::minimize_not(expr.span(), expr, ctx),
+            });
             ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
         }
 
@@ -69,13 +68,12 @@ impl<'a> PeepholeOptimizations {
             // Avoid swapping when alternate is an `if` — that risks a worse chain.
             // `if (!a) return b; else return c;` => `if (a) return c; else return b;`
             if Self::should_invert_if(&if_stmt.consequent, alternate, &if_stmt.test, ctx) {
-                let new_test = match &mut if_stmt.test {
+                ctx.replace_expression_with(&mut if_stmt.test, |expr, ctx| match expr {
                     Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                        unary_expr.argument.take_in(ctx)
+                        unary_expr.unbox().argument
                     }
-                    _ => Self::minimize_not(if_stmt.test.span(), if_stmt.test.take_in(ctx), ctx),
-                };
-                ctx.replace_expression(&mut if_stmt.test, new_test);
+                    _ => Self::minimize_not(expr.span(), expr, ctx),
+                });
                 std::mem::swap(&mut if_stmt.consequent, alternate);
             }
         } else if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
