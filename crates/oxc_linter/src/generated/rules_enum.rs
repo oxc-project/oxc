@@ -846,6 +846,7 @@ pub use crate::rules::vue::no_computed_properties_in_data::NoComputedPropertiesI
 pub use crate::rules::vue::no_deprecated_data_object_declaration::NoDeprecatedDataObjectDeclaration as VueNoDeprecatedDataObjectDeclaration;
 pub use crate::rules::vue::no_deprecated_delete_set::NoDeprecatedDeleteSet as VueNoDeprecatedDeleteSet;
 pub use crate::rules::vue::no_deprecated_destroyed_lifecycle::NoDeprecatedDestroyedLifecycle as VueNoDeprecatedDestroyedLifecycle;
+pub use crate::rules::vue::no_deprecated_dollar_listeners_api::NoDeprecatedDollarListenersApi as VueNoDeprecatedDollarListenersApi;
 pub use crate::rules::vue::no_deprecated_events_api::NoDeprecatedEventsApi as VueNoDeprecatedEventsApi;
 pub use crate::rules::vue::no_deprecated_model_definition::NoDeprecatedModelDefinition as VueNoDeprecatedModelDefinition;
 pub use crate::rules::vue::no_deprecated_props_default_this::NoDeprecatedPropsDefaultThis as VueNoDeprecatedPropsDefaultThis;
@@ -1722,6 +1723,7 @@ pub enum RuleEnum {
     NodeNoProcessEnv(NodeNoProcessEnv),
     NodeNoSync(NodeNoSync),
     NodeNoTopLevelAwait(NodeNoTopLevelAwait),
+    VueNoDeprecatedDollarListenersApi(VueNoDeprecatedDollarListenersApi),
     VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
@@ -2695,7 +2697,9 @@ const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
 const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
 const NODE_NO_SYNC_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
 const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = NODE_NO_SYNC_ID + 1usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = NODE_NO_TOP_LEVEL_AWAIT_ID + 1usize;
+const VUE_NO_DEPRECATED_DOLLAR_LISTENERS_API_ID: usize = NODE_NO_TOP_LEVEL_AWAIT_ID + 1usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize =
+    VUE_NO_DEPRECATED_DOLLAR_LISTENERS_API_ID + 1usize;
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = VUE_COMPONENT_DEFINITION_NAME_CASING_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
@@ -2748,7 +2752,7 @@ const VUE_VALID_DEFINE_EMITS_ID: usize = VUE_RETURN_IN_EMITS_VALIDATOR_ID + 1usi
 const VUE_VALID_DEFINE_OPTIONS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_OPTIONS_ID + 1usize;
 const VUE_VALID_NEXT_TICK_ID: usize = VUE_VALID_DEFINE_PROPS_ID + 1usize;
-static RULE_NAMES: [&str; 870usize] = [
+static RULE_NAMES: [&str; 871usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3573,6 +3577,7 @@ static RULE_NAMES: [&str; 870usize] = [
     NodeNoProcessEnv::NAME,
     NodeNoSync::NAME,
     NodeNoTopLevelAwait::NAME,
+    VueNoDeprecatedDollarListenersApi::NAME,
     VueComponentDefinitionNameCasing::NAME,
     VueDefineEmitsDeclaration::NAME,
     VueDefinePropsDeclaration::NAME,
@@ -4573,6 +4578,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
             Self::NodeNoSync(_) => NODE_NO_SYNC_ID,
             Self::NodeNoTopLevelAwait(_) => NODE_NO_TOP_LEVEL_AWAIT_ID,
+            Self::VueNoDeprecatedDollarListenersApi(_) => VUE_NO_DEPRECATED_DOLLAR_LISTENERS_API_ID,
             Self::VueComponentDefinitionNameCasing(_) => VUE_COMPONENT_DEFINITION_NAME_CASING_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
@@ -5622,6 +5628,9 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
             Self::NodeNoSync(_) => NodeNoSync::CATEGORY,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::CATEGORY,
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::CATEGORY
+            }
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
@@ -6613,6 +6622,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
             Self::NodeNoSync(_) => NodeNoSync::FIX,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::FIX,
+            Self::VueNoDeprecatedDollarListenersApi(_) => VueNoDeprecatedDollarListenersApi::FIX,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
@@ -7860,6 +7870,9 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
             Self::NodeNoSync(_) => NodeNoSync::documentation(),
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::documentation(),
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::documentation()
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::documentation()
             }
@@ -10289,6 +10302,10 @@ impl RuleEnum {
             }
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::config_schema(generator)
                 .or_else(|| NodeNoTopLevelAwait::schema(generator)),
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::config_schema(generator)
+                    .or_else(|| VueNoDeprecatedDollarListenersApi::schema(generator))
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::config_schema(generator)
                     .or_else(|| VueComponentDefinitionNameCasing::schema(generator))
@@ -11253,6 +11270,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => "node",
             Self::NodeNoSync(_) => "node",
             Self::NodeNoTopLevelAwait(_) => "node",
+            Self::VueNoDeprecatedDollarListenersApi(_) => "vue",
             Self::VueComponentDefinitionNameCasing(_) => "vue",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
@@ -13258,6 +13276,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
             Self::NodeNoSync(rule) => rule.run(node, ctx),
             Self::NodeNoTopLevelAwait(rule) => rule.run(node, ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run(node, ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run(node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -14145,6 +14164,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
             Self::NodeNoSync(rule) => rule.run_once(ctx),
             Self::NodeNoTopLevelAwait(rule) => rule.run_once(ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run_once(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_once(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -15145,6 +15165,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoSync(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -16037,6 +16058,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
             Self::NodeNoSync(rule) => rule.should_run(ctx),
             Self::NodeNoTopLevelAwait(rule) => rule.should_run(ctx),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.should_run(ctx),
             Self::VueComponentDefinitionNameCasing(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
@@ -17279,6 +17301,9 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
             Self::NodeNoSync(_) => NodeNoSync::IS_TSGOLINT_RULE,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::IS_TSGOLINT_RULE,
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::IS_TSGOLINT_RULE
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::IS_TSGOLINT_RULE
             }
@@ -18343,6 +18368,9 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::VERSION,
             Self::NodeNoSync(_) => NodeNoSync::VERSION,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::VERSION,
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::VERSION
+            }
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::VERSION,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::VERSION,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::VERSION,
@@ -19428,6 +19456,9 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
             Self::NodeNoSync(_) => NodeNoSync::HAS_CONFIG,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::HAS_CONFIG,
+            Self::VueNoDeprecatedDollarListenersApi(_) => {
+                VueNoDeprecatedDollarListenersApi::HAS_CONFIG
+            }
             Self::VueComponentDefinitionNameCasing(_) => {
                 VueComponentDefinitionNameCasing::HAS_CONFIG
             }
@@ -20424,6 +20455,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::INFO,
             Self::NodeNoSync(_) => NodeNoSync::INFO,
             Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::INFO,
+            Self::VueNoDeprecatedDollarListenersApi(_) => VueNoDeprecatedDollarListenersApi::INFO,
             Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::INFO,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::INFO,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::INFO,
@@ -21307,6 +21339,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
             Self::NodeNoSync(rule) => rule.types_info(),
             Self::NodeNoTopLevelAwait(rule) => rule.types_info(),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.types_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
@@ -22181,6 +22214,7 @@ impl RuleEnum {
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
             Self::NodeNoSync(rule) => rule.run_info(),
             Self::NodeNoTopLevelAwait(rule) => rule.run_info(),
+            Self::VueNoDeprecatedDollarListenersApi(rule) => rule.run_info(),
             Self::VueComponentDefinitionNameCasing(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
@@ -23187,6 +23221,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
         RuleEnum::NodeNoSync(NodeNoSync::default()),
         RuleEnum::NodeNoTopLevelAwait(NodeNoTopLevelAwait::default()),
+        RuleEnum::VueNoDeprecatedDollarListenersApi(VueNoDeprecatedDollarListenersApi::default()),
         RuleEnum::VueComponentDefinitionNameCasing(VueComponentDefinitionNameCasing::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),

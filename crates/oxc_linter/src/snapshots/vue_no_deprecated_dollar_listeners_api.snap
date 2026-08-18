@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ vue(no-deprecated-dollar-listeners-api): `$listeners` is deprecated.
+    ╭─[no_deprecated_dollar_listeners_api.tsx:9:39]
+  8 │                         foo () {
+  9 │                           return this.$listeners
+    ·                                       ──────────
+ 10 │                         }
+    ╰────
+  help: Use `$attrs` instead; in Vue 3, listeners are included in `$attrs`.
+
+  ⚠ vue(no-deprecated-dollar-listeners-api): `$listeners` is deprecated.
+    ╭─[no_deprecated_dollar_listeners_api.tsx:10:35]
+  9 │                         foo () {
+ 10 │                           fn(this.$listeners)
+    ·                                   ──────────
+ 11 │                         }
+    ╰────
+  help: Use `$attrs` instead; in Vue 3, listeners are included in `$attrs`.
+
+  ⚠ vue(no-deprecated-dollar-listeners-api): `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:7:37]
+ 6 │                           const vm = this
+ 7 │                           return vm.$listeners
+   ·                                     ──────────
+ 8 │                         }
+   ╰────
+  help: Use `$attrs` instead; in Vue 3, listeners are included in `$attrs`.
+
+  ⚠ vue(no-deprecated-dollar-listeners-api): `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:8:39]
+ 7 │                           function fn() {
+ 8 │                             return vm.$listeners
+   ·                                       ──────────
+ 9 │                           }
+   ╰────
+  help: Use `$attrs` instead; in Vue 3, listeners are included in `$attrs`.
+
+  ⚠ vue(no-deprecated-dollar-listeners-api): `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:7:41]
+ 6 │                           const vm = this
+ 7 │                           const a = vm?.$listeners
+   ·                                         ──────────
+ 8 │                           const b = this?.$listeners
+   ╰────
+  help: Use `$attrs` instead; in Vue 3, listeners are included in `$attrs`.
+
+  ⚠ vue(no-deprecated-dollar-listeners-api): `$listeners` is deprecated.
+   ╭─[no_deprecated_dollar_listeners_api.tsx:8:43]
+ 7 │                           const a = vm?.$listeners
+ 8 │                           const b = this?.$listeners
+   ·                                           ──────────
+ 9 │                         }
+   ╰────
+  help: Use `$attrs` instead; in Vue 3, listeners are included in `$attrs`.
