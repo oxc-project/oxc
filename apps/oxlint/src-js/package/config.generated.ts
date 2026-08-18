@@ -1343,6 +1343,7 @@ export interface DummyRuleMap {
   "react/forbid-elements"?: RuleNoConfig | [AllowWarnDeny, ForbidElementsConfig];
   "react/forward-ref-uses-ref"?: RuleNoConfig;
   "react/function-component-definition"?: RuleNoConfig | [AllowWarnDeny, FunctionComponentDefinitionConfig];
+  "react/gating"?: RuleNoConfig | [AllowWarnDeny, GatingOptions];
   "react/globals"?: RuleNoConfig;
   "react/hook-use-state"?: RuleNoConfig | [AllowWarnDeny, HookUseStateConfig];
   "react/hooks"?: RuleNoConfig;
@@ -4769,6 +4770,33 @@ export interface ForbidElementsConfig {
 export interface FunctionComponentDefinitionConfig {
   namedComponents?: NamedComponents;
   unnamedComponents?: UnnamedComponents;
+}
+export interface GatingOptions {
+  /**
+   * Enable validation of `"use memo if(...)"` directives.
+   */
+  dynamicGating?: DynamicGatingImport;
+  /**
+   * React Compiler feature-flag import configuration to validate.
+   * Oxlint does not emit gated code.
+   */
+  gating?: GatingImport;
+}
+export interface DynamicGatingImport {
+  /**
+   * Module that exports flags referenced by dynamic gating directives.
+   */
+  source: string;
+}
+export interface GatingImport {
+  /**
+   * Name of the imported function that guards compiled functions.
+   */
+  importSpecifierName: string;
+  /**
+   * Module that exports the gating function.
+   */
+  source: string;
 }
 export interface HookUseStateConfig {
   /**

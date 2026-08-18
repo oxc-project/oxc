@@ -453,6 +453,7 @@ pub(crate) mod react {
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
     pub mod function_component_definition;
+    pub mod gating;
     pub mod globals;
     pub mod hook_use_state;
     pub mod hooks;

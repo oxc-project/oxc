@@ -419,6 +419,7 @@ react/exhaustive-effect-dependencies                       |      7
 react/forbid-component-props                               |    452
 react/forward-ref-uses-ref                                 |  62606
 react/function-component-definition                        |  16812
+react/gating                                               |      7
 react/globals                                              |      7
 react/hook-use-state                                       |  62606
 react/hooks                                                |      7
