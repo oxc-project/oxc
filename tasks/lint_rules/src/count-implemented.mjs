@@ -26,7 +26,7 @@ const statsForPlugin = (pluginName) => {
   const entries = Array.from(ruleEntries.entries()).filter(([name]) => name.startsWith(prefix));
   const filtered = entries.filter(([_name, e]) => !e.isNotSupported);
   const total = filtered.length;
-  const implemented = filtered.filter(([name, e]) => e.isImplemented).length;
+  const implemented = filtered.filter(([_name, e]) => e.isImplemented).length;
   const notImplemented = total - implemented;
   const notSupported = entries.length - filtered.length;
   return { pluginName, total, implemented, notImplemented, notSupported };
