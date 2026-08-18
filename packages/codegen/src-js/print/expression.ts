@@ -240,9 +240,9 @@ export function printExpression(
       throw new Error(`Unknown expression type: ${node.type}`);
   }
 
-  // Rust adds an exclusive-end mapping after a postfix operand which ended in `)` or `]`, so the
-  // punctuation of a following call/member/tag chain resolves to the operand rather than one
-  // character to its left.
+  // Rust adds an exclusive-end mapping after a postfix operand which ended in `)` or `]`,
+  // so the punctuation of a following call/member/tag chain resolves to the operand,
+  // rather than one character to its left
   if (SOURCEMAPS && precedence === PREC_POSTFIX && state.lastWasPostfixClose) {
     markWithMapAfter(state, node);
   }

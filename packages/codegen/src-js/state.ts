@@ -142,7 +142,7 @@ export class State {
     }
 
     // `writeWithMap` records the output offset and original position of every mapped node,
-    // and `generateSourceMap` encodes them in one pass at the end.
+    // and `generateSourceMap` encodes them in one pass at the end
     if (options.sourcemap !== true) {
       this.mapPositions = null;
       this.mapNames = null;
