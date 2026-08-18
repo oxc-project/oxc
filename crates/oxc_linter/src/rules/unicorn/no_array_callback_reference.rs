@@ -7,7 +7,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_import_from_module,
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::is_import_from_module,
 };
 
 fn no_array_callback_reference_diagnostic(span: Span) -> OxcDiagnostic {
