@@ -682,7 +682,7 @@ impl DisableDirectivesBuilder {
                         .next_back()
                         .map_or(0, |line| comment_span.start - line.len() as u32);
                     let comment_start = comment_span.start as usize;
-                    let stop = memchr2(b'\r', b'\n', source_text[comment_start..].as_bytes())
+                    let stop = memchr2(b'\r', b'\n', &source_text.as_bytes()[comment_start..])
                         .map_or(source_text.len(), |offset| comment_start + offset)
                         as u32;
 
@@ -1763,6 +1763,7 @@ mod tests {
     }
 
     #[test]
+    #[expect(clippy::cast_possible_truncation)]
     fn disable_line_covers_the_entire_physical_line() {
         test_directives(
             |prefix| {
