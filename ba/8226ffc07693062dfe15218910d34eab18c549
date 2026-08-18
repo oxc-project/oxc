@@ -1,0 +1,21 @@
+napi/parser/src-js/raw-transfer/common.js
+  s_22d0a4f8830497::t_dd41b4264c8921 113
+tasks/lint_rules/src/count-implemented.mjs
+  s_22d0a4f8830497::t_e27ca989e3425a 27,29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ba8226ffc07693062dfe15218910d34eab18c549",
+  "prompts": {},
+  "sessions": {
+    "s_22d0a4f8830497": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01514-38c7-7d10-bbb3-9c9ea9be5e3f",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
