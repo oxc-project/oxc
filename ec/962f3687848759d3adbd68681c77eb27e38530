@@ -1,0 +1,19 @@
+packages/codegen/src-js/print/typescript.ts
+  s_fb9fd7ba381866::t_1b4d476c8731fb 11,1161-1162,1166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ec962f3687848759d3adbd68681c77eb27e38530",
+  "prompts": {},
+  "sessions": {
+    "s_fb9fd7ba381866": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0155f-c45a-7810-beeb-13acfd0f857f",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
