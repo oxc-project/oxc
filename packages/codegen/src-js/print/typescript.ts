@@ -8,6 +8,7 @@ import {
   CAT_OTHER,
   CAT_QUESTION,
   debugAssertLastFresh,
+  markWithMapAtStartOffset,
   write,
   writeNoLast,
   writeWithMap,
@@ -1149,12 +1150,13 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
     printString(state, id.value, id);
   } else {
     // Computed string/template member name
-    write(state, "[", CAT_OTHER);
     if (id.type === "TemplateLiteral") {
-      writeNoLast(state, "`");
+      markWithMapAtStartOffset(state, id.quasis[0], 1);
+      writeNoLast(state, "[`");
       writeNoLast(state, id.quasis[0].value.raw);
       write(state, "`", CAT_OTHER);
     } else {
+      write(state, "[", CAT_OTHER);
       printExpression(id, state, PREC_COMMA, CTX_NONE);
     }
     write(state, "]", CAT_OTHER);
