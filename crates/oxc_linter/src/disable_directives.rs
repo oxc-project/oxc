@@ -349,9 +349,14 @@ impl DisableDirectives {
                 // For next-line directives, only check if the diagnostic starts within the interval
                 // We intentionally only check span.start (not span.end) to avoid suppressing
                 // diagnostics for large constructs that merely contain the disabled line
+                let comment_span = interval.val.comment_span();
                 #[expect(clippy::suspicious_operation_groupings)]
                 {
                     span.start >= interval.start && span.start < interval.stop
+                        // A line directive must not suppress a diagnostic reported on itself.
+                        // `eslint-plugin-unicorn` achieves this by reporting
+                        // `no-abusive-eslint-disable` at a synthetic column before the line.
+                        && (span.start < comment_span.start || span.start >= comment_span.end)
                 }
             } else {
                 // For regular disable directives, check if there's any overlap
