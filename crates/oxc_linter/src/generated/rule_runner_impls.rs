@@ -5239,17 +5239,17 @@ impl RuleRunner for crate::rules::node::no_top_level_await::NoTopLevelAwait {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
-impl RuleRunner for crate::rules::vue::component_options_name_casing::ComponentOptionsNameCasing {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ObjectExpression]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
-}
-
 impl RuleRunner
     for crate::rules::vue::component_definition_name_casing::ComponentDefinitionNameCasing
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ObjectExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
+impl RuleRunner for crate::rules::vue::component_options_name_casing::ComponentOptionsNameCasing {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ObjectExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

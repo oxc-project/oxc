@@ -1180,15 +1180,15 @@
       "type": "string",
       "enum": [
         "PascalCase",
-        "kebab-case",
-        "camelCase"
+        "kebab-case"
       ]
     },
     "CaseType2": {
       "type": "string",
       "enum": [
         "PascalCase",
-        "kebab-case"
+        "kebab-case",
+        "camelCase"
       ]
     },
     "CaseType3": {
@@ -10295,7 +10295,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/CaseType2"
+                  "$ref": "#/definitions/CaseType"
                 }
               ],
               "maxItems": 2,
@@ -10315,7 +10315,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/CaseType"
+                  "$ref": "#/definitions/CaseType2"
                 }
               ],
               "maxItems": 2,
