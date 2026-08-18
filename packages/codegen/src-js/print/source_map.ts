@@ -24,6 +24,13 @@ const MIN_MAPPING_BUFFER_LENGTH = 64;
 const ESTIMATED_BYTES_PER_MAPPING = 6;
 const MAX_MAPPING_SEGMENT_LENGTH = 64;
 
+// Buffer's initial capacity must be greater than or equal to the maximum extra capacity required
+// at a `growMappingBuffer` call. See that function for more details.
+debugAssert(
+  MIN_MAPPING_BUFFER_LENGTH >= MAX_MAPPING_SEGMENT_LENGTH,
+  "`MIN_MAPPING_BUFFER_LENGTH` must be >= `MAX_MAPPING_SEGMENT_LENGTH`",
+);
+
 // `\r\n` must be one line terminator, rather than two.
 const NEXT_LINE_TERMINATOR_REGEX = /\r\n|[\r\n\u2028\u2029]/g;
 
@@ -103,7 +110,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
       previousGeneratedColumn = 0;
       hasSegmentOnLine = false;
       if (mappingLength === mappingBuffer.length) {
-        mappingBuffer = growMappingBuffer(mappingBuffer, mappingLength, mappingLength + 1);
+        mappingBuffer = growMappingBuffer(mappingBuffer, mappingLength);
       }
       mappingBuffer[mappingLength++] = 59; // `;`
     }
@@ -221,11 +228,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     }
 
     if (mappingLength + MAX_MAPPING_SEGMENT_LENGTH > mappingBuffer.length) {
-      mappingBuffer = growMappingBuffer(
-        mappingBuffer,
-        mappingLength,
-        mappingLength + MAX_MAPPING_SEGMENT_LENGTH,
-      );
+      mappingBuffer = growMappingBuffer(mappingBuffer, mappingLength);
     }
 
     if (hasSegmentOnLine) mappingBuffer[mappingLength++] = 44; // `,`
@@ -344,14 +347,17 @@ function writeVlq(buffer: Buffer, index: number, value: number): number {
 }
 
 /**
- * Grow the mappings buffer to contain `requiredLength`, preserving its written prefix.
+ * Grow the mappings buffer by doubling, preserving its written prefix.
+ *
+ * The returned buffer is guaranteed to have at least `MAX_MAPPING_SEGMENT_LENGTH` spare capacity.
  */
-function growMappingBuffer(buffer: Buffer, writtenLength: number, requiredLength: number): Buffer {
-  let capacity = buffer.length * 2;
-  while (capacity < requiredLength) capacity *= 2;
-  const next = Buffer.allocUnsafe(capacity);
-  buffer.copy(next, 0, 0, writtenLength);
-  return next;
+function growMappingBuffer(buffer: Buffer, writtenLength: number): Buffer {
+  // Buffer starts with at least `MIN_MAPPING_BUFFER_LENGTH` bytes capacity.
+  // Maximum extra capacity required is `MAX_MAPPING_SEGMENT_LENGTH`, which is <= `MIN_MAPPING_BUFFER_LENGTH`,
+  // so doubling capacity is always enough.
+  const newBuffer = Buffer.allocUnsafe(buffer.length * 2);
+  buffer.copy(newBuffer, 0, 0, writtenLength);
+  return newBuffer;
 }
 
 /**
