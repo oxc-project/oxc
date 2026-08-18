@@ -186,7 +186,7 @@ describe("Rust conformance", () => {
   test("returns a source map only when requested", () => {
     const code = "const value = 1;";
     const program = parseProgram("return-map.js", code);
-    expect(printSync(program).map).toBeUndefined();
+    expect(printSync(program).map).toBeNull();
 
     const { map } = printSync(program, {
       sourcemap: true,

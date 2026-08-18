@@ -12,7 +12,7 @@ export interface SourceMap {
 /** Result returned by `printSync`. */
 export interface CodegenResult {
   code: string;
-  map?: SourceMap;
+  map: SourceMap | null;
 }
 
 /**

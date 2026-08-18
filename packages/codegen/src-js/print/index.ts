@@ -43,5 +43,5 @@ export function printSync(node: ESTree.Node, state: State, options: Options): Co
     return { code: state.output, map: generateSourceMap(state, options) };
   }
 
-  return { code: state.output };
+  return { code: state.output, map: null };
 }

@@ -79,7 +79,7 @@ const { code } = printSync(program, {
 ### `printSync(node, options?)`
 
 ```ts
-function printSync(node: Node, options?: Options): { code: string; map?: SourceMap };
+function printSync(node: Node, options?: Options): { code: string; map: SourceMap | null };
 ```
 
 Prints a complete `Program` or a single statement and returns the generated source code,
