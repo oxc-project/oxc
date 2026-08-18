@@ -110,8 +110,11 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     }
 
     const { decorators } = param;
-    markWithMapNoName(state, decorators != null && decorators.length > 0 ? decorators[0] : param);
-    if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
+    if (decorators != null && decorators.length > 0) {
+      printDecorators(decorators, state);
+    } else {
+      markWithMapNoName(state, param);
+    }
 
     if (TS && param.type === "TSParameterProperty") {
       if (param.accessibility != null) {
