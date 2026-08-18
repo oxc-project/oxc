@@ -12,7 +12,7 @@ import type {
 let pool: Tinypool | null = null;
 let poolSize: number | null = null;
 
-export async function initExternalFormatter(numThreads: number): Promise<void> {
+export async function initExternalServices(numThreads: number): Promise<void> {
   // In LSP mode, this can be called repeatedly for the lifetime of the process.
   // e.g. on every workspace folder build, config-triggered rebuild, etc
   // The process-wide pool must never be recreated or destroyed on re-init:
@@ -26,8 +26,8 @@ export async function initExternalFormatter(numThreads: number): Promise<void> {
 // so runs that never delegate to Prettier spawn no `child_process` workers at all.
 // (e.g. Rust-tier files only)
 async function getPool(): Promise<Tinypool> {
-  // Rust always calls `initExternalFormatter` before formatting, so this is defensive.
-  if (poolSize === null) throw new Error("External formatter is not initialized");
+  // Rust always calls `initExternalServices` before formatting, so this is defensive.
+  if (poolSize === null) throw new Error("External services are not initialized");
 
   pool ??= new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
@@ -44,7 +44,7 @@ async function getPool(): Promise<Tinypool> {
   return pool;
 }
 
-export async function disposeExternalFormatter(): Promise<void> {
+export async function disposeExternalServices(): Promise<void> {
   await pool?.destroy();
   pool = null;
   poolSize = null;
@@ -80,11 +80,11 @@ export function formatEmbeddedCode(
 
 export function formatEmbeddedDoc(
   options: FormatEmbeddedDocParam["options"],
-  texts: string[],
-): Promise<string[] | null> {
+  code: string,
+): Promise<string | null> {
   return toNullable(
     getPool().then((pool) =>
-      pool.run({ options, texts } satisfies FormatEmbeddedDocParam, {
+      pool.run({ options, code } satisfies FormatEmbeddedDocParam, {
         name: "formatEmbeddedDoc",
       }),
     ),

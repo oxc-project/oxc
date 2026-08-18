@@ -1,0 +1,36 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:3:16]
+ 2 │ function Component() {
+ 3 │   const date = Date.now();
+   ·                ─────┬────
+   ·                     ╰── Cannot call impure function
+ 4 │   const now = performance.now();
+   ╰────
+  help: `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:4:15]
+ 3 │   const date = Date.now();
+ 4 │   const now = performance.now();
+   ·               ────────┬────────
+   ·                       ╰── Cannot call impure function
+ 5 │   const rand = Math.random();
+   ╰────
+  help: `performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:5:16]
+ 4 │   const now = performance.now();
+ 5 │   const rand = Math.random();
+   ·                ──────┬──────
+   ·                      ╰── Cannot call impure function
+ 6 │   return <Foo date={date} now={now} rand={rand} />;
+   ╰────
+  help: `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity

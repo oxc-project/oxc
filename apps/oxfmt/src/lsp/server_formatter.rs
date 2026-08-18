@@ -13,7 +13,7 @@ use oxc_language_server::{
 };
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
+    ConfigResolver, ExternalServices, FormatResult, JsConfigLoaderCb, NestedConfigCtx,
     ResolveOutcome, SourceFormatter, classify_file_kind, config_discovery,
     resolve_editorconfig_path, resolve_file_scope_config, utils,
 };
@@ -22,12 +22,12 @@ use crate::lsp::options::FormatOptions as LSPFormatOptions;
 
 pub struct ServerFormatterBuilder {
     js_config_loader: JsConfigLoaderCb,
-    external_formatter: ExternalFormatter,
+    external_services: ExternalServices,
 }
 
 impl ServerFormatterBuilder {
-    pub fn new(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) -> Self {
-        Self { js_config_loader, external_formatter }
+    pub fn new(js_config_loader: JsConfigLoaderCb, external_services: ExternalServices) -> Self {
+        Self { js_config_loader, external_services }
     }
 
     /// Create a dummy `ServerFormatterBuilder` for testing.
@@ -37,7 +37,7 @@ impl ServerFormatterBuilder {
             js_config_loader: std::sync::Arc::new(|_| {
                 Err("JS config not supported in tests".to_string())
             }),
-            external_formatter: ExternalFormatter::dummy(),
+            external_services: ExternalServices::dummy(),
         }
     }
 
@@ -75,12 +75,12 @@ impl ServerFormatterBuilder {
         let num_of_threads = 1; // Single threaded for LSP
         // Use `block_in_place()` to avoid nested async runtime access
         if let Err(err) =
-            tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads))
+            tokio::task::block_in_place(|| self.external_services.init(num_of_threads))
         {
-            error!("Failed to setup external formatter.\n{err}\n");
+            error!("Failed to setup external services.\n{err}\n");
         }
         let source_formatter = SourceFormatter::new(num_of_threads)
-            .with_external_formatter(Some(self.external_formatter.clone()));
+            .with_external_services(Some(self.external_services.clone()));
 
         (
             ServerFormatter::new(
@@ -524,9 +524,7 @@ fn compute_minimal_text_edit<'a>(
 // Almost the same as `cli::walk::load_ignore_paths`, but does not handle custom ignore files.
 //
 // NOTE: `.gitignore` is intentionally NOT included here.
-// In LSP, every file is explicitly opened by the user (like directly specifying a file in CLI),
-// so `.gitignore` should not prevent formatting.
-// Only formatter-specific ignore files apply.
+// An LSP document is explicitly formatted by the user.
 fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
     let path = cwd.join(".prettierignore");
     if path.exists() { vec![path] } else { vec![] }

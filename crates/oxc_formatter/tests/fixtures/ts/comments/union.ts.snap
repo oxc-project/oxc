@@ -36,8 +36,8 @@ interface _KeywordDef {
   type?: JSONType | JSONType[]; // data types that keyword applies to
 }
 
-type C1 = /* 1 */ /*1*/
-  | A
+type C1 =
+  | /* 1 */ /*1*/ A
   // A comment to force break
   | B;
 
@@ -54,8 +54,8 @@ interface _KeywordDef {
   type?: JSONType | JSONType[]; // data types that keyword applies to
 }
 
-type C1 = /* 1 */ /*1*/
-  | A
+type C1 =
+  | /* 1 */ /*1*/ A
   // A comment to force break
   | B;
 

@@ -341,22 +341,18 @@ impl<'a> PeepholeOptimizations {
         if right.operator != e.operator {
             return;
         }
-        let Expression::LogicalExpression(mut right) = e.right.take_in(ctx) else { return };
+        let Expression::LogicalExpression(right) = e.right.take_in(ctx) else { return };
+        let LogicalExpression { left: right_left, right: right_right, .. } = right.unbox();
         let mut new_left = Expression::new_logical_expression(
             e.span,
             e.left.take_in(ctx),
             e.operator,
-            right.left.take_in(ctx),
+            right_left,
             ctx,
         );
         Self::substitute_rotate_logical_expression(&mut new_left, ctx);
-        let new_value = Expression::new_logical_expression(
-            e.span,
-            new_left,
-            e.operator,
-            right.right.take_in(ctx),
-            ctx,
-        );
+        let new_value =
+            Expression::new_logical_expression(e.span, new_left, e.operator, right_right, ctx);
         ctx.replace_expression(expr, new_value);
     }
 
@@ -382,24 +378,20 @@ impl<'a> PeepholeOptimizations {
             && right.operator == e.operator
             && !right.right.may_have_side_effects(ctx)
         {
-            let Expression::BinaryExpression(mut right) = e.right.take_in(ctx) else {
+            let Expression::BinaryExpression(right) = e.right.take_in(ctx) else {
                 return;
             };
+            let BinaryExpression { left: right_left, right: right_right, .. } = right.unbox();
             let mut new_left = Expression::new_binary_expression(
                 e.span,
                 e.left.take_in(ctx),
                 e.operator,
-                right.left.take_in(ctx),
+                right_left,
                 ctx,
             );
             Self::substitute_rotate_binary_expression(&mut new_left, ctx);
-            let new_value = Expression::new_binary_expression(
-                e.span,
-                new_left,
-                e.operator,
-                right.right.take_in(ctx),
-                ctx,
-            );
+            let new_value =
+                Expression::new_binary_expression(e.span, new_left, e.operator, right_right, ctx);
             ctx.replace_expression(expr, new_value);
             return;
         }
@@ -1471,31 +1463,25 @@ impl<'a> PeepholeOptimizations {
         let new_args = args;
 
         for arg in old_args {
-            if let Argument::SpreadElement(mut spread_el) = arg {
-                if let Expression::ArrayExpression(array_expr) = &mut spread_el.argument {
-                    for el in &mut array_expr.elements {
+            if let Argument::SpreadElement(spread_el) = arg {
+                let SpreadElement { span, argument, .. } = spread_el.unbox();
+                if let Expression::ArrayExpression(array_expr) = argument {
+                    for el in array_expr.unbox().elements {
                         match el {
                             ArrayExpressionElement::SpreadElement(spread_el) => {
-                                new_args.push(Argument::new_spread_element(
-                                    spread_el.span,
-                                    spread_el.argument.take_in(ctx),
-                                    ctx,
-                                ));
+                                let SpreadElement { span, argument, .. } = spread_el.unbox();
+                                new_args.push(Argument::new_spread_element(span, argument, ctx));
                             }
                             ArrayExpressionElement::Elision(elision) => {
                                 new_args.push(Expression::new_void_0(elision.span, ctx).into());
                             }
                             match_expression!(ArrayExpressionElement) => {
-                                new_args.push(el.to_expression_mut().take_in(ctx).into());
+                                new_args.push(el.into_expression().into());
                             }
                         }
                     }
                 } else {
-                    new_args.push(Argument::new_spread_element(
-                        spread_el.span,
-                        spread_el.argument.take_in(ctx),
-                        ctx,
-                    ));
+                    new_args.push(Argument::new_spread_element(span, argument, ctx));
                 }
             } else {
                 new_args.push(arg);

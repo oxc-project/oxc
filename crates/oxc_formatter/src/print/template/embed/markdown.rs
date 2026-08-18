@@ -1,7 +1,6 @@
 use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
-
-use oxc_formatter_core::{DispatchOutcome, DispatchRequest, InputKind};
+use oxc_formatter_core::dispatch_fragment_ir;
 
 use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
@@ -32,15 +31,7 @@ pub(super) fn try_embed_markdown<'a>(
     let text = if has_indent { strip_indentation(text, indentation, allocator) } else { text };
 
     // Phase 3: Get the IR from the dispatcher
-    let Ok(DispatchOutcome::Formatted(result)) = f.session().dispatch(DispatchRequest {
-        language: "markdown",
-        texts: &[text],
-        input_kind: InputKind::Fragment,
-        parent_context: None,
-    }) else {
-        return false;
-    };
-    let Some(mut ir) = result.docs.into_iter().next() else {
+    let Some(ir) = dispatch_fragment_ir(f, "markdown", text, None) else {
         return false;
     };
 
@@ -48,7 +39,7 @@ pub(super) fn try_embed_markdown<'a>(
     // Markdown uses `.raw` quasi values, so only backticks need raw-style escaping
     // (template chars `${` / `\` are passed through verbatim).
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24
-    super::escape_backticks_raw_in_ir(&mut ir, allocator, f.options().indent_width);
+    let ir = super::escape_backticks_raw_in_ir(&ir, f);
 
     // Phase 5: Layout
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24-L29

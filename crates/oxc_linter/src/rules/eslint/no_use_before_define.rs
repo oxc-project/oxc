@@ -125,7 +125,7 @@ impl Rule for NoUseBeforeDefine {
                 ..NoUseBeforeDefineConfig::default()
             }));
         }
-        serde_json::from_value::<DefaultRuleConfig<NoUseBeforeDefineConfig>>(value)
+        DefaultRuleConfig::<NoUseBeforeDefineConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
             .map(Self)
     }

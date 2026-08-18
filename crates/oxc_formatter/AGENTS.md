@@ -23,12 +23,8 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
   - Drives context-dependent decisions like forced parentheses / quote style
   - The formatter knows nothing about Prettier/Vue vocabulary, callers pass wrapped source
 - `format_program`: Special-purpose AST-in entry point
-- `format_with_session`: session-aware entry whose `FormatSession` carries the
-  host-supplied `FormatDispatcher` for embedded languages
-  (plain `format` / `format_program` wrap a dispatcher-less `PhysicalFile` session)
-- `ExternalCallbacks` (in `external_formatter.rs`): the string-based (JSDoc fences + html-in-js recovery)
-  and Tailwind callbacks delegated back to the host;
-  IR-channel dispatch is NOT here, it travels on the session
+- `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
+  - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
 
 ### Generated code
 
@@ -45,14 +41,14 @@ After changing AST shapes or the generators, regenerate with `just ast`, never h
 ### Format JSDoc (`formatter/jsdoc/`)
 
 - Derived from `prettier-plugin-jsdoc`, but not fully compatible
-- See `prettier_conformance/jsdoc` for the covered behavior
-  - See also prettier_conformance/jsdoc/upstream-jsdoc-bugs.md
+- See `tests/jsdoc/fixtures` for the covered behavior
+  - See also `tests/jsdoc/upstream-jsdoc-bugs.md`
 
 ### Sort Tailwind CSS
 
 - Backed by `prettier-plugin-tailwindcss`
 - Classes are collected during IR construction and sorted in one batch when the IR is stringified
-- Requires `ExternalCallbacks` (the sort itself is delegated to the host via `TailwindCallback`)
+- Requires the session's `TailwindSorter` service (the sort itself is delegated to the host)
 
 ### Embedded language formatting
 
@@ -61,7 +57,7 @@ Two directions: xxx-in-js (css/graphql/html in template literals) and js-in-xxx 
 - xxx-in-js goes through the `FormatDispatcher` Oxfmt assembles Rust based formatter, Prettier Doc→IR fallback otherwise
 - As the JS host, this crate also owns the parent-side concerns in `print/template/embed/`:
   - template-literal escape on returned IR,
-  - placeholder marker insertion / survival count / `${expr}` substitution,
+  - placeholder marker insertion / survival validation / `${expr}` substitution,
   - and `.raw` vs `.cooked` selection
   - Language formatter crates stay free of these rules
     - See `embed/mod.rs` for the shared helpers and `embed/{css,html,graphql,markdown}.rs` for each site's wiring
@@ -153,10 +149,29 @@ Accepted edges (byte-identical to Prettier, semantically inert, idempotent):
 ## Known divergences
 
 Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences".
-Entries documented in this file so far — both of the comment-attachment-artifact class, details in "Comment placement invariants" above; this is not yet an exhaustive audit against the conformance snapshots:
+The entries documented so far are not yet an exhaustive audit against the conformance snapshots:
 
 - A comment after a trailing array hole stays in place; Prettier relocates it backward across commas to the last real element
 - Asymmetric attachment like `export type T = string /* c */;` (comment moved behind `;` only in the exported form): one uniform rule instead of emulating the asymmetry
+- A trailing comment before a closing paren never breaks the operand chain: `!(a &&\n b // c)` collapses to `a && b // c`, as both formatters already do in every other paren-surviving position (return/throw argument, call argument, assignment, arrow body)
+  - Prettier preserves the source break only in the unary position and only when the last operand was alone on its source line (attachment binds the comment to that operand)
+  - Internal inconsistency plus source-layout sensitivity, overridden by the uniform rule
+  - Conditions are a separate shared rule (logical operands always break)
+- `experimentalOperatorPosition: "start"`, binary-like chains: a single space before the previous operand's flushed trailing line comment (`prev // c`); Prettier emits two (`prev  // c`)
+  - Artifact of its comment-extraction doc surgery: an unconditional separator space that its end-of-line trimming can only remove when no line-suffix comment flushes behind it
+- `experimentalOperatorPosition: "start"`, intersection types: a leading own-line comment stays own-line, above the leading `&`; Prettier prints it behind `& `, losing its own-line-ness and idempotency (the second pass inlines the type with the comment behind `;`)
+  - Binary-like chains hoist the comment in both formatters; one uniform rule (and the own-line invariant) over Prettier's internal inconsistency
+- Inline comments around a union's formatter-added `(` keep their source side (`keyof /* c */ (A | B)` stays as-is)
+  - Prettier moves the comment inside for `keyof`/type-operator operands while keeping it outside in array/indexed-access positions
+- An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break)
+  - Prettier treats the same shape three ways:
+    - JS keeps it only when the right-hand side breaks and flushes it past a fitting one (prettier#14617-family attachment artifact)
+    - TS type aliases and union-valued property signatures get it own-lined (the 3.9 union rewrite)
+    - simple-typed property signatures get it flushed past the member and its `;` separator
+  - Not yet covered: default parameters, destructuring defaults, enum members (different formatting paths still flush, Prettier-compatible)
+- A union's leading comments normalize to behind the leading `|` (`| /* c */ A`) whenever no comment ends its source line, regardless of the source shape
+  - Prettier does the same except for nested single-member paren sources (`| (/* c */ | A ...`) and multiline block comments starting their line, where it keeps `/* c */ | A`
+    - An output it then reformats into `| /* c */ A` itself for the first shape, not idempotent
 
 ## Verification
 

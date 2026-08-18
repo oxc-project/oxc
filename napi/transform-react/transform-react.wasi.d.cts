@@ -153,6 +153,11 @@ export interface ReactCompilerEnvironmentOptions {
   enableCustomTypeDefinitionForReanimated?: boolean
   enableTreatRefLikeIdentifiersAsRefs?: boolean
   enableTreatSetIdentifiersAsStateSetters?: boolean
+  /**
+   * Validate that `useMemo` callbacks return a value.
+   *
+   * @default false
+   */
   validateNoVoidUseMemo?: boolean
   enableAllowSetStateFromRefsInEffects?: boolean
   enableVerboseNoSetStateInEffect?: boolean
@@ -210,8 +215,9 @@ export interface ReactCompilerOptions {
   /** Select client, SSR, or lint output. */
   outputMode?: 'client' | 'ssr' | 'lint'
   /**
-   * ESLint rule names whose suppressions opt a function out of compilation when
-   * hooks usage or exhaustive memoization dependency validation is disabled.
+   * ESLint rule names whose suppressions opt a function out of compilation.
+   * Defaults to `react-hooks/exhaustive-deps` and `react-hooks/rules-of-hooks`;
+   * pass an empty array to disable this behavior.
    */
   eslintSuppressionRules?: Array<string>
   /**

@@ -7,7 +7,7 @@ mod support;
 pub mod utils;
 
 #[cfg(feature = "napi")]
-mod external_formatter;
+mod external_services;
 
 pub use config::{
     ConfigResolver, NestedConfigCtx, ResolveOutcome, resolve_editorconfig_path,
@@ -25,7 +25,7 @@ pub use format::{FormatResult, FormatStrategy, SourceFormatter};
 pub use support::classify_file_kind;
 
 #[cfg(feature = "napi")]
-pub use external_formatter::{
-    ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-    JsInitExternalFormatterCb, JsSortTailwindClassesCb,
+pub use external_services::{
+    ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+    JsInitExternalServicesCb, JsSortTailwindClassesCb,
 };

@@ -28,6 +28,24 @@ describe("transformSync", () => {
     expect(result.code).toContain("@license MIT");
   });
 
+  it("honors JSX pragmas after React Compiler adds imports", () => {
+    const result = transformSync(
+      "Component.tsx",
+      `/** @jsxRuntime automatic */
+/** @jsxImportSource custom-runtime */
+export function Component({ value }: { value: string }) {
+  return <div>{value}</div>;
+}
+`,
+    );
+
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain('from "custom-runtime/jsx-runtime"');
+    expect(result.code).not.toContain('from "react/jsx-runtime"');
+  });
+
   it("forwards React Compiler options", () => {
     const target = transformSync("Component.tsx", fixture, {
       reactCompiler: { target: "18" },
@@ -166,13 +184,18 @@ describe("transformSync", () => {
     expect(result.code).toContain("import { CSS_VAR }");
   });
 
-  it("ignores ESLint suppressions when internal validations are enabled", () => {
+  it("honors ESLint suppressions when internal validations are enabled", () => {
     const result = transformSync(
-      "Component.tsx",
-      `function Component({ value }: { value: number }) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        const doubled: number = value * 2;
-        return <div>{doubled}</div>;
+      "Counter.jsx",
+      `import { useEffect, useRef, useState } from "react";
+      export function Counter({ step }) {
+        const [count, setCount] = useState(0);
+        const ref = useRef(step);
+        useEffect(() => {
+          setCount((value) => value + ref.current);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+        return <div>{count}</div>;
       }`,
       {
         reactCompiler: {
@@ -183,9 +206,14 @@ describe("transformSync", () => {
       },
     );
 
-    expect(result.errors).toEqual([]);
-    expect(result.code).toContain("react/compiler-runtime");
-    expect(result.code).toContain("_c(");
+    expect(result.fatal).toBe(false);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toMatchObject({
+      severity: "Warning",
+      message: "React rule suppression prevents optimization",
+    });
+    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.code).not.toContain("_c(");
   });
 
   it("honors ESLint suppressions by default", () => {
@@ -201,11 +229,11 @@ describe("transformSync", () => {
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].severity).toBe("Warning");
-    expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+    expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     expect(result.code).not.toContain("react/compiler-runtime");
   });
 
-  it("honors ESLint suppressions when internal validations are disabled", () => {
+  it("allows ESLint suppression bailouts to be disabled", () => {
     const result = transformSync(
       "Component.tsx",
       `function Component({ value }: { value: number }) {
@@ -215,21 +243,15 @@ describe("transformSync", () => {
       }`,
       {
         reactCompiler: {
-          environment: {
-            validateExhaustiveMemoizationDependencies: false,
-          },
+          eslintSuppressionRules: [],
         },
       },
     );
 
     expect(result.fatal).toBe(false);
-    expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toMatchObject({
-      severity: "Warning",
-      message: expect.stringContaining("[ReactCompiler] Suppression:"),
-    });
-    expect(result.code).not.toBe("");
-    expect(result.code).not.toContain("react/compiler-runtime");
+    expect(result.errors).toEqual([]);
+    expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("_c(");
     expect(result.code).not.toContain(": number");
     expect(result.code).not.toContain("<div");
   });
@@ -251,7 +273,7 @@ describe("transformSync", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
       severity: "Warning",
-      message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library",
+      message: "Use of incompatible library",
     });
     expect(result.errors.some((error) => error.message.includes("Unexpected error"))).toBe(false);
     expect(result.code).toContain("react/compiler-runtime");
@@ -288,19 +310,12 @@ describe("transformSync", () => {
       export function Component(props: { text: string }) {
         return <span>{props.text}</span>;
       }`,
-      {
-        reactCompiler: {
-          environment: {
-            validateExhaustiveMemoizationDependencies: false,
-          },
-        },
-      },
     );
 
     expect(result.fatal).toBe(false);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].severity).toBe("Warning");
-    expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+    expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     expect(result.code).toContain("react/compiler-runtime");
     expect(result.code).not.toContain("props: { text: string }");
     expect(result.code).not.toContain("<span");
@@ -319,9 +334,6 @@ describe("transformSync", () => {
         {
           reactCompiler: {
             panicThreshold,
-            environment: {
-              validateExhaustiveMemoizationDependencies: false,
-            },
           },
         },
       );
@@ -330,7 +342,7 @@ describe("transformSync", () => {
       expect(result.code).toBe("");
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].severity).toBe("Error");
-      expect(result.errors[0].message).toContain("[ReactCompiler] Suppression:");
+      expect(result.errors[0].message).toBe("React rule suppression prevents optimization");
     },
   );
 
@@ -350,7 +362,7 @@ describe("transformSync", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatchObject({
       severity: "Warning",
-      message: "[ReactCompiler] IncompatibleLibrary: Use of incompatible library",
+      message: "Use of incompatible library",
     });
   });
 

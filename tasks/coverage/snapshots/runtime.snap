@@ -1,8 +1,8 @@
-commit: b363f29d
+commit: be13516f
 
 runtime Summary:
 AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17304/18277 (94.68%)
+Positive Passed: 17306/18277 (94.69%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -68,9 +68,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/expressions/arrow-function/dstr/obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-transform Error: tasks/coverage/test262/test/language/expressions/arrow-function/name.js
-timeout: global
 
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/array-elem-init-fn-name-class.js
 Test262Error: Expected true but got false
@@ -1370,9 +1367,6 @@ TypeError: Cannot read properties of undefined (reading 'enumerable')
 
 minify Error: tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 Test262Error: Expected SameValue(«"a"», «""») to be true
-
-codegen Error: tasks/coverage/test262/test/language/function-code/10.4.3-1-13-s.js
-timeout: global
 
 minify Error: tasks/coverage/test262/test/language/function-code/block-decl-onlystrict.js
 TypeError: Cannot read properties of undefined (reading 'constructor')

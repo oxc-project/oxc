@@ -7,10 +7,9 @@ use std::borrow::Cow;
 
 use markdown::{Constructs, ParseOptions, to_mdast};
 
-use oxc_allocator::Allocator;
+use oxc_formatter_core::FormatSession;
 
 use crate::JsFormatOptions;
-use crate::external_formatter::ExternalCallbacks;
 
 use super::line_buffer::LineBuffer;
 use super::wrap::{wrap_plain_paragraphs, wrap_plain_paragraphs_balance};
@@ -33,15 +32,14 @@ pub fn format_description_mdast(
     max_width: usize,
     tag_string_length: usize,
     capitalize: bool,
-    format_options: Option<&JsFormatOptions>,
-    allocator: Option<&Allocator>,
-    external_callbacks: Option<&ExternalCallbacks>,
+    format_options: &JsFormatOptions,
+    session: &FormatSession<'_>,
 ) -> String {
     if text.trim().is_empty() {
         return String::new();
     }
 
-    let jsdoc_opts = format_options.and_then(|opts| opts.jsdoc.as_ref());
+    let jsdoc_opts = format_options.jsdoc.as_ref();
     let description_with_dot = jsdoc_opts.is_some_and(|o| o.description_with_dot);
     let prefer_code_fences = jsdoc_opts.is_some_and(|o| o.prefer_code_fences);
     let line_wrapping_style =
@@ -143,8 +141,7 @@ pub fn format_description_mdast(
         line_wrapping_style,
         source: &protected,
         format_options,
-        allocator,
-        external_callbacks,
+        session,
     };
     serialize_children(&root, 0, opts.tag_string_length, &opts, &mut lines);
 
@@ -160,7 +157,6 @@ pub(super) struct SerializeOptions<'a> {
     pub(super) prefer_code_fences: bool,
     pub(super) line_wrapping_style: crate::LineWrappingStyle,
     pub(super) source: &'a str,
-    pub(super) format_options: Option<&'a JsFormatOptions>,
-    pub(super) allocator: Option<&'a Allocator>,
-    pub(super) external_callbacks: Option<&'a ExternalCallbacks>,
+    pub(super) format_options: &'a JsFormatOptions,
+    pub(super) session: &'a FormatSession<'a>,
 }

@@ -165,7 +165,7 @@ impl<'a> PeepholeOptimizations {
                             };
                             let prev_stmt = stmts.pop().unwrap();
                             let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let mut prev_if = prev_if.unbox();
+                            let prev_if = prev_if.unbox();
                             let Statement::ReturnStatement(prev_return) = prev_if.consequent else {
                                 unreachable!()
                             };
@@ -173,47 +173,23 @@ impl<'a> PeepholeOptimizations {
                             let left_span = prev_return.span;
                             let right_span = last_return.span;
                             // "if (a) return; return b;" => "return a ? void 0 : b;"
-                            let mut left = prev_return
+                            let left = prev_return
                                 .unbox()
                                 .argument
                                 .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
                             // "if (a) return a; return;" => "return a ? b : void 0;"
-                            let mut right = last_return
+                            let right = last_return
                                 .unbox()
                                 .argument
                                 .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
 
-                            // "if (!a) return b; return c;" => "return a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
-                                && unary_expr.operator.is_not()
-                            {
-                                prev_if.test = unary_expr.argument.take_in(ctx);
-                                std::mem::swap(&mut left, &mut right);
-                            }
-
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
-                                // "if (a, b) return c; return d;" => "return a, b ? c : d;"
-                                let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
-                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
-                            } else {
-                                // "if (a) return b; return c;" => "return a ? b : c;"
-                                Self::minimize_conditional(
-                                    prev_if.span,
-                                    prev_if.test.take_in(ctx),
-                                    left,
-                                    right,
-                                    ctx,
-                                )
-                            };
+                            let argument = Self::minimize_conditional_after_if(
+                                prev_if.span,
+                                prev_if.test,
+                                left,
+                                right,
+                                ctx,
+                            );
                             let last_return_stmt =
                                 Statement::new_return_statement(right_span, Some(argument), ctx);
                             stmts.push(last_return_stmt);
@@ -270,46 +246,19 @@ impl<'a> PeepholeOptimizations {
                             };
                             let prev_stmt = stmts.pop().unwrap();
                             let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let mut prev_if = prev_if.unbox();
+                            let prev_if = prev_if.unbox();
                             let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
                                 unreachable!()
                             };
 
                             let right_span = last_throw.span;
-                            let mut left = prev_throw.unbox().argument;
-                            let mut right = last_throw.unbox().argument;
-
-                            // "if (!a) throw b; throw c;" => "throw a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
-                                && unary_expr.operator.is_not()
-                            {
-                                prev_if.test = unary_expr.argument.take_in(ctx);
-                                std::mem::swap(&mut left, &mut right);
-                            }
-
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
-                                // "if (a, b) throw c; throw d;" => "throw a, b ? c : d;"
-                                let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
-                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
-                            } else {
-                                // "if (a) throw b; throw c;" => "throw a ? b : c;"
-                                Self::minimize_conditional(
-                                    prev_if.span,
-                                    prev_if.test.take_in(ctx),
-                                    left,
-                                    right,
-                                    ctx,
-                                )
-                            };
+                            let argument = Self::minimize_conditional_after_if(
+                                prev_if.span,
+                                prev_if.test,
+                                prev_throw.unbox().argument,
+                                last_throw.unbox().argument,
+                                ctx,
+                            );
                             let last_throw_stmt =
                                 Statement::new_throw_statement(right_span, argument, ctx);
                             stmts.push(last_throw_stmt);
@@ -334,6 +283,36 @@ impl<'a> PeepholeOptimizations {
             current = &c.alternate;
         }
         false
+    }
+
+    fn minimize_conditional_after_if(
+        span: Span,
+        test: Expression<'a>,
+        consequent: Expression<'a>,
+        alternate: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        match test {
+            // "if (!a) return/throw b; return/throw c;" => "return/throw a ? c : b;"
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
+                Self::minimize_conditional(
+                    span,
+                    unary_expr.unbox().argument,
+                    alternate,
+                    consequent,
+                    ctx,
+                )
+            }
+            // "if (a, b) return/throw c; return/throw d;" => "return/throw a, b ? c : d;"
+            Expression::SequenceExpression(mut sequence_expr) => {
+                let test = sequence_expr.expressions.pop().unwrap();
+                let conditional =
+                    Self::minimize_conditional(span, test, consequent, alternate, ctx);
+                sequence_expr.expressions.push(conditional);
+                Expression::SequenceExpression(sequence_expr)
+            }
+            test => Self::minimize_conditional(span, test, consequent, alternate, ctx),
+        }
     }
 
     fn minimize_statement(
@@ -668,29 +647,31 @@ impl<'a> PeepholeOptimizations {
         if !ctx.is_tree_shake_only()
             && switch_stmt.cases.len() == 1
             && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
-            && let Some(mut case) = switch_stmt.cases.pop()
+            && let Some(case) = switch_stmt.cases.pop()
         {
             ctx.notice_change();
+            let switch_scope_id = switch_stmt.scope_id();
+            let SwitchStatement { span: switch_span, discriminant, .. } = switch_stmt.unbox();
+            let SwitchCase { span: case_span, test, mut consequent, .. } = case;
 
-            let block_stmt = if case.consequent.len() == 1
-                && matches!(case.consequent[0], Statement::BlockStatement(_))
-            {
-                case.consequent.pop().unwrap()
-            } else {
-                Statement::new_block_statement_with_scope_id(
-                    case.span,
-                    case.consequent.take_in(ctx),
-                    switch_stmt.scope_id(),
-                    ctx,
-                )
-            };
+            let block_stmt =
+                if consequent.len() == 1 && matches!(consequent[0], Statement::BlockStatement(_)) {
+                    consequent.pop().unwrap()
+                } else {
+                    Statement::new_block_statement_with_scope_id(
+                        case_span,
+                        consequent,
+                        switch_scope_id,
+                        ctx,
+                    )
+                };
 
-            if let Some(test) = case.test {
+            if let Some(test) = test {
                 result.push(Statement::new_if_statement(
-                    switch_stmt.span,
+                    switch_span,
                     Expression::new_binary_expression(
                         SPAN,
-                        switch_stmt.discriminant.take_in(ctx),
+                        discriminant,
                         BinaryOperator::StrictEquality,
                         test,
                         ctx,
@@ -702,10 +683,10 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
-            if !switch_stmt.discriminant.is_literal() {
+            if !discriminant.is_literal() {
                 result.push(Statement::new_expression_statement(
-                    switch_stmt.discriminant.span(),
-                    switch_stmt.discriminant.take_in(ctx),
+                    discriminant.span(),
+                    discriminant,
                     ctx,
                 ));
             }
@@ -747,15 +728,20 @@ impl<'a> PeepholeOptimizations {
                     // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
                     // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
                     // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                    if_stmt.test = Self::join_with_left_associative_op(
-                        if_stmt.test.span(),
-                        LogicalOperator::Or,
-                        prev_if_stmt.test.take_in(ctx),
-                        if_stmt.test.take_in(ctx),
-                        ctx,
-                    );
-                    let dropped = result.pop().unwrap();
-                    ctx.drop_statement(&dropped);
+                    let previous = result.pop().unwrap();
+                    let Statement::IfStatement(previous) = previous else { unreachable!() };
+                    let previous = previous.unbox();
+                    let span = if_stmt.test.span();
+                    ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                        Self::join_with_left_associative_op(
+                            span,
+                            LogicalOperator::Or,
+                            previous.test,
+                            test,
+                            ctx,
+                        )
+                    });
+                    ctx.drop_statement(&previous.consequent);
                 }
 
                 if Self::can_remove_termination_statement(&if_stmt.consequent, ctx) {
@@ -792,7 +778,7 @@ impl<'a> PeepholeOptimizations {
                         } else {
                             body[0].span()
                         };
-                        let test = if_stmt.test.take_in(ctx);
+                        let test = if_stmt.unbox().test;
                         let mut test = Self::minimize_not(test.span(), test, ctx);
                         Self::minimize_expression_in_boolean_context(&mut test, ctx);
                         let consequent = if body.len() == 1 {
@@ -865,11 +851,10 @@ impl<'a> PeepholeOptimizations {
                     let a = &mut prev_expr_stmt.expression;
                     prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
                 } else {
-                    result.push(Statement::new_expression_statement(
-                        argument.span(),
-                        argument.take_in(ctx),
-                        ctx,
-                    ));
+                    let span = argument.span();
+                    let argument = ret_stmt.argument.take().unwrap();
+                    result.push(Statement::new_expression_statement(span, argument, ctx));
+                    ctx.notice_change();
                 }
             }
             if let Some(old) = ret_stmt.argument.take() {
@@ -988,10 +973,12 @@ impl<'a> PeepholeOptimizations {
                             ctx.drop_statement(&dropped);
                         }
                     } else {
-                        for_stmt.init =
-                            Some(ForStatementInit::from(prev_expr_stmt.expression.take_in(ctx)));
-                        let dropped = result.pop().unwrap();
-                        ctx.drop_statement(&dropped);
+                        let previous = result.pop().unwrap();
+                        let Statement::ExpressionStatement(previous) = previous else {
+                            unreachable!()
+                        };
+                        for_stmt.init = Some(ForStatementInit::from(previous.unbox().expression));
+                        ctx.notice_change();
                     }
                 }
                 Some(Statement::VariableDeclaration(prev_var_decl)) => {

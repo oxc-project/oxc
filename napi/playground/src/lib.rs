@@ -30,9 +30,9 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, QuoteProperties,
-    QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
-    default_internal_patterns,
+    Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, OperatorPosition,
+    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
+    default_groups, default_internal_patterns,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
@@ -348,7 +348,10 @@ impl Oxc {
         } else {
             None
         };
-        Some(Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program))
+        Some(
+            Minifier::new(MinifierOptions { mangle, mangle_properties: None, compress })
+                .minify(allocator, program),
+        )
     }
 
     fn finalize_output<'a>(
@@ -517,6 +520,12 @@ impl Oxc {
             }
         }
 
+        if let Some(ref operator_position) = options.experimental_operator_position
+            && let Ok(position) = operator_position.parse::<OperatorPosition>()
+        {
+            format_options.operator_position = position;
+        }
+
         if let Some(ref sort_imports_config) = options.sort_imports {
             let order = sort_imports_config
                 .order
@@ -626,24 +635,18 @@ impl Oxc {
                 source_text,
                 source_type,
                 format_options.clone(),
-                None,
             ) {
                 Ok(formatted) => formatted.document().display(source_text).to_string(),
                 Err(err) => err.to_string(),
             };
-            self.formatter_formatted_text = match oxc_formatter::format(
-                &allocator,
-                source_text,
-                source_type,
-                format_options,
-                None,
-            ) {
-                Ok(formatted) => match formatted.print() {
-                    Ok(printer) => printer.into_code(),
+            self.formatter_formatted_text =
+                match oxc_formatter::format(&allocator, source_text, source_type, format_options) {
+                    Ok(formatted) => match formatted.print() {
+                        Ok(printer) => printer.into_code(),
+                        Err(err) => err.to_string(),
+                    },
                     Err(err) => err.to_string(),
-                },
-                Err(err) => err.to_string(),
-            };
+                };
         }
     }
 
