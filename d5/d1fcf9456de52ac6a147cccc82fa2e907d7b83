@@ -1,0 +1,20 @@
+crates/oxc_linter/src/disable_directives.rs
+  s_2ab07a30199d42::t_d2f458d332d8cd 8-10
+  s_2ab07a30199d42::t_d531a548777cf6 352,356-359
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d5d1fcf9456de52ac6a147cccc82fa2e907d7b83",
+  "prompts": {},
+  "sessions": {
+    "s_2ab07a30199d42": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fffac-06d6-7703-9f34-db4bedf3c830",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
