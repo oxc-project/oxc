@@ -424,7 +424,7 @@ function printIf(node: ESTree.IfStatement, state: State): void {
     printBlockStatement(consequent, state);
     write(state, alternate != null ? " " : "\n", CAT_OTHER);
   } else if (wrapToAvoidAmbiguousElse(consequent)) {
-    write(state, ") ", CAT_OTHER);
+    writeNoLast(state, ") ");
     writeWithMap(state, "{\n", CAT_OTHER, consequent);
     state.indentLevel++;
     printStatement(consequent, state);
