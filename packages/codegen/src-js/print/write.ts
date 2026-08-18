@@ -5,7 +5,7 @@
 
 import { debugAssert } from "../asserts.ts";
 
-import type { MappableNode } from "./types.ts";
+import type { MappableNode, NamedMappableNode, UnnamedMappableNode } from "./types.ts";
 import type { State } from "../state.ts";
 
 // `state.last` records what was written last, by category, not the last character itself.
@@ -260,7 +260,40 @@ export function write(state: State, code: string, last: Category): void {
 }
 
 /**
- * Append `code` to the output, record what it ends with, and record a source mapping for `node`.
+ * Append `code` to the output, record what it ends with, and record an unnamed source mapping for `node`.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ *
+ * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
+ * into `write` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ *
+ * @param state - Printer state
+ * @param code - Text to append, never empty
+ * @param last - Category of the last character of `code`
+ * @param node - Node this text came from
+ */
+export function writeWithMap(
+  state: State,
+  code: string,
+  last: Category,
+  node: UnnamedMappableNode,
+): void {
+  debugAssert(code.length > 0, "`code` should not be an empty string");
+  debugAssertCategoryMatches(state, code, last);
+
+  recordSourceMapping(state, node, LOCATION_START);
+
+  state.last = last;
+  state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = false;
+    state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append `code` to the output, record what it ends with, and record a named source mapping for `node`.
  *
  * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
@@ -276,7 +309,7 @@ export function writeWithMapNamed(
   state: State,
   code: string,
   last: Category,
-  node: MappableNode,
+  node: NamedMappableNode,
 ): void {
   debugAssert(code.length > 0, "`code` should not be an empty string");
   debugAssertCategoryMatches(state, code, last);
@@ -317,7 +350,34 @@ export function writeNoLast(state: State, code: string): void {
 }
 
 /**
- * Append `code` and record a source mapping for `node`, leaving `state.last` alone.
+ * Append `code` and record an unnamed source mapping for `node`, leaving `state.last` alone.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
+ *
+ * `writeNoLast`'s rule about `last` applies here too - another write must follow before anything reads it.
+ *
+ * Builds without source map support have no use for this. For those builds, TSDown plugin rewrites every call
+ * into `writeNoLast` and drops the `node` argument, leaving this unreferenced for the minifier to remove.
+ *
+ * @param state - Printer state
+ * @param code - Text to append, which unlike `writeWithMap` may be empty
+ * @param node - Node this text came from
+ */
+export function writeWithMapNoLast(state: State, code: string, node: UnnamedMappableNode): void {
+  recordSourceMapping(state, node, LOCATION_START);
+
+  state.output += code;
+
+  if (DEBUG) {
+    state.lastIsStale = true;
+    if (code.length > 0) state.lastCharWritten = code[code.length - 1];
+  }
+}
+
+/**
+ * Append `code` and record a named source mapping for `node`, leaving `state.last` alone.
+ *
+ * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
  *
  * `writeNoLast`'s rule about `last` applies here too - another write must follow before anything reads it.
  *
@@ -328,7 +388,7 @@ export function writeNoLast(state: State, code: string): void {
  * @param code - Text to append, which unlike `writeWithMapNamed` may be empty
  * @param node - Node this text came from
  */
-export function writeWithMapNamedNoLast(state: State, code: string, node: MappableNode): void {
+export function writeWithMapNamedNoLast(state: State, code: string, node: NamedMappableNode): void {
   recordSourceMapping(state, node, LOCATION_NAMED);
 
   state.output += code;
@@ -373,21 +433,6 @@ export function writeWithMapEnd(
     state.lastIsStale = false;
     state.lastCharWritten = code[code.length - 1];
   }
-}
-
-/**
- * Record a mapping for `node`'s start offset at the current output position, with a name.
- *
- * Where `node` is an identifier, the mapping carries the name it had in the source.
- *
- * The mapping is only recorded where the caller asked for source maps and `node` carries `start` / `end` offsets.
- * Builds without source map support have no use for this. In those builds, minifier removes it.
- *
- * @param state - Printer state
- * @param node - Node the mapping points at
- */
-export function markMapNamed(state: State, node: MappableNode): void {
-  if (SOURCEMAPS) recordSourceMapping(state, node, LOCATION_NAMED);
 }
 
 /**
@@ -499,7 +544,10 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
   // recovering a name or retaining the mapping, since member-level marks commonly duplicate keys.
   if (state.mapPositions[state.mapPositions.length - 1] === sourceOffset) return;
 
-  if (location === LOCATION_NAMED && typeof node.name === "string") {
+  if (location === LOCATION_NAMED) {
+    // Only the named forms pass `LOCATION_NAMED`, and they take a `NamedMappableNode`
+    debugAssert("name" in node && typeof node.name === "string");
+
     // A mapping carries a name only when the identifier printed differs from the one in the source.
     // When possible, the mapping records the name from source, but if the source range is invalid,
     // it falls back to the printed name.
@@ -524,8 +572,7 @@ function recordSourceMapping(state: State, node: MappableNode, location: Locatio
     const nameStart = start + hashLength;
     const nameEnd = nameStart + printedName.length;
     const matchesSource =
-      printedName.length > 0
-      && end <= sourceText.length
+      end <= sourceText.length
       && nameEnd <= end
       && (hashLength === 0 || sourceText.charCodeAt(start) === 35) /* # */
       && sourceText.startsWith(printedName, nameStart)

@@ -7,7 +7,7 @@ import type { Plugin } from "rolldown";
  *
  * ```ts
  * // Original code
- * writeWithMapNamed(state, "declare ", CAT_OTHER, node);
+ * writeWithMap(state, "declare ", CAT_OTHER, node);
  *
  * // After transform
  * write(state, "declare ", CAT_OTHER);
@@ -35,11 +35,12 @@ import type { Plugin } from "rolldown";
  */
 const REWRITES = {
   // `write` takes the `last` category between the code and the node, `writeNoLast` does not
+  writeWithMap: { arity: 4, remove: 1, rename: "write" },
   writeWithMapNamed: { arity: 4, remove: 1, rename: "write" },
+  writeWithMapNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
   writeWithMapNamedNoLast: { arity: 3, remove: 1, rename: "writeNoLast" },
   writeWithMapEnd: { arity: 4, remove: 1, rename: "write" },
   // `rename: null` because a standalone mark has no non-sourcemap equivalent
-  markMapNamed: { arity: 2, remove: 1, rename: null },
   markMapStart: { arity: 2, remove: 1, rename: null },
   markMapAfter: { arity: 2, remove: 1, rename: null },
   markMapAtStartOffset: { arity: 3, remove: 2, rename: null },
