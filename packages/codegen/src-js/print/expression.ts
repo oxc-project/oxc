@@ -459,6 +459,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     (TS && value.type === "TSEmptyBodyFunctionExpression")
   ) {
     markWithMap(state, node);
+
     const { kind } = node;
     const isGetter = kind === "get";
     const isAccessor = isGetter || kind === "set";
@@ -621,6 +622,7 @@ function printAssignmentExpression(
   if (wrap) write(state, "(", CAT_OTHER);
 
   markWithMap(state, node);
+
   printAssignmentTarget(left, state);
   write(state, PADDED_ASSIGN_OPERATORS[node.operator], CAT_OTHER);
   printExpression(node.right, state, PREC_COMMA, ctx);

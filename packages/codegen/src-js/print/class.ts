@@ -221,6 +221,7 @@ function printClassBody(node: ClassBodyNode, state: State): void {
  */
 function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
   markWithMap(state, node);
+
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
 
@@ -292,6 +293,7 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
  */
 function printPropertyDefinition(node: PropertyDefinitionNode, state: State): void {
   markWithMap(state, node);
+
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
 
@@ -382,6 +384,7 @@ function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
  */
 function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
   markWithMap(state, node);
+
   const { decorators } = node;
   if (decorators != null && decorators.length > 0) printDecorators(decorators, state);
 

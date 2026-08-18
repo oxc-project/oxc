@@ -53,12 +53,14 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
   let sourceLineStart = 0;
   let replayedSourceScanTotal = 0;
   let lineStart = 0;
+
   // Proving an output contains only `\n` takes a full scan. Amortize it only when enough mappings will benefit.
   // Sparse maps and huge one-line literals stay on the single-pass regexp path.
   const useOutputLineFeedFastPath =
     mappingCount >= MIN_LF_FAST_PATH_MAPPINGS &&
     output.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING &&
     !hasUncommonLineTerminator(output);
+
   // Require mappings to cover a substantial part of the source, so looking for the first line break
   // cannot scan a huge unmapped suffix. Reordered inputs conservatively take the slow path.
   const useSourceLineBoundaryCache =
@@ -91,9 +93,10 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     }
 
     const generatedColumn = offset - lineStart;
-    let sourceOffset = mapPositions[positionIndex + 1];
+
     // Rust end mappings use `span.end - 1`, which may land inside a multi-byte code point.
     // The JS equivalent can land on a low surrogate - normalize it back to the code point's start.
+    let sourceOffset = mapPositions[positionIndex + 1];
     if (sourceOffset > 0) {
       const char = sourceText.charCodeAt(sourceOffset);
       if (
@@ -105,6 +108,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
         sourceOffset--;
       }
     }
+
     let originalLine: number;
     let originalColumn: number;
     if (sourceLineStarts === undefined) {
@@ -155,6 +159,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
         // Once replaying costs as much as building a line table, the fallback below becomes cheaper.
         if (sourceOffset < sourceLineStart) {
           replayedSourceScanTotal += sourceScanOffset - sourceOffset;
+
           while (sourceOffset < sourceLineStart) {
             let index = sourceLineStart - 1;
             if (sourceText.charCodeAt(index) === 10 && sourceText.charCodeAt(index - 1) === 13) {
@@ -162,15 +167,19 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
             } else {
               index--;
             }
+
             while (index >= 0) {
               const char = sourceText.charCodeAt(index);
               if (char === 10 || char === 13 || char === 0x2028 || char === 0x2029) break;
               index--;
             }
+
             sourceLineStart = index + 1;
             sourceLine--;
           }
+
           sourceScanOffset = sourceOffset;
+
           if (useSourceLineBoundaryCache) {
             nextSourceLineStart = findNextLineStart(
               sourceText,
@@ -202,26 +211,31 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
         mappingLength + MAX_MAPPING_SEGMENT_LENGTH,
       );
     }
+
     if (hasSegmentOnLine) mappingBuffer[mappingLength++] = 44; // `,`
+
     mappingLength = writeVlq(
       mappingBuffer,
       mappingLength,
       generatedColumn - previousGeneratedColumn,
     );
+
     // All mappings point into the one source file, so the source-index delta is always zero (`A`)
     mappingBuffer[mappingLength++] = 65;
     mappingLength = writeVlq(mappingBuffer, mappingLength, originalLine - previousOriginalLine);
     mappingLength = writeVlq(mappingBuffer, mappingLength, originalColumn - previousOriginalColumn);
 
     if (index === nextNamedMappingIndex) {
-      const name = mapNames![mapNameEntryIndex + 1] as string;
       nameIds ??= new Map<string, number>();
+
+      const name = mapNames![mapNameEntryIndex + 1] as string;
       let nameId = nameIds.get(name);
       if (nameId === undefined) {
         nameId = names.length;
         names.push(name);
         nameIds.set(name, nameId);
       }
+
       mappingLength = writeVlq(mappingBuffer, mappingLength, nameId - previousNameId);
       previousNameId = nameId;
       mapNameEntryIndex += 2;
@@ -300,6 +314,7 @@ function writeVlq(buffer: Buffer, index: number, value: number): number {
       if (vlq > 0) digit |= 32;
       buffer[index++] = BASE64_CODES[digit];
     } while (vlq > 0);
+
     return index;
   }
 
@@ -309,6 +324,7 @@ function writeVlq(buffer: Buffer, index: number, value: number): number {
     if (vlq > 0) digit += 32;
     buffer[index++] = BASE64_CODES[digit];
   } while (vlq > 0);
+
   return index;
 }
 
@@ -363,6 +379,7 @@ function hasOnlyLineFeedsAndCrLf(sourceText: string): boolean {
     if (sourceText.charCodeAt(carriageReturn + 1) !== 10) return false;
     carriageReturn = sourceText.indexOf("\r", carriageReturn + 1);
   }
+
   return true;
 }
 
