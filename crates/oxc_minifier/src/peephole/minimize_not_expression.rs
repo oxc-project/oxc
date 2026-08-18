@@ -60,7 +60,7 @@ impl<'a> PeepholeOptimizations {
             Expression::SequenceExpression(sequence_expr) => {
                 if let Some(last_expr) = sequence_expr.expressions.last_mut() {
                     ctx.replace_expression_with(last_expr, |old, ctx| {
-                        Self::minimize_not(old.span(), old, ctx, false)
+                        Self::minimize_not(old.span(), old, ctx, boolean_context)
                     });
                     return true;
                 }
