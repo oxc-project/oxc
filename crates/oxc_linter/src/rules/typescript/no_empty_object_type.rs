@@ -181,6 +181,7 @@ impl Rule for NoEmptyObjectType {
                 check_interface_declaration(
                     ctx,
                     interface,
+                    node.id(),
                     self.allow_interfaces,
                     self.allow_with_name.as_ref(),
                 );
@@ -206,6 +207,7 @@ impl Rule for NoEmptyObjectType {
 fn check_interface_declaration(
     ctx: &LintContext,
     interface: &TSInterfaceDeclaration,
+    node_id: NodeId,
     allow_interfaces: AllowInterfaces,
     allow_with_name: Option<&Regex>,
 ) {
@@ -224,6 +226,11 @@ fn check_interface_declaration(
             interface.body.span,
             "Do not use an empty interface declaration.",
         );
+
+        if matches!(ctx.nodes().parent_kind(node_id), AstKind::ExportDefaultDeclaration(_)) {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
 
         let merged_with_class_declaration = interface.id.symbol_id.get().is_some_and(|symbol_id| {
             ctx.scoping()
@@ -624,6 +631,7 @@ fn test() {
             Some(serde_json::json!([{ "allowWithName": ".*Props$" }])),
         )
             .into(),
+        ("export default interface Foo {}", "export default interface Foo {}").into(),
     ];
 
     Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail)
