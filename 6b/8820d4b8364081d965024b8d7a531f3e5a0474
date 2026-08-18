@@ -1,0 +1,22 @@
+packages/codegen/src-js/print/typescript.ts
+  s_90f7c1b7d33691::t_3e06ce9e766cb5 741,755-757
+  s_90f7c1b7d33691::t_a5804a929a1bc5 849,852
+  s_90f7c1b7d33691::t_fc1467c8127cd6 1102,1114-1115
+  s_90f7c1b7d33691::t_4455c533c11271 921-924,927
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6b8820d4b8364081d965024b8d7a531f3e5a0474",
+  "prompts": {},
+  "sessions": {
+    "s_90f7c1b7d33691": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a01525-bb69-7801-9a14-90ad724800c5",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
