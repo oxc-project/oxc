@@ -45,5 +45,3 @@ export function printSync(node: ESTree.Node, state: State, options: Options): Co
 
   return { code: state.output };
 }
-
-export type { CodegenResult, Options, SourceMap } from "./options.ts";
