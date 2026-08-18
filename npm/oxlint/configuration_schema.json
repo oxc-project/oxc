@@ -1180,10 +1180,18 @@
       "type": "string",
       "enum": [
         "PascalCase",
-        "kebab-case"
+        "kebab-case",
+        "camelCase"
       ]
     },
     "CaseType2": {
+      "type": "string",
+      "enum": [
+        "PascalCase",
+        "kebab-case"
+      ]
+    },
+    "CaseType3": {
       "type": "string",
       "enum": [
         "camelCase",
@@ -1519,7 +1527,7 @@
       "type": "array",
       "items": [
         {
-          "$ref": "#/definitions/CaseType2"
+          "$ref": "#/definitions/CaseType3"
         },
         {
           "$ref": "#/definitions/Options"
@@ -10287,6 +10295,26 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
+                  "$ref": "#/definitions/CaseType2"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
+        "vue/component-options-name-casing": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
                   "$ref": "#/definitions/CaseType"
                 }
               ],
@@ -10584,7 +10612,7 @@
                   "$ref": "#/definitions/AllowWarnDeny"
                 },
                 {
-                  "$ref": "#/definitions/CaseType2"
+                  "$ref": "#/definitions/CaseType3"
                 },
                 {
                   "$ref": "#/definitions/Options"
