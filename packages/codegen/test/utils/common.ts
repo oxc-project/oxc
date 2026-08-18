@@ -126,9 +126,8 @@ export function checkFixture(
     const { code: actual } = printSync(program, { ts, jsx });
     expect(actual, `preserveParens: ${preserveParens}`).toBe(expected.code);
 
-    // Source maps use the maps-enabled build, which is compiled separately from the normal
-    // printer. Source offsets are converted at the end. Compare both its code and complete
-    // Source Map v3 output against Rust.
+    // Source maps use the maps-enabled build, which is compiled separately from the normal printer.
+    // Source offsets are converted at the end. Compare both its code and complete Source Map v3 output against Rust.
     const { code: actualWithSourceMap, map } = printSync(program, {
       ts,
       jsx,

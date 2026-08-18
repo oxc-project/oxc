@@ -1,8 +1,8 @@
 // Source map tests.
 //
 // The conformance checker compares the complete Source Map v3 object against Rust `oxc_codegen`.
-// The remaining tests here check invariants which give a more local failure than a full mapping
-// diff: positions stay in bounds and ordered, indentation is respected, identifier text agrees,
+// The remaining tests here check invariants which give a more local failure than a full mapping diff -
+// positions stay in bounds and ordered, indentation is respected, identifier text agrees,
 // and turning source maps on does not change the generated code.
 //
 // Mappings use Oxc `start` / `end` offsets.
@@ -18,8 +18,8 @@ import { checkFixture, getEcmaScriptLineTable } from "./utils/common.ts";
 import type { Program } from "oxc-parser";
 import type { SourceMap } from "../dist/index.js";
 
-// Same directory the benchmarks download their fixtures to. Whichever are already cached are used;
-// the inline fixtures below always run.
+// Same directory the benchmarks download their fixtures to. Whichever are already cached are used.
+// The inline fixtures below always run.
 const CACHE_DIR_PATH = pathJoin(import.meta.dirname, "../../../target");
 
 // `preserveParens: false` because this printer deliberately does not support the redundant
@@ -118,7 +118,7 @@ describe("Rust conformance", () => {
     const identifier = statement.declarations[0].id;
     if (identifier.type !== "Identifier") throw new Error("Expected identifier");
 
-    // Simulate a transformed AST whose old offsets are no longer valid for the source text.
+    // Simulate a transformed AST whose old offsets are no longer valid for the source text
     identifier.end = code.length + 1;
 
     const { map } = printSync(program, {
@@ -137,7 +137,7 @@ describe("Rust conformance", () => {
     const identifier = statement.declarations[0].id;
     if (identifier.type !== "Identifier") throw new Error("Expected identifier");
 
-    // Simulate a transformed AST whose stale offsets are in bounds but start on whitespace.
+    // Simulate a transformed AST whose stale offsets are in bounds but start on whitespace
     identifier.start = code.indexOf(" ");
     identifier.end = identifier.start + 1;
 
@@ -247,7 +247,9 @@ interface Recorded {
   source: string;
 }
 
-/** Decode a Source Map v3 mapping string for the local invariant checks below. */
+/**
+ * Decode a Source Map v3 mapping string for the local invariant checks below.
+ */
 function decodeSourceMap(map: SourceMap): Recorded[] {
   const mappings: Recorded[] = [];
   let sourceId = 0;
@@ -284,7 +286,9 @@ function decodeSourceMap(map: SourceMap): Recorded[] {
   return mappings;
 }
 
-/** Decode one comma-delimited source-map segment. */
+/**
+ * Decode one comma-delimited source-map segment.
+ */
 function decodeVlqSegment(segment: string): number[] {
   const values: number[] = [];
   let value = 0;
@@ -333,8 +337,8 @@ interface Printed {
 }
 
 for (const fixture of FIXTURES) {
-  // A cached fixture which has not been downloaded is reported as skipped rather than passing
-  // quietly. `pnpm run bench` downloads them.
+  // A cached fixture which has not been downloaded is reported as skipped rather than passing quietly.
+  // `pnpm run bench` downloads them.
   const describeFixture = fixture.code === null ? describe.skip : describe;
 
   describeFixture(fixture.name, () => {
@@ -345,8 +349,8 @@ for (const fixture of FIXTURES) {
       const program = parseProgram(fixture.name, code);
       const { jsx, ts } = fixture;
 
-      // Both builds through the public API - `printSync` picks the maps build when `sourcemap`
-      // is true, and the no-maps build when it is not.
+      // Both builds through the public API.
+      // `printSync` picks the maps build when `sourcemap` is true, and the no-maps build when it is not.
       const { code: withMaps, map } = printSync(program, {
         jsx,
         ts,
@@ -444,8 +448,8 @@ for (const fixture of FIXTURES) {
 
 // --- Indentation ----------------------------------------------------------------------------
 
-// `printIndent` goes through the same write path as everything else, so the `indent` option and
-// the mappings have to agree: indentation is honoured, and no mapping ever points into the middle
+// `printIndent` goes through the same write path as everything else, so the `indent` option
+// and the mappings have to agree: indentation is honoured, and no mapping ever points into the middle
 // of an indent run.
 const INDENT_CASES = [undefined, "\t", "  ", "    ", "\t\t", " \t", "\t "];
 

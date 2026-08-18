@@ -509,9 +509,9 @@ from `start` / `end`. Nodes without offsets are not mapped, and `sourceText` is 
 source offsets to line/column positions.
 
 `generateSourceMap` then walks the output once at the end, counting ECMAScript line terminators,
-builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column, and
-encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write in
-every build.
+builds the equivalent line table for `sourceText`, turns both sets of offsets into line/column,
+and encodes the mappings as base64 VLQ. Tracking lines and columns throughout would cost every write
+in every build.
 
 #### Potential future improvement
 

@@ -43,7 +43,9 @@ export interface Options {
    */
   ts?: boolean;
 
-  /** Original source text. Required for source-map mappings. */
+  /**
+   * Original source text. Required for source-map mappings.
+   */
   sourceText?: string;
 
   /**
@@ -51,6 +53,8 @@ export interface Options {
    */
   sourcemap?: boolean;
 
-  /** Original source filename recorded in the returned source map. */
+  /**
+   * Original source filename recorded in the returned source map.
+   */
   sourceFileName?: string;
 }

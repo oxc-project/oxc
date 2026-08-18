@@ -1,7 +1,8 @@
 // Source map generation.
 //
-// Mapped writes record output offsets and original positions while printing. This module converts
-// them to generated positions and encodes a standard Source Map v3 in one pass at the end.
+// Mapped writes record output offsets and original positions while printing.
+// `generateSourceMap` defined here converts them to generated positions
+// and encodes a standard Source Map v3 in one pass at the end.
 
 import { Buffer } from "node:buffer";
 
@@ -10,7 +11,9 @@ import { debugAssert } from "../asserts.ts";
 import type { Options, SourceMap } from "./options.ts";
 import type { State } from "../state.ts";
 
-/** Convert deferred mapping data into a standard Source Map v3 object. */
+/**
+ * Convert deferred mapping data into a standard Source Map v3 object.
+ */
 export function generateSourceMap(state: State, options: Options): SourceMap {
   debugAssert(
     state.mapPositions !== null,
@@ -50,14 +53,14 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
   let sourceLineStart = 0;
   let replayedSourceScanTotal = 0;
   let lineStart = 0;
-  // Proving an output contains only `\n` takes a full scan. Amortize it only when enough mappings
-  // will benefit; sparse maps and huge one-line literals stay on the single-pass regexp path.
+  // Proving an output contains only `\n` takes a full scan. Amortize it only when enough mappings will benefit.
+  // Sparse maps and huge one-line literals stay on the single-pass regexp path.
   const useOutputLineFeedFastPath =
     mappingCount >= MIN_LF_FAST_PATH_MAPPINGS &&
     output.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING &&
     !hasUncommonLineTerminator(output);
-  // Require mappings to cover a substantial part of the source, so looking for the first line
-  // break cannot scan a huge unmapped suffix. Reordered inputs conservatively take the slow path.
+  // Require mappings to cover a substantial part of the source, so looking for the first line break
+  // cannot scan a huge unmapped suffix. Reordered inputs conservatively take the slow path.
   const useSourceLineBoundaryCache =
     mappingCount >= MIN_LF_FAST_PATH_MAPPINGS &&
     sourceText.length <= mappingCount * MAX_LF_FAST_PATH_CHARS_PER_MAPPING &&
@@ -89,8 +92,8 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
 
     const generatedColumn = offset - lineStart;
     let sourceOffset = mapPositions[positionIndex + 1];
-    // Rust end mappings use `span.end - 1`, which may land inside a multi-byte code point. The JS
-    // equivalent can land on a low surrogate; normalize it back to the code point's start.
+    // Rust end mappings use `span.end - 1`, which may land inside a multi-byte code point.
+    // The JS equivalent can land on a low surrogate - normalize it back to the code point's start.
     if (sourceOffset > 0) {
       const char = sourceText.charCodeAt(sourceOffset);
       if (
@@ -106,8 +109,8 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
     let originalColumn: number;
     if (sourceLineStarts === undefined) {
       if (sourceOffset >= sourceScanOffset) {
-        // Mappings almost always advance through the source. Scan only the text between this
-        // mapping and the last one instead of building a line table for the whole source.
+        // Mappings almost always advance through the source. Scan only the text between this mapping
+        // and the last one, instead of building a line table for the whole source.
         if (useSourceLineBoundaryCache) {
           while (sourceOffset >= nextSourceLineStart) {
             sourceLineStart = nextSourceLineStart;
@@ -143,12 +146,13 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
           replayedSourceScanTotal + sourceScanOffset - sourceOffset <=
             Math.max(MAX_REPLAYED_SOURCE_SCAN, sourceText.length))
       ) {
-        // Parent/end mappings and locally reordered nodes can step backwards. These moves are
-        // normally within the current line or a nearby one, so a short reverse scan is cheaper
-        // than allocating a complete line table.
-        // A same-line backtrack needs no scan and leaves the forward cursor where it is. When the
-        // mapping crosses a line, count the text a later forward step must replay; once replaying
-        // costs as much as building a line table, the fallback below becomes cheaper.
+        // Parent/end mappings and locally reordered nodes can step backwards.
+        // These moves are normally within the current line or a nearby one, so a short reverse scan
+        // is cheaper than allocating a complete line table.
+        //
+        // A same-line backtrack needs no scan and leaves the forward cursor where it is.
+        // When the mapping crosses a line, count the text a later forward step must replay.
+        // Once replaying costs as much as building a line table, the fallback below becomes cheaper.
         if (sourceOffset < sourceLineStart) {
           replayedSourceScanTotal += sourceScanOffset - sourceOffset;
           while (sourceOffset < sourceLineStart) {
@@ -204,7 +208,7 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
       mappingLength,
       generatedColumn - previousGeneratedColumn,
     );
-    // All mappings point into the one source file, so the source-index delta is always zero (`A`).
+    // All mappings point into the one source file, so the source-index delta is always zero (`A`)
     mappingBuffer[mappingLength++] = 65;
     mappingLength = writeVlq(mappingBuffer, mappingLength, originalLine - previousOriginalLine);
     mappingLength = writeVlq(mappingBuffer, mappingLength, originalColumn - previousOriginalColumn);
@@ -240,7 +244,9 @@ export function generateSourceMap(state: State, options: Options): SourceMap {
   return map;
 }
 
-/** Build UTF-16 offsets to the start of every ECMAScript source line. */
+/**
+ * Build UTF-16 offsets to the start of every ECMAScript source line.
+ */
 function getLineStarts(sourceText: string): number[] {
   const lineStarts = [0];
   for (let index = 0; index < sourceText.length; index++) {
@@ -252,11 +258,13 @@ function getLineStarts(sourceText: string): number[] {
   return lineStarts;
 }
 
-/** Find the source line containing `sourceOffset`, starting close to the previous result. */
+/**
+ * Find the source line containing `sourceOffset`, starting close to the previous result.
+ */
 function findSourceLine(lineStarts: number[], sourceOffset: number, previousLine: number): number {
-  // Source mappings normally advance through the original file. Search the next few lines
-  // linearly, as V8 optimizes this small predictable loop well, then fall back for large jumps or
-  // transformed ASTs whose source locations move backwards.
+  // Source mappings normally advance through the original file. Search the next few lines linearly,
+  // as V8 optimizes this small predictable loop well, then fall back for large jumps or transformed ASTs
+  // whose source locations move backwards.
   if (sourceOffset >= lineStarts[previousLine]) {
     const end = Math.min(previousLine + LINE_SEARCH_ITERATIONS + 1, lineStarts.length);
     for (let line = previousLine + 1; line < end; line++) {
@@ -280,7 +288,9 @@ function findSourceLine(lineStarts: number[], sourceOffset: number, previousLine
   return low - 1;
 }
 
-/** Write one signed source-map delta as base64 VLQ, returning the next buffer position. */
+/**
+ * Write one signed source-map delta as base64 VLQ, returning the next buffer position.
+ */
 function writeVlq(buffer: Buffer, index: number, value: number): number {
   let vlq = value < 0 ? -value * 2 + 1 : value * 2;
   if (vlq <= MAX_BITWISE_VLQ) {
@@ -302,7 +312,9 @@ function writeVlq(buffer: Buffer, index: number, value: number): number {
   return index;
 }
 
-/** Grow the mappings buffer to contain `requiredLength`, preserving its written prefix. */
+/**
+ * Grow the mappings buffer to contain `requiredLength`, preserving its written prefix.
+ */
 function growMappingBuffer(buffer: Buffer, writtenLength: number, requiredLength: number): Buffer {
   let capacity = buffer.length * 2;
   while (capacity < requiredLength) capacity *= 2;
@@ -311,22 +323,25 @@ function growMappingBuffer(buffer: Buffer, writtenLength: number, requiredLength
   return next;
 }
 
-/** Find the UTF-16 offset after the next ECMAScript line terminator. */
+/**
+ * Find the UTF-16 offset after the next ECMAScript line terminator.
+ */
 function findNextLineStart(output: string, from: number, useLineFeedFastPath: boolean): number {
   if (useLineFeedFastPath) {
     const index = output.indexOf("\n", from);
     return index === -1 ? Infinity : index + 1;
   }
 
-  // Let the regexp engine scan long generated lines. A JS `charCodeAt` loop is much slower for
-  // large literals, while `lastIndex` avoids allocating a substring just to start the search at
-  // `from`.
+  // Let the regexp engine scan long generated lines. A JS `charCodeAt` loop is much slower for large literals,
+  // while `lastIndex` avoids allocating a substring just to start the search at `from`.
   NEXT_LINE_TERMINATOR_REGEX.lastIndex = from;
   const match = NEXT_LINE_TERMINATOR_REGEX.exec(output);
   return match === null ? Infinity : match.index + match[0].length;
 }
 
-/** Whether output contains a line terminator other than `\n`. */
+/**
+ * Whether output contains a line terminator other than `\n`.
+ */
 function hasUncommonLineTerminator(output: string): boolean {
   // V8's specialized substring search is substantially faster than a regexp scan here, even when
   // all three searches miss. This also avoids allocating regexp match state for the common path.
@@ -337,7 +352,9 @@ function hasUncommonLineTerminator(output: string): boolean {
   );
 }
 
-/** Whether every source line terminator can be found by searching for `\n`. */
+/**
+ * Whether every source line terminator can be found by searching for `\n`.
+ */
 function hasOnlyLineFeedsAndCrLf(sourceText: string): boolean {
   if (sourceText.indexOf("\u2028") !== -1 || sourceText.indexOf("\u2029") !== -1) return false;
 

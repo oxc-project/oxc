@@ -330,22 +330,30 @@ export function writeWithMapEnd(
   }
 }
 
-/** Record a start mapping at the current output position without writing anything. */
+/**
+ * Record a start mapping at the current output position without writing anything.
+ */
 export function markWithMap(state: State, node: MappableNode): void {
   recordSourceMapping(state, node, false);
 }
 
-/** Record a start mapping without attaching an identifier name. */
+/**
+ * Record a start mapping without attaching an identifier name.
+ */
 export function markWithMapNoName(state: State, node: MappableNode): void {
   recordSourceMapping(state, node, 3);
 }
 
-/** Record a mapping for `node`'s end offset at the current output position. */
+/**
+ * Record a mapping for `node`'s end offset at the current output position.
+ */
 export function markWithMapAfter(state: State, node: MappableNode): void {
   recordSourceMapping(state, node, 2);
 }
 
-/** Record a mapping a fixed number of columns after `node`'s start offset. */
+/**
+ * Record a mapping a fixed number of columns after `node`'s start offset.
+ */
 export function markWithMapAtStartOffset(
   state: State,
   node: MappableNode,
@@ -379,7 +387,9 @@ export function markWithMapAtStartOffset(
   state.mapPositions.push(state.output.length, sourceOffset);
 }
 
-/** Record one mapping, if source maps and a non-empty location are available. */
+/**
+ * Record one mapping, if source maps and a non-empty location are available.
+ */
 function recordSourceMapping(state: State, node: MappableNode, location: false | 1 | 2 | 3): void {
   if (!SOURCEMAPS) return;
   const { sourceText } = state;
@@ -432,8 +442,8 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
         (nameEnd === end || isDefinitelyIdentifierBoundary(sourceText.charCodeAt(nameEnd)))
           ? printedName
           : originalNameFromSource(sourceText, node, start, end);
-      // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`. Preserve
-      // the existing fallback in that case instead of recording an arbitrary source substring.
+      // A transformed or hand-authored AST can carry ranges unrelated to `sourceText`.
+      // Preserve the existing fallback in that case instead of recording an arbitrary source substring.
       name =
         originalName === undefined
           ? printedName
@@ -452,7 +462,9 @@ function recordSourceMapping(state: State, node: MappableNode, location: false |
   }
 }
 
-/** Recover the original identifier spelling from validated source offsets. */
+/**
+ * Recover the original identifier spelling from validated source offsets.
+ */
 function originalNameFromSource(
   sourceText: string,
   node: MappableNode,
@@ -492,7 +504,9 @@ function originalNameFromSource(
   return index === identifierStart ? undefined : sourceText.slice(start, index);
 }
 
-/** Return the UTF-16 length of a `\\u` identifier escape within `end`, or `0` if invalid. */
+/**
+ * Return the UTF-16 length of a `\\u` identifier escape within `end`, or `0` if invalid.
+ */
 function unicodeEscapeLength(sourceText: string, index: number, end: number): number {
   if (sourceText.charCodeAt(index + 1) !== 117) return 0; // `u`
 
@@ -512,7 +526,9 @@ function unicodeEscapeLength(sourceText: string, index: number, end: number): nu
   return escapeEnd - index;
 }
 
-/** Decode the code point in a syntactically valid identifier escape. */
+/**
+ * Decode the code point in a syntactically valid identifier escape.
+ */
 function unicodeEscapeCodePoint(sourceText: string, index: number, length: number): number {
   const braced = sourceText.charCodeAt(index + 2) === 123;
   const digitsStart = index + (braced ? 3 : 2);
@@ -520,12 +536,16 @@ function unicodeEscapeCodePoint(sourceText: string, index: number, length: numbe
   return Number.parseInt(sourceText.slice(digitsStart, digitsEnd), 16);
 }
 
-/** Whether `code` is an ASCII hexadecimal digit. */
+/**
+ * Whether `code` is an ASCII hexadecimal digit.
+ */
 function isHexDigit(code: number): boolean {
   return (code >= 48 && code <= 57) || (code >= 65 && code <= 70) || (code >= 97 && code <= 102);
 }
 
-/** Whether an ASCII character definitely cannot continue any supported identifier spelling. */
+/**
+ * Whether an ASCII character definitely cannot continue any supported identifier spelling.
+ */
 function isDefinitelyIdentifierBoundary(code: number): boolean {
   return (
     code <= 0x7f &&
@@ -537,7 +557,9 @@ function isDefinitelyIdentifierBoundary(code: number): boolean {
   );
 }
 
-/** Track the final byte category Rust's postfix source-map hook checks, without reading `output`. */
+/**
+ * Track the final byte category Rust's postfix source-map hook checks, without reading `output`.
+ */
 function updatePostfixClose(state: State, code: string): void {
   if (SOURCEMAPS && code.length > 0) {
     const last = code.charCodeAt(code.length - 1);

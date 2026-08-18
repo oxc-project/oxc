@@ -82,8 +82,8 @@ const { code } = printSync(program, {
 function printSync(node: Node, options?: Options): { code: string; map?: SourceMap };
 ```
 
-Prints a complete `Program` or a single statement and returns the generated source code and,
-when requested, a standard Source Map v3 object.
+Prints a complete `Program` or a single statement and returns the generated source code,
+and (when requested) a standard Source Map v3 object.
 
 ```js
 import { printSync } from "oxc-codegen";
@@ -98,9 +98,9 @@ const { code, map } = printSync(program, {
 });
 ```
 
-Source-map mappings require `sourceText` and nodes with valid Oxc `start` / `end` offsets. A
-manually constructed AST without offsets can still be printed, but its source map has an empty
-`mappings` string.
+Source-map mappings require `sourceText` and nodes with valid Oxc `start` / `end` offsets.
+A manually constructed AST without offsets can still be printed, but its source map has
+an empty `mappings` string.
 
 ### Options
 

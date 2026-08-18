@@ -101,8 +101,8 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
 
     const param = params[i];
 
-    // Oxc stores TypeScript's special `this` parameter separately from formal parameters and
-    // prints it without a source mapping.
+    // Oxc stores TypeScript's special `this` parameter separately from formal parameters
+    // and prints it without a source mapping.
     if (TS && param.type === "Identifier" && param.name === "this") {
       write(state, "this", CAT_IDENT);
       if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
