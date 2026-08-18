@@ -17,10 +17,10 @@ impl<'a> PeepholeOptimizations {
             if boolean_context {
                 Self::minimize_expression_in_boolean_context(&mut expr, ctx);
             }
+            expr
         } else {
-            return Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx);
+            Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx)
         }
-        expr
     }
 
     pub fn try_negate_expression(

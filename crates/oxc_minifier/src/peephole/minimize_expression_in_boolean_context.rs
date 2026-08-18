@@ -17,17 +17,9 @@ impl<'a> PeepholeOptimizations {
     ) {
         match expr {
             Expression::UnaryExpression(u1) if u1.operator.is_not() => {
-                // "!!a" => "a"
-                if let Expression::UnaryExpression(u2) = &mut u1.argument
-                    && u2.operator.is_not()
-                {
-                    let mut e = u2.argument.take_in(ctx);
-                    Self::minimize_expression_in_boolean_context(&mut e, ctx);
-                    ctx.replace_expression(expr, e);
-                } else if Self::try_negate_expression(&mut u1.argument, ctx, true) {
-                    let mut e = u1.argument.take_in(ctx);
-                    Self::minimize_expression_in_boolean_context(&mut e, ctx);
-                    ctx.replace_expression(expr, e);
+                if Self::try_negate_expression(&mut u1.argument, ctx, true) {
+                    Self::minimize_expression_in_boolean_context(&mut u1.argument, ctx);
+                    ctx.replace_expression_with(expr, Self::unwrap_unary);
                 } else {
                     Self::minimize_expression_in_boolean_context(&mut u1.argument, ctx);
                 }
