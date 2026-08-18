@@ -16,10 +16,10 @@ use crate::{
 /// Mirrors `COMPILER_OPTIONS` in `eslint-plugin-react-hooks`'s
 /// `src/shared/RunReactCompiler.ts`.
 ///
-/// The options are a fixed superset shared by every rule in the family: which
-/// rules are enabled only routes categories to reporters, it never changes
-/// what the compiler analyzes. That keeps the single shared run valid for any
-/// combination of enabled rules.
+/// The options are a common superset shared by every rule in the family.
+/// Rule-specific options that affect compiler analysis are added before the
+/// shared per-file run is initialized, keeping the single run valid for every
+/// enabled rule.
 pub fn react_compiler_plugin_options() -> PluginOptions {
     PluginOptions {
         output_mode: Some(CompilerOutputMode::Lint),
@@ -75,7 +75,7 @@ pub fn build_react_compiler_results(host: &ContextHost) -> ReactCompilerResults 
         program,
         semantic,
         host.allocator(),
-        react_compiler_plugin_options(),
+        host.react_compiler_options().cloned().unwrap_or_else(react_compiler_plugin_options),
     );
 
     ReactCompilerResults { diagnostics: result.diagnostics }
@@ -94,19 +94,6 @@ pub fn should_run_react_compiler(ctx: &ContextHost) -> bool {
 /// shared run's findings for `category` under the calling rule's name.
 pub fn run_react_compiler_rule(ctx: &LintContext, category: ErrorCategory) {
     report_react_compiler_diagnostics(ctx, category, &ctx.react_compiler_results().diagnostics);
-}
-
-/// Run the React Compiler with rule-specific options and report one diagnostic
-/// category. This is reserved for compiler options that cannot participate in
-/// the shared fixed-options run.
-pub fn run_react_compiler_rule_with_options(
-    ctx: &LintContext,
-    category: ErrorCategory,
-    options: PluginOptions,
-) {
-    let result =
-        oxc_react_compiler::lint(ctx.nodes().program(), ctx.semantic(), ctx.allocator(), options);
-    report_react_compiler_diagnostics(ctx, category, &result.diagnostics);
 }
 
 fn report_react_compiler_diagnostics(

@@ -7,10 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::{
-        react_compiler_plugin_options, run_react_compiler_rule_with_options,
-        should_run_react_compiler,
-    },
+    utils::{react_compiler_plugin_options, run_react_compiler_rule, should_run_react_compiler},
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -44,6 +41,20 @@ pub struct DynamicGatingImport {
     source: String,
 }
 
+impl Gating {
+    pub(crate) fn react_compiler_options(&self) -> Option<oxc_react_compiler::PluginOptions> {
+        let dynamic_gating = self.0.dynamic_gating.as_ref()?;
+        let mut options = react_compiler_plugin_options();
+        options.gating = self.0.gating.as_ref().map(|gating| CompilerGatingConfig {
+            source: gating.source.clone(),
+            import_specifier_name: gating.import_specifier_name.clone(),
+        });
+        options.dynamic_gating =
+            Some(DynamicGatingConfig { source: dynamic_gating.source.clone() });
+        Some(options)
+    }
+}
+
 declare_react_compiler_lint!(
     /// ### What it does
     ///
@@ -70,22 +81,11 @@ impl Rule for Gating {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let Some(dynamic_gating) = &self.0.dynamic_gating else {
-            return;
-        };
-
-        let mut options = react_compiler_plugin_options();
-        options.gating = self.0.gating.as_ref().map(|gating| CompilerGatingConfig {
-            source: gating.source.clone(),
-            import_specifier_name: gating.import_specifier_name.clone(),
-        });
-        options.dynamic_gating =
-            Some(DynamicGatingConfig { source: dynamic_gating.source.clone() });
-        run_react_compiler_rule_with_options(ctx, ErrorCategory::Gating, options);
+        run_react_compiler_rule(ctx, ErrorCategory::Gating);
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        should_run_react_compiler(ctx)
+        self.0.dynamic_gating.is_some() && should_run_react_compiler(ctx)
     }
 }
 
