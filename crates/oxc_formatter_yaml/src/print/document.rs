@@ -24,7 +24,7 @@ use crate::{
 /// Returns whether the stream ends with a keep-chomped block scalar (computed here anyway),
 /// so `format()` doesn't re-walk the tree for its final newline.
 pub fn write_root<'a>(root: &'a Root<'a>, f: &mut YamlFormatter<'_, 'a>) -> bool {
-    let keep_chomped_tail = ends_with_keep_chomped_block(root);
+    let keep_chomped_tail = ends_with_keep_chomped_block(root, f);
     let documents = root.children.as_slice();
 
     for (i, document) in documents.iter().enumerate() {

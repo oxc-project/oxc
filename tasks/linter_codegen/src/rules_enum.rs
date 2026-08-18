@@ -210,6 +210,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
     let to_configuration_arms: Vec<TokenStream> = rule_entries
         .iter()
+        .filter(|rule| rule.has_custom_to_configuration)
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(rule) => rule.to_configuration() }
@@ -354,7 +355,8 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
             pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
                 match self {
-                    #(#to_configuration_arms),*
+                    #(#to_configuration_arms,)*
+                    _ => None,
                 }
             }
 

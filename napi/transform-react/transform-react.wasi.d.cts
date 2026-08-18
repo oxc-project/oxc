@@ -153,6 +153,11 @@ export interface ReactCompilerEnvironmentOptions {
   enableCustomTypeDefinitionForReanimated?: boolean
   enableTreatRefLikeIdentifiersAsRefs?: boolean
   enableTreatSetIdentifiersAsStateSetters?: boolean
+  /**
+   * Validate that `useMemo` callbacks return a value.
+   *
+   * @default false
+   */
   validateNoVoidUseMemo?: boolean
   enableAllowSetStateFromRefsInEffects?: boolean
   enableVerboseNoSetStateInEffect?: boolean

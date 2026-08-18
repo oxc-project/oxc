@@ -972,8 +972,7 @@ fn cfg_returns(node_id: NodeId, ctx: &LintContext<'_>) -> FunctionReturns {
 #[derive(Debug)]
 pub enum InnermostFunction<'a> {
     Function(&'a Function<'a>),
-    /// Arrow functions never have an id, so we don't need to store the reference
-    ArrowFunction,
+    ArrowFunction(&'a ArrowFunctionExpression<'a>),
 }
 
 pub fn find_innermost_function_with_jsx<'a>(
@@ -1004,7 +1003,7 @@ pub fn find_innermost_function_with_jsx<'a>(
         }
         Expression::ArrowFunctionExpression(arrow_func) => {
             if arrow_function_returns(arrow_func, ctx).has_jsx() {
-                Some(InnermostFunction::ArrowFunction)
+                Some(InnermostFunction::ArrowFunction(arrow_func))
             } else {
                 match &arrow_func.body {
                     ArrowFunctionBody::FunctionBody(body) => {

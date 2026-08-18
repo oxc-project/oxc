@@ -94,9 +94,8 @@ declare_oxc_lint!(
 
 impl Rule for NoDistractingElements {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config =
-            serde_json::from_value::<DefaultRuleConfig<NoDistractingElementsConfig>>(value)
-                .map(DefaultRuleConfig::into_inner)?;
+        let config = DefaultRuleConfig::<NoDistractingElementsConfig>::from_value(value)
+            .map(DefaultRuleConfig::into_inner)?;
 
         Ok(Self {
             check_marquee: config.elements.contains(&DistractingElement::Marquee),

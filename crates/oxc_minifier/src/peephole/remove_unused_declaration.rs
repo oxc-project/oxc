@@ -1,4 +1,4 @@
-use super::PeepholeOptimizations;
+use super::{PeepholeOptimizations, remove_unused_expression::ClassRemovability};
 use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
@@ -64,6 +64,25 @@ impl<'a> PeepholeOptimizations {
         })
     }
 
+    /// Keep an unused declarator when dropping its class initializer would
+    /// leave an executing anonymous class expression without its inferred
+    /// name. The name can be observed by static blocks and decorators before
+    /// any later use of the binding, so `keep_names` cannot be applied after
+    /// the declarator has been reduced to a bare class expression.
+    fn class_initializer_name_needs_to_be_kept(
+        decl: &VariableDeclarator<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        let Some(init) = &decl.init else { return false };
+        if !ctx.is_expression_whose_name_needs_to_be_kept(init) {
+            return false;
+        }
+        let Expression::ClassExpression(class) = init.without_parentheses() else {
+            return false;
+        };
+        matches!(Self::classify_class_removability(class, ctx), ClassRemovability::Keep)
+    }
+
     fn is_sync_iterator_expr(expr: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match expr {
             Expression::ArrayExpression(_)
@@ -99,10 +118,9 @@ impl<'a> PeepholeOptimizations {
         match &decl.id {
             BindingPattern::BindingIdentifier(ident) => {
                 if let Some(symbol_id) = ident.symbol_id.get() {
-                    return Self::symbol_is_unused_by_count(symbol_id, ctx)
-                        || Self::self_recursive_function_declarator_is_unused(
-                            decl, symbol_id, ctx,
-                        );
+                    let is_unused = Self::symbol_is_unused_by_count(symbol_id, ctx)
+                        || Self::self_recursive_function_declarator_is_unused(decl, symbol_id, ctx);
+                    return is_unused && !Self::class_initializer_name_needs_to_be_kept(decl, ctx);
                 }
                 false
             }

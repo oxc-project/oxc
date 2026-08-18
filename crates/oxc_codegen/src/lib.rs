@@ -127,6 +127,7 @@ pub struct Codegen<'a> {
 
     // Builders
     comments: CommentsMap,
+    has_property_key_annotations: bool,
 
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
     /// so the emission site can recover verbatim source text instead of a
@@ -195,6 +196,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
             orphan_comment_keys: Vec::new(),
             #[cfg(feature = "sourcemap")]

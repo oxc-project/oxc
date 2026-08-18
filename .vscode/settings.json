@@ -20,6 +20,7 @@
   // Paths are workspace-root relative. Globs are not supported, so each is listed explicitly.
   "rust-analyzer.files.exclude": [
     "apps/oxfmt/node_modules",
+    "crates/oxc_formatter_tests/prettier",
     "apps/oxlint/conformance/submodules",
     "apps/oxlint/node_modules",
     "apps/shared/node_modules",
@@ -37,7 +38,6 @@
     "tasks/coverage/babel",
     "tasks/coverage/typescript",
     "tasks/coverage/estree-conformance",
-    "tasks/prettier_conformance/prettier",
     "tasks/transform_conformance/node_modules"
   ]
 }

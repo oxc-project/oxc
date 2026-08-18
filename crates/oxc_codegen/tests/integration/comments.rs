@@ -71,6 +71,53 @@ fn test_comments_before_expression_operands_idempotency() {
     test_idempotency("const value = { aFunction: /* istanbul ignore next */ () => {} };");
 }
 
+#[test]
+fn test_property_key_annotations_before_literals() {
+    use oxc_codegen::{CodegenOptions, CommentOptions};
+
+    let annotation_only = CodegenOptions {
+        comments: CommentOptions { normal: false, ..CommentOptions::default() },
+        ..CodegenOptions::default()
+    };
+    let source = r#"const key = /* @__KEY__ */ "_field";
+const lineKey = // #__KEY__
+"_field";
+object[/* #__KEY__ */ `_field`];"#;
+    crate::tester::test_options(
+        source,
+        r#"const key = /* @__KEY__ */ "_field";
+const lineKey = // #__KEY__
+"_field";
+object[/* #__KEY__ */ `_field`];
+"#,
+        annotation_only.clone(),
+    );
+    crate::tester::test_options(
+        "use(/* @__KEY__ */ \"_field\");",
+        "use(\n\t/* @__KEY__ */\n\t\"_field\"\n);\n",
+        annotation_only.clone(),
+    );
+
+    let minify_with_annotations = CodegenOptions { minify: true, ..annotation_only.clone() };
+    crate::tester::test_options(
+        "(/* @__KEY__ */ \"_field\");",
+        "/* @__KEY__ */`_field`;",
+        minify_with_annotations.clone(),
+    );
+
+    test_idempotency_options(source, &annotation_only);
+    test_idempotency_options("(/* @__KEY__ */ \"_field\");", &minify_with_annotations);
+
+    crate::tester::test_options(
+        "const key = /* @__KEY__ */ \"_field\";",
+        "const key = \"_field\";\n",
+        CodegenOptions {
+            comments: CommentOptions { annotation: false, ..CommentOptions::default() },
+            ..CodegenOptions::default()
+        },
+    );
+}
+
 // A mid-line comment group must not receive a full indent: `print_comments`
 // used to inject `indent` tabs before any group whose first comment was not
 // preceded by a newline, so indented emission sites (`key: /** c */ value`)

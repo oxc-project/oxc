@@ -11,7 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use smallvec::smallvec;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{
     PlaceList, each_instruction_lvalue_ids, each_instruction_value_operand, each_terminal_operand,
@@ -47,18 +47,12 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
     // Then record the top-level reassignment error if any
     if let Some(reassignment_place) = reassignment {
         let variable_name = format_variable_name(&reassignment_place, &env.identifiers);
-        env.record_diagnostic(
-            ErrorCategory::Immutability
-                .diagnostic("Cannot reassign variable after render completes")
-                .with_help(format!(
-                    "Reassigning {} after render has completed can cause inconsistent \
-                     behavior on subsequent renders. Consider using state instead",
-                    variable_name
-                ))
-                .with_labels(reassignment_place.span.map(|s| {
-                    s.label(format!("Cannot reassign {} after render completes", variable_name))
-                })),
-        );
+        let declaration_span = env.identifiers[reassignment_place.identifier].span;
+        env.record_diagnostic(diagnostics::reassigned_after_render(
+            &variable_name,
+            reassignment_place.span,
+            declaration_span,
+        ));
     }
 }
 
@@ -134,18 +128,11 @@ fn get_context_reassignment(
                             // Async functions that reassign get an immediate error
                             let variable_name =
                                 format_variable_name(reassignment_place, identifiers);
-                            diagnostics.push(
-                                ErrorCategory::Immutability
-                                    .diagnostic("Cannot reassign variable in async function")
-                                    .with_help(
-                                        "Reassigning a variable in an async function can cause \
-                                         inconsistent behavior on subsequent renders. \
-                                         Consider using state instead",
-                                    )
-                                    .with_labels(reassignment_place.span.map(|s| {
-                                        s.label(format!("Cannot reassign {}", variable_name))
-                                    })),
-                            );
+                            diagnostics.push(diagnostics::reassigned_in_async_function(
+                                &variable_name,
+                                reassignment_place.span,
+                                identifiers[reassignment_place.identifier].span,
+                            ));
                             // Return null (don't propagate further) — matches TS behavior
                             return None;
                         } else {

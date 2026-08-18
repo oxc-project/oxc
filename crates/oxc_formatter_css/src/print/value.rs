@@ -679,9 +679,6 @@ pub(super) fn write_value_groups<'a>(
                 // The declaration tail belongs to the LAST group only
                 let gctx = if is_last { ctx } else { ValueContext { tail_bound: None, ..ctx } };
                 let content = format_with(move |f: &mut CssFormatter<'_, 'a>| {
-                    if let Some(first) = group_values.first() {
-                        flush_value_comments(to_span(first.span()).start, f);
-                    }
                     write_comma_group(group_values, gctx, f);
                     if !is_last {
                         write_group_comma(comma, f);
@@ -798,10 +795,13 @@ pub(super) fn write_comma_group<'a>(
     if values.is_empty() {
         return;
     }
+    // Comments leading the FIRST value flush at this level, before any group/indent opens:
+    // `//` comment's forced hardline inside `indent(&body)` would drop the value one level deeper
+    // and break the fill run after it.
+    flush_value_comments(to_span(values[0].span()).start, f);
     // Prettier's `flattenGroups`:
     // a single-element comma group collapses to the element itself (no extra group/indent level).
     if values.len() == 1 && ctx.tail_bound.is_none() {
-        flush_value_comments(to_span(values[0].span()).start, f);
         // EXCEPT a sass interpolation:
         // route through a fill entry to get the chunk-isolated fit (see `is_single_sass_interpolation`).
         if is_single_sass_interpolation(values) {
@@ -940,23 +940,17 @@ pub(super) fn write_comma_group<'a>(
                     filler.entry(&soft_line_break_or_space(), &content);
                 }
             }
-            // Trailing same-line comments become their own fill items
-            // (they wrap independently when the line is too long).
+            // Block comments between runs become their own fill items, own-line ones included:
+            // keeping those own-line would freeze a previously wrapped layout (= not idempotent).
             if !is_last_run {
                 let next_start = to_span(values[run_end].span()).start;
                 for &comment in pending.iter().filter(|c| {
-                    !c.inline
-                        && c.span.start >= run_end_pos
-                        && c.span.end <= next_start
-                        && !comment_is_own_line(**c, source)
+                    !c.inline && c.span.start >= run_end_pos && c.span.end <= next_start
                 }) {
                     let entry = format_with(move |f: &mut CssFormatter<'_, 'a>| {
                         if f.context().comments().peek().is_some_and(|c| c.span == comment.span) {
                             f.context().comments().take_before(comment.span.end);
                             comments::write_single_comment(comment, f);
-                            if comment.inline {
-                                write!(f, expand_parent());
-                            }
                         }
                     });
                     filler.entry(&soft_line_break_or_space(), &entry);

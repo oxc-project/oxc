@@ -1,5 +1,7 @@
 pub mod debug;
 pub mod document;
+pub(crate) mod formatted;
+pub(crate) mod group_id;
 pub mod tag;
 
 // #[cfg(target_pointer_width = "64")]
@@ -165,10 +167,6 @@ impl PrintMode {
     pub const fn is_flat(self) -> bool {
         matches!(self, PrintMode::Flat)
     }
-
-    pub const fn is_expanded(self) -> bool {
-        matches!(self, PrintMode::Expanded)
-    }
 }
 
 #[derive(Clone)]
@@ -243,19 +241,6 @@ pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) ->
 }
 
 impl FormatElement<'_> {
-    /// Returns `true` if self is a [FormatElement::Tag]
-    pub const fn is_tag(&self) -> bool {
-        matches!(self, FormatElement::Tag(_))
-    }
-
-    /// Returns `true` if self is a [FormatElement::Tag] and [Tag::is_start] is `true`.
-    pub const fn is_start_tag(&self) -> bool {
-        match self {
-            FormatElement::Tag(tag) => tag.is_start(),
-            _ => false,
-        }
-    }
-
     /// Returns `true` if self is a [FormatElement::Tag] and [Tag::is_end] is `true`.
     pub const fn is_end_tag(&self) -> bool {
         match self {
@@ -270,10 +255,6 @@ impl FormatElement<'_> {
 
     pub const fn is_space(&self) -> bool {
         matches!(self, FormatElement::Space)
-    }
-
-    pub const fn is_line(&self) -> bool {
-        matches!(self, FormatElement::Line(_))
     }
 }
 

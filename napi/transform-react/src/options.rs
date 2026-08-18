@@ -259,6 +259,9 @@ pub struct ReactCompilerEnvironmentOptions {
     pub enable_custom_type_definition_for_reanimated: Option<bool>,
     pub enable_treat_ref_like_identifiers_as_refs: Option<bool>,
     pub enable_treat_set_identifiers_as_state_setters: Option<bool>,
+    /// Validate that `useMemo` callbacks return a value.
+    ///
+    /// @default false
     pub validate_no_void_use_memo: Option<bool>,
     pub enable_allow_set_state_from_refs_in_effects: Option<bool>,
     pub enable_verbose_no_set_state_in_effect: Option<bool>,

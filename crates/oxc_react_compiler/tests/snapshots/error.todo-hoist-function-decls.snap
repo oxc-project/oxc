@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-hoist-function-decls.j
 ---
 Diagnostics:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] Todo: Support functions with unreachable code that may contain hoisted declarations", labels: [LabeledSpan { label: None, span: SourceSpan { offset: 42, length: 35 }, primary: false }], help: None, note: None, severity: Warning, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Support functions with unreachable code that may contain hoisted declarations", labels: [LabeledSpan { label: None, span: Span { start: 51, end: 55 }, primary: true }], help: Some("Rewrite the highlighted code using syntax supported by React Compiler"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("Todo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
 
 No changes.

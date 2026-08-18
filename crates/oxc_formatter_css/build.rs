@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_formatter_core::test_support::{GenerateConfig, generate_tests};
+use oxc_formatter_tests::{GenerateConfig, generate_tests};
 
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();

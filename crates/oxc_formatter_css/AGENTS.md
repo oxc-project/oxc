@@ -58,8 +58,9 @@ they are collected via `ParserBuilder::comments()` into a positional cursor over
 
 - Statement-level comments: flushed before each statement (`flush_leading_comments`);
   consecutive same-line comments stay glued (`*/ /*!`), but a comment is always followed by a line break before a node
-- Value-level comments: flushed inside fill entries before the component they precede (`flush_value_comments`);
-  `//` comments expand the parent group and force a hardline after
+- Value-level comments: block comments between fill runs are standalone fill items (own-line or not);
+  the rest (leads before the first component, own-line `//`) flush at the next entry's head (`flush_value_comments`),
+  where `//` comments expand the parent group and force a hardline after
 - Trailing (`value /* c */;`): flushed by `write_declaration` with the source gap before `;` preserved
 - After each statement, the sequence DISCARDS unclaimed comments inside the statement span
   (cursor must never point before a printed position)
@@ -79,7 +80,9 @@ The shared invariants (FORMATTER_POLICY.md "Comment placement invariants") apply
 - The positional cursor makes ownership a bounds discipline, not an attachment one:
   - a flush's upper bound must never extend past the next piece of user content,
   - and a declaration's `tail_bound` may only be consumed by the LAST comma group (`write_value_groups` clears it for every other group)
-- Line-boundary rule in CSS terms: `//` comments force a hardline after; own-line comments stay own-line
+- Line-boundary rule in CSS terms: `//` comments force a hardline after;
+  - own-line comments stay own-line at statement and trailing level, but a value-level own-line BLOCK comment is a plain fill item (joins the line when it fits):
+    - it carries no line-based semantics, and freezing it own-line would pin a wrapped layout (= not idempotent)
 
 ### Line endings
 
@@ -249,6 +252,8 @@ Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Notabl
   - Less lookups (`@config[@key]`) are unaffected: the typed lookup rule wins and keeps printing structurally
   - With the name GLUED to the `(` (`--viewport-medium(width<=50rem)`)
   - Prettier keeps the whole prelude verbatim (ONE `media-type` token)
+  - With the name spaced, Prettier still only collapses whitespace RUNS in the prelude (`(  width  >=500px )` → `(width >=500px)`, glue kept);
+    - we print the structured form either way, identical to the same query inside `@media`, where Prettier agrees
 - A declaration swallowed by a `;`-less css-in-js placeholder (`${m}\ncolor: red`)
   - We parse it structurally and FORMAT it (spacing/hex/number normalization)
   - Prettier keeps it verbatim, postcss swallows the run as an opaque prelude string it can't format, so `color   :   red` / `#FFFFFF` survive unformatted
@@ -265,6 +270,11 @@ Admission reasons and rules: see FORMATTER_POLICY.md "Known divergences". Notabl
   - Prettier double-indents it (closing `)` floating between levels) when the nearest
     at-rule ancestor is a control directive (`@if`/`@else`/`@for`/`@each`/`@while`; selector blocks in between don't shield)
     = identical source, different indent per context
+- SCSS: A comment-preceded block map value also prints at the normal nested-map indent
+  - Prettier double-indents it (`+6` body / `+4` `)`)
+  - Its dedent applies only when the pair doc is a plain `group(indent(fill))`, and a leading comment changes the doc shape
+  - Comment presence must not change layout; same dedent-skip artifact class as the entries above
+    (paren-block KEYS still keep the pair indent, matching Prettier: that trigger is content, not trivia)
 - SCSS: The map-item break (one element per line + trailing comma) applies ONLY to parens whose contents are already a comma-separated list (semantics)
   - `(x,)` is a single-element list in Sass, so the added comma is a semantic no-op for a comma list and NOWHERE else
   - Prettier 3.9.6 changes `key: ($a + $b)` from a number to a list,
@@ -319,9 +329,9 @@ The harness snapshots both `--print-width 80` and `100`; verify fixtures at both
 
 ### Prettier conformance
 
-At the current version (v3.9.6), the divergences of seven files have been confirmed and are intentional (see "Known divergences"):
+At the current version (v3.9.6), the divergences of eight files have been confirmed and are intentional (see "Known divergences"):
 
-- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/postcss-plugins/postcss-nesting.css`
+- CSS: `css/stylefmt-repo/at-media/at-media.css`, `css/stylefmt-repo/cssnext-example/cssnext-example.css`, `css/stylefmt-repo/media-queries-ranges/media-queries-ranges.css`, `css/postcss-plugins/postcss-nesting.css`
 - SCSS: `scss/comments/4878.scss`, `scss/map/function-argument/functional-argument.scss`, `scss/parens/issue-16594.scss`, `scss/variables/apply-rule.scss`
 
 Two more files fail with MIXED hunks; they can't pass as files (the intentional hunks alone keep them failing), so the remaining diffs are itemized here:
