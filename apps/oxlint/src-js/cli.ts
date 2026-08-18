@@ -267,8 +267,9 @@ function reportJsWorkerDeath(id: number, reason: string): void {
  * Start `k` JS plugin worker isolates, and wait until all of them have registered their callbacks.
  *
  * Each worker calls `registerWorker` on the Rust side and then posts `ready`, so once every worker
- * is ready, Rust can route lint requests to any of them. Rust decides `k` and calls this at most
- * once per process, and never with `k <= 1` (a single isolate runs plugins on this thread instead).
+ * is ready, Rust can route lint requests to any of them. Rust calls this at most once per process,
+ * only after a JS plugin is actually loaded, and never with `k <= 1` (a single isolate runs plugins
+ * on this thread instead).
  *
  * @param k - Number of workers to start
  * @returns Promise which resolves when all workers are ready

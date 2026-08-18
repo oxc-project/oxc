@@ -82,7 +82,8 @@ export type JsSetupRuleConfigsCb =
 /**
  * JS callback to start JS plugin worker isolates.
  *
- * Called once, with `K`. Resolves when every worker has registered its callbacks.
+ * Called at most once per `lint()`, with `K`, when the first JS plugin is loaded.
+ * Resolves when every worker has registered its callbacks.
  */
 export type JsStartWorkersCb =
   ((arg: number) => Promise<undefined>)
@@ -99,7 +100,7 @@ export type JsStartWorkersCb =
  * 6. `create_workspace`: Create a workspace.
  * 7. `destroy_workspace`: Destroy a workspace.
  * 8. `load_js_configs`: Load JavaScript config files.
- * 9. `start_js_workers`: Start `K` JS plugin worker isolates.
+ * 9. `start_js_workers`: Start `K` JS plugin worker isolates when a JS plugin is first loaded.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */

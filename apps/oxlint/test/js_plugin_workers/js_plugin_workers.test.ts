@@ -46,6 +46,18 @@ describe("JS plugin worker startup", () => {
     expect(stdout).toContain("basic-custom-plugin(no-debugger)");
   });
 
+  it("does not start workers when no jsPlugins are configured", async () => {
+    const dir = await fs.mkdtemp(pathJoin(tmpdir(), "oxlint-no-js-plugins-"));
+    try {
+      await fs.writeFile(pathJoin(dir, "foo.js"), "debugger;\n");
+      const { stdout, stderr } = await runOxlint(["--threads=4"], dir, TEST_WORKER_ENV);
+      expect(jsWorkers(stderr)).toBeNull();
+      expect(stdout).toContain("eslint(no-debugger)");
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("starts workers for the probed worker count, and lints through them", async (ctx) => {
     const { stdout, stderr } = await runOxlint(["--threads=4"], FIXTURE_PATH, TEST_WORKER_ENV);
     const k = jsWorkers(stderr);
